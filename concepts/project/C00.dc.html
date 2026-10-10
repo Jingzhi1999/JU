@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C00 管线测试</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* shared review panel — lives outside the phone frame, never inside the product UI */
+.ju-stage{display:flex;align-items:flex-start;gap:28px;padding:20px;box-sizing:border-box;background:#e9e9ec;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;width:780px;min-height:884px}
+.ju-phone{width:390px;height:844px;flex:0 0 390px;position:relative;overflow:hidden;border-radius:38px;box-shadow:0 0 0 1px rgba(0,0,0,.18),0 20px 50px -24px rgba(0,0,0,.45);background:#000;contain:layout paint}
+.ju-panel{flex:1 1 auto;min-width:0;max-height:844px;overflow:auto;background:#f6f6f7;border:1px solid rgba(0,0,0,.08);border-radius:14px;padding:14px 14px 18px;color:#1c1c1e;font-size:12px;line-height:1.5;box-sizing:border-box}
+.ju-panel-head{display:flex;align-items:baseline;gap:8px}
+.ju-panel-code{font:600 11px/1 "DM Mono",ui-monospace,monospace;letter-spacing:.08em;color:#6b6b70}
+.ju-panel-name{font-size:15px;font-weight:600}
+.ju-panel-line{margin:4px 0 10px;color:#55555a}
+.ju-panel-sec{font:600 10px/1 "DM Mono",ui-monospace,monospace;letter-spacing:.12em;color:#8a8a90;margin:14px 0 6px;text-transform:uppercase}
+.ju-panel-row{display:flex;flex-wrap:wrap;gap:6px}
+.ju-btn{appearance:none;border:1px solid rgba(0,0,0,.14);background:#fff;color:#1c1c1e;border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;line-height:1.2;cursor:pointer;min-height:30px}
+.ju-btn.on{background:#1c1c1e;color:#fff;border-color:#1c1c1e}
+.ju-btn-mini{padding:4px 8px;min-height:24px}
+.ju-btn-replay{border-style:dashed}
+.ju-btn-reset{border-color:#c2364c;color:#c2364c}
+.ju-scrub{display:flex;align-items:center;gap:8px;margin-top:8px;color:#55555a}
+.ju-scrub input{flex:1 1 auto;min-width:0}
+.ju-idx-group{margin-bottom:8px}
+.ju-idx-title{font-size:11px;color:#8a8a90;margin-bottom:4px}
+.ju-idx-list{display:flex;flex-wrap:wrap;gap:4px}
+.ju-idx{appearance:none;border:1px solid rgba(0,0,0,.1);background:#fff;border-radius:6px;padding:4px 8px;font:inherit;font-size:11.5px;line-height:1.3;cursor:pointer;color:#2c2c30;min-height:26px}
+.ju-idx.on{background:#4a5ad6;border-color:#4a5ad6;color:#fff}
+.ju-motions{margin:0;padding-left:18px;color:#2c2c30}
+.ju-motions li{margin-bottom:4px}
+.ju-panel-notes{margin:10px 0 0;color:#55555a;white-space:pre-line}
+
+/* ju-fx.css — shared effect primitives. Concepts override colours, edges, durations and composition.
+   All durations multiply by --k (1 = normal, 2 = 0.5× speed); .scrub holds animations at --frame (0..1). */
+@property --fx-r { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+@property --fx-ink { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+/* ---- burn: element is masked by a growing irregular hole; ::after draws the ember ring just outside it ---- */
+.fx-burn{position:relative;--fx-x:28%;--fx-y:72%;--fx-dur:2600ms;--fx-ember:#ff8a2a;--fx-char:#2a1710;--fx-glow:#ffd27a}
+.fx-burn.burning{animation:fx-burn calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.35,.1,.6,1) forwards;filter:url(#fx-rough);-webkit-mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%));mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%))}
+.fx-burn.burning::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent calc(var(--fx-r) - 1%),var(--fx-glow) calc(var(--fx-r) + 1%),var(--fx-ember) calc(var(--fx-r) + 2.5%),var(--fx-char) calc(var(--fx-r) + 5.5%),transparent calc(var(--fx-r) + 10%))}
+.fx-burn.burnt{opacity:0;visibility:hidden}
+@keyframes fx-burn{0%{--fx-r:0%}12%{--fx-r:6%}100%{--fx-r:150%}}
+.scrub .fx-burn.burning{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+/* ---- print: paper emerges from a slot in roller steps; ink is revealed slightly behind the leading edge ---- */
+.fx-printer{position:relative;overflow:hidden}
+.fx-print-paper{--fx-dur:2000ms;transform:translateY(-102%);animation:fx-print calc(var(--fx-dur) * var(--k,1)) linear forwards;-webkit-mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%));mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%))}
+@keyframes fx-print{0%{transform:translateY(-102%);--fx-ink:0%}14%{transform:translateY(-86%);--fx-ink:12%}22%{transform:translateY(-84%);--fx-ink:16%}40%{transform:translateY(-52%);--fx-ink:46%}48%{transform:translateY(-50%);--fx-ink:50%}70%{transform:translateY(-12%);--fx-ink:84%}78%{transform:translateY(-10%);--fx-ink:88%}92%{transform:translateY(1.5%);--fx-ink:100%}100%{transform:translateY(0);--fx-ink:110%}}
+.scrub .fx-print-paper{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+/* ---- stamp: ink lands from above with a small overshoot; a bleed blur settles ---- */
+.fx-stamp{--fx-dur:520ms;animation:fx-stamp calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.2,1.2,.3,1) both;transform-origin:50% 50%}
+@keyframes fx-stamp{0%{transform:scale(1.8) rotate(-8deg);opacity:0;filter:blur(2px)}55%{transform:scale(.96) rotate(1deg);opacity:1;filter:blur(0)}100%{transform:scale(1) rotate(0)}}
+/* ---- tear: two copies of the same face, each clipped by the seam polygon; the stub pivots on its attached end ---- */
+.fx-tear{position:relative}
+.fx-tear .fx-side{position:absolute;inset:0;will-change:clip-path,transform}
+.fx-tear .fx-side.stub{transform-origin:100% 0}
+.fx-tear .fx-edge{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:.9;filter:blur(.4px)}
+.fx-tear .fx-side.stub.off{transition:transform calc(700ms * var(--k,1)) cubic-bezier(.4,0,.8,.4),opacity calc(500ms * var(--k,1)) ease-in calc(250ms * var(--k,1));transform:translate(-36px,140px) rotate(-28deg);opacity:0}
+/* ---- ash / fragments ---- */
+.fx-ash{position:absolute;width:6px;height:6px;border-radius:40% 60% 50% 50%;background:#3b2a20;opacity:0;pointer-events:none}
+.fx-ash.fall{animation:fx-ash calc(1400ms * var(--k,1)) ease-in forwards}
+@keyframes fx-ash{0%{opacity:.9;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx,0),var(--dy,80px)) rotate(var(--rot,90deg))}}
+/* ---- global review states ---- */
+.rm *,.rm *::before,.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.paused *,.paused *::before,.paused *::after{animation-play-state:paused!important}
+
+.app{position:absolute;inset:0;background:#f4f1ea;font-family:"Noto Sans SC",sans-serif;padding:60px 20px 20px;--k:1}
+.app h1{margin:0 0 12px;font-size:26px;font-weight:500}
+.seg{display:flex;gap:6px;margin-bottom:16px}
+.seg button{flex:1;padding:10px;border:1px solid #ccc;background:#fff;border-radius:10px;font:inherit}
+.seg button.on{background:#141416;color:#fff}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.8,.2,1);display:block;width:100%;text-align:left;border:0;font:inherit}
+.card.open{transform:translateY(-6px) scale(1.03)}
+.app.rm *{transition-duration:1ms!important;animation-duration:1ms!important}
+.app.paused *{animation-play-state:paused!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}}">
+      <h1>我的局 · {{roleLabel}}</h1>
+      <div class="seg"><button type="button" class="{{joinedOn}}" onClick="{{toJoined}}">我参加的</button><button type="button" class="{{hostedOn}}" onClick="{{toHosted}}">我发起的</button></div>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p>还没有局。</p></sc-if>
+      <sc-for list="{{events}}" as="e" hint-placeholder-count="2"><button type="button" class="card {{e.cls}}" onClick="{{e.open}}"><b>{{e.title}}</b><br>{{e.when}} · {{e.place}}</button></sc-for>
+    </div>
+  </div>
+  <sc-if value="{{panel.show}}" hint-placeholder-val="{{true}}">
+<aside class="ju-panel" aria-label="评审面板">
+  <div class="ju-panel-head"><span class="ju-panel-code">{{panel.code}}</span><span class="ju-panel-name">{{panel.name}}</span></div>
+  <p class="ju-panel-line">{{panel.line}}</p>
+  <div class="ju-panel-sec">动效</div>
+  <div class="ju-panel-row">
+    <button type="button" class="ju-btn {{panel.speed1}}" onClick="{{panel.setSpeed1}}">1×</button>
+    <button type="button" class="ju-btn {{panel.speedHalf}}" onClick="{{panel.setSpeedHalf}}">0.5×</button>
+    <button type="button" class="ju-btn {{panel.pausedOn}}" onClick="{{panel.togglePause}}">暂停</button>
+    <button type="button" class="ju-btn {{panel.rmOn}}" onClick="{{panel.toggleRM}}">减少动态</button>
+    <button type="button" class="ju-btn ju-btn-replay" onClick="{{panel.replay}}">重播上一动效</button>
+  </div>
+  <label class="ju-scrub"><span>关键帧</span><input type="range" min="0" max="100" value="{{panel.scrub}}" onInput="{{panel.onScrub}}" onChange="{{panel.onScrub}}"><button type="button" class="ju-btn ju-btn-mini" onClick="{{panel.endScrub}}">释放</button></label>
+  <div class="ju-panel-sec">状态索引</div>
+  <sc-for list="{{panel.groups}}" as="g" hint-placeholder-count="3">
+    <div class="ju-idx-group">
+      <div class="ju-idx-title">{{g.title}}</div>
+      <div class="ju-idx-list">
+        <sc-for list="{{g.items}}" as="e" hint-placeholder-count="4"><button type="button" class="ju-idx {{e.cls}}" onClick="{{e.go}}">{{e.label}}</button></sc-for>
+      </div>
+    </div>
+  </sc-for>
+  <div class="ju-panel-sec">演示数据</div>
+  <div class="ju-panel-row">
+    <sc-for list="{{panel.variants}}" as="v" hint-placeholder-count="4"><button type="button" class="ju-btn {{v.cls}}" onClick="{{v.go}}">{{v.label}}</button></sc-for>
+    <button type="button" class="ju-btn ju-btn-reset" onClick="{{panel.reset}}">重置本套</button>
+  </div>
+  <div class="ju-panel-sec">三个核心动作</div>
+  <ol class="ju-motions"><sc-for list="{{panel.motions}}" as="m" hint-placeholder-count="3"><li>{{m}}</li></sc-for></ol>
+  <p class="ju-panel-notes">{{panel.notes}}</p>
+</aside>
+
+</sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
+/* STUB — replaced once spec/state-inventory.md lands */
+(function (global) {
+  var JU = global.JU = global.JU || {};
+  JU.INDEX = [
+    { key: 'j-list', group: '参加者', label: '当前（默认）', role: 'joined', section: 'current' },
+    { key: 'j-history', group: '参加者', label: '历史', role: 'joined', section: 'history' },
+    { key: 'h-list', group: '局主', label: '当前（默认）', role: 'hosted', section: 'current' },
+    { key: 'b-empty', group: '边界', label: '完全空', role: 'joined', section: 'current', variant: 'empty' }
+  ];
+  JU.data = function (variant) { return { variant: variant, events: variant === 'empty' ? [] : [{ id: 'e1', title: '法拉盛饺子局', when: '周六 12.19 · 20:30', place: '法拉盛' }, { id: 'e2', title: '周末爬山', when: '周日 12.20 · 08:00', place: '熊山' }] }; };
+})(typeof window !== 'undefined' ? window : this);
+
+/* ju-fx.js — shared low-level effect helpers (geometry + measurement). Each concept supplies its own
+   materials, edges, timings and composition; this file only computes shapes and rects. */
+(function (global) {
+  'use strict';
+  var JU = global.JU = global.JU || {};
+  function rand(seed) { var s = (seed || 1) * 9301 + 49297; return function () { s = (s * 9301 + 49297) % 233280; return s / 233280; }; }
+  /* jagged profile: n offsets in [-amp, amp], smoothed a little so the tear reads as fibre, not noise */
+  function tearProfile(n, amp, seed) {
+    var r = rand(seed || 7), raw = [], out = [];
+    for (var i = 0; i < n; i++) raw.push((r() * 2 - 1) * amp);
+    for (var j = 0; j < n; j++) out.push(((raw[(j + n - 1) % n] + raw[j] * 2 + raw[(j + 1) % n]) / 4));
+    return out;
+  }
+  /* clip-path polygons for a horizontal tear at y (px) across a w×h face.
+     progress ∈ [0,1]: how far the tear has run from the left edge; attached part keeps the straight perforation.
+     side 'keep' = part below the seam, 'stub' = part above. gap (px) opens the torn portion. */
+  function tearClip(o) {
+    var w = o.w, h = o.h, y = o.y, prof = o.profile, p = Math.max(0, Math.min(1, o.progress == null ? 1 : o.progress)), gap = o.gap || 0, n = prof.length;
+    var seam = [];
+    for (var i = 0; i <= n; i++) { var x = (w * i) / n; var torn = x <= p * w + 0.001; var off = torn ? prof[Math.min(i, n - 1)] : 0; seam.push([x, y + off]); }
+    var pts = function (arr) { return arr.map(function (q) { return q[0].toFixed(1) + 'px ' + q[1].toFixed(1) + 'px'; }).join(','); };
+    if (o.side === 'stub') { var top = seam.map(function (q) { var torn = q[0] <= p * w + 0.001; return [q[0], q[1] - (torn ? gap : 0)]; }); return 'polygon(0px 0px,' + w + 'px 0px,' + pts(top.slice().reverse()) + ')'; }
+    if (o.side === 'edge') { var e = o.edge || 2; var a = seam.map(function (q) { return [q[0], q[1] - e]; }), b = seam.map(function (q) { return [q[0], q[1] + e]; }).reverse(); return 'polygon(' + pts(a) + ',' + pts(b) + ')'; }
+    return 'polygon(' + pts(seam) + ',' + w + 'px ' + h + 'px,0px ' + h + 'px)';
+  }
+  /* vertical tear (seam at x) */
+  function tearClipV(o) { var w = o.w, h = o.h, x = o.x, prof = o.profile, p = Math.max(0, Math.min(1, o.progress == null ? 1 : o.progress)), gap = o.gap || 0, n = prof.length; var seam = []; for (var i = 0; i <= n; i++) { var y = (h * i) / n; var torn = y <= p * h + 0.001; seam.push([x + (torn ? prof[Math.min(i, n - 1)] : 0), y]); } var pts = function (arr) { return arr.map(function (q) { return q[0].toFixed(1) + 'px ' + q[1].toFixed(1) + 'px'; }).join(','); }; if (o.side === 'stub') { var l = seam.map(function (q) { var torn = q[1] <= p * h + 0.001; return [q[0] - (torn ? gap : 0), q[1]]; }); return 'polygon(0px 0px,' + pts(l) + ',0px ' + h + 'px)'; } if (o.side === 'edge') { var e = o.edge || 2; var a = seam.map(function (q) { return [q[0] - e, q[1]]; }), b = seam.map(function (q) { return [q[0] + e, q[1]]; }).reverse(); return 'polygon(' + pts(a) + ',' + pts(b) + ')'; } return 'polygon(' + pts(seam) + ',' + w + 'px ' + h + 'px,' + w + 'px 0px)'; }
+  /* rect of an element relative to a root element (the phone) — for FLIP / shared-element transitions */
+  function rectIn(el, root) { var a = el.getBoundingClientRect(), b = root.getBoundingClientRect(); var sx = root.offsetWidth ? b.width / root.offsetWidth : 1; return { x: (a.left - b.left) / sx, y: (a.top - b.top) / sx, w: a.width / sx, h: a.height / sx }; }
+  /* scatter positions for ash / confetti fragments */
+  function scatter(n, seed, spread) { var r = rand(seed || 3), out = []; for (var i = 0; i < n; i++) out.push({ dx: (r() * 2 - 1) * (spread || 60), dy: 40 + r() * (spread || 60), rot: (r() * 2 - 1) * 120, s: 0.5 + r() * 0.8, d: r() * 300 }); return out; }
+  JU.fx = { rand: rand, tearProfile: tearProfile, tearClip: tearClip, tearClipV: tearClipV, rectIn: rectIn, scatter: scatter };
+})(typeof window !== 'undefined' ? window : this);
+
+/* ju-review.js — shared review mixin for every concept artboard.
+   Gives each Component: speed / reduced-motion / pause / keyframe scrub, timers that respect speed,
+   reset, state-index jumps, replay of the last core motion, and the review panel's renderVals.
+   Depends on JU.data(variant) and JU.INDEX from ju-data.js (same bundle). */
+(function (global) {
+  'use strict';
+  var JU = global.JU = global.JU || {};
+  JU.VARIANTS = [
+    { key: 'default', label: '标准示例' }, { key: 'empty', label: '完全空' }, { key: 'single', label: '只有一场' },
+    { key: 'drafts', label: '只有草稿' }, { key: 'pending', label: '待处理较多' }, { key: 'many', label: '当前较多' },
+    { key: 'history', label: '历史较多' }, { key: 'long', label: '长标题长地点' }
+  ];
+  JU.mixin = function (C) {
+    var p = C.prototype;
+    /* ---- lifecycle helpers ---- */
+    p.reviewInit = function (concept) {
+      this.concept = concept; this._timers = []; this.lastMotion = null; this.rootRef = { current: null };
+      this.state = Object.assign({ review: { speed: 1, rm: false, paused: false, scrub: null, frame: 0 } }, this.initialState('default'));
+    };
+    p.componentWillUnmount = function () { this.clearTimers(); };
+    /* timers scaled by speed; cleared on reset */
+    p.after = function (ms, fn) {
+      var self = this; var r = this.state.review || {}; var k = r.rm ? 0 : (r.speed === 0.5 ? 2 : 1);
+      var id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== id; }); fn(); }, Math.round(ms * k));
+      this._timers.push(id); return id;
+    };
+    p.clearTimers = function () { (this._timers || []).forEach(clearTimeout); this._timers = []; };
+    /* run a named core motion: records it for replay */
+    p.motion = function (name, fn) { this.lastMotion = { name: name, fn: fn }; fn.call(this); };
+    /* ---- review actions ---- */
+    p.setReview = function (patch) { this.setState(function (s) { return { review: Object.assign({}, s.review, patch) }; }); };
+    p.setSpeed = function (x) { this.setReview({ speed: x }); };
+    p.toggleRM = function () { this.setReview({ rm: !this.state.review.rm }); };
+    p.togglePause = function () { this.setReview({ paused: !this.state.review.paused }); };
+    p.scrubTo = function (v) { this.setReview({ scrub: v == null ? null : +v, paused: v != null }); };
+    p.reset = function (variant) { this.clearTimers(); var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false }); this.setState(st); };
+    p.loadVariant = function (key) { this.reset(key); };
+    p.replay = function () { if (!this.lastMotion) return; var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name); var self = this; this.after(60, function () { m.fn.call(self); }); };
+    p.jumpTo = function (key) {
+      var e = JU.INDEX.filter(function (x) { return x.key === key; })[0]; if (!e) return;
+      this.clearTimers();
+      var st = this.initialState(e.variant || 'default');
+      st.role = e.role || 'joined'; st.section = e.section || 'current';
+      st.review = Object.assign({}, this.state.review, { scrub: null, paused: false });
+      this.setState(st);
+      if (e.open) { var self = this; this.after(30, function () { self.applyJump(e); }); }
+    };
+    /* default jump: concepts override applyJump(entry) to open the right surface in their own view model */
+    if (!p.applyJump) p.applyJump = function (e) { if (this.openSurface) this.openSurface(e.open); };
+    /* ---- panel renderVals ---- */
+    p.panelVals = function () {
+      var self = this, s = this.state, r = s.review;
+      var groups = []; var byGroup = {};
+      JU.INDEX.forEach(function (e) {
+        var g = byGroup[e.group]; if (!g) { g = byGroup[e.group] = { title: e.group, items: [] }; groups.push(g); }
+        var active = (s.role === (e.role || 'joined')) && (s.section === (e.section || 'current')) && ((s.variant || 'default') === (e.variant || 'default')) && (!e.open ? !s.view || s.view.name === 'list' : (s.view && s.view.jumpKey === e.key));
+        g.items.push({ key: e.key, label: e.label, cls: active ? 'on' : '', go: function () { self.jumpTo(e.key); } });
+      });
+      var k = r.rm ? 0.001 : (r.speed === 0.5 ? 2 : 1);
+      return {
+        code: this.concept.code, name: this.concept.name, line: this.concept.line, notes: this.concept.notes, motions: this.concept.motions || [],
+        groups: groups,
+        variants: JU.VARIANTS.map(function (v) { return { key: v.key, label: v.label, cls: (s.variant || 'default') === v.key ? 'on' : '', go: function () { self.loadVariant(v.key); } }; }),
+        speed1: r.speed === 1 ? 'on' : '', speedHalf: r.speed === 0.5 ? 'on' : '', rmOn: r.rm ? 'on' : '', pausedOn: r.paused ? 'on' : '',
+        setSpeed1: function () { self.setSpeed(1); }, setSpeedHalf: function () { self.setSpeed(0.5); },
+        toggleRM: function () { self.toggleRM(); }, togglePause: function () { self.togglePause(); },
+        reset: function () { self.reset(); }, replay: function () { self.replay(); }, hasReplay: !!this.lastMotion,
+        scrub: r.scrub == null ? 0 : r.scrub, scrubbing: r.scrub != null,
+        onScrub: function (ev) { self.scrubTo(ev.target.value); }, endScrub: function () { self.scrubTo(null); },
+        k: k, frame: r.scrub == null ? 0 : r.scrub / 100,
+        rootCls: (r.rm ? ' rm' : '') + (r.paused ? ' paused' : '') + (r.scrub != null ? ' scrub' : '')
+      };
+    };
+  };
+})(typeof window !== 'undefined' ? window : this);
+
+var CONCEPT = {"code":"C00","name":"管线测试","line":"仅用于验证构建、运行时与评审面板。","notes":"临时。","motions":["局卡抬起：点击局卡抬起 6px，900ms 后落回"]};
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; }
+  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null }; }
+  renderVals() {
+    const s = this.state;
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    return {
+      panel, roleLabel: s.role === 'joined' ? '我参加的' : '我发起的', joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '',
+      toJoined: () => this.setState({ role: 'joined' }), toHosted: () => this.setState({ role: 'hosted' }),
+      empty: s.data.events.length === 0,
+      events: s.data.events.map(e => ({ ...e, cls: s.openId === e.id ? 'open' : '', open: () => this.motion('open-card', () => { this.setState({ openId: e.id }); this.after(900, () => this.setState({ openId: null })); }) }))
+    };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C00 管线测试</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+.app{position:absolute;inset:0;background:#f4f1ea;font-family:"Noto Sans SC",sans-serif;padding:60px 20px 20px;--k:1}
+.app h1{margin:0 0 12px;font-size:26px;font-weight:500}
+.seg{display:flex;gap:6px;margin-bottom:16px}
+.seg button{flex:1;padding:10px;border:1px solid #ccc;background:#fff;border-radius:10px;font:inherit}
+.seg button.on{background:#141416;color:#fff}
+.card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.8,.2,1);display:block;width:100%;text-align:left;border:0;font:inherit}
+.card.open{transform:translateY(-6px) scale(1.03)}
+.app.rm *{transition-duration:1ms!important;animation-duration:1ms!important}
+.app.paused *{animation-play-state:paused!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}}">
+      <h1>我的局 · {{roleLabel}}</h1>
+      <div class="seg"><button type="button" class="{{joinedOn}}" onClick="{{toJoined}}">我参加的</button><button type="button" class="{{hostedOn}}" onClick="{{toHosted}}">我发起的</button></div>
+      <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p>还没有局。</p></sc-if>
+      <sc-for list="{{events}}" as="e" hint-placeholder-count="2"><button type="button" class="card {{e.cls}}" onClick="{{e.open}}"><b>{{e.title}}</b><br>{{e.when}} · {{e.place}}</button></sc-for>
+    </div>
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
+/* @core */
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; }
+  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null }; }
+  renderVals() {
+    const s = this.state;
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    return {
+      panel, roleLabel: s.role === 'joined' ? '我参加的' : '我发起的', joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '',
+      toJoined: () => this.setState({ role: 'joined' }), toHosted: () => this.setState({ role: 'hosted' }),
+      empty: s.data.events.length === 0,
+      events: s.data.events.map(e => ({ ...e, cls: s.openId === e.id ? 'open' : '', open: () => this.motion('open-card', () => { this.setState({ openId: e.id }); this.after(900, () => this.setState({ openId: null })); }) }))
+    };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>

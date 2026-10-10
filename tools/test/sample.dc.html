@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>Sample</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700&display=swap">
+<style>
+body{margin:0}
+.root{width:390px;height:300px;background:#f3efe6;font-family:"Noto Serif SC",serif;padding:16px;box-sizing:border-box}
+.card{background:#fff;border-radius:12px;padding:12px;margin-bottom:8px;transition:transform calc(600ms * var(--k,1)) cubic-bezier(.2,.8,.2,1), opacity 600ms;transform:translateX(0)}
+.card.open{transform:translateX(40px) scale(1.05)}
+.card.gone{opacity:0;transform:translateX(-200px)}
+</style>
+</helmet>
+<div class="root" style="--k:{{k}}">
+  <h1 style="margin:0 0 8px;font-size:22px">{{title}} <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 12h16M12 4l8 8-8 8"/></svg></h1>
+  <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><div>空</div></sc-if>
+  <sc-for list="{{items}}" as="it" hint-placeholder-count="3">
+    <button class="card {{it.cls}}" onClick="{{it.pick}}" type="button">{{$index}} · {{it.label}} <sc-if value="{{it.sel}}" hint-placeholder-val="{{false}}"><b>选中</b></sc-if></button>
+  </sc-for>
+  <p>count={{count}}</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"title":{"editor":"text","default":"测试 &amp; 标题"},"$preview":{"width":390,"height":300}}'>
+class Component extends DCLogic {
+  constructor(p){ super(p); this.state = { sel: null, gone: {} }; }
+  renderVals() {
+    const items = ['饺子局', '周末爬山', '电影之夜'].map((label, i) => ({ label, sel: this.state.sel === i, cls: (this.state.sel === i ? 'open' : '') + (this.state.gone[i] ? ' gone' : ''), pick: (e) => { this.setState({ sel: i }); setTimeout(() => this.setState(s => ({ gone: { ...s.gone, [i]: true } })), 50); } }));
+    return { title: this.props.title ?? 'x', items, empty: items.length === 0, count: items.length, k: 1 };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+/* ju-fx.css — shared effect primitives. Concepts override colours, edges, durations and composition.
+   All durations multiply by --k (1 = normal, 2 = 0.5× speed); .scrub holds animations at --frame (0..1). */
+@property --fx-r { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+@property --fx-ink { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+/* ---- burn: element is masked by a growing irregular hole; ::after draws the ember ring just outside it ---- */
+.fx-burn{position:relative;--fx-x:28%;--fx-y:72%;--fx-dur:2600ms;--fx-ember:#ff8a2a;--fx-char:#2a1710;--fx-glow:#ffd27a}
+.fx-burn.burning{animation:fx-burn calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.35,.1,.6,1) forwards;filter:url(#fx-rough);-webkit-mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%));mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%))}
+.fx-burn.burning::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent calc(var(--fx-r) - 1%),var(--fx-glow) calc(var(--fx-r) + 1%),var(--fx-ember) calc(var(--fx-r) + 2.5%),var(--fx-char) calc(var(--fx-r) + 5.5%),transparent calc(var(--fx-r) + 10%))}
+.fx-burn.burnt{opacity:0;visibility:hidden}
+@keyframes fx-burn{0%{--fx-r:0%}12%{--fx-r:6%}100%{--fx-r:150%}}
+.scrub .fx-burn.burning{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+/* ---- print: paper emerges from a slot in roller steps; ink is revealed slightly behind the leading edge ---- */
+.fx-printer{position:relative;overflow:hidden}
+.fx-print-paper{--fx-dur:2000ms;transform:translateY(-102%);animation:fx-print calc(var(--fx-dur) * var(--k,1)) linear forwards;-webkit-mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%));mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%))}
+@keyframes fx-print{0%{transform:translateY(-102%);--fx-ink:0%}14%{transform:translateY(-86%);--fx-ink:12%}22%{transform:translateY(-84%);--fx-ink:16%}40%{transform:translateY(-52%);--fx-ink:46%}48%{transform:translateY(-50%);--fx-ink:50%}70%{transform:translateY(-12%);--fx-ink:84%}78%{transform:translateY(-10%);--fx-ink:88%}92%{transform:translateY(1.5%);--fx-ink:100%}100%{transform:translateY(0);--fx-ink:110%}}
+.scrub .fx-print-paper{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+/* ---- stamp: ink lands from above with a small overshoot; a bleed blur settles ---- */
+.fx-stamp{--fx-dur:520ms;animation:fx-stamp calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.2,1.2,.3,1) both;transform-origin:50% 50%}
+@keyframes fx-stamp{0%{transform:scale(1.8) rotate(-8deg);opacity:0;filter:blur(2px)}55%{transform:scale(.96) rotate(1deg);opacity:1;filter:blur(0)}100%{transform:scale(1) rotate(0)}}
+/* ---- tear: two copies of the same face, each clipped by the seam polygon; the stub pivots on its attached end ---- */
+.fx-tear{position:relative}
+.fx-tear .fx-side{position:absolute;inset:0;will-change:clip-path,transform}
+.fx-tear .fx-side.stub{transform-origin:100% 0}
+.fx-tear .fx-edge{position:absolute;inset:0;pointer-events:none;background:#fff;opacity:.9;filter:blur(.4px)}
+.fx-tear .fx-side.stub.off{transition:transform calc(700ms * var(--k,1)) cubic-bezier(.4,0,.8,.4),opacity calc(500ms * var(--k,1)) ease-in calc(250ms * var(--k,1));transform:translate(-36px,140px) rotate(-28deg);opacity:0}
+/* ---- ash / fragments ---- */
+.fx-ash{position:absolute;width:6px;height:6px;border-radius:40% 60% 50% 50%;background:#3b2a20;opacity:0;pointer-events:none}
+.fx-ash.fall{animation:fx-ash calc(1400ms * var(--k,1)) ease-in forwards}
+@keyframes fx-ash{0%{opacity:.9;transform:translate(0,0) rotate(0)}100%{opacity:0;transform:translate(var(--dx,0),var(--dy,80px)) rotate(var(--rot,90deg))}}
+/* ---- global review states ---- */
+.rm *,.rm *::before,.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.paused *,.paused *::before,.paused *::after{animation-play-state:paused!important}
