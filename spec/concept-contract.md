@@ -112,3 +112,12 @@ JU.mixin(Component);
 - 390×844 下 100% 成立；在 360 与 430 宽下不崩（phone 容器固定 390，但你的布局不要依赖绝对像素到溢出）。
 - `node src/build.js` 成功且 `tools/capture.cjs` 的 errors 为空。
 - 写好 `spec/motion/CNN.md`（三个核心动作分段 + 关键视觉参数：字体、字号阶、色板、材质规则、圆角 / 阴影 / 边缘规则、布局构图）。
+
+## 9. 已验证的模式代码（取自 `concepts/src/C00.dc.html`，可直接改用）
+
+- **共享元素展开（局卡 → 详情）**：点击时 `JU.fx.rectIn(ev.currentTarget, this.rootRef.current)` 取卡片矩形 → `setState({detail:{id, phase:'start', from:r}})` → `this.after(16, …phase:'in')` → 详情层从 `from` 矩形过渡到全屏；关闭时反向，`after(430)` 再卸载。**不要用非等比 scale 拉伸文字**：详情层用 `width/height/transform:translate` 或 `clip-path: inset()` 过渡，或者对内层做反向缩放；背景层同时加遮罩 / 退后 / 失焦。
+- **撕票（拖拽）**：票面渲染两份（keep / stub），各自 `clip-path` 由 `JU.fx.tearClip({w,h,y,profile,progress,side})` 生成；`onPointerDown` 记录起点并 `setPointerCapture`，`onPointerMove` 把位移映射到 progress ∈ [0,1]，`onPointerUp` 过阈值（0.55）→ `engine.tearTicket` + stub 加 `off` 类落下，否则回弹。票面根元素加 `touch-action:none; user-select:none`。
+- **燃烧**：`.fx-burn` + 内部 `<svg class="fx-burn-svg">` 的 `<mask>`（`circle.fx-hole` 用 `filter="url(#fx-rough-strong)"` 打毛边）+ `circle.fx-ember` 描边火线；加 `burning` 类启动 `fx-hole` 关键帧（`r: 0 → var(--fx-reach)`），`after(dur)` 后进入 `burnt`（或你的残余形态）。mask id 必须唯一（`id="cNN-hole-{{id}}"`，`style="--fx-mask:url(#cNN-hole-{{id}})"`）。
+- **打印**：`.fx-printer{overflow:hidden}` 内的 `.fx-print-paper`（或你自己的 keyframes）：`transform:translateY(-102%→0)` 分段走纸 + `--fx-ink` 墨迹揭示；打印中禁用票上的操作。
+- **速度 / 关键帧**：所有时长 `calc(Xms * var(--k,1))`；长动效用 keyframes 并写 `.scrub` 规则（见 ju-fx.css）。
+- **撤销**：`engine.deleteDraft` → 行加 `leaving` 类（高度过渡到 0）→ `after(360)` 真正移除并显示撤销条 → `after(10000)` `engine.commitUndo`；撤销 → `engine.undoDelete` → 行以 `entering` 类回到原位。

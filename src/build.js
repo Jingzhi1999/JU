@@ -7,7 +7,9 @@ const ROOT = path.resolve(__dirname, '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const exists = (p) => fs.existsSync(path.join(ROOT, p));
 const js = (s) => JSON.stringify(s).split('<').join('\\u003c');
-const meta = JSON.parse(read('concepts/concepts.json'));
+const metaAll = JSON.parse(read(process.env.JU_CONCEPTS || 'concepts/concepts.json'));
+const meta = metaAll.filter(c => { const ok = exists(`concepts/src/${c.file}`); if (!ok) console.warn('skip (no source yet):', c.file); return ok; });
+const metaIndex = metaAll;
 const core = ['src/core/ju-data.js', 'src/core/ju-fx.js', 'src/core/ju-review.js'].filter(exists).map(read).join('\n');
 const panelHtml = read('src/core/ju-panel.html');
 const panelCss = read('src/core/ju-panel.css');
@@ -33,7 +35,8 @@ for (const c of meta) { built[c.code] = assemble(c); fs.writeFileSync(path.join(
 const W = 780, H = 884, GX = 80, GY = 120; const perRow = 5;
 const boards = { 'Main.dc.html': { x: 0, y: 0, w: 1240, h: 640, title: '评审入口 · 十套方案索引', is_interactive: true } };
 const order = ['Main.dc.html'];
-meta.forEach((c, i) => { const r = Math.floor(i / perRow), col = i % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
+meta.forEach((c, i) => { const r = Math.floor(metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) / perRow), col = metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
+void ((c, i) => { const r = Math.floor(i / perRow), col = i % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
 const canvasPath = path.join(ROOT, 'concepts/project/canvas.json');
 let canvas = exists('concepts/project/canvas.json') ? JSON.parse(read('concepts/project/canvas.json')) : { v: 3, createdOnFiles: { v: 1, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }, title: 'JU 我的局 · 十套视觉动效方案', launch: { view: 'canvas' }, pages: [], notes: {}, designSystems: [] };
 canvas.boards = boards; canvas.order = order;
@@ -69,7 +72,7 @@ body{margin:0}
   <h1>JU「我的局」· 十套视觉与动效方案</h1>
   <p class="sub">每套都是一台可操作的 390×844 手机画面，覆盖「我参加的」「我发起的」两种身份、局内详情、管理这局、弹层、票件与结束态；画面右侧是评审面板（状态索引 / 1× · 0.5× / 暂停 · 关键帧 / 演示数据 / 重置），不属于产品界面。点卡片进入对应方案。</p>
   <div class="grid">
-${meta.map(c => `    <a class="card" href="${c.file}"><span class="code">${c.code}</span><span class="name">${c.name}</span><span class="line">${c.line}</span></a>`).join('\n')}
+${metaIndex.map(c => `    <a class="card" href="${c.file}"><span class="code">${c.code}</span><span class="name">${c.name}</span><span class="line">${c.line}</span></a>`).join('\n')}
   </div>
   <p class="foot">所有方案共用同一份示例活动与业务状态；每套数据独立。研究附录与差异矩阵见仓库 spec/ 与 research/。</p>
 </div>
