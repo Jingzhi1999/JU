@@ -30,7 +30,7 @@
         '<div class="ov-foot"><span>' + (c.motions || []).slice(0, 3).map(function (m) { return m.split('：')[0]; }).join(' · ') + '</span><button type="button" class="btn">进入操作</button></div>';
       card.addEventListener('click', function () { openConcept(c.code); });
       grid.appendChild(card);
-      card.querySelectorAll('.ph-host').forEach(function (h) { mountConcept('preview', c.code, h, { preset: h.dataset.preset, idle: true, panel: false }); });
+      card.querySelectorAll('.ph-host').forEach(function (h) { h.classList.add('preview'); mountConcept('preview', c.code, h, { preset: h.dataset.preset, idle: true, panel: false }); });
     });
   }
   /* ---- concept view ---- */

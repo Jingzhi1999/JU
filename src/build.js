@@ -106,7 +106,7 @@ function md(s) {
   return out.join('\n');
 }
 const docs = {};
-for (const [k, f] of Object.entries({ ledger: 'research/ledger.md', matrix: 'spec/matrix.md', motions: 'spec/motion-specs.md', coverage: 'spec/coverage.md', inventory: 'spec/state-inventory.md', limits: 'spec/limits.md', mapping: 'spec/concept-refs.md' })) docs[k] = exists(f) ? md(read(f)) : '<p>（本次构建未包含）</p>';
+for (const [k, f] of Object.entries({ ledger: 'research/ledger.md', matrix: 'spec/directions.md', motions: 'spec/motion-specs.md', coverage: 'spec/coverage.md', inventory: 'spec/state-inventory.md', limits: 'spec/limits.md', mapping: 'spec/concept-refs.md' })) docs[k] = exists(f) ? md(read(f)) : '<p>（本次构建未包含）</p>';
 
 /* ---- standalone ---- */
 const shellHtml = read('src/shell/shell.html');
