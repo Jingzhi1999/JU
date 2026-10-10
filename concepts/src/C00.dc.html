@@ -20,7 +20,18 @@ body{margin:0}
 .card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.8,.2,1);display:block;width:100%;text-align:left;border:0;font:inherit}
 .card.open{transform:translateY(-6px) scale(1.03)}
 .app.rm *{transition-duration:1ms!important;animation-duration:1ms!important}
-.app.paused *{animation-play-state:paused!important}
+.fxlab{margin-top:14px}
+.fxrow{display:flex;gap:6px;margin-bottom:8px}.fxrow button{padding:6px 10px;border:1px solid #999;background:#fff;border-radius:8px;font:inherit}
+.slot{height:6px;border-radius:3px;background:linear-gradient(#5a554d,#2b2824);box-shadow:0 1px 0 #fff}
+.tk-printer{height:190px;margin-top:-2px}
+.tk{position:absolute;left:12px;right:12px;top:0;height:180px;border-radius:6px;--fx-reach:420px}
+.tk.printing{animation:fx-print calc(var(--fx-dur) * var(--k,1)) linear forwards;--fx-dur:2000ms;-webkit-mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%));mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%))}
+.tk.printing .fx-side,.tk.printing .fx-edge{pointer-events:none}
+.face{position:absolute;inset:0;background:#fbf7ee;border-radius:6px;box-shadow:0 1px 0 rgba(0,0,0,.12),0 6px 14px -8px rgba(0,0,0,.35);display:flex;flex-direction:column;justify-content:space-between;font-size:13px}
+.face-main{padding:14px 16px;display:flex;flex-direction:column;gap:4px}.face-main b{font-size:17px}.face-main .code{font-family:"DM Mono",monospace;color:#666;font-size:12px}
+.face-stub{height:46px;border-top:1px dashed #b9b1a3;display:flex;align-items:center;padding:0 16px;color:#7a7268;font-size:12px}
+.tk.torn .fx-side.keep .face-stub{opacity:0}
+.fxinfo{font-size:12px;color:#777}
 </style>
 </helmet>
 <div class="ju-stage">
@@ -30,7 +41,21 @@ body{margin:0}
       <div class="seg"><button type="button" class="{{joinedOn}}" onClick="{{toJoined}}">我参加的</button><button type="button" class="{{hostedOn}}" onClick="{{toHosted}}">我发起的</button></div>
       <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p>还没有局。</p></sc-if>
       <sc-for list="{{events}}" as="e" hint-placeholder-count="2"><button type="button" class="card {{e.cls}}" onClick="{{e.open}}"><b>{{e.title}}</b><br>{{e.when}} · {{e.place}}</button></sc-for>
+      <div class="fxlab">
+        <div class="fxrow"><button type="button" onClick="{{doPrint}}">出票</button><button type="button" onClick="{{doBurn}}">燃烧</button><button type="button" onClick="{{doReset}}">复位</button></div>
+        <div class="slot"></div>
+        <div class="fx-printer tk-printer">
+          <div class="tk fx-tear fx-burn {{tkCls}}" style="--fx-dur:{{burnDur}}ms;--p:{{tear.p}};--fx-mask:url(#hole-c00)">
+            <div class="fx-side keep" style="clip-path:{{tear.keep}}"><div class="face"><div class="face-main"><b>法拉盛饺子局</b><span>周六 12.19 · 20:30 · 法拉盛</span><span class="code">JU-0427 · 第 5 席</span></div><div class="face-stub">存根 · 撕下联系局主</div></div></div>
+            <div class="fx-edge keep" style="clip-path:{{tear.edge}}"></div>
+            <svg class="fx-burn-svg" viewBox="0 0 342 180" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="hole-c00" maskUnits="userSpaceOnUse" x="0" y="0" width="342" height="180"><rect width="342" height="180" fill="#fff"></rect><circle class="fx-hole" cx="100" cy="130" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="fx-ember" cx="100" cy="130" r="0" fill="none" stroke="url(#fx-ember-lin)" filter="url(#fx-rough-strong)"></circle></svg>
+            <div class="fx-side stub {{stubCls}}" style="clip-path:{{tear.stub}};transform:{{tear.stubTf}}" onPointerDown="{{tearDown}}" onPointerMove="{{tearMove}}" onPointerUp="{{tearUp}}" onPointerCancel="{{tearUp}}"><div class="face"><div class="face-main"><b>法拉盛饺子局</b><span>周六 12.19 · 20:30 · 法拉盛</span><span class="code">JU-0427 · 第 5 席</span></div><div class="face-stub">存根 · 撕下联系局主</div></div></div>
+          </div>
+        </div>
+        <p class="fxinfo">{{fxInfo}}</p>
+      </div>
     </div>
+    <!-- @fx-svg -->
   </div>
   <!-- @panel -->
 </div>
@@ -39,15 +64,36 @@ body{margin:0}
 /* @core */
 class Component extends DCLogic {
   constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; }
-  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null }; }
+  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null, fx: 'idle', tearP: 0, tearDrag: null }; }
+  tearVals() {
+    const W = 342, H = 180, Y = 134, prof = this._prof || (this._prof = JU.fx.tearProfile(28, 4, 11));
+    const p = this.state.tearP, done = this.state.fx === 'torn' || this.state.fx === 'burning' || this.state.fx === 'burnt';
+    const prog = done ? 1 : p, gap = done ? 0 : p * 10;
+    // the seam is at Y: keep = main (above), stub = bottom part; use vertical orientation flipped: compute with H-Y trick by mirroring
+    const keep = JU.fx.tearClip({ w: W, h: H, y: Y, profile: prof, progress: prog, side: 'stub' });   // top part (main face) keeps
+    const stub = JU.fx.tearClip({ w: W, h: H, y: Y, profile: prof, progress: prog, gap: 0, side: 'keep' }); // bottom stub
+    const edge = JU.fx.tearClip({ w: W, h: H, y: Y, profile: prof, progress: prog, side: 'edge', edge: 1.5 });
+    const ang = done ? 0 : -p * 9, dy = done ? 0 : p * 6;
+    return { p, keep, stub, edge, stubTf: 'rotate(' + ang + 'deg) translate(' + (-p * 4) + 'px,' + dy + 'px)' };
+  }
   renderVals() {
     const s = this.state;
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const tear = this.tearVals();
     return {
       panel, roleLabel: s.role === 'joined' ? '我参加的' : '我发起的', joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '',
       toJoined: () => this.setState({ role: 'joined' }), toHosted: () => this.setState({ role: 'hosted' }),
       empty: s.data.events.length === 0,
-      events: s.data.events.map(e => ({ ...e, cls: s.openId === e.id ? 'open' : '', open: () => this.motion('open-card', () => { this.setState({ openId: e.id }); this.after(900, () => this.setState({ openId: null })); }) }))
+      events: s.data.events.map(e => ({ ...e, cls: s.openId === e.id ? 'open' : '', open: () => this.motion('open-card', () => { this.setState({ openId: e.id }); this.after(900, () => this.setState({ openId: null })); }) })),
+      tear, tkCls: (s.fx === 'printing' ? 'printing ' : '') + (s.fx === 'burning' ? 'burning ' : '') + (s.fx === 'burnt' ? 'burnt ' : '') + (s.fx === 'torn' ? 'torn' : ''),
+      stubCls: s.fx === 'torn' || s.fx === 'burning' || s.fx === 'burnt' ? 'off' : '',
+      burnDur: 2600, fxInfo: 'fx=' + s.fx + ' tearP=' + s.tearP.toFixed(2),
+      doPrint: () => this.motion('print', () => { this.setState({ fx: 'printing', tearP: 0 }); this.after(2000, () => this.setState({ fx: 'printed' })); }),
+      doBurn: () => this.motion('burn', () => { this.setState({ fx: 'burning' }); this.after(2600, () => this.setState({ fx: 'burnt' })); }),
+      doReset: () => this.setState({ fx: 'idle', tearP: 0 }),
+      tearDown: (ev) => { if (s.fx === 'printing' || s.fx === 'torn') return; ev.currentTarget.setPointerCapture && ev.currentTarget.setPointerCapture(ev.pointerId); this.setState({ tearDrag: { x: ev.clientX, y: ev.clientY } }); },
+      tearMove: (ev) => { const d = this.state.tearDrag; if (!d) return; const p = Math.max(0, Math.min(1, ((ev.clientX - d.x) * -1 + (ev.clientY - d.y) * 1.2) / 160)); this.setState({ tearP: p }); },
+      tearUp: () => { const d = this.state.tearDrag; if (!d) return; if (this.state.tearP >= 0.55) this.motion('tear', () => this.setState({ fx: 'torn', tearDrag: null, tearP: 1 })); else this.setState({ tearDrag: null, tearP: 0 }); }
     };
   }
 }

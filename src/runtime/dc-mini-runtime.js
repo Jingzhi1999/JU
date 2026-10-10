@@ -93,12 +93,22 @@
   }
   var fontLinks = {};
   function hoistLinks(links) { links.forEach(function (href) { if (fontLinks[href]) return; fontLinks[href] = 1; var l = document.createElement('link'); l.rel = 'stylesheet'; l.href = href; document.head.appendChild(l); }); }
+  var registered = {};
+  function registerProps(css) {
+    if (!global.CSS || !CSS.registerProperty) return;
+    var re = /@property\s+(--[\w-]+)\s*\{([^}]*)\}/g, m;
+    while ((m = re.exec(css))) {
+      if (registered[m[1]]) continue; registered[m[1]] = 1;
+      var body = m[2]; var syn = /syntax\s*:\s*['"]([^'"]+)['"]/.exec(body), inh = /inherits\s*:\s*(true|false)/.exec(body), init = /initial-value\s*:\s*([^;]+)/.exec(body);
+      try { CSS.registerProperty({ name: m[1], syntax: syn ? syn[1] : '*', inherits: inh ? inh[1] === 'true' : false, initialValue: init ? init[1].trim() : undefined }); } catch (e) { }
+    }
+  }
   function hoistFontFaces(css) { var faces = css.match(/@font-face\s*\{[^}]*\}/g); if (!faces) return css; var st = document.createElement('style'); st.textContent = faces.join('\n'); document.head.appendChild(st); return css; }
 
   function mount(host, src, extraProps, opts) {
     opts = opts || {};
     var parsed = parseDc(src);
-    hoistLinks(parsed.links); hoistFontFaces(parsed.css);
+    hoistLinks(parsed.links); hoistFontFaces(parsed.css); registerProps(parsed.css);
     var factory = new Function('DCLogic', 'preact', parsed.code + '\n;return Component;');
     var Comp = factory(DCLogic, P);
     Comp.prototype.__tpl__ = parsed.tpl;

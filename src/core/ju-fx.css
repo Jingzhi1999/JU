@@ -2,13 +2,22 @@
    All durations multiply by --k (1 = normal, 2 = 0.5× speed); .scrub holds animations at --frame (0..1). */
 @property --fx-r { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
 @property --fx-ink { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-/* ---- burn: element is masked by a growing irregular hole; ::after draws the ember ring just outside it ---- */
-.fx-burn{position:relative;--fx-x:28%;--fx-y:72%;--fx-dur:2600ms;--fx-ember:#ff8a2a;--fx-char:#2a1710;--fx-glow:#ffd27a}
-.fx-burn.burning{animation:fx-burn calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.35,.1,.6,1) forwards;filter:url(#fx-rough);-webkit-mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%));mask:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent var(--fx-r),#000 calc(var(--fx-r) + 2.5%))}
-.fx-burn.burning::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;background:radial-gradient(circle at var(--fx-x) var(--fx-y),transparent calc(var(--fx-r) - 1%),var(--fx-glow) calc(var(--fx-r) + 1%),var(--fx-ember) calc(var(--fx-r) + 2.5%),var(--fx-char) calc(var(--fx-r) + 5.5%),transparent calc(var(--fx-r) + 10%))}
+/* ---- burn (v2): the face is masked by an SVG hole whose edge is roughened by feTurbulence (text stays crisp);
+   an SVG overlay strokes the ember ring just outside the hole. Markup pattern (ids must be unique per ticket):
+   <div class="fx-burn burning" style="--fx-mask:url(#hole-ID)"> …face…
+     <svg class="fx-burn-svg" viewBox="0 0 W H" preserveAspectRatio="none"><defs><mask id="hole-ID" maskUnits="userSpaceOnUse" x="0" y="0" width="W" height="H"><rect width="W" height="H" fill="#fff"/><circle class="fx-hole" cx="X" cy="Y" r="0" fill="#000" filter="url(#fx-rough-strong)"/></mask></defs>
+       <circle class="fx-ember" cx="X" cy="Y" r="0" fill="none" stroke="url(#fx-ember-grad)" filter="url(#fx-rough-strong)"/></svg></div>
+   W/H in px of the face; --fx-reach = the radius that clears the whole face (≈ diagonal). ---- */
+.fx-burn{position:relative;--fx-dur:2600ms;--fx-reach:520px}
+.fx-burn .fx-burn-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.fx-burn .fx-hole,.fx-burn .fx-ember{r:0}
+.fx-burn.burning{-webkit-mask:var(--fx-mask);mask:var(--fx-mask)}
+.fx-burn.burning .fx-hole{animation:fx-hole calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.3,.05,.55,1) forwards}
+.fx-burn.burning .fx-ember{stroke-width:14px;animation:fx-hole calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.3,.05,.55,1) forwards,fx-ember-fade calc(var(--fx-dur) * var(--k,1)) linear forwards}
 .fx-burn.burnt{opacity:0;visibility:hidden}
-@keyframes fx-burn{0%{--fx-r:0%}12%{--fx-r:6%}100%{--fx-r:150%}}
-.scrub .fx-burn.burning{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+@keyframes fx-hole{0%{r:0}10%{r:calc(var(--fx-reach) * .05)}100%{r:var(--fx-reach)}}
+@keyframes fx-ember-fade{0%{opacity:1}85%{opacity:1}100%{opacity:0}}
+.scrub .fx-burn.burning .fx-hole,.scrub .fx-burn.burning .fx-ember{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
 /* ---- print: paper emerges from a slot in roller steps; ink is revealed slightly behind the leading edge ---- */
 .fx-printer{position:relative;overflow:hidden}
 .fx-print-paper{--fx-dur:2000ms;transform:translateY(-102%);animation:fx-print calc(var(--fx-dur) * var(--k,1)) linear forwards;-webkit-mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%));mask:linear-gradient(#000 var(--fx-ink),transparent calc(var(--fx-ink) + 8%))}
