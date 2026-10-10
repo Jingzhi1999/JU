@@ -32,15 +32,32 @@ body{margin:0}
 .face-stub{height:46px;border-top:1px dashed #b9b1a3;display:flex;align-items:center;padding:0 16px;color:#7a7268;font-size:12px}
 .tk.torn .fx-side.keep .face-stub{opacity:0}
 .fxinfo{font-size:12px;color:#777}
+.app{overflow:hidden}
+.backdrop{position:absolute;inset:0;background:rgba(20,18,14,0);transition:background calc(380ms * var(--k,1)) ease}
+.backdrop.in{background:rgba(20,18,14,.35)}
+.detail{position:absolute;left:0;top:0;width:350px;height:120px;background:#fff;border-radius:14px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 20px 40px -20px rgba(0,0,0,.5);transform-origin:0 0;transition:transform calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),border-radius calc(420ms * var(--k,1)),opacity calc(240ms * var(--k,1));overflow:hidden;display:flex;flex-direction:column}
+.detail-head{padding:14px;display:flex;flex-direction:column;gap:4px;font-size:14px;flex:0 0 auto}
+.detail-head b{font-size:20px;line-height:1.3}
+.detail-body{padding:14px;opacity:0;transition:opacity calc(240ms * var(--k,1)) ease calc(160ms * var(--k,1))}
+.detail.in .detail-body{opacity:1}
+.detail.in{border-radius:0}
+.detail-body .back{margin-top:12px;padding:8px 14px;border:1px solid #999;border-radius:8px;background:#fff;font:inherit}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone">
-    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}}">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}}" ref="{{rootRef}}">
       <h1>我的局 · {{roleLabel}}</h1>
       <div class="seg"><button type="button" class="{{joinedOn}}" onClick="{{toJoined}}">我参加的</button><button type="button" class="{{hostedOn}}" onClick="{{toHosted}}">我发起的</button></div>
       <sc-if value="{{empty}}" hint-placeholder-val="{{false}}"><p>还没有局。</p></sc-if>
-      <sc-for list="{{events}}" as="e" hint-placeholder-count="2"><button type="button" class="card {{e.cls}}" onClick="{{e.open}}"><b>{{e.title}}</b><br>{{e.when}} · {{e.place}}</button></sc-for>
+      <sc-for list="{{events}}" as="e" hint-placeholder-count="2"><button type="button" class="card {{e.cls}}" data-id="{{e.id}}" onClick="{{e.open}}"><b>{{e.title}}</b><br>{{e.when}} · {{e.place}}</button></sc-for>
+      <sc-if value="{{detail.on}}" hint-placeholder-val="{{false}}">
+        <div class="backdrop {{detail.phase}}" onClick="{{detail.close}}"></div>
+        <div class="detail {{detail.phase}}" style="{{detail.style}}" onTransitionEnd="{{detail.settled}}">
+          <div class="detail-head"><b>{{detail.title}}</b><span>{{detail.when}} · {{detail.place}}</span></div>
+          <div class="detail-body"><p>这里是局内详情：成员、约定、票件……</p><button type="button" class="back" onClick="{{detail.close}}">返回</button></div>
+        </div>
+      </sc-if>
       <div class="fxlab">
         <div class="fxrow"><button type="button" onClick="{{doPrint}}">出票</button><button type="button" onClick="{{doBurn}}">燃烧</button><button type="button" onClick="{{doReset}}">复位</button></div>
         <div class="slot"></div>
@@ -64,7 +81,28 @@ body{margin:0}
 /* @core */
 class Component extends DCLogic {
   constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; }
-  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null, fx: 'idle', tearP: 0, tearDrag: null }; }
+  initialState(variant) { return { variant: variant, role: 'joined', section: 'current', data: JU.data(variant), view: { name: 'list' }, openId: null, fx: 'idle', tearP: 0, tearDrag: null, detail: null }; }
+  /* FLIP: detail layer starts at the card's rect (scale/translate from full size), then transitions to the phone's full rect */
+  openDetail(ev, e) {
+    const root = this.rootRef.current; const r = JU.fx.rectIn(ev.currentTarget, root);
+    const W = root.clientWidth, Hh = root.clientHeight;
+    this.setState({ detail: { id: e.id, phase: 'start', from: r } });
+    this.after(16, () => this.setState(s => ({ detail: Object.assign({}, s.detail, { phase: 'in' }) })));
+  }
+  closeDetail() {
+    const root = this.rootRef.current; const card = root.querySelector('.card[data-id="' + this.state.detail.id + '"]');
+    const r = card ? JU.fx.rectIn(card, root) : null;
+    this.setState(s => ({ detail: Object.assign({}, s.detail, { phase: 'out', from: r || s.detail.from }) }));
+    this.after(430, () => this.setState({ detail: null }));
+  }
+  detailVals() {
+    const d = this.state.detail; if (!d) return { on: false };
+    const root = this.rootRef.current; const W = root ? root.clientWidth : 390, Hh = root ? root.clientHeight : 844;
+    const row = JU.derive.joined(this.state.data).current.find(x => x.id === d.id) || { event: {}, when: {}, place: {} };
+    const full = 'transform:translate(0px,0px) scale(1,1);width:' + W + 'px;height:' + Hh + 'px';
+    const at = 'transform:translate(' + d.from.x + 'px,' + d.from.y + 'px) scale(' + (d.from.w / W) + ',' + (d.from.h / Hh) + ');width:' + W + 'px;height:' + Hh + 'px';
+    return { on: true, phase: d.phase, style: d.phase === 'in' ? full : at, title: row.event.title, when: row.when.zh, place: row.place.hood, close: () => this.closeDetail(), settled: () => {} };
+  }
   tearVals() {
     const W = 342, H = 180, Y = 134, prof = this._prof || (this._prof = JU.fx.tearProfile(28, 4, 11));
     const p = this.state.tearP, done = this.state.fx === 'torn' || this.state.fx === 'burning' || this.state.fx === 'burnt';
@@ -83,8 +121,9 @@ class Component extends DCLogic {
     return {
       panel, roleLabel: s.role === 'joined' ? '我参加的' : '我发起的', joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '',
       toJoined: () => this.setState({ role: 'joined' }), toHosted: () => this.setState({ role: 'hosted' }),
-      empty: s.data.events.length === 0,
-      events: s.data.events.map(e => ({ ...e, cls: s.openId === e.id ? 'open' : '', open: () => this.motion('open-card', () => { this.setState({ openId: e.id }); this.after(900, () => this.setState({ openId: null })); }) })),
+      empty: JU.derive.joined(s.data).current.length === 0,
+      events: JU.derive.joined(s.data).current.slice(0, 4).map(r => ({ id: r.id, title: r.event.title, when: r.when.zh, place: r.place.hood, cls: s.detail && s.detail.id === r.id ? 'open' : '', open: (ev) => this.motion('open-card', () => this.openDetail(ev, r)) })),
+      detail: this.detailVals(), rootRef: this.rootRef,
       tear, tkCls: (s.fx === 'printing' ? 'printing ' : '') + (s.fx === 'burning' ? 'burning ' : '') + (s.fx === 'burnt' ? 'burnt ' : '') + (s.fx === 'torn' ? 'torn' : ''),
       stubCls: s.fx === 'torn' || s.fx === 'burning' || s.fx === 'burnt' ? 'off' : '',
       burnDur: 2600, fxInfo: 'fx=' + s.fx + ' tearP=' + s.tearP.toFixed(2),
