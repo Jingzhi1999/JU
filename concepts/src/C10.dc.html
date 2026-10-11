@@ -1,0 +1,1521 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C10 胶片</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Space+Mono:wght@400;700&family=Long+Cang&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ============================== C10 胶片 · darkroom tokens ============================== */
+.app{position:absolute;inset:0;overflow:hidden;background:var(--dk);color:var(--cream);font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+  --k:1;--frame:0;
+  --dk:#0c0906;--dk2:#15100b;--dk3:#1d1610;
+  --base:#7a4318;--base2:#56300f;--rail:#1a1108;--hole:#040201;--frd:#120d09;--frd2:#1b140e;
+  --edge:#e9aa3f;--edge2:#c98a2a;
+  --cream:#f1e6cf;--cream2:rgba(241,230,207,.72);--cream3:rgba(241,230,207,.5);--cream4:rgba(241,230,207,.3);--line:rgba(241,230,207,.11);
+  --lb:#f7efdd;--lb2:#eee2c8;--lbhi:#fff9ea;--ink:#1a120c;--ink2:#5b4836;--ink3:#8b7862;--inkline:rgba(26,18,12,.14);
+  --red:#dc3a30;--red2:#b52b23;--redbg:#1f0908;--redbg2:#2c0d0b;--redtx:#ffd9d1;--redtx2:rgba(255,217,209,.68);--redline:rgba(255,130,118,.28);
+  --pencil:#ef4d3e;
+  --paper:#f8f4ec;--paper2:#ebe3d3;--img:#241910;--img2:#2f2218;
+  --ease:cubic-bezier(.2,.8,.2,1);--heavy:cubic-bezier(.45,.02,.75,.5);--snap:cubic-bezier(.2,1.05,.3,1)}
+.app *{box-sizing:border-box}
+.app button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
+.app button:disabled{cursor:default}
+.app input{font:inherit;color:inherit}
+.app::before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(70% 36% at 50% 30%,rgba(233,170,63,.06),transparent 70%),radial-gradient(120% 60% at 50% 110%,rgba(0,0,0,.6),transparent 60%)}
+.mono{font-family:"Space Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.pen{font-family:"Long Cang","Noto Sans SC",cursive;color:var(--pencil);line-height:1}
+.ic{width:18px;height:18px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.t-act{--tone:var(--edge)}.t-go{--tone:var(--cream)}.t-wait{--tone:rgba(241,230,207,.55)}.t-void{--tone:rgba(241,230,207,.32)}.t-kept{--tone:var(--cream2)}.t-host{--tone:var(--edge)}.t-danger{--tone:#ff8a7c}
+/* ============================== home: darkroom table with hanging contact sheet ============================== */
+.home{position:absolute;inset:0;display:flex;flex-direction:column;transform-origin:50% 42%;transition:transform calc(460ms * var(--k)) var(--ease),filter calc(460ms * var(--k)) var(--ease)}
+.home.recede{transform:scale(.965);filter:brightness(.3)}
+.hd{padding:50px 20px 0;flex:0 0 auto;position:relative;z-index:3;background:linear-gradient(var(--dk) 82%,transparent)}
+.hd .t1{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;height:40px;transition:height calc(300ms * var(--k)) var(--ease)}
+.hd h1{margin:0;font-size:28px;font-weight:500;letter-spacing:.06em;line-height:1.1;transition:font-size calc(300ms * var(--k)) var(--ease)}
+.hd .sub{display:block;font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.22em;color:var(--edge);text-transform:uppercase;margin-bottom:6px;transition:opacity calc(240ms * var(--k)),margin calc(300ms * var(--k))}
+.home.col .hd .t1{height:26px}
+.home.col .hd h1{font-size:18px}
+.home.col .hd .sub{opacity:0;margin-bottom:0;height:0}
+.datepill{font-family:"Space Mono",monospace;font-size:10px;letter-spacing:.06em;color:var(--cream2);border:1px solid rgba(241,230,207,.22);border-radius:999px;padding:4px 10px;white-space:nowrap;margin-bottom:4px;transition:opacity calc(240ms * var(--k))}
+.home.col .datepill{opacity:0}
+.rolls-tabs{margin-top:14px;display:grid;grid-template-columns:1fr 1fr;position:relative;height:44px;border-radius:6px;background:var(--dk2);box-shadow:inset 0 0 0 1px rgba(241,230,207,.09)}
+.rolls-tabs .ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 4px);border-radius:4px;background:linear-gradient(180deg,#6b3a14,#4a2a10);box-shadow:inset 0 1px 0 rgba(233,170,63,.5),0 6px 16px -8px rgba(0,0,0,.8);transition:transform calc(420ms * var(--k)) var(--snap)}
+.rolls-tabs .ind.r{transform:translateX(100%)}
+.role{position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;letter-spacing:.06em;color:var(--cream3);transition:color calc(240ms * var(--k))}
+.role.on{color:var(--cream);font-weight:500}
+.role .reel{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.16em;color:var(--edge);opacity:.75}
+.badge{min-width:18px;height:18px;padding:0 5px;border-radius:2px;background:var(--edge);color:#1a120c;font-family:"Space Mono",monospace;font-weight:700;font-size:11px;display:inline-flex;align-items:center;justify-content:center}
+.badge.zero{display:none}
+.secs{display:flex;gap:18px;padding:12px 20px 6px;align-items:center;z-index:3;position:relative;background:var(--dk)}
+.stab{font-size:13px;color:var(--cream3);letter-spacing:.06em;position:relative;padding:2px 0 6px;display:inline-flex;gap:5px;align-items:baseline;transition:color calc(240ms * var(--k))}
+.stab .n{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cream4)}
+.stab.on{color:var(--cream)}
+.stab.on .n{color:var(--edge)}
+.stab.on::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;background:var(--edge)}
+.secs .sheetno{margin-left:auto;font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.2em;color:var(--cream4);text-transform:uppercase}
+.rolls{flex:1 1 auto;min-height:0;display:flex;width:200%;transition:transform calc(480ms * var(--k)) var(--ease)}
+.rolls.r{transform:translateX(-50%)}
+.roll{width:50%;flex:0 0 50%;overflow-y:auto;overflow-x:hidden;padding:2px 0 124px;scrollbar-width:none;transition:opacity calc(380ms * var(--k))}
+.roll::-webkit-scrollbar{display:none}
+.rolls:not(.r) .roll.h,.rolls.r .roll.j{opacity:.0}
+.roll.expose{animation:c10-expose calc(420ms * var(--k)) linear both}
+@keyframes c10-expose{0%{opacity:1;filter:brightness(1)}28%{opacity:.05;filter:brightness(0)}62%{opacity:.55;filter:brightness(.6)}100%{opacity:1;filter:brightness(1)}}
+/* ---------- strip ---------- */
+.strip{margin:14px 0 0;position:relative}
+.glab{display:flex;align-items:baseline;gap:8px;padding:0 20px 7px}
+.gzh{font-size:13px;font-weight:500;letter-spacing:.08em;color:var(--cream)}
+.gn{font-family:"Space Mono",monospace;font-size:11px;color:var(--edge)}
+.gnote{margin-left:auto;font-size:11px;color:var(--cream4);letter-spacing:.02em}
+.film{position:relative;--cw:268px;--fh:170px}
+.strip.lead .film{--cw:324px;--fh:208px}
+.lbox{position:absolute;left:18px;top:0;width:var(--cw);height:100%;border-radius:2px;background:var(--lbhi);box-shadow:0 0 50px 12px rgba(255,236,200,.17),0 0 0 1px rgba(255,255,255,.12);opacity:0;transition:opacity calc(500ms * var(--k))}
+.strip.lead .lbox{opacity:1}
+.track{display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;scrollbar-width:none;padding:0 18px;position:relative;scroll-padding:0 18px}
+.track::-webkit-scrollbar{display:none}
+.track::after{content:"";flex:0 0 18px}
+.film .sheen{position:absolute;left:18px;right:0;top:0;bottom:0;pointer-events:none;background:linear-gradient(104deg,transparent 28%,rgba(255,255,255,.05) 44%,transparent 58%);z-index:2}
+.cell{flex:0 0 auto;width:var(--cw);scroll-snap-align:start;position:relative;background:var(--base);transition:width calc(420ms * var(--k)) var(--ease),opacity calc(300ms * var(--k)),margin calc(420ms * var(--k)) var(--ease)}
+.cell.leaving{width:0!important;opacity:0;overflow:hidden}
+.cell.entering{animation:c10-cellin calc(480ms * var(--k)) var(--ease) both}
+@keyframes c10-cellin{0%{width:0;opacity:0}100%{width:var(--cw);opacity:1}}
+.cell.opening .fr{opacity:0}
+.perf{height:22px;position:relative;background-color:var(--rail);background-image:radial-gradient(4.8px 3.4px at 50% 50%,var(--hole) 94%,transparent 100%);background-size:16px 12px;background-repeat:repeat-x;background-position:2px 0}
+.perf.bot{background-position:2px 10px}
+.perf .fno{position:absolute;left:8px;bottom:1px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.1em;color:var(--edge);line-height:10px;opacity:.9}
+.perf .fno.a{left:auto;right:8px}
+.perf.bot .fno{bottom:auto;top:1px;left:8px;letter-spacing:.2em;opacity:.7}
+.cell.lit .perf{--hole:var(--lbhi)}
+.cell.lit .perf::before{content:"";position:absolute;inset:0;background:inherit;filter:blur(2px);opacity:.55;pointer-events:none}
+.fr{display:block;margin:4px 6px;width:calc(100% - 12px);height:var(--fh);background:var(--frd);border-radius:1px;position:relative;overflow:hidden;text-align:left;color:var(--cream);box-shadow:inset 0 0 0 1px rgba(0,0,0,.55);transition:color calc(420ms * var(--k)) var(--ease),box-shadow calc(400ms * var(--k))}
+.fr .lbx{position:absolute;inset:0;background:linear-gradient(160deg,var(--lbhi),var(--lb) 60%,var(--lb2));clip-path:inset(0 100% 0 0);transition:clip-path calc(420ms * var(--k)) var(--ease)}
+.cell.lit .fr .lbx{clip-path:inset(0 0 0 0)}
+.cell.lit .fr{color:var(--ink)}
+.cell.lit .fr .fcta{background:var(--ink);color:var(--lb)}
+.fr-in{position:relative;padding:14px 16px 12px;height:100%;display:flex;flex-direction:column;gap:5px;transition:opacity calc(420ms * var(--k))}
+.fr.x0 .fr-in{opacity:.52}.fr.x1 .fr-in{opacity:.66}.fr.x2 .fr-in{opacity:.8}.fr.x3 .fr-in{opacity:.9}.fr.x4 .fr-in{opacity:1}
+.cell.lit .fr .fr-in{opacity:1}
+.fr.x4::after{content:"";position:absolute;inset:4px;border:1px solid rgba(241,230,207,.22);pointer-events:none}
+.cell.lit .fr.x4::after{border-color:rgba(26,18,12,.18)}
+.fr.void{background:#070504}
+.fr.void .fr-in{opacity:.6}
+.fttl{font-size:18px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;letter-spacing:.01em}
+.strip:not(.lead) .fttl{font-size:16px}
+.ftm{display:flex;align-items:baseline;gap:9px;flex-wrap:nowrap;min-width:0}
+.ftm .t{font-family:"Space Mono",monospace;font-weight:700;font-size:26px;line-height:1;letter-spacing:-.02em;flex:0 0 auto}
+.strip:not(.lead) .ftm .t{font-size:22px}
+.ftm .t.strike{text-decoration:line-through;text-decoration-thickness:2px;text-decoration-color:var(--pencil);opacity:.6}
+.ftm .d{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.1em;opacity:.72;text-transform:uppercase;flex:0 0 auto}
+.ftm .p{font-size:12px;opacity:.72;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.fst{display:flex;align-items:center;gap:7px;font-size:12px;flex-wrap:wrap}
+.fst .lb{font-weight:500}
+.fst .cd{font-family:"Space Mono",monospace;font-weight:700;font-size:12.5px;color:var(--edge)}
+.cell.lit .fst .cd{color:var(--red2)}
+.fst .new{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.04em}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--tone,var(--cream3));flex:0 0 auto}
+.fneed{font-size:12px;opacity:.68;line-height:1.4;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.fbar{height:3px;background:rgba(128,128,128,.25);margin-top:2px;position:relative}
+.fbar i{position:absolute;left:0;top:0;bottom:0;background:var(--edge);width:calc(var(--r) * 100%);transition:width calc(900ms * var(--k)) linear}
+.cell.lit .fbar i{background:var(--red2)}
+.fcta{margin-top:auto;display:flex;align-items:center;justify-content:center;gap:8px;height:36px;border-radius:2px;background:var(--edge);color:#1a120c;font-weight:500;font-size:14px;letter-spacing:.08em;transition:background calc(420ms * var(--k)),color calc(420ms * var(--k))}
+.fentry{margin-top:auto;text-align:right;font-size:12px;opacity:.82;letter-spacing:.02em}
+.fcap{position:absolute;left:16px;bottom:8px;font-family:"Space Mono",monospace;font-size:7.5px;letter-spacing:.16em;opacity:.5;text-transform:uppercase}
+.fr.lead .fcap,.fr.draft .fcap{display:none}
+.fr.hasmark .fttl{padding-right:64px}
+.seats{display:flex;gap:2px;margin-top:2px}
+.sq{width:13px;height:13px;border-radius:1px;background:rgba(241,230,207,.1);box-shadow:inset 0 0 0 1px rgba(241,230,207,.22)}
+.sq.host{background:var(--edge);box-shadow:none}.sq.ok{background:var(--cream);box-shadow:none}.sq.res{background:linear-gradient(180deg,rgba(241,230,207,.55) 50%,transparent 50%);box-shadow:inset 0 0 0 1px rgba(241,230,207,.55)}.sq.att{background:var(--cream)}.sq.abs{background:rgba(241,230,207,.1);box-shadow:inset 0 0 0 1px var(--pencil)}.sq.pend{background:repeating-linear-gradient(45deg,rgba(241,230,207,.5) 0 2px,transparent 2px 4px)}
+.cell.lit .sq{box-shadow:inset 0 0 0 1px rgba(26,18,12,.3);background:rgba(26,18,12,.06)}
+.cell.lit .sq.ok{background:var(--ink);box-shadow:none}.cell.lit .sq.host{background:var(--red2)}.cell.lit .sq.res{background:linear-gradient(180deg,rgba(26,18,12,.55) 50%,transparent 50%);box-shadow:inset 0 0 0 1px rgba(26,18,12,.55)}
+.sq.pop{animation:c10-sq calc(500ms * var(--k)) var(--snap) both}
+@keyframes c10-sq{0%{transform:scaleY(.42)}60%{transform:scaleY(1.08)}100%{transform:none}}
+.pmark{position:absolute;right:14px;top:10px;font-family:"Long Cang",cursive;font-size:24px;color:var(--pencil);line-height:1;transform:rotate(-8deg);padding:2px 8px;border:2px solid var(--pencil);border-radius:50%/60%;opacity:.95}
+.pmark.abs{border-radius:2px;border-style:dashed}
+.pmark.none{border:0;color:var(--cream3);font-family:"Noto Sans SC",sans-serif;font-size:11px;transform:none;top:12px}
+.pmark.pend{border-style:dotted}
+.cell.landed .fr{box-shadow:inset 0 0 0 2px var(--edge);animation:c10-land calc(1400ms * var(--k)) var(--ease) both}
+@keyframes c10-land{0%{box-shadow:inset 0 0 0 2px var(--edge),0 0 0 6px rgba(233,170,63,.25)}100%{box-shadow:inset 0 0 0 2px rgba(233,170,63,0),0 0 0 6px rgba(233,170,63,0)}}
+/* draft frames: unexposed film, pencil notes */
+.fr.draft{background:linear-gradient(160deg,#4e2c10,#3a2009)}
+.fr.draft .fr-in{opacity:1}
+.fr.draft .dttl{font-family:"Long Cang",cursive;font-size:24px;color:var(--pencil);line-height:1.1;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.fr.draft .dttl.un{opacity:.6}
+.fr.draft .dline{font-size:12px;color:rgba(241,230,207,.78)}
+.fr.draft .dcmp{font-size:12px;color:var(--edge)}
+.fr.draft .dcmp.ready{color:#b9e4a6}
+.fr.draft .dfoot{margin-top:auto;display:flex;flex-direction:column;gap:2px;font-size:11.5px}
+.fr.draft .dfoot .dline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.8}
+.fr.draft .dfoot .inert{color:rgba(241,230,207,.45)}
+.cell .del{position:absolute;right:12px;top:30px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;border-radius:50%;background:rgba(0,0,0,.35);color:var(--cream2);z-index:3}
+/* melted residue (history 已取消 / void) */
+.fr.residue{background:#050302;box-shadow:inset 0 0 0 1px rgba(233,170,63,.12)}
+.fr.residue .hole{position:absolute;left:34%;top:26%;width:40%;height:46%;background:var(--dk);border-radius:48% 52% 43% 57%/55% 45% 55% 45%;box-shadow:0 0 0 6px #0a0604,0 0 0 9px rgba(120,70,30,.35),inset 0 0 12px rgba(0,0,0,.9)}
+.cell.lit .fr.residue .hole{background:var(--lbhi)}
+.fr.residue .fr-in{opacity:.72}
+.fr.residue .bead{position:absolute;bottom:6px;width:7px;height:5px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a2c16,#120a05 70%)}
+/* empty state: a short blank piece of film */
+.emp{margin:6px 18px 0;background:var(--base);position:relative}
+.emp .fr{height:auto;min-height:150px;background:linear-gradient(160deg,#3b2210,#2a1707);cursor:default}
+.emp .fr .fr-in{opacity:1;gap:8px;padding:18px 18px 16px}
+.emp h3{margin:0;font-size:17px;font-weight:500;letter-spacing:.02em}
+.emp p{margin:0;font-size:12.5px;color:var(--cream2);line-height:1.6}
+.emp .act{margin-top:auto;font-size:13px;color:var(--edge);display:inline-flex;gap:6px;align-items:center}
+.emp .act.inert{color:var(--cream4)}
+.emp .act.inert small{font-size:10px;letter-spacing:.06em}
+/* undo bar */
+.undo{position:absolute;left:16px;right:16px;bottom:92px;z-index:8;background:var(--redbg);color:var(--redtx);box-shadow:inset 0 0 0 1px var(--redline),0 14px 30px -12px rgba(0,0,0,.9);border-radius:4px;padding:10px 14px;display:flex;align-items:center;gap:12px;font-size:13px;animation:c10-up calc(380ms * var(--k)) var(--snap) both}
+.undo b{font-weight:500}
+.undo button{margin-left:auto;color:#fff;font-weight:500;letter-spacing:.08em;padding:4px 8px;box-shadow:inset 0 0 0 1px rgba(255,217,209,.4);border-radius:2px}
+.undo .fuse{position:absolute;left:0;bottom:0;height:2px;background:var(--red);animation:c10-fuse calc(10000ms * var(--k)) linear forwards}
+@keyframes c10-fuse{0%{width:100%}100%{width:0}}
+@keyframes c10-up{0%{transform:translateY(16px);opacity:0}100%{transform:none;opacity:1}}
+/* bottom nav */
+.nav{position:absolute;left:0;right:0;bottom:0;height:84px;padding:12px 26px 24px;background:linear-gradient(transparent,var(--dk) 34%);display:flex;justify-content:space-between;z-index:4}
+.nav .ni{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;letter-spacing:.08em;color:var(--cream4);cursor:default;width:48px}
+.nav .ni.on{color:var(--edge)}
+.nav .ni .ic{width:20px;height:20px;stroke-width:1.5}
+/* ============================== pane (detail / manage / draft) ============================== */
+.pane{position:absolute;inset:0;background:var(--dk);z-index:20;clip-path:inset(0 0 0 0);transition:clip-path calc(440ms * var(--k)) var(--ease);display:flex;flex-direction:column;color:var(--cream)}
+.pane.noanim,.pane.noanim .pane-in{transition:none!important}
+.pane-in{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform calc(440ms * var(--k)) var(--ease)}
+.pane .body{opacity:0;transition:opacity calc(260ms * var(--k)) ease calc(160ms * var(--k))}
+.pane.in .body{opacity:1}
+.pane.out .body{opacity:0;transition-delay:0ms}
+.bar2{flex:0 0 auto;padding:50px 16px 0;height:92px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.back{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--cream2);letter-spacing:.04em;height:32px;padding-right:8px}
+.pstat{font-size:11.5px;letter-spacing:.08em;color:var(--cream3);display:inline-flex;align-items:center;gap:6px}
+.pbody{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 16px 130px;scrollbar-width:none}
+.pbody::-webkit-scrollbar{display:none}
+/* the enlarged frame on the lightbox */
+.lbwrap{position:relative;margin:4px 0 12px}
+.lbwrap .bubs{z-index:4}
+.hero .face{position:relative}
+.lbglow{position:absolute;inset:0;background:var(--lbhi);box-shadow:0 0 70px 10px rgba(255,236,200,.15)}
+.hero{position:relative;background:var(--base);border-radius:2px}
+.hero .perf{--hole:var(--lbhi)}
+.hface{margin:0 6px;background:linear-gradient(160deg,var(--lbhi),var(--lb) 55%,var(--lb2));color:var(--ink);padding:18px 18px 16px;position:relative;min-height:140px;overflow:hidden}
+.hface.blank{background:linear-gradient(160deg,#3b2210,#2a1707);color:var(--cream2)}
+.hface .ttl{font-size:22px;font-weight:500;line-height:1.3;letter-spacing:.01em;padding-right:70px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.hface .ttl.one{padding-right:0}
+.hface .tmrow{display:flex;align-items:baseline;gap:10px;margin-top:10px}
+.hface .tm{font-family:"Space Mono",monospace;font-weight:700;font-size:34px;line-height:1;letter-spacing:-.02em}
+.hface .tm.strike{text-decoration:line-through;text-decoration-color:var(--pencil);text-decoration-thickness:3px;opacity:.5;font-size:22px}
+.hface .dm{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;color:var(--ink2);text-transform:uppercase}
+.hface .pl{font-size:13px;color:var(--ink2);margin-top:6px}
+.hface .cap{position:absolute;right:12px;bottom:8px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.16em;color:var(--ink3);text-transform:uppercase}
+.hface .life{position:absolute;right:16px;top:16px;font-size:11px;letter-spacing:.08em;padding:3px 8px;border-radius:2px;background:rgba(26,18,12,.08);color:var(--ink2)}
+.hface .life.act{background:var(--ink);color:var(--lb)}
+.hface .life.void{background:transparent;box-shadow:inset 0 0 0 1px rgba(26,18,12,.3)}
+.hface .pst{position:absolute;right:14px;top:12px}
+.hface .pst .pen{font-size:26px;border:2px solid var(--pencil);border-radius:50%/60%;padding:2px 10px;transform:rotate(-8deg);display:inline-block}
+.hface .pst .pen.abs{border-radius:2px;border-style:dashed}
+.hface .pst .pen.pend{border-style:dotted}
+.hface .pst .pen.fresh{animation:fx-stamp calc(560ms * var(--k)) cubic-bezier(.2,1.2,.3,1) both}
+.hface .reprint{animation:c10-reprint calc(520ms * var(--k)) var(--ease) both}
+@keyframes c10-reprint{0%{clip-path:inset(0 0 100% 0);transform:translateY(-7px)}100%{clip-path:inset(0 0 0 0);transform:none}}
+.hface .pencilnote{position:absolute;left:18px;bottom:8px;font-family:"Long Cang",cursive;font-size:18px;color:var(--pencil);transform:rotate(-1.5deg);line-height:1}
+.hero.dimmed .hface{filter:brightness(.72) saturate(.5)}
+.hero .ttlsettle{animation:c10-settle calc(420ms * var(--k)) var(--ease) both}
+@keyframes c10-settle{0%{opacity:.25;transform:translateY(5px)}100%{opacity:1;transform:none}}
+/* detail blocks */
+.blk{padding:14px 0;border-top:1px solid var(--line)}
+.blk.first{border-top:0;padding-top:8px}
+.stt{font-size:20px;font-weight:500;letter-spacing:.02em;line-height:1.3}
+.stt.settle{animation:c10-settle calc(420ms * var(--k)) var(--ease) both}
+.sneed{font-size:13px;color:var(--cream2);margin-top:4px;line-height:1.55}
+.count{font-family:"Space Mono",monospace;font-weight:700;font-size:30px;color:var(--edge);margin-top:10px;line-height:1;display:flex;align-items:baseline;gap:10px}
+.count small{font-family:"Noto Sans SC",sans-serif;font-weight:400;font-size:12px;color:var(--cream3)}
+.bar6{height:4px;background:rgba(241,230,207,.12);margin-top:10px;position:relative}
+.bar6 i{position:absolute;left:0;top:0;bottom:0;width:calc(var(--r) * 100%);background:var(--edge);transition:width calc(900ms * var(--k)) linear}
+.bar6.red i{background:var(--pencil)}
+.bh{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.bh h3{margin:0;font-size:14px;font-weight:500;letter-spacing:.04em}
+.bh .n{font-family:"Space Mono",monospace;font-size:11px;color:var(--edge)}
+.bh .hint{font-size:11.5px;color:var(--cream3)}
+.cs{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(241,230,207,.16);padding:1px;margin-top:10px}
+.cs .c{background:var(--frd2);aspect-ratio:1/1;position:relative;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;color:var(--cream);overflow:hidden}
+.cs .c .no{position:absolute;right:5px;top:3px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.1em;color:var(--cream3)}
+.cs .c .nm{position:absolute;left:6px;bottom:4px;right:4px;font-size:10px;color:var(--cream2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
+.cs .c .rl{position:absolute;left:6px;top:4px;font-size:8.5px;letter-spacing:.08em;color:var(--edge)}
+.cs .c.res{color:var(--cream3);outline:1px dashed rgba(241,230,207,.45);outline-offset:-5px}
+.cs .c.res .rl{color:var(--cream3)}
+.cs .c.open{background:#0d0906;color:var(--cream4);font-size:12px}
+.cs .c.you{box-shadow:inset 0 0 0 2px var(--edge)}
+.cs .c.void{opacity:.45}
+.cs .c.pop{animation:c10-cpop calc(500ms * var(--k)) var(--snap) both}
+@keyframes c10-cpop{0%{transform:scaleY(.42);opacity:.3}60%{transform:scaleY(1.06);opacity:1}100%{transform:none}}
+.cs.q .c{aspect-ratio:auto;height:44px;font-size:13px;font-weight:400}
+.kv{display:grid;grid-template-columns:52px 1fr;gap:7px 10px;font-size:13px;margin-top:4px}
+.kv dt{color:var(--cream3)}
+.kv dd{margin:0;color:var(--cream)}
+.kv dd.m{font-family:"Space Mono",monospace;font-size:12.5px}
+.btns{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.btn{height:46px;border-radius:3px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:15px;font-weight:500;letter-spacing:.08em;position:relative;transition:opacity calc(200ms * var(--k)),transform calc(200ms * var(--k))}
+.btn.pri{background:var(--edge);color:#1a120c}
+.btn.sec{box-shadow:inset 0 0 0 1px rgba(241,230,207,.3);color:var(--cream)}
+.btn.dng{box-shadow:inset 0 0 0 1px rgba(239,77,62,.6);color:#ff8f82}
+.btn:disabled{opacity:.42}
+.btn.busy{opacity:.75}
+.btn.busy::after{content:"";width:6px;height:6px;border-radius:50%;background:currentColor;animation:c10-dots calc(900ms * var(--k)) steps(3) infinite;box-shadow:10px 0 0 currentColor,20px 0 0 currentColor;margin-left:4px;opacity:.6;transform:translateX(-10px)}
+@keyframes c10-dots{0%{opacity:.2}100%{opacity:.9}}
+.lnk{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-top:1px solid var(--line);font-size:14px;color:var(--cream)}
+.lnk small{font-size:11.5px;color:var(--cream3)}
+.lnk.inert{color:var(--cream4)}
+.resblk{padding:18px 0 8px}
+.resblk .big{font-size:24px;font-weight:500;letter-spacing:.02em;line-height:1.25}
+.resblk .why{font-size:13.5px;color:var(--cream2);margin-top:6px;line-height:1.6}
+.resblk .fact{font-size:12.5px;color:var(--cream3);margin-top:10px;padding-left:10px;border-left:2px solid rgba(233,170,63,.5)}
+.rec{display:flex;gap:10px;padding:8px 0;font-size:13px;border-top:1px dashed var(--line);align-items:baseline}
+.rec .at{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cream3);flex:0 0 auto;letter-spacing:.04em}
+.rec.fresh{animation:c10-settle calc(420ms * var(--k)) var(--ease) both}
+.noteform{display:flex;gap:8px;margin-top:10px}
+.noteform input{flex:1 1 auto;min-width:0;height:40px;border:0;border-bottom:1px solid rgba(241,230,207,.3);background:transparent;color:var(--cream);padding:0 2px;font-size:13.5px;outline:none}
+.noteform input::placeholder{color:var(--cream4)}
+.noteform button{height:40px;padding:0 14px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(241,230,207,.3);font-size:13px}
+.noteform button:disabled{opacity:.4}
+.whyline{font-size:12px;color:var(--cream3);margin-top:8px}
+/* ============================== ticket: developing tray + photo print + negative stub ============================== */
+.tray{position:relative;margin:4px 0 0;--ph:304px;--nh:68px}
+.traybox{position:relative;height:calc(var(--ph) + var(--nh) + 56px);overflow:hidden;perspective:700px;transition:height calc(400ms * var(--k)) var(--ease)}
+.tray.noneg .traybox{height:calc(var(--ph) + 56px)}
+.tray.dropping .traybox{overflow:visible}
+.tray.dropping .liquid{z-index:1}
+.liquid{position:absolute;left:0;right:0;bottom:0;height:36px;z-index:3;background:linear-gradient(#2b1c12,#17100a);border-radius:0 0 6px 6px;box-shadow:inset 0 2px 0 rgba(255,236,200,.14),inset 0 -1px 0 rgba(0,0,0,.6),0 10px 20px -10px rgba(0,0,0,.8)}
+.liquid::before{content:"";position:absolute;left:14px;right:14px;top:10px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,236,200,.22) 30%,rgba(255,236,200,.08) 70%,transparent)}
+.liquid .lbl{position:absolute;right:12px;bottom:8px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.2em;color:rgba(241,230,207,.35);text-transform:uppercase}
+.tk{position:absolute;left:10px;right:10px;top:12px;z-index:2;transform-origin:50% 100%}
+.tk .face{position:relative}
+.tk.pre{transform:translateY(calc(100% + 44px))}
+.tk.dev{animation:c10-rise calc(2600ms * var(--k)) linear forwards}
+@keyframes c10-rise{0%{transform:translateY(calc(100% + 44px))}14%{transform:translateY(62%)}26%{transform:translateY(62%)}48%{transform:translateY(28%)}60%{transform:translateY(28%)}84%{transform:translateY(0%)}100%{transform:translateY(0%)}}
+.tk .tongs{position:absolute;left:50%;top:-10px;width:44px;height:16px;margin-left:-22px;z-index:5;opacity:0;transition:opacity calc(300ms * var(--k))}
+.tk.dev .tongs{opacity:1}
+.tk .tongs::before,.tk .tongs::after{content:"";position:absolute;top:0;width:12px;height:16px;background:linear-gradient(180deg,#5a4a3c,#2a211a);border-radius:2px 2px 1px 1px}
+.tk .tongs::before{left:6px}.tk .tongs::after{right:6px}
+.print{position:relative;height:var(--ph);background:var(--paper);color:var(--ink);border-radius:1px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 12px 26px -10px rgba(0,0,0,.95),0 1px 0 rgba(0,0,0,.4);padding:10px 10px 0;display:flex;flex-direction:column}
+.print::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,transparent 34%,rgba(255,255,255,.42) 47%,transparent 60%);opacity:0;transition:opacity calc(1200ms * var(--k)) ease}
+.tk.dev .print::after,.tk.wet .print::after{opacity:1}
+.pimg{flex:1 1 auto;background:linear-gradient(170deg,var(--img2),var(--img) 40%,#1b120c);color:var(--cream);padding:16px 16px 14px;position:relative;display:flex;flex-direction:column;gap:3px;min-height:0}
+.pimg.devmask{-webkit-mask:var(--mask);mask:var(--mask)}
+.pimg.blank{opacity:0}
+.pimg .en{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.22em;color:var(--edge);text-transform:uppercase}
+.pimg .ttl{font-size:19px;font-weight:500;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:60px}
+.pimg .tmrow{display:flex;align-items:baseline;gap:10px;margin-top:6px}
+.pimg .tm{font-family:"Space Mono",monospace;font-weight:700;font-size:38px;line-height:1;letter-spacing:-.02em}
+.pimg .dm{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.12em;color:var(--cream2);text-transform:uppercase}
+.pimg .row{font-size:12.5px;color:var(--cream2);display:flex;gap:8px}
+.pimg .row b{font-weight:500;color:var(--cream)}
+.pimg .row.old{font-family:"Space Mono",monospace;font-size:11px;color:var(--cream3)}
+.pimg .row.old s{text-decoration-color:var(--pencil);text-decoration-thickness:2px}
+.pimg .num{position:absolute;right:12px;bottom:9px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.16em;opacity:.6;text-transform:uppercase}
+.pimg .pstamp{position:absolute;right:12px;top:12px;font-family:"Long Cang",cursive;font-size:26px;color:var(--pencil);border:2px solid var(--pencil);border-radius:3px;padding:0 8px;transform:rotate(-9deg);line-height:1.25;opacity:.95}
+.pimg .pstamp.fresh{animation:fx-stamp calc(560ms * var(--k)) cubic-bezier(.2,1.2,.3,1) both}
+.pcap{height:36px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;flex:0 0 auto}
+.pcap .pen{font-size:18px;transform:rotate(-1.5deg);white-space:nowrap}
+.pcap .mono{font-family:"Space Mono",monospace;font-size:8.5px;letter-spacing:.16em;color:var(--ink3);text-transform:uppercase}
+.tk.old{z-index:1;transform:translateY(-18px) scale(.96);filter:brightness(.42) saturate(.6);transition:transform calc(600ms * var(--k)) var(--ease),filter calc(600ms * var(--k))}
+.tk.old .print::after{display:none}
+.tk.printed .print{box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 18px 30px -14px rgba(0,0,0,.95),0 1px 0 rgba(0,0,0,.4)}
+.scrub .tk.dev,.scrub .pimg.devmask .dh{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 2600ms * var(--k,1))!important}
+.pimg .dh{animation:c10-devhole calc(1700ms * var(--k)) cubic-bezier(.4,.1,.6,1) forwards}
+.pimg .dh.d2{animation-delay:calc(420ms * var(--k))}.pimg .dh.d3{animation-delay:calc(760ms * var(--k))}
+@keyframes c10-devhole{0%{r:0}100%{r:var(--reach)}}
+.devsvg{position:absolute;width:0;height:0}
+.tk .busyveil{position:absolute;inset:0;z-index:6}
+/* negative stub + blade */
+.negwrap{position:relative;margin:0;height:var(--nh);perspective:600px;touch-action:none;user-select:none;-webkit-user-select:none;z-index:3;cursor:grab;--p:0}
+.negwrap.hidden{display:none}
+.negs{position:absolute;inset:0;background:var(--base);display:flex;flex-direction:column}
+.negs .perf{height:14px;background-size:14px 10px;background-image:radial-gradient(4px 2.8px at 50% 50%,var(--hole) 94%,transparent 100%);background-position:1px 0}
+.negs .perf.bot{background-position:1px 4px}
+.negs .nfr{flex:1 1 auto;margin:3px 6px;background:var(--frd);display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:11.5px;color:var(--cream2);letter-spacing:.04em;position:relative}
+.negs .nfr b{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.18em;color:var(--edge);font-weight:400}
+.negs .nfr .arrow{color:var(--cream3)}
+.negs.a{clip-path:inset(0 calc((1 - var(--p)) * 100%) 0 0);transform:translateY(calc(var(--p) * 5px)) rotate(calc(var(--p) * -1.6deg));transform-origin:0 0}
+.negs.b{clip-path:inset(0 0 0 calc(var(--p) * 100%))}
+.negwrap.spring .negs{transition:transform calc(240ms * var(--k)) var(--snap),clip-path calc(240ms * var(--k)) var(--snap)}
+.negwrap .cut{position:absolute;left:0;top:-1px;height:2px;width:calc(var(--p) * 100%);background:linear-gradient(90deg,rgba(255,245,220,0),rgba(255,245,220,.9) 70%,#fff);box-shadow:0 1px 3px rgba(255,236,200,.5);pointer-events:none;z-index:4}
+.negwrap .cutshadow{position:absolute;left:0;top:0;height:6px;width:calc(var(--p) * 100%);background:linear-gradient(rgba(0,0,0,.55),transparent);pointer-events:none;z-index:3}
+.blade{position:absolute;top:-16px;left:calc(var(--p) * 100% - 11px);width:22px;height:100px;z-index:5;pointer-events:none;transition:opacity calc(200ms * var(--k))}
+.blade::before{content:"";position:absolute;left:10px;top:0;bottom:0;width:2px;background:linear-gradient(#fff,rgba(255,245,220,.9) 70%,rgba(255,245,220,.2));box-shadow:0 0 6px rgba(255,236,200,.8)}
+.blade::after{content:"";position:absolute;left:4px;top:-2px;width:14px;height:26px;border-radius:3px;background:linear-gradient(180deg,#8a5a2a,#3d2510);box-shadow:inset 0 1px 0 rgba(233,170,63,.7),0 2px 4px rgba(0,0,0,.7)}
+.negwrap.off .blade{opacity:0}
+.negwrap.off .negs.a{animation:c10-drop calc(760ms * var(--k)) var(--heavy) forwards}
+@keyframes c10-drop{0%{transform:translate(0,5px) rotate(-1.6deg) rotateX(0)}40%{opacity:1}100%{transform:translate(-22px,118px) rotate(-18deg) rotateX(72deg) scale(.86);opacity:0}}
+.scrub .negwrap.off .negs.a{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 760ms * var(--k,1))!important}
+.negwrap .hint{position:absolute;right:6px;bottom:-18px;font-size:10.5px;color:var(--cream3);letter-spacing:.04em}
+.sleeve{margin:22px 10px 0;height:54px;border:1px solid rgba(241,230,207,.2);background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.015) 60%);border-radius:3px;display:flex;align-items:center;padding:0 14px;gap:10px;font-size:11px;color:var(--cream3);letter-spacing:.08em;position:relative;overflow:hidden}
+.sleeve::after{content:"";position:absolute;inset:0;background:linear-gradient(100deg,transparent 40%,rgba(255,255,255,.08) 50%,transparent 60%);pointer-events:none}
+.sleeve .ms{width:32px;height:20px;background:var(--base);border-radius:1px;box-shadow:inset 0 3px 0 var(--rail),inset 0 -3px 0 var(--rail);flex:0 0 auto}
+.sleeve .ms.fresh{animation:c10-stubin calc(460ms * var(--k)) var(--snap) both}
+@keyframes c10-stubin{0%{transform:translateY(-30px) rotate(-20deg);opacity:0}100%{transform:none;opacity:1}}
+.sleeve .cnt{margin-left:auto;font-family:"Space Mono",monospace;font-size:10px;color:var(--cream2)}
+.tkstat{display:flex;justify-content:space-between;align-items:center;padding:12px 10px 0;font-size:12px;color:var(--cream3)}
+.tkstat b{font-weight:500;color:var(--cream)}
+/* contact layer: the safelight panel */
+.contact{margin:16px 0 0;background:var(--redbg);box-shadow:inset 0 0 0 1px var(--redline),0 0 40px -10px rgba(220,60,50,.35);border-radius:4px;padding:14px 16px 16px;color:var(--redtx);animation:c10-slidein calc(420ms * var(--k)) var(--ease) both;position:relative;overflow:hidden}
+.contact::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--red)}
+@keyframes c10-slidein{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
+.contact .who{font-size:11.5px;color:var(--redtx2);letter-spacing:.1em;text-transform:uppercase;font-family:"Space Mono",monospace}
+.contact .nm{font-size:16px;font-weight:500;margin-top:2px}
+.contact .wx{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:10px}
+.contact .wx b{font-family:"Space Mono",monospace;font-weight:700;font-size:20px;letter-spacing:.02em}
+.cp{height:32px;padding:0 12px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(255,217,209,.45);font-size:12px;letter-spacing:.06em;display:inline-flex;align-items:center;gap:6px;transition:background calc(200ms * var(--k)),color calc(200ms * var(--k))}
+.cp.ok{background:var(--redtx);color:var(--redbg)}
+.contact .note{font-size:12px;color:var(--redtx2);margin-top:10px;line-height:1.55}
+.contact .btn.pri{background:var(--red);color:#fff6f2;margin-top:12px}
+.contact .btn.pri:disabled{opacity:.5;background:rgba(220,58,48,.5)}
+.contact .closed{font-size:12.5px;color:var(--redtx2);margin-top:4px}
+/* melt (作废) — same object, bubbles → hole → curl → residue */
+.melt{position:relative}
+.melt .face{z-index:1}
+.melt .msvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden;z-index:2}
+.melt .mh,.melt .mo,.melt .mr,.melt .mg{r:0}
+.melt.burning{-webkit-mask:var(--mask);mask:var(--mask)}
+.melt.burning .mh,.melt.burning .mo,.melt.burning .mr,.melt.burning .mg{animation:c10-melt calc(3000ms * var(--k)) linear forwards}
+.melt.burning .mg{animation:c10-melt calc(3000ms * var(--k)) linear forwards,c10-glow calc(3000ms * var(--k)) linear forwards}
+.melt.burning .face{animation:c10-curl calc(3000ms * var(--k)) linear forwards;transform-origin:50% 40%}
+@keyframes c10-melt{0%{r:0}24%{r:calc(var(--reach) * .035)}58%{r:calc(var(--reach) * .6)}100%{r:var(--reach)}}
+@keyframes c10-glow{0%{opacity:.3}24%{opacity:1}88%{opacity:1}100%{opacity:0}}
+@keyframes c10-curl{0%,52%{transform:none;filter:brightness(1)}100%{transform:perspective(600px) rotateX(-9deg) rotateY(5deg) translateY(5px);filter:brightness(.5) saturate(.6)}}
+.bubs{position:absolute;inset:0;pointer-events:none;z-index:3}
+.bub{position:absolute;width:var(--s);height:var(--s);border-radius:50%;background:radial-gradient(circle at 34% 30%,rgba(255,232,196,.75),rgba(120,64,28,.95) 50%,rgba(22,11,6,1) 100%);box-shadow:0 1px 2px rgba(0,0,0,.6);transform:scale(0);opacity:0}
+.melt.burning .bub{animation:c10-bub calc(3000ms * var(--k)) linear forwards;animation-delay:var(--d)}
+@keyframes c10-bub{0%{transform:scale(0);opacity:0}6%{transform:scale(1.15);opacity:1}14%{transform:scale(.95)}60%{transform:scale(1.05);opacity:1}100%{transform:scale(.8) translateY(10px);opacity:.9;filter:brightness(.45)}}
+.melt.melted .face,.melt.melted .msvg{visibility:hidden}
+.melt.melted .bub{transform:scale(.8) translateY(10px);opacity:.9;filter:brightness(.45)}
+.scrub .melt.burning .mh,.scrub .melt.burning .mo,.scrub .melt.burning .mr,.scrub .melt.burning .mg,.scrub .melt.burning .face,.scrub .melt.burning .bub{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 3000ms * var(--k,1))!important}
+.rsd{position:relative;background:#060403;min-height:170px;border-radius:2px;box-shadow:inset 0 0 0 1px rgba(233,170,63,.14);overflow:hidden;animation:c10-settle calc(600ms * var(--k)) var(--ease) both}
+.rsd.lit{background:#070504}
+.rsd .hole{position:absolute;left:46%;top:28%;width:38%;height:44%;background:#1c130c;border-radius:48% 52% 43% 57%/55% 45% 55% 45%;box-shadow:0 0 0 7px #0b0705,0 0 0 11px rgba(120,70,30,.4),inset 0 0 16px rgba(0,0,0,.95)}
+.rsd.lit .hole{background:#d8c7a4;box-shadow:0 0 0 7px #0b0705,0 0 0 11px rgba(120,70,30,.4),inset 0 0 36px rgba(90,50,20,.75)}
+.rsd .bead{position:absolute;bottom:8px;width:8px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#4a2c16,#120a05 70%)}
+.rsd .rtx{position:absolute;left:16px;top:14px;right:46%;font-size:12px;color:rgba(241,230,207,.55);line-height:1.5}
+.rsd .rtx b{display:block;font-size:14px;color:rgba(241,230,207,.8);font-weight:500}
+.rsd .rlb{position:absolute;right:12px;bottom:10px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.18em;color:rgba(233,170,63,.5);text-transform:uppercase}
+/* ============================== manage ============================== */
+.mg .hface{min-height:150px}
+.mstat{display:flex;align-items:baseline;gap:6px;font-size:12px;color:var(--ink2);margin-top:8px;flex-wrap:wrap;line-height:1.4}
+.mstat .m{font-weight:500;font-size:13px;color:var(--ink);white-space:nowrap}
+.prog{display:flex;align-items:center;gap:10px;padding:12px 2px 2px;font-size:12.5px;color:var(--cream2)}
+.prog .seats{margin:0}
+.prog .seats .sq{width:16px;height:16px}
+.prog b{color:var(--cream);font-weight:500}
+.prog .more{margin-left:auto;font-size:11.5px;color:var(--cream3)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding:10px 0 12px;scrollbar-width:none;margin:0 -16px;padding-left:16px;padding-right:16px}
+.chips::-webkit-scrollbar{display:none}
+.chip{height:30px;padding:0 12px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(241,230,207,.22);font-size:12.5px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;color:var(--cream2);flex:0 0 auto;transition:background calc(200ms * var(--k)),color calc(200ms * var(--k))}
+.chip .n{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--edge)}
+.chip.on{background:var(--cream);color:var(--ink);box-shadow:none}
+.chip.on .n{color:var(--red2)}
+.chip.dng{color:#ff8f82;box-shadow:inset 0 0 0 1px rgba(239,77,62,.45)}
+.sec{animation:c10-settle calc(320ms * var(--k)) var(--ease) both}
+.help{font-size:11.5px;color:var(--cream3);line-height:1.55;margin-top:10px}
+.apl{display:grid;grid-template-columns:56px 1fr;gap:12px;padding:12px 0;border-top:1px solid var(--line);position:relative}
+.apl .c{width:56px;height:56px;background:var(--frd2);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:500;position:relative;box-shadow:inset 0 0 0 1px rgba(241,230,207,.14)}
+.apl .c .no{position:absolute;right:4px;bottom:2px;font-family:"Space Mono",monospace;font-size:7.5px;letter-spacing:.1em;color:var(--cream3)}
+.apl .c .circ{position:absolute;left:-7px;top:-7px;width:70px;height:70px;overflow:visible}
+.apl .c .circ ellipse{fill:none;stroke:var(--pencil);stroke-width:2.6;stroke-linecap:round;stroke-dasharray:210;stroke-dashoffset:210}
+.apl.ok .c .circ ellipse{animation:c10-draw calc(480ms * var(--k)) var(--ease) forwards}
+.apl .c .cross{position:absolute;inset:0;width:56px;height:56px}
+.apl .c .cross line{stroke:var(--pencil);stroke-width:2.4;stroke-linecap:round;stroke-dasharray:80;stroke-dashoffset:80}
+.apl.no .c .cross line{animation:c10-draw calc(380ms * var(--k)) var(--ease) forwards}
+.apl.no .c .cross line.l2{animation-delay:calc(160ms * var(--k))}
+@keyframes c10-draw{0%{stroke-dashoffset:210}100%{stroke-dashoffset:0}}
+.apl.no .c .cross line{stroke-dasharray:80;stroke-dashoffset:80;animation-name:c10-draw2}
+@keyframes c10-draw2{0%{stroke-dashoffset:80}100%{stroke-dashoffset:0}}
+.apl .nmr{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.apl .nm{font-size:15px;font-weight:500}
+.vb{font-size:10.5px;padding:2px 6px;border-radius:2px;background:rgba(233,170,63,.16);color:var(--edge);letter-spacing:.02em}
+.vb.un{background:rgba(241,230,207,.08);color:var(--cream3)}
+.apl .q{font-size:13px;color:var(--cream2);margin-top:3px;line-height:1.5}
+.apl .ago{font-size:11px;color:var(--cream3);margin-top:2px;font-family:"Space Mono",monospace;letter-spacing:.02em}
+.apl .acts{display:flex;gap:8px;margin-top:9px}
+.sbtn{height:34px;padding:0 16px;border-radius:3px;font-size:13px;letter-spacing:.06em;display:inline-flex;align-items:center;justify-content:center;gap:6px;font-weight:500}
+.sbtn.pri{background:var(--edge);color:var(--ink);flex:1 1 auto}
+.sbtn.sec{box-shadow:inset 0 0 0 1px rgba(241,230,207,.28);color:var(--cream2)}
+.sbtn:disabled{opacity:.45}
+.sbtn.busy{opacity:.7}
+.apl .res{margin-top:9px;font-size:12.5px;color:var(--cream2);animation:c10-settle calc(420ms * var(--k)) var(--ease) both;display:flex;gap:6px;align-items:center}
+.apl .res.ok{color:var(--edge)}
+.mem{display:grid;grid-template-columns:40px 1fr auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.mem .c{width:40px;height:40px;background:var(--frd2);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;position:relative;box-shadow:inset 0 0 0 1px rgba(241,230,207,.12)}
+.mem .c.host{box-shadow:inset 0 0 0 1px var(--edge)}
+.mem .c.res{outline:1px dashed rgba(241,230,207,.45);outline-offset:-4px;color:var(--cream3)}
+.mem .c.open{color:var(--cream4);font-size:11px}
+.mem .c.void{opacity:.45}
+.mem .c .no{position:absolute;right:3px;bottom:1px;font-family:"Space Mono",monospace;font-size:7px;color:var(--cream3)}
+.mem .nm{font-size:14.5px;font-weight:500;display:flex;gap:8px;align-items:baseline}
+.mem .nm small{font-size:11px;color:var(--cream3);font-weight:400}
+.mem .st{font-size:12px;color:var(--cream3);margin-top:1px;display:flex;gap:6px;flex-wrap:wrap}
+.mem .st .cd{font-family:"Space Mono",monospace;color:var(--edge)}
+.mem .st .tk{position:static;height:auto;color:var(--cream2);transform:none}
+.mem .st .pm{color:var(--pencil)}
+.wxr{display:flex;align-items:center;gap:8px;font-family:"Space Mono",monospace;font-size:12px;color:var(--cream2)}
+.wxr .cp{box-shadow:inset 0 0 0 1px rgba(241,230,207,.3);height:28px;font-family:"Noto Sans SC",sans-serif}
+.wxr .cp.ok{background:var(--cream);color:var(--ink)}
+.mem.att{grid-template-columns:40px 1fr;align-items:start}
+.mem.att .sub{grid-column:2}
+.seg3{display:flex;gap:6px;margin-top:8px}
+.seg3 button{height:32px;padding:0 12px;border-radius:3px;box-shadow:inset 0 0 0 1px rgba(241,230,207,.25);font-size:12.5px;letter-spacing:.04em;color:var(--cream2)}
+.seg3 button.on{background:var(--cream);color:var(--ink);box-shadow:none}
+.seg3 button.a.on{background:var(--pencil);color:#fff}
+.attres{display:flex;align-items:center;gap:12px;margin-top:4px;min-height:34px}
+.attres .pm{font-family:"Long Cang",cursive;font-size:24px;color:var(--pencil);line-height:1;position:relative;display:inline-block;padding:2px 10px}
+.attres .pm svg{position:absolute;left:-4px;top:-4px;width:calc(100% + 8px);height:calc(100% + 8px);overflow:visible}
+.attres .pm svg ellipse,.attres .pm svg line{fill:none;stroke:var(--pencil);stroke-width:2.2;stroke-linecap:round}
+.attres .pm.fresh svg ellipse{stroke-dasharray:260;stroke-dashoffset:260;animation:c10-draw3 calc(520ms * var(--k)) var(--ease) forwards}
+.attres .pm.fresh svg line{stroke-dasharray:120;stroke-dashoffset:120;animation:c10-draw3 calc(420ms * var(--k)) var(--ease) forwards}
+@keyframes c10-draw3{100%{stroke-dashoffset:0}}
+.attres .pm.none{font-family:"Noto Sans SC",sans-serif;font-size:12.5px;color:var(--cream3);padding:0}
+.attres .fix{margin-left:auto;font-size:12px;color:var(--cream2);box-shadow:inset 0 0 0 1px rgba(241,230,207,.25);height:28px;padding:0 10px;border-radius:3px;display:inline-flex;align-items:center}
+.trail{margin-top:6px;font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cream3);line-height:1.7}
+.trail div.fresh{color:var(--edge);animation:c10-settle calc(420ms * var(--k)) var(--ease) both}
+.qrow{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.qrow .no{font-family:"Space Mono",monospace;font-size:12px;color:var(--edge);width:34px}
+.qrow .ago{margin-left:auto;font-size:11px;color:var(--cream3);font-family:"Space Mono",monospace}
+.lv{display:flex;justify-content:space-between;padding:9px 0;border-top:1px dashed var(--line);font-size:13px;color:var(--cream2)}
+.lv .at{font-family:"Space Mono",monospace;font-size:10.5px;color:var(--cream3)}
+.arr{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 0;border-top:1px solid var(--line);width:100%}
+.arr .l{font-size:15px;font-weight:500;letter-spacing:.02em}
+.arr .s{font-size:11.5px;color:var(--cream3);margin-top:2px}
+.arr.dng .l{color:#ff8f82}
+.arr.inert{opacity:.5;cursor:default}
+.arr .ic{color:var(--cream3)}
+.cmp{display:flex;align-items:center;gap:10px;font-family:"Space Mono",monospace;font-size:12.5px;margin-top:6px;flex-wrap:wrap}
+.cmp s{opacity:.55;text-decoration-color:var(--pencil);text-decoration-thickness:2px}
+.cmp .arrow{color:var(--cream3)}
+.cmp b{font-weight:700;color:var(--cream)}
+.rp{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-top:1px solid var(--line);font-size:14px}
+.rp .a{font-size:12.5px;color:var(--cream3)}
+.rp .a.ok{color:var(--edge)}.rp .a.no{color:#ff8f82}
+.toast{position:absolute;left:50%;bottom:110px;transform:translate(-50%,10px);z-index:40;background:var(--base2);color:var(--cream);box-shadow:inset 0 0 0 1px rgba(233,170,63,.4),0 14px 30px -12px rgba(0,0,0,.9);padding:9px 16px;border-radius:3px;font-size:13px;white-space:nowrap;opacity:0;transition:opacity calc(260ms * var(--k)),transform calc(320ms * var(--k)) var(--snap);pointer-events:none;letter-spacing:.02em}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.errbar{position:absolute;left:16px;right:16px;bottom:100px;z-index:45;background:var(--redbg);color:var(--redtx);box-shadow:inset 0 0 0 1px var(--red),0 14px 30px -12px rgba(0,0,0,.9);border-radius:4px;padding:11px 14px;display:flex;align-items:center;gap:10px;font-size:13px;animation:c10-up calc(380ms * var(--k)) var(--snap) both}
+.errbar .ic{color:var(--red)}
+.errbar button{margin-left:auto;font-weight:500;letter-spacing:.06em;padding:5px 10px;border-radius:2px;background:var(--red);color:#fff}
+.errbar button.x{background:none;margin-left:0;color:var(--redtx2)}
+/* ============================== sheets: safelight panel ============================== */
+.dim{position:absolute;inset:0;background:rgba(30,6,4,0);transition:background calc(360ms * var(--k));z-index:30}
+.dim.in{background:rgba(32,6,4,.66)}
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:31;background:var(--redbg);color:var(--redtx);border-radius:14px 14px 0 0;padding:12px 20px 34px;box-shadow:0 -1px 0 var(--redline),0 -40px 90px -20px rgba(220,60,50,.3);transform:translateY(104%);transition:transform calc(380ms * var(--k)) var(--snap);max-height:84%;display:flex;flex-direction:column}
+.sheet.in{transform:none}
+.handle{width:40px;height:4px;border-radius:2px;background:rgba(255,217,209,.3);margin:0 auto 12px;flex:0 0 auto}
+.sheet h2{margin:0;font-size:20px;font-weight:500;letter-spacing:.02em;display:flex;align-items:center;justify-content:space-between}
+.sheet h2 .x{width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:var(--redtx2)}
+.sheet .lamp{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.22em;color:var(--red);text-transform:uppercase;margin-bottom:4px}
+.sheet .idb{display:flex;gap:10px;align-items:center;margin:12px 0 0;padding:10px 12px;background:rgba(255,217,209,.06);border-radius:4px}
+.sheet .idb .mini{width:34px;height:24px;background:var(--base);border-radius:1px;box-shadow:inset 0 4px 0 var(--rail),inset 0 -4px 0 var(--rail);flex:0 0 auto}
+.sheet .idb .t{font-size:13.5px;font-weight:500;line-height:1.3}
+.sheet .idb .w{font-size:11.5px;color:var(--redtx2);font-family:"Space Mono",monospace}
+.sheet p{margin:10px 0 0;font-size:13.5px;line-height:1.65;color:var(--redtx2)}
+.sheet .irr{margin-top:10px;padding:9px 12px;border-left:2px solid var(--red);font-size:12.5px;color:var(--redtx);line-height:1.55}
+.sheet .aff{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.sheet .aff div{background:rgba(255,217,209,.06);padding:8px 10px;border-radius:3px;font-size:11.5px;color:var(--redtx2)}
+.sheet .aff b{display:block;font-family:"Space Mono",monospace;font-weight:700;font-size:20px;color:var(--redtx);line-height:1.1}
+.sheet .row2{display:flex;gap:10px;margin-top:18px;flex:0 0 auto}
+.sheet .row2 .btn{flex:1 1 auto;height:46px}
+.sheet .btn.sec{box-shadow:inset 0 0 0 1px rgba(255,217,209,.35);color:var(--redtx)}
+.sheet .btn.pri{background:var(--red);color:#fff6f2}
+.sheet .btn.lit{background:var(--redtx);color:var(--redbg)}
+.sheet .btn:disabled{opacity:.4}
+.inputs{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.inputs label{font-size:11px;color:var(--redtx2);letter-spacing:.06em}
+.inputs input{display:block;width:100%;margin-top:4px;height:40px;border-radius:3px;border:1px solid rgba(255,217,209,.3);background:rgba(0,0,0,.3);color:var(--redtx);padding:0 10px;font-family:"Space Mono",monospace;font-size:13px;color-scheme:dark;outline:none}
+.sheet .cmp{color:var(--redtx)}
+.sheet .cmp .ph{color:var(--redtx2);font-family:"Noto Sans SC",sans-serif}
+.sheet .same{font-size:12px;color:#ff9d92;margin-top:6px}
+.rs{overflow:auto;margin-top:8px;padding-right:4px;flex:1 1 auto;min-height:0;max-height:52vh;scrollbar-width:none}
+.rs::-webkit-scrollbar{display:none}
+.rs h3{margin:14px 0 4px;font-size:14px;font-weight:500;letter-spacing:.06em;display:flex;gap:8px;align-items:baseline}
+.rs h3 .k{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.2em;color:var(--red);text-transform:uppercase}
+.rs ul{margin:0;padding-left:16px;font-size:13px;line-height:1.65;color:var(--redtx2)}
+.rs li{margin-bottom:4px}
+.rs .endmk{text-align:center;font-family:"Space Mono",monospace;font-size:9.5px;letter-spacing:.24em;padding:18px 0 6px;color:var(--redtx2)}
+.rs .inertl{font-size:12px;color:rgba(255,217,209,.4);margin-top:6px}
+.rhint{font-size:12px;color:var(--redtx2);margin-top:10px;text-align:center}
+.rhint.ok{color:var(--redtx)}
+.cardfr{margin-top:12px;background:var(--base);border-radius:2px}
+.cardfr .perf{--hole:#2a0b0a;height:18px}
+.cardfr .cf{margin:0 6px;background:var(--frd);color:var(--cream);padding:16px 16px 14px;position:relative;min-height:170px}
+.cardfr .cf .en{font-family:"Space Mono",monospace;font-size:9px;letter-spacing:.22em;color:var(--edge)}
+.cardfr .cf .ttl{font-size:20px;font-weight:500;line-height:1.3;margin-top:4px}
+.cardfr .cf .tm{font-family:"Space Mono",monospace;font-weight:700;font-size:30px;margin-top:8px;line-height:1}
+.cardfr .cf .dm{font-family:"Space Mono",monospace;font-size:10.5px;letter-spacing:.12em;color:var(--cream2);text-transform:uppercase;margin-top:4px}
+.cardfr .cf .pl{font-size:12.5px;color:var(--cream2);margin-top:4px}
+.cardfr .cf .stl{position:absolute;right:14px;top:14px;font-size:11px;letter-spacing:.06em;padding:3px 8px;border-radius:2px;background:rgba(233,170,63,.18);color:var(--edge)}
+.cardfr .cf .capl{font-size:11.5px;color:var(--cream3);margin-top:8px;font-family:"Space Mono",monospace}
+.cardfr .cf .num{position:absolute;right:12px;bottom:8px;font-family:"Space Mono",monospace;font-size:8px;letter-spacing:.16em;opacity:.55;text-transform:uppercase}
+/* draft pane */
+.dv .hface.blank .dttl{font-family:"Long Cang",cursive;font-size:30px;color:var(--pencil);line-height:1.15}
+.dv .hface.blank .dttl.un{opacity:.6}
+.dv .dkv{margin-top:14px}
+.dv .dkv .kv dd{color:var(--cream)}
+/* widths guard */
+@media (max-width:370px){.film{--cw:252px;--fh:160px}.strip.lead .film{--cw:300px;--fh:196px}}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}">
+      <svg class="devsvg" aria-hidden="true"><defs>
+        <radialGradient id="c10-meltg"><stop offset="0" stop-color="#ffc67a"/><stop offset=".5" stop-color="#8a4a1c"/><stop offset="1" stop-color="#1a0e07"/></radialGradient>
+      </defs></svg>
+      <!-- ============================== HOME ============================== -->
+      <div class="home {{home.cls}} {{home.colCls}}">
+        <header class="hd">
+          <div class="t1">
+            <h1><span class="sub">JU · 暗房 · 接触印样</span>我的局</h1>
+            <span class="datepill">{{home.datePill}}</span>
+          </div>
+          <div class="rolls-tabs" role="tablist" aria-label="身份">
+            <div class="ind {{home.indCls}}"></div>
+            <button type="button" class="role {{home.joinedOn}}" role="tab" onClick="{{home.toJoined}}" aria-label="我参加的，{{J.badge}} 项要你回应"><span class="reel">A</span>我参加的 <span class="badge {{J.badgeCls}}">{{J.badge}}</span></button>
+            <button type="button" class="role {{home.hostedOn}}" role="tab" onClick="{{home.toHosted}}" aria-label="我发起的，{{H.badge}} 项待你处理"><span class="reel">B</span>我发起的 <span class="badge {{H.badgeCls}}">{{H.badge}}</span></button>
+          </div>
+        </header>
+        <div class="secs" role="tablist" aria-label="分区">
+          <sc-if value="{{home.isJoined}}" hint-placeholder-val="{{true}}">
+            <button type="button" class="stab {{secs.j.cur.cls}}" role="tab" onClick="{{secs.j.cur.go}}">当前</button>
+            <button type="button" class="stab {{secs.j.his.cls}}" role="tab" onClick="{{secs.j.his.go}}">历史 <span class="n">{{secs.j.his.n}}</span></button>
+          </sc-if>
+          <sc-if value="{{home.isHosted}}" hint-placeholder-val="{{false}}">
+            <button type="button" class="stab {{secs.h.cur.cls}}" role="tab" onClick="{{secs.h.cur.go}}">当前</button>
+            <button type="button" class="stab {{secs.h.dr.cls}}" role="tab" onClick="{{secs.h.dr.go}}">草稿 <span class="n">{{secs.h.dr.n}}</span></button>
+            <button type="button" class="stab {{secs.h.his.cls}}" role="tab" onClick="{{secs.h.his.go}}">历史 <span class="n">{{secs.h.his.n}}</span></button>
+          </sc-if>
+          <span class="sheetno">{{home.sheetNo}}</span>
+        </div>
+        <div class="rolls {{home.rollsCls}}">
+          <!-- roll A: joined -->
+          <div class="roll j {{home.exposeJ}}" onScroll="{{home.scrollJ}}">
+            <sc-if value="{{J.showCurrent}}" hint-placeholder-val="{{true}}">
+              <sc-if value="{{J.empty}}" hint-placeholder-val="{{false}}">
+                <div class="emp"><div class="perf"></div><div class="fr"><div class="fr-in"><h3>{{J.emptyTitle}}</h3><p>{{J.emptyBody}}</p><span class="act inert">去找局 <small>· 找局模块 · 本范围不演示</small></span></div></div><div class="perf bot"></div></div>
+              </sc-if>
+              <sc-for list="{{J.strips}}" as="g" hint-placeholder-count="2">
+                <section class="strip {{g.cls}}" data-grp="{{g.key}}">
+                  <header class="glab"><span class="gzh">{{g.zh}}</span><span class="gn">{{g.n}}</span><span class="gnote">{{g.note}}</span></header>
+                  <div class="film"><div class="lbox"></div><div class="sheen"></div>
+                    <div class="track" onScroll="{{g.onScroll}}">
+                      <sc-for list="{{g.frames}}" as="f" hint-placeholder-count="3">
+                        <div class="cell {{f.cellCls}}" data-rid="{{f.id}}">
+                          <div class="perf"><span class="fno">{{f.no}}</span><span class="fno a">{{f.noA}}</span></div>
+                          <button type="button" class="fr {{f.frCls}}" onClick="{{f.open}}" aria-label="{{f.aria}}">
+                            <div class="lbx"></div>
+                            <sc-if value="{{f.residue}}" hint-placeholder-val="{{false}}"><div class="hole"></div><i class="bead" style="left:38%"></i><i class="bead" style="left:52%;width:5px"></i></sc-if>
+                            <div class="fr-in">
+                              <div class="fttl">{{f.title}}</div>
+                              <div class="ftm"><span class="t {{f.tCls}}">{{f.time}}</span><span class="d">{{f.date}}</span><span class="p">{{f.hood}}</span></div>
+                              <div class="fst {{f.tone}}"><i class="dot"></i><span class="lb">{{f.label}}</span><sc-if value="{{f.hasCd}}" hint-placeholder-val="{{false}}"><span class="cd">剩 {{f.leftText}}</span></sc-if><sc-if value="{{f.newTime}}" hint-placeholder-val="{{false}}"><span class="new">改为 {{f.newTime}}</span></sc-if></div>
+                              <sc-if value="{{f.showSeats}}" hint-placeholder-val="{{false}}"><div class="seats"><sc-for list="{{f.seats}}" as="sq" hint-placeholder-count="4"><i class="sq {{sq.cls}}"></i></sc-for></div></sc-if>
+                              <sc-if value="{{f.need}}" hint-placeholder-val="{{true}}"><div class="fneed">{{f.need}}</div></sc-if>
+                              <sc-if value="{{f.hasDeadline}}" hint-placeholder-val="{{false}}"><div class="fbar"><i style="--r:{{f.leftRatio}}"></i></div></sc-if>
+                              <sc-if value="{{f.isLead}}" hint-placeholder-val="{{false}}"><span class="fcta">{{f.cta}} <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></sc-if>
+                              <sc-if value="{{f.isRow}}" hint-placeholder-val="{{true}}"><div class="fentry">{{f.entry}} ›</div></sc-if>
+                            </div>
+                            <sc-if value="{{f.mark}}" hint-placeholder-val="{{false}}"><span class="pmark {{f.markCls}}">{{f.mark}}</span></sc-if>
+                            <span class="fcap">{{f.cap}}</span>
+                          </button>
+                          <div class="perf bot"><span class="fno">{{f.eprint}}</span></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </section>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{J.showHistory}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{J.hEmpty}}" hint-placeholder-val="{{false}}">
+                <div class="emp"><div class="perf"></div><div class="fr"><div class="fr-in"><h3>{{J.hEmptyTitle}}</h3><p>{{J.hEmptyBody}}</p><button type="button" class="act" onClick="{{secs.j.cur.go}}">回到当前 ›</button></div></div><div class="perf bot"></div></div>
+              </sc-if>
+              <sc-for list="{{J.hstrips}}" as="g" hint-placeholder-count="2">
+                <section class="strip {{g.cls}}" data-grp="{{g.key}}">
+                  <header class="glab"><span class="gzh">{{g.zh}}</span><span class="gn">{{g.n}}</span><span class="gnote">{{g.note}}</span></header>
+                  <div class="film"><div class="sheen"></div>
+                    <div class="track">
+                      <sc-for list="{{g.frames}}" as="f" hint-placeholder-count="3">
+                        <div class="cell {{f.cellCls}}" data-rid="{{f.id}}">
+                          <div class="perf"><span class="fno">{{f.no}}</span><span class="fno a">{{f.noA}}</span></div>
+                          <button type="button" class="fr {{f.frCls}}" onClick="{{f.open}}" aria-label="{{f.aria}}">
+                            <sc-if value="{{f.residue}}" hint-placeholder-val="{{false}}"><div class="hole"></div><i class="bead" style="left:38%"></i><i class="bead" style="left:52%;width:5px"></i></sc-if>
+                            <div class="fr-in">
+                              <div class="fttl">{{f.title}}</div>
+                              <div class="ftm"><span class="t">{{f.time}}</span><span class="d">{{f.date}}</span><span class="p">{{f.hood}}</span></div>
+                              <div class="fst {{f.tone}}"><i class="dot"></i><span class="lb">{{f.label}}</span></div>
+                              <div class="fneed">{{f.need}}</div>
+                              <div class="fentry">{{f.entry}} ›</div>
+                            </div>
+                            <sc-if value="{{f.mark}}" hint-placeholder-val="{{false}}"><span class="pmark {{f.markCls}}">{{f.mark}}</span></sc-if>
+                            <span class="fcap">{{f.cap}}</span>
+                          </button>
+                          <div class="perf bot"><span class="fno">{{f.eprint}}</span></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </section>
+              </sc-for>
+            </sc-if>
+          </div>
+          <!-- roll B: hosted -->
+          <div class="roll h {{home.exposeH}}" onScroll="{{home.scrollH}}">
+            <sc-if value="{{H.showCurrent}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{H.empty}}" hint-placeholder-val="{{false}}">
+                <div class="emp"><div class="perf"></div><div class="fr"><div class="fr-in"><h3>{{H.emptyTitle}}</h3><p>{{H.emptyBody}}</p>
+                  <sc-if value="{{H.emptyToDrafts}}" hint-placeholder-val="{{false}}"><button type="button" class="act" onClick="{{secs.h.dr.go}}">接着改草稿 ›</button></sc-if>
+                  <sc-if value="{{H.emptyFirst}}" hint-placeholder-val="{{true}}"><span class="act inert">去开局 <small>· 开局模块 · 本范围不演示</small></span></sc-if>
+                </div></div><div class="perf bot"></div></div>
+              </sc-if>
+              <sc-for list="{{H.strips}}" as="g" hint-placeholder-count="2">
+                <section class="strip {{g.cls}}" data-grp="{{g.key}}">
+                  <header class="glab"><span class="gzh">{{g.zh}}</span><span class="gn">{{g.n}}</span><span class="gnote">{{g.note}}</span></header>
+                  <div class="film"><div class="lbox"></div><div class="sheen"></div>
+                    <div class="track" onScroll="{{g.onScroll}}">
+                      <sc-for list="{{g.frames}}" as="f" hint-placeholder-count="3">
+                        <div class="cell {{f.cellCls}}" data-rid="{{f.id}}">
+                          <div class="perf"><span class="fno">{{f.no}}</span><span class="fno a">{{f.noA}}</span></div>
+                          <button type="button" class="fr {{f.frCls}}" onClick="{{f.open}}" aria-label="{{f.aria}}">
+                            <div class="lbx"></div>
+                            <div class="fr-in">
+                              <div class="fttl">{{f.title}}</div>
+                              <div class="ftm"><span class="t">{{f.time}}</span><span class="d">{{f.date}}</span><span class="p">{{f.hood}}</span></div>
+                              <div class="fst {{f.tone}}"><i class="dot"></i><span class="lb">{{f.label}}</span><span class="new">· {{f.life}}</span></div>
+                              <sc-if value="{{f.showSeats}}" hint-placeholder-val="{{true}}"><div class="seats"><sc-for list="{{f.seats}}" as="sq" hint-placeholder-count="4"><i class="sq {{sq.cls}}"></i></sc-for></div></sc-if>
+                              <div class="fneed">{{f.need}}</div>
+                              <sc-if value="{{f.isLead}}" hint-placeholder-val="{{false}}"><span class="fcta">{{f.cta}} <svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></span></sc-if>
+                              <sc-if value="{{f.isRow}}" hint-placeholder-val="{{true}}"><div class="fentry">{{f.entry}} ›</div></sc-if>
+                            </div>
+                            <span class="fcap">{{f.cap}}</span>
+                          </button>
+                          <div class="perf bot"><span class="fno">{{f.eprint}}</span></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </section>
+              </sc-for>
+            </sc-if>
+            <sc-if value="{{H.showDrafts}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{H.dEmpty}}" hint-placeholder-val="{{false}}">
+                <div class="emp"><div class="perf"></div><div class="fr"><div class="fr-in"><h3>{{H.dEmptyTitle}}</h3><p>{{H.dEmptyBody}}</p><span class="act inert">去开局 <small>· 开局模块 · 本范围不演示</small></span></div></div><div class="perf bot"></div></div>
+              </sc-if>
+              <sc-if value="{{H.dShow}}" hint-placeholder-val="{{true}}">
+                <section class="strip" data-grp="drafts">
+                  <header class="glab"><span class="gzh">草稿</span><span class="gn">{{H.dN}}</span><span class="gnote">还没曝光的格 · 补完就能发布</span></header>
+                  <div class="film"><div class="sheen"></div>
+                    <div class="track">
+                      <sc-for list="{{H.drafts}}" as="d" hint-placeholder-count="2">
+                        <div class="cell {{d.cellCls}}" data-rid="{{d.id}}">
+                          <div class="perf"><span class="fno">{{d.no}}</span><span class="fno a">{{d.noA}}</span></div>
+                          <button type="button" class="fr draft" onClick="{{d.open}}" aria-label="草稿 {{d.title}}">
+                            <div class="fr-in">
+                              <div class="dttl {{d.ttlCls}}">{{d.title}}</div>
+                              <div class="dline">{{d.whenText}} · {{d.placeText}} · {{d.capText}}</div>
+                              <div class="dcmp {{d.cmpCls}}">{{d.missingText}}</div>
+                              <div class="dfoot"><span class="dline">{{d.agoText}}{{d.sourceText}}</span><span class="inert">继续编辑 › <small>开局模块 · 不在本范围</small></span></div>
+                            </div>
+                            <span class="fcap">DRAFT · 未曝光</span>
+                          </button>
+                          <button type="button" class="del" data-act="delete" onClick="{{d.del}}" aria-label="删除草稿「{{d.title}}」，可撤销"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10 11v5M14 11v5"></path></svg></button>
+                          <div class="perf bot"><span class="fno">{{d.eprint}}</span></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </section>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{H.showHistory}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{H.hEmpty}}" hint-placeholder-val="{{false}}">
+                <div class="emp"><div class="perf"></div><div class="fr"><div class="fr-in"><h3>{{H.hEmptyTitle}}</h3><p>{{H.hEmptyBody}}</p><button type="button" class="act" onClick="{{secs.h.cur.go}}">回到当前 ›</button></div></div><div class="perf bot"></div></div>
+              </sc-if>
+              <sc-for list="{{H.hstrips}}" as="g" hint-placeholder-count="2">
+                <section class="strip {{g.cls}}" data-grp="{{g.key}}">
+                  <header class="glab"><span class="gzh">{{g.zh}}</span><span class="gn">{{g.n}}</span><span class="gnote">{{g.note}}</span></header>
+                  <div class="film"><div class="sheen"></div>
+                    <div class="track">
+                      <sc-for list="{{g.frames}}" as="f" hint-placeholder-count="3">
+                        <div class="cell {{f.cellCls}}" data-rid="{{f.id}}">
+                          <div class="perf"><span class="fno">{{f.no}}</span><span class="fno a">{{f.noA}}</span></div>
+                          <button type="button" class="fr {{f.frCls}}" onClick="{{f.open}}" aria-label="{{f.aria}}">
+                            <sc-if value="{{f.residue}}" hint-placeholder-val="{{false}}"><div class="hole"></div><i class="bead" style="left:38%"></i><i class="bead" style="left:52%;width:5px"></i></sc-if>
+                            <div class="fr-in">
+                              <div class="fttl">{{f.title}}</div>
+                              <div class="ftm"><span class="t">{{f.time}}</span><span class="d">{{f.date}}</span><span class="p">{{f.hood}}</span></div>
+                              <div class="fst {{f.tone}}"><i class="dot"></i><span class="lb">{{f.label}}</span></div>
+                              <sc-if value="{{f.showSeats}}" hint-placeholder-val="{{false}}"><div class="seats"><sc-for list="{{f.seats}}" as="sq" hint-placeholder-count="4"><i class="sq {{sq.cls}}"></i></sc-for></div></sc-if>
+                              <div class="fneed">{{f.need}}</div>
+                              <div class="fentry">{{f.entry}} ›</div>
+                            </div>
+                            <sc-if value="{{f.mark}}" hint-placeholder-val="{{false}}"><span class="pmark {{f.markCls}}">{{f.mark}}</span></sc-if>
+                            <span class="fcap">{{f.cap}}</span>
+                          </button>
+                          <div class="perf bot"><span class="fno">{{f.eprint}}</span></div>
+                        </div>
+                      </sc-for>
+                    </div>
+                  </div>
+                </section>
+              </sc-for>
+            </sc-if>
+          </div>
+        </div>
+        <sc-if value="{{H.undo}}" hint-placeholder-val="{{false}}"><div class="undo c10-over" role="status">已删除<b>「{{H.undo.title}}」</b><button type="button" data-act="undo" onClick="{{H.undo.go}}">撤销</button><i class="fuse"></i></div></sc-if>
+        <nav class="nav" aria-label="主导航">
+          <span class="ni"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"></circle><path d="M16 16l4 4"></path></svg>找局</span>
+          <span class="ni"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>开局</span>
+          <span class="ni on"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="1"></rect><path d="M3 9h18M3 15h18M7 6v3M12 6v3M17 6v3M7 15v3M12 15v3M17 15v3"></path></svg>我的局</span>
+          <span class="ni"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"></path></svg>设置</span>
+        </nav>
+      </div>
+      <!-- ============================== PARTICIPANT DETAIL ============================== -->
+      <sc-if value="{{D.on}}" hint-placeholder-val="{{false}}">
+        <div class="pane dt c10-over {{D.phase}} {{D.anim}}" style="{{D.clip}}" role="dialog" aria-label="{{D.title}}">
+          <div class="pane-in" style="{{D.inner}}">
+            <div class="bar2"><button type="button" class="back" data-act="back" onClick="{{D.close}}" aria-label="返回我参加的"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>返回 我参加的 · {{D.secLabel}}</button><span class="pstat {{D.tone}}"><i class="dot"></i>{{D.label}}</span></div>
+            <div class="pbody body">
+              <!-- hero frame on the lightbox (card-type stages, history) -->
+              <sc-if value="{{D.showHero}}" hint-placeholder-val="{{true}}">
+                <div class="lbwrap"><div class="lbglow"></div>
+                  <div class="hero melt {{D.heroMeltCls}} {{D.heroCls}}" style="--mask:url(#c10-melt-hero);--reach:250px"><div class="face">
+                    <div class="perf"><span class="fno">{{D.no}}</span><span class="fno a">{{D.noA}}</span></div>
+                    <div class="hface {{D.hfaceCls}}">
+                      <div class="ttl {{D.ttlCls}}">{{D.title}}</div>
+                      <div class="tmrow"><span class="tm">{{D.time}}</span><span class="dm">{{D.date}}</span></div>
+                      <div class="pl">{{D.placeFull}}</div>
+                      <sc-if value="{{D.mark}}" hint-placeholder-val="{{false}}"><span class="pst"><span class="pen {{D.markCls}}">{{D.mark}}</span></span></sc-if>
+                      <sc-if value="{{D.pencilNote}}" hint-placeholder-val="{{false}}"><span class="pencilnote">{{D.pencilNote}}</span></sc-if>
+                      <span class="cap">{{D.cap}}</span>
+                    </div>
+                    <div class="perf bot"><span class="fno">{{D.eprint}}</span></div>
+                  </div>
+                  <svg class="msvg" viewBox="0 0 358 206" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c10-melt-hero" maskUnits="userSpaceOnUse" x="0" y="0" width="358" height="206"><rect width="358" height="206" fill="#fff"></rect><circle class="mh" cx="179" cy="103" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="mo" cx="179" cy="103" r="0" fill="none" stroke="#5c3416" stroke-width="30" filter="url(#fx-rough-strong)"></circle><circle class="mr" cx="179" cy="103" r="0" fill="none" stroke="#120a06" stroke-width="18" filter="url(#fx-rough-strong)"></circle><circle class="mg" cx="179" cy="103" r="0" fill="none" stroke="#ffb864" stroke-width="4" filter="url(#fx-rough)"></circle></svg>
+                  </div>
+                  <div class="bubs"><i class="bub" style="--s:14px;--d:0ms;left:46%;top:44%"></i><i class="bub" style="--s:9px;--d:120ms;left:54%;top:38%"></i><i class="bub" style="--s:11px;--d:260ms;left:40%;top:52%"></i><i class="bub" style="--s:7px;--d:380ms;left:58%;top:56%"></i><i class="bub" style="--s:12px;--d:520ms;left:33%;top:36%"></i><i class="bub" style="--s:8px;--d:640ms;left:62%;top:30%"></i><i class="bub" style="--s:6px;--d:760ms;left:50%;top:64%"></i></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{D.showResidue}}" hint-placeholder-val="{{false}}">
+                <div class="rsd"><div class="hole"></div><i class="bead" style="left:36%"></i><i class="bead" style="left:48%;width:6px"></i><i class="bead" style="left:60%;width:5px;height:4px"></i><div class="rtx"><b>{{D.resTitle}}</b>{{D.resLine}}</div><span class="rlb">VOID · 已熔穿</span></div>
+              </sc-if>
+              <!-- ticket surface: developing tray + print + negative stub -->
+              <sc-if value="{{D.showTicket}}" hint-placeholder-val="{{false}}">
+                <div class="tray {{D.tk.trayCls}}">
+                  <div class="traybox">
+                    <sc-if value="{{D.tk.showOld}}" hint-placeholder-val="{{false}}">
+                      <div class="tk old printed"><div class="face"><div class="print"><div class="pimg"><span class="en">JU · 票根 · V{{D.tk.oldVer}}</span><div class="ttl">{{D.title}}</div><div class="tmrow"><span class="tm">{{D.tk.oldTime}}</span><span class="dm">{{D.tk.oldDate}}</span></div><span class="pstamp">改期</span></div><div class="pcap"><span class="mono">旧版 · 答复前不能用</span></div></div></div></div>
+                    </sc-if>
+                    <div class="tk melt {{D.tk.cls}}" style="--mask:url(#c10-melt-tk);--reach:262px">
+                      <div class="tongs"></div>
+                      <div class="face">
+                        <div class="print">
+                          <div class="pimg {{D.tk.imgCls}}" style="--mask:url(#c10-dev-tk)">
+                            <span class="en">JU · 票根 · V{{D.tk.ver}}</span>
+                            <div class="ttl">{{D.title}}</div>
+                            <div class="tmrow"><span class="tm">{{D.time}}</span><span class="dm">{{D.date}}</span></div>
+                            <sc-if value="{{D.tk.oldLine}}" hint-placeholder-val="{{false}}"><div class="row old">原定 <s>{{D.tk.oldLine}}</s></div></sc-if>
+                            <div class="row"><span>地点</span><b>{{D.placeFull}}</b></div>
+                            <div class="row"><span>集合</span><b>{{D.tk.meeting}}</b></div>
+                            <div class="row"><span>局主</span><b>{{D.hostName}}</b></div>
+                            <sc-if value="{{D.tk.stamp}}" hint-placeholder-val="{{false}}"><span class="pstamp {{D.tk.stampCls}}">时间已改</span></sc-if>
+                            <span class="num">{{D.cap}}</span>
+                            <svg class="devsvg" aria-hidden="true"><defs><mask id="c10-dev-tk" maskUnits="userSpaceOnUse" x="0" y="0" width="340" height="230"><rect width="340" height="230" fill="#000"></rect><circle class="dh d1" cx="80" cy="150" r="0" fill="#fff" filter="url(#fx-rough-strong)" style="--reach:300px"></circle><circle class="dh d2" cx="250" cy="60" r="0" fill="#fff" filter="url(#fx-rough-strong)" style="--reach:300px"></circle><circle class="dh d3" cx="200" cy="200" r="0" fill="#fff" filter="url(#fx-rough-strong)" style="--reach:300px"></circle></mask></defs></svg>
+                          </div>
+                          <div class="pcap"><span class="pen">{{D.tk.pencil}}</span><span class="mono">{{D.tk.capMono}}</span></div>
+                        </div>
+                        <sc-if value="{{D.tk.showNeg}}" hint-placeholder-val="{{false}}">
+                          <div class="negwrap {{D.tk.negCls}}" style="--p:{{D.tk.p}}" onPointerDown="{{D.tk.down}}" onPointerMove="{{D.tk.move}}" onPointerUp="{{D.tk.up}}" onPointerCancel="{{D.tk.up}}" data-act="tear" role="slider" aria-label="拖动裁刀，剪下副券" aria-valuenow="{{D.tk.pPct}}">
+                            <div class="negs b"><div class="perf"></div><div class="nfr"><b>副券 · STUB</b><span>{{D.tk.negText}}</span><span class="arrow">→</span></div><div class="perf bot"></div></div>
+                            <div class="negs a"><div class="perf"></div><div class="nfr"><b>副券 · STUB</b><span>{{D.tk.negText}}</span><span class="arrow">→</span></div><div class="perf bot"></div></div>
+                            <div class="cutshadow"></div><div class="cut"></div><div class="blade"></div>
+                          </div>
+                        </sc-if>
+                      </div>
+                      <svg class="msvg" viewBox="0 0 340 372" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c10-melt-tk" maskUnits="userSpaceOnUse" x="0" y="0" width="340" height="372"><rect width="340" height="372" fill="#fff"></rect><circle class="mh" cx="170" cy="180" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="mo" cx="170" cy="180" r="0" fill="none" stroke="#5c3416" stroke-width="30" filter="url(#fx-rough-strong)"></circle><circle class="mr" cx="170" cy="180" r="0" fill="none" stroke="#120a06" stroke-width="18" filter="url(#fx-rough-strong)"></circle><circle class="mg" cx="170" cy="180" r="0" fill="none" stroke="#ffb864" stroke-width="4" filter="url(#fx-rough)"></circle></svg>
+                      <div class="bubs"><i class="bub" style="--s:14px;--d:0ms;left:46%;top:44%"></i><i class="bub" style="--s:9px;--d:120ms;left:54%;top:38%"></i><i class="bub" style="--s:11px;--d:260ms;left:40%;top:52%"></i><i class="bub" style="--s:7px;--d:380ms;left:58%;top:56%"></i><i class="bub" style="--s:12px;--d:520ms;left:34%;top:36%"></i><i class="bub" style="--s:8px;--d:640ms;left:62%;top:30%"></i><i class="bub" style="--s:6px;--d:760ms;left:50%;top:64%"></i></div>
+                      <sc-if value="{{D.tk.veil}}" hint-placeholder-val="{{false}}"><div class="busyveil"></div></sc-if>
+                    </div>
+                    <div class="liquid"><span class="lbl">DEV · 显影盘</span></div>
+                  </div>
+                  <sc-if value="{{D.tk.showSleeve}}" hint-placeholder-val="{{false}}">
+                    <div class="sleeve"><span>底片袋 · 剪下的副券</span><sc-for list="{{D.tk.stubs}}" as="st" hint-placeholder-count="1"><i class="ms {{st.cls}}"></i></sc-for><span class="cnt">{{D.tk.stubCount}}</span></div>
+                  </sc-if>
+                  <sc-if value="{{D.tk.stat}}" hint-placeholder-val="{{false}}"><div class="tkstat"><span>{{D.tk.stat}}</span><b>{{D.tk.statB}}</b></div></sc-if>
+                </div>
+                <sc-if value="{{D.tk.showContact}}" hint-placeholder-val="{{false}}">
+                  <div class="contact" role="region" aria-label="联系局主">
+                    <div class="who">SAFELIGHT · 局主联系方式</div>
+                    <div class="nm">局主 · {{D.hostName}}</div>
+                    <div class="wx"><b>{{D.hostWx}}</b><button type="button" class="cp {{D.tk.copiedCls}}" data-act="copy" onClick="{{D.tk.copy}}">{{D.tk.copyLabel}}</button></div>
+                    <div class="note">{{D.tk.contactNote}}</div>
+                    <sc-if value="{{D.tk.canContacted}}" hint-placeholder-val="{{true}}"><button type="button" class="btn pri {{D.tk.contactedBusy}}" data-act="contacted" onClick="{{D.tk.contacted}}">{{D.tk.contactedLabel}}</button></sc-if>
+                    <sc-if value="{{D.tk.goingBtn}}" hint-placeholder-val="{{false}}"><button type="button" class="btn pri" disabled="{{true}}">待赴约</button></sc-if>
+                  </div>
+                </sc-if>
+              </sc-if>
+              <!-- status block -->
+              <sc-if value="{{D.showStatus}}" hint-placeholder-val="{{true}}">
+                <div class="blk first">
+                  <div class="stt {{D.sttCls}}">{{D.detailTitle}}</div>
+                  <div class="sneed">{{D.need}}</div>
+                  <sc-if value="{{D.hasDeadline}}" hint-placeholder-val="{{false}}"><div class="count">{{D.leftText}}<small>预留剩余 · {{D.deadlineCopy}}</small></div><div class="bar6 {{D.barCls}}"><i style="--r:{{D.leftRatio}}"></i></div></sc-if>
+                  <sc-if value="{{D.queueLine}}" hint-placeholder-val="{{false}}"><div class="count">{{D.queueNo}}<small>{{D.queueLine}}</small></div></sc-if>
+                </div>
+              </sc-if>
+              <!-- result block for closed stages -->
+              <sc-if value="{{D.showResult}}" hint-placeholder-val="{{false}}">
+                <div class="resblk">
+                  <div class="big">{{D.detailTitle}}</div>
+                  <div class="why">{{D.need}}</div>
+                  <sc-if value="{{D.resWhen}}" hint-placeholder-val="{{false}}"><div class="whyline">原定 {{D.resWhen}}</div></sc-if>
+                  <sc-if value="{{D.fact}}" hint-placeholder-val="{{false}}"><div class="fact">{{D.fact}}</div></sc-if>
+                </div>
+              </sc-if>
+              <!-- members as a contact sheet -->
+              <sc-if value="{{D.showMembers}}" hint-placeholder-val="{{true}}">
+                <div class="blk">
+                  <div class="bh"><h3>{{D.memTitle}} <span class="n">{{D.memCount}}</span></h3><span class="hint">含局主 · 点开才显名字</span></div>
+                  <div class="cs"><sc-for list="{{D.members}}" as="m" hint-placeholder-count="4"><div class="c {{m.cls}}"><span class="rl">{{m.role}}</span>{{m.ini}}<span class="no">{{m.no}}</span><span class="nm">{{m.name}}</span></div></sc-for></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{D.showQueue}}" hint-placeholder-val="{{false}}">
+                <div class="blk">
+                  <div class="bh"><h3>候补 <span class="n">{{D.queueN}}</span></h3><span class="hint">不占席位 · 按加入顺序</span></div>
+                  <div class="cs q"><sc-for list="{{D.queue}}" as="q" hint-placeholder-count="2"><div class="c {{q.cls}}">{{q.name}}<span class="no">{{q.no}}</span></div></sc-for></div>
+                  <div class="help">轮到后需在 6 小时内确认。候补尚未留位，按加入顺序邀请。</div>
+                </div>
+              </sc-if>
+              <!-- history: attendance + records -->
+              <sc-if value="{{D.showRecords}}" hint-placeholder-val="{{false}}">
+                <div class="blk">
+                  <div class="bh"><h3>出席记录</h3><span class="hint">局主记录的事实 · 不评分</span></div>
+                  <div class="sneed">{{D.attendanceText}}</div>
+                  <sc-for list="{{D.records}}" as="r" hint-placeholder-count="1"><div class="rec {{r.cls}}"><span class="at">{{r.at}}</span><span>{{r.text}}</span></div></sc-for>
+                  <div class="noteform"><input type="text" placeholder="补充一句（例如：当天高烧，已私信局主）" value="{{D.note}}" onInput="{{D.noteInput}}" aria-label="补充说明"><button type="button" onClick="{{D.addNote}}" disabled="{{D.noteDisabled}}">记下</button></div>
+                  <div class="whyline">{{D.contactLine}}</div>
+                </div>
+              </sc-if>
+              <!-- info -->
+              <sc-if value="{{D.showInfo}}" hint-placeholder-val="{{true}}">
+                <div class="blk">
+                  <dl class="kv"><dt>时间</dt><dd class="m">{{D.whenLong}}</dd><dt>地点</dt><dd>{{D.placeFull}}</dd><dt>局主</dt><dd>{{D.hostName}}</dd><sc-if value="{{D.noteText}}" hint-placeholder-val="{{false}}"><dt>局主说</dt><dd>{{D.noteText}}</dd></sc-if><dt>方式</dt><dd>{{D.joinMode}} · {{D.capText}}</dd></dl>
+                </div>
+                <button type="button" class="lnk" onClick="{{D.openRules}}">参加约定 › <small>确认 · 信用 · 赴约</small></button>
+              </sc-if>
+              <!-- actions -->
+              <sc-if value="{{D.act.on}}" hint-placeholder-val="{{true}}">
+                <div class="btns">
+                  <sc-if value="{{D.act.primary}}" hint-placeholder-val="{{true}}"><button type="button" class="btn pri {{D.act.primaryBusy}}" data-act="{{D.act.primaryAct}}" onClick="{{D.act.primary.go}}" disabled="{{D.act.primary.disabled}}">{{D.act.primary.label}}</button></sc-if>
+                  <sc-if value="{{D.act.secondary}}" hint-placeholder-val="{{true}}"><button type="button" class="btn dng" data-act="{{D.act.secondaryAct}}" onClick="{{D.act.secondary.go}}">{{D.act.secondary.label}}</button></sc-if>
+                  <sc-if value="{{D.act.hint}}" hint-placeholder-val="{{false}}"><div class="whyline">{{D.act.hint}}</div></sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{D.showBackBtn}}" hint-placeholder-val="{{false}}"><div class="btns"><button type="button" class="btn sec" onClick="{{D.close}}">回到列表</button></div></sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <!-- ============================== HOST MANAGE ============================== -->
+      <sc-if value="{{M.on}}" hint-placeholder-val="{{false}}">
+        <div class="pane mg c10-over {{M.phase}} {{M.anim}}" style="{{M.clip}}" role="dialog" aria-label="管理 {{M.title}}">
+          <div class="pane-in" style="{{M.inner}}">
+            <div class="bar2"><button type="button" class="back" data-act="back" onClick="{{M.close}}" aria-label="返回我的局"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>返回 我发起的</button><span class="pstat"><i class="dot" style="background:var(--pencil)"></i>灯箱 · 红蜡笔</span></div>
+            <div class="pbody body" onScroll="{{M.onScroll}}">
+              <sc-if value="{{M.showHero}}" hint-placeholder-val="{{true}}">
+                <div class="lbwrap"><div class="lbglow"></div>
+                  <div class="hero melt {{M.meltCls}} {{M.heroCls}}" style="--mask:url(#c10-melt-mg);--reach:222px"><div class="face">
+                    <div class="perf"><span class="fno">{{M.no}}</span><span class="fno a">{{M.noA}}</span></div>
+                    <div class="hface">
+                      <div class="ttl">{{M.title}}</div>
+                      <span class="life {{M.lifeCls}}">{{M.life}}</span>
+                      <div class="tmrow"><sc-if value="{{M.oldTime}}" hint-placeholder-val="{{false}}"><span class="tm strike">{{M.oldTime}}</span></sc-if><span class="tm {{M.whenCls}}">{{M.time}}</span><span class="dm">{{M.date}}</span></div>
+                      <div class="pl">{{M.placeFull}}</div>
+                      <div class="mstat {{M.statCls}}"><span class="m">{{M.status}}</span><span>· {{M.formedLine}}</span></div>
+                      <span class="cap">{{M.cap}}</span>
+                    </div>
+                    <div class="perf bot"><span class="fno">{{M.eprint}}</span></div>
+                  </div>
+                  <svg class="msvg" viewBox="0 0 358 236" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c10-melt-mg" maskUnits="userSpaceOnUse" x="0" y="0" width="358" height="236"><rect width="358" height="236" fill="#fff"></rect><circle class="mh" cx="179" cy="118" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="mo" cx="179" cy="118" r="0" fill="none" stroke="#5c3416" stroke-width="30" filter="url(#fx-rough-strong)"></circle><circle class="mr" cx="179" cy="118" r="0" fill="none" stroke="#120a06" stroke-width="18" filter="url(#fx-rough-strong)"></circle><circle class="mg" cx="179" cy="118" r="0" fill="none" stroke="#ffb864" stroke-width="4" filter="url(#fx-rough)"></circle></svg>
+                  </div>
+                  <div class="bubs"><i class="bub" style="--s:14px;--d:0ms;left:46%;top:46%"></i><i class="bub" style="--s:9px;--d:120ms;left:54%;top:40%"></i><i class="bub" style="--s:11px;--d:260ms;left:40%;top:54%"></i><i class="bub" style="--s:7px;--d:380ms;left:58%;top:58%"></i><i class="bub" style="--s:12px;--d:520ms;left:34%;top:38%"></i><i class="bub" style="--s:8px;--d:640ms;left:62%;top:32%"></i><i class="bub" style="--s:6px;--d:760ms;left:50%;top:66%"></i></div>
+                </div>
+              </sc-if>
+              <sc-if value="{{M.showResidue}}" hint-placeholder-val="{{false}}">
+                <div class="rsd lit"><div class="hole"></div><i class="bead" style="left:36%"></i><i class="bead" style="left:48%;width:6px"></i><i class="bead" style="left:60%;width:5px;height:4px"></i><div class="rtx"><b>{{M.title}}</b>已取消 · {{M.when}} · 票根作废 · 联系已关闭</div><span class="rlb">VOID · 已熔穿</span></div>
+              </sc-if>
+              <sc-if value="{{M.showProg}}" hint-placeholder-val="{{true}}">
+                <div class="prog"><div class="seats"><sc-for list="{{M.seats}}" as="sq" hint-placeholder-count="5"><i class="sq {{sq.cls}}"></i></sc-for></div><span><b>{{M.seatText}}</b> {{M.seatSub}}</span><span class="more">{{M.seatMore}}</span></div>
+              </sc-if>
+              <div class="chips" role="tablist"><sc-for list="{{M.chips}}" as="c" hint-placeholder-count="4"><button type="button" class="chip {{c.cls}}" role="tab" onClick="{{c.go}}">{{c.label}} <sc-if value="{{c.n}}" hint-placeholder-val="{{false}}"><span class="n">{{c.n}}</span></sc-if></button></sc-for></div>
+              <!-- applications -->
+              <sc-if value="{{M.tabApps}}" hint-placeholder-val="{{true}}">
+                <div class="sec">
+                  <div class="bh"><h3>申请 <span class="n">{{M.appsN}}</span></h3><span class="hint">{{M.appsHint}}</span></div>
+                  <sc-for list="{{M.apps}}" as="a" hint-placeholder-count="2">
+                    <div class="apl {{a.cls}}" data-rid="{{a.id}}">
+                      <div class="c">{{a.ini}}<span class="no">{{a.no}}</span><svg class="circ" viewBox="0 0 70 70" aria-hidden="true"><ellipse cx="35" cy="35" rx="31" ry="28" transform="rotate(-8 35 35)"></ellipse></svg><svg class="cross" viewBox="0 0 56 56" aria-hidden="true"><line class="l1" x1="8" y1="8" x2="48" y2="48"></line><line class="l2" x1="48" y1="8" x2="8" y2="48"></line></svg></div>
+                      <div>
+                        <div class="nmr"><span class="nm">{{a.nick}}</span><span class="vb {{a.vbCls}}">{{a.verifiedLabel}}</span></div>
+                        <sc-if value="{{a.note}}" hint-placeholder-val="{{false}}"><div class="q">“{{a.note}}”</div></sc-if>
+                        <div class="ago">{{a.agoText}}</div>
+                        <sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="acts"><button type="button" class="sbtn sec {{a.rejBusy}}" data-act="reject" onClick="{{a.reject}}" disabled="{{a.disabled}}">谢绝</button><button type="button" class="sbtn pri {{a.appBusy}}" data-act="approve" onClick="{{a.approve}}" disabled="{{a.disabled}}">{{a.approveLabel}}</button></div></sc-if>
+                        <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="res {{a.resCls}}">{{a.resultText}}</div></sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div class="help">{{M.approveHelp}}</div>
+                </div>
+              </sc-if>
+              <!-- replies -->
+              <sc-if value="{{M.tabReplies}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>改期答复 <span class="n">已答复 {{M.answered}}/{{M.asked}}</span></h3><span class="hint">没有答复期限</span></div>
+                  <div class="cmp">原定 <s>{{M.oldWhen}}</s><span class="arrow">→</span>改为 <b>{{M.whenZh}}</b></div>
+                  <sc-for list="{{M.replies}}" as="r" hint-placeholder-count="2"><div class="rp"><span>{{r.nick}}</span><span class="a {{r.cls}}">{{r.answerText}}</span></div></sc-for>
+                  <div class="help">{{M.repliesHelp}}</div>
+                </div>
+              </sc-if>
+              <!-- members -->
+              <sc-if value="{{M.tabMembers}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>成员</h3><span class="hint">{{M.memHint}}</span></div>
+                  <sc-for list="{{M.roster}}" as="m" hint-placeholder-count="3">
+                    <div class="mem" data-rid="{{m.id}}">
+                      <div class="c {{m.cls}}">{{m.ini}}<span class="no">{{m.no}}</span></div>
+                      <div><div class="nm">{{m.nick}}</div><div class="st"><span>{{m.stateText}}</span><sc-if value="{{m.leftText}}" hint-placeholder-val="{{false}}"><span class="cd">{{m.leftText}}</span></sc-if><sc-if value="{{m.ticketText}}" hint-placeholder-val="{{false}}"><span>· {{m.ticketText}}</span></sc-if><sc-if value="{{m.contactAdded}}" hint-placeholder-val="{{false}}"><span>· 已自报加微信</span></sc-if></div></div>
+                      <sc-if value="{{m.showWx}}" hint-placeholder-val="{{false}}"><div class="wxr"><span>{{m.wx}}</span><button type="button" class="cp {{m.copiedCls}}" data-act="copy" onClick="{{m.copy}}">{{m.copyLabel}}</button></div></sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-for list="{{M.openRows}}" as="o" hint-placeholder-count="1"><div class="mem"><div class="c open">空位</div><div><div class="nm" style="color:var(--cream3)">{{o.text}}</div></div></div></sc-for>
+                  <sc-if value="{{M.contactClosed}}" hint-placeholder-val="{{false}}"><div class="help">{{M.contactClosed}}</div></sc-if>
+                </div>
+              </sc-if>
+              <!-- waitlist -->
+              <sc-if value="{{M.tabQueue}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>候补 <span class="n">{{M.queueN}}</span></h3><span class="hint">不占席位</span></div>
+                  <sc-for list="{{M.queue}}" as="q" hint-placeholder-count="2"><div class="qrow"><span class="no">{{q.no}}</span><span>{{q.nick}}</span><span class="ago">{{q.agoText}}</span></div></sc-for>
+                  <div class="help">{{M.queueHelp}}</div>
+                </div>
+              </sc-if>
+              <!-- leaves -->
+              <sc-if value="{{M.tabLeaves}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>离开记录 <span class="n">{{M.leavesN}}</span></h3><span class="hint">中性事实 · 不带信用字样</span></div>
+                  <sc-for list="{{M.leaves}}" as="l" hint-placeholder-count="2"><div class="lv"><span>{{l.nick}} · {{l.text}}</span><span class="at">{{l.at}}</span></div></sc-for>
+                </div>
+              </sc-if>
+              <!-- attendance -->
+              <sc-if value="{{M.tabAtt}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>出席 <span class="n">{{M.recorded}}/{{M.attN}}</span></h3><span class="hint">逐人记录 · 可更正</span></div>
+                  <sc-for list="{{M.attendees}}" as="m" hint-placeholder-count="3">
+                    <div class="mem att" data-rid="{{m.id}}">
+                      <div class="c">{{m.ini}}<span class="no">{{m.no}}</span></div>
+                      <div>
+                        <div class="nm">{{m.nick}}<sc-if value="{{m.showWx}}" hint-placeholder-val="{{false}}"><small class="wxr">{{m.wx}} <button type="button" class="cp {{m.copiedCls}}" data-act="copy" onClick="{{m.copy}}">{{m.copyLabel}}</button></small></sc-if></div>
+                        <sc-if value="{{m.choose}}" hint-placeholder-val="{{true}}"><div class="seg3" role="group" aria-label="记录 {{m.nick}} 的出席"><button type="button" class="p {{m.onP}}" data-act="attend-present" onClick="{{m.setPresent}}">出席</button><button type="button" class="a {{m.onA}}" data-act="attend-absent" onClick="{{m.setAbsent}}">未出席</button><button type="button" class="d {{m.onD}}" data-act="attend-pending" onClick="{{m.setPending}}">待定</button></div></sc-if>
+                        <sc-if value="{{m.showRes}}" hint-placeholder-val="{{false}}"><div class="attres"><span class="pm {{m.pmCls}}">{{m.attLabel}}<sc-if value="{{m.pmCirc}}" hint-placeholder-val="{{false}}"><svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><ellipse cx="50" cy="20" rx="47" ry="17"></ellipse></svg></sc-if><sc-if value="{{m.pmCross}}" hint-placeholder-val="{{false}}"><svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><line x1="4" y1="34" x2="96" y2="6"></line></svg></sc-if><sc-if value="{{m.pmDot}}" hint-placeholder-val="{{false}}"><svg viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true"><line x1="4" y1="36" x2="96" y2="36" stroke-dasharray="4 5"></line></svg></sc-if></span><button type="button" class="fix" onClick="{{m.fix}}">更正</button></div></sc-if>
+                        <sc-if value="{{m.showTrail}}" hint-placeholder-val="{{false}}"><div class="trail"><sc-for list="{{m.trail}}" as="t" hint-placeholder-count="1"><div class="{{t.cls}}">{{t.text}}</div></sc-for></div></sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <div class="help">{{M.attendanceHelp}}</div>
+                  <div class="help">{{M.contactWindow}}</div>
+                </div>
+              </sc-if>
+              <!-- arrangements -->
+              <sc-if value="{{M.tabArr}}" hint-placeholder-val="{{false}}">
+                <div class="sec">
+                  <div class="bh"><h3>这局的安排</h3><span class="hint">永远在最后</span></div>
+                  <sc-if value="{{M.arr.reschedule}}" hint-placeholder-val="{{true}}"><button type="button" class="arr" onClick="{{M.arr.openReschedule}}"><span><div class="l">改时间</div><div class="s">已确认的人各自答复</div></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-if>
+                  <sc-if value="{{M.arr.end}}" hint-placeholder-val="{{true}}"><button type="button" class="arr" onClick="{{M.arr.openEnd}}"><span><div class="l">记为散场</div><div class="s">散场后逐人记录出席</div></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-if>
+                  <sc-if value="{{M.arr.notFormed}}" hint-placeholder-val="{{false}}"><div class="arr inert"><span><div class="l">记为散场</div><div class="s">还没成局，不能记为散场</div></span></div></sc-if>
+                  <sc-if value="{{M.arr.cancel}}" hint-placeholder-val="{{true}}"><button type="button" class="arr dng" onClick="{{M.arr.openCancel}}"><span><div class="l">取消这局</div><div class="s">确认前会列出受影响的人</div></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button></sc-if>
+                  <sc-if value="{{M.arr.reopen}}" hint-placeholder-val="{{false}}"><div class="arr inert"><span><div class="l">再开一局</div><div class="s">只带入活动内容，成员与记录不复制 · 开局模块，不在本范围演示</div></span></div></sc-if>
+                  <button type="button" class="arr" onClick="{{M.openCard}}"><span><div class="l">查看局卡</div><div class="s">成员在详情里看到的是同一张局卡</div></span><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></button>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <!-- ============================== DRAFT SUMMARY ============================== -->
+      <sc-if value="{{DR.on}}" hint-placeholder-val="{{false}}">
+        <div class="pane dv c10-over {{DR.phase}} {{DR.anim}}" style="{{DR.clip}}" role="dialog" aria-label="草稿 {{DR.title}}">
+          <div class="pane-in" style="{{DR.inner}}">
+            <div class="bar2"><button type="button" class="back" data-act="back" onClick="{{DR.close}}" aria-label="返回草稿"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg>返回 草稿</button><span class="pstat">未曝光的格</span></div>
+            <div class="pbody body">
+              <div class="lbwrap"><div class="hero">
+                <div class="perf"><span class="fno">{{DR.no}}</span><span class="fno a">{{DR.noA}}</span></div>
+                <div class="hface blank"><div class="dttl {{DR.ttlCls}}">{{DR.title}}</div><div class="pl" style="color:var(--cream2)">{{DR.whenText}} · {{DR.placeText}}</div><span class="cap">DRAFT · 未曝光</span></div>
+                <div class="perf bot"><span class="fno">JU 400 · 草稿</span></div>
+              </div></div>
+              <div class="blk first"><div class="stt">{{DR.missingText}}</div><div class="sneed">{{DR.agoText}}{{DR.sourceText}}</div></div>
+              <div class="blk dkv"><dl class="kv"><dt>局名</dt><dd>{{DR.title}}</dd><dt>时间</dt><dd class="m">{{DR.whenText}}</dd><dt>地点</dt><dd>{{DR.placeText}}</dd><dt>人数</dt><dd>{{DR.capText}}</dd><dt>方式</dt><dd>{{DR.joinMode}}</dd></dl></div>
+              <div class="lnk inert">继续编辑 › <small>开局模块 · 不在本范围演示</small></div>
+              <div class="btns"><button type="button" class="btn dng" data-act="delete" onClick="{{DR.del}}">删除这份草稿</button></div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <!-- ============================== SHEETS (safelight) ============================== -->
+      <sc-if value="{{S.on}}" hint-placeholder-val="{{false}}">
+        <div class="dim c10-over {{S.cls}}" onClick="{{S.cancel}}"></div>
+        <div class="sheet c10-over {{S.cls}}" role="dialog" aria-modal="true" aria-label="{{S.title}}">
+          <div class="handle"></div>
+          <div class="lamp">SAFELIGHT · 红灯</div>
+          <h2>{{S.title}}<button type="button" class="x" data-act="close" onClick="{{S.cancel}}" aria-label="关闭"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></h2>
+          <sc-if value="{{S.idb}}" hint-placeholder-val="{{true}}"><div class="idb"><i class="mini"></i><div><div class="t">{{S.idb.title}}</div><div class="w">{{S.idb.when}} · {{S.idb.hood}}</div></div></div></sc-if>
+          <sc-if value="{{S.body}}" hint-placeholder-val="{{true}}"><p>{{S.body}}</p></sc-if>
+          <sc-if value="{{S.irr}}" hint-placeholder-val="{{false}}"><div class="irr">{{S.irr}}</div></sc-if>
+          <sc-if value="{{S.aff}}" hint-placeholder-val="{{false}}"><div class="help" style="color:var(--redtx2)">会受影响的人</div><div class="aff"><sc-for list="{{S.aff}}" as="a" hint-placeholder-count="2"><div><b>{{a.n}}</b>{{a.label}}</div></sc-for></div></sc-if>
+          <sc-if value="{{S.isResched}}" hint-placeholder-val="{{false}}">
+            <div class="cmp">原定 <s>{{S.resched.oldWhen}}</s><span class="arrow">→</span><sc-if value="{{S.resched.newWhen}}" hint-placeholder-val="{{true}}"><b>改为 · 纽约时间 {{S.resched.newWhen}}</b></sc-if><sc-if value="{{S.resched.placeholder}}" hint-placeholder-val="{{false}}"><span class="ph">选好新的日期和时间</span></sc-if></div>
+            <div class="inputs"><label>新日期<input type="date" value="{{S.resched.date}}" onInput="{{S.resched.onDate}}" onChange="{{S.resched.onDate}}"></label><label>新时间<input type="time" step="900" value="{{S.resched.time}}" onInput="{{S.resched.onTime}}" onChange="{{S.resched.onTime}}"></label></div>
+            <sc-if value="{{S.resched.same}}" hint-placeholder-val="{{false}}"><div class="same">{{S.resched.sameText}}</div></sc-if>
+            <p>{{S.resched.desc}}</p>
+          </sc-if>
+          <sc-if value="{{S.isRules}}" hint-placeholder-val="{{false}}">
+            <div class="rs" onScroll="{{S.rules.scroll}}">
+              <sc-for list="{{S.rules.list}}" as="r" hint-placeholder-count="3"><h3><span class="k">{{r.key}}</span>{{r.title}}</h3><ul><sc-for list="{{r.lines}}" as="l" hint-placeholder-count="3"><li>{{l}}</li></sc-for></ul></sc-for>
+              <div class="inertl">查看我的记录 › · 账户级页面，不在本范围演示</div>
+              <div class="endmk">— 已到约定末尾 —</div>
+            </div>
+            <sc-if value="{{S.rules.confirming}}" hint-placeholder-val="{{false}}"><div class="rhint {{S.rules.hintCls}}">{{S.rules.hint}}</div></sc-if>
+          </sc-if>
+          <sc-if value="{{S.isCard}}" hint-placeholder-val="{{false}}">
+            <div class="cardfr"><div class="perf"></div><div class="cf"><span class="en">{{S.card.en}}</span><div class="ttl">{{S.card.title}}</div><div class="tm">{{S.card.time}}</div><div class="dm">{{S.card.date}}</div><div class="pl">{{S.card.placeFull}}</div><span class="stl">{{S.card.statusLabel}}</span><div class="capl">{{S.card.caption}}</div><span class="num">{{S.card.cap}}</span></div><div class="perf bot"></div></div>
+            <p>成员在详情里看到的是同一张局卡。</p>
+          </sc-if>
+          <div class="row2">
+            <sc-if value="{{S.secondary}}" hint-placeholder-val="{{true}}"><button type="button" class="btn sec" data-act="close" onClick="{{S.cancel}}">{{S.secondary}}</button></sc-if>
+            <sc-if value="{{S.primary}}" hint-placeholder-val="{{true}}"><button type="button" class="btn {{S.primaryCls}} {{S.busyCls}}" data-act="{{S.primaryAct}}" onClick="{{S.ok}}" disabled="{{S.disabled}}">{{S.primary}}</button></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{E.on}}" hint-placeholder-val="{{false}}"><div class="errbar c10-over" role="alert"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16v.5"></path></svg><span>{{E.message}}</span><button type="button" onClick="{{E.retry}}">重试</button><button type="button" class="x" onClick="{{E.dismiss}}">关闭</button></div></sc-if>
+      <div class="toast {{T.cls}}" role="status">{{T.text}}</div>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
+/* @core */
+const STAGE_X = { pending: 'x0', waitlist: 'x1', gathering: 'x2', invited: 'x3', invited_queue: 'x3', tear: 'x4', contact: 'x4', going: 'x4', reschedule: 'x4', ended: 'x4' };
+const ENTRY = { pending: '查看详情', invited: '阅读并确认', invited_queue: '阅读并确认', waitlist: '查看候补位置', gathering: '查看成员', tear: '撕开票根', contact: '联系局主', going: '查看票根', reschedule: '答复新时间', ended: '查看票根' };
+const EN = { act: 'RESPOND', soon: 'SOON', wait: 'WAITING', kept: 'KEPT', closed: 'CLOSED', todo: 'TO-DO', resched: 'RESCHED', recruit: 'RECRUIT', formed: 'FORMED', ended: 'ENDED', cancelled: 'CANCELLED', drafts: 'DRAFT' };
+const BASE = { act: 7, soon: 12, wait: 16, kept: 22, closed: 28, todo: 3, resched: 9, recruit: 14, formed: 19, ended: 24, cancelled: 31, drafts: 34 };
+const HERO_TOP = 118;
+const pad2 = (n) => (n < 10 ? '0' : '') + n;
+const ini = (name) => (name || '?').trim().slice(0, 1).toUpperCase();
+const isoFrom = (date, time) => (date && time) ? date + 'T' + time : '';
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; this._undoTimer = null; this._seen = {}; }
+  initialState(variant) {
+    return Object.assign({}, JU.baseState(variant), { lit: 0, col: false, expose: '', detail: null, manage: null, draftView: null, sheet: null, toast: '', busy: '', err: null, cut: { p: 0, drag: null, spring: false }, fx: {}, undo: null, leaving: null, entering: null, landed: null, copied: '', attEdit: null, attFresh: null, resched: null, note: '', rulesRead: false, stubs: 0 });
+  }
+  /* ---------------------------------------------------------------- helpers ---------------------------------------------------------------- */
+  flush(sel) { const root = this.rootRef.current; const el = root && root.querySelector(sel); if (el) { void getComputedStyle(el).clipPath; void getComputedStyle(el).transform; void el.offsetWidth; } }
+  W() { const r = this.rootRef.current; return r ? r.clientWidth : 390; }
+  Hh() { const r = this.rootRef.current; return r ? r.clientHeight : 844; }
+  toast(text) { this.setState({ toast: text }); this.after(2600, () => { if (this.state.toast === text) this.setState({ toast: '' }); }); }
+  run(name, payload, done, opts) {
+    opts = opts || {};
+    if (this.state.busy && !opts.force) return;
+    const go = () => {
+      const res = JU.engine[name](this.state.data, payload || {});
+      if (res.effect && res.effect.type === 'error') { this.setState({ busy: '', data: res.data, err: { message: res.effect.message, retry: () => { this.setState({ err: null }); this.run(name, payload, done, opts); }, dismiss: () => this.setState({ err: null }) } }); if (opts.onError) opts.onError(res.effect); return; }
+      this.setState({ busy: '', data: res.data, err: null });
+      if (done) done(res.effect, res.data);
+    };
+    if (opts.instant) { go(); return; }
+    this.setState({ busy: opts.busy || name, err: null }); this.after(opts.ms || 420, go);
+  }
+  joinedRow(id) { return JU.derive.rowById(this.state.data, id); }
+  rollEl() { const root = this.rootRef.current; return root && root.querySelector(this.state.role === 'joined' ? '.roll.j' : '.roll.h'); }
+  rowRect(id) {
+    const root = this.rootRef.current; if (!root) return null; const roll = this.rollEl(); const cell = roll && roll.querySelector('.cell[data-rid="' + id + '"]'); if (!cell) return null;
+    const track = cell.closest('.track'); if (track) { const cl = cell.offsetLeft - 18, vis = track.scrollLeft; if (cl < vis || cl + cell.offsetWidth > vis + track.clientWidth) track.scrollLeft = Math.max(0, cl); }
+    const rr = roll.getBoundingClientRect(), cr = cell.getBoundingClientRect(); if (cr.top < rr.top + 120 || cr.bottom > rr.bottom - 100) roll.scrollTop += (cr.top - rr.top - 150);
+    const fr = cell.querySelector('.fr'); const r = JU.fx.rectIn(fr || cell, root); if (r.w < 20 || r.y > this.Hh() || r.y + r.h < 0) return null; return r;
+  }
+  landOn(id) { this.setState({ landed: id }); this.after(1600, () => { if (this.state.landed === id) this.setState({ landed: null }); }); }
+  leaveKind(stage) { return stage === 'pending' ? 'withdraw' : (stage === 'invited' || stage === 'invited_queue') ? 'release' : stage === 'waitlist' ? 'leaveQueue' : stage === 'reschedule' ? 'decline' : 'exit'; }
+  /* ---------------------------------------------------------------- jumps ---------------------------------------------------------------- */
+  applyJump(e) {
+    const o = e.open;
+    if (o.surface === 'manage') { this.openManage(null, o.eventId, { tab: o.tab, jumpKey: e.key }); return; }
+    if (o.surface === 'draft') { this.setState({ view: { name: 'draft', jumpKey: e.key }, draftView: { id: o.eventId, phase: 'in', from: null, anim: 'noanim' } }); this.after(60, () => this.setState(s => ({ draftView: s.draftView && Object.assign({}, s.draftView, { anim: '' }) }))); return; }
+    const row = this.joinedRow(o.eventId); if (!row) return;
+    const d = { id: o.eventId, phase: 'in', from: null, anim: 'noanim', printed: true, entered: 'jump' };
+    this.setState({ view: { name: 'detail', jumpKey: e.key }, detail: d, cut: { p: 0, drag: null, spring: false }, fx: {}, err: null, note: '', stubs: 0 });
+    if (o.surface === 'withdraw') this.after(80, () => this.openSheet(this.leaveKind(row.stage)));
+    if (o.surface === 'ticket' || o.surface === 'reschedule-reply' || o.surface === 'contact') { const self = this; this.lastMotion = { name: 'develop', fn: function () { self.startDevelop(); } }; }
+    this.after(60, () => this.setState(s => ({ detail: s.detail && Object.assign({}, s.detail, { anim: '' }) })));
+  }
+  beforeReplay(name) {
+    if (name === 'open-frame') this.setState({ detail: null, manage: null, draftView: null, view: { name: 'list' }, sheet: null });
+    if (name === 'develop') this.setState(s => ({ fx: {}, detail: s.detail && Object.assign({}, s.detail, { printed: false }) }));
+    if (name === 'cut') this.setState({ fx: { replayStub: true }, cut: { p: 0, drag: null, spring: false } });
+    if (name === 'melt') { if (this.state.manage) this.setState(s => ({ manage: Object.assign({}, s.manage, { cstage: 'restore' }) })); else this.setState({ fx: { restore: true } }); }
+  }
+  /* ---------------------------------------------------------------- participant detail ---------------------------------------------------------------- */
+  openDetail(ev, row) {
+    const root = this.rootRef.current; const r = ev ? JU.fx.rectIn(ev.currentTarget, root) : null;
+    const needsDev = row.stage === 'tear' || row.stage === 'reschedule';
+    const firstVoid = row.stage === 'cancelled' && !!row.ticket && !this._seen[row.id];
+    this.setState({ view: { name: 'detail' }, detail: { id: row.id, phase: r ? 'start' : 'in', from: r, anim: '', printed: !needsDev, entered: 'tap' }, cut: { p: 0, drag: null, spring: false }, fx: {}, err: null, note: '', stubs: 0, sheet: null });
+    this.after(20, () => { this.flush('.pane.dt'); this.flush('.pane.dt .pane-in'); this.setState(s => ({ detail: s.detail && Object.assign({}, s.detail, { phase: 'in' }) })); });
+    if (needsDev) this.after(520, () => this.startDevelop());
+    if (firstVoid) { this._seen[row.id] = true; this.after(560, () => this.motion('melt', () => this.playMelt())); }
+  }
+  startDevelop() {
+    const d = this.state.detail; if (!d) return;
+    this.motion('develop', () => {
+      this.setState(s => ({ fx: { dev: true }, detail: Object.assign({}, s.detail, { printed: false }) }));
+      this.after(2600, () => this.setState(s => ({ fx: { wet: true }, detail: s.detail && Object.assign({}, s.detail, { printed: true }) })));
+      this.after(3800, () => this.setState(s => (s.fx.wet ? { fx: {} } : {})));
+    });
+  }
+  playMelt() { this.setState({ fx: { melt: true } }); this.after(2700, () => this.setState({ fx: { melted: true } })); }
+  closeDetail() {
+    const d = this.state.detail; if (!d) return; const id = d.id; const row = this.joinedRow(id);
+    const target = row && (row.group === 'kept' || row.group === 'closed') ? 'history' : 'current';
+    if (this.state.section !== target) this.setState({ section: target, lit: 0 });
+    this.after(40, () => {
+      const r = this.rowRect(id);
+      this.setState(s => ({ detail: Object.assign({}, s.detail, { phase: 'out', from: r, anim: r ? '' : 'noanim' }), sheet: null }));
+      this.after(r ? 440 : 160, () => { this.setState({ detail: null, view: { name: 'list' }, fx: {}, err: null }); this.landOn(id); });
+    });
+  }
+  /* ---------------------------------------------------------------- safelight sheets ---------------------------------------------------------------- */
+  openSheet(kind, extra) { this.setState({ sheet: Object.assign({ kind, cls: '' }, extra || {}), err: null }); this.after(20, () => { this.flush('.sheet'); this.flush('.dim'); this.setState(s => ({ sheet: s.sheet && Object.assign({}, s.sheet, { cls: 'in' }) })); }); }
+  closeSheet(then) { this.setState(s => ({ sheet: s.sheet && Object.assign({}, s.sheet, { cls: '' }) })); this.after(420, () => { this.setState({ sheet: null }); if (then) then(); }); }
+  leaveAction(kind) {
+    const d = this.state.detail; if (!d) return; const id = d.id;
+    const map = { withdraw: 'withdrawApplication', release: 'releaseReservation', leaveQueue: 'leaveWaitlist', exit: 'exitEvent', decline: 'declineReschedule' };
+    this.run(map[kind], { eventId: id }, (eff) => {
+      if (eff.burn) this.setState({ fx: { hold: true } });
+      this.closeSheet(() => {
+        if (eff.burn) this.motion('melt', () => this.playMelt());
+        else { this.setState({ fx: { settle: true } }); this.after(900, () => this.setState(s => (s.fx.settle ? { fx: {} } : {}))); }
+      });
+    }, { where: 'sheet' });
+  }
+  confirmReservation() {
+    const d = this.state.detail; if (!d) return; const id = d.id;
+    this.run('confirmReservation', { eventId: id }, (eff) => {
+      this.closeSheet(() => {
+        this.setState(s => ({ fx: { settle: true }, detail: Object.assign({}, s.detail, { printed: !eff.formed }) }));
+        if (eff.formed) this.after(320, () => this.startDevelop()); else this.after(1200, () => this.setState(s => (s.fx.settle ? { fx: {} } : {})));
+      });
+    }, { where: 'sheet' });
+  }
+  cutDown(ev) { const s = this.state; if (!s.detail || !s.detail.printed || s.fx.cutOff || s.fx.dev || s.busy) return; if (ev.currentTarget.setPointerCapture) { try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } } this.setState({ cut: { p: 0, drag: { x: ev.clientX, y: ev.clientY, w: ev.currentTarget.getBoundingClientRect().width || 340 }, spring: false } }); }
+  cutMove(ev) { const c = this.state.cut; if (!c.drag) return; const p = Math.max(0, Math.min(1, (ev.clientX - c.drag.x) / (c.drag.w * 0.8))); this.setState({ cut: { p, drag: c.drag, spring: false } }); }
+  cutUp() {
+    const c = this.state.cut; if (!c.drag) return;
+    if (c.p >= 0.55) { const id = this.state.detail.id; const row = this.joinedRow(id); const isR = row && row.stage === 'reschedule'; this.run(isR ? 'acceptReschedule' : 'tearTicket', { eventId: id }, (eff) => this.cutDrop(eff), { instant: true, onError: () => this.setState({ cut: { p: 0, drag: null, spring: true } }) }); }
+    else this.setState({ cut: { p: 0, drag: null, spring: true } });
+  }
+  cutDrop(eff) {
+    this.motion('cut', () => {
+      this.setState({ cut: { p: 1, drag: null, spring: false }, fx: { cutOff: true } });
+      this.after(760, () => this.setState(s => ({ fx: { torn: true, accepted: eff && eff.type === 'reschedule-accepted' }, cut: { p: 0, drag: null, spring: false }, stubs: s.stubs + 1 })));
+      this.after(2600, () => this.setState(s => (s.fx.torn ? { fx: {} } : {})));
+    });
+  }
+  acceptByButton() { const id = this.state.detail.id; this.run('acceptReschedule', { eventId: id }, (eff) => this.cutDrop(eff), { ms: 300 }); }
+  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.after(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  markContacted() { const id = this.state.detail.id; this.run('markContacted', { eventId: id }, () => { this.setState({ fx: { settle: true } }); this.after(900, () => this.setState(s => (s.fx.settle ? { fx: {} } : {}))); }); }
+  addNote() { const id = this.state.detail.id; const text = (this.state.note || '').trim(); if (!text) return; this.run('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, () => { this.setState({ note: '', fx: { newRecord: true } }); this.after(700, () => this.setState(s => (s.fx.newRecord ? { fx: {} } : {}))); }, { ms: 300 }); }
+  openRules(readOnly) { this.setState({ rulesRead: false }); this.openSheet('rules', { readOnly: !!readOnly }); this.after(700, () => this.checkRulesEnd()); }
+  checkRulesEnd(el) { const root = this.rootRef.current; const sc = el || (root && root.querySelector('.sheet .rs')); if (!sc) return; if (sc.scrollTop + sc.clientHeight >= sc.scrollHeight - 6) { if (!this.state.rulesRead) this.setState({ rulesRead: true }); } }
+  /* ---------------------------------------------------------------- host manage ---------------------------------------------------------------- */
+  openManage(ev, id, o) {
+    o = o || {}; const root = this.rootRef.current; const r = ev ? JU.fx.rectIn(ev.currentTarget, root) : null;
+    const m = JU.derive.manage(this.state.data, id); if (!m) return;
+    const intentTab = m.pending ? 'applications' : (m.event.status === 'ended') ? 'attendance' : (m.event.proposal && m.event.status === 'open') ? 'replies' : 'members';
+    let tab = o.tab || intentTab; let sheet = null;
+    if (tab === 'contact') tab = 'members';
+    if (tab === 'reschedule' || tab === 'cancel' || tab === 'end' || tab === 'card') { sheet = tab; tab = m.event.status === 'ended' ? 'attendance' : 'members'; }
+    const cancelled = m.event.status === 'cancelled';
+    this.setState({ view: { name: 'manage', jumpKey: o.jumpKey }, manage: { id, tab, phase: r ? 'start' : 'in', from: r, anim: r ? '' : 'noanim', cstage: cancelled ? 'void' : null, whenCls: '', oldShown: false }, err: null, attEdit: null, resched: null, sheet: null });
+    this.after(20, () => { this.flush('.pane.mg'); this.flush('.pane.mg .pane-in'); this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { phase: 'in', anim: '' }) })); });
+    if (sheet) this.after(r ? 420 : 80, () => this.openManageSheet(sheet));
+  }
+  closeManage() {
+    const mg = this.state.manage; if (!mg) return; const id = mg.id;
+    const row = JU.derive.hostRowById(this.state.data, id);
+    const target = row && (row.event.status === 'cancelled' || (row.event.status === 'ended' && !row.todo)) ? 'history' : 'current';
+    if (this.state.section !== target) this.setState({ section: target, lit: 0 });
+    this.after(40, () => {
+      const r = this.rowRect(id);
+      this.setState(s => ({ manage: Object.assign({}, s.manage, { phase: 'out', from: r, anim: r ? '' : 'noanim' }), sheet: null }));
+      this.after(r ? 440 : 160, () => { this.setState({ manage: null, view: { name: 'list' }, err: null }); this.landOn(id); });
+    });
+  }
+  openManageSheet(kind) {
+    const m = JU.derive.manage(this.state.data, this.state.manage.id);
+    if (kind === 'reschedule') this.setState({ resched: { date: m.when.iso.slice(0, 10), time: m.when.iso.slice(11, 16) } });
+    this.openSheet(kind === 'cancel' ? 'cancelEvent' : kind === 'end' ? 'endEvent' : kind);
+  }
+  setTab(tab) { this.setState(s => ({ manage: Object.assign({}, s.manage, { tab }), attEdit: null })); }
+  approve(appId) { const id = this.state.manage.id; this.run('approve', { eventId: id, appId }, () => { this.setState({ fx: { progSettle: true } }); this.after(800, () => this.setState(s => (s.fx.progSettle ? { fx: {} } : {}))); }, { busy: 'approve:' + appId }); }
+  reject(appId) { const id = this.state.manage.id; this.run('reject', { eventId: id, appId }, () => { }, { busy: 'reject:' + appId }); }
+  propose() {
+    const id = this.state.manage.id; const rs = this.state.resched || {}; const newIso = isoFrom(rs.date, rs.time);
+    this.run('propose', { eventId: id, newIso }, (eff) => {
+      this.closeSheet(() => {
+        this.setState(s => ({ manage: Object.assign({}, s.manage, { tab: 'replies', whenCls: 'reprint', oldShown: true, titleSettle: true }), fx: { progSettle: true } }));
+        this.toast(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间');
+        this.after(1800, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { whenCls: '', oldShown: false, titleSettle: false }), fx: {} })));
+      });
+    }, { where: 'sheet' });
+  }
+  cancelEvent() {
+    const id = this.state.manage.id;
+    this.run('cancel', { eventId: id }, () => { this.closeSheet(() => this.motion('melt', () => this.playMeltMg())); }, { where: 'sheet' });
+  }
+  playMeltMg() { this.setState(s => ({ manage: Object.assign({}, s.manage, { cstage: 'melt' }) })); this.after(2550, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { cstage: 'void', titleSettle: true }) }))); }
+  endEvent() { const id = this.state.manage.id; this.run('end', { eventId: id }, () => { this.closeSheet(() => { this.setState(s => ({ manage: Object.assign({}, s.manage, { tab: 'attendance', titleSettle: true }), fx: { progSettle: true } })); this.after(1000, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { titleSettle: false }), fx: {} }))); }); }, { where: 'sheet' }); }
+  attend(memberId, value) { const id = this.state.manage.id; this.run('attend', { eventId: id, memberId, value }, (eff) => { if (eff.type === 'noop') { this.setState({ attEdit: null }); return; } this.setState({ attEdit: null, attFresh: memberId, fx: { progSettle: true } }); this.after(800, () => this.setState(s => (s.fx.progSettle ? { fx: {} } : {}))); this.after(2500, () => { if (this.state.attFresh === memberId) this.setState({ attFresh: null }); }); }, { ms: 260, busy: 'att:' + memberId }); }
+  /* ---------------------------------------------------------------- drafts ---------------------------------------------------------------- */
+  deleteDraft(id) {
+    if (this.state.leaving) return;
+    this.setState({ leaving: id });
+    this.after(430, () => this.run('deleteDraft', { draftId: id }, (eff) => {
+      this.setState({ leaving: null, undo: { title: eff.title, draftId: id } });
+      if (this._undoTimer) { this._timers = (this._timers || []).filter(t => t !== this._undoTimer); if (this._undoTimer.id) clearTimeout(this._undoTimer.id); }
+      this._undoTimer = this.after(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
+    }, { instant: true, onError: () => this.setState({ leaving: null }) }));
+  }
+  undoDelete() {
+    if (this._undoTimer) { if (this._undoTimer.id) clearTimeout(this._undoTimer.id); this._timers = (this._timers || []).filter(t => t !== this._undoTimer); this._undoTimer = null; }
+    this.run('undoDelete', {}, (eff) => { this.setState({ undo: null, entering: eff.draftId }); this.after(540, () => this.setState({ entering: null })); }, { instant: true });
+  }
+  openDraft(ev, d) { const root = this.rootRef.current; const r = ev ? JU.fx.rectIn(ev.currentTarget, root) : null; this.setState({ view: { name: 'draft' }, draftView: { id: d.id, phase: r ? 'start' : 'in', from: r, anim: '' } }); this.after(20, () => { this.flush('.pane.dv'); this.flush('.pane.dv .pane-in'); this.setState(s => ({ draftView: s.draftView && Object.assign({}, s.draftView, { phase: 'in' }) })); }); }
+  closeDraft(then) { const dv = this.state.draftView; if (!dv) return; const id = dv.id; const r = this.rowRect(id); this.setState(s => ({ draftView: Object.assign({}, s.draftView, { phase: 'out', from: r, anim: r ? '' : 'noanim' }) })); this.after(r ? 440 : 160, () => { this.setState({ draftView: null, view: { name: 'list' } }); if (then) then(); else this.landOn(id); }); }
+  /* ---------------------------------------------------------------- pane geometry: frame → full lightbox table ---------------------------------------------------------------- */
+  paneGeom(p) {
+    const W = this.W(), H = this.Hh(); const from = p.from; const at = (p.phase === 'start' || p.phase === 'out') && from;
+    if (!at) return { clip: 'clip-path:inset(0px 0px 0px 0px)', inner: 'transform:translateY(0px)' };
+    const top = Math.max(0, from.y), left = Math.max(0, from.x), right = Math.max(0, W - from.x - from.w), bottom = Math.max(0, H - from.y - from.h);
+    return { clip: 'clip-path:inset(' + top.toFixed(1) + 'px ' + right.toFixed(1) + 'px ' + bottom.toFixed(1) + 'px ' + left.toFixed(1) + 'px)', inner: 'transform:translateY(' + (from.y - HERO_TOP).toFixed(1) + 'px)' };
+  }
+  /* ---------------------------------------------------------------- home ---------------------------------------------------------------- */
+  homeVals() {
+    const s = this.state; const J0 = JU.derive.joined(s.data), H0 = JU.derive.hosted(s.data);
+    const paneOpen = !!(s.detail || s.manage || s.draftView);
+    const isJ = s.role === 'joined', sec = s.section;
+    const wrapCls = (id) => (s.landed === id ? ' landed' : '') + (s.leaving === id ? ' leaving' : '') + (s.entering === id ? ' entering' : '') + ((s.detail && s.detail.id === id && s.detail.phase !== 'out') || (s.manage && s.manage.id === id && s.manage.phase !== 'out') || (s.draftView && s.draftView.id === id && s.draftView.phase !== 'out') ? ' opening' : '');
+    const seatCls = (sq) => sq.kind === 'host' ? 'host' : sq.kind === 'ok' ? 'ok' : sq.kind === 'res' ? 'res' : '';
+    const mkFrame = (r, i, key, lead, lit) => {
+      const e = r.event; const isR = r.stage === 'reschedule'; const no = BASE[key] + i;
+      return { id: r.id, no: String(no), noA: no + 'A', eprint: 'JU 400 · ' + EN[key] + ' · ' + pad2(i + 1), cap: 'Nº ' + pad2(no) + ' · ' + r.when.md,
+        cellCls: (lit ? 'lit' : '') + wrapCls(r.id), frCls: (STAGE_X[r.stage] || 'x1') + (lead ? ' lead' : ''), title: e.title, time: isR ? r.oldWhen.time : r.when.time, tCls: isR ? 'strike' : '', date: isR ? r.oldWhen.wdEn + ' ' + r.oldWhen.md : r.when.wdEn + ' ' + r.when.md, hood: r.place.hood,
+        tone: 't-' + r.tone, label: r.label, hasCd: !!r.deadline, leftText: r.leftText, newTime: isR ? r.when.zh : '', showSeats: r.stage === 'gathering', seats: r.seats.map(sq => ({ cls: seatCls(sq) })), need: r.need, hasDeadline: !!r.deadline && lead, leftRatio: r.leftRatio.toFixed(3),
+        isLead: lead, isRow: !lead, cta: r.cta || '查看成员', entry: ENTRY[r.stage] || '查看', aria: e.title + '，' + r.label + '，' + r.when.zh + '，' + r.place.hood,
+        open: (ev) => this.motion('open-frame', () => { if (ev && ev.currentTarget) this.openDetail(ev, r); else { const root = this.rootRef.current; const b = root && root.querySelector('.cell[data-rid="' + r.id + '"] .fr'); this.openDetail(b ? { currentTarget: b } : null, r); } }) };
+    };
+    const onTrack = (ev) => { const el = ev.currentTarget; const c = el.querySelector('.cell'); const cw = c ? c.offsetWidth : 324; const idx = Math.max(0, Math.round(el.scrollLeft / cw)); if (idx !== this.state.lit) this.setState({ lit: idx }); };
+    const mkStrip = (g, gi, mk, leadId) => ({ key: g.key, cls: gi === 0 ? 'lead' : '', zh: g.title, n: g.rows.length, note: g.note, onScroll: gi === 0 ? onTrack : () => { }, frames: g.rows.map((r, i) => mk(r, i, g.key, leadId && r.id === leadId, gi === 0 && i === s.lit)) });
+    const mkHist = (r, i, key) => {
+      const e = r.event; const no = BASE[key] + i; const kept = r.stage === 'ended'; const residue = !kept && (r.stage === 'cancelled' || r.stage === 'exited' || r.stage === 'declined') && !!r.ticket;
+      const mark = kept ? (r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席' : r.attendance === 'pending' ? '待定' : '等章') : '';
+      return { id: r.id, no: String(no), noA: no + 'A', eprint: 'JU 400 · ' + EN[key] + ' · ' + pad2(i + 1), cap: 'Nº ' + pad2(no) + ' · ' + r.when.md, cellCls: wrapCls(r.id), frCls: (kept ? 'x4' : residue ? 'residue' : 'void') + (mark ? ' hasmark' : ''), residue, title: e.title, time: r.when.time, date: r.when.wdEn + ' ' + r.when.md, hood: r.place.hood, tone: 't-' + r.tone, label: r.label, need: kept ? r.attendanceText : r.need, entry: kept ? '查看票根' : '查看记录', mark, markCls: r.attendance === 'absent' ? 'abs' : r.attendance === 'pending' ? 'pend' : (!r.attendance ? 'none' : ''), aria: e.title + '，' + r.label + (kept ? '，' + r.attendanceText : '，' + r.need),
+        open: (ev) => this.motion('open-frame', () => this.openDetail(ev, r)) };
+    };
+    const J = {
+      badge: J0.badge, badgeCls: J0.badge ? '' : 'zero', showCurrent: sec !== 'history', showHistory: sec === 'history',
+      empty: J0.empty, emptyTitle: J0.emptyKind === 'first' ? JU.COPY.emptyJoinedFirst.title : JU.COPY.emptyJoinedRested.title, emptyBody: J0.emptyKind === 'first' ? JU.COPY.emptyJoinedFirst.body : JU.COPY.emptyJoinedRested.body,
+      strips: J0.sectionsCurrent.map((g, gi) => mkStrip(g, gi, mkFrame, J0.lead && J0.lead.id)),
+      hEmpty: J0.history.length === 0, hEmptyTitle: JU.COPY.emptyJoinedHistory.title, hEmptyBody: JU.COPY.emptyJoinedHistory.body,
+      hstrips: J0.sectionsHistory.map((g) => ({ key: g.key, cls: '', zh: g.title, n: g.rows.length, note: g.note, frames: g.rows.map((r, i) => mkHist(r, i, g.key)) }))
+    };
+    const mkHost = (r, i, key, lead, lit) => {
+      const e = r.event; const no = BASE[key] + i; const open = e.status === 'open';
+      return { id: r.id, no: String(no), noA: no + 'A', eprint: 'JU 400 · ' + EN[key] + ' · ' + pad2(i + 1), cap: 'Nº ' + pad2(no) + ' · ' + r.when.md, cellCls: (lit ? 'lit' : '') + wrapCls(r.id), frCls: (open ? (r.formed ? 'x4' : r.counts.reserved ? 'x3' : 'x2') : 'x4') + (lead ? ' lead' : ''), title: e.title, time: r.when.time, date: r.when.wdEn + ' ' + r.when.md, hood: r.place.hood,
+        tone: r.todo ? 't-act' : r.section === 'formed' ? 't-go' : 't-wait', label: r.label, life: r.life, showSeats: open, seats: r.seats.map(sq => ({ cls: seatCls(sq) })), need: open ? r.formedLine : r.label, isLead: lead, isRow: !lead, cta: r.cta || '管理这局', entry: r.cta ? r.cta : '管理这局', aria: e.title + '，' + r.life + '，' + r.label + '，' + r.when.zh,
+        open: (ev) => this.motion('open-frame', () => this.openManage(ev, r.id)) };
+    };
+    const mkHostHist = (r, i, key) => {
+      const e = r.event; const no = BASE[key] + i; const ended = e.status === 'ended'; const residue = !ended;
+      return { id: r.id, no: String(no), noA: no + 'A', eprint: 'JU 400 · ' + EN[key] + ' · ' + pad2(i + 1), cap: 'Nº ' + pad2(no) + ' · ' + r.when.md, cellCls: wrapCls(r.id), frCls: (ended ? 'x4' : 'residue') + (ended && !r.unrecorded && r.nonHost ? ' hasmark' : ''), residue, title: e.title, time: r.when.time, date: r.when.wdEn + ' ' + r.when.md, hood: r.place.hood, tone: ended ? 't-kept' : 't-void', label: r.label, need: ended ? (r.unrecorded ? r.unrecorded + ' 人出席待记录' : r.formedLine) : '取消后票根作废，成员不计主动退出', showSeats: ended, seats: r.seats.map(sq => ({ cls: sq.kind === 'host' ? 'host' : sq.kind === 'ok' ? (sq.attendance === 'present' ? 'att' : sq.attendance === 'absent' ? 'abs' : sq.attendance === 'pending' ? 'pend' : '') : '' })), entry: ended ? '查看出席' : '查看记录', mark: ended && !r.unrecorded && r.nonHost ? r.present + '/' + r.nonHost : '', markCls: 'none', aria: e.title + '，' + r.life + '，' + r.label,
+        open: (ev) => this.motion('open-frame', () => this.openManage(ev, r.id)) };
+    };
+    const H = {
+      badge: H0.badge, badgeCls: H0.badge ? '' : 'zero', showCurrent: sec === 'current', showDrafts: sec === 'drafts', showHistory: sec === 'history',
+      empty: H0.empty, emptyTitle: H0.emptyKind === 'drafts' ? JU.COPY.emptyHostedDrafts.title : JU.COPY.emptyHostedFirst.title, emptyBody: H0.emptyKind === 'drafts' ? JU.COPY.emptyHostedDrafts.body : JU.COPY.emptyHostedFirst.body, emptyToDrafts: H0.emptyKind === 'drafts', emptyFirst: H0.emptyKind === 'first',
+      strips: H0.sectionsCurrent.map((g, gi) => mkStrip(g, gi, mkHost, H0.lead && H0.lead.id)),
+      dEmpty: H0.drafts.length === 0 && !s.undo, dEmptyTitle: JU.COPY.emptyDrafts.title, dEmptyBody: JU.COPY.emptyDrafts.body, dShow: H0.drafts.length > 0 || !!s.undo, dN: H0.drafts.length,
+      drafts: H0.drafts.map((d, i) => ({ id: d.id, no: String(BASE.drafts + i), noA: (BASE.drafts + i) + 'A', eprint: 'JU 400 · DRAFT · ' + pad2(i + 1), title: d.title, ttlCls: d.untitled ? 'un' : '', whenText: d.whenText, placeText: d.placeText, capText: d.capacity + ' 人局 · 含你', cmpCls: d.ready ? 'ready' : 'missing', missingText: d.missingText, agoText: d.agoText, sourceText: d.source ? ' · 由「' + d.source.title + '」再开' : '', cellCls: wrapCls(d.id), open: (ev) => this.motion('open-frame', () => this.openDraft(ev, d)), del: () => this.deleteDraft(d.id) })),
+      undo: s.undo ? { title: s.undo.title, go: () => this.undoDelete() } : null,
+      hEmpty: H0.history.length === 0, hEmptyTitle: JU.COPY.emptyHostedHistory.title, hEmptyBody: JU.COPY.emptyHostedHistory.body,
+      hstrips: H0.sectionsHistory.map((g) => ({ key: g.key, cls: '', zh: g.title, n: g.rows.length, note: g.note, frames: g.rows.map((r, i) => mkHostHist(r, i, g.key)) }))
+    };
+    const setSec = (k) => () => { if (this.state.section === k) return; this.setState({ section: k, lit: 0, expose: this.state.role }); this.after(460, () => this.setState({ expose: '' })); };
+    const secs = { j: { cur: { cls: sec !== 'history' ? 'on' : '', go: setSec('current') }, his: { cls: sec === 'history' ? 'on' : '', go: setSec('history'), n: J0.counts.history } }, h: { cur: { cls: sec === 'current' ? 'on' : '', go: setSec('current') }, dr: { cls: sec === 'drafts' ? 'on' : '', go: setSec('drafts'), n: H0.counts.drafts }, his: { cls: sec === 'history' ? 'on' : '', go: setSec('history'), n: H0.counts.history } } };
+    const nowIso = '2026-12-17T15:00'; const wd = new Date(JU.NOW).getUTCDay(); const sun = JU.fmt.when(JU.fmt.isoAdd(nowIso, -wd, 0)), sat = JU.fmt.when(JU.fmt.isoAdd(nowIso, 6 - wd, 0));
+    const onRoll = (ev) => { const col = ev.currentTarget.scrollTop > 36; if (col !== this.state.col) this.setState({ col }); };
+    const home = { cls: paneOpen ? 'recede' : '', colCls: s.col ? 'col' : '', isJoined: isJ, isHosted: !isJ, indCls: isJ ? '' : 'r', rollsCls: isJ ? '' : 'r', joinedOn: isJ ? 'on' : '', hostedOn: isJ ? '' : 'on', datePill: '本周 ' + sun.md + '(' + sun.wd1 + ')〜' + sat.md + '(' + sat.wd1 + ')', sheetNo: 'SHEET ' + (isJ ? 'A' : 'B') + ' · ' + (sec === 'current' ? 'NOW' : sec === 'history' ? 'ARCHIVE' : 'DRAFT'),
+      toJoined: () => { if (isJ) return; this.setState({ role: 'joined', section: s.section === 'drafts' ? 'current' : s.section, lit: 0, col: false }); }, toHosted: () => { if (!isJ) return; this.setState({ role: 'hosted', lit: 0, col: false }); },
+      scrollJ: onRoll, scrollH: onRoll, exposeJ: s.expose === 'joined' ? 'expose' : '', exposeH: s.expose === 'hosted' ? 'expose' : '' };
+    return { J, H, secs, home };
+  }
+  /* ---------------------------------------------------------------- participant detail view model ---------------------------------------------------------------- */
+  detailVals() {
+    const s = this.state, d = s.detail; if (!d) return { on: false };
+    const row = this.joinedRow(d.id); if (!row) return { on: false };
+    const e = row.event, st = row.stage, fx = s.fx; const g = this.paneGeom(d);
+    const isTicketStage = st === 'tear' || st === 'contact' || st === 'going' || st === 'reschedule';
+    const closed = row.group === 'closed', kept = row.group === 'kept';
+    const voidTicket = closed && (st === 'cancelled' || st === 'exited' || st === 'declined') && !!row.ticket;
+    const melting = !!fx.melt, melted = !!fx.melted;
+    const hold = !!fx.hold;
+    const showTicket = isTicketStage || (voidTicket && (melting || fx.restore || hold));
+    const showResidue = voidTicket && !melting && !fx.restore && !hold;
+    const showHero = !showTicket && !showResidue;
+    const printed = d.printed && !fx.dev;
+    const torn = st !== 'reschedule' && !!(row.ticket && row.ticket.torn);
+    const no = 7 + (row.idx || 0);
+    const members = row.seats.map((sq, i) => ({ cls: (sq.kind === 'host' ? 'host' : sq.kind === 'res' ? 'res' : sq.kind === 'open' ? 'open' : '') + (sq.you ? ' you' : '') + (closed ? ' void' : ''), ini: sq.kind === 'open' ? '空位' : ini(sq.name), role: sq.kind === 'host' ? '局主' : sq.kind === 'res' ? '已预留' : sq.kind === 'ok' ? '已确认' : '', name: sq.kind === 'open' ? '' : (sq.you ? sq.name + ' · 你' : sq.name) + (sq.kind === 'res' && sq.deadline ? ' · 剩 ' + Math.ceil(Math.max(0, sq.deadline - JU.NOW) / 3600000) + 'h' : ''), no: pad2(i + 1) }));
+    const queue = (row.item.queue || []).map((q, i) => ({ name: q.you ? '你' : (q.name || '').slice(0, 1) + '**', no: '№' + (i + 1), cls: q.you ? 'you' : '' }));
+    const act = { on: false, primary: null, secondary: null, hint: '', primaryAct: '', secondaryAct: '', primaryBusy: s.busy ? 'busy' : '' };
+    const leave = (kind, label) => ({ label, go: () => this.openSheet(kind) });
+    if (st === 'pending') { act.on = true; act.secondary = leave('withdraw', '撤回报名'); act.secondaryAct = 'withdraw'; }
+    else if (st === 'invited' || st === 'invited_queue') { act.on = true; act.primary = { label: '阅读并确认', go: () => this.openRules(false), disabled: false }; act.primaryAct = 'confirm'; act.secondary = leave('release', '去不了了'); act.secondaryAct = 'release'; }
+    else if (st === 'waitlist') { act.on = true; act.secondary = leave('leaveQueue', '退出候补'); act.secondaryAct = 'exit'; act.hint = '轮到后需在 6 小时内确认 · 现在尚未留位'; }
+    else if (st === 'gathering') { act.on = true; act.primary = { label: '等待确认', go: () => { }, disabled: true }; act.primaryAct = 'confirm'; act.hint = '包括局主全员确认后才出票 · 成员行写「等成局出票」'; }
+    else if (st === 'tear' || st === 'contact' || st === 'going') { act.on = !fx.dev && !melting; act.secondary = leave('exit', '去不了了'); act.secondaryAct = 'exit'; act.hint = st === 'tear' ? '拖动裁刀剪下副券，才能看到局主微信' : ''; }
+    else if (st === 'reschedule') { act.on = !fx.dev && !melting && !fx.cutOff; act.primary = { label: '接受新时间', go: () => this.acceptByButton(), disabled: !printed }; act.primaryAct = 'accept'; act.secondary = leave('decline', '去不了了'); act.secondaryAct = 'decline'; act.hint = '接受 = 剪下新票副券（或按这里）· 答复前旧票不能用'; }
+    const whenShown = row.when;
+    const tk = {};
+    if (showTicket) {
+      const dev = !!fx.dev; const pre = !d.printed && !dev;
+      tk.cls = (pre ? 'pre' : '') + (dev ? ' dev' : '') + (printed ? ' printed' : '') + (fx.wet ? ' wet' : '') + (melting ? ' burning' : '') + (melted ? ' melted' : '');
+      tk.imgCls = dev ? 'devmask' : (pre ? 'blank' : '');
+      tk.ver = (row.ticket && row.ticket.version) || e.version; tk.oldVer = Math.max(1, e.version - 1);
+      tk.showOld = st === 'reschedule'; tk.oldTime = row.oldWhen ? row.oldWhen.time : ''; tk.oldDate = row.oldWhen ? row.oldWhen.wdEn + ' ' + row.oldWhen.md : '';
+      tk.oldLine = (st === 'reschedule' || (row.rescheduleAnswer === 'accepted')) && row.oldWhen ? row.oldWhen.zh : '';
+      tk.stamp = st === 'reschedule' || row.rescheduleAnswer === 'accepted'; tk.stampCls = dev ? 'fresh' : '';
+      tk.meeting = JU.fmt.when(st === 'reschedule' ? row.item.reschedule.newIso : e.iso).meeting;
+      tk.pencil = st === 'tear' ? '剪下副券，再联系局主' : st === 'contact' ? '8 小时内联系局主' : st === 'going' ? '已加微信 · 等这次见面' : st === 'reschedule' ? '新时间 · 剪下副券即接受' : '票根已作废';
+      tk.capMono = 'Nº ' + pad2(no) + ' · ' + row.when.md;
+      tk.veil = dev || melting;
+      const stubStage = st === 'tear' || st === 'reschedule';
+      tk.showNeg = (stubStage && !melting && !melted && !torn) || !!fx.cutOff || !!fx.replayStub;
+      tk.negCls = (s.cut.spring ? 'spring' : '') + (fx.cutOff ? ' off' : '');
+      tk.p = fx.cutOff ? 1 : s.cut.p.toFixed(3); tk.pPct = Math.round((fx.cutOff ? 1 : s.cut.p) * 100);
+      tk.negText = st === 'reschedule' ? '剪下，确认新时间' : '剪下，联系局主';
+      tk.hint = s.cut.drag ? (s.cut.p >= 0.55 ? '松手即剪断' : '继续向右推裁刀') : '按住裁刀，沿帧边向右推';
+      tk.down = (ev) => this.cutDown(ev); tk.move = (ev) => this.cutMove(ev); tk.up = () => this.cutUp();
+      tk.showSleeve = !melting && !melted; tk.stubs = (torn && !fx.cutOff && !fx.replayStub && st !== 'reschedule') ? [{ cls: fx.torn ? 'fresh' : '' }] : []; tk.stubCount = tk.stubs.length ? '存根 ' + tk.stubs.length : '空';
+      tk.trayCls = (tk.showNeg ? '' : 'noneg') + (fx.cutOff ? ' dropping' : ''); tk.stat = melting || melted ? '' : (tk.showNeg ? tk.hint : '票根状态'); tk.statB = st === 'reschedule' ? '旧票不可用 · 新票待剪' : torn ? '有效 · 已剪副券' : '有效 · 未剪';
+      tk.showContact = (st === 'contact' || st === 'going') && printed && !fx.cutOff && !melting && !melted;
+      tk.copiedCls = s.copied === 'host' ? 'ok' : ''; tk.copyLabel = s.copied === 'host' ? '已复制' : '复制'; tk.copy = () => this.copyWx(e.host.wx, 'host');
+      tk.contactNote = st === 'going' ? JU.COPY.contactedNote : JU.COPY.contactNote; tk.canContacted = st === 'contact'; tk.goingBtn = st === 'going'; tk.contactedLabel = s.busy === 'markContacted' ? '记录中…' : '已加微信'; tk.contactedBusy = s.busy === 'markContacted' ? 'busy' : ''; tk.contacted = () => this.markContacted();
+    }
+    const attendanceText = row.attendanceText || '';
+    const resWhen = closed && !voidTicket ? row.when.zh : (closed ? row.when.zh : '');
+    const fact = st === 'cancelled' ? '不计为未出席，也不影响成局信用。' : st === 'exited' ? '记为主动退出 · 同一账户每年共 4 次 · 只陈述，不评分' : st === 'declined' ? '未接受局主的新时间，位置已释放 · 不记主动失约' : st === 'expired' ? '预留到期未确认 · 不占主动退出机会' : st === 'released' ? '放弃未确认的预留 · 不记主动失约' : st === 'queue_left' ? '退出候补不记缺席 · 之后仍可重新加入' : st === 'rejected' ? '可重新申请 · 不影响信用' : st === 'withdrawn' ? '仍有位置时可以重新报名' : '';
+    const contactOpen = kept && e.endedAt && JU.NOW < e.endedAt + 24 * 3600000;
+    return {
+      on: true, phase: d.phase, anim: d.anim, clip: g.clip, inner: g.inner, close: () => this.closeDetail(), secLabel: (kept || closed) ? '历史' : '当前', tone: 't-' + row.tone, label: row.label,
+      title: e.title, ttlCls: (kept || row.mark) ? '' : 'one', time: whenShown.time, date: whenShown.wdEn + ' ' + whenShown.md, placeFull: row.place.full, whenLong: whenShown.long, hostName: e.host.name, hostWx: e.host.wx, noteText: e.note || '', joinMode: e.joinMode === 'direct' ? '直接留位' : '申请审核', capText: e.capacity + ' 人 · 含局主',
+      no: String(no), noA: no + 'A', eprint: 'JU 400 · ' + EN[row.group] + ' · ' + pad2((row.idx || 0) + 1), cap: 'Nº ' + pad2(no) + ' · ' + row.when.md,
+      showHero, heroCls: closed ? 'dimmed' : '', heroMeltCls: '', hfaceCls: (closed && !voidTicket) ? 'blank' : '',
+      mark: kept ? (row.attendance === 'present' ? '出席' : row.attendance === 'absent' ? '未出席' : row.attendance === 'pending' ? '待定' : '') : '', markCls: row.attendance === 'absent' ? 'abs' : row.attendance === 'pending' ? 'pend' : '', pencilNote: kept && !row.attendance ? '局主还没记录出席' : '',
+      showResidue, resTitle: st === 'cancelled' ? '局主取消 · 票根作废' : st === 'exited' ? '已退出 · 票根作废' : '未接受新时间 · 票根作废', resLine: '原定 ' + row.when.zh + ' · ' + row.place.hood,
+      showTicket, tk,
+      showStatus: !closed && !kept, sttCls: fx.settle ? 'settle' : '', detailTitle: row.detailTitle, need: row.need, hasDeadline: !!row.deadline, leftText: row.leftText, leftRatio: row.leftRatio.toFixed(3), barCls: row.leftRatio < 0.17 ? 'red' : '', deadlineCopy: row.deadline ? JU.fmt.deadlineCopy(row.deadline) : '',
+      queueLine: st === 'waitlist' ? '候补 ' + queue.length + ' · 已确认 ' + row.counts.confirmed + '/' + e.capacity + ' · 预留 ' + row.counts.reserved : '', queueNo: st === 'waitlist' ? '第 ' + row.queuePos + ' 位' : '',
+      showResult: closed && !melting && !hold, resWhen: resWhen, fact,
+      showMembers: !closed && st !== 'contact' && st !== 'going' && st !== 'tear' && st !== 'reschedule' || st === 'gathering', memTitle: st === 'waitlist' ? '已进' : st === 'gathering' ? '座位' : '同去的', memCount: row.counts.confirmed + '/' + e.capacity, members,
+      showQueue: st === 'waitlist', queueN: queue.length, queue,
+      showRecords: kept, attendanceText, records: (row.records || []).slice().reverse().map((r, i) => ({ at: JU.fmt.abs(r.at), text: r.text, cls: i === 0 && fx.newRecord ? 'fresh' : '' })), note: s.note, noteInput: (ev) => this.setState({ note: ev.target.value }), addNote: () => this.addNote(), noteDisabled: !(s.note || '').trim() || !!s.busy, contactLine: contactOpen ? '局主微信 ' + e.host.wx + ' · 散场 24 小时内可见' : '散场已超过 24 小时，联系方式已关闭',
+      showInfo: !closed && !kept, openRules: () => this.openRules(true),
+      act, showBackBtn: (closed && !melting && !hold) || kept
+    };
+  }
+  /* ---------------------------------------------------------------- host manage view model ---------------------------------------------------------------- */
+  manageVals() {
+    const s = this.state, mg = s.manage; if (!mg) return { on: false };
+    const m = JU.derive.manage(s.data, mg.id); if (!m) return { on: false };
+    const e = m.event; const cancelled = e.status === 'cancelled', ended = e.status === 'ended', open = e.status === 'open'; const g = this.paneGeom(mg);
+    const melting = mg.cstage === 'melt', restoring = mg.cstage === 'restore';
+    const showResidue = cancelled && mg.cstage === 'void'; const showHero = !showResidue;
+    const idx = s.data.hosted.findIndex(x => x.eventId === mg.id); const no = 3 + Math.max(0, idx);
+    const vis = { applications: m.appsToShow.length > 0, replies: !!e.proposal && open, members: !ended, waitlist: m.queue.length > 0, leaves: m.leaves.length > 0, attendance: ended && m.attendees.length > 0, arrange: true };
+    const order = m.pending ? ['applications', 'replies', 'members', 'waitlist'] : ended ? ['attendance', 'members'] : ['replies', 'members', 'applications', 'waitlist'];
+    const keys = order.concat(['leaves', 'arrange']).filter(k => vis[k]);
+    let tab = mg.tab; if (!vis[tab]) tab = keys[0];
+    const labels = { applications: '申请', replies: '改期答复', members: '成员', waitlist: '候补', leaves: '离开记录', attendance: '出席', arrange: '安排' };
+    const ns = { applications: m.pendingApps.length, replies: m.answered + '/' + m.asked, waitlist: m.queue.length, leaves: m.leaves.length, attendance: m.recorded + '/' + m.attendees.length };
+    const chips = keys.map(k => ({ label: labels[k], n: ns[k] != null ? String(ns[k]) : '', cls: (k === tab ? 'on' : '') + (k === 'arrange' && open ? '' : ''), go: () => this.setTab(k) }));
+    const pop = s.fx.progSettle ? ' pop' : '';
+    const seats = ended ? m.attendees.map(a => ({ cls: (a.attendance === 'present' ? 'att' : a.attendance === 'absent' ? 'abs' : a.attendance === 'pending' ? 'pend' : '') + pop })) : m.seats.map(sq => ({ cls: (sq.kind === 'host' ? 'host' : sq.kind === 'ok' ? 'ok' : sq.kind === 'res' ? 'res' + pop : '') }));
+    const cp = (key, wx) => ({ copiedCls: s.copied === key ? 'ok' : '', copyLabel: s.copied === key ? '已复制' : '复制', copy: () => this.copyWx(wx, key) });
+    const apps = m.appsToShow.map((a, i) => Object.assign({ id: a.id, ini: ini(a.nick || '未'), no: pad2(i + 1), nick: a.nick || '未填称呼', vbCls: a.verified ? '' : 'un', verifiedLabel: a.verifiedLabel, note: a.note, agoText: a.agoText, pending: !a.handled, handled: a.handled, resultText: a.resultText, resCls: a.status === 'approved' ? 'ok' : '', cls: a.status === 'approved' ? 'ok' : a.status === 'rejected' ? 'no' : 'pending', approve: () => this.approve(a.id), reject: () => this.reject(a.id), appBusy: s.busy === 'approve:' + a.id ? 'busy' : '', rejBusy: s.busy === 'reject:' + a.id ? 'busy' : '', disabled: !!s.busy, approveLabel: s.busy === 'approve:' + a.id ? '发出中…' : '发出邀请' }));
+    const roster = m.roster.map((mm, i) => Object.assign({ id: mm.id, ini: mm.host ? '你' : ini(mm.nick), no: pad2(i + 1), nick: mm.host ? '局主 · 你' : mm.nick, cls: mm.host ? 'host' : mm.tone === 'res' ? 'res' : mm.tone === 'void' ? 'void' : '', stateText: mm.host ? '' : mm.stateText, leftText: mm.leftText, ticketText: mm.ticketText, contactAdded: mm.contactAdded && !mm.host, showWx: mm.showWx, wx: mm.wx }, cp('m:' + mm.id, mm.wx)));
+    const attendees = m.attendees.map((a, i) => { const editing = s.attEdit === a.id; const choose = !a.attendance || editing; return Object.assign({ id: a.id, ini: ini(a.nick), no: pad2(i + 1), nick: a.nick, showWx: a.showWx, wx: a.wx, choose, onP: editing && a.attendance === 'present' ? 'on' : '', onA: editing && a.attendance === 'absent' ? 'on' : '', onD: editing && a.attendance === 'pending' ? 'on' : '', showRes: !!a.attendance && !editing, attLabel: a.attendance === 'present' ? '出席' : a.attendance === 'absent' ? '未出席 · 待核实' : '待定', pmCls: (a.attendance === 'absent' ? 'abs' : a.attendance === 'pending' ? 'pend' : '') + (s.attFresh === a.id ? ' fresh' : ''), pmCirc: a.attendance === 'present', pmCross: a.attendance === 'absent', pmDot: a.attendance === 'pending', fix: () => this.setState({ attEdit: a.id }), showTrail: a.attTrail.length >= 2, trail: a.attTrail.map((t, ti) => ({ text: t, cls: ti === 0 && s.attFresh === a.id ? 'fresh' : '' })), setPresent: () => this.attend(a.id, 'present'), setAbsent: () => this.attend(a.id, 'absent'), setPending: () => this.attend(a.id, 'pending') }, cp('a:' + a.id, a.wx)); });
+    const arr = { reschedule: m.canReschedule, end: m.canEnd, notFormed: m.notFormedHint, cancel: m.canCancel, reopen: ended || cancelled, openReschedule: () => this.openManageSheet('reschedule'), openEnd: () => this.openManageSheet('end'), openCancel: () => this.openManageSheet('cancel') };
+    return {
+      on: true, phase: mg.phase, anim: mg.anim, clip: g.clip, inner: g.inner, close: () => this.closeManage(), onScroll: () => { },
+      title: e.title, life: m.life, lifeCls: cancelled ? 'void' : m.todo ? 'act' : '', time: m.when.time, date: m.when.wdEn + ' ' + m.when.md, placeFull: m.place.full, when: m.when.zh, whenZh: m.when.zh, oldWhen: m.oldWhen ? m.oldWhen.zh : '', oldTime: mg.oldShown && m.oldWhen ? m.oldWhen.time : '', whenCls: mg.whenCls, status: m.status, formedLine: m.formedLine, statCls: mg.titleSettle ? 'ttlsettle' : '',
+      no: String(no), noA: no + 'A', eprint: 'JU 400 · HOST · ' + pad2(Math.max(0, idx) + 1), cap: 'Nº ' + pad2(no) + ' · ' + m.when.md,
+      showHero, heroCls: '', meltCls: melting ? 'burning' : '', showResidue,
+      showProg: !cancelled, seats, seatText: ended ? m.recorded + '/' + m.attendees.length : m.seatText, seatSub: ended ? '已记录出席' : '含你', seatMore: ended ? '出席 ' + m.present + ' · 未出席 ' + m.absent + (m.undecided ? ' · 待定 ' + m.undecided : '') : m.seatMore,
+      chips, tabApps: tab === 'applications', tabReplies: tab === 'replies', tabMembers: tab === 'members', tabQueue: tab === 'waitlist', tabLeaves: tab === 'leaves', tabAtt: tab === 'attendance', tabArr: tab === 'arrange',
+      appsN: m.pendingApps.length, appsHint: (m.handledCount ? '已处理 ' + m.handledCount + ' · ' : '') + '通过即发出 6 小时预留', apps, approveHelp: JU.COPY.approveHelp,
+      answered: m.answered, asked: m.asked, replies: m.reschedRoster.map(r => ({ nick: r.nick, answerText: r.answerText, cls: r.reschedule === 'accepted' ? 'ok' : r.reschedule === 'declined' || r.status === 'declined' ? 'no' : '' })), repliesHelp: JU.COPY.repliesHelp,
+      memHint: e.capacity + ' 个座位（含你）· 已确认 ' + m.counts.confirmed + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : ''), roster, openRows: open && m.openSeats > 0 ? [{ text: '还有 ' + m.openSeats + ' 个空位 · 等人' }] : [], contactClosed: cancelled ? '已取消 · 联系方式已关闭' : (!m.formed && open ? '成局后才能看到成员微信' : ''),
+      queueN: m.queue.length, queue: m.queue, queueHelp: JU.COPY.queueHelp,
+      leavesN: m.leaves.length, leaves: m.leaves.map(l => ({ nick: l.nick, text: l.text, at: JU.fmt.abs(l.at) })),
+      recorded: m.recorded, attN: m.attendees.length, attendees, attendanceHelp: JU.COPY.attendanceHelp, contactWindow: m.contactOpen ? '散场 24 小时内仍可查看成员微信' : '散场已超过 24 小时，联系方式已关闭',
+      arr, openCard: () => this.openManageSheet('card')
+    };
+  }
+  draftVals() {
+    const s = this.state, dv = s.draftView; if (!dv) return { on: false };
+    const H0 = JU.derive.hosted(s.data); const d = H0.drafts.filter(x => x.id === dv.id)[0]; if (!d) return { on: false };
+    const g = this.paneGeom(dv); const i = H0.drafts.indexOf(d); const no = BASE.drafts + i;
+    return { on: true, phase: dv.phase, anim: dv.anim, clip: g.clip, inner: g.inner, close: () => this.closeDraft(), no: String(no), noA: no + 'A', title: d.title, ttlCls: d.untitled ? 'un' : '', whenText: d.whenText, placeText: d.placeText, missingText: d.missingText, agoText: d.agoText, sourceText: d.source ? ' · 由「' + d.source.title + '」再开' : '', capText: d.capacity + ' 人 · 含你', joinMode: d.draft.joinMode === 'direct' ? '直接留位' : '申请审核', del: () => this.closeDraft(() => this.deleteDraft(d.id)) };
+  }
+  sheetVals() {
+    const s = this.state, sh = s.sheet; if (!sh) return { on: false };
+    const k = sh.kind; const busy = s.busy ? 'busy' : '';
+    let idb = null; if (s.detail) { const r = this.joinedRow(s.detail.id); if (r) idb = { title: r.event.title, when: r.when.zh, hood: r.place.hood }; } else if (s.manage) { const m = JU.derive.manage(s.data, s.manage.id); if (m) idb = { title: m.event.title, when: m.when.zh, hood: m.place.hood }; }
+    const base = { on: true, cls: sh.cls, cancel: () => this.closeSheet(), idb, body: '', irr: '', aff: null, isResched: false, isRules: false, isCard: false, primary: '', secondary: '再想想', primaryCls: 'pri', primaryAct: '', busyCls: busy, disabled: !!s.busy, ok: () => { } };
+    if (k === 'withdraw' || k === 'release' || k === 'exit' || k === 'decline' || k === 'leaveQueue') { const c = JU.COPY[k]; return Object.assign(base, { title: c.title, body: c.body, primary: s.busy ? '处理中…' : c.ok, secondary: c.cancel, primaryAct: k === 'leaveQueue' ? 'exit' : k, ok: () => this.leaveAction(k) }); }
+    if (k === 'cancelEvent') { const m = JU.derive.manage(s.data, s.manage.id); const c = JU.COPY.cancelEvent; const a = m.cancelAffected; const aff = [[a.confirmed, '已确认成员'], [a.reserved, '已预留'], [a.queue, '候补'], [a.pending, '待审申请']].filter(x => x[0] > 0).map(x => ({ n: x[0], label: x[1] })); return Object.assign(base, { title: c.title, body: c.body, irr: c.irreversible, aff: aff.length ? aff : null, primary: s.busy ? '取消中…' : c.ok, secondary: c.cancel, primaryAct: 'cancel', ok: () => this.cancelEvent() }); }
+    if (k === 'endEvent') { const c = JU.COPY.endEvent; return Object.assign(base, { title: c.title, body: c.body, primary: s.busy ? '处理中…' : c.ok, secondary: c.cancel, primaryCls: 'lit', primaryAct: 'end', ok: () => this.endEvent() }); }
+    if (k === 'reschedule') {
+      const m = JU.derive.manage(s.data, s.manage.id); const rs = s.resched || {}; const newIso = isoFrom(rs.date, rs.time); const same = !!newIso && newIso === m.event.iso; const valid = !!newIso && !same;
+      return Object.assign(base, { title: JU.COPY.reschedule.title, isResched: true, resched: { oldWhen: m.when.zh, newWhen: newIso ? JU.fmt.when(newIso).zh : '', placeholder: !newIso, date: rs.date || '', time: rs.time || '', onDate: (ev) => this.setState(st => ({ resched: Object.assign({}, st.resched, { date: ev.target.value }) })), onTime: (ev) => this.setState(st => ({ resched: Object.assign({}, st.resched, { time: ev.target.value }) })), same, sameText: JU.COPY.reschedule.same, desc: m.rescheduleDesc }, primary: s.busy ? '发出中…' : JU.COPY.reschedule.ok, secondary: JU.COPY.reschedule.cancel, primaryCls: 'lit', primaryAct: 'propose', disabled: !valid || !!s.busy, ok: () => this.propose() });
+    }
+    if (k === 'card') { const m = JU.derive.manage(s.data, s.manage.id); const e = m.event; return Object.assign(base, { title: '局卡', isCard: true, idb: null, card: { en: e.en + ' · JU', title: e.title, time: m.when.time, date: m.when.wdEn + ' ' + m.when.md, placeFull: m.place.full, statusLabel: m.formed ? '已成局' : m.counts.reserved ? '席位已预留' : '仍可报名', caption: '已确认 ' + m.counts.confirmed + '/' + e.capacity + ' · 已预留 ' + m.counts.reserved, cap: 'Nº ' + pad2(3) + ' · V' + e.version }, primary: '', secondary: '关闭' }); }
+    if (k === 'rules') { const confirming = !sh.readOnly; return Object.assign(base, { title: '参加约定', isRules: true, idb: confirming ? idb : null, rules: { list: JU.RULES.map(r => ({ key: r.key.toUpperCase(), title: r.title, lines: r.lines })), scroll: (ev) => this.checkRulesEnd(ev.currentTarget), confirming, hint: s.rulesRead ? '已读完，可以确认' : '请读到末尾，再确认入局', hintCls: s.rulesRead ? 'ok' : '' }, primary: confirming ? (s.busy ? '确认中…' : '确认入局') : '', secondary: confirming ? '再想想' : '关闭', primaryCls: 'lit', primaryAct: 'confirm', disabled: !s.rulesRead || !!s.busy, ok: () => this.confirmReservation() }); }
+    return Object.assign(base, { title: '' });
+  }
+  renderVals() {
+    const s = this.state; const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const hv = this.homeVals();
+    return Object.assign({ panel, rootRef: this.rootRef, D: this.detailVals(), M: this.manageVals(), DR: this.draftVals(), S: this.sheetVals(), E: s.err ? { on: true, message: s.err.message, retry: s.err.retry, dismiss: s.err.dismiss } : { on: false }, T: { cls: s.toast ? 'on' : '', text: s.toast } }, hv);
+  }
+}
+
+JU.mixin(Component);
+</script>
+</body>
+</html>

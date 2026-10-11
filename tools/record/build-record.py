@@ -47,7 +47,7 @@ sizes={f:os.path.getsize(f'{ROOT}/{f}') for f in ['concepts/src/C01.dc.html','co
 srcs=sorted(os.path.basename(p) for p in glob.glob(f'{ROOT}/concepts/src/C*.dc.html'))
 motion_specs=sorted(os.path.basename(p) for p in glob.glob(f'{ROOT}/spec/motion/*.md'))
 doc=body.replace('{{NOW}}',now).replace('{{RESEARCH_TABLE}}',research_table).replace('{{RESEARCH_COUNTS}}',counts_line)\
- .replace('{{EVIDENCE_C01}}',tree('C01')).replace('{{EVIDENCE_C04}}',tree('C04')).replace('{{GIT_LOG}}',git).replace('{{GIT_STATUS}}',status)\
+ .replace('{{EVIDENCE_C01}}',tree('C01')).replace('{{EVIDENCE_C02}}',tree('C02')).replace('{{EVIDENCE_C04}}',tree('C04')).replace('{{GIT_LOG}}',git).replace('{{GIT_STATUS}}',status)\
  .replace('{{BRANCH}}',branch).replace('{{HEAD}}',head).replace('{{SIZES}}','；'.join(f'`{k}` {v//1024} KB' for k,v in sizes.items()))\
  .replace('{{SRCS}}','、'.join(srcs) or '（无）').replace('{{MOTION_SPECS}}','、'.join(motion_specs) or '（无）')
 open(f'{ROOT}/JU-MY-JU-PROJECT-RECORD.md','w',encoding='utf-8').write(doc)

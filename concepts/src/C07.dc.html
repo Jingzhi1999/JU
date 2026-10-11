@@ -1,0 +1,1395 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C07 格盘</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=DM+Mono:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ============================================================================================
+   C07 格盘 · Bento dashboard. Every id is c07-*, every rule lives under .app (no :root).
+   Material: flat tiles with a 1px edge, a 1px inner top highlight and a 2px darker "lip" at the bottom
+   (a key-cap thickness), on a dotted-grid board. Section colour appears only on the current / lead tile.
+   ============================================================================================ */
+@property --c07-ink { syntax: '<percentage>'; inherits: true; initial-value: 0%; }
+.app{position:absolute;inset:0;overflow:hidden;background:#E7E8E3;color:#17191C;font-family:"Noto Sans SC","PingFang SC",-apple-system,sans-serif;font-size:14px;line-height:1.45;-webkit-font-smoothing:antialiased;
+  --bg:#E7E8E3;--tile:#FBFBF8;--ink:#17191C;--ink2:#4B5056;--ink3:#878D93;--line:rgba(23,25,28,.11);
+  --or:#FF6B35;--or2:#FFE4D6;--or3:#C8461B;--tl:#0F9C87;--tl2:#D2F0E8;--tl3:#0A7765;--sl:#6B7C9E;--sl2:#E0E5EF;--sl3:#4C5C7E;
+  --am:#E3A325;--am2:#FBEFD0;--am3:#9C6B0C;--dk:#22262B;--gy:#D6D8D3;--gy2:#EEEFEB;--gy3:#767C82;--dn:#C2364C;--dn2:#FBE1E5;
+  --mono:"DM Mono",ui-monospace,SFMono-Regular,monospace;--k:1}
+.app *{box-sizing:border-box}
+.app button{font-family:inherit}
+.c07-main{position:absolute;inset:0;display:flex;flex-direction:column;transform-origin:50% 40%;transition:transform calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),filter calc(460ms * var(--k,1)) ease,opacity calc(460ms * var(--k,1)) ease}
+.c07-main.back{transform:scale(.94) translateY(6px);filter:blur(1.5px) brightness(.86);opacity:.9}
+.c07-main.deep{transform:scale(.9) translateY(10px);filter:blur(2px) brightness(.8);opacity:.85}
+/* ---------- header (collapses continuously with --sc 0..1) ---------- */
+.c07-hd{position:relative;z-index:3;flex:0 0 auto;padding:54px 16px 0;background:linear-gradient(var(--bg) 82%,rgba(231,232,227,0));--sc:0}
+.c07-hd-top{display:flex;align-items:flex-end;justify-content:space-between;height:calc(40px - 32px * var(--sc));overflow:hidden;opacity:calc(1 - var(--sc) * 1.3);transform:translateY(calc(var(--sc) * -8px));transition:height .05s linear,opacity .05s linear,transform .05s linear}
+.c07-hd h1{margin:0;font-size:27px;font-weight:700;letter-spacing:-.01em;line-height:1}
+.c07-hd-date{font:500 11px/1 var(--mono);letter-spacing:.14em;color:var(--ink3);padding-bottom:4px}
+.c07-roles{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:calc(14px - 4px * var(--sc));padding:4px;background:#DDDFD9;border-radius:14px;box-shadow:inset 0 1px 0 rgba(0,0,0,.05)}
+.c07-roles-ind{position:absolute;top:4px;bottom:4px;left:4px;width:calc(50% - 6px);border-radius:11px;background:var(--dk);box-shadow:0 2px 0 #000,0 10px 18px -12px rgba(0,0,0,.5);transform:translateX(calc(var(--r) * (100% + 4px)));transition:transform calc(420ms * var(--k,1)) cubic-bezier(.25,.9,.3,1)}
+.c07-role{position:relative;z-index:1;border:0;background:transparent;border-radius:11px;height:38px;font-size:14.5px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--ink2);transition:color calc(300ms * var(--k,1)) ease;cursor:pointer}
+.c07-role.on{color:#fff}
+.c07-badge{display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;padding:0 6px;border-radius:6px;background:var(--or);color:#fff;font:500 11.5px/1 var(--mono)}
+.c07-role.on .c07-badge{background:var(--or)}
+.c07-secs{display:flex;align-items:center;gap:6px;margin-top:10px;padding-bottom:10px}
+.c07-sec{border:1px solid transparent;background:transparent;height:30px;padding:0 11px;border-radius:9px;font-size:13.5px;font-weight:500;color:var(--ink2);display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background calc(220ms * var(--k,1)) ease,color calc(220ms * var(--k,1)) ease}
+.c07-sec .n{font:500 11.5px/1 var(--mono);color:var(--ink3)}
+.c07-sec.on{background:var(--tile);border-color:var(--line);color:var(--ink);box-shadow:0 1px 0 rgba(0,0,0,.04)}
+.c07-sec.on .n{color:var(--ink)}
+.c07-secs-note{margin-left:auto;font-size:11px;color:var(--ink3);white-space:nowrap}
+/* ---------- boards in a sliding track ---------- */
+.c07-track{position:relative;flex:1 1 auto;min-height:0;display:flex;width:200%;transform:translateX(calc(var(--r) * -50%));transition:transform calc(440ms * var(--k,1)) cubic-bezier(.25,.9,.3,1)}
+.c07-board{position:relative;width:50%;flex:0 0 50%;overflow-y:auto;overflow-x:hidden;padding-bottom:110px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;background-image:radial-gradient(rgba(23,25,28,.075) 1px,transparent 1.2px);background-size:14px 14px;background-position:8px 8px}
+.c07-grid{position:relative;transition:height calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.c07-head{position:absolute;left:16px;right:16px;height:30px;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:var(--ink);transition:top calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(260ms * var(--k,1)) ease}
+.c07-head::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--hc,var(--ink))}
+.c07-head .n{font:500 12px/1 var(--mono);color:var(--ink2)}
+.c07-head .note{margin-left:auto;font-size:11px;font-weight:400;color:var(--ink3)}
+.c07-head.off{opacity:0;visibility:hidden}
+.c07-head.act{--hc:var(--or)}.c07-head.soon{--hc:var(--tl)}.c07-head.wait{--hc:var(--sl)}.c07-head.kept{--hc:var(--dk)}.c07-head.closed{--hc:var(--gy3)}
+.c07-head.todo{--hc:var(--or)}.c07-head.resched{--hc:var(--am)}.c07-head.recruit{--hc:var(--sl)}.c07-head.formed{--hc:var(--tl)}.c07-head.ended{--hc:var(--dk)}.c07-head.cancelled{--hc:var(--gy3)}.c07-head.drafts{--hc:var(--ink3)}
+/* ---------- tiles ---------- */
+.c07-tile{position:absolute;border-radius:18px;background:var(--tile);border:1px solid var(--line);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.08),0 14px 24px -18px rgba(20,24,30,.35);overflow:hidden;
+  transition:left calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),top calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),width calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),height calc(520ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(280ms * var(--k,1)) ease,transform calc(360ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),box-shadow calc(300ms * var(--k,1)) ease,visibility 0s linear 0s;--tone:var(--sl);--tone2:var(--sl2);--tone3:var(--sl3)}
+.c07-tile.off{opacity:0;transform:scale(.92);visibility:hidden;pointer-events:none;transition:opacity calc(240ms * var(--k,1)) ease,transform calc(240ms * var(--k,1)) ease,visibility 0s linear calc(240ms * var(--k,1))}
+.c07-tile.act,.c07-tile.todo{--tone:var(--or);--tone2:var(--or2);--tone3:var(--or3)}
+.c07-tile.soon,.c07-tile.formed{--tone:var(--tl);--tone2:var(--tl2);--tone3:var(--tl3)}
+.c07-tile.wait,.c07-tile.recruit{--tone:var(--sl);--tone2:var(--sl2);--tone3:var(--sl3)}
+.c07-tile.resched{--tone:var(--am);--tone2:var(--am2);--tone3:var(--am3)}
+.c07-tile.kept,.c07-tile.ended{--tone:var(--dk);--tone2:#3A3F46;--tone3:#000}
+.c07-tile.closed,.c07-tile.cancelled{--tone:var(--gy3);--tone2:var(--gy2);--tone3:#5D6369}
+.c07-tile.lead{background:var(--tone);border-color:transparent;color:var(--ink);box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 var(--tone3),0 18px 30px -16px color-mix(in srgb,var(--tone) 60%,#000)}
+.c07-tile.lead.soon,.c07-tile.lead.formed{color:#fff}
+.c07-tile.kept,.c07-tile.ended{background:var(--dk);color:#F2F3F0;border-color:#000;box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 2px 0 #000,0 14px 24px -18px rgba(0,0,0,.6)}
+.c07-tile.closed,.c07-tile.cancelled{background:var(--gy2);color:var(--gy3);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.06)}
+.c07-tile.draft{background:transparent;border:1.5px dashed rgba(23,25,28,.28);box-shadow:none;color:var(--ink2)}
+.c07-tile.landed{box-shadow:inset 0 1px 0 #fff,0 0 0 3px var(--bg),0 0 0 5px var(--tone),0 14px 24px -18px rgba(20,24,30,.35);animation:c07-land calc(1100ms * var(--k,1)) ease both}
+@keyframes c07-land{0%,70%{outline-color:var(--tone)}100%{outline-color:transparent}}
+.c07-tile.src{opacity:0}
+.c07-open{position:absolute;inset:0;z-index:0;border:0;background:transparent;opacity:0;cursor:pointer;border-radius:inherit}
+.c07-open:focus-visible{opacity:1;outline:2px solid var(--or);outline-offset:-2px;background:transparent}
+.c07-in{position:absolute;inset:0;padding:14px;pointer-events:none;display:flex;flex-direction:column;animation:c07-in calc(320ms * var(--k,1)) ease both}
+.c07-in button{pointer-events:auto}
+@keyframes c07-in{from{opacity:0}to{opacity:1}}
+.swap .c07-tile,.swap .c07-head{transition:none!important;animation:c07-tile-in calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 45ms * var(--k,1))}
+@keyframes c07-tile-in{from{opacity:0;transform:translateY(14px);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+.swap .c07-tile.off{animation:none}
+/* corner pixel + chip (section colour only on the current state) */
+.c07-px{width:12px;height:12px;border-radius:3px;background:var(--tone);flex:0 0 auto}
+.c07-chip{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px 0 6px;border-radius:7px;background:var(--tone2);color:var(--tone3);font-size:12px;font-weight:600;white-space:nowrap}
+.c07-chip::before{content:"";width:7px;height:7px;border-radius:2px;background:var(--tone)}
+.lead .c07-chip{background:rgba(255,255,255,.82);color:var(--ink)}
+.lead.soon .c07-chip,.lead.formed .c07-chip{background:rgba(255,255,255,.18);color:#fff}
+.kept .c07-chip,.ended .c07-chip{background:rgba(255,255,255,.12);color:#fff}
+.kept .c07-chip::before,.ended .c07-chip::before{background:#fff}
+.closed .c07-chip,.cancelled .c07-chip{background:rgba(23,25,28,.07);color:var(--gy3)}
+.c07-t{font-weight:600;letter-spacing:-.005em;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;overflow:hidden;word-break:break-all;flex-shrink:0}
+.c07-when{display:flex;gap:8px;align-items:baseline;min-width:0;white-space:nowrap}
+.c07-when > span:last-child{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.c07-when > b{flex:0 0 auto}
+.c07-mono{font-family:var(--mono);font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+.c07-txt{font-size:12px;color:var(--ink2);line-height:1.4}
+.lead .c07-txt{color:rgba(23,25,28,.72)}.lead.soon .c07-txt,.lead.formed .c07-txt,.kept .c07-txt,.ended .c07-txt{color:rgba(255,255,255,.72)}
+.closed .c07-txt,.cancelled .c07-txt{color:var(--gy3)}
+/* L tile (lead) */
+.c07-L .c07-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.c07-L .c07-big{font-size:34px;line-height:1;text-align:right;letter-spacing:-.02em}
+.c07-L .c07-big small{display:block;font-size:11px;letter-spacing:.1em;font-weight:500;opacity:.75;margin-top:5px;text-align:right}
+.c07-L .c07-t{font-size:24px;margin-top:14px;-webkit-line-clamp:3;max-height:95px}
+.c07-L .c07-when{margin-top:8px;font-size:13.5px;display:flex;gap:10px;align-items:baseline}
+.c07-L .c07-when b{font-family:var(--mono);font-weight:500;font-size:15px}
+.c07-L .c07-need{margin-top:10px;font-size:12.5px;line-height:1.45}
+.c07-L .c07-bar{display:grid;grid-template-columns:repeat(36,1fr);gap:2px;height:7px;margin-top:auto}
+.c07-L .c07-bar i{background:rgba(23,25,28,.14);border-radius:1px}
+.c07-L .c07-bar i.on{background:var(--ink)}
+.c07-L .c07-bar.hot i.on{background:var(--dn)}
+.c07-L .c07-acts{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:12px}.c07-L .c07-need + .c07-acts{margin-top:auto}
+.c07-L .c07-num{font-size:56px;line-height:.9;letter-spacing:-.04em;margin-top:8px;display:flex;align-items:baseline;gap:8px}
+.c07-L .c07-num small{display:inline;font-size:14px;font-weight:600;font-family:"Noto Sans SC",sans-serif;letter-spacing:0}
+.c07-L .c07-t.hl{font-size:20px;margin-top:8px;-webkit-line-clamp:2;max-height:54px}
+/* W tile */
+.c07-W .c07-in{flex-direction:row;gap:12px;align-items:stretch}
+.c07-W .c07-main-col{flex:1 1 auto;min-width:0;display:flex;flex-direction:column}
+.c07-W .c07-t{font-size:16.5px;-webkit-line-clamp:2;max-height:44px}
+.c07-W .c07-chip{height:20px;font-size:11.5px}
+.c07-W .c07-when{margin-top:4px;font-size:12.5px;color:var(--ink2);display:flex;gap:8px;align-items:baseline}
+.c07-W .c07-when b{font-family:var(--mono);font-weight:500;font-size:14px;color:var(--ink)}
+.kept .c07-when b,.ended .c07-when b{color:#fff}.closed .c07-when b,.cancelled .c07-when b{color:var(--gy3)}
+.c07-W .c07-foot{margin-top:auto;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--ink2);min-width:0}
+.c07-W .c07-foot .x{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c07-W .c07-foot .go{margin-left:auto;font-weight:600;color:var(--ink);white-space:nowrap;background:none;border:0;padding:0;font-size:12.5px;cursor:pointer}
+.c07-W .c07-foot .go::after{content:" ›"}
+.kept .c07-foot,.ended .c07-foot{color:rgba(255,255,255,.72)}.kept .c07-foot .go,.ended .c07-foot .go{color:#fff}
+.c07-W .c07-side{flex:0 0 auto;min-width:54px;max-width:96px;display:flex;flex-direction:column;align-items:flex-end;justify-content:space-between;gap:6px}
+.c07-W .c07-row1{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.c07-W .c07-t{margin-top:0}
+/* S tile */
+.c07-S .c07-t{font-size:14.5px;-webkit-line-clamp:2;max-height:38px;margin-top:8px}
+.c07-S .c07-when{margin-top:4px;font-size:12px;color:var(--ink2);display:block;overflow:hidden;text-overflow:ellipsis}
+.c07-S .c07-when b{font-family:var(--mono);font-weight:500;font-size:13px;color:var(--ink)}
+.closed .c07-when b,.cancelled .c07-when b{color:var(--gy3)}
+.c07-S .c07-need{margin-top:auto;font-size:11px;line-height:1.35;color:var(--ink2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.closed .c07-need,.cancelled .c07-need{color:var(--gy3)}
+.c07-S .c07-row1{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.c07-S .c07-chip{height:20px;font-size:11px;padding:0 6px 0 5px;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+/* seats pixel row */
+.c07-seats{display:flex;gap:3px;flex-wrap:wrap}
+.c07-seats i{width:14px;height:14px;border-radius:3px;background:var(--gy);border:1.5px dashed rgba(23,25,28,.3);position:relative}
+.c07-seats i.host{background:var(--ink);border:0}
+.c07-seats i.ok{background:var(--tl);border:0}
+.c07-seats i.res{background:var(--or2);border:1.5px solid var(--or)}
+.c07-seats i.res::after{content:"";position:absolute;inset:3px;border-radius:1px;background:var(--or)}
+.c07-seats i.void{background:transparent;border:1.5px solid var(--gy3);opacity:.6}
+.c07-seats i.pop{animation:c07-seat-pop calc(520ms * var(--k,1)) cubic-bezier(.2,1.2,.3,1) both}
+.lead .c07-seats i{border-color:rgba(23,25,28,.35);background:rgba(255,255,255,.35)}
+.lead .c07-seats i.host{background:var(--ink)}
+.lead .c07-seats i.ok{background:#fff}
+.lead .c07-seats i.res{background:rgba(255,255,255,.5);border-color:var(--ink)}.lead .c07-seats i.res::after{background:var(--ink)}
+@keyframes c07-seat-pop{0%{transform:scaleY(.4)}60%{transform:scaleY(1.12)}100%{transform:none}}
+.c07-seats.big i{width:22px;height:22px;border-radius:5px;font:500 10px/19px var(--mono);color:#fff;text-align:center}
+.c07-seats.big i.res{color:var(--or3);line-height:18px}.c07-seats.big i.res::after{display:none}.c07-seats.big i.open{color:transparent}
+/* dot-matrix progress (已到 n / 共 N) */
+.c07-dots{display:flex;gap:4px;align-items:center}
+.c07-dots i{width:9px;height:9px;border-radius:2px;background:rgba(23,25,28,.14)}
+.c07-dots i.on{background:var(--ink)}.c07-dots i.ab{background:transparent;border:1.5px solid rgba(23,25,28,.5)}.c07-dots i.pd{background:rgba(23,25,28,.45)}
+.kept .c07-dots i,.ended .c07-dots i{background:rgba(255,255,255,.18)}.kept .c07-dots i.on,.ended .c07-dots i.on{background:#fff}.kept .c07-dots i.ab,.ended .c07-dots i.ab{background:transparent;border-color:rgba(255,255,255,.55)}.kept .c07-dots i.pd,.ended .c07-dots i.pd{background:rgba(255,255,255,.5)}
+/* mini objects on tiles */
+.c07-obj{width:54px;height:54px;border-radius:10px;overflow:hidden;position:relative;background:#fff;border:1px solid var(--line);flex:0 0 auto}
+.c07-obj svg{display:block;width:100%;height:100%}
+.c07-obj.pass{display:grid;grid-template-columns:1fr 12px;background:#fff}
+.c07-obj.pass .qr{padding:5px}
+.c07-obj.pass .stb{background:repeating-linear-gradient(180deg,var(--ink) 0 3px,transparent 3px 5px);margin:5px 3px 5px 0;border-radius:2px;opacity:.85}
+.c07-obj.pass.torn{grid-template-columns:1fr 12px}
+.c07-obj.pass.torn .stb{background:repeating-linear-gradient(180deg,rgba(23,25,28,.18) 0 3px,transparent 3px 5px)}
+.c07-obj.pass.torn .stb::after{content:"";position:absolute;right:3px;bottom:6px;width:6px;height:3px;background:var(--ink);border-radius:1px}
+.c07-obj.pass.chg::before{content:"改期";position:absolute;left:4px;top:4px;font-size:9px;font-weight:700;color:var(--or3);background:var(--or2);padding:1px 4px;border-radius:3px;z-index:1}
+.c07-obj.stamp{display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+.c07-obj.void{background:var(--gy2);border-style:dashed;opacity:.8}
+.c07-obj.card{padding:0;background:var(--tone2)}
+.c07-stamp{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:36px;height:36px;padding:2px;border-radius:6px}
+.c07-stamp i{border-radius:2px;background:var(--tl)}
+.c07-stamp.absent i{background:transparent;border:1.5px solid rgba(255,255,255,.7)}
+.c07-stamp.pending i{background:var(--am)}
+.c07-stamp.none i{background:rgba(255,255,255,.14)}
+.c07-stamp.fresh i{animation:c07-stamp-pop calc(520ms * var(--k,1)) cubic-bezier(.2,1.3,.3,1) both;animation-delay:calc(var(--j,0) * 42ms * var(--k,1))}
+@keyframes c07-stamp-pop{0%{transform:scale(0)}65%{transform:scale(1.25)}100%{transform:none}}
+/* buttons: primary = rounded square (shape + colour), secondary = pill */
+.c07-btn{appearance:none;border:0;border-radius:12px;height:44px;padding:0 18px;background:var(--ink);color:#fff;font-size:14.5px;font-weight:600;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;box-shadow:0 2px 0 #000,0 10px 16px -12px rgba(0,0,0,.6);transition:transform calc(160ms * var(--k,1)) ease,box-shadow calc(160ms * var(--k,1)) ease,opacity calc(200ms * var(--k,1)) ease;white-space:nowrap;position:relative}
+.c07-btn:active{transform:translateY(1px);box-shadow:0 1px 0 #000}
+.c07-btn.pill{border-radius:999px;height:36px;background:rgba(23,25,28,.08);color:var(--ink);box-shadow:none;font-weight:500;font-size:13.5px;padding:0 14px}
+.c07-btn.ghost{background:transparent;box-shadow:none;color:var(--ink2);text-decoration:underline;text-underline-offset:3px;padding:0 6px;height:36px;font-weight:500;font-size:13px}
+.c07-btn.danger{background:var(--dn);box-shadow:0 2px 0 #7F1F2E,0 10px 16px -12px rgba(194,54,76,.6)}
+.c07-btn.teal{background:var(--tl);box-shadow:0 2px 0 var(--tl3),0 10px 16px -12px rgba(15,156,135,.6)}
+.c07-btn.big{height:52px;padding:0 22px;font-size:15.5px;border-radius:14px}
+.c07-btn.sm{height:34px;padding:0 12px;font-size:13px;border-radius:9px}
+.c07-btn.wide{width:100%}
+.c07-btn.sq{width:52px;padding:0;border-radius:14px}
+.c07-btn[disabled]{opacity:.42;cursor:default;box-shadow:none;transform:none}
+.c07-btn.inert{background:transparent;color:var(--ink3);box-shadow:none;border:1px dashed rgba(23,25,28,.3);cursor:default;font-weight:500}
+.lead .c07-btn{background:var(--ink);color:#fff}
+.lead.soon .c07-btn,.lead.formed .c07-btn{background:#fff;color:var(--tl3);box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.lead .c07-btn.ghost{background:transparent;box-shadow:none;color:rgba(23,25,28,.85)}.lead.soon .c07-btn.ghost,.lead.formed .c07-btn.ghost{color:rgba(255,255,255,.9)}
+.c07-btn.busy{color:transparent}
+.c07-btn.busy::after{content:"";position:absolute;left:50%;top:50%;width:30px;height:8px;margin:-4px 0 0 -15px;background:repeating-linear-gradient(90deg,currentColor 0 8px,transparent 8px 11px);color:#fff;animation:c07-busy calc(720ms * var(--k,1)) steps(3) infinite;opacity:.9}
+.c07-btn.pill.busy::after,.c07-btn.ghost.busy::after{color:var(--ink)}
+@keyframes c07-busy{0%{clip-path:inset(0 66% 0 0)}100%{clip-path:inset(0 -5% 0 0)}}
+/* result line that replaces buttons in place (settle) */
+.c07-res{font-size:12.5px;color:var(--ink2);display:flex;align-items:center;gap:8px;animation:c07-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.c07-res::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--tl)}
+.c07-res.no::before{background:var(--gy3)}
+@keyframes c07-settle{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* inline alert (failure in place) */
+.c07-alert{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--dn2);color:#7F1F2E;font-size:12.5px;display:flex;align-items:center;gap:10px;animation:c07-settle calc(300ms * var(--k,1)) ease both}
+.c07-alert b{font-weight:600}
+.c07-alert .c07-btn{margin-left:auto;height:30px;padding:0 10px;font-size:12.5px;border-radius:8px;background:#7F1F2E;box-shadow:none}
+/* empty composition */
+.c07-empty{position:relative;margin:12px 16px 0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:148px 148px 110px 110px;gap:10px}
+.c07-empty i{border-radius:18px;border:1.5px dashed rgba(23,25,28,.16)}
+.c07-empty .c07-tile{position:relative;grid-column:1 / span 2;grid-row:1 / span 2;left:auto;top:auto;width:auto;height:auto;padding:18px;display:flex;flex-direction:column;gap:8px}
+.c07-empty .c07-tile h2{margin:6px 0 0;font-size:21px;font-weight:600;line-height:1.3}
+.c07-empty .c07-tile p{margin:0;font-size:13px;color:var(--ink2);line-height:1.55}
+.c07-empty .c07-tile .c07-btn{margin-top:auto;align-self:flex-start}
+.c07-empty .c07-tile .c07-px{background:var(--ink3)}
+.c07-foot{margin:18px 16px 0;font-size:11px;color:var(--ink3);line-height:1.6}
+.c07-foot b{font-weight:500;color:var(--ink2)}
+.c07-foot .lk{text-decoration:underline dashed;text-underline-offset:3px;color:var(--ink3)}
+/* bottom nav (static) */
+.c07-nav{position:absolute;left:0;right:0;bottom:0;height:84px;padding:8px 10px 22px;z-index:4;display:grid;grid-template-columns:repeat(4,1fr);gap:4px;background:linear-gradient(rgba(231,232,227,0),var(--bg) 30%)}
+.c07-nav span{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10.5px;color:var(--ink3);border-radius:12px}
+.c07-nav span svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.c07-nav span.on{color:var(--ink);background:var(--tile);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.08);font-weight:600}
+/* toast / undo */
+.c07-toast{position:absolute;left:16px;right:16px;bottom:96px;z-index:30;background:var(--dk);color:#fff;border-radius:12px;padding:11px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 0 #000,0 16px 24px -16px rgba(0,0,0,.6);transform:translateY(18px);opacity:0;transition:transform calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1),opacity calc(260ms * var(--k,1)) ease;pointer-events:none}
+.c07-toast.on{transform:none;opacity:1}
+.c07-toast::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--tl)}
+.c07-undo{position:absolute;left:16px;right:16px;bottom:96px;z-index:31;background:var(--dk);color:#fff;border-radius:12px;padding:10px 10px 10px 14px;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 0 #000,0 16px 24px -16px rgba(0,0,0,.6);animation:c07-rise calc(360ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both;overflow:hidden}
+.c07-undo .t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c07-undo .c07-btn{height:32px;padding:0 12px;background:#fff;color:var(--ink);box-shadow:none;border-radius:8px;font-size:13px}
+.c07-undo .cd{position:absolute;left:0;bottom:0;height:3px;background:var(--or);width:100%;animation:c07-cd calc(10000ms * var(--k,1)) linear both}
+@keyframes c07-cd{from{width:100%}to{width:0}}
+@keyframes c07-rise{from{transform:translateY(18px);opacity:0}to{transform:none;opacity:1}}
+/* ============================ overlays (expanded tile) ============================ */
+.c07-over{position:absolute;inset:0;z-index:10;background:var(--bg);display:flex;flex-direction:column;transform-origin:0 0;will-change:clip-path,transform;
+  transition:clip-path calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),transform calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k,1)) ease;background-image:radial-gradient(rgba(23,25,28,.06) 1px,transparent 1.2px);background-size:14px 14px}
+.c07-over.start,.c07-over.out{overflow:hidden}
+.c07-over.out{transition-timing-function:cubic-bezier(.4,0,.6,1)}
+.c07-over.gone{opacity:0}
+.c07-topbar{flex:0 0 auto;height:92px;padding:50px 16px 0;display:flex;align-items:center;gap:10px}
+.c07-back{border:0;background:var(--tile);border:1px solid var(--line);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.08);height:34px;padding:0 12px 0 8px;border-radius:10px;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;cursor:pointer}
+.c07-back svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.c07-rail{margin-left:auto;display:flex;gap:4px;align-items:center;background:transparent;border:0;padding:6px;cursor:pointer}
+.c07-rail i{width:8px;height:8px;border-radius:2px;background:var(--rc,var(--gy3));opacity:.5}
+.c07-rail i.cur{width:14px;height:14px;border-radius:4px;opacity:1;box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--rc,var(--ink))}
+.c07-rail i.act,.c07-rail i.todo{--rc:var(--or)}.c07-rail i.soon,.c07-rail i.formed{--rc:var(--tl)}.c07-rail i.wait,.c07-rail i.recruit{--rc:var(--sl)}.c07-rail i.kept,.c07-rail i.ended{--rc:var(--dk)}.c07-rail i.resched{--rc:var(--am)}.c07-rail i.draft{--rc:var(--ink3)}
+.c07-body{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;padding:0 16px 120px}
+.c07-over.start .c07-body,.c07-over.out .c07-body{overflow:hidden}
+/* sub-tiles inside an expanded tile */
+.c07-sub{position:relative;background:var(--tile);border:1px solid var(--line);border-radius:18px;box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.08),0 14px 24px -18px rgba(20,24,30,.3);padding:16px;margin-bottom:10px;--tone:var(--sl);--tone2:var(--sl2);--tone3:var(--sl3)}
+.c07-sub.act,.c07-sub.todo{--tone:var(--or);--tone2:var(--or2);--tone3:var(--or3)}.c07-sub.soon,.c07-sub.formed{--tone:var(--tl);--tone2:var(--tl2);--tone3:var(--tl3)}.c07-sub.wait,.c07-sub.recruit{--tone:var(--sl);--tone2:var(--sl2);--tone3:var(--sl3)}.c07-sub.resched{--tone:var(--am);--tone2:var(--am2);--tone3:var(--am3)}.c07-sub.kept,.c07-sub.ended{--tone:var(--dk);--tone2:#3A3F46;--tone3:#000}.c07-sub.closed,.c07-sub.cancelled{--tone:var(--gy3);--tone2:var(--gy2);--tone3:#5D6369}
+.c07-sub.hero{background:var(--tone);border-color:transparent;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 2px 0 var(--tone3),0 18px 30px -16px color-mix(in srgb,var(--tone) 60%,#000);min-height:150px}
+.c07-sub.hero.soon,.c07-sub.hero.formed,.c07-sub.hero.kept,.c07-sub.hero.ended{color:#fff}
+.c07-sub.hero.closed,.c07-sub.hero.cancelled{background:var(--gy2);color:var(--gy3);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.08)}
+.c07-sub.hero .c07-row1{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.c07-sub.hero .c07-big{font-size:30px;line-height:1;text-align:right;letter-spacing:-.02em}
+.c07-sub.hero .c07-big small{display:block;font-size:11px;letter-spacing:.1em;font-weight:500;opacity:.75;margin-top:5px}
+.c07-sub.hero .c07-t{font-size:24px;margin-top:14px;-webkit-line-clamp:3}
+.c07-sub.hero .c07-when{margin-top:8px;font-size:13.5px;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;white-space:normal}
+.c07-sub.hero .c07-when > span:last-child{flex:0 1 auto;overflow:visible;white-space:normal}
+.c07-sub.hero .c07-when b{font-family:var(--mono);font-weight:500;font-size:15px}
+.c07-sub.hero .c07-when s{opacity:.6}
+.c07-sub.hero .c07-chip{background:rgba(255,255,255,.82);color:var(--ink)}
+.c07-sub.hero.soon .c07-chip,.c07-sub.hero.formed .c07-chip,.c07-sub.hero.kept .c07-chip,.c07-sub.hero.ended .c07-chip{background:rgba(255,255,255,.18);color:#fff}
+.c07-sub.hero.kept .c07-chip::before,.c07-sub.hero.ended .c07-chip::before{background:#fff}
+.c07-sub.hero.closed .c07-chip,.c07-sub.hero.cancelled .c07-chip{background:rgba(23,25,28,.07);color:var(--gy3)}
+.c07-sub.hero .c07-need{margin-top:10px;font-size:13px;line-height:1.5;opacity:.85}
+.c07-sub.hero .c07-bar{display:grid;grid-template-columns:repeat(36,1fr);gap:2px;height:8px;margin-top:10px}
+.c07-sub.hero .c07-bar i{background:rgba(23,25,28,.14);border-radius:1px}.c07-sub.hero .c07-bar i.on{background:var(--ink)}.c07-sub.hero .c07-bar.hot i.on{background:var(--dn)}
+.c07-sub.hero .c07-meta{margin-top:6px;font-size:12.5px;opacity:.8}
+.c07-sub h3{margin:0 0 10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.c07-sub h3::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--tone)}
+.c07-sub h3 .n{font:500 12px/1 var(--mono);color:var(--ink2)}
+.c07-sub h3 .note{margin-left:auto;font-size:11px;font-weight:400;color:var(--ink3);white-space:nowrap}
+.c07-sub .help{font-size:11.5px;color:var(--ink3);line-height:1.55;margin:10px 0 0}
+.c07-sub.jumped{box-shadow:inset 0 1px 0 #fff,0 0 0 3px var(--bg),0 0 0 5px var(--tone),0 14px 24px -18px rgba(20,24,30,.3)}
+.c07-grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.c07-grid2 .c07-sub{margin:0}
+/* stagger-in of sub tiles once the tile has expanded */
+.c07-over.in .c07-sub{animation:c07-tile-in calc(380ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(60ms * var(--k,1) + var(--i,0) * 55ms * var(--k,1))}
+.c07-over.in .c07-sub.hero{animation:none}
+.c07-over.instant .c07-sub{animation:none}
+.c07-over.out .c07-sub{animation:none}
+/* action tile */
+.c07-acts{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.c07-acts .c07-btn.big{flex:1 1 auto}
+/* members avatar grid */
+.c07-av{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.c07-av .m{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11px;color:var(--ink2);min-width:0;text-align:center}
+.c07-av .m b{width:46px;height:46px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;background:var(--gy2);border:1.5px dashed rgba(23,25,28,.3);color:var(--ink3)}
+.c07-av .m.host b{background:var(--ink);color:#fff;border:0}
+.c07-av .m.ok b{background:var(--tl);color:#fff;border:0}
+.c07-av .m.res b{background:var(--or2);color:var(--or3);border:1.5px solid var(--or)}
+.c07-av .m.you b{box-shadow:0 0 0 2px var(--tile),0 0 0 4px var(--ink)}
+.c07-av .m span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.c07-av .m small{font-size:10px;color:var(--ink3);white-space:nowrap}
+.c07-av .m.pop b{animation:c07-stamp-pop calc(520ms * var(--k,1)) cubic-bezier(.2,1.3,.3,1) both}
+/* roster rows (host) */
+.c07-rows{display:flex;flex-direction:column}
+.c07-rw{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid var(--line);min-height:52px;position:relative;flex-wrap:wrap}
+.c07-rw:first-child{border-top:0}
+.c07-rw .av{width:36px;height:36px;border-radius:10px;background:var(--gy2);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;color:var(--ink2);flex:0 0 auto}
+.c07-rw.host .av{background:var(--ink);color:#fff}.c07-rw.ok .av{background:var(--tl);color:#fff}.c07-rw.res .av{background:var(--or2);color:var(--or3);border:1.5px solid var(--or)}.c07-rw.wait .av{background:var(--am2);color:var(--am3)}.c07-rw.void .av{background:transparent;border:1.5px dashed var(--gy3);color:var(--gy3)}
+.c07-rw .who{flex:1 1 auto;min-width:0}
+.c07-rw .who b{display:block;font-size:14px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c07-rw .who span{display:block;font-size:11.5px;color:var(--ink2);line-height:1.4}
+.c07-rw .who .q{color:var(--ink);font-style:normal}
+.c07-rw .st{text-align:right;font-size:12px;color:var(--ink2);line-height:1.35;flex:0 0 auto;max-width:46%}
+.c07-rw .st b{display:block;font-weight:600;color:var(--ink)}
+.c07-rw .st .mono{font-family:var(--mono);font-weight:500}
+.c07-rw .st.hot b{color:var(--dn)}
+.c07-rw .acts{flex:0 0 auto;display:flex;gap:6px}
+.c07-rw .full{flex:0 0 100%}
+.c07-rw.gone{opacity:.5}
+.c07-badge2{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:5px;background:var(--tl2);color:var(--tl3);font-weight:500;margin-left:6px;vertical-align:1px}
+.c07-badge2.no{background:var(--gy2);color:var(--gy3)}
+.c07-wx{display:flex;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:var(--ink2);flex:0 0 100%}
+.c07-wx code{font-family:var(--mono);font-weight:500;color:var(--ink);background:var(--gy2);padding:2px 7px;border-radius:6px}
+.c07-wx .c07-btn{height:28px;padding:0 10px;font-size:12px;border-radius:7px;background:var(--tile);color:var(--ink);border:1px solid var(--line);box-shadow:0 1px 0 rgba(23,25,28,.08)}
+.c07-wx .c07-btn.done{background:var(--tl2);color:var(--tl3);border-color:transparent}
+.c07-minibar{display:grid;grid-template-columns:repeat(18,1fr);gap:1.5px;height:5px;margin-top:4px;width:110px;margin-left:auto}
+.c07-minibar i{background:var(--gy);border-radius:1px}.c07-minibar i.on{background:var(--or)}.c07-minibar.hot i.on{background:var(--dn)}
+/* three-segment attendance */
+.c07-seg{display:flex;gap:4px;flex:0 0 100%;margin-top:6px}
+.c07-seg .c07-btn{flex:1 1 0;height:36px;border-radius:9px;background:var(--gy2);color:var(--ink2);box-shadow:none;font-size:13px;font-weight:500}
+.c07-seg .c07-btn.on{background:var(--ink);color:#fff}
+.c07-seg .c07-btn.p.on{background:var(--tl)}.c07-seg .c07-btn.a.on{background:var(--gy3)}.c07-seg .c07-btn.u.on{background:var(--am)}
+.c07-trail{flex:0 0 100%;font-size:11px;color:var(--ink3);line-height:1.6;font-family:var(--mono)}
+.c07-rw .c07-stamp{width:30px;height:30px;flex:0 0 auto}
+.c07-rw .c07-stamp i{background:var(--tl)}.c07-rw .c07-stamp.absent i{background:transparent;border:1.5px solid var(--gy3)}.c07-rw .c07-stamp.pending i{background:var(--am)}.c07-rw .c07-stamp.none i{background:var(--gy)}
+/* leaves (collapsible) */
+.c07-leaves summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600}
+.c07-leaves summary::-webkit-details-marker{display:none}
+.c07-leaves summary::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--gy3)}
+.c07-leaves summary .n{font:500 12px/1 var(--mono);color:var(--ink2)}
+.c07-leaves summary .tg{margin-left:auto;width:18px;height:18px;border-radius:5px;background:var(--gy2);display:inline-flex;align-items:center;justify-content:center;font-size:12px;color:var(--ink2);transition:transform calc(240ms * var(--k,1)) ease}
+.c07-leaves.open summary .tg{transform:rotate(45deg)}
+.c07-leaves .ls{display:grid;grid-template-rows:0fr;transition:grid-template-rows calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.c07-leaves.open .ls{grid-template-rows:1fr}
+.c07-leaves .ls > div{overflow:hidden}
+.c07-leaves .lr{display:flex;justify-content:space-between;font-size:12.5px;padding:8px 0;border-top:1px solid var(--line);color:var(--ink2)}
+.c07-leaves .lr:first-child{margin-top:10px}
+.c07-leaves .lr b{font-weight:500;color:var(--ink)}
+/* arrangement rows */
+.c07-arr{display:flex;flex-direction:column}
+.c07-ar{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.c07-ar:first-child{border-top:0;padding-top:0}
+.c07-ar .ic{width:36px;height:36px;border-radius:10px;background:var(--gy2);display:flex;align-items:center;justify-content:center;flex:0 0 auto}
+.c07-ar .ic svg{width:18px;height:18px;stroke:var(--ink);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.c07-ar.dn .ic{background:var(--dn2)}.c07-ar.dn .ic svg{stroke:var(--dn)}
+.c07-ar .tx{flex:1 1 auto;min-width:0}
+.c07-ar .tx b{display:block;font-size:14px;font-weight:600}
+.c07-ar .tx span{display:block;font-size:11.5px;color:var(--ink3);line-height:1.4}
+.c07-ar.dim .tx b{color:var(--ink3)}
+.c07-ar .c07-btn{flex:0 0 auto}
+/* rules (participation agreement) */
+.c07-rules{display:flex;flex-direction:column;gap:12px}
+.c07-rule h4{margin:0 0 6px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
+.c07-rule h4 i{width:22px;height:22px;border-radius:6px;background:var(--ink);color:#fff;font:500 11px/22px var(--mono);text-align:center;font-style:normal}
+.c07-rule p{margin:0 0 4px;font-size:12.5px;color:var(--ink2);line-height:1.6}
+.c07-rule-end{margin-top:6px;text-align:center;font:500 11px/1 var(--mono);letter-spacing:.14em;color:var(--ink3)}
+/* records / notes */
+.c07-rec{font-size:12.5px;color:var(--ink2);padding:8px 0;border-top:1px solid var(--line);display:flex;gap:10px;align-items:baseline}
+.c07-rec:first-of-type{border-top:0}
+.c07-rec .at{font:400 11px/1.4 var(--mono);color:var(--ink3);white-space:nowrap;margin-left:auto}
+.c07-input{width:100%;height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;padding:0 12px;font:inherit;font-size:14px;color:var(--ink)}
+.c07-input:focus{outline:2px solid var(--ink);outline-offset:-1px}
+.c07-ta{width:100%;min-height:88px;border-radius:10px;border:1px solid var(--line);background:#fff;padding:10px 12px;font:inherit;font-size:14px;line-height:1.5;resize:vertical;color:var(--ink)}
+.c07-lbl{display:block;font-size:12px;color:var(--ink2);margin:10px 0 6px;font-weight:500}
+.c07-chips{display:flex;flex-wrap:wrap;gap:6px}
+.c07-chips .c07-btn{height:30px;border-radius:8px;background:var(--gy2);color:var(--ink);box-shadow:none;font-size:12.5px;padding:0 10px;font-weight:500}
+.c07-chips .c07-btn.on{background:var(--ink);color:#fff}
+/* ============================ the pass tile (通行证格) ============================ */
+.c07-pass{position:relative;border-radius:16px;background:#fff;border:1px solid var(--line);box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.1),0 14px 24px -18px rgba(20,24,30,.35);overflow:hidden;--c07-ink:100%;min-height:196px;display:grid;grid-template-columns:96px 1fr 48px;touch-action:none;user-select:none;-webkit-user-select:none}
+.c07-pass .face{grid-column:1 / span 2;display:grid;grid-template-columns:96px 1fr;position:relative}
+.c07-pass .qr{padding:14px 0 14px 14px}
+.c07-pass .qr svg{display:block;width:82px;height:82px;border-radius:4px}
+.c07-pass .qr .code{display:block;font:500 9.5px/1 var(--mono);letter-spacing:.08em;color:var(--ink3);margin-top:8px;text-transform:uppercase}
+.c07-pass .info{padding:14px 12px 14px 14px;min-width:0;display:flex;flex-direction:column}
+.c07-pass .info .tt{font-size:14.5px;font-weight:600;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c07-pass .info .tm{font-family:var(--mono);font-weight:500;font-size:30px;line-height:1;letter-spacing:-.02em;margin-top:8px}
+.c07-pass .info .tm s{font-size:16px;opacity:.5;margin-right:6px}
+.c07-pass .info .dt{font-size:12.5px;color:var(--ink2);margin-top:4px}
+.c07-pass .info .pl{font-size:12px;color:var(--ink2);margin-top:auto;padding-top:8px;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2}
+.c07-pass .info .pl b{font-weight:600;color:var(--ink)}
+.c07-pass .info .pl .mono{font-family:var(--mono)}
+.c07-pass .mark{position:absolute;right:10px;top:10px;font-size:10.5px;font-weight:700;letter-spacing:.06em;padding:3px 7px;border-radius:5px;background:var(--or2);color:var(--or3);transform:rotate(-4deg)}
+.c07-pass .mark.void{background:var(--gy2);color:var(--gy3)}
+/* stub: a column of pixel cells that get scraped off */
+.c07-stub{position:relative;border-left:1.5px dashed rgba(23,25,28,.35);padding:12px 0 12px 8px;cursor:grab;display:flex;flex-direction:column;align-items:center;gap:6px;background:linear-gradient(90deg,rgba(23,25,28,.04),transparent 40%)}
+.c07-stub:active{cursor:grabbing}
+.c07-stub .cells{display:grid;grid-template-columns:repeat(3,8px);grid-auto-rows:8px;gap:2px;--dx:0px;--dy:0px}
+.c07-sc{display:block;width:8px;height:8px;border-radius:1.5px;background:var(--ink);transition:transform calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(200ms * var(--k,1)) ease;will-change:transform}
+.c07-sc.lite{background:rgba(23,25,28,.35)}
+.c07-sc.det{transform:translate(calc(var(--dx) * .55 + var(--jx)),calc(var(--dy) * .55 + var(--jy))) rotate(var(--jr));transition-duration:calc(110ms * var(--k,1))}
+.c07-stub.falling .c07-sc{animation:c07-sc-fall calc(900ms * var(--k,1)) cubic-bezier(.5,0,.9,.6) forwards;animation-delay:calc(var(--d) * var(--k,1));transition:none}
+@keyframes c07-sc-fall{0%{transform:translate(calc(var(--dx) * .55 + var(--jx)),calc(var(--dy) * .55 + var(--jy))) rotate(var(--jr));opacity:1}100%{transform:translate(calc(var(--jx) * 3 - 20px),270px) rotate(calc(var(--jr) * 6));opacity:0}}
+.scrub .c07-stub.falling .c07-sc{animation-play-state:paused!important;animation-delay:calc(var(--d) * var(--k,1) - var(--frame,0) * 1100ms * var(--k,1))!important}
+.c07-stub .lbl{writing-mode:vertical-rl;font:500 10px/1 var(--mono);letter-spacing:.14em;color:var(--ink3);margin-top:auto;text-transform:uppercase;white-space:nowrap}
+.c07-stub.hint .lbl{color:var(--or3)}
+.c07-stub.slot{cursor:default;background:none;border-left-style:dotted;border-left-color:rgba(23,25,28,.25);justify-content:flex-end}
+.c07-stub.slot .cells{opacity:0}
+.c07-stub .resid{position:absolute;left:10px;bottom:12px;display:flex;gap:3px}
+.c07-stub .resid i{width:6px;height:6px;border-radius:1px;background:var(--ink);opacity:.9}
+.c07-stub .resid i:nth-child(2){transform:translateY(-3px) rotate(20deg);opacity:.6}.c07-stub .resid i:nth-child(3){transform:translateY(2px) rotate(-30deg);opacity:.45;width:4px}
+.c07-pass.printing .c07-stub,.c07-pass.old .c07-stub{pointer-events:none}
+.c07-pass.old{opacity:.7;filter:grayscale(.6)}
+.c07-pass.old .face{text-decoration:none}
+.c07-pass.old .info .tm{text-decoration:line-through;text-decoration-thickness:3px;text-decoration-color:var(--or)}
+.c07-pass-hint{font-size:11.5px;color:var(--ink3);margin-top:8px;display:flex;align-items:center;gap:8px;min-height:16px}
+.c07-pass-hint b{color:var(--or3);font-weight:600}
+/* pixel print: the face rasterises top → bottom in stepped bands with pauses; the scan bar leads the ink line */
+.c07-pass.printing{animation:c07-print calc(2000ms * var(--k,1)) linear both}
+.c07-pass.printing .face{-webkit-mask:linear-gradient(#000 0 var(--c07-ink),transparent var(--c07-ink));mask:linear-gradient(#000 0 var(--c07-ink),transparent var(--c07-ink))}
+.c07-pass.printing .c07-stub{-webkit-mask:linear-gradient(#000 0 var(--c07-ink),transparent var(--c07-ink));mask:linear-gradient(#000 0 var(--c07-ink),transparent var(--c07-ink))}
+.c07-pass .scan{position:absolute;left:0;right:0;top:calc(var(--c07-ink) - 2px);height:3px;background:var(--or);box-shadow:0 0 10px 2px rgba(255,107,53,.55);opacity:0;pointer-events:none;z-index:3}
+.c07-pass.printing .scan{opacity:1;animation:c07-scan-hide calc(2000ms * var(--k,1)) linear both}
+@keyframes c07-scan-hide{0%,94%{opacity:1}100%{opacity:0}}
+@keyframes c07-print{0%{--c07-ink:0%}6%{--c07-ink:0%}24%{--c07-ink:34%;animation-timing-function:steps(8,end)}34%{--c07-ink:34%}56%{--c07-ink:68%;animation-timing-function:steps(8,end)}66%{--c07-ink:68%}90%{--c07-ink:100%;animation-timing-function:steps(8,end)}100%{--c07-ink:100%}}
+.scrub .c07-pass.printing,.scrub .c07-pass.printing .scan{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 2000ms * var(--k,1))!important}
+.c07-pass.printing .face,.c07-pass.printing .c07-stub{transition:none}
+/* pixel void: the same face is masked by a 12×8 grid whose cells switch off from the fire corner, while a sibling layer of
+   pixel fragments falls, greys and settles into a residue; the tile then collapses into a grey 灰格 */
+.c07-void{position:relative}
+.c07-void .vsvg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:hidden}
+.c07-void.dropping .c07-pass{-webkit-mask:var(--c07-mask);mask:var(--c07-mask)}
+.c07-void.dropping .vc{animation:c07-vc-off 1ms steps(1,end) forwards;animation-delay:calc(var(--d) * var(--k,1))}
+@keyframes c07-vc-off{to{opacity:0}}
+.c07-vf{position:absolute;inset:0;pointer-events:none;overflow:visible;z-index:5}
+.c07-vf i{position:absolute;width:var(--cw);height:var(--ch);left:var(--x);top:var(--y);background:var(--c);border-radius:2px;opacity:0;transform:none}
+.c07-void.dropping .c07-vf i{animation:c07-vf-fall calc(1200ms * var(--k,1)) cubic-bezier(.45,0,.9,.55) forwards;animation-delay:calc(var(--d) * var(--k,1))}
+@keyframes c07-vf-fall{0%{opacity:1;transform:none;filter:grayscale(0)}18%{transform:translate(calc(var(--fx) * .2),-6px) rotate(calc(var(--fr) * .2))}100%{opacity:0;transform:translate(var(--fx),var(--fy)) rotate(var(--fr));filter:grayscale(1)}}
+.scrub .c07-void.dropping .vc,.scrub .c07-void.dropping .c07-vf i{animation-play-state:paused!important;animation-delay:calc(var(--d) * var(--k,1) - var(--frame,0) * 3200ms * var(--k,1))!important}
+.c07-void.dropped .c07-pass{visibility:hidden}
+.c07-void.dropped{min-height:0}
+.c07-ghost{border-radius:16px;background:var(--gy2);border:1px dashed rgba(23,25,28,.25);padding:14px 16px;color:var(--gy3);display:flex;align-items:center;gap:12px;animation:c07-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both;position:relative}
+.c07-ghost .gpx{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;width:34px;height:34px;flex:0 0 auto}
+.c07-ghost .gpx i{background:var(--gy);border-radius:2px}
+.c07-ghost .gpx i:nth-child(2),.c07-ghost .gpx i:nth-child(6){background:transparent;border:1px dashed var(--gy3)}
+.c07-ghost .gpx i:nth-child(9){background:var(--gy3)}
+.c07-ghost b{display:block;font-size:14px;color:var(--ink2)}
+.c07-ghost span{display:block;font-size:12px;line-height:1.45}
+.c07-ghost .resid{position:absolute;right:16px;bottom:8px;display:flex;gap:3px}
+.c07-ghost .resid i{width:6px;height:6px;border-radius:1px;background:var(--gy3);opacity:.6}
+.c07-ghost .resid i:nth-child(2){transform:translateY(-2px) rotate(25deg);opacity:.4}
+/* 局卡 (pixel-art card) */
+.c07-card{border-radius:16px;background:var(--tone2);border:1px solid var(--line);padding:14px;display:flex;gap:14px;align-items:center;--tone2:var(--sl2)}
+.c07-card .art{width:92px;height:92px;border-radius:12px;overflow:hidden;flex:0 0 auto;background:#fff;box-shadow:0 2px 0 rgba(23,25,28,.1)}
+.c07-card .art svg{display:block;width:100%;height:100%}
+.c07-card .cx{flex:1 1 auto;min-width:0}
+.c07-card .cx .en{font:500 10px/1 var(--mono);letter-spacing:.16em;color:var(--ink3);text-transform:uppercase}
+.c07-card .cx b{display:block;font-size:15px;font-weight:600;margin-top:4px;line-height:1.3;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c07-card .cx .sl{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:6px;background:#fff;color:var(--ink)}
+.c07-card .cx .cap{display:block;font-size:11.5px;color:var(--ink2);margin-top:6px}
+.c07-card.grey{filter:grayscale(1);opacity:.7}
+.c07-card.sm .art{width:60px;height:60px}
+.c07-card.sm .cx b{font-size:13.5px}
+/* ============================ sheets (操作盘: a tile inflating from the bottom) ============================ */
+.c07-dim{position:absolute;inset:0;z-index:20;background:rgba(23,25,28,0);transition:background calc(320ms * var(--k,1)) ease;border:0;padding:0;cursor:default}
+.c07-dim.on{background:rgba(23,25,28,.42)}
+.c07-sheet{position:absolute;left:8px;right:8px;bottom:8px;z-index:21;max-height:calc(100% - 70px);background:var(--tile);border:1px solid var(--line);border-radius:22px;box-shadow:inset 0 1px 0 #fff,0 2px 0 rgba(23,25,28,.14),0 30px 50px -24px rgba(20,24,30,.6);display:flex;flex-direction:column;transform:translateY(calc(100% + 20px));transition:transform calc(380ms * var(--k,1)) cubic-bezier(.2,.9,.3,1)}
+.c07-sheet.on{transform:none}
+.c07-sheet.leave{transform:translateY(calc(100% + 20px));transition-timing-function:cubic-bezier(.5,0,.8,.5)}
+.c07-sheet-h{flex:0 0 auto;display:flex;align-items:center;gap:10px;padding:16px 16px 0}
+.c07-sheet-h h2{margin:0;font-size:19px;font-weight:700;letter-spacing:-.005em}
+.c07-sheet-h .x{margin-left:auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);background:var(--gy2);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.c07-sheet-h .x svg{width:14px;height:14px;stroke:var(--ink);fill:none;stroke-width:2;stroke-linecap:round}
+.c07-sheet-b{flex:1 1 auto;min-height:0;overflow-y:auto;padding:12px 16px 4px}
+.c07-sheet-f{flex:0 0 auto;display:flex;gap:10px;padding:12px 16px 16px;align-items:center}
+.c07-sheet-f .c07-btn.big{flex:1 1 auto}
+.c07-sheet p{margin:0 0 8px;font-size:13.5px;line-height:1.6;color:var(--ink2)}
+.c07-sheet p.irr{background:var(--dn2);color:#7F1F2E;padding:10px 12px;border-radius:10px;font-size:12.5px;font-weight:500}
+.c07-ident{display:flex;gap:10px;align-items:center;padding:10px;border-radius:12px;background:var(--gy2);margin-bottom:12px}
+.c07-ident .art{width:40px;height:40px;border-radius:9px;overflow:hidden;background:#fff;flex:0 0 auto}
+.c07-ident .art svg{display:block;width:100%;height:100%}
+.c07-ident b{display:block;font-size:13.5px;font-weight:600;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c07-ident span{display:block;font-size:11.5px;color:var(--ink2)}
+.c07-aff{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:4px 0 12px}
+.c07-aff div{background:var(--gy2);border-radius:10px;padding:10px 12px}
+.c07-aff div b{display:block;font-family:var(--mono);font-weight:500;font-size:22px;line-height:1}
+.c07-aff div span{display:block;font-size:11.5px;color:var(--ink2);margin-top:4px}
+.c07-cmp{display:flex;align-items:center;gap:10px;margin:4px 0 10px;font-size:13px}
+.c07-cmp s{color:var(--ink3)}
+.c07-cmp .arrow{width:18px;height:18px;stroke:var(--ink3);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.c07-cmp b{font-family:var(--mono);font-weight:500}
+.c07-cmp .ph{color:var(--ink3)}
+.c07-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.c07-note{font-size:12px;color:var(--dn);margin-top:8px}
+/* reduced motion: result states directly */
+.rm .c07-pass.printing .face,.rm .c07-pass.printing .c07-stub{-webkit-mask:none;mask:none}
+.rm .c07-pass .scan{display:none}
+.rm .c07-over,.rm .c07-main,.rm .c07-track,.rm .c07-tile,.rm .c07-sheet{transition-duration:1ms!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}">
+      <div class="c07-main {{mainCls}}">
+        <header class="c07-hd" style="--sc:{{sc}}">
+          <div class="c07-hd-top"><h1>我的局</h1><span class="c07-hd-date">{{nowText}}</span></div>
+          <div class="c07-roles" style="--r:{{roleIdx}}" role="tablist" aria-label="身份">
+            <i class="c07-roles-ind" aria-hidden="true"></i>
+            <button type="button" class="c07-role {{joinedOn}}" role="tab" onClick="{{toJoined}}">我参加的<sc-if value="{{jBadgeOn}}" hint-placeholder-val="{{true}}"><b class="c07-badge" aria-label="{{jBadgeAria}}">{{jBadge}}</b></sc-if></button>
+            <button type="button" class="c07-role {{hostedOn}}" role="tab" onClick="{{toHosted}}">我发起的<sc-if value="{{hBadgeOn}}" hint-placeholder-val="{{true}}"><b class="c07-badge" aria-label="{{hBadgeAria}}">{{hBadge}}</b></sc-if></button>
+          </div>
+          <div class="c07-secs">
+            <sc-for list="{{secs}}" as="s" hint-placeholder-count="3"><button type="button" class="c07-sec {{s.cls}}" onClick="{{s.go}}">{{s.label}}<sc-if value="{{s.hasN}}" hint-placeholder-val="{{true}}"><span class="n">{{s.n}}</span></sc-if></button></sc-for>
+            <span class="c07-secs-note">{{secNote}}</span>
+          </div>
+        </header>
+        <div class="c07-track" style="--r:{{roleIdx}}">
+          <sc-for list="{{boards}}" as="b" hint-placeholder-count="2">
+          <div class="c07-board" onScroll="{{b.onScroll}}" ref="{{b.ref}}" id="c07-board-{{b.key}}">
+            <sc-if value="{{b.empty.on}}" hint-placeholder-val="{{false}}">
+              <div class="c07-empty"><div class="c07-tile"><i class="c07-px"></i><h2>{{b.empty.title}}</h2><p>{{b.empty.body}}</p>
+                <sc-if value="{{b.empty.inert}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn inert" aria-disabled="true" title="不在本范围演示">{{b.empty.act}} · 其他模块</button></sc-if>
+                <sc-if value="{{b.empty.live}}" hint-placeholder-val="{{false}}"><button type="button" class="c07-btn" onClick="{{b.empty.go}}">{{b.empty.act}}</button></sc-if>
+              </div><i></i><i></i><i></i><i></i></div>
+            </sc-if>
+            <div class="c07-grid {{b.gridCls}}" style="height:{{b.height}}px">
+              <sc-for list="{{b.heads}}" as="h" hint-placeholder-count="2"><div class="c07-head {{h.cls}}" style="top:{{h.y}}px;--i:{{h.i}}"><b>{{h.title}}</b><span class="n">{{h.n}}</span><span class="note">{{h.note}}</span></div></sc-for>
+              <sc-for list="{{b.tiles}}" as="t" hint-placeholder-count="4">
+              <div class="c07-tile {{t.cls}}" data-rid="{{t.id}}" style="left:{{t.x}}px;top:{{t.y}}px;width:{{t.w}}px;height:{{t.h}}px;--i:{{t.i}}">
+                <button type="button" class="c07-open" aria-label="{{t.aria}}" onClick="{{t.open}}"></button>
+                <sc-if value="{{t.isJL}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-row1"><span class="c07-chip">{{t.label}}</span><div class="c07-big c07-mono">{{t.big}}<small>{{t.bigSmall}}</small></div></div>
+                    <div class="c07-t">{{t.title}}</div>
+                    <div class="c07-when"><sc-if value="{{t.showTime}}" hint-placeholder-val="{{true}}"><b>{{t.time}}</b></sc-if><span>{{t.wd}}</span><span>{{t.hood}}</span></div>
+                    <div class="c07-need">{{t.need}}</div>
+                    <sc-if value="{{t.hasBar}}" hint-placeholder-val="{{false}}"><div class="c07-bar {{t.barCls}}"><sc-for list="{{t.bar}}" as="c" hint-placeholder-count="36"><i class="{{c}}"></i></sc-for></div></sc-if>
+                    <div class="c07-acts">
+                      <sc-if value="{{t.hasSec}}" hint-placeholder-val="{{false}}"><button type="button" class="c07-btn ghost" data-act="{{t.secAct}}" onClick="{{t.doSec}}">{{t.sec}}</button></sc-if>
+                      <sc-if value="{{t.hasCta}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn big" data-act="{{t.ctaAct}}" disabled="{{t.ctaOff}}" onClick="{{t.doCta}}">{{t.cta}}</button></sc-if>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isJW}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-main-col">
+                      <div class="c07-row1"><span class="c07-chip">{{t.label}}</span></div>
+                      <div class="c07-t">{{t.title}}</div>
+                      <div class="c07-when"><b>{{t.time}}</b><span>{{t.wd}}</span><span>{{t.hood}}</span></div>
+                      <div class="c07-foot"><span class="x">{{t.extra}}</span><sc-if value="{{t.hasGo}}" hint-placeholder-val="{{true}}"><button type="button" class="go" data-act="{{t.ctaAct}}" onClick="{{t.doCta}}">{{t.go}}</button></sc-if></div>
+                    </div>
+                    <div class="c07-side">
+                      <sc-if value="{{t.obj.isPass}}" hint-placeholder-val="{{false}}"><span class="c07-obj pass {{t.obj.cls}}"><svg class="qr" viewBox="0 0 21 21" shape-rendering="crispEdges" aria-hidden="true"><rect width="21" height="21" fill="#fff"></rect><path d="{{t.obj.qr}}" fill="#17191C"></path></svg><i class="stb"></i></span></sc-if>
+                      <sc-if value="{{t.obj.isCard}}" hint-placeholder-val="{{false}}"><span class="c07-obj card"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect width="8" height="8" fill="{{t.obj.bg}}"></rect><path d="{{t.obj.art}}" fill="{{t.obj.fg}}"></path></svg></span></sc-if>
+                      <sc-if value="{{t.obj.isStamp}}" hint-placeholder-val="{{false}}"><span class="c07-obj stamp"><span class="c07-stamp {{t.obj.cls}}"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></span></sc-if>
+                      <sc-if value="{{t.obj.isDots}}" hint-placeholder-val="{{false}}"><span class="c07-dots"><sc-for list="{{t.obj.dots}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if>
+                      <sc-if value="{{t.obj.isSeats}}" hint-placeholder-val="{{false}}"><span class="c07-seats"><sc-for list="{{t.obj.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isJS}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-row1"><span class="c07-chip">{{t.label}}</span><sc-if value="{{t.obj.isSeats}}" hint-placeholder-val="{{false}}"><span class="c07-seats"><sc-for list="{{t.obj.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if></div>
+                    <div class="c07-t">{{t.title}}</div>
+                    <div class="c07-when"><b>{{t.time}}</b> {{t.wd}} · {{t.hood}}</div>
+                    <div class="c07-need">{{t.need}}</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isHL}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-row1"><span class="c07-chip">{{t.life}}</span><div class="c07-big c07-mono">{{t.time}}<small>{{t.wdEn}}</small></div></div>
+                    <div class="c07-num c07-mono">{{t.num}}<small>{{t.unit}}</small></div>
+                    <div class="c07-t hl">{{t.title}}</div>
+                    <div class="c07-when"><span>{{t.wd}}</span><span>{{t.hood}}</span></div>
+                    <div class="c07-need">{{t.need}}</div>
+                    <div class="c07-acts"><span class="c07-seats"><sc-for list="{{t.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span><button type="button" class="c07-btn big" data-act="{{t.ctaAct}}" onClick="{{t.doCta}}">{{t.cta}}</button></div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isHW}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-main-col">
+                      <div class="c07-row1"><span class="c07-chip">{{t.life}}</span></div>
+                      <div class="c07-t">{{t.title}}</div>
+                      <div class="c07-when"><b>{{t.time}}</b><span>{{t.wd}}</span><span>{{t.hood}}</span></div>
+                      <div class="c07-foot"><span class="x">{{t.label}}</span><sc-if value="{{t.hasGo}}" hint-placeholder-val="{{true}}"><button type="button" class="go" data-act="{{t.ctaAct}}" onClick="{{t.doCta}}">{{t.go}}</button></sc-if><sc-if value="{{t.inert}}" hint-placeholder-val="{{false}}"><span class="x" style="flex:0 0 auto;text-decoration:underline dashed;text-underline-offset:3px">再开一局 · 其他模块</span></sc-if></div>
+                    </div>
+                    <div class="c07-side">
+                      <sc-if value="{{t.hasSeats}}" hint-placeholder-val="{{true}}"><span class="c07-seats"><sc-for list="{{t.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if>
+                      <sc-if value="{{t.hasDots}}" hint-placeholder-val="{{false}}"><span class="c07-dots"><sc-for list="{{t.dots}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isHS}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-row1"><span class="c07-chip">{{t.life}}</span></div>
+                    <div class="c07-t">{{t.title}}</div>
+                    <div class="c07-when"><b>{{t.time}}</b> {{t.wd}} · {{t.hood}}</div>
+                    <div class="c07-need">{{t.label}}</div>
+                    <sc-if value="{{t.hasSeats}}" hint-placeholder-val="{{true}}"><span class="c07-seats" style="margin-top:6px"><sc-for list="{{t.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></span></sc-if>
+                  </div>
+                </sc-if>
+                <sc-if value="{{t.isDraft}}" hint-placeholder-val="{{false}}">
+                  <div class="c07-in">
+                    <div class="c07-main-col">
+                      <div class="c07-t">{{t.title}}</div>
+                      <div class="c07-when"><span>{{t.whenText}}</span><span>·</span><span>{{t.placeText}}</span></div>
+                      <div class="c07-txt" style="margin-top:4px;font-weight:500;color:{{t.missColor}}">{{t.missingText}}</div>
+                      <div class="c07-foot"><span class="x">{{t.agoText}}</span><span class="x" style="flex:0 0 auto;text-decoration:underline dashed;text-underline-offset:3px;color:var(--ink3)">继续编辑 ›</span></div>
+                    </div>
+                    <div class="c07-side"><span class="c07-chip">草稿</span><button type="button" class="c07-btn pill" style="height:30px;padding:0 10px;font-size:12.5px" data-act="delete" onClick="{{t.del}}">删除</button></div>
+                  </div>
+                </sc-if>
+              </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{b.foot.on}}" hint-placeholder-val="{{false}}"><footer class="c07-foot"><b>{{b.foot.lead}}</b> · <span class="lk">{{b.foot.a}}</span> · <span class="lk">{{b.foot.b}}</span><br>账户级记录页不在本范围演示。</footer></sc-if>
+          </div>
+          </sc-for>
+        </div>
+        <nav class="c07-nav" aria-label="底部导航">
+          <span><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-4-4"></path></svg>找局</span>
+          <span><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>开局</span>
+          <span class="on"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="7" rx="1.5"></rect><rect x="13" y="4" width="7" height="7" rx="1.5"></rect><rect x="4" y="13" width="7" height="7" rx="1.5"></rect><rect x="13" y="13" width="7" height="7" rx="1.5"></rect></svg>我的局</span>
+          <span><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"></circle><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"></path></svg>设置</span>
+        </nav>
+      </div>
+
+      <!-- ============================ participant detail (expanded tile) ============================ -->
+      <sc-if value="{{det.on}}" hint-placeholder-val="{{false}}">
+      <div class="c07-over c07-det {{det.cls}}" style="{{det.style}}" id="c07-det">
+        <div class="c07-topbar">
+          <button type="button" class="c07-back" data-act="back" onClick="{{det.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>{{det.backText}}</button>
+          <button type="button" class="c07-rail" aria-label="回到格盘" onClick="{{det.back}}"><sc-for list="{{det.rail}}" as="r" hint-placeholder-count="5"><i class="{{r}}"></i></sc-for></button>
+        </div>
+        <div class="c07-body" ref="{{detBody}}">
+          <section class="c07-sub hero {{det.tone}}" style="--i:0">
+            <div class="c07-row1"><span class="c07-chip">{{det.label}}</span><sc-if value="{{det.hasBig}}" hint-placeholder-val="{{true}}"><div class="c07-big c07-mono">{{det.big}}<small>{{det.bigSmall}}</small></div></sc-if></div>
+            <h2 class="c07-t" style="margin-top:12px;font-size:24px">{{det.title}}</h2>
+            <div class="c07-when"><sc-if value="{{det.hasOld}}" hint-placeholder-val="{{false}}"><s>{{det.oldWhen}}</s><span>改为</span></sc-if><b>{{det.time}}</b><span>{{det.wd}}</span><span>{{det.place}}</span></div>
+            <div class="c07-need"><b>{{det.headline}}</b><sc-if value="{{det.hasNeed}}" hint-placeholder-val="{{true}}"> · {{det.need}}</sc-if></div>
+            <sc-if value="{{det.hasBar}}" hint-placeholder-val="{{false}}"><div class="c07-bar {{det.barCls}}"><sc-for list="{{det.bar}}" as="c" hint-placeholder-count="36"><i class="{{c}}"></i></sc-for></div></sc-if>
+          </section>
+          <sc-if value="{{det.result.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub closed" style="--i:1"><h3>{{det.result.title}}</h3><p class="c07-txt" style="margin:0;font-size:13px;line-height:1.6">{{det.result.body}}</p><div class="c07-acts" style="margin-top:12px"><button type="button" class="c07-btn pill" data-act="back" onClick="{{det.back}}">回到格盘</button></div></section>
+          </sc-if>
+          <sc-if value="{{det.acts.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub {{det.tone}}" style="--i:1">
+              <div class="c07-acts">
+                <sc-if value="{{det.acts.hasSec}}" hint-placeholder-val="{{false}}"><button type="button" class="c07-btn ghost" data-act="{{det.acts.secAct}}" onClick="{{det.acts.doSec}}">{{det.acts.sec}}</button></sc-if>
+                <sc-if value="{{det.acts.hasCta}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn big {{det.acts.ctaCls}}" data-act="{{det.acts.ctaAct}}" disabled="{{det.acts.ctaOff}}" onClick="{{det.acts.doCta}}">{{det.acts.cta}}</button></sc-if>
+              </div>
+              <sc-if value="{{det.acts.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert" role="alert"><b>没有保存成功</b>{{det.acts.err.message}}<button type="button" class="c07-btn" onClick="{{det.acts.err.retry}}">重试</button></div></sc-if>
+              <sc-if value="{{det.acts.hasNote}}" hint-placeholder-val="{{false}}"><p class="help">{{det.acts.note}}</p></sc-if>
+            </section>
+          </sc-if>
+          <sc-if value="{{det.card.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub {{det.tone}}" style="--i:2"><h3>局卡<span class="note">{{det.card.note}}</span></h3>
+              <div class="c07-card {{det.card.cls}}" style="--tone2:{{det.card.bg}}"><span class="art"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect width="8" height="8" fill="{{det.card.bg}}"></rect><path d="{{det.card.art}}" fill="{{det.card.fg}}"></path></svg></span><div class="cx"><span class="en">{{det.card.en}}</span><b>{{det.title}}</b><span class="sl">{{det.card.statusLabel}}</span><span class="cap">{{det.card.caption}}</span></div></div>
+            </section>
+          </sc-if>
+          <sc-for list="{{det.passes}}" as="p" hint-placeholder-count="1">
+            <section class="c07-sub {{p.secCls}}" style="--i:{{p.i}}" id="c07-pass-{{p.key}}">
+              <h3>{{p.heading}}<span class="note">{{p.note}}</span></h3>
+              <div class="c07-void {{p.voidCls}}" style="--c07-mask:url(#c07-vm-{{p.uid}})">
+                <div class="c07-pass {{p.cls}}">
+                  <div class="face">
+                    <div class="qr"><svg viewBox="0 0 21 21" shape-rendering="crispEdges" aria-hidden="true"><rect width="21" height="21" fill="#fff"></rect><path d="{{p.qr}}" fill="#17191C"></path></svg><span class="code">{{p.code}}</span></div>
+                    <div class="info"><div class="tt">{{p.title}}</div><div class="tm c07-mono"><sc-if value="{{p.hasOld}}" hint-placeholder-val="{{false}}"><s>{{p.oldTime}}</s></sc-if>{{p.time}}</div><div class="dt">{{p.wd}}<sc-if value="{{p.hasOld}}" hint-placeholder-val="{{false}}"> · 原定 {{p.oldWhen}}</sc-if></div><div class="pl"><b>{{p.hood}}</b> · 集合 <span class="mono">{{p.meeting}}</span> · 局主 {{p.host}}</div></div>
+                    <sc-if value="{{p.hasMark}}" hint-placeholder-val="{{false}}"><span class="mark {{p.markCls}}">{{p.mark}}</span></sc-if>
+                  </div>
+                  <div class="c07-stub {{p.stubCls}}" onPointerDown="{{p.down}}" onPointerMove="{{p.move}}" onPointerUp="{{p.up}}" onPointerCancel="{{p.up}}" aria-label="副券 · 按住向下刮">
+                    <div class="cells" style="--dx:{{p.dx}}px;--dy:{{p.dy}}px"><sc-for list="{{p.cells}}" as="c" hint-placeholder-count="42"><i class="c07-sc {{c.cls}}" style="--jx:{{c.jx}}px;--jy:{{c.jy}}px;--jr:{{c.jr}}deg;--d:{{c.d}}ms"></i></sc-for></div>
+                    <span class="lbl">{{p.stubLabel}}</span>
+                    <sc-if value="{{p.torn}}" hint-placeholder-val="{{false}}"><span class="resid"><i></i><i></i><i></i></span></sc-if>
+                  </div>
+                  <i class="scan" aria-hidden="true"></i>
+                </div>
+                <svg class="vsvg" viewBox="0 0 358 240" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c07-vm-{{p.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><sc-for list="{{p.vcells}}" as="v" hint-placeholder-count="0"><rect class="vc" x="{{v.x}}" y="{{v.y}}" width="{{v.w}}" height="{{v.h}}" fill="#fff" style="--d:{{v.d}}ms"></rect></sc-for></mask></defs></svg>
+                <div class="c07-vf"><sc-for list="{{p.vcells}}" as="v" hint-placeholder-count="0"><i style="--x:{{v.x}}px;--y:{{v.y}}px;--cw:{{v.w}}px;--ch:{{v.h}}px;--c:{{v.c}};--d:{{v.d}}ms;--fx:{{v.fx}}px;--fy:{{v.fy}}px;--fr:{{v.fr}}deg"></i></sc-for></div>
+                <sc-if value="{{p.ghost.on}}" hint-placeholder-val="{{false}}"><div class="c07-ghost"><span class="gpx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>{{p.ghost.title}}</b><span>{{p.ghost.body}}</span></div><span class="resid"><i></i><i></i></span></div></sc-if>
+              </div>
+              <div class="c07-pass-hint"><sc-if value="{{p.hintStrong}}" hint-placeholder-val="{{false}}"><b>{{p.hintB}}</b></sc-if>{{p.hint}}</div>
+              <sc-if value="{{p.hasTearBtn}}" hint-placeholder-val="{{false}}"><div class="c07-acts" style="margin-top:10px"><button type="button" class="c07-btn big {{p.tearCls}}" data-act="{{p.tearAct}}" onClick="{{p.autoTear}}">{{p.tearText}}</button></div></sc-if>
+              <sc-if value="{{p.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert" role="alert"><b>没有保存成功</b>{{p.err.message}}<button type="button" class="c07-btn" onClick="{{p.err.retry}}">重试</button></div></sc-if>
+            </section>
+          </sc-for>
+          <sc-if value="{{det.contact.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub soon" style="--i:{{det.contact.i}}" id="c07-contact"><h3>联系局主<span class="note">{{det.contact.note}}</span></h3>
+              <div class="c07-rows"><div class="c07-rw host"><span class="av">{{det.contact.initial}}</span><div class="who"><b>局主 · {{det.contact.name}}</b><span>{{det.contact.sub}}</span></div>
+                <div class="c07-wx"><span>微信</span><code>{{det.contact.wx}}</code><button type="button" class="c07-btn {{det.contact.copyCls}}" data-act="copy" onClick="{{det.contact.copy}}">{{det.contact.copyText}}</button></div></div></div>
+              <p class="help">{{det.contact.help}}</p>
+              <div class="c07-acts" style="margin-top:12px"><button type="button" class="c07-btn big teal {{det.contact.ctaCls}}" data-act="contacted" disabled="{{det.contact.ctaOff}}" onClick="{{det.contact.doCta}}">{{det.contact.cta}}</button></div>
+              <sc-if value="{{det.contact.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert" role="alert"><b>没有保存成功</b>{{det.contact.err.message}}<button type="button" class="c07-btn" onClick="{{det.contact.err.retry}}">重试</button></div></sc-if>
+            </section>
+          </sc-if>
+          <sc-if value="{{det.queue.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub wait" style="--i:2"><h3>门口 · 候补<span class="note">不占席位</span></h3>
+              <div class="c07-grid2">
+                <div class="c07-sub" style="padding:12px"><div class="c07-num c07-mono" style="font-size:40px;line-height:1">{{det.queue.pos}}<small style="display:block;font-size:12px;font-weight:600;font-family:'Noto Sans SC',sans-serif;margin-top:6px">候补第 {{det.queue.pos}} 位 · 共 {{det.queue.total}}</small></div></div>
+                <div class="c07-sub" style="padding:12px"><div class="c07-txt" style="font-size:12.5px;line-height:1.6">{{det.queue.seatLine}}</div><div class="c07-seats" style="margin-top:8px"><sc-for list="{{det.queue.seats}}" as="d" hint-placeholder-count="4"><i class="{{d}}"></i></sc-for></div></div>
+              </div>
+              <div class="c07-lbl">已进</div><div class="c07-chips"><sc-for list="{{det.queue.inside}}" as="q" hint-placeholder-count="3"><span class="c07-btn {{q.cls}}" style="height:28px;padding:0 10px;font-size:12px">{{q.name}}</span></sc-for></div>
+              <div class="c07-lbl">候补 · 按加入顺序</div><div class="c07-chips"><sc-for list="{{det.queue.list}}" as="q" hint-placeholder-count="2"><span class="c07-btn {{q.cls}}" style="height:28px;padding:0 10px;font-size:12px">№{{q.no}} {{q.name}}</span></sc-for></div>
+              <p class="help">{{det.queue.hint}}</p>
+              <div class="c07-acts" style="margin-top:12px"><button type="button" class="c07-btn pill" data-act="exit" onClick="{{det.queue.leave}}">退出候补</button><span class="help" style="margin:0">退出候补不记缺席</span></div>
+            </section>
+          </sc-if>
+          <sc-if value="{{det.members.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub {{det.tone}}" style="--i:3"><h3>同局的<span class="n">{{det.members.seatText}}</span><span class="note">{{det.members.note}}</span></h3>
+              <div class="c07-av"><sc-for list="{{det.members.list}}" as="m" hint-placeholder-count="4"><div class="m {{m.cls}}"><b>{{m.initial}}</b><span>{{m.name}}</span><small>{{m.sub}}</small></div></sc-for></div>
+            </section>
+          </sc-if>
+          <sc-if value="{{det.hist.on}}" hint-placeholder-val="{{false}}">
+            <section class="c07-sub {{det.tone}}" style="--i:2"><h3>{{det.hist.heading}}<span class="note">{{det.hist.note}}</span></h3>
+              <sc-if value="{{det.hist.hasStamp}}" hint-placeholder-val="{{false}}"><div class="c07-rw"><span class="c07-stamp {{det.hist.stampCls}}" style="width:44px;height:44px;flex:0 0 auto;background:var(--dk);padding:4px"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div class="who"><b>{{det.hist.stampText}}</b><span>{{det.hist.stampSub}}</span></div></div></sc-if>
+              <sc-if value="{{det.hist.hasGhost}}" hint-placeholder-val="{{false}}"><div class="c07-ghost"><span class="gpx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>{{det.hist.ghostTitle}}</b><span>{{det.hist.ghostBody}}</span></div><span class="resid"><i></i><i></i></span></div></sc-if>
+              <sc-if value="{{det.hist.hasBar}}" hint-placeholder-val="{{false}}"><div class="c07-bar hot" style="display:grid;grid-template-columns:repeat(36,1fr);gap:2px;height:8px;margin:10px 0"><sc-for list="{{det.hist.bar}}" as="c" hint-placeholder-count="36"><i class="{{c}}" style="background:rgba(23,25,28,.14);border-radius:1px"></i></sc-for></div><div class="c07-mono" style="font-size:22px">00:00:00</div></sc-if>
+              <p class="help">{{det.hist.body}}</p>
+              <sc-if value="{{det.hist.hasRecords}}" hint-placeholder-val="{{false}}"><div class="c07-lbl">局内记录</div><sc-for list="{{det.hist.records}}" as="r" hint-placeholder-count="2"><div class="c07-rec"><span>{{r.text}}</span><span class="at">{{r.at}}</span></div></sc-for></sc-if>
+              <sc-if value="{{det.hist.canNote}}" hint-placeholder-val="{{false}}">
+                <label class="c07-lbl" for="c07-note-in">补充一句（只记录事实）</label>
+                <div style="display:flex;gap:8px"><input id="c07-note-in" class="c07-input" type="text" placeholder="例如：当天提前告知了局主" value="{{det.hist.noteText}}" onInput="{{det.hist.setNote}}"><button type="button" class="c07-btn {{det.hist.noteCls}}" disabled="{{det.hist.noteOff}}" onClick="{{det.hist.addNote}}">记录</button></div>
+                <div class="c07-acts" style="margin-top:12px"><button type="button" class="c07-btn ghost" onClick="{{det.hist.report}}">不对劲？举报</button><span class="help" style="margin:0">{{det.hist.reportNote}}</span></div>
+                <sc-if value="{{det.hist.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert" role="alert"><b>提交失败，内容已保留</b>{{det.hist.err.message}}<button type="button" class="c07-btn" onClick="{{det.hist.err.retry}}">重试</button></div></sc-if>
+              </sc-if>
+            </section>
+          </sc-if>
+          <section class="c07-sub" style="--i:5"><h3>参加约定<span class="note">确认 · 信用 · 赴约</span></h3>
+            <sc-if value="{{det.rulesOpen}}" hint-placeholder-val="{{false}}"><div class="c07-rules"><sc-for list="{{det.rules}}" as="r" hint-placeholder-count="3"><div class="c07-rule"><h4><i>{{r.no}}</i>{{r.title}}</h4><sc-for list="{{r.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></div></sc-for><div class="c07-rule-end">— 已到约定末尾 —</div></div></sc-if>
+            <div class="c07-acts" style="margin-top:4px"><button type="button" class="c07-btn pill" onClick="{{det.toggleRules}}">{{det.rulesBtn}}</button><span class="help" style="margin:0">查看我的记录 · 账户级，不在本范围</span></div>
+          </section>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============================ host manage (sub board) ============================ -->
+      <sc-if value="{{man.on}}" hint-placeholder-val="{{false}}">
+      <div class="c07-over c07-man {{man.cls}}" style="{{man.style}}" id="c07-man">
+        <div class="c07-topbar">
+          <button type="button" class="c07-back" data-act="back" onClick="{{man.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>返回我的局</button>
+          <button type="button" class="c07-rail" aria-label="回到格盘" onClick="{{man.back}}"><sc-for list="{{man.rail}}" as="r" hint-placeholder-count="5"><i class="{{r}}"></i></sc-for></button>
+        </div>
+        <div class="c07-body" ref="{{manBody}}">
+          <section class="c07-sub hero {{man.tone}}" style="--i:0">
+            <div class="c07-row1"><span class="c07-chip">{{man.status}}</span><div class="c07-big c07-mono {{man.whenCls}}">{{man.time}}<small>{{man.wdEn}}</small></div></div>
+            <h2 class="c07-t" style="margin-top:12px;font-size:23px">{{man.title}}</h2>
+            <div class="c07-when"><span>{{man.wd}}</span><span>{{man.place}}</span><sc-if value="{{man.hasOld}}" hint-placeholder-val="{{false}}"><s>原定 {{man.oldWhen}}</s></sc-if></div>
+            <div class="c07-meta">{{man.formedLine}}</div>
+          </section>
+          <sc-if value="{{man.prog.on}}" hint-placeholder-val="{{true}}">
+            <section class="c07-sub" style="--i:1"><h3>{{man.prog.title}}<span class="n">{{man.prog.n}}</span><span class="note">{{man.prog.note}}</span></h3>
+              <div class="c07-seats big"><sc-for list="{{man.prog.seats}}" as="d" hint-placeholder-count="5"><i class="{{d.cls}}">{{d.t}}</i></sc-for></div>
+            </section>
+          </sc-if>
+          <section class="c07-sub" style="--i:2" id="c07-man-card"><h3>局卡 · 通行证<span class="note">{{man.cardNote}}</span></h3>
+            <div class="c07-void {{man.voidCls}}" style="--c07-mask:url(#c07-vm-{{man.uid}})">
+              <div class="c07-pass nostub {{man.passCls}}" style="grid-template-columns:96px 1fr">
+                <div class="face"><div class="qr"><svg viewBox="0 0 21 21" shape-rendering="crispEdges" aria-hidden="true"><rect width="21" height="21" fill="#fff"></rect><path d="{{man.qr}}" fill="#17191C"></path></svg><span class="code">{{man.code}}</span></div>
+                  <div class="info"><div class="tt">{{man.title}}</div><div class="tm c07-mono">{{man.time}}</div><div class="dt">{{man.wd}}</div><div class="pl"><b>{{man.hood}}</b> · 集合 <span class="mono">{{man.meeting}}</span> · 局主 你</div></div>
+                  <sc-if value="{{man.hasMark}}" hint-placeholder-val="{{false}}"><span class="mark {{man.markCls}}">{{man.mark}}</span></sc-if>
+                </div>
+                <i class="scan" aria-hidden="true"></i>
+              </div>
+              <svg class="vsvg" viewBox="0 0 358 240" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c07-vm-{{man.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="260"><sc-for list="{{man.vcells}}" as="v" hint-placeholder-count="0"><rect class="vc" x="{{v.x}}" y="{{v.y}}" width="{{v.w}}" height="{{v.h}}" fill="#fff" style="--d:{{v.d}}ms"></rect></sc-for></mask></defs></svg>
+              <div class="c07-vf"><sc-for list="{{man.vcells}}" as="v" hint-placeholder-count="0"><i style="--x:{{v.x}}px;--y:{{v.y}}px;--cw:{{v.w}}px;--ch:{{v.h}}px;--c:{{v.c}};--d:{{v.d}}ms;--fx:{{v.fx}}px;--fy:{{v.fy}}px;--fr:{{v.fr}}deg"></i></sc-for></div>
+              <sc-if value="{{man.ghost.on}}" hint-placeholder-val="{{false}}"><div class="c07-ghost"><span class="gpx"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><div><b>{{man.ghost.title}}</b><span>{{man.ghost.body}}</span></div><span class="resid"><i></i><i></i></span></div></sc-if>
+            </div>
+            <div class="c07-acts" style="margin-top:10px"><button type="button" class="c07-btn pill" onClick="{{man.openCard}}">查看完整局卡 ›</button><span class="help" style="margin:0">{{man.passHint}}</span></div>
+          </section>
+          <sc-for list="{{man.sections}}" as="sec" hint-placeholder-count="4">
+            <section class="c07-sub {{sec.cls}}" style="--i:{{sec.i}}" id="c07-man-{{sec.key}}">
+              <sc-if value="{{sec.isApps}}" hint-placeholder-val="{{false}}">
+                <h3>申请<span class="n">{{sec.n}}</span><span class="note">{{sec.note}}</span></h3>
+                <div class="c07-rows"><sc-for list="{{sec.rows}}" as="a" hint-placeholder-count="3">
+                  <div class="c07-rw {{a.cls}}"><span class="av">{{a.initial}}</span><div class="who"><b>{{a.nick}}<span class="c07-badge2 {{a.badgeCls}}">{{a.verifiedLabel}}</span></b><sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><span class="q">“{{a.note}}”</span></sc-if><span>{{a.agoText}}</span></div>
+                    <sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="acts"><button type="button" class="c07-btn pill {{a.rejectCls}}" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c07-btn sm {{a.approveCls}}" data-act="approve" onClick="{{a.approve}}">发出邀请</button></div></sc-if>
+                    <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="c07-res {{a.resCls}}">{{a.resultText}}</div></sc-if>
+                    <sc-if value="{{a.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert full" role="alert"><b>没有生效</b>{{a.err.message}}<button type="button" class="c07-btn" onClick="{{a.err.retry}}">重试</button></div></sc-if>
+                  </div></sc-for></div>
+                <p class="help">{{sec.help}}</p>
+              </sc-if>
+              <sc-if value="{{sec.isReplies}}" hint-placeholder-val="{{false}}">
+                <h3>改期答复<span class="n">已答复 {{sec.n}}</span><span class="note">没有答复期限</span></h3>
+                <div class="c07-cmp"><span>原定 <s>{{sec.oldWhen}}</s></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>改为 <b>{{sec.newWhen}}</b></span></div>
+                <div class="c07-rows"><sc-for list="{{sec.rows}}" as="m" hint-placeholder-count="2"><div class="c07-rw {{m.cls}}"><span class="av">{{m.initial}}</span><div class="who"><b>{{m.nick}}</b><span>{{m.stateText}}</span></div><div class="st"><b>{{m.answerText}}</b></div></div></sc-for></div>
+                <p class="help">{{sec.help}}</p>
+              </sc-if>
+              <sc-if value="{{sec.isMembers}}" hint-placeholder-val="{{false}}">
+                <h3>成员<span class="n">{{sec.n}}</span><span class="note">{{sec.note}}</span></h3>
+                <div class="c07-rows"><sc-for list="{{sec.rows}}" as="m" hint-placeholder-count="3">
+                  <div class="c07-rw {{m.cls}}"><span class="av">{{m.initial}}</span><div class="who"><b>{{m.nick}}<sc-if value="{{m.contactAdded}}" hint-placeholder-val="{{false}}"><span class="c07-badge2">已自报加微信</span></sc-if></b><span>{{m.stateText}}</span></div>
+                    <div class="st {{m.stCls}}"><b>{{m.right}}</b><span>{{m.rightSub}}</span><sc-if value="{{m.hasBar}}" hint-placeholder-val="{{false}}"><span class="c07-minibar {{m.barCls}}"><sc-for list="{{m.bar}}" as="c" hint-placeholder-count="18"><i class="{{c}}"></i></sc-for></span></sc-if></div>
+                    <sc-if value="{{m.showWx}}" hint-placeholder-val="{{false}}"><div class="c07-wx"><span>微信</span><code>{{m.wx}}</code><button type="button" class="c07-btn {{m.copyCls}}" data-act="copy" onClick="{{m.copy}}">{{m.copyText}}</button></div></sc-if>
+                  </div></sc-for>
+                  <sc-if value="{{sec.hasOpen}}" hint-placeholder-val="{{false}}"><div class="c07-rw"><span class="av" style="background:transparent;border:1.5px dashed rgba(23,25,28,.3)"></span><div class="who"><b style="color:var(--ink3);font-weight:500">{{sec.openText}}</b></div></div></sc-if>
+                </div>
+                <sc-if value="{{sec.hasClosedNote}}" hint-placeholder-val="{{false}}"><p class="help">{{sec.closedNote}}</p></sc-if>
+              </sc-if>
+              <sc-if value="{{sec.isQueue}}" hint-placeholder-val="{{false}}">
+                <h3>候补<span class="n">{{sec.n}}</span><span class="note">不占席位</span></h3>
+                <div class="c07-rows"><sc-for list="{{sec.rows}}" as="q" hint-placeholder-count="2"><div class="c07-rw"><span class="av c07-mono" style="font-size:11px">{{q.no}}</span><div class="who"><b>{{q.nick}}</b><span>{{q.agoText}}</span></div></div></sc-for></div>
+                <p class="help">{{sec.help}}</p>
+              </sc-if>
+              <sc-if value="{{sec.isLeaves}}" hint-placeholder-val="{{false}}">
+                <div class="c07-leaves {{sec.openCls}}"><button type="button" class="c07-btn" style="all:unset;display:block;width:100%;cursor:pointer" aria-expanded="{{sec.open}}" onClick="{{sec.toggle}}"><div class="c07-sub" style="all:unset;display:flex;align-items:center;gap:8px;font-size:13px;font-weight:600"><span class="c07-px" style="background:var(--gy3)"></span>离开记录<span class="n" style="font:500 12px/1 var(--mono);color:var(--ink2)">{{sec.n}}</span><span class="tg">+</span></div></button>
+                  <div class="ls"><div><sc-for list="{{sec.rows}}" as="l" hint-placeholder-count="2"><div class="lr"><b>{{l.nick}}</b><span>{{l.text}}</span></div></sc-for><p class="help">中性事实，不带信用标记。</p></div></div></div>
+              </sc-if>
+              <sc-if value="{{sec.isAttend}}" hint-placeholder-val="{{false}}">
+                <h3>出席<span class="n">{{sec.n}}</span><span class="note">逐人记录 · 可更正</span></h3>
+                <div class="c07-rows"><sc-for list="{{sec.rows}}" as="m" hint-placeholder-count="2">
+                  <div class="c07-rw {{m.cls}}"><span class="c07-stamp {{m.stampCls}}"><i style="--j:0"></i><i style="--j:1"></i><i style="--j:2"></i><i style="--j:3"></i><i style="--j:4"></i><i style="--j:5"></i><i style="--j:6"></i><i style="--j:7"></i><i style="--j:8"></i></span><div class="who"><b>{{m.nick}}</b><span>{{m.attLabel}}</span></div>
+                    <sc-if value="{{m.canCorrect}}" hint-placeholder-val="{{false}}"><div class="acts"><button type="button" class="c07-btn pill" onClick="{{m.edit}}">更正</button></div></sc-if>
+                    <sc-if value="{{m.editing}}" hint-placeholder-val="{{false}}"><div class="c07-seg"><button type="button" class="c07-btn p {{m.onP}}" data-act="attend-present" onClick="{{m.setP}}">出席</button><button type="button" class="c07-btn a {{m.onA}}" data-act="attend-absent" onClick="{{m.setA}}">未出席</button><button type="button" class="c07-btn u {{m.onU}}" data-act="attend-pending" onClick="{{m.setU}}">待定</button></div></sc-if>
+                    <sc-if value="{{m.showWx}}" hint-placeholder-val="{{false}}"><div class="c07-wx"><span>微信</span><code>{{m.wx}}</code><button type="button" class="c07-btn {{m.copyCls}}" data-act="copy" onClick="{{m.copy}}">{{m.copyText}}</button></div></sc-if>
+                    <sc-if value="{{m.hasTrail}}" hint-placeholder-val="{{false}}"><div class="c07-trail"><sc-for list="{{m.trail}}" as="tr" hint-placeholder-count="2"><div>{{tr}}</div></sc-for></div></sc-if>
+                    <sc-if value="{{m.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert full" role="alert"><b>没有生效</b>{{m.err.message}}<button type="button" class="c07-btn" onClick="{{m.err.retry}}">重试</button></div></sc-if>
+                  </div></sc-for></div>
+                <p class="help">{{sec.help}}</p><p class="help">{{sec.contactNote}}</p>
+              </sc-if>
+              <sc-if value="{{sec.isArrange}}" hint-placeholder-val="{{false}}">
+                <h3>这局的安排<span class="note">{{sec.note}}</span></h3>
+                <div class="c07-arr"><sc-for list="{{sec.rows}}" as="r" hint-placeholder-count="3">
+                  <div class="c07-ar {{r.cls}}"><span class="ic"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.icon}}"></path></svg></span><div class="tx"><b>{{r.title}}</b><span>{{r.sub}}</span></div>
+                    <sc-if value="{{r.hasBtn}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn sm {{r.btnCls}}" data-act="{{r.act}}" onClick="{{r.go}}">{{r.btn}}</button></sc-if>
+                    <sc-if value="{{r.inert}}" hint-placeholder-val="{{false}}"><span class="c07-btn sm inert">不在本范围</span></sc-if>
+                  </div></sc-for></div>
+              </sc-if>
+            </section>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============================ draft summary ============================ -->
+      <sc-if value="{{drf.on}}" hint-placeholder-val="{{false}}">
+      <div class="c07-over c07-drf {{drf.cls}}" style="{{drf.style}}" id="c07-drf">
+        <div class="c07-topbar"><button type="button" class="c07-back" data-act="back" onClick="{{drf.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"></path></svg>返回草稿</button><button type="button" class="c07-rail" aria-label="回到格盘" onClick="{{drf.back}}"><sc-for list="{{drf.rail}}" as="r" hint-placeholder-count="3"><i class="{{r}}"></i></sc-for></button></div>
+        <div class="c07-body">
+          <section class="c07-sub hero closed" style="--i:0;border:1.5px dashed rgba(23,25,28,.3);background:transparent;box-shadow:none;color:var(--ink)"><div class="c07-row1"><span class="c07-chip" style="background:var(--gy2);color:var(--ink2)">草稿 · {{drf.missShort}}</span><div class="c07-big c07-mono">{{drf.time}}<small>{{drf.wdEn}}</small></div></div><h2 class="c07-t" style="margin-top:12px;font-size:24px">{{drf.title}}</h2><div class="c07-when"><span>{{drf.whenText}}</span><span>{{drf.placeText}}</span></div><div class="c07-need" style="color:{{drf.missColor}}"><b>{{drf.missingText}}</b> · {{drf.agoText}}</div></section>
+          <section class="c07-sub" style="--i:1"><h3>草稿内容<span class="note">只读摘要</span></h3>
+            <div class="c07-rows"><sc-for list="{{drf.fields}}" as="f" hint-placeholder-count="5"><div class="c07-rw" style="min-height:40px;padding:8px 0"><div class="who"><span>{{f.k}}</span><b style="color:{{f.color}}">{{f.v}}</b></div></div></sc-for></div>
+            <sc-if value="{{drf.hasSource}}" hint-placeholder-val="{{false}}"><p class="help">由「{{drf.source}}」再开 · 只带入活动内容，成员与记录不复制</p></sc-if>
+          </section>
+          <section class="c07-sub" style="--i:2"><div class="c07-acts"><button type="button" class="c07-btn pill" data-act="delete" onClick="{{drf.del}}">删除草稿</button><button type="button" class="c07-btn big inert" aria-disabled="true">继续编辑 · 开局模块，不在本范围</button></div><p class="help">删除后 10 秒内可以撤销；发布在开局模块完成。</p></section>
+        </div>
+      </div>
+      </sc-if>
+
+      <!-- ============================ sheets (操作盘) ============================ -->
+      <sc-if value="{{sheet.on}}" hint-placeholder-val="{{false}}">
+        <button type="button" class="c07-dim {{sheet.dimCls}}" aria-label="关闭" onClick="{{sheet.close}}"></button>
+        <div class="c07-sheet c07-over {{sheet.cls}}" role="dialog" aria-modal="true" aria-label="{{sheet.title}}" id="c07-sheet">
+          <div class="c07-sheet-h"><h2>{{sheet.title}}</h2><button type="button" class="x" aria-label="关闭" data-act="close" onClick="{{sheet.close}}"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+          <div class="c07-sheet-b" onScroll="{{sheet.onScroll}}" ref="{{sheetBody}}">
+            <sc-if value="{{sheet.hasIdent}}" hint-placeholder-val="{{true}}"><div class="c07-ident"><span class="art"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect width="8" height="8" fill="{{sheet.ident.bg}}"></rect><path d="{{sheet.ident.art}}" fill="{{sheet.ident.fg}}"></path></svg></span><div style="min-width:0"><b>{{sheet.ident.title}}</b><span>{{sheet.ident.sub}}</span></div></div></sc-if>
+            <sc-if value="{{sheet.isConfirm}}" hint-placeholder-val="{{false}}"><p>{{sheet.body}}</p></sc-if>
+            <sc-if value="{{sheet.isRules}}" hint-placeholder-val="{{false}}">
+              <p>{{sheet.body}}</p>
+              <div class="c07-rules"><sc-for list="{{sheet.rules}}" as="r" hint-placeholder-count="3"><div class="c07-rule"><h4><i>{{r.no}}</i>{{r.title}}</h4><sc-for list="{{r.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></div></sc-for><div class="c07-rule-end" id="c07-rules-end">— 已到约定末尾 —</div></div>
+            </sc-if>
+            <sc-if value="{{sheet.isCancel}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{sheet.hasAffected}}" hint-placeholder-val="{{true}}"><div class="c07-lbl" style="margin-top:0">会受影响的人</div><div class="c07-aff"><sc-for list="{{sheet.affected}}" as="a" hint-placeholder-count="2"><div><b>{{a.n}}</b><span>{{a.k}}</span></div></sc-for></div></sc-if>
+              <p class="irr">{{sheet.irr}}</p><p>{{sheet.body}}</p>
+            </sc-if>
+            <sc-if value="{{sheet.isResched}}" hint-placeholder-val="{{false}}">
+              <div class="c07-cmp"><span>原定 <s>{{sheet.oldWhen}}</s></span><svg class="arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"></path></svg><span>改为 · 纽约时间 <sc-if value="{{sheet.hasNew}}" hint-placeholder-val="{{true}}"><b>{{sheet.newWhen}}</b></sc-if><sc-if value="{{sheet.noNew}}" hint-placeholder-val="{{false}}"><span class="ph">选好新的日期和时间</span></sc-if></span></div>
+              <div class="c07-fields"><div><label class="c07-lbl" for="c07-rs-date">新日期</label><input id="c07-rs-date" class="c07-input" type="date" value="{{sheet.date}}" onInput="{{sheet.setDate}}" onChange="{{sheet.setDate}}"></div><div><label class="c07-lbl" for="c07-rs-time">新时间</label><input id="c07-rs-time" class="c07-input" type="time" step="900" value="{{sheet.time}}" onInput="{{sheet.setTime}}" onChange="{{sheet.setTime}}"></div></div>
+              <sc-if value="{{sheet.same}}" hint-placeholder-val="{{false}}"><p class="c07-note">{{sheet.sameText}}</p></sc-if>
+              <p style="margin-top:12px">{{sheet.desc}}</p>
+            </sc-if>
+            <sc-if value="{{sheet.isCard}}" hint-placeholder-val="{{false}}">
+              <div class="c07-card" style="--tone2:{{sheet.card.bg}}"><span class="art"><svg viewBox="0 0 8 8" shape-rendering="crispEdges" aria-hidden="true"><rect width="8" height="8" fill="{{sheet.card.bg}}"></rect><path d="{{sheet.card.art}}" fill="{{sheet.card.fg}}"></path></svg></span><div class="cx"><span class="en">{{sheet.card.en}}</span><b>{{sheet.card.title}}</b><span class="sl">{{sheet.card.statusLabel}}</span><span class="cap">{{sheet.card.caption}}</span></div></div>
+              <p style="margin-top:12px">{{sheet.card.when}} · {{sheet.card.place}}</p><p>{{sheet.card.note}}</p><p class="help" style="margin-top:6px">成员在详情里看到的是同一张局卡。</p>
+            </sc-if>
+            <sc-if value="{{sheet.isReport}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{sheet.submitted}}" hint-placeholder-val="{{false}}"><div class="c07-res">已受理 · 可在“设置 → 帮助与反馈”查询进度（查看进度不在本范围）</div></sc-if>
+              <sc-if value="{{sheet.notSubmitted}}" hint-placeholder-val="{{true}}">
+                <label class="c07-lbl" for="c07-rp-text" style="margin-top:0">说说发生了什么（至少 4 字）</label><textarea id="c07-rp-text" class="c07-ta" onInput="{{sheet.setText}}" value="{{sheet.text}}"></textarea>
+                <div class="c07-lbl">谁</div><div class="c07-chips"><sc-for list="{{sheet.who}}" as="w" hint-placeholder-count="3"><button type="button" class="c07-btn {{w.cls}}" onClick="{{w.toggle}}">{{w.name}}</button></sc-for></div>
+                <div class="c07-lbl">截图 · 最多 6 张</div><div class="c07-chips"><span class="c07-btn inert" style="height:30px;font-size:12px">本范围不演示上传</span></div>
+              </sc-if>
+            </sc-if>
+            <sc-if value="{{sheet.err.on}}" hint-placeholder-val="{{false}}"><div class="c07-alert" role="alert"><b>{{sheet.err.title}}</b>{{sheet.err.message}}<button type="button" class="c07-btn" onClick="{{sheet.err.retry}}">重试</button></div></sc-if>
+            <sc-if value="{{sheet.hasHint}}" hint-placeholder-val="{{false}}"><p class="help">{{sheet.hint}}</p></sc-if>
+          </div>
+          <div class="c07-sheet-f">
+            <sc-if value="{{sheet.hasCancel}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn pill" data-act="close" onClick="{{sheet.close}}">{{sheet.cancelText}}</button></sc-if>
+            <sc-if value="{{sheet.hasOk}}" hint-placeholder-val="{{true}}"><button type="button" class="c07-btn big {{sheet.okCls}}" data-act="{{sheet.okAct}}" disabled="{{sheet.okOff}}" onClick="{{sheet.ok}}">{{sheet.okText}}</button></sc-if>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{undo.on}}" hint-placeholder-val="{{false}}"><div class="c07-undo" role="status"><span class="t">已删除「{{undo.title}}」</span><button type="button" class="c07-btn" data-act="undo" onClick="{{undo.go}}">撤销</button><i class="cd"></i></div></sc-if>
+      <sc-if value="{{err.on}}" hint-placeholder-val="{{false}}"><div class="c07-undo" role="alert" style="background:#7F1F2E"><span class="t"><b>没有保存成功</b> · {{err.message}}</span><button type="button" class="c07-btn" onClick="{{err.retry}}">重试</button><button type="button" class="c07-btn" style="background:transparent;color:#fff" onClick="{{err.dismiss}}">取消</button></div></sc-if>
+      <div class="c07-toast {{toast.cls}}" role="status">{{toast.text}}</div>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* ---------------------------------------------------------------- C07 helpers (pure) ---------------------------------------------------------------- */
+var C07 = (function () {
+  var PAD = 16, GAP = 10, COL = 174, HL = 304, HW = 144, HS = 156, HEAD = 34, TOP = 6;
+  function pack(items, width) {
+    var COL = Math.floor(((width || 390) - PAD * 2 - GAP) / 2);
+    var y = TOP, slot = null, out = [];
+    items.forEach(function (it) {
+      if (it.head) { if (slot != null) { y += HS + GAP; slot = null; } it.y = y; y += HEAD; out.push(it); return; }
+      var w = it.size === 'S' ? COL : COL * 2 + GAP, h = it.size === 'L' ? HL : it.size === 'W' ? HW : HS;
+      if (it.size === 'S') { if (slot != null) { it.x = PAD + COL + GAP; it.y = slot; slot = null; y += HS + GAP; } else { it.x = PAD; it.y = y; slot = y; } }
+      else { if (slot != null) { y += HS + GAP; slot = null; } it.x = PAD; it.y = y; y += h + GAP; }
+      it.w = w; it.h = h; out.push(it);
+    });
+    if (slot != null) y += HS + GAP;
+    return { items: out, height: y + 8 };
+  }
+  function seedOf(str) { var h = 7; for (var i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % 100003; return h + 3; }
+  var qrCache = {}, artCache = {};
+  function qr(id) {
+    if (qrCache[id]) return qrCache[id];
+    var r = JU.fx.rand(seedOf(id)), d = [];
+    function finder(ox, oy) { for (var y = 0; y < 7; y++) for (var x = 0; x < 7; x++) { var ring = x === 0 || y === 0 || x === 6 || y === 6, core = x >= 2 && x <= 4 && y >= 2 && y <= 4; if (ring || core) d.push('M' + (ox + x) + ' ' + (oy + y) + 'h1v1h-1z'); } }
+    finder(0, 0); finder(14, 0); finder(0, 14);
+    for (var y = 0; y < 21; y++) for (var x = 0; x < 21; x++) {
+      var inF = (x < 8 && y < 8) || (x > 12 && y < 8) || (x < 8 && y > 12); if (inF) continue;
+      if (y === 6 || x === 6) { if ((x + y) % 2 === 0) d.push('M' + x + ' ' + y + 'h1v1h-1z'); continue; }
+      if (r() < 0.44) d.push('M' + x + ' ' + y + 'h1v1h-1z');
+    }
+    return (qrCache[id] = d.join(''));
+  }
+  var PAL = { invite: ['#FFE4D6', '#C8461B'], riso: ['#FDE1E7', '#C2364C'], acid: ['#E7F6C4', '#4E7A0B'], street: ['#E0E5EF', '#4C5C7E'], grain: ['#F3E9D8', '#8A5A2B'], mono: ['#E8E9E4', '#17191C'] };
+  function art(id, pack) {
+    if (artCache[id]) return artCache[id];
+    var r = JU.fx.rand(seedOf(id + 'art')), d = [];
+    for (var y = 0; y < 8; y++) for (var x = 0; x < 4; x++) { if (r() < 0.5) { d.push('M' + x + ' ' + y + 'h1v1h-1z'); d.push('M' + (7 - x) + ' ' + y + 'h1v1h-1z'); } }
+    var p = PAL[pack] || PAL.mono;
+    return (artCache[id] = { path: d.join(''), bg: p[0], fg: p[1] });
+  }
+  /* scrape cells (3 × 14) with deterministic jitter */
+  function stubCells(seed) { var r = JU.fx.rand(seed), out = []; for (var i = 0; i < 42; i++) { var row = Math.floor(i / 3); out.push({ i: i, row: row, lite: r() < 0.3, jx: ((r() * 2 - 1) * 7).toFixed(1), jy: ((r() * 2 - 1) * 5).toFixed(1), jr: Math.round((r() * 2 - 1) * 40), d: row * 26 + Math.round(r() * 40) }); } return out; }
+  /* void cells (12 × 8) — delay grows with distance from the fire corner (top-right) */
+  function voidCells(seed, stub) {
+    var r = JU.fx.rand(seed), out = [], cols = 12, rows = 8, W = 358, H = 196, cw = W / cols, ch = H / rows, maxD = Math.sqrt(11 * 11 + 7 * 7);
+    for (var row = 0; row < rows; row++) for (var col = 0; col < cols; col++) {
+      var dist = Math.sqrt((11 - col) * (11 - col) + row * row); var d = Math.round(Math.pow(dist / maxD, 1.05) * 1900 + r() * 140);
+      var inQR = col * cw < 96 && row * ch < 112, inStub = stub && col >= 11;
+      var c = inQR ? ((col + row) % 2 ? '#17191C' : '#FBFBF8') : inStub ? (row % 2 ? '#17191C' : '#FBFBF8') : (r() < 0.12 ? '#4B5056' : '#FBFBF8');
+      out.push({ x: (col * cw).toFixed(1), y: (row * ch).toFixed(1), w: (cw + 0.6).toFixed(1), h: (ch + 0.6).toFixed(1), c: c, d: d, fx: Math.round((r() * 2 - 1) * 40), fy: Math.round(230 + r() * 70), fr: Math.round((r() * 2 - 1) * 160) });
+    }
+    return out;
+  }
+  function bar(ratio, n) { var out = []; for (var i = 0; i < n; i++) out.push(i < Math.round(ratio * n) ? 'on' : ''); return out; }
+  function initial(name) { return name ? String(name).trim().charAt(0).toUpperCase() : '?'; }
+  function mask(name) { return name ? String(name).charAt(0) + '**' : '**'; }
+  var ICON = { clock: 'M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', flag: 'M5 21V4h11l-1 4 1 4H5M5 12h10', x: 'M6 6l12 12M18 6L6 18', plus: 'M12 5v14M5 12h14', card: 'M4 6h16v12H4zM4 10h16' };
+  return { PAD: PAD, GAP: GAP, COL: COL, pack: pack, qr: qr, art: art, stubCells: stubCells, voidCells: voidCells, bar: bar, initial: initial, mask: mask, ICON: ICON, seedOf: seedOf };
+})();
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted';
+    this.boardJ = { current: null }; this.boardH = { current: null }; this.detBody = { current: null }; this.manBody = { current: null }; this.sheetBody = { current: null }; this._uid = 0; this._lastFrozen = null;
+  }
+  initialState(variant) {
+    var base = JU.baseState(variant);
+    return Object.assign({}, base, { view: { name: 'list' }, otherSec: 'current', sheet: null, busy: null, err: null, toast: { text: '', on: false }, undo: null, landed: null, swap: false, scJ: 0, scH: 0, frozen: null, printed: {}, copied: null, draftIds: base.data.drafts.map(function (d) { return d.id; }) });
+  }
+  /* ------------------------------------------------ helpers ------------------------------------------------ */
+  root() { return this.rootRef.current; }
+  patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
+  patchSheet(patch) { this.setState(function (s) { return s.sheet ? { sheet: Object.assign({}, s.sheet, patch) } : {}; }); }
+  setPass(key, patch) { this.setState(function (s) { var v = s.view; if (!v.passes || !v.passes[key]) return {}; var passes = Object.assign({}, v.passes); passes[key] = Object.assign({}, passes[key], patch); return { view: Object.assign({}, v, { passes: passes }) }; }); }
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.after(2600, function () { self.setState(function (s) { return s.toast.text === text ? { toast: { text: text, on: false } } : {}; }); }); }
+  /* every write goes through JU.engine: processing → result | failure + retry (in place, keyed) */
+  act(fn, payload, key, done, ms, onErr) {
+    var self = this; this.setState({ busy: { key: key }, err: null });
+    this.after(ms == null ? 460 : ms, function () {
+      var res = JU.engine[fn](self.state.data, payload);
+      if (res.effect && res.effect.type === 'error') { self.setState({ data: res.data, busy: null, err: { key: key, message: res.effect.message, retry: function () { self.act(fn, payload, key, done, ms, onErr); } } }); if (onErr) onErr(res.effect); return; }
+      self.setState({ data: res.data, busy: null, err: null });
+      if (done) done(res.effect, res.data);
+    });
+  }
+  errFor(key) { var e = this.state.err; return e && e.key === key ? { on: true, message: e.message, retry: e.retry, title: '没有保存成功' } : { on: false }; }
+  busyIs(key) { return this.state.busy && this.state.busy.key === key ? 'busy' : ''; }
+  copy(text, key) { var self = this; try { if (navigator.clipboard) { var pr = navigator.clipboard.writeText(text); if (pr && pr.catch) pr.catch(function () { }); } } catch (e) { } this.setState({ copied: key }); this.say('微信号已复制'); this.after(2600, function () { self.setState(function (s) { return s.copied === key ? { copied: null } : {}; }); }); }
+  locate(id) {
+    var s = this.state;
+    if (s.role === 'joined') { var j = JU.derive.joined(s.data); if (j.current.some(function (r) { return r.id === id; })) return 'current'; if (j.history.some(function (r) { return r.id === id; })) return 'history'; return null; }
+    var h = JU.derive.hosted(s.data); if (h.drafts.some(function (d) { return d.id === id; })) return 'drafts'; if (h.current.some(function (r) { return r.id === id; })) return 'current'; if (h.history.some(function (r) { return r.id === id; })) return 'history'; return null;
+  }
+  boardEl() { return this.state.role === 'joined' ? this.boardJ.current : this.boardH.current; }
+  /* ------------------------------------------------ role / section (M1 / M2) ------------------------------------------------ */
+  switchRole(role) { var self = this; if (this.state.role === role) return; this.motion('role', function () { self.setState(function (s) { return { role: role, section: s.otherSec, otherSec: s.section, view: { name: 'list' }, swap: true }; }); self.after(520, function () { self.setState({ swap: false }); }); }); }
+  switchSection(sec) { var self = this; if (this.state.section === sec) return; var b = this.boardEl(); if (b) b.scrollTop = 0; this.setState({ section: sec, swap: true, view: { name: 'list' }, scJ: 0, scH: 0 }); this.after(520, function () { self.setState({ swap: false }); }); }
+  onBoardScroll(which, ev) { var sc = Math.max(0, Math.min(1, ev.currentTarget.scrollTop / 56)); var cur = which === 'J' ? this.state.scJ : this.state.scH; if (Math.abs(sc - cur) < 0.02 && !(sc === 0 && cur !== 0) && !(sc === 1 && cur !== 1)) return; this.setState(which === 'J' ? { scJ: sc } : { scH: sc }); }
+  /* ------------------------------------------------ open / close an expanded tile (M4) ------------------------------------------------ */
+  rectOf(id, ev) { var root = this.root(); var el = ev && ev.currentTarget ? ev.currentTarget.closest('.c07-tile') : (root ? root.querySelector('.c07-tile[data-rid="' + id + '"]') : null); if (el && root) { var r = JU.fx.rectIn(el, root); if (r.w > 0) return r; } return null; }
+  openOver(view, ev, instant) {
+    var self = this; var from = this.rectOf(view.id, ev) || { x: 16, y: 150, w: 358, h: 132 };
+    view.phase = instant ? 'in' : 'start'; view.instant = !!instant; view.from = from; view.uid = ++this._uid;
+    this.setState(function (s) { return { view: view, frozen: s.frozen || s.data }; });
+    if (instant) { this.after(16, function () { self.afterOpen(view); }); return; }
+    this.after(20, function () { var el = self.root() && self.root().querySelector('.c07-over'); if (el) void el.getBoundingClientRect(); self.patchView({ phase: 'in' }); self.after(470, function () { self.afterOpen(view); }); });
+  }
+  afterOpen(view) { }
+  closeOver() {
+    var self = this; var v = this.state.view; if (!v || v.name === 'list' || v.phase === 'out') return;
+    var id = v.id; var where = this.locate(id); var changed = where && where !== this.state.section;
+    if (this.state.sheet) this.setState({ sheet: null });
+    this.setState({ err: null, busy: null });
+    var go = function () {
+      var r = self.rectOf(id); var b = self.boardEl();
+      if (r && b) { var top = r.y - 90; var sb = b.scrollTop; if (r.y < 150 || r.y + r.h > 760) { b.scrollTop = Math.max(0, sb + top); r = self.rectOf(id) || r; } }
+      self.patchView({ phase: 'out', from: r || v.from, gone: !r });
+      self.setState({ landed: id });
+      self.after(440, function () {
+        var moved = self.state.frozen && self.state.frozen !== self.state.data; self._lastFrozen = self.state.frozen;
+        self.setState({ view: { name: 'list' } });
+        if (moved) self.motion('reflow', function () { self.setState({ frozen: null }); }); else self.setState({ frozen: null });
+      });
+      self.after(1900, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); });
+    };
+    if (changed) { this.setState({ section: where, frozen: null, swap: true }); this.after(520, function () { self.setState({ swap: false }); }); this.after(60, go); } else go();
+  }
+  /* replay restores the pre-state of the last core motion */
+  beforeReplay(name) {
+    var self = this; var v = this.state.view;
+    if (name === 'print' && v.passes) Object.keys(v.passes).forEach(function (k) { if (v.passes[k].phase === 'ready' && !v.passes[k].torn) self.setPass(k, { phase: 'idle' }); });
+    if (name === 'tear' && v.passes) { Object.keys(v.passes).forEach(function (k) { var p = v.passes[k]; if (p.torn || p.falling) self.setPass(k, { torn: false, falling: false, p: 0, dx: 0, dy: 0, drag: null, auto: false }); }); this.patchView({ contact: false, replayTear: true }); }
+    if (name === 'void') { if (v.passes) Object.keys(v.passes).forEach(function (k) { if (v.passes[k].voidPhase !== 'idle') self.setPass(k, { voidPhase: 'idle' }); }); if (v.name === 'manage') this.patchView({ voidPhase: 'idle' }); }
+    if (name === 'reflow') { this.setState({ frozen: this._lastFrozen }); }
+    if (name === 'open') { this.setState({ view: { name: 'list' }, frozen: null }); }
+    if (name === 'role') { var r = this.state.role; this.setState(function (s) { return { role: r === 'joined' ? 'hosted' : 'joined', section: s.otherSec, otherSec: s.section }; }); }
+  }
+  /* ------------------------------------------------ applyJump: every index entry maps onto a view, shown instantly ------------------------------------------------ */
+  applyJump(e) {
+    var o = e.open; var self = this;
+    if (o.surface === 'manage') { this.openManage(o.eventId, null, { tab: o.tab, jumpKey: e.key }, true); return; }
+    if (o.surface === 'draft') { this.openDraft(o.eventId, null, { jumpKey: e.key }, true); return; }
+    this.openDetail(o.eventId, null, { surface: o.surface, jumpKey: e.key }, true);
+  }
+  /* ================================================ participant detail ================================================ */
+  openDetail(id, ev, extra, instant) {
+    var self = this; extra = extra || {}; var r = JU.derive.rowById(this.state.data, id); if (!r) return;
+    var surface = extra.surface || (r.object === 'ticket' ? 'ticket' : r.group === 'kept' || r.group === 'closed' ? 'history' : 'detail');
+    var passes = {};
+    var mk = function (key) { return { key: key, phase: 'ready', p: 0, dx: 0, dy: 0, drag: null, falling: false, torn: false, voidPhase: 'idle', auto: false }; };
+    if (r.object === 'ticket' || (r.ticket && r.stage !== 'reschedule')) { passes.main = mk('main'); passes.main.torn = !!(r.ticket && r.ticket.torn); if (r.ticket && r.ticket.void && r.object === 'spine') passes.main.voidPhase = 'dropped'; }
+    if (r.stage === 'reschedule') { passes.fresh = mk('fresh'); }
+    if (r.group === 'closed' && r.ticket && r.ticket.void) { passes.main = passes.main || mk('main'); passes.main.torn = !!r.ticket.torn; passes.main.voidPhase = 'dropped'; }
+    var view = { name: 'detail', id: id, surface: surface, jumpKey: extra.jumpKey || null, rulesOpen: false, result: null, passes: passes, contact: r.stage === 'contact' || r.stage === 'going' || surface === 'contact', noteText: '', popYou: false, replayTear: false };
+    this.motion('open', function () { self.openOver(view, ev, instant); });
+    /* print on first sight of this ticket version (not on panel jumps: they show the settled state; 重播 reprints) */
+    var pk = passes.fresh ? 'fresh' : (passes.main && !passes.main.torn && passes.main.voidPhase === 'idle' ? 'main' : null);
+    var ver = r.ticket ? r.ticket.version : (r.event.version || 1); var tag = id + ':' + (pk === 'fresh' ? 'fresh' : 'main') + ':' + ver;
+    if (pk) { if (instant || this.state.printed[tag]) { this.markPrinted(tag); } else { this.setPass(pk, { phase: 'idle' }); this.after(instant ? 30 : 520, function () { self.markPrinted(tag); self.startPrint(pk); }); } }
+    if (surface === 'withdraw') this.after(instant ? 40 : 540, function () { self.openSheet(r.stage === 'pending' ? 'withdraw' : (r.stage === 'invited' || r.stage === 'invited_queue') ? 'release' : r.stage === 'waitlist' ? 'leaveQueue' : r.stage === 'reschedule' ? 'decline' : 'exit'); });
+  }
+  markPrinted(tag) { this.setState(function (s) { var p = Object.assign({}, s.printed); p[tag] = true; return { printed: p }; }); }
+  startPrint(key) { var self = this; this.motion('print', function () { self.setPass(key, { phase: 'printing' }); self.after(2000, function () { self.setPass(key, { phase: 'ready' }); }); }); }
+  /* scrape: pointer drag over the stub detaches pixel rows; release past 0.55 commits, else the cells return */
+  canTear(key) { var v = this.state.view; var p = v.passes && v.passes[key]; if (!p) return false; return p.phase === 'ready' && !p.torn && !p.falling && p.voidPhase === 'idle' && !this.state.busy && (key === 'fresh' || !v.oldOnly); }
+  tearDown(key, ev) { if (!this.canTear(key)) return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this.setPass(key, { drag: { x: ev.clientX, y: ev.clientY }, p: 0, dx: 0, dy: 0 }); }
+  tearMove(key, ev) { var p = this.state.view.passes[key]; if (!p || !p.drag) return; var dx = ev.clientX - p.drag.x, dy = ev.clientY - p.drag.y; var prog = Math.max(0, Math.min(1, (dy * 1.0 + Math.max(0, -dx) * 0.8) / 150)); this.setPass(key, { p: prog, dx: Math.max(-60, Math.min(20, dx)), dy: Math.max(-10, Math.min(70, dy)) }); }
+  tearUp(key) { var p = this.state.view.passes[key]; if (!p || !p.drag) return; if (p.p >= 0.55) this.commitTear(key); else this.setPass(key, { drag: null, p: 0, dx: 0, dy: 0 }); }
+  autoTear(key) { var self = this; if (!this.canTear(key)) return; this.setPass(key, { auto: true, p: 1, dx: -10, dy: 26 }); this.after(380, function () { self.commitTear(key); }); }
+  commitTear(key) {
+    var self = this; var id = this.state.view.id; this.setPass(key, { drag: null, p: 1 });
+    this.motion('tear', function () {
+      var fn = key === 'fresh' ? 'acceptReschedule' : 'tearTicket';
+      self.act(fn, { eventId: id }, 'tear:' + key, function (eff) {
+        self.setPass(key, { falling: true });
+        self.after(1000, function () { self.setPass(key, { falling: false, torn: true, auto: false, dx: 0, dy: 0 }); if (key === 'fresh') self.setState(function (st) { var passes = Object.assign({}, st.view.passes); delete passes.main; return { view: Object.assign({}, st.view, { passes: passes }) }; }); });
+        self.after(1280, function () { self.patchView({ contact: true }); if (key === 'fresh') self.say('已接受改期 · 按新票根的时间见'); });
+      }, 220, function () { self.setPass(key, { p: 0, dx: 0, dy: 0, auto: false, drag: null }); });
+    });
+  }
+  /* pixel void of a pass (exit / decline) then the result tile */
+  voidPass(key, result) { var self = this; this.motion('void', function () { self.setPass(key, { voidPhase: 'dropping' }); self.after(3200, function () { self.setPass(key, { voidPhase: 'dropped' }); self.setState(function (st) { var passes = Object.assign({}, st.view.passes); if (key === 'fresh') delete passes.main; return { view: Object.assign({}, st.view, { passes: passes, result: result, contact: false, hold: null }) }; }); }); }); }
+  /* ------------------------------------------------ sheets (操作盘) ------------------------------------------------ */
+  openSheet(kind, extra) { var self = this; var sh = Object.assign({ kind: kind, phase: 'start', readEnd: false, text: '', who: [], submitted: false }, extra || {}); this.setState({ sheet: sh, err: null }); this.after(20, function () { var el = self.root() && self.root().querySelector('.c07-sheet'); if (el) void el.getBoundingClientRect(); self.patchSheet({ phase: 'on' }); }); }
+  closeSheet() { var self = this; if (!this.state.sheet) return; this.patchSheet({ phase: 'leave' }); this.setState({ err: null, busy: null }); this.after(400, function () { self.setState(function (s) { return s.sheet && s.sheet.phase === 'leave' ? { sheet: null } : {}; }); }); }
+  sheetOk() {
+    var self = this; var sh = this.state.sheet; if (!sh) return; var v = this.state.view; var id = v.id;
+    var closeThen = function (fn) { self.closeSheet(); self.after(120, fn); };
+    if (sh.kind === 'withdraw') this.act('withdrawApplication', { eventId: id }, 'sheet', function () { closeThen(function () { self.patchView({ result: { title: '已撤回申请', body: '申请已撤回 · 不影响信用。仍有位置时可以重新报名（找局模块，不在本范围）。' } }); }); });
+    if (sh.kind === 'release') this.act('releaseReservation', { eventId: id }, 'sheet', function () { closeThen(function () { self.patchView({ result: { title: '已退出这局', body: '放弃预留 · 不记主动失约，也不消耗主动退出机会；想再参加需重新申请。' } }); }); });
+    if (sh.kind === 'leaveQueue') this.act('leaveWaitlist', { eventId: id }, 'sheet', function () { closeThen(function () { self.patchView({ result: { title: '已退出候补', body: '退出候补 · 不记缺席；之后仍有位置时可以重新加入，排在队尾。' } }); }); });
+    if (sh.kind === 'exit') { var held = JU.derive.rowById(this.state.data, id); this.act('exitEvent', { eventId: id }, 'sheet', function (eff) { if (eff.burn && v.passes.main) self.patchView({ hold: held }); closeThen(function () { var res = { title: '已退出这局', body: '主动退出 · 票根与联系已关闭。记为主动退出（同一账户每年共 4 次），只陈述事实，不评分。' }; if (eff.burn && v.passes.main) self.voidPass('main', res); else self.patchView({ result: res }); }); }); }
+    if (sh.kind === 'decline') { var heldD = JU.derive.rowById(this.state.data, id); this.act('declineReschedule', { eventId: id }, 'sheet', function () { self.patchView({ hold: heldD }); closeThen(function () { self.voidPass('fresh', { title: '未接受新时间', body: '未接受局主的新时间，位置已释放。不记你的主动失约，也不消耗主动退出机会，旧票不恢复。' }); }); }); }
+    if (sh.kind === 'rules') { if (!sh.readEnd) return; this.act('confirmReservation', { eventId: id }, 'sheet', function (eff, data) {
+      closeThen(function () {
+        var r = JU.derive.rowById(data, id);
+        if (eff.formed) { var passes = { main: { key: 'main', phase: 'idle', p: 0, dx: 0, dy: 0, drag: null, falling: false, torn: false, voidPhase: 'idle', auto: false } }; self.patchView({ passes: passes, surface: 'ticket' }); self.after(380, function () { self.markPrinted(id + ':main:' + r.ticket.version); self.startPrint('main'); }); }
+        else { self.patchView({ popYou: true }); self.after(900, function () { self.patchView({ popYou: false }); }); }
+      }); }); }
+    if (sh.kind === 'end') this.act('end', { eventId: id }, 'sheet', function () { closeThen(function () { self.patchView({ tab: 'attendance', intent: 'attendance' }); var b = self.manBody.current; if (b) b.scrollTop = 0; }); });
+    if (sh.kind === 'cancel') this.act('cancel', { eventId: id }, 'sheet', function () { closeThen(function () { self.motion('void', function () { self.patchView({ voidPhase: 'dropping' }); self.after(3200, function () { self.patchView({ voidPhase: 'dropped' }); }); }); }); });
+    if (sh.kind === 'resched') { var newIso = sh.date && sh.time ? sh.date + 'T' + sh.time.slice(0, 5) : ''; this.act('propose', { eventId: id, newIso: newIso }, 'sheet', function (eff) { closeThen(function () { self.say(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间'); self.patchView({ whenFresh: true }); var b = self.manBody.current; if (b) b.scrollTop = 0; self.after(700, function () { self.patchView({ whenFresh: false }); }); }); }); }
+    if (sh.kind === 'report') { if ((sh.text || '').trim().length < 4) return; this.act('addRecord', { eventId: id, kind: 'report', text: '举报：' + sh.text.trim() + (sh.who.length ? '（' + sh.who.join('、') + '）' : '') }, 'sheet', function () { self.patchSheet({ submitted: true }); }); }
+    if (sh.kind === 'card') this.closeSheet();
+  }
+  onSheetScroll(ev) { var el = ev.currentTarget; var sh = this.state.sheet; if (!sh || sh.kind !== 'rules' || sh.readEnd) return; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 24) this.patchSheet({ readEnd: true }); }
+  /* ================================================ host manage ================================================ */
+  openManage(id, ev, extra, instant) {
+    var self = this; extra = extra || {}; var m = JU.derive.manage(this.state.data, id); if (!m) return;
+    var tab = extra.tab || (m.pending ? 'applications' : (m.event.status === 'ended' && m.unrecorded) ? 'attendance' : 'members');
+    var intent = tab === 'applications' ? 'review' : tab === 'attendance' ? 'attendance' : 'manage';
+    var view = { name: 'manage', id: id, tab: tab, intent: intent, jumpKey: extra.jumpKey || null, leavesOpen: tab === 'leaves', editing: {}, fresh: {}, freshSeat: null, voidPhase: m.event.status === 'cancelled' ? 'dropped' : 'idle', whenFresh: false };
+    this.motion('open', function () { self.openOver(view, ev, instant); });
+    var sheetKind = { reschedule: 'resched', cancel: 'cancel', end: 'end', card: 'card' }[tab];
+    this.after(instant ? 40 : 520, function () {
+      if (sheetKind) self.openSheet(sheetKind, sheetKind === 'resched' ? { date: m.when.iso.slice(0, 10), time: m.when.time } : {});
+      else if (tab !== 'applications' && tab !== 'members') { var el = self.root() && self.root().querySelector('#c07-man-' + ({ waitlist: 'queue', contact: 'members', leaves: 'leaves', replies: 'replies', attendance: 'attendance' }[tab] || tab)); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'start' }); }
+    });
+  }
+  approve(appId) { var self = this; var id = this.state.view.id; this.act('approve', { eventId: id, appId: appId }, 'app:' + appId, function (eff) { self.patchView({ freshSeat: eff.slot }); self.after(700, function () { self.patchView({ freshSeat: null }); }); }); }
+  reject(appId) { this.act('reject', { eventId: this.state.view.id, appId: appId }, 'app:' + appId); }
+  attend(memberId, value) { var self = this; var id = this.state.view.id; this.act('attend', { eventId: id, memberId: memberId, value: value }, 'att:' + memberId, function () { self.setState(function (s) { var v = s.view; var ed = Object.assign({}, v.editing); delete ed[memberId]; var fr = Object.assign({}, v.fresh); fr[memberId] = true; return { view: Object.assign({}, v, { editing: ed, fresh: fr }) }; }); self.after(2500, function () { self.setState(function (s) { var fr = Object.assign({}, s.view.fresh); delete fr[memberId]; return { view: Object.assign({}, s.view, { fresh: fr }) }; }); }); }, 320); }
+  /* ================================================ drafts ================================================ */
+  openDraft(id, ev, extra, instant) { var self = this; extra = extra || {}; var view = { name: 'draft', id: id, jumpKey: extra.jumpKey || null }; this.motion('open', function () { self.openOver(view, ev, instant); }); }
+  deleteDraft(id, fromOver) {
+    var self = this;
+    this.act('deleteDraft', { draftId: id }, fromOver ? 'sheet' : 'global', function (eff) {
+      self.setState({ undo: { id: id, title: eff.title, at: Date.now() } });
+      if (fromOver) { self.setState(function (s) { return { frozen: null }; }); self.patchView({ phase: 'out', gone: true }); self.after(400, function () { self.setState({ view: { name: 'list' }, frozen: null }); }); }
+      self.after(10000, function () { if (self.state.undo && self.state.undo.id === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
+    }, 260);
+  }
+  undoDelete() { var self = this; var r = JU.engine.undoDelete(this.state.data); if (r.effect.type === 'error') { this.say(r.effect.message); return; } this.setState({ data: r.data, undo: null, landed: r.effect.draftId }); this.after(1600, function () { self.setState({ landed: null }); }); }
+  /* ================================================ view models ================================================ */
+  seatsCls(seats) { return seats.map(function (x) { return x.kind === 'host' ? 'host' : x.kind === 'ok' ? 'ok' : x.kind === 'res' ? 'res' : ''; }); }
+  joinedTile(r, size, lead) {
+    var self = this; var s = this.state; var t = { id: r.id, size: size, tone: r.group, lead: !!lead };
+    var when = r.stage === 'reschedule' ? r.oldWhen : r.when;
+    t.title = r.event.title; t.time = when.time; t.wd = when.wdZh + ' ' + when.md; t.wdEn = when.wdEn + ' ' + when.md; t.hood = r.place.hood; t.label = r.label; t.need = r.need;
+    var extra = r.need; if (r.deadline) extra = '剩 ' + r.leftText + ' · ' + r.need; if (r.stage === 'reschedule') extra = '改为 ' + r.newWhen.zh; if (r.stage === 'ended') extra = r.attendanceText; if (r.tone === 'void') extra = r.need;
+    t.extra = extra;
+    var sec = null, secAct = '', surface = r.object === 'ticket' ? 'ticket' : 'detail';
+    if (r.stage === 'pending') { sec = '撤回申请'; secAct = 'go-withdraw'; }
+    if (r.stage === 'invited' || r.stage === 'invited_queue') { sec = '去不了了'; secAct = 'go-release'; }
+    if (r.stage === 'tear' || r.stage === 'contact' || r.stage === 'going') { sec = '去不了了'; secAct = 'go-exit'; }
+    if (r.stage === 'waitlist') { sec = '退出候补'; secAct = 'go-leave'; }
+    var ctaOff = r.stage === 'gathering'; var cta = r.cta || (r.stage === 'gathering' ? '等待确认' : r.stage === 'waitlist' ? '看门口位置' : r.stage === 'pending' ? '查看申请' : '查看详情');
+    var ctaAct = { invited: 'go-confirm', invited_queue: 'go-confirm', tear: 'go-tear', contact: 'go-contact', going: 'go-ticket', reschedule: 'go-accept' }[r.stage] || 'go-detail';
+    var open = function (ev) { self.openDetail(r.id, ev, { surface: r.stage === 'reschedule' ? 'reschedule-reply' : surface }); };
+    t.open = open; t.doCta = function (ev) { if (ctaOff) return; open(ev); }; t.doSec = function (ev) { self.openDetail(r.id, ev, { surface: 'withdraw' }); };
+    t.cta = cta; t.ctaAct = ctaAct; t.ctaOff = ctaOff; t.hasCta = true; t.sec = sec; t.secAct = secAct; t.hasSec = !!sec;
+    t.hasBar = !!r.deadline; t.bar = r.deadline ? C07.bar(r.leftRatio, 36) : []; t.barCls = r.leftRatio < .25 ? 'hot' : '';
+    if (r.deadline) { t.big = r.leftText; t.bigSmall = '预留剩余 · 6H'; t.showTime = true; } else { t.big = when.time; t.bigSmall = when.wdEn + ' ' + when.md; t.showTime = false; }
+    t.go = r.cta || (r.group === 'kept' ? '看票根' : r.group === 'closed' ? '看记录' : r.stage === 'gathering' ? '看成员' : r.stage === 'waitlist' ? '看位置' : '看详情'); t.hasGo = true;
+    var obj = { isPass: false, isCard: false, isStamp: false, isDots: false, isSeats: false };
+    if (r.object === 'ticket') { obj.isPass = true; obj.qr = C07.qr(r.id); obj.cls = (r.ticket && r.ticket.torn ? 'torn ' : '') + (r.stage === 'reschedule' ? 'chg' : ''); }
+    else if (r.object === 'card') { if (r.stage === 'gathering') { obj.isSeats = true; obj.seats = this.seatsCls(r.seats); } else { var a = C07.art(r.id, r.event.pack); obj.isCard = true; obj.art = a.path; obj.bg = a.bg; obj.fg = a.fg; } }
+    else if (r.object === 'stamp') { obj.isStamp = true; obj.cls = r.attendance === 'present' ? 'present' : r.attendance === 'absent' ? 'absent' : r.attendance === 'pending' ? 'pending' : 'none'; }
+    t.obj = obj;
+    t.aria = r.event.title + '，' + r.label + '，' + r.when.zh + '，' + r.place.hood;
+    return t;
+  }
+  hostTile(r, size, lead, inHistory) {
+    var self = this; var t = { id: r.id, size: size, tone: inHistory && r.event.status === 'ended' ? 'ended' : r.section, lead: !!lead, isHost: true };
+    t.title = r.event.title; t.time = r.when.time; t.wd = r.when.wdZh + ' ' + r.when.md; t.wdEn = r.when.wdEn + ' ' + r.when.md; t.hood = r.place.hood; t.life = r.life; t.label = inHistory && r.event.status === 'ended' ? (r.nonHost ? r.present + '/' + r.nonHost + ' 人到场' + (r.unrecorded ? ' · ' + r.unrecorded + ' 人待记录' : '') : '已散场') : r.label;
+    t.num = r.pending || r.unrecorded || 0; t.unit = r.pending ? '份申请待审' : r.unrecorded ? '人出席待记录' : '';
+    t.need = r.cta === '审核申请' ? '通过即发出 6 小时预留 · 确认前不占定、不出票' : r.cta === '记录出席' ? '散场后逐人记录出席 · 待核实、可更正' : r.formedLine;
+    var ended = r.event.status === 'ended', cancelled = r.event.status === 'cancelled';
+    t.hasSeats = !ended && !cancelled; t.seats = this.seatsCls(r.seats); t.hasDots = ended; t.dots = ended ? r.item.members.filter(function (m) { return !m.host && m.status === 'confirmed'; }).map(function (m) { return m.attendance === 'present' ? 'on' : m.attendance === 'absent' ? 'ab' : m.attendance === 'pending' ? 'pd' : ''; }) : [];
+    if (ended) t.seats = t.dots.map(function (d) { return d === 'on' ? 'ok' : d === 'ab' ? 'void' : d === 'pd' ? 'res' : ''; });
+    t.cta = r.cta || '管理这局'; t.ctaAct = r.cta === '审核申请' ? 'go-review' : r.cta === '记录出席' ? 'go-attendance' : 'go-manage'; t.go = r.cta || (cancelled ? '看记录' : '管理这局'); t.hasGo = !ended || !!r.cta; t.inert = ended && !r.cta;
+    t.open = function (ev) { self.openManage(r.id, ev, {}); }; t.doCta = t.open;
+    t.aria = r.event.title + '，' + r.life + '，' + r.label + '，' + r.when.zh;
+    return t;
+  }
+  draftTile(d) {
+    var self = this; return { id: d.id, size: 'W', tone: 'draft', isDraftTile: true, title: d.title, whenText: d.whenText, placeText: d.placeText, missingText: d.missingText, missColor: d.ready ? 'var(--tl3)' : 'var(--or3)', agoText: d.agoText + (d.source ? ' · 由「' + d.source.title + '」再开' : ''), aria: d.title + '，草稿，' + d.missingText,
+      open: function (ev) { self.openDraft(d.id, ev, {}); }, del: function () { self.deleteDraft(d.id, false); } };
+  }
+  boardVals(role) {
+    var self = this; var s = this.state; var data = s.frozen || s.data; var active = s.role === role; var section = active ? s.section : s.otherSec;
+    var W = this.root() ? this.root().clientWidth || 390 : 390; var layouts = {}, tiles = [], heads = [];
+    var makeItems = function (secs, leadId, sizer) { var items = []; secs.forEach(function (sec) { items.push({ head: true, key: sec.key, title: sec.title, n: sec.rows.length, note: sec.note }); sec.rows.forEach(function (r) { items.push({ id: r.id, row: r, size: r.id === leadId ? 'L' : sizer(r), lead: r.id === leadId }); }); }); return items; };
+    var empty = { on: false }, foot = { on: false };
+    var find = function (id) { var act = layouts[section] ? layouts[section].items.filter(function (x) { return x.id === id; })[0] : null; if (act) return act; var all = []; Object.keys(layouts).forEach(function (k) { all = all.concat(layouts[k].items); }); return all.filter(function (x) { return x.id === id; })[0] || null; };
+    if (role === 'joined') {
+      var j = JU.derive.joined(data);
+      layouts.current = C07.pack(makeItems(j.sectionsCurrent, j.lead ? j.lead.id : null, function (r) { return r.group === 'wait' ? 'S' : 'W'; }), W);
+      layouts.history = C07.pack(makeItems(j.sectionsHistory, null, function (r) { return r.group === 'closed' ? 'S' : 'W'; }), W);
+      var rows = j.current.concat(j.history).sort(function (a, b) { return a.idx - b.idx; });
+      rows.forEach(function (r) { var it = find(r.id); var on = !!it && layouts[section].items.indexOf(it) >= 0; tiles.push(self.finishTile(self.joinedTile(r, it ? it.size : 'S', it && it.lead), it, on, tiles.length)); });
+      if (section === 'current' && j.empty) { var c = j.emptyKind === 'first' ? JU.COPY.emptyJoinedFirst : JU.COPY.emptyJoinedRested; empty = { on: true, title: c.title, body: c.body, act: '去找局', inert: true, live: false }; }
+      if (section === 'history' && !j.history.length) { empty = { on: true, title: JU.COPY.emptyJoinedHistory.title, body: JU.COPY.emptyJoinedHistory.body, act: '回到当前', inert: false, live: true, go: function () { self.switchSection('current'); } }; }
+      if (section === 'history' && j.history.length) foot = { on: true, lead: JU.COPY.historyFooter.lead, a: JU.COPY.historyFooter.links[0], b: JU.COPY.historyFooter.links[1] };
+    } else {
+      var h = JU.derive.hosted(data);
+      layouts.current = C07.pack(makeItems(h.sectionsCurrent, h.lead ? h.lead.id : null, function (r) { return r.section === 'recruit' || r.section === 'formed' ? 'S' : 'W'; }), W);
+      layouts.history = C07.pack(makeItems(h.sectionsHistory, null, function (r) { return r.section === 'cancelled' ? 'S' : 'W'; }), W);
+      var dItems = [{ head: true, key: 'drafts', title: '草稿', n: h.drafts.length, note: '补完就能发布 · 删除可撤销' }]; h.drafts.forEach(function (d) { dItems.push({ id: d.id, draft: d, size: 'W' }); });
+      layouts.drafts = C07.pack(h.drafts.length ? dItems : [], W);
+      h.rows.forEach(function (r) { var it = find(r.id); var on = !!it && layouts[section].items.indexOf(it) >= 0; tiles.push(self.finishTile(self.hostTile(r, it ? it.size : 'S', it && it.lead, section === 'history'), it, on, tiles.length)); });
+      s.draftIds.forEach(function (did) { var d = h.drafts.filter(function (x) { return x.id === did; })[0]; var it = layouts.drafts.items.filter(function (x) { return x.id === did; })[0]; var t = d ? self.draftTile(d) : { id: did, size: 'W', tone: 'draft', isDraftTile: true, title: '', aria: '' }; tiles.push(self.finishTile(t, it, !!(d && section === 'drafts'), tiles.length)); });
+      if (section === 'current' && h.empty) { var hc = h.emptyKind === 'drafts' ? JU.COPY.emptyHostedDrafts : JU.COPY.emptyHostedFirst; empty = h.emptyKind === 'drafts' ? { on: true, title: hc.title, body: hc.body, act: '接着改草稿', inert: false, live: true, go: function () { self.switchSection('drafts'); } } : { on: true, title: hc.title, body: hc.body, act: '去开局', inert: true, live: false }; }
+      if (section === 'drafts' && !h.drafts.length) empty = { on: true, title: JU.COPY.emptyDrafts.title, body: JU.COPY.emptyDrafts.body, act: '去开局', inert: true, live: false };
+      if (section === 'history' && !h.history.length) empty = { on: true, title: JU.COPY.emptyHostedHistory.title, body: JU.COPY.emptyHostedHistory.body, act: '回到当前', inert: false, live: true, go: function () { self.switchSection('current'); } };
+    }
+    var L = layouts[section] || { items: [], height: 0 };
+    L.items.forEach(function (it, i) { if (it.head) heads.push({ y: it.y, i: i, cls: it.key, title: it.title, n: it.n, note: it.note }); });
+    return { key: role, tiles: tiles, heads: heads, height: empty.on ? 0 : L.height, empty: empty, foot: foot, gridCls: '', onScroll: function (ev) { self.onBoardScroll(role === 'joined' ? 'J' : 'H', ev); }, ref: role === 'joined' ? this.boardJ : this.boardH };
+  }
+  finishTile(t, it, on, i) {
+    var s = this.state; t.i = i; t.x = it ? it.x : 16; t.y = it ? it.y : 0; t.w = it ? it.w : 0; t.h = it ? it.h : 0;
+    var size = it ? it.size : t.size; var k = t.isDraftTile ? 'Draft' : (t.isHost ? 'H' : 'J') + size;
+    t.isJL = k === 'JL'; t.isJW = k === 'JW'; t.isJS = k === 'JS'; t.isHL = k === 'HL'; t.isHW = k === 'HW'; t.isHS = k === 'HS'; t.isDraft = k === 'Draft';
+    var src = s.view && s.view.name !== 'list' && s.view.id === t.id && s.view.phase !== 'out';
+    t.cls = 'c07-' + size + ' ' + t.tone + (t.lead ? ' lead' : '') + (on ? '' : ' off') + (s.landed === t.id ? ' landed' : '') + (src && s.view.phase === 'in' ? ' src' : '');
+    return t;
+  }
+  railFor(id) { var s = this.state; var data = s.frozen || s.data; var rows = s.role === 'joined' ? (function () { var j = JU.derive.joined(data); return s.section === 'history' ? j.history : j.current; })() : (function () { var h = JU.derive.hosted(data); return s.section === 'drafts' ? h.drafts.map(function (d) { return { id: d.id, section: 'draft' }; }) : s.section === 'history' ? h.history : h.current; })(); return rows.map(function (r) { return (r.group || r.section || '') + (r.id === id ? ' cur' : ''); }); }
+  overStyle(v) {
+    if (!v.from) return '';
+    var f = v.from; var root = this.root(); var W = root ? root.clientWidth || 390 : 390, H = root ? root.clientHeight || 844 : 844; var heroY = 92;
+    if (v.phase === 'in') return 'clip-path:inset(0px 0px 0px 0px round 0px);transform:translateY(0px)';
+    var dy = f.y - heroY; return 'clip-path:inset(' + (f.y - dy).toFixed(1) + 'px ' + (W - f.x - f.w).toFixed(1) + 'px ' + (H - f.y - f.h + dy).toFixed(1) + 'px ' + f.x.toFixed(1) + 'px round 18px);transform:translateY(' + dy.toFixed(1) + 'px)';
+  }
+  passVals(r, key, opts) {
+    var self = this; var s = this.state; var v = s.view; var p = v.passes[key]; var isFresh = key === 'fresh'; var e = r.event;
+    var when = isFresh ? r.newWhen : (r.stage === 'reschedule' ? r.oldWhen : r.when); var old = isFresh ? r.oldWhen : null;
+    var st = r.stage; var canTear = this.canTear(key) && (isFresh ? st === 'reschedule' : st === 'tear'); var busy = this.busyIs('tear:' + key); var voidP = p.voidPhase;
+    var cells = C07.stubCells(C07.seedOf(r.id + key)).map(function (c) { var det = p.torn ? false : (p.falling || c.row / 14 < p.p - 0.001 || (p.p >= 1)); return { cls: (c.lite ? 'lite ' : '') + (det ? 'det' : ''), jx: c.jx, jy: c.jy, jr: c.jr, d: c.d }; });
+    var stubCls = (p.torn ? 'slot ' : '') + (p.falling ? 'falling ' : '') + (canTear && p.p > 0.55 ? 'hint ' : '');
+    var hint = '', hintB = '', hintStrong = false;
+    if (p.phase === 'printing') hint = '出票中 · 格子逐行点亮，完成前不能刮';
+    else if (p.torn) hint = isFresh ? '新版副券已刮下 · 新时间已确认' : '副券已刮下 · 可以联系局主了';
+    else if (voidP !== 'idle') hint = '票件已作废';
+    else if (canTear && p.drag) { hintStrong = true; hintB = p.p >= 0.55 ? '松手就撕下' : '再刮一点'; hint = ' · 没过阈值会弹回'; }
+    else if (canTear) hint = isFresh ? '按住右侧副券向下刮，接受新时间' : '按住右侧副券向下刮，刮过一半就断开';
+    else if (r.stage === 'reschedule' && !isFresh) hint = '旧票 · 答复前不能使用';
+    else if (r.stage === 'contact' || r.stage === 'going') hint = '已撕票 · 票版本 = 活动版本 ' + (r.ticket ? r.ticket.version : e.version);
+    var ghost = { on: voidP === 'dropped' };
+    if (ghost.on) { ghost.title = r.stage === 'cancelled' ? '票根作废 · 局主取消' : r.stage === 'exited' ? '票根作废 · 主动退出' : r.stage === 'declined' ? '新票作废 · 拒绝改期' : '票根作废'; ghost.body = r.stage === 'cancelled' ? '不计为未出席，也不影响成局信用。' : r.stage === 'declined' ? '席位已释放 · 旧票不恢复' : '联系入口已关闭'; }
+    return { key: key, i: opts.i, uid: v.uid + '-' + key, heading: isFresh && r.stage === 'reschedule' ? '新版票 · 答复' : r.stage === 'reschedule' ? '旧票' : '通行证', note: isFresh && r.stage === 'reschedule' ? '撕下副券 = 接受新时间' : (p.torn ? '已撕 · 副券在存根槽' : r.stage === 'reschedule' ? '改期后不可用' : '刮下副券后联系局主'),
+      secCls: isFresh ? 'act' : r.stage === 'reschedule' ? 'closed' : (r.group || ''), voidCls: voidP === 'dropping' ? 'dropping' : voidP === 'dropped' ? 'dropped' : '',
+      cls: (p.phase === 'printing' ? 'printing ' : '') + (r.stage === 'reschedule' && !isFresh ? 'old ' : ''), qr: C07.qr(r.id + (isFresh ? '-v' + e.version : '')), code: 'JU · ' + r.id.toUpperCase() + ' · V' + (isFresh ? e.version : (r.ticket ? r.ticket.version : e.version)) + ' · 第 ' + (r.seats.map(function (x) { return x.you; }).indexOf(true) + 1 || 2) + ' 席',
+      title: e.title, time: when.time, wd: when.wdZh + ' ' + when.md, hasOld: !!old, oldTime: old ? old.time : '', oldWhen: old ? old.wdZh + ' ' + old.md + ' ' + old.time : '', hood: r.place.hood, meeting: when.meeting, host: r.host.name,
+      hasMark: (isFresh && (r.stage === 'reschedule' || st === 'contact' || st === 'going')) || r.stage === 'reschedule' || voidP !== 'idle', mark: voidP !== 'idle' ? '作废' : isFresh ? '时间已改' : '改期', markCls: voidP !== 'idle' ? 'void' : '',
+      stubCls: stubCls, dx: p.dx || 0, dy: p.dy || 0, cells: cells, stubLabel: p.torn ? 'STUB · 已撕' : '副券 · 刮下', torn: !!p.torn,
+      down: function (ev) { if (canTear) self.tearDown(key, ev); }, move: function (ev) { self.tearMove(key, ev); }, up: function () { self.tearUp(key); },
+      vcells: C07.voidCells(C07.seedOf(r.id + key + 'void'), true), ghost: ghost,
+      hint: hint, hintB: hintB, hintStrong: hintStrong,
+      hasTearBtn: canTear || !!busy, tearCls: busy, tearAct: isFresh ? 'accept' : 'tear', tearText: isFresh ? '刮下新副券 · 接受新时间' : '刮下副券', autoTear: function () { self.autoTear(key); },
+      err: (function () { var er = self.errFor('tear:' + key); if (er.on) { er.message = (isFresh ? '新时间未保存，请重新刮下副券' : '未能保存，请重新刮下副券') + '（' + er.message + '）'; er.retry = function () { self.setState({ err: null }); self.autoTear(key); }; } return er; })() };
+  }
+  detailVals() {
+    var self = this; var s = this.state; var v = s.view; if (!v || v.name !== 'detail') return { on: false };
+    var r = v.hold || JU.derive.rowById(s.data, v.id); if (!r) return { on: false };
+    var tone = r.group; var e = r.event; var st = r.stage; var when = st === 'reschedule' ? r.newWhen : r.when;
+    var d = { on: true, cls: v.phase + (v.instant ? ' instant' : '') + (v.gone ? ' gone' : ''), style: this.overStyle(v), back: function () { self.closeOver(); }, backText: '格盘', rail: this.railFor(v.id), tone: tone, label: r.label, title: e.title, headline: v.result ? v.result.title : r.detailTitle, need: v.result ? '' : r.need, hasNeed: !v.result && !!r.need,
+      time: when.time, wd: when.wdZh + ' ' + when.md, place: r.place.full, hasOld: st === 'reschedule', oldWhen: st === 'reschedule' ? r.oldWhen.zh : '', hasBig: true, big: r.deadline ? r.leftText : when.time, bigSmall: r.deadline ? '预留剩余 · 6H' : when.wdEn + ' ' + when.md, hasBar: !!r.deadline, bar: r.deadline ? C07.bar(r.leftRatio, 36) : [], barCls: r.leftRatio < .25 ? 'hot' : '',
+      result: v.result ? { on: true, title: v.result.title, body: v.result.body } : { on: false }, rulesOpen: v.rulesOpen, rules: JU.RULES.map(function (x, i) { return { no: '0' + (i + 1), title: x.title, lines: x.lines }; }), rulesBtn: v.rulesOpen ? '收起约定' : '展开三类约定 ›', toggleRules: function () { self.patchView({ rulesOpen: !v.rulesOpen }); } };
+    if (v.result) { d.label = r.label; d.need = r.need; }
+    /* actions */
+    var acts = { on: false }; var err = this.errFor('sheet');
+    if (!v.result) {
+      if (st === 'pending') acts = { on: true, hasCta: false, hasSec: true, sec: '撤回申请', secAct: 'withdraw', doSec: function () { self.openSheet('withdraw'); }, hasNote: true, note: '等局主审核 · 不占名额；通过后从那一刻起 6 小时预留。' };
+      if (st === 'invited' || st === 'invited_queue') acts = { on: true, hasCta: true, cta: '阅读并确认', ctaAct: 'confirm', ctaCls: '', doCta: function () { self.openSheet('rules'); }, hasSec: true, sec: '去不了了', secAct: 'release', doSec: function () { self.openSheet('release'); }, hasNote: true, note: st === 'invited_queue' ? '轮到你了，位置已预留 · ' + JU.fmt.deadlineCopy(r.deadline) : JU.fmt.deadlineCopy(r.deadline) + ' · 重开页面不续时' };
+      if (st === 'gathering') acts = { on: true, hasCta: true, cta: '等待确认', ctaAct: 'wait', ctaOff: true, doCta: function () { }, hasSec: false, hasNote: true, note: '包括局主全员确认后才出票 · 他人到期或放弃时席位放回，候补顺位补上。' };
+      if (st === 'tear' || st === 'contact' || st === 'going') acts = { on: true, hasCta: false, hasSec: true, sec: '去不了了', secAct: 'exit', doSec: function () { self.openSheet('exit'); }, hasNote: true, note: st === 'tear' ? '撕开副券后 8 小时内联系局主；8 小时只是文案，不计时、不自动处罚。' : st === 'contact' ? '联系后点「已加微信」记录为待赴约（自报，不代表对方已回复）。' : '散场 24 小时后联系入口关闭。' };
+      if (st === 'reschedule') acts = { on: true, hasCta: false, hasSec: true, sec: '新时间去不了', secAct: 'decline', doSec: function () { self.openSheet('decline'); }, hasNote: true, note: '接受 = 刮下新版副券（已加微信沿用）；拒绝 = 释放席位，不记主动失约。答复前旧票不能用。' };
+    }
+    if (acts.on) acts.err = { on: false };
+    d.acts = acts;
+    /* 局卡 */
+    var cardOn = r.object === 'card' && !v.result; var a = C07.art(r.id, e.pack);
+    d.card = { on: cardOn, note: st === 'gathering' ? '全员确认后出票' : '确认前不出票', cls: '', bg: a.bg, fg: a.fg, art: a.path, en: e.en, statusLabel: r.counts.confirmed >= e.capacity ? '已成局' : r.counts.reserved ? '席位已预留' : '仍可报名', caption: '已确认 ' + r.counts.confirmed + '/' + e.capacity + ' · 已预留 ' + r.counts.reserved };
+    if (v.result && r.object === 'card') { d.card.on = true; d.card.cls = 'grey'; d.card.note = '已失效'; }
+    /* passes */
+    var passes = [];
+    if (v.passes.fresh) passes.push(this.passVals(r, 'fresh', { i: 2 }));
+    if (v.passes.main) passes.push(this.passVals(r, 'main', { i: passes.length + 2 }));
+    d.passes = passes;
+    /* contact layer */
+    var contactOn = v.contact && !v.result && (st === 'contact' || st === 'going') && r.ticket && r.ticket.torn;
+    d.contact = { on: contactOn, i: passes.length + 2, note: st === 'going' ? '已记录加微信' : '8 小时内', initial: C07.initial(r.host.name), name: r.host.name, sub: st === 'going' ? JU.COPY.contactedNote : '撕券后 8 小时内联系 · 此处为示例微信', wx: r.host.wx, copyCls: s.copied === 'det' ? 'done' : '', copyText: s.copied === 'det' ? '已复制' : '复制', copy: function () { self.copy(r.host.wx, 'det'); }, help: st === 'going' ? '已加微信只是自报，不代表对方已回复或到场；散场 24 小时后双方联系入口关闭。' : JU.COPY.contactNote,
+      cta: st === 'going' ? '待赴约' : '已加微信', ctaOff: st === 'going', ctaCls: this.busyIs('contact'), doCta: function () { if (st === 'going') return; self.act('markContacted', { eventId: r.id }, 'contact'); }, err: this.errFor('contact') };
+    /* waitlist */
+    var qOn = st === 'waitlist' && !v.result; var c = r.counts;
+    d.queue = { on: qOn, pos: r.queuePos, total: r.item.queue.length, seatLine: c.confirmed + '/' + e.capacity + ' 已确认 · ' + c.reserved + ' 已预留 · 候补 ' + r.item.queue.length, seats: this.seatsCls(r.seats), inside: r.item.members.filter(function (m) { return m.status !== 'open'; }).map(function (m) { return { name: m.name + (m.status === 'host' ? ' · 局主' : m.status === 'invited' ? ' · 已预留' : ''), cls: m.status === 'host' ? 'on' : '' }; }), list: r.item.queue.map(function (q, i) { return { no: i + 1, name: q.you ? '你' : C07.mask(q.name), cls: q.you ? 'on' : '' }; }), hint: '轮到后需在 6 小时内确认 · 候补尚未留位，按加入顺序邀请。', leave: function () { self.openSheet('leaveQueue'); } };
+    /* members */
+    var mOn = !v.result && (st === 'pending' || st === 'invited' || st === 'invited_queue' || st === 'gathering' || st === 'tear' || st === 'contact' || st === 'going' || st === 'reschedule');
+    d.members = { on: mOn, seatText: '已确认 ' + c.confirmed + '/' + e.capacity + '（含局主）', note: c.reserved ? '已预留 ' + c.reserved : (c.available ? '空 ' + c.available : '满员'), list: r.seats.map(function (x) { var cls = x.kind + (x.you ? ' you' : '') + (x.you && v.popYou ? ' pop' : ''); var sub = x.kind === 'host' ? '局主' : x.kind === 'ok' ? (x.you ? '你 · 已确认' : '已确认') : x.kind === 'res' ? (x.you ? '等你确认' : '已预留 ' + Math.ceil(Math.max(0, (x.deadline || 0) - JU.NOW) / 3600000) + 'h') : '等人'; return { cls: cls, initial: x.kind === 'open' ? '' : C07.initial(x.name), name: x.kind === 'open' ? '空位' : x.name, sub: sub }; }) };
+    /* history */
+    var hOn = (st === 'ended' || r.group === 'closed') && !v.result;
+    var hist = { on: hOn, err: this.errFor('note') };
+    if (hOn) {
+      if (st === 'ended') { hist.heading = '散场记录'; hist.note = '局主记录的事实 · 不评分'; hist.hasStamp = true; hist.stampCls = r.attendance === 'present' ? 'present' : r.attendance === 'absent' ? 'absent' : r.attendance === 'pending' ? 'pending' : 'none'; hist.stampText = r.attendanceText; hist.stampSub = r.attendance === 'absent' ? '待核实 · 不等于故意缺席，不会自动处罚' : r.attendance ? '进入历史不重放盖章' : '局主尚未记录'; hist.body = '散场 ' + (JU.NOW < r.endedAt + 86400000 ? '24 小时内仍可查看局主微信：' + r.host.wx : '已超过 24 小时，联系入口已关闭。'); hist.canNote = true; }
+      else { hist.heading = r.detailTitle; hist.note = '不计出席'; hist.hasGhost = (st === 'cancelled' || st === 'exited' || st === 'declined') && !passes.length; hist.ghostTitle = st === 'cancelled' ? '票根作废 · 局主取消' : st === 'exited' ? '票根作废 · 主动退出' : '新票作废 · 拒绝改期'; hist.ghostBody = st === 'cancelled' ? '取消时的票快照' : st === 'exited' ? '退出时的票快照 · ' + (r.ticket && r.ticket.torn ? '已撕' : '未撕') : '新时间未接受'; hist.hasBar = st === 'expired'; hist.bar = C07.bar(0, 36);
+        hist.body = ({ cancelled: '原定 ' + r.when.zh + ' · 不计为未出席，也不影响成局信用。', rejected: '局主这次没有通过申请 · 不影响信用；可重新申请（找局模块，不在本范围）。', withdrawn: '申请已撤回 · 仍有位置时可以重新报名。', exited: '主动退出 · 票根与联系已关闭；记录「主动告知退出」（占年度 4 次机会之一，只陈述不评分）。本局不能再申请。', declined: '未接受局主的新时间，位置已释放 · 不记主动失约。本局不能再申请或候补。', expired: '预留到期未确认 · 位置已补给他人；不占机会，可重新申请。', released: '放弃预留 · 不记主动失约；可重新申请。', queue_left: '退出候补 · 不记缺席；可再排队（排尾）。' })[st] || r.need; hist.canNote = st === 'exited' || st === 'cancelled'; }
+      hist.hasRecords = r.records.length > 0; hist.records = r.records.slice().reverse().map(function (x) { return { text: x.text, at: JU.fmt.abs(x.at) }; });
+      hist.noteText = v.noteText || ''; hist.noteOff = !(v.noteText || '').trim(); hist.noteCls = this.busyIs('note'); hist.setNote = function (ev) { self.patchView({ noteText: ev.target.value }); }; hist.addNote = function () { var txt = (self.state.view.noteText || '').trim(); if (!txt) return; self.act('addRecord', { eventId: r.id, kind: 'note', text: '你补充：' + txt }, 'note', function () { self.patchView({ noteText: '' }); }); };
+      hist.report = function () { self.openSheet('report', { who: [], text: '' }); }; hist.reportNote = '只陈述事实 · 已受理后在设置里查进度';
+    }
+    d.hist = hist;
+    return d;
+  }
+  manageVals() {
+    var self = this; var s = this.state; var v = s.view; if (!v || v.name !== 'manage') return { on: false };
+    var m = JU.derive.manage(s.data, v.id); if (!m) return { on: false }; var e = m.event; var id = v.id;
+    var cancelled = e.status === 'cancelled', ended = e.status === 'ended';
+    var tone = cancelled ? 'cancelled' : ended ? 'ended' : m.pending ? 'todo' : m.unanswered ? 'resched' : m.formed ? 'formed' : 'recruit';
+    var d = { on: true, cls: v.phase + (v.instant ? ' instant' : '') + (v.gone ? ' gone' : ''), style: this.overStyle(v), back: function () { self.closeOver(); }, rail: this.railFor(id), tone: tone, status: m.status, title: e.title, time: m.when.time, wd: m.when.wdZh + ' ' + m.when.md, wdEn: m.when.wdEn + ' ' + m.when.md, hood: m.place.hood, place: m.place.full, hasOld: !!e.proposal && e.status === 'open', oldWhen: e.proposal ? m.oldWhen.zh : '', formedLine: m.formedLine, whenCls: v.whenFresh ? 'c07-reprint' : '', uid: v.uid + '-h', meeting: m.meeting,
+      qr: C07.qr(id + '-host'), code: 'JU · ' + id.toUpperCase() + ' · V' + e.version + ' · 局主', hasMark: cancelled || ended || (!!e.proposal && e.status === 'open'), mark: cancelled ? '作废' : ended ? '已散场' : '时间已改', markCls: cancelled ? 'void' : '', passCls: '', cardNote: m.when.zh,
+      voidCls: v.voidPhase === 'dropping' ? 'dropping' : v.voidPhase === 'dropped' ? 'dropped' : '', vcells: C07.voidCells(C07.seedOf(id + 'host-void'), false), ghost: { on: v.voidPhase === 'dropped', title: '已取消 · 票根作废', body: '联系入口关闭 · 成员不计主动退出 · 不能撤销' },
+      passHint: cancelled ? '取消后票根作废，这里留下灰格' : ended ? '已散场 · 票根归档' : m.formed ? '已成局 · 成员各自持有同一版本的票' : '全员确认后出票',
+      openCard: function () { self.openSheet('card'); } };
+    /* progress */
+    if (cancelled) d.prog = { on: false };
+    else if (ended) d.prog = { on: true, title: '出席', n: m.recorded + '/' + m.nonHost + ' 已记录出席', note: '出席 ' + m.present + ' · 未出席 ' + m.absent + (m.undecided ? ' · 待定 ' + m.undecided : ''), seats: m.attendees.map(function (x) { return { cls: x.attendance === 'present' ? 'ok' : x.attendance === 'absent' ? 'void' : x.attendance === 'pending' ? 'res' : '', t: C07.initial(x.nick) }; }) };
+    else d.prog = { on: true, title: '席位', n: '已确认 ' + m.counts.confirmed + '/' + e.capacity + '（含你）', note: m.seatMore || '满员', seats: m.seats.map(function (x, i) { return { cls: x.kind + (v.freshSeat != null && i === v.freshSeat ? ' pop' : ''), t: x.kind === 'open' ? '' : C07.initial(x.name) }; }) };
+    /* sections by intent */
+    var secs = [];
+    var apps = { key: 'apps', isApps: true, n: m.pendingApps.length + (m.handledCount ? ' · 已处理 ' + m.handledCount : ''), note: '通过即发出 6 小时预留', help: JU.COPY.approveHelp, rows: m.appsToShow.map(function (a) { var key = 'app:' + a.id; return { cls: a.handled ? (a.status === 'approved' ? 'ok' : 'gone') : '', initial: C07.initial(a.nick || '?'), nick: a.nick || '未填称呼', badgeCls: a.verified ? '' : 'no', verifiedLabel: a.verifiedLabel, hasNote: !!a.note, note: a.note, agoText: a.agoText, pending: !a.handled, handled: a.handled, resCls: a.status === 'approved' ? '' : 'no', resultText: a.resultText, approveCls: self.busyIs(key), rejectCls: self.busyIs(key), approve: function () { self.approve(a.id); }, reject: function () { self.reject(a.id); }, err: self.errFor(key) }; }) };
+    var replies = { key: 'replies', isReplies: true, n: m.answered + '/' + m.asked, oldWhen: m.oldWhen ? m.oldWhen.zh : '', newWhen: m.when.zh, help: JU.COPY.repliesHelp, rows: m.reschedRoster.map(function (x) { return { cls: x.tone === 'ok' ? 'ok' : x.tone === 'wait' ? 'wait' : 'void', initial: C07.initial(x.nick), nick: x.nick, stateText: x.stateText, answerText: x.answerText }; }) };
+    var members = { key: 'members', isMembers: true, n: e.capacity + ' 个座位（含你）', note: '已确认 ' + m.counts.confirmed + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : ''), hasOpen: !cancelled && m.openSeats > 0, openText: m.openSeats > 1 ? '还有 ' + m.openSeats + ' 个空位' : '还有 1 个空位 · 等人', hasClosedNote: cancelled, closedNote: '已取消 · 成员不计主动退出；联系方式已关闭。',
+      rows: m.roster.map(function (x) { var key = 'wx:' + x.id; var right = x.host ? '' : x.status === 'invited' ? x.leftText : x.ticketText; var hot = x.status === 'invited' && x.leftRatio < .25; return { cls: x.tone === 'host' ? 'host' : x.tone === 'ok' ? 'ok' : x.tone === 'res' ? 'res' : x.tone === 'wait' ? 'wait' : 'void', initial: C07.initial(x.nick), nick: x.nick, contactAdded: !!x.contactAdded && !cancelled, stateText: x.stateText, stCls: hot ? 'hot' : '', right: right, rightSub: x.host ? '' : x.status === 'invited' ? '确认前不占定' : '', hasBar: x.status === 'invited' && !cancelled, bar: C07.bar(x.leftRatio, 18), barCls: hot ? 'hot' : '', showWx: x.showWx, wx: x.wx, copyCls: s.copied === key ? 'done' : '', copyText: s.copied === key ? '已复制' : '复制', copy: function () { self.copy(x.wx, key); } }; }) };
+    var queue = { key: 'queue', isQueue: true, n: m.queue.length, help: JU.COPY.queueHelp, rows: m.queue.map(function (q) { return { no: q.no, nick: q.nick, agoText: q.agoText }; }) };
+    var leaves = { key: 'leaves', isLeaves: true, n: m.leaves.length, open: !!v.leavesOpen, openCls: v.leavesOpen ? 'open' : '', toggle: function () { self.patchView({ leavesOpen: !v.leavesOpen }); }, rows: m.leaves.map(function (l) { return { nick: l.nick, text: l.text }; }) };
+    var attendance = { key: 'attendance', isAttend: true, n: m.recorded + '/' + m.nonHost, help: JU.COPY.attendanceHelp, contactNote: m.contactOpen ? '散场 24 小时内仍可查看成员微信' : '散场已超过 24 小时，联系方式已关闭',
+      rows: m.attendees.map(function (x) { var key = 'att:' + x.id; var wkey = 'wx:' + x.id; var editing = !x.attendance || !!v.editing[x.id]; return { cls: x.attendance === 'present' ? 'ok' : x.attendance === 'absent' ? 'void' : x.attendance === 'pending' ? 'wait' : '', stampCls: (x.attendance === 'present' ? 'present' : x.attendance === 'absent' ? 'absent' : x.attendance === 'pending' ? 'pending' : 'none') + (v.fresh[x.id] ? ' fresh' : ''), nick: x.nick, attLabel: x.attLabel, canCorrect: !!x.attendance && !v.editing[x.id] && !self.busyIs(key), editing: editing, onP: x.attendance === 'present' ? 'on' : '', onA: x.attendance === 'absent' ? 'on' : '', onU: x.attendance === 'pending' ? 'on' : '', edit: function () { self.setState(function (st) { var ed = Object.assign({}, st.view.editing); ed[x.id] = true; return { view: Object.assign({}, st.view, { editing: ed }) }; }); }, setP: function () { self.attend(x.id, 'present'); }, setA: function () { self.attend(x.id, 'absent'); }, setU: function () { self.attend(x.id, 'pending'); }, showWx: x.showWx, wx: x.wx, copyCls: s.copied === wkey ? 'done' : '', copyText: s.copied === wkey ? '已复制' : '复制', copy: function () { self.copy(x.wx, wkey); }, hasTrail: x.attTrail.length >= 2, trail: x.attTrail, err: self.errFor(key) }; }) };
+    var arrRows = [];
+    if (e.status === 'open') {
+      arrRows.push(m.canReschedule ? { cls: '', icon: C07.ICON.clock, title: '改时间', sub: '已确认的人各自答复', hasBtn: true, btn: '改时间', btnCls: '', act: 'propose', go: function () { self.openSheet('resched', { date: m.when.iso.slice(0, 10), time: m.when.time }); } } : { cls: 'dim', icon: C07.ICON.clock, title: '改时间', sub: '上一次改期还有人未答复', hasBtn: false });
+      arrRows.push(m.canEnd ? { cls: '', icon: C07.ICON.flag, title: '记为散场', sub: '散场后逐人记录出席', hasBtn: true, btn: '记为散场', btnCls: 'teal', act: 'end', go: function () { self.openSheet('end'); } } : { cls: 'dim', icon: C07.ICON.flag, title: '记为散场', sub: m.notFormedHint ? '还没成局，不能记为散场' : '改期还有人未答复，先等答复', hasBtn: false });
+      arrRows.push({ cls: 'dn', icon: C07.ICON.x, title: '取消这局', sub: '确认前会列出受影响的人', hasBtn: true, btn: '取消这局', btnCls: 'danger', act: 'cancel', go: function () { self.openSheet('cancel'); } });
+    } else arrRows.push({ cls: 'dim', icon: C07.ICON.plus, title: '再开一局', sub: '只带入活动内容，成员与记录不复制', hasBtn: false, inert: true });
+    var arrange = { key: 'arrange', isArrange: true, note: cancelled ? '已取消' : ended ? '已散场' : '局主操作', rows: arrRows };
+    var showApps = m.appsToShow.length > 0, showReplies = !!e.proposal && e.status === 'open', showMembers = !ended, showQueue = m.queue.length > 0, showAtt = ended && m.attendees.length > 0, showLeaves = m.leaves.length > 0;
+    var order = v.intent === 'review' ? ['apps', 'replies', 'members', 'queue'] : v.intent === 'attendance' ? ['attendance'] : ['replies', 'members', 'apps', 'queue'];
+    if (ended && order.indexOf('attendance') < 0) order.push('attendance');
+    var map = { apps: showApps && apps, replies: showReplies && replies, members: showMembers && members, queue: showQueue && queue, attendance: showAtt && attendance };
+    order.forEach(function (k) { if (map[k]) secs.push(map[k]); });
+    if (showLeaves) secs.push(leaves); secs.push(arrange);
+    var jumpKey = { applications: 'apps', members: 'members', contact: 'members', waitlist: 'queue', leaves: 'leaves', replies: 'replies', attendance: 'attendance' }[v.tab];
+    secs.forEach(function (x, i) { x.i = i + 3; x.cls = (x.key === jumpKey ? 'jumped ' : '') + (x.key === 'apps' ? 'todo' : x.key === 'replies' ? 'resched' : x.key === 'attendance' ? 'ended' : ''); });
+    d.sections = secs;
+    return d;
+  }
+  draftVals() {
+    var self = this; var s = this.state; var v = s.view; if (!v || v.name !== 'draft') return { on: false };
+    var h = JU.derive.hosted(s.data); var d = h.drafts.filter(function (x) { return x.id === v.id; })[0]; if (!d) return { on: false };
+    return { on: true, cls: v.phase + (v.instant ? ' instant' : '') + (v.gone ? ' gone' : ''), style: this.overStyle(v), back: function () { self.closeOver(); }, rail: this.railFor(v.id), title: d.title, missShort: d.ready ? '可发布' : '还差 ' + d.draft.missing.length + ' 项', time: d.when ? d.when.time : '--:--', wdEn: d.when ? d.when.wdEn + ' ' + d.when.md : '日期未定', whenText: d.whenText, placeText: d.placeText, missingText: d.missingText, missColor: d.ready ? 'var(--tl3)' : 'var(--or3)', agoText: d.agoText, hasSource: !!d.source, source: d.source ? d.source.title : '',
+      fields: [{ k: '局名', v: d.draft.title || '未命名的局', color: d.draft.title ? 'var(--ink)' : 'var(--or3)' }, { k: '日期 · 时间', v: d.when ? d.when.zh : '日期未定', color: d.when ? 'var(--ink)' : 'var(--or3)' }, { k: '地点', v: d.draft.loc ? JU.fmt.place(d.draft.loc).full : '地点未定', color: d.draft.loc ? 'var(--ink)' : 'var(--or3)' }, { k: '人数', v: d.capacity + ' 人（含你）', color: 'var(--ink)' }, { k: '加入方式', v: d.draft.joinMode === 'direct' ? '直接留位' : '申请审核', color: 'var(--ink)' }],
+      del: function () { self.deleteDraft(v.id, true); } };
+  }
+  sheetVals() {
+    var self = this; var s = this.state; var sh = s.sheet; if (!sh) return { on: false };
+    var v = s.view; var id = v.id; var data = s.data; var e = data.events[id]; var r = v.name === 'detail' ? JU.derive.rowById(data, id) : null; var m = v.name === 'manage' ? JU.derive.manage(data, id) : null;
+    var a = C07.art(id, e ? e.pack : 'mono'); var when = e ? JU.fmt.when(e.iso) : null; var place = e ? JU.fmt.place(e.loc) : null;
+    var d = { on: true, cls: sh.phase === 'on' ? 'on' : sh.phase === 'leave' ? 'leave' : '', dimCls: sh.phase === 'on' ? 'on' : '', close: function () { self.closeSheet(); }, onScroll: function (ev) { self.onSheetScroll(ev); }, hasIdent: !!e, ident: { bg: a.bg, fg: a.fg, art: a.path, title: e ? e.title : '', sub: when ? when.zh + ' · ' + place.hood : '' }, isConfirm: false, isRules: false, isCancel: false, isResched: false, isCard: false, isReport: false, hasCancel: true, hasOk: true, okCls: '', okOff: false, okAct: 'confirm', ok: function () { self.sheetOk(); }, err: (function () { var er = self.errFor('sheet'); return er; })(), hasHint: false };
+    var busy = this.busyIs('sheet'); d.okCls = busy;
+    var confirmKinds = { withdraw: 'withdraw', release: 'release', exit: 'exit', decline: 'decline', leaveQueue: 'exit' };
+    if (JU.COPY[sh.kind] && confirmKinds[sh.kind]) { var c = JU.COPY[sh.kind]; d.isConfirm = true; d.title = c.title; d.body = c.body; d.cancelText = c.cancel; d.okText = c.ok; d.okAct = confirmKinds[sh.kind]; d.okCls += sh.kind === 'exit' || sh.kind === 'decline' ? ' danger' : ''; if (d.err.on) d.err.message = (sh.kind === 'exit' ? '无法保存退出，尚未退出。' : sh.kind === 'decline' ? '保存失败，尚未退出。新时间仍待你答复。' : '') + d.err.message; }
+    if (sh.kind === 'rules') { d.isRules = true; d.title = '阅读并确认'; d.body = '请读到末尾，再确认入局。预留剩余 ' + (r ? r.leftText : '') + '，重开页面不续时。'; d.rules = JU.RULES.map(function (x, i) { return { no: '0' + (i + 1), title: x.title, lines: x.lines }; }); d.cancelText = '再想想'; d.okText = sh.readEnd ? '确认入局' : '读到末尾后可确认'; d.okOff = !sh.readEnd; d.okAct = 'confirm'; d.hasHint = true; d.hint = sh.readEnd ? '已读完，可以确认。确认后若全员到齐即出票。' : '滚到底部会记录阅读回执。'; }
+    if (sh.kind === 'cancel') { var ce = JU.COPY.cancelEvent; d.isCancel = true; d.title = ce.title; d.body = ce.body; d.irr = ce.irreversible; d.cancelText = ce.cancel; d.okText = ce.ok; d.okAct = 'cancel'; d.okCls += ' danger'; var aff = m ? m.cancelAffected : { confirmed: 0, reserved: 0, queue: 0, pending: 0 }; d.affected = [['confirmed', '已确认成员'], ['reserved', '已预留'], ['queue', '候补'], ['pending', '待审申请']].filter(function (x) { return aff[x[0]] > 0; }).map(function (x) { return { n: aff[x[0]], k: x[1] }; }); d.hasAffected = d.affected.length > 0; }
+    if (sh.kind === 'end') { var ee = JU.COPY.endEvent; d.isConfirm = true; d.title = ee.title; d.body = ee.body; d.cancelText = ee.cancel; d.okText = ee.ok; d.okAct = 'end'; d.okCls += ' teal'; }
+    if (sh.kind === 'resched') { var rc = JU.COPY.reschedule; d.isResched = true; d.title = rc.title; d.cancelText = rc.cancel; d.okText = rc.ok; d.okAct = 'propose'; d.oldWhen = when.zh; d.date = sh.date || ''; d.time = sh.time || ''; var newIso = sh.date && sh.time ? sh.date + 'T' + sh.time.slice(0, 5) : ''; var valid = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(newIso); d.hasNew = valid; d.noNew = !valid; d.newWhen = valid ? JU.fmt.when(newIso).zh : ''; d.same = valid && newIso === e.iso; d.sameText = rc.same; d.okOff = !valid || d.same; d.desc = m ? m.rescheduleDesc : ''; d.setDate = function (ev) { self.patchSheet({ date: ev.target.value }); }; d.setTime = function (ev) { self.patchSheet({ time: ev.target.value }); }; }
+    if (sh.kind === 'card') { d.isCard = true; d.title = '局卡'; d.hasIdent = false; d.hasCancel = false; d.okText = '关闭'; d.okAct = 'close'; var cnt = m ? m.counts : (r ? r.counts : { confirmed: 0, reserved: 0 }); var formed = m ? m.formed : (r ? r.counts.confirmed >= e.capacity : false); d.card = { bg: a.bg, fg: a.fg, art: a.path, en: e.en, title: e.title, statusLabel: e.status === 'cancelled' ? '已取消' : e.status === 'ended' ? '已散场' : formed ? '已成局' : cnt.reserved ? '席位已预留' : '仍可报名', caption: '已确认 ' + cnt.confirmed + '/' + e.capacity + ' · 已预留 ' + cnt.reserved, when: when.long, place: place.full, note: e.note || '' }; }
+    if (sh.kind === 'report') { d.isReport = true; d.title = '说说发生了什么'; d.hasIdent = true; d.text = sh.text; d.submitted = !!sh.submitted; d.notSubmitted = !sh.submitted; d.setText = function (ev) { self.patchSheet({ text: ev.target.value }); }; var names = r ? r.item.members.filter(function (x) { return x.name && !x.you; }).map(function (x) { return x.name + (x.status === 'host' ? '（局主）' : ''); }) : []; d.who = names.map(function (n) { return { name: n, cls: sh.who.indexOf(n) >= 0 ? 'on' : '', toggle: function () { var w = sh.who.slice(); var i = w.indexOf(n); if (i >= 0) w.splice(i, 1); else w.push(n); self.patchSheet({ who: w }); } }; }); d.cancelText = sh.submitted ? '关闭' : '取消'; d.hasOk = !sh.submitted; d.okText = '提交'; d.okAct = 'confirm'; d.okOff = (sh.text || '').trim().length < 4; if (d.err.on) { d.err.title = '提交失败，内容已保留'; } }
+    return d;
+  }
+  renderVals() {
+    var self = this; var s = this.state; var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var j = JU.derive.joined(s.data), h = JU.derive.hosted(s.data);
+    var secs = s.role === 'joined' ? [{ key: 'current', label: '当前', n: j.counts.current }, { key: 'history', label: '历史', n: j.counts.history }] : [{ key: 'current', label: '当前', n: h.counts.current }, { key: 'drafts', label: '草稿', n: h.counts.drafts }, { key: 'history', label: '历史', n: h.counts.history }];
+    var over = s.view && s.view.name !== 'list' && s.view.phase !== 'out';
+    return {
+      panel: panel, rootRef: this.rootRef, detBody: this.detBody, manBody: this.manBody, sheetBody: this.sheetBody,
+      mainCls: over ? (s.sheet ? 'deep' : 'back') : '', sc: (s.role === 'joined' ? s.scJ : s.scH).toFixed(2), nowText: JU.fmt.when('2026-12-17T15:00').en,
+      roleIdx: s.role === 'joined' ? 0 : 1, joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '', toJoined: function () { self.switchRole('joined'); }, toHosted: function () { self.switchRole('hosted'); },
+      jBadge: j.badge, jBadgeOn: j.badge > 0, jBadgeAria: j.badge + ' 项要你回应', hBadge: h.badge, hBadgeOn: h.badge > 0, hBadgeAria: h.badge + ' 项待你处理',
+      secs: secs.map(function (x) { return { label: x.label, n: x.n, hasN: x.n > 0, cls: s.section === x.key ? 'on' : '', go: function () { self.switchSection(x.key); } }; }),
+      secNote: s.role === 'joined' ? (s.section === 'current' ? '急的格子大 · 处理完就缩' : '散场 · 未成行分开留着') : (s.section === 'drafts' ? '没写完的局留在这里' : s.section === 'history' ? '可以从这里再开一局' : '待处理的格子最大'),
+      boards: [this.boardVals('joined'), this.boardVals('hosted')],
+      det: this.detailVals(), man: this.manageVals(), drf: this.draftVals(), sheet: this.sheetVals(),
+      undo: s.undo ? { on: true, title: s.undo.title, go: function () { self.undoDelete(); } } : { on: false },
+      err: s.err && s.err.key === 'global' ? { on: true, message: s.err.message, retry: s.err.retry, dismiss: function () { self.setState({ err: null }); } } : { on: false },
+      toast: { cls: s.toast.on ? 'on' : '', text: s.toast.text }
+    };
+  }
+}
+JU.mixin(Component);
+(function () { var jump = Component.prototype.jumpTo; Component.prototype.jumpTo = function (key) { var self = this; [this.boardJ, this.boardH].forEach(function (r) { if (r.current) r.current.scrollTop = 0; }); this.setState({ scJ: 0, scH: 0 }); jump.call(this, key); }; })();
+</script>
+</body>
+</html>
