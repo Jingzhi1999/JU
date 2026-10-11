@@ -12,7 +12,7 @@
 | 最后更新 | {{NOW}}（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `{{BRANCH}}`，HEAD `{{HEAD}}`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
-| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 版本 4（2026-10-11 05:3x UTC）：入口画板 `Main.dc.html` + 十套画板 C01–C10（评审修复后会再发） |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 版本 5（2026-10-11 19:5x UTC，标签「After review round 2」）：入口画板 + 十套画板，内容为提交 `8246121` 的源文件（即第 2 轮评审所测版本）；主负责人修复轮完成后会再发 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：{{SRCS}}） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-My-Ju-Fable51-10-Concepts.html`（总览 / 方案 / 对比 / 附录四个视图，`#concept/C01` 直达）；字体来自 Google Fonts（离线时退回系统字体）。无需安装；Node 22 + Playwright（已预装于容器）仅用于构建与截图验证 |
 | 构建 | `node src/build.js`（写 `concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=<path> node src/build.js`（并行开发用，不写共享文件） |
@@ -31,7 +31,7 @@
 | 状态 | 事项 |
 |---|---|
 | 已完成（有材料） | 附件语义抽取（`spec/extracts/*.md`）；共同状态清单 `spec/state-inventory.md` + 数据规格 `spec/ju-data.spec.md`；共享运行时 / 数据引擎 / 动效工具 / 评审面板 / 构建与截图工具；十套方向卡与差异矩阵 `spec/directions.md`；实现契约 `spec/concept-contract.md`（含试点经验 §10）；研究台账 `research/ledger.md` + `ledger.json`（94 例）+ 证据 `research/evidence/`；试点 C01 票据卷、C04 夜玻璃两套源文件及其自验证据 |
-| 进行中（后台） | 工作流 `wf_e040b27e-e9f`（脚本 `tools/workflow-build-concepts.js`）。第一次运行 00:3x–04:5x UTC：完成 Map（`spec/concept-refs.md`）、八套 Build（C02 C03 C05–C10 源文件 + `spec/motion/CNN.md` + `evidence/CNN/`）、C01 与 C04 第一轮评审（均未通过：C01 0 blocker / 7 major；C04 1 blocker / 5 major，报告 `evidence/C0x/review-1.md`）；其余 12 个评审 / 修复代理因会话额度失败。05:13 UTC 第一次恢复：同样 12 个代理因 Fable 5.1 模型额度失败（C02 评审与 C01 修复各留下部分产物：`evidence/C02/review-1/` 部分目录、`concepts/src/C01.dc.html` 部分修改，已核实仍可构建且 50/50 状态 0 错误，作为 WIP 提交 `ad9a5b7`）。05:3x UTC 用户把会话模型切换为 **Opus 5.5**；随即第二次恢复（`resumeFromRunId`，已完成的 11 个代理走缓存，失败的 12 个在 Opus 5.5 上重跑）。结果以仓库文件为准 |
+| 进行中（后台） | **构建与评审工作流 `wf_e040b27e-e9f` 已完成**（19:4x UTC，46 个代理全部完成，0 失败；Opus 5.5 恢复后跑完）：十套都有两轮独立评审（`evidence/CNN/review-1.md`、`review-2.md`），每两轮之间一次修复。第 2 轮评审结果见 §6.6。**主负责人修复轮工作流 `wf_2df3dba6-cd1`（`tools/workflow-lead-fix.js`）19:5x UTC 启动**：每套一个修复代理（读最新评审 + `spec/lead-review.md`，按最新评审为准）→ 新的评审代理逐条验证（`evidence/CNN/fix-rN.md`、`verify-rN.md`），未通过再来一轮。结果以仓库文件为准 |
 | 受阻 / 失败 | 无硬性阻塞。已知限制：设计画布（claude.ai）无法在容器内渲染，只能用独立画布做截图验证；容器评审画布无 GPU（SwiftShader），性能不代表真机；Dribbble 页面可截图但部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
 | 未开始 | 十套全部通过评审后的主负责人复审；把十套画板发布到 Design 画布；附录（差异矩阵 / 动效分段汇总 / 覆盖矩阵 / 限制）；最终独立画布构建与推送；最终答复 |
 
@@ -251,6 +251,7 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 {{GIT_STATUS}}
 ```
 - 备份：除 origin 远端外无其他备份；容器临时目录（`/tmp/claude-0/.../scratchpad`）中的研究原图、私有构建、工作流日志不可迁移。
+- 证据入库策略（2026-10-11 19:4x UTC 起）：评审 / 修复 / 验证目录中的原始逐帧 `fNN.png` 不入库（`.gitignore`），只入库拼图 `sheet.png`、各状态截图、`log.json` 与报告；新入库的 PNG 经 `tools/shrink-sheets.py` 压成 256 色调色板（宽 ≤1400px），文件名不变。原始逐帧仍在容器 `evidence/` 下，容器回收后丢失。私有构建 `.build/` 不入库（可用 `JU_STANDALONE=… node src/build.js` 重建）。
 
 ### 5.3 集成状态与 Mock 边界
 - 全部数据为本地演示数据（`JU.data`），固定时钟 `JU.NOW = 2026-12-17 15:00`；没有真实接口、通知、分享、数据库；所有写入经 `JU.engine` 纯函数修改内存副本；「本机保存失败」由面板按钮一次性触发。
@@ -297,6 +298,24 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 
 ### 6.5 主负责人复审第一轮（2026-10-11 05:4x UTC）
 全文见 `spec/lead-review.md`。要点：十套在构图 / 材质 / 字体 / 过渡上确实分开；共同短板是管理页（申请审核）结构雷同、个别终态偏弱、窄列截断。高优先级：C02 局名截断、C03 详情页首用大号英文撑场、C04 详情不透明 + 底栏遮挡、C07 作废终态残余缺失、C09 标题颗粒破碎。主负责人判断应保护的局部：C01 打印 / 撕票 / 焦卷，C04 裂开 / 碎裂，C02 翻牌与插卡，C05 布标与线脚，C06 便签改期，C10 帧与相纸。以上均**不是**用户认可。
+
+### 6.6 独立评审结果（构建工作流，两轮）
+口径：评审代理自建私有画布、自己操作与截图，按客户验收清单打分；pass = 0 blocker 且 major ≤ 3。以下为代理评审结论（**不是**主负责人或用户验收）。报告：`evidence/CNN/review-1.md`、`review-2.md`；对应截图 `evidence/CNN/review-N/`（原始逐帧未入库，只入库拼图 sheet.png 与日志）。
+
+| 方案 | 第 1 轮 blocker / major / minor | 第 2 轮 blocker / major / minor | 第 2 轮结论 |
+|---|---|---|---|
+| C01 票据卷 | 0 / 7 / 11 | 0 / 6 / 15 | 未通过 |
+| C02 站牌 | 1 / 4 / 11 | 0 / 5 / 12 | 未通过 |
+| C03 刊 | 0 / 8 / 10 | 0 / 3 / 10 | 通过 |
+| C04 夜玻璃 | 1 / 5 / 7 | 0 / 5 / 10 | 未通过 |
+| C05 缝线 | 0 / 7 / 14 | 0 / 3 / 8 | 通过 |
+| C06 桌面 | 0 / 9 / 14 | 0 / 5 / 12 | 未通过 |
+| C07 格盘 | 1 / 10 / 9 | 0 / 3 / 15 | 通过 |
+| C08 时间尺 | 1 / 10 / 15 | 0 / 4 / 12 | 未通过 |
+| C09 影印贴纸 | 1 / 6 / 6 | 0 / 5 / 9 | 未通过 |
+| C10 胶片 | 2 / 6 / 12 | 1 / 4 / 13 | 未通过（仍有 1 个 blocker） |
+
+第 2 轮之后没有再修复（工作流上限两轮）；第 2 轮的未关闭项由主负责人修复轮处理。
 
 ## 7. 下一步（优先级最高的五项）
 
