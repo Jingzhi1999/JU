@@ -12,7 +12,7 @@
 | 最后更新 | {{NOW}}（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `{{BRANCH}}`，HEAD `{{HEAD}}`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
-| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 目前只发布了入口画板 `Main.dc.html`（十套索引）；C01/C04 画板**尚未发布**到画布（文件在 `concepts/project/`） |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 已发布：入口画板 `Main.dc.html`（十套索引）+ C01 票据卷 + C04 夜玻璃（2026-10-11 00:5x UTC，版本 3；两套仍会随评审修复而重发）；其余八套待构建后发布 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：{{SRCS}}） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-My-Ju-Fable51-10-Concepts.html`（总览 / 方案 / 对比 / 附录四个视图，`#concept/C01` 直达）；字体来自 Google Fonts（离线时退回系统字体）。无需安装；Node 22 + Playwright（已预装于容器）仅用于构建与截图验证 |
 | 构建 | `node src/build.js`（写 `concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=<path> node src/build.js`（并行开发用，不写共享文件） |
@@ -234,6 +234,7 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 | 2026-10-11 00:2x | C01 / C04 | `tools/coverage.cjs` 50 状态 | 0 错误，`evidence/C0x/coverage-v2/sheet.png` |
 | 2026-10-11 00:2x | C01 / C04 首屏 | 肉眼看 `joined-home.png` / `hosted-home.png` | C01 层级成立；C04 主角明确但底部导航遮挡最后一组 |
 | 2026-10-11 00:4x | C01 撕票 / 取消，C04 撕票 / 取消 | 肉眼看四张 sheet.png（各 16–20 帧） | 四段都有触发 → 过程 → 落点，物件连续；C01 燃烧抽帧稀疏；C04 裂纹形态可再贴合起裂点 |
+| 2026-10-11 00:5x | C01 出票 / 记为散场 + 出席；C04 记为散场 + 出席 / 草稿删除撤销 | 肉眼看四张 sheet.png | C01 走纸三段露出、打印中禁止撕票提示、成员列表让位；散场便签 → 出席记录（出席 / 未出席 / 待定、红色圆章、更正留痕）成立。C04 散场弹层 → 处理中 → 出席记录（青色圆标、待定虚线圈、更正轨迹）成立；草稿删除 → 撤销条 → 原位恢复、草稿摘要页「继续编辑」为惰性文字。未见文字模糊 / 残影 / 白块 |
 
 ### 6.2 代理自报、未经主负责人复核
 - C01、C04 的详情 / 管理 / 打印 / 撕票 / 燃烧 / 改期 / 散场 / 草稿撤销 / 空态 / 长标题等帧序列（`evidence/C0x/*/sheet.png`，各目录 `log.json` 自报 errors 为空）。
