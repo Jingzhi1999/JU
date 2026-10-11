@@ -121,3 +121,18 @@ JU.mixin(Component);
 - **打印**：`.fx-printer{overflow:hidden}` 内的 `.fx-print-paper`（或你自己的 keyframes）：`transform:translateY(-102%→0)` 分段走纸 + `--fx-ink` 墨迹揭示；打印中禁用票上的操作。
 - **速度 / 关键帧**：所有时长 `calc(Xms * var(--k,1))`；长动效用 keyframes 并写 `.scrub` 规则（见 ju-fx.css）。
 - **撤销**：`engine.deleteDraft` → 行加 `leaving` 类（高度过渡到 0）→ `after(360)` 真正移除并显示撤销条 → `after(10000)` `engine.commitUndo`；撤销 → `engine.undoDelete` → 行以 `entering` 类回到原位。
+
+## 10. 试点（C01 / C04）踩过的坑 —— 必读补充
+
+- **私有构建，避免互相覆盖**：十套并行开发时，用 `JU_STANDALONE=/home/user/JU/.build/CNN.html node src/build.js` 生成你自己的独立画布（不写共享文件），然后 `JU_STANDALONE=/home/user/JU/.build/CNN.html node tools/capture.cjs CNN …` / `tools/coverage.cjs` 同样带这个环境变量。构建会自动跳过别人还没写完（缺标记）的文件。最终共享构建由主设计负责人执行。
+- **engine 之后用返回的数据**：`var res = JU.engine.x(this.state.data, …); this.setState({ data: res.data })` 之后，任何派生（`JU.derive.*`）在同一回调里都要用 `res.data`，不要读 `this.state.data`（setState 是异步的）。`res.effect.type === 'error'` 时显示失败态与重试。
+- **§4 的 manage tab 全集**：`applications / members / waitlist / contact / leaves / reschedule / replies / cancel / end / attendance / card`；`draft` surface 打开草稿摘要。
+- **FLIP 要先刷新样式**：在 `phase:'start'` 渲染后、切换到 `'in'` 之前，读一次布局（例如 `void el.getBoundingClientRect()` 或 `getComputedStyle(el).transform`），否则无头浏览器里可能不出现过渡。
+- **燃烧相关**：`.fx-burn-svg` 现已 `overflow:hidden`；被 mask 的元素内部的一切（包括灰烬）都会被 mask 掉 → 灰烬 / 碎片放在 `.fx-burn` 的**兄弟**层。`@property` 注册是整页全局的：自定义属性名要带方案前缀（`--c07-ink`），且 `inherits` 按你的需要声明。
+- **定时器与暂停 / 关键帧**：`this.after()` 现在会随「暂停」与关键帧滑杆一起暂停、释放后续跑；长动效用 keyframes + `.scrub` 规则，完成态由 `after(dur)` 落定即可。`replay` 之前会调用你的 `beforeReplay(name)`（如果定义了）来恢复动效前的状态——请实现它。
+- **失败 / 重试演示**：评审面板已有「下一次保存失败」按钮（`this.armFail()`），下一次 engine 写入会返回 `{type:'error', message}`；你的 UI 要显示处理中 → 失败条 → 重试，并在重试后成功。不要再在界面里放演示控件。
+- **可成局的数据**：`brunch`（已预留待确认）容量 3，确认后即成局 → `effect.formed === true` → 走出票（打印）。改期答复的行无论阶段都带 `oldWhen / newWhen / rescheduleAnswer`。新增 `JU.derive.rowById(data, id)`、`JU.derive.hostRowById(data, id)`、`manage.appsToShow`（待审 ∪ 本次已处理）。
+- **选择器约定（便于评审脚本定位）**：所有覆盖层 / 弹层根元素加类 `cNN-over`；列表行加 `data-rid="{{row.id}}"`；主要按钮加 `data-act="confirm|release|tear|contact|copy|contacted|accept|decline|withdraw|exit|approve|reject|propose|cancel|end|attend-present|attend-absent|attend-pending|delete|undo|back|close"`。评审者会按这些选择器操作。
+- **`JU.STAGE.exited` 与 `declined` 的列表标签同为「已退出」**：区别必须靠副文（`need`）与详情标题（`detailTitle`）呈现——不要省略副文。
+- **底部导航**：可以静态渲染（找局 / 开局 / 我的局 / 设置，我的局选中）；若使用固定底栏，列表要留出底部安全区，最后一项不能被盖住。
+- **inert 入口**：`继续编辑 / 再开一局 / 去找局 / 去开局 / 账户级记录页` 保留文字与位置、禁用态或说明「不在本范围演示」，不跳转。

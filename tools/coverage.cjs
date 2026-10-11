@@ -7,7 +7,7 @@ const [code, outdir] = process.argv.slice(2); const only = (() => { const i = pr
   fs.rmSync(outdir, { recursive: true, force: true }); fs.mkdirSync(outdir, { recursive: true });
   const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
   const errors = []; p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-  await p.goto('file://' + path.resolve(__dirname, '..', 'JU-My-Ju-Fable51-10-Concepts.html') + '#concept/' + code);
+  await p.goto('file://' + (process.env.JU_STANDALONE ? path.resolve(process.env.JU_STANDALONE) : path.resolve(__dirname, '..', 'JU-My-Ju-Fable51-10-Concepts.html')) + '#concept/' + code);
   await p.waitForTimeout(600); await p.evaluate(() => document.fonts.ready); await p.waitForTimeout(400);
   const phone = await p.evaluate(c => { const h = document.querySelector('.stage-host[data-code="' + c + '"]'); const r = h.shadowRoot.querySelector('.ju-phone').getBoundingClientRect(); return { x: r.left, y: r.top, w: r.width, h: r.height }; }, code);
   const keys = await p.evaluate(() => JU.INDEX.map(e => e.key));

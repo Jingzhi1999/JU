@@ -20,7 +20,7 @@ fs.mkdirSync(path.join(ROOT, 'concepts/project'), { recursive: true });
 function assemble(c) {
   let src = read(`concepts/src/${c.file}`);
   const conceptJson = JSON.stringify({ code: c.code, name: c.name, line: c.line, notes: c.notes || '', motions: c.motions || [] });
-  if (!src.includes('<!-- @panel -->') || !src.includes('/* @core */') || !src.includes('/* @panel-css */')) throw new Error(c.file + ': missing a marker (<!-- @panel -->, /* @core */, /* @panel-css */)');
+  if (!src.includes('<!-- @panel -->') || !src.includes('/* @core */') || !src.includes('/* @panel-css */')) { console.warn('skip (markers missing, still being written?):', c.file); return null; }
   src = src.replace('<!-- @panel -->', () => '<sc-if value="{{panel.show}}" hint-placeholder-val="{{true}}">\n' + panelHtml + '\n</sc-if>');
   src = src.replace('/* @panel-css */', () => panelCss + '\n' + fxCss);
   src = src.replace('<!-- @fx-svg -->', () => fxSvg);
@@ -28,16 +28,18 @@ function assemble(c) {
   if (!/<title>/.test(src)) src = src.replace('<head>', '<head>\n<title>' + c.code + ' ' + c.name + '</title>');
   return src;
 }
-const built = {};
-for (const c of meta) { built[c.code] = assemble(c); fs.writeFileSync(path.join(ROOT, 'concepts/project', c.file), built[c.code]); }
+const PRIVATE = process.env.JU_STANDALONE || '';   // builders set this to a private output path; then no shared files are written
+const built = {}; const metaBuilt = [];
+for (const c of meta) { const out = assemble(c); if (!out) continue; built[c.code] = out; metaBuilt.push(c); if (!PRIVATE) fs.writeFileSync(path.join(ROOT, 'concepts/project', c.file), out); }
 
 /* ---- canvas index + Main entry artboard ---- */
 const W = 780, H = 884, GX = 80, GY = 120; const perRow = 5;
 const boards = { 'Main.dc.html': { x: 0, y: 0, w: 1240, h: 640, title: '评审入口 · 十套方案索引', is_interactive: true } };
 const order = ['Main.dc.html'];
-meta.forEach((c, i) => { const r = Math.floor(metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) / perRow), col = metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
+metaBuilt.forEach((c, i) => { const r = Math.floor(metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) / perRow), col = metaIndex.indexOf(metaIndex.find(x => x.code === c.code)) % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
 void ((c, i) => { const r = Math.floor(i / perRow), col = i % perRow; boards[c.file] = { x: col * (W + GX), y: 640 + 223 + 120 + r * (H + GY), w: W, h: H, title: `${c.code} ${c.name}`, is_interactive: true }; order.push(c.file); });
 const canvasPath = path.join(ROOT, 'concepts/project/canvas.json');
+if (!PRIVATE) {
 let canvas = exists('concepts/project/canvas.json') ? JSON.parse(read('concepts/project/canvas.json')) : { v: 3, createdOnFiles: { v: 1, at: new Date().toISOString().replace(/\.\d+Z$/, 'Z') }, title: 'JU 我的局 · 十套视觉动效方案', launch: { view: 'canvas' }, pages: [], notes: {}, designSystems: [] };
 canvas.boards = boards; canvas.order = order;
 canvas.notes = Object.assign({}, canvas.notes, { row1: { x: 0, y: 640 + 120, text: '十套「我的局」方案 · 每套 = 手机画面（390×844）+ 画面外评审面板（状态索引 / 速度 / 关键帧 / 演示数据）', kind: 'title1', maxW: 4220 } });
@@ -86,7 +88,9 @@ class Component extends DCLogic {
 </html>
 `;
 fs.writeFileSync(path.join(ROOT, 'concepts/project/Main.dc.html'), mainBoard);
+}
 
+function writeStandalone() {
 /* ---- appendices (markdown → html, minimal) ---- */
 function md(s) {
   const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -114,7 +118,11 @@ const standalone = shellHtml
   .replace('/*@shell-css*/', () => read('src/shell/shell.css'))
   .replace('/*@preact*/', () => read('src/runtime/preact.min.js'))
   .replace('/*@runtime*/', () => read('src/runtime/dc-mini-runtime.js'))
-  .replace('/*@data*/', () => `window.__JU_SOURCES=${js(built)};window.__JU_META=${js(meta)};window.__JU_DOCS=${js(docs)};window.__JU_BUILT=${js(new Date().toISOString())};`)
+  .replace('/*@data*/', () => `window.__JU_SOURCES=${js(built)};window.__JU_META=${js(metaBuilt)};window.__JU_DOCS=${js(docs)};window.__JU_BUILT=${js(new Date().toISOString())};`)
   .replace('/*@shell-js*/', () => read('src/shell/shell.js'));
-fs.writeFileSync(path.join(ROOT, 'JU-My-Ju-Fable51-10-Concepts.html'), standalone);
-console.log('built', meta.length, 'concepts;', (standalone.length / 1024 / 1024).toFixed(2), 'MB standalone');
+const outPath = PRIVATE ? path.resolve(PRIVATE) : path.join(ROOT, 'JU-My-Ju-Fable51-10-Concepts.html');
+fs.mkdirSync(path.dirname(outPath), { recursive: true });
+fs.writeFileSync(outPath, standalone);
+console.log('built', metaBuilt.length, 'concepts;', (standalone.length / 1024 / 1024).toFixed(2), 'MB standalone →', outPath);
+}
+writeStandalone();
