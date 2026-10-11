@@ -38,6 +38,15 @@ body{margin:0}
 .c09-stk.dash::after{display:none}
 .c09-stk.slap{animation:c09-slap calc(260ms * var(--k,1)) cubic-bezier(.2,1.3,.4,1) both}
 @keyframes c09-slap{0%{transform:rotate(var(--r,-2.5deg)) scale(1.5);opacity:0}45%{opacity:1}100%{transform:rotate(var(--r,-2.5deg)) scale(1)}}
+/* a sticker whose curled corner can grow: used when a sticker is peeled off a page (withdraw / release) or off its liner (approve) */
+@property --c09-curl{syntax:'<length>';inherits:false;initial-value:9px}
+.c09-stk.peeloff,.c09-peelstk{background-image:linear-gradient(135deg,transparent calc(100% - var(--c09-curl) - 3px),rgba(0,0,0,.2) calc(100% - var(--c09-curl) - 3px),rgba(0,0,0,.08) calc(100% - var(--c09-curl)),#fff calc(100% - var(--c09-curl)))}
+.c09-stk.peeloff{animation:c09-peeloff calc(380ms * var(--k,1)) cubic-bezier(.4,0,.7,.4) forwards;pointer-events:none}
+@keyframes c09-peeloff{0%{transform:rotate(var(--r,-2.5deg));--c09-curl:9px}
+ 35%{transform:translate(-3px,-8px) rotate(calc(var(--r,-2.5deg) - 7deg)) scale(1.06);--c09-curl:26px;box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),4px 10px 14px rgba(0,0,0,.32)}
+ 100%{transform:translate(78px,22px) rotate(24deg) scale(.7);--c09-curl:34px;opacity:0;box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),6px 14px 18px rgba(0,0,0,.25)}}
+.c09-stk.press{animation:c09-press calc(220ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+@keyframes c09-press{0%{transform:rotate(var(--r,-2.5deg)) scale(1.1);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),4px 9px 12px rgba(0,0,0,.3)}100%{transform:rotate(var(--r,-2.5deg)) scale(1)}}
 /* ---- masking tape ---- */
 .c09-tape{position:absolute;height:18px;width:70px;background:var(--tape);transform:rotate(-4deg);box-shadow:0 1px 1px rgba(0,0,0,.12);mix-blend-mode:multiply;pointer-events:none;clip-path:polygon(0 12%,2% 0,98% 5%,100% 18%,99% 100%,1% 94%)}
 /* ---- staples ---- */
@@ -99,12 +108,18 @@ body{margin:0}
 .c09-gh{display:flex;align-items:baseline;gap:10px;margin:14px 0 8px;padding:6px 10px 5px;background:#141414;color:#fff;font:700 12px/1.2 var(--fb);letter-spacing:.06em;border-radius:2px;position:relative}
 .c09-gh::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.14) .5px,transparent .7px);background-size:3px 3px;pointer-events:none}
 .c09-gh b{font:400 16px/1 var(--fd);letter-spacing:.04em}
+/* ds_many_history: a photocopied month slip wherever the month changes inside a group */
+.c09-mon{display:flex;align-items:center;gap:8px;margin:4px 2px 10px;pointer-events:none}
+.c09-mon b{position:relative;display:inline-block;padding:4px 9px 3px;background:var(--page);box-shadow:0 0 0 1.2px #111,1px 2px 0 rgba(0,0,0,.18);font:400 15px/1 var(--fd);letter-spacing:.14em;color:#111;transform:rotate(-1.5deg)}
+.c09-mon b::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(0,0,0,.14) .5px,transparent .7px);background-size:3px 3px;mix-blend-mode:multiply;pointer-events:none}
+.c09-mon span{font:500 11px/1 var(--fb);color:var(--mid);white-space:nowrap}
+.c09-mon i{flex:1 1 auto;height:0;border-top:1.5px dashed #a9a8a0}
 .c09-gh i{font-style:normal;font:500 11px/1.2 var(--fb);color:var(--yel);margin-left:auto;letter-spacing:.04em}
 /* ---- rows = zine pages ---- */
 .c09-row{position:relative;display:block;width:100%;text-align:left;border:0;padding:0;margin:0 0 10px;font:inherit;color:inherit;max-height:520px;transition:max-height calc(260ms * var(--k,1)) ease,margin calc(260ms * var(--k,1)) ease,opacity calc(220ms * var(--k,1)),transform calc(380ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);transform-origin:50% 100%}
 .c09-row.lead{margin-bottom:14px}
-.c09-row.src{transform:perspective(900px) rotateX(-58deg) translateY(-6px);opacity:0;pointer-events:none}
-.c09-row.leaving{max-height:0!important;margin-bottom:0;opacity:0;transform:translateX(-24px)}
+.c09-row.src{visibility:hidden;pointer-events:none}
+.c09-row.leaving{max-height:0!important;margin-bottom:0;opacity:0;transform:translateX(-24px);pointer-events:none}
 .c09-row.entering{animation:c09-rowin calc(300ms * var(--k,1)) ease both}
 @keyframes c09-rowin{0%{max-height:0;opacity:0;transform:translateX(-24px)}100%{max-height:520px;opacity:1;transform:none}}
 .c09-row.landed .c09-page{animation:c09-land calc(1100ms * var(--k,1)) ease both}
@@ -117,6 +132,8 @@ body{margin:0}
 .c09-pg .c09-staple{left:-6px;transform:rotate(90deg)}
 /* lead page */
 .c09-lead-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.c09-lead-top > div:first-child{flex:1 1 auto;min-width:0}
+.c09-lead-top > .c09-stk{flex:0 0 auto}
 .c09-time{font:400 40px/1 var(--fd);letter-spacing:.01em;color:var(--ink)}
 .c09-wd{font:500 13px/1.3 var(--fb);color:var(--ink2);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c09-wd span{color:var(--mid);margin-left:6px}
@@ -130,6 +147,8 @@ body{margin:0}
 .c09-bar{position:relative;height:12px;margin:8px 0 14px;background:rgba(0,0,0,.06);border-radius:1px;overflow:hidden}
 .c09-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--tape);mix-blend-mode:multiply;transition:width calc(900ms * var(--k,1)) linear;clip-path:polygon(0 12%,1% 0,99% 5%,100% 18%,99% 100%,1% 94%)}
 .c09-bar i.hot{background:rgba(255,79,163,.7)}
+.c09-bar.empty{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.18);background-image:repeating-linear-gradient(135deg,transparent 0 6px,rgba(0,0,0,.05) 6px 8px)}
+.c09-cdline b.dead{color:var(--mid)}
 .c09-lead-cta{display:flex;align-items:center;gap:14px;margin-top:14px}
 .c09-lead-cta .c09-btn{flex:1 1 auto}
 .c09-ex{font:500 12.5px/1.3 var(--fb);color:var(--ink2);white-space:nowrap}
@@ -199,6 +218,37 @@ body{margin:0}
 .c09-inner{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;background:var(--paper);background-image:radial-gradient(rgba(0,0,0,.08) .5px,transparent .65px);background-size:3px 3px;transition:transform calc(430ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);padding:0 0 60px}
 .c09-dh{position:sticky;top:0;z-index:6;display:flex;align-items:center;justify-content:space-between;padding:50px 16px 10px}
 .c09-dh .c09-staple{display:none}
+/* F02 fold: once the page title has gone under the header, the title rides in the header as one line (30→18px) with status · when.
+   Absolutely positioned below the bar so nothing in the page shifts; a feathered toner edge, no blur. */
+.c09-dh-fold{position:absolute;left:0;right:0;top:100%;display:flex;align-items:baseline;gap:10px;padding:0 16px 9px;background:#111;background-image:radial-gradient(rgba(255,255,255,.13) .55px,transparent .75px);background-size:3px 3px;color:#fff;pointer-events:none;clip-path:inset(0 0 100% 0);transition:clip-path calc(260ms * var(--k,1)) ease}
+.c09-dh-fold::after{content:'';position:absolute;left:0;right:0;top:100%;height:12px;background:linear-gradient(rgba(17,17,17,.38),rgba(17,17,17,0));opacity:0;transition:opacity calc(260ms * var(--k,1))}
+.c09-dh-fold b{flex:1 1 auto;min-width:0;font:400 30px/1.15 var(--fd);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateY(14px);opacity:0;transition:font-size calc(260ms * var(--k,1)) ease,transform calc(260ms * var(--k,1)) ease,opacity calc(200ms * var(--k,1))}
+.c09-dh-fold span{flex:0 1 auto;max-width:46%;font:500 11px/1.2 var(--fb);color:var(--yel);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transition:opacity calc(200ms * var(--k,1)) calc(60ms * var(--k,1))}
+.c09-dh-fold.on{clip-path:inset(0 0 -14px 0)}
+.c09-dh-fold.on::after{opacity:1}
+.c09-dh-fold.on b{font-size:18px;transform:none;opacity:1}
+.c09-dh-fold.on span{opacity:1}
+/* ---- M4 peel copy: the tapped page lifts from its bottom edge (hinge = clip's top edge), shows its glossy backing, and is laid back on return */
+.c09-peel{position:absolute;z-index:26;pointer-events:none;transition:opacity calc(200ms * var(--k,1)) ease calc(220ms * var(--k,1))}
+.c09-peel-card{position:absolute;inset:0;transform-origin:50% 0;transform-style:preserve-3d;transition:transform calc(430ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.c09-peel-front,.c09-peel-back{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden}
+.c09-peel-front .c09-row{margin:0;max-height:none}
+.c09-peel-front::after{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(rgba(0,0,0,0),rgba(0,0,0,.28));opacity:0;transition:opacity calc(300ms * var(--k,1))}
+.c09-peel-back{transform:rotateX(180deg);border-radius:2px;background:linear-gradient(160deg,#fdfdfb,#e9e8e3 45%,#f6f6f2 60%,#dcdbd5);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12)}
+.c09-peel-back::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(115deg,rgba(0,0,0,.035) 0 2px,transparent 2px 7px)}
+.c09-peel.start .c09-peel-card{transition:none;transform:perspective(1100px)}
+.c09-peel.start{transition:none;opacity:1}
+.c09-peel.in{opacity:0}
+.c09-peel.in .c09-peel-card{transform:perspective(1100px) translateY(var(--py,0px)) rotateX(122deg) rotateZ(-2.5deg)}
+.c09-peel.in .c09-peel-front::after{opacity:1}
+.c09-peel.out{opacity:1;transition:opacity calc(60ms * var(--k,1)) linear}
+.c09-over.out .c09-dh,.c09-over.out .c09-inner > :not(.c09-dh){opacity:0;transition:opacity calc(130ms * var(--k,1)) ease}
+/* the layer's leading (bottom) edge casts a shadow on the feed it slides over, so rows it crosses read as covered, not cut */
+.c09-oedge{position:absolute;z-index:24;top:0;height:18px;pointer-events:none;background:linear-gradient(rgba(0,0,0,.34),rgba(0,0,0,.1) 5px,rgba(0,0,0,0));box-shadow:inset 0 1px 0 rgba(0,0,0,.45);transition:transform calc(430ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),left calc(430ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),right calc(430ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.c09-oedge.start{transition:none}
+.rm .c09-oedge{display:none}
+.c09-peel.out .c09-peel-card{transform:perspective(1100px);transition:transform calc(400ms * var(--k,1)) cubic-bezier(.3,.6,.25,1) calc(30ms * var(--k,1))}
+.rm .c09-peel{display:none}
 .c09-back{appearance:none;border:0;background:none;color:#fff;font:500 13px/1 var(--fb);display:flex;align-items:center;gap:6px;padding:6px 0}
 .c09-back svg{width:16px;height:16px;stroke:#fff;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .c09-dh-r{font:400 13px/1 var(--fd);letter-spacing:.14em;color:var(--yel)}
@@ -219,6 +269,12 @@ body{margin:0}
 .c09-hostline b{color:var(--ink);font-weight:500}
 .c09-sep{height:0;border-top:1.5px dashed var(--line);margin:16px 0}
 .c09-need2{font-size:13.5px;line-height:1.55;color:var(--ink2)}
+.c09-need2.tk{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0}
+/* in-place failure: a pink strip where the write happened, with its own retry */
+.c09-ialert{display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 8px 8px 12px;background:var(--pink);color:#111;font:700 12.5px/1.4 var(--fb);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),1px 2px 3px rgba(0,0,0,.2);transform:rotate(-.5deg);animation:c09-alertin calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.c09-ialert span{flex:1 1 auto;min-width:0}
+.c09-ialert .c09-btn{flex:0 0 auto}
+@keyframes c09-alertin{0%{opacity:0;transform:rotate(-.5deg) translateY(6px)}100%{opacity:1;transform:rotate(-.5deg)}}
 .c09-cdline{display:flex;align-items:baseline;gap:10px;margin-top:8px}
 .c09-cdline b{font:400 32px/1 var(--fd)}
 .c09-cdline b.hot{color:var(--pink)}
@@ -244,7 +300,7 @@ body{margin:0}
 .c09-kv li b{font-weight:500}
 .c09-kv li b.miss{color:var(--pink);font-weight:700}
 .c09-acts{margin-top:18px;display:flex;flex-direction:column;gap:10px}
-.c09-acts .c09-btn{width:100%}
+.c09-acts > .c09-btn,.c09-acts > span.c09-btn{width:100%}
 .c09-hint{font-size:12px;color:var(--mid);line-height:1.5}
 .c09-rules-btn{appearance:none;border:0;background:none;padding:10px 0;display:flex;justify-content:space-between;align-items:center;width:100%;font:500 14px/1 var(--fb);border-top:1.5px dashed var(--line);border-bottom:1.5px dashed var(--line);margin-top:16px}
 .c09-rules-btn i{font-style:normal;font-family:var(--fh);font-size:20px;color:var(--pink)}
@@ -279,40 +335,55 @@ body{margin:0}
 .printing .c09-scan i{animation:c09-scan calc(var(--c09-pd) * var(--k,1)) linear forwards}
 @keyframes c09-scan{0%{transform:translateX(-110%);opacity:0}3%{opacity:1}20%{transform:translateX(280%);opacity:1}23%{opacity:0}100%{transform:translateX(280%);opacity:0}}
 .c09-tray{position:relative;overflow:hidden;padding:0 0 10px;margin-top:-4px}
-.c09-tkw{position:relative;width:342px;height:200px;margin:0 auto;transform:translateY(0)}
+.c09-copier.ready .c09-tray{overflow:visible}
+.c09-copier.falling{z-index:5}
+.c09-tkw{position:relative;width:316px;height:200px;margin:0 auto;transform:translateY(0)}
 .printing .c09-tkw{animation:c09-feed calc(var(--c09-pd) * var(--k,1)) linear forwards}
 .measure .c09-tkw{transform:translateY(-104%)}
 @keyframes c09-feed{0%{transform:translateY(-104%)}22%{transform:translateY(-104%)}40%{transform:translateY(-58%)}48%{transform:translateY(-56%)}72%{transform:translateY(-14%)}80%{transform:translateY(-12%)}94%{transform:translateY(1.2%)}100%{transform:translateY(0)}}
-.c09-blank{position:absolute;inset:0;z-index:5;background:var(--page);pointer-events:none;clip-path:inset(100% 0 0 0)}
+/* blank = bare paper over the ink area only (inside the 2px frame, below the toner band), so the sheet's edge and frame are seen while it feeds.
+   It shrinks from the BOTTOM up: its lower edge sits a little below the slot line (ticket y = -translateY + lag), so the part that has just
+   come out is still bare paper and the toner develops behind it; in each pause the lag closes (26px → 4px). Values in px of the 200px ticket. */
+.c09-blank{position:absolute;left:2px;right:2px;top:22px;bottom:2px;z-index:5;background:#fff;background-image:radial-gradient(rgba(0,0,0,.06) .5px,transparent .65px);background-size:3px 3px;pointer-events:none;clip-path:inset(0 0 176px 0)}
 .printing .c09-blank{animation:c09-toner calc(var(--c09-pd) * var(--k,1)) linear forwards}
-@keyframes c09-toner{0%{clip-path:inset(0 0 0 0)}22%{clip-path:inset(0 0 0 0)}40%{clip-path:inset(38% 0 0 0)}48%{clip-path:inset(42% 0 0 0)}72%{clip-path:inset(82% 0 0 0)}80%{clip-path:inset(86% 0 0 0)}94%{clip-path:inset(100% 0 0 0)}100%{clip-path:inset(100% 0 0 0)}}
+@keyframes c09-toner{0%{clip-path:inset(0 0 0px 0)}26%{clip-path:inset(0 0 0px 0)}40%{clip-path:inset(0 0 56px 0)}48%{clip-path:inset(0 0 82px 0)}72%{clip-path:inset(0 0 144px 0)}80%{clip-path:inset(0 0 170px 0)}94%{clip-path:inset(0 0 176px 0)}100%{clip-path:inset(0 0 176px 0)}}
+/* the fuser lamp stays faintly lit while the sheet is moving (after the scan) */
+.printing .c09-slot::after{content:'';position:absolute;left:12px;right:12px;top:13px;height:2px;background:#9dff5f;opacity:0;animation:c09-fuse calc(var(--c09-pd) * var(--k,1)) linear forwards}
+@keyframes c09-fuse{0%,22%{opacity:0}26%,40%{opacity:.7}44%,48%{opacity:.15}52%,72%{opacity:.7}76%,80%{opacity:.15}84%,94%{opacity:.7}100%{opacity:0}}
+.scrub .printing .c09-slot::after{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--c09-pd) * var(--k,1))!important}
 .scrub .printing .c09-tkw,.scrub .printing .c09-blank,.scrub .printing .c09-scan i{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--c09-pd) * var(--k,1))!important}
 .c09-tk{position:absolute;inset:0;touch-action:none;user-select:none;z-index:1}
 .c09-side{position:absolute;inset:0;will-change:clip-path,transform}
 .c09-side.stub{transform-origin:100% 100%}
-.c09-side.stub.off{animation:c09-drop calc(1000ms * var(--k,1)) cubic-bezier(.35,0,.6,.35) forwards}
-@keyframes c09-drop{0%{transform:translate(0,0) rotate(0)}40%{transform:translate(14px,70px) rotate(16deg)}100%{transform:translate(var(--dx,-40px),var(--drop,420px)) rotate(-8deg);opacity:1}}
+.c09-side.stub.off{animation:c09-drop calc(1000ms * var(--k,1)) linear forwards}
+@keyframes c09-drop{0%{transform:translate(5px,0) rotate(-7deg) scale(1);animation-timing-function:cubic-bezier(.45,0,.8,.55)}
+ 28%{transform:translate(9px,38px) rotate(9deg) scale(.94);animation-timing-function:cubic-bezier(.25,.35,.35,1)}
+ 85%{transform:translate(var(--dx,-40px),var(--drop,300px)) rotate(var(--rz,-6deg)) scale(.3);opacity:1;animation-timing-function:ease-in}
+ 100%{transform:translate(var(--dx,-40px),calc(var(--drop,300px) + 12px)) rotate(var(--rz,-6deg)) scale(.3);opacity:0}}
 .scrub .c09-side.stub.off{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 1000ms * var(--k,1))!important}
 .c09-cut{position:absolute;inset:0;pointer-events:none;background:#3c3c3c;opacity:.95}
 .c09-face{position:absolute;inset:0;background:#fff;border:2px solid #111;border-radius:3px;overflow:hidden;color:var(--ink)}
 .c09-face::before{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(rgba(0,0,0,.08) .5px,transparent .65px);background-size:3px 3px;opacity:.7;mix-blend-mode:multiply}
-.c09-face.void{filter:grayscale(1) contrast(.8);opacity:.75}
+.c09-face.void{filter:grayscale(1) contrast(.82) brightness(1.04)}
+.c09-face.cut .c09-tk-line{display:none}
 .c09-tk-band{position:absolute;left:0;right:0;top:0;height:22px;background:#111;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font:400 11px/1 var(--fd);letter-spacing:.18em}
+.c09-tk-band span:last-child{margin-right:76px;letter-spacing:.08em}
 .c09-tk-band::before{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.16) .5px,transparent .7px);background-size:3px 3px;pointer-events:none}
-.c09-tk-main{position:absolute;left:0;top:22px;bottom:0;width:256px;padding:10px 12px 10px 14px}
+.c09-tk-main{position:absolute;left:0;top:22px;bottom:0;width:236px;padding:10px 12px 10px 14px}
 .c09-tk-ttl{font:400 17px/1.2 var(--fd);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:4px;min-height:20px}
 .c09-tk-when{display:flex;align-items:baseline;gap:8px;margin-top:6px}
 .c09-tk-when b{font:400 34px/1 var(--fd)}
 .c09-tk-when span{font:500 12px/1.2 var(--fb);color:var(--ink2)}
 .c09-tk-when.old b{text-decoration:line-through;font-size:22px;color:var(--mid)}
 .c09-tk-old{font-size:11px;color:var(--mid);margin-top:3px;text-decoration:line-through}
-.c09-tk-meta{margin-top:5px;font-size:11.5px;line-height:1.45;color:var(--ink2);display:flex;flex-direction:column;padding-right:100px}
+.c09-tk-meta{margin-top:5px;font-size:11.5px;line-height:1.45;color:var(--ink2);display:flex;flex-direction:column;padding-right:4px}
 .c09-tk-meta b{font-weight:700;color:var(--ink)}
 .c09-tk-meta .full{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c09-tk-stk{position:absolute;right:94px;bottom:10px;z-index:2}
 .c09-tk-stk .c09-staple{left:50%;top:-4px;margin-left:-8px;transform:rotate(0);z-index:3}
-.c09-tk-line{position:absolute;left:255px;top:22px;bottom:0;border-left:2px dashed #111;opacity:.7}
-.c09-tk-stub{position:absolute;right:0;top:22px;bottom:0;width:86px;padding:8px 4px 8px 8px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
+.c09-tk-line{position:absolute;left:235px;top:22px;bottom:0;border-left:2px dashed #111;opacity:.7}
+.c09-tk-stub{position:absolute;right:0;top:22px;bottom:0;width:80px;padding:8px 6px 8px 11px;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start}
+.c09-tk-stub span i{display:block;font-style:normal;white-space:nowrap}
 .c09-tk-stub b{font:400 30px/1 var(--fd);writing-mode:vertical-rl;letter-spacing:.3em;text-orientation:upright}
 .c09-tk-stub span{font:500 10px/1.3 var(--fb);color:var(--ink2);letter-spacing:-.02em}
 .c09-tk-stub em{font-style:normal;font:400 10px/1 var(--fd);letter-spacing:.14em;color:var(--mid)}
@@ -321,20 +392,34 @@ body{margin:0}
 .c09-scis svg{width:24px;height:24px;stroke:#111;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:rotate(90deg)}
 .c09-scis.dis{opacity:.4;pointer-events:none}
 .c09-scis.snap{transition:top calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1),transform calc(160ms * var(--k,1))}
-.c09-tkhint{margin:10px 0 0;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:8px}
+.c09-tk.flip-out{animation:c09-flipout calc(190ms * var(--k,1)) cubic-bezier(.5,0,1,.6) forwards}
+.c09-tk.flip-in{animation:c09-flipin calc(230ms * var(--k,1)) cubic-bezier(0,.4,.4,1) both}
+@keyframes c09-flipout{0%{transform:perspective(900px) rotateY(0)}100%{transform:perspective(900px) rotateY(90deg)}}
+@keyframes c09-flipin{0%{transform:perspective(900px) rotateY(-90deg)}100%{transform:perspective(900px) rotateY(0)}}
+.c09-face.back{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:24px 22px 18px 26px;background:#fff}
+.c09-face.back::after{content:'';position:absolute;inset:0;pointer-events:none;background-image:radial-gradient(#111 .8px,transparent 1px);background-size:4px 4px;opacity:.07}
+.c09-face.back b{font:400 78px/.9 var(--fd);letter-spacing:-.02em;color:#111;position:relative;text-shadow:1px 0 0 rgba(0,0,0,.35),-.5px .5px 0 rgba(0,0,0,.2)}
+.c09-face.back b::after{content:'';position:absolute;inset:0;background-image:radial-gradient(rgba(255,255,255,.5) .6px,transparent .8px);background-size:3px 3px;mix-blend-mode:screen;pointer-events:none}
+.c09-face.back span{margin-top:10px;font:400 17px/1.2 var(--fd);letter-spacing:.08em}
+.c09-face.back small{margin-top:6px;font:500 11px/1.4 var(--fb);color:var(--mid)}
+.c09-face.back .c09-staple{left:auto;right:18px;top:16px}
+.c09-flipbtn{appearance:none;border:0;background:none;padding:6px 0;font:500 12.5px/1 var(--fb);color:var(--ink);display:inline-flex;align-items:center;gap:8px}
+.c09-flipbtn i{font-style:normal;font-family:var(--fh);font-size:19px;color:var(--pink)}
+.c09-tkhint{margin:10px 0 0;font-size:12px;color:var(--ink2);display:flex;align-items:center;gap:8px;min-height:20px}
 .c09-tkhint i{font-style:normal;font-family:var(--fh);font-size:19px;color:var(--pink)}
 .c09-tkhint.err{color:var(--pink);font-weight:700}
 /* page pocket for stubs */
-.c09-pocket{position:relative;margin-top:16px;height:64px;border-radius:2px;background:linear-gradient(#e9e8e2,#dfded8);border:1px solid rgba(0,0,0,.18);overflow:visible}
+.c09-pocket{position:relative;margin-top:16px;height:64px;border-radius:2px;background:linear-gradient(#e9e8e2,#dfded8);border:1px solid rgba(0,0,0,.18);overflow:hidden}
 .c09-pocket::before{content:'';position:absolute;inset:0;background:linear-gradient(170deg,rgba(0,0,0,.08),transparent 40%);pointer-events:none}
 .c09-pocket::after{content:'';position:absolute;left:0;right:0;bottom:-1px;height:30px;background:var(--page);border-top:1.5px solid rgba(0,0,0,.25);clip-path:polygon(0 30%,100% 0,100% 100%,0 100%);box-shadow:0 -4px 8px -4px rgba(0,0,0,.4)}
 .c09-pocket-l{position:absolute;left:12px;top:9px;font:400 13px/1 var(--fd);letter-spacing:.18em;color:var(--ink2);z-index:2}
 .c09-pocket-n{position:absolute;right:12px;top:8px;font:400 12px/1 var(--fd);letter-spacing:.1em;color:var(--mid);z-index:2}
-.c09-pstub{position:absolute;bottom:14px;width:60px;height:34px;background:#fff;border:1.5px solid #111;border-radius:2px;z-index:1;clip-path:polygon(6% 0,100% 0,100% 100%,6% 100%,0 86%,4% 70%,0 54%,4% 38%,0 22%,4% 8%)}
-.c09-pstub::before{content:'';position:absolute;left:0;right:0;top:0;height:6px;background:#111}
-.c09-pstub i{position:absolute;left:12px;top:10px;font:400 14px/1 var(--fd);letter-spacing:.2em}
-.c09-pstub.new{animation:c09-pstub calc(360ms * var(--k,1)) ease both}
-@keyframes c09-pstub{0%{transform:translateY(-10px) rotate(-6deg);opacity:0}100%{opacity:1}}
+.c09-pocket-n.bump{animation:c09-bump calc(420ms * var(--k,1)) cubic-bezier(.2,1.4,.4,1) both;color:var(--ink)}
+@keyframes c09-bump{0%{transform:scale(1.5);color:var(--pink)}100%{transform:none}}
+.c09-pstub{position:absolute;left:0;top:0;width:316px;height:200px;transform-origin:100% 100%;z-index:1;pointer-events:none}
+.c09-pstub > div{position:absolute;inset:0}
+.c09-pstub.new > div{animation:c09-pstub calc(240ms * var(--k,1)) ease-out both}
+@keyframes c09-pstub{0%{transform:translateY(-40px);opacity:0}100%{transform:none;opacity:1}}
 /* contact sticky note */
 .c09-contact{position:relative;margin:16px 0 0;padding:16px 16px 14px;background:var(--yel);box-shadow:0 0 0 1px rgba(0,0,0,.08),0 10px 18px -12px rgba(0,0,0,.5);animation:c09-noteup calc(360ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 .c09-contact::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(135deg,transparent calc(100% - 22px),rgba(0,0,0,.14) calc(100% - 22px),rgba(0,0,0,.06) calc(100% - 17px),var(--page) calc(100% - 17px))}
@@ -351,16 +436,28 @@ body{margin:0}
 .c09-burnwrap .c09-char-ring{stroke:url(#c09-char-grad);stroke-width:26px;fill:none}
 .c09-burnwrap .fx-burn.burning .c09-char-ring{animation:fx-hole calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.3,.05,.55,1) forwards}
 .scrub .c09-burnwrap .fx-burn.burning .c09-char-ring{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+/* ticket burn front = three nested bands on the same circle as the hole (only their outer halves show past the hole):
+   char line (black, 3px) → ember (orange, 3px more) → scorch (brown, fades into the paper). When it stops, the ember cools away and char + scorch stay as the rim. */
+.c09-tk .c09-scorch,.c09-tk .c09-ember,.c09-tk .c09-charline{fill:none;r:0}
+.c09-tk .c09-scorch{stroke:rgba(110,62,22,.42);stroke-width:36px}
+.c09-tk .c09-ember{stroke:#ff7a1a;stroke-width:13px;opacity:0}
+.c09-tk .c09-charline{stroke:#0b0907;stroke-width:6px}
+.c09-tk.burning .c09-ember{opacity:1}
+.c09-tk.burning .c09-scorch,.c09-tk.burning .c09-ember,.c09-tk.burning .c09-charline{animation:fx-hole calc(var(--fx-dur) * var(--k,1)) cubic-bezier(.3,.05,.55,1) forwards}
+.scrub .c09-tk.burning .c09-scorch,.scrub .c09-tk.burning .c09-ember,.scrub .c09-tk.burning .c09-charline{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
+.c09-tk.c09-charred{-webkit-mask:var(--fx-mask);mask:var(--fx-mask)}
+.c09-tk.c09-charred .fx-hole,.c09-tk.c09-charred .c09-scorch,.c09-tk.c09-charred .c09-ember,.c09-tk.c09-charred .c09-charline{r:var(--fx-reach)}
+.c09-tk.c09-charred .c09-ember{opacity:0;transition:opacity calc(900ms * var(--k,1)) ease}
+.c09-tk-dot{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;z-index:3;opacity:0;pointer-events:none;background:radial-gradient(circle at 36% 34%,#3b3b3b,#060606 62%,#000);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),1px 2px 3px rgba(0,0,0,.3);transform:rotate(-8deg)}
+.c09-tk-dot::after{content:'';position:absolute;inset:6px;border-radius:50%;border:1px dashed rgba(255,255,255,.35)}
+.c09-tk.burning .c09-tk-dot{animation:c09-dotin calc(600ms * var(--k,1)) cubic-bezier(.2,1.3,.4,1) calc(2350ms * var(--k,1)) both}
+.scrub .c09-tk.burning .c09-tk-dot{animation-play-state:paused!important;animation-delay:calc((2350ms - var(--frame,0) * 3000ms) * var(--k,1))!important}
+.c09-tk.c09-charred .c09-tk-dot{opacity:1}
+@keyframes c09-dotin{0%{opacity:0;transform:rotate(-8deg) scale(1.6)}100%{opacity:1;transform:rotate(-8deg) scale(1)}}
 .c09-flakes{position:absolute;inset:0;pointer-events:none;overflow:visible}
 .c09-flake{position:absolute;width:7px;height:5px;border-radius:40% 60% 50% 50%;background:#1a1a1a;opacity:0}
 .burning .c09-flake,.burnt .c09-flake{animation:c09-flake calc(1500ms * var(--k,1)) ease-in forwards;animation-delay:calc(var(--d,0ms) * var(--k,1))}
 @keyframes c09-flake{0%{opacity:0;transform:translate(0,0)}15%{opacity:.95}100%{opacity:0;transform:translate(var(--dx,0),var(--dy,90px)) rotate(var(--rot,80deg))}}
-.c09-ashed{position:absolute;inset:0;pointer-events:none;opacity:0;z-index:0;transition:opacity calc(500ms * var(--k,1)) ease}
-.c09-ashed.on{opacity:1}
-.c09-ashed::before{content:'';position:absolute;inset:0;border-radius:3px;border:1.5px solid #222;background:linear-gradient(#e9e8e2,#d4d3cc);clip-path:polygon(0 0,100% 0,100% 30%,92% 36%,96% 48%,84% 58%,70% 52%,60% 70%,44% 66%,30% 82%,14% 78%,0 100%)}
-.c09-ashed::after{content:'';position:absolute;inset:0;background:radial-gradient(200px 160px at 100% 100%,rgba(0,0,0,.75),rgba(0,0,0,.25) 50%,transparent 70%);clip-path:polygon(0 0,100% 0,100% 30%,92% 36%,96% 48%,84% 58%,70% 52%,60% 70%,44% 66%,30% 82%,14% 78%,0 100%)}
-.c09-ashed .c09-char-dot{right:14px;top:10px;z-index:2}
-.c09-ashed .c09-stk{position:absolute;left:14px;top:14px;z-index:2}
 /* ============================ sticky-note sheets (confirm layers) ============================ */
 .c09-shade{position:absolute;inset:0;z-index:40;background:rgba(10,10,10,0);transition:background calc(320ms * var(--k,1)) ease;pointer-events:none}
 .c09-shade.in{background:rgba(10,10,10,.5);pointer-events:auto}
@@ -381,6 +478,7 @@ body{margin:0}
 .c09-sh-b p{margin:0 0 8px}
 .c09-sh-red{margin:8px 0 0;padding:8px 10px;background:#111;color:var(--pink);font-size:12.5px;font-weight:700;line-height:1.5}
 .c09-sh-f{display:flex;gap:10px;padding:14px 18px 18px;position:relative;z-index:1}
+.c09-sh-alert{margin:12px 18px 0;position:relative;z-index:1}
 .c09-sh-f .c09-btn{flex:1 1 0}
 .c09-rules{list-style:none;margin:0;padding:0}
 .c09-rules li{padding:8px 0;border-bottom:1px dotted rgba(0,0,0,.3)}
@@ -391,10 +489,12 @@ body{margin:0}
 .c09-sh-note{font-size:12px;color:#5d5a33;padding:0 18px;position:relative;z-index:1}
 .c09-sh-note.ok{color:#2d6a4f;font-weight:700}
 .c09-rs{display:flex;flex-direction:column;gap:8px}
-.c09-rs-cmp{display:flex;align-items:center;gap:10px;font-size:13px}
-.c09-rs-cmp s{color:var(--mid)}
-.c09-rs-cmp i{font-style:normal;font-family:var(--fh);font-size:22px;color:var(--pink)}
-.c09-rs-cmp b{font-weight:700}
+.c09-rs-cmp{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;align-items:baseline;font-size:13.5px}
+.c09-rs-cmp .k{font:700 11px/1.2 var(--fb);color:#4d4a2a;letter-spacing:.06em}
+.c09-rs-cmp .k.to{color:#b8005f}
+.c09-rs-cmp s{color:var(--mid);white-space:nowrap}
+.c09-rs-cmp b{font-weight:700;white-space:nowrap}
+.c09-rs-cmp b small{font-weight:500;font-size:11px;color:#5d5a33;margin-left:8px}
 .c09-rs-cmp b.ph{color:var(--mid);font-weight:400}
 .c09-rs-in{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .c09-rs-in label{display:flex;flex-direction:column;gap:4px;font-size:11px;color:#4d4a2a;font-weight:700}
@@ -431,6 +531,9 @@ body{margin:0}
 .c09-mg-head.c09-char.beneath{position:absolute;left:0;right:0;top:0;z-index:0;min-height:100%;margin:12px 14px 0!important}
 .c09-mg-head.c09-abs{position:relative;z-index:1}
 .c09-mg-head.c09-char{min-height:150px}
+.c09-char .c09-cardstrip{border-top-color:rgba(0,0,0,.28);margin-top:10px;padding-top:10px;position:relative}
+.c09-char .c09-cardstrip .c09-obj{filter:grayscale(1) contrast(.85);opacity:.62}
+.c09-char .c09-cs-t .when{text-decoration:line-through;text-decoration-thickness:1.5px;color:#4a4a4a}
 .c09-chips{display:flex;gap:8px;padding:14px 14px 4px;overflow-x:auto;scrollbar-width:none}
 .c09-chips::-webkit-scrollbar{display:none}
 .c09-chip{appearance:none;flex:0 0 auto;border:1.5px solid #111;background:var(--page);padding:7px 12px;border-radius:3px;font:700 12.5px/1 var(--fb);display:flex;align-items:center;gap:6px;position:relative;transition:transform calc(160ms * var(--k,1)),background calc(160ms * var(--k,1))}
@@ -453,6 +556,28 @@ body{margin:0}
 .c09-app-res{display:flex;align-items:center;gap:10px;margin-top:10px;min-height:34px;justify-content:flex-end;animation:c09-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 @keyframes c09-settle{0%{transform:translateY(5px);opacity:.25}100%{transform:none;opacity:1}}
 .c09-app-res span{font-size:12px;color:var(--ink2)}
+.c09-stk.app{font-size:12.5px;padding:4px 10px 3px}
+.c09-app-slot{display:inline-block;vertical-align:middle;margin:-3px 0 0 10px;min-width:1px;height:23px}
+.c09-liner{display:inline-flex;align-items:center;gap:10px;padding:6px 10px 6px 9px;border-radius:3px;position:relative;background:linear-gradient(160deg,#fdfdfb,#ebeae5 55%,#f7f7f3);box-shadow:inset 0 0 0 1px rgba(0,0,0,.16),0 1px 0 rgba(0,0,0,.14)}
+.c09-liner::before{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background-image:repeating-linear-gradient(115deg,rgba(0,0,0,.035) 0 2px,transparent 2px 7px)}
+.c09-liner > i{position:relative;font-style:normal;font:500 10px/1.3 var(--fb);color:var(--mid);white-space:nowrap}
+.c09-liner > i b{display:block;font:400 11px/1.1 var(--fd);letter-spacing:.12em;color:var(--ink2)}
+.c09-liner.empty{padding:5px 9px;opacity:.85}
+.c09-pit{position:relative;display:inline-block;min-width:58px;height:23px}
+.c09-pit::before{content:'';position:absolute;inset:-3px;border:1.2px dashed rgba(0,0,0,.38);border-radius:4px;pointer-events:none}
+.c09-liner.empty .c09-pit{min-width:52px}
+.c09-liner.empty .c09-pit::after{content:'已揭下';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font:500 10px/1 var(--fb);color:#8a8983}
+.c09-peelstk{appearance:none;border:0;position:absolute;left:0;top:0;z-index:4;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;font-family:var(--fb)}
+.c09-peelstk:focus-visible{outline:2px solid #111;outline-offset:4px}
+.c09-peelstk.drag{cursor:grabbing;transition:none;transform:translate(var(--sx,0px),var(--sy,0px)) rotate(calc(var(--r,-2.5deg) - 6deg)) scale(1.08);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),4px 10px 14px rgba(0,0,0,.32);--c09-curl:24px}
+.c09-peelstk.back{transition:transform calc(300ms * var(--k,1)) cubic-bezier(.2,.9,.3,1)}
+.c09-peelstk.fly{animation:c09-fly calc(440ms * var(--k,1)) cubic-bezier(.35,.6,.3,1) forwards;pointer-events:none}
+@keyframes c09-fly{0%{transform:translate(var(--sx,0px),var(--sy,0px)) rotate(var(--r,-2.5deg));--c09-curl:9px}
+ 22%{transform:translate(calc(var(--sx,0px) - 2px),calc(var(--sy,0px) - 12px)) rotate(calc(var(--r,-2.5deg) - 9deg)) scale(1.1);--c09-curl:28px;box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.42),5px 12px 16px rgba(0,0,0,.3)}
+ 100%{transform:translate(var(--dx,0px),var(--dy,0px)) rotate(var(--r1,-2deg)) scale(1);--c09-curl:9px}}
+.scrub .c09-peelstk.fly{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 440ms * var(--k,1))!important}
+.c09-app-acts{align-items:center}
+.c09-app-acts .c09-btn[disabled]{pointer-events:none}
 .c09-mem{padding:9px 0;border-bottom:1px dotted var(--line)}
 .c09-mem:last-child{border-bottom:0}
 .c09-mem-top{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;padding:0;text-align:left}
@@ -477,6 +602,7 @@ body{margin:0}
 .c09-plan li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1.5px dashed var(--line)}
 .c09-plan li:last-child{border-bottom:0}
 .c09-plan li.ghost{opacity:.55}
+.c09-plan li.c09-plan-err{padding:0 0 12px;border-bottom:1.5px dashed var(--line)}
 .c09-plan-t{flex:1 1 auto;min-width:0}
 .c09-plan-t b{display:block;font:400 18px/1.2 var(--fd)}
 .c09-plan-t small{display:block;font-size:11.5px;color:var(--mid);margin-top:2px;line-height:1.4}
@@ -490,7 +616,7 @@ body{margin:0}
 .c09-att-st{display:flex;align-items:center;gap:10px;margin:8px 0 0 40px;flex-wrap:wrap}
 .c09-trail{margin:8px 0 0 40px;padding:0;list-style:none;font-size:11.5px;color:var(--mid);line-height:1.6}
 /* ============================ toast / error ============================ */
-.c09-toast{position:absolute;left:50%;bottom:104px;z-index:60;transform:translate(-50%,25px) rotate(-1.5deg);opacity:0;transition:transform calc(500ms * var(--k,1)) cubic-bezier(.2,.9,.3,1),opacity calc(400ms * var(--k,1));pointer-events:none;max-width:330px;padding:10px 14px;background:#fff;color:#111;font:700 13px/1.3 var(--fb);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.45),0 8px 18px -8px rgba(0,0,0,.6)}
+.c09-toast{position:absolute;left:50%;bottom:28px;z-index:60;transform:translate(-50%,25px) rotate(-1.5deg);opacity:0;transition:transform calc(500ms * var(--k,1)) cubic-bezier(.2,.9,.3,1),opacity calc(400ms * var(--k,1));pointer-events:none;width:max-content;max-width:330px;padding:10px 14px;background:#fff;color:#111;font:700 13px/1.3 var(--fb);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.45),0 8px 18px -8px rgba(0,0,0,.6)}
 .c09-toast.in{transform:translate(-50%,0) rotate(-1.5deg);opacity:1}
 .c09-err{position:absolute;left:12px;right:12px;bottom:98px;z-index:61;display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--pink);color:#111;font:700 13px/1.35 var(--fb);box-shadow:0 0 0 2.5px #fff,0 0 0 3.2px rgba(0,0,0,.45),0 8px 18px -8px rgba(0,0,0,.6);animation:c09-toastin calc(400ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both;transform:rotate(.6deg)}
 .c09-err span{flex:1 1 auto}
@@ -518,11 +644,12 @@ body{margin:0}
           <span class="c09-secnote">{{secNote}}</span>
         </div>
         <sc-if value="{{undo.on}}" hint-placeholder-val="{{false}}">
-          <div class="c09-undo" role="status"><span>已删除<b>「{{undo.title}}」</b></span><button type="button" class="c09-btn sm" data-act="undo" onClick="{{undo.go}}">撤销</button></div>
+          <div class="c09-undo" role="status"><span>已删除<b>「{{undo.title}}」</b></span><button type="button" class="c09-btn sm" data-act="undo" onClick="{{undo.go}}">撤销</button></div><sc-if value="{{undo.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{undo.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{undo.err.retry}}">重试</button></div></sc-if>
         </sc-if>
         <sc-for list="{{sections}}" as="sc" hint-placeholder-count="2">
           <div class="c09-gh"><b>{{sc.title}}</b><span>{{sc.count}}</span><i>{{sc.note}}</i></div>
           <sc-for list="{{sc.rows}}" as="r" hint-placeholder-count="3">
+            <sc-if value="{{r.isMonth}}" hint-placeholder-val="{{false}}"><div class="c09-mon" aria-hidden="true"><b>{{r.month}}</b><span>{{r.monthNote}}</span><i></i></div></sc-if>
             <sc-if value="{{r.isLead}}" hint-placeholder-val="{{true}}">
               <button type="button" class="c09-row lead {{r.cls}}" data-rid="{{r.rid}}" aria-label="{{r.aria}}" style="--i:{{$index}}" onClick="{{r.open}}">
                 <div class="c09-page c09-pg lead">
@@ -572,7 +699,7 @@ body{margin:0}
                       <div class="c09-obj"><div class="c09-mcard" style="--dots:.25;opacity:.6"><i>DRAFT</i></div></div>
                     </div>
                   </button>
-                  <div class="c09-dr-foot"><span class="c09-link c09-inert">继续编辑 ›<small>开局模块 · 不在本范围演示</small></span><button type="button" class="c09-del" data-act="delete" aria-label="{{r.delAria}}" onClick="{{r.del}}">删除</button></div>
+                  <div class="c09-dr-foot"><span class="c09-link c09-inert">继续编辑 ›<small>开局模块 · 不在本范围演示</small></span><button type="button" class="c09-del" data-act="delete" aria-label="{{r.delAria}}" disabled="{{r.delOff}}" onClick="{{r.del}}">删除</button></div><sc-if value="{{r.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{r.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{r.err.retry}}">重试</button></div></sc-if>
                   <span class="c09-pno">{{r.pno}}</span>
                 </div>
               </div>
@@ -614,7 +741,7 @@ body{margin:0}
             </sc-if>
             <sc-if value="{{sheet.isResched}}" hint-placeholder-val="{{false}}">
               <div class="c09-rs">
-                <div class="c09-rs-cmp"><span>原定 <s>{{sheet.oldWhen}}</s></span><i>→</i><span>改为 · 纽约时间 <b class="{{sheet.newCls}}">{{sheet.newWhen}}</b></span></div>
+                <div class="c09-rs-cmp"><span class="k">原定</span><s>{{sheet.oldWhen}}</s><span class="k to">改为</span><b class="{{sheet.newCls}}">{{sheet.newWhen}}<small>纽约时间</small></b></div>
                 <div class="c09-rs-in"><label>新日期<input type="date" value="{{sheet.date}}" onInput="{{sheet.onDate}}" onChange="{{sheet.onDate}}"></label><label>新时间<input type="time" step="900" value="{{sheet.time}}" onInput="{{sheet.onTime}}" onChange="{{sheet.onTime}}"></label></div>
                 <sc-if value="{{sheet.same}}" hint-placeholder-val="{{false}}"><p class="c09-sh-note" style="padding:0;color:#b8005f">{{sheet.sameText}}</p></sc-if>
                 <p style="margin:4px 0 0">{{sheet.desc}}</p>
@@ -631,54 +758,61 @@ body{margin:0}
             </sc-if>
           </div>
           <sc-if value="{{sheet.hasNote}}" hint-placeholder-val="{{false}}"><p class="c09-sh-note {{sheet.noteCls}}">{{sheet.note}}</p></sc-if>
-          <div class="c09-sh-f"><sc-if value="{{sheet.hasCancel}}" hint-placeholder-val="{{true}}"><button type="button" class="c09-btn soft" onClick="{{sheet.cancel}}">{{sheet.cancelLabel}}</button></sc-if><button type="button" class="c09-btn {{sheet.okCls}}" data-act="{{sheet.okAct}}" onClick="{{sheet.ok}}">{{sheet.okLabel}}</button></div>
+          <sc-if value="{{sheet.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert c09-sh-alert" role="alert"><span>{{sheet.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{sheet.err.retry}}">重试</button></div></sc-if>
+          <div class="c09-sh-f"><sc-if value="{{sheet.hasCancel}}" hint-placeholder-val="{{true}}"><button type="button" class="c09-btn soft {{sheet.cancelCls}}" onClick="{{sheet.cancel}}">{{sheet.cancelLabel}}</button></sc-if><button type="button" class="c09-btn {{sheet.okCls}}" data-act="{{sheet.okAct}}" onClick="{{sheet.ok}}">{{sheet.okLabel}}</button></div>
         </div>
       </sc-if>
       <sc-if value="{{dt.on}}" hint-placeholder-val="{{false}}">
         <div class="c09-over c09-dt {{dt.phase}}" style="{{dt.clip}}">
-          <div class="c09-inner" style="{{dt.inner}}" ref="{{overRef}}">
-            <div class="c09-dh c09-toner"><button type="button" class="c09-back" data-act="back" onClick="{{dt.close}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>返回 {{dt.backLabel}}</button><span class="c09-dh-r">{{dt.pno}}</span></div>
+          <div class="c09-inner" style="{{dt.inner}}" ref="{{overRef}}" onScroll="{{dt.onScroll}}">
+            <div class="c09-dh c09-toner"><button type="button" class="c09-back" data-act="back" onClick="{{dt.close}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>返回 {{dt.backLabel}}</button><span class="c09-dh-r">{{dt.pno}}</span><div class="c09-dh-fold {{dt.foldCls}}" aria-hidden="{{dt.foldHidden}}"><b>{{dt.title}}</b><span>{{dt.foldMeta}}</span></div></div>
             <div class="c09-page c09-dp">
               <i class="c09-staple" style="top:30px"></i><i class="c09-staple" style="bottom:30px"></i>
               <span class="c09-stk big c09-dp-stk {{dt.stk.cls}}" style="--r:{{dt.stk.r}}">{{dt.stk.text}}</span>
               <div class="c09-kick">{{dt.kick}}</div>
               <h2 class="c09-hero {{dt.heroCls}}">{{dt.title}}</h2>
-              <div class="c09-when {{dt.whenCls}}"><b>{{dt.time}}</b><span>{{dt.wd}}</span></div>
-              <sc-if value="{{dt.hasNew}}" hint-placeholder-val="{{false}}"><div class="c09-when"><b>{{dt.newTime}}</b><span>{{dt.newWd}} · 改为</span></div></sc-if>
+              <sc-if value="{{dt.showWhen}}" hint-placeholder-val="{{true}}"><div class="c09-when {{dt.whenCls}}"><b>{{dt.time}}</b><span>{{dt.wd}}</span></div></sc-if>
               <div class="c09-place"><b>{{dt.hood}}</b> · {{dt.area}}<small>集合 {{dt.meeting}}</small></div>
               <div class="c09-hostline">局主 <b>{{dt.host}}</b><sc-if value="{{dt.hasNote}}" hint-placeholder-val="{{false}}"> · {{dt.note}}</sc-if></div>
-              <sc-if value="{{dt.result.on}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><div class="c09-result"><span class="c09-stk big {{dt.result.cls}}">{{dt.result.tag}}</span><h3>{{dt.result.title}}</h3><p>{{dt.result.body}}</p></div></sc-if>
-              <sc-if value="{{dt.deadline.on}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><div class="c09-kick">预留倒计时</div><div class="c09-cdline"><b class="{{dt.deadline.hot}}">{{dt.deadline.text}}</b><span>{{dt.deadline.copy}}</span></div><div class="c09-bar"><i class="{{dt.deadline.hot}}" style="width:{{dt.deadline.ratio}}%"></i></div></sc-if>
-              <sc-if value="{{dt.hasNeed}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><p class="c09-need2">{{dt.need}}</p></sc-if>
+              <sc-if value="{{dt.deadline.on}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><div class="c09-kick">{{dt.deadline.kick}}</div><div class="c09-cdline"><b class="{{dt.deadline.hot}}">{{dt.deadline.text}}</b><span>{{dt.deadline.copy}}</span></div><div class="c09-bar {{dt.deadline.barCls}}"><i class="{{dt.deadline.hot}}" style="width:{{dt.deadline.ratio}}%"></i></div></sc-if>
+              <sc-if value="{{dt.hasNeed}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><p class="c09-need2 {{dt.needCls}}">{{dt.need}}</p></sc-if>
               <sc-for list="{{dt.tickets}}" as="t" hint-placeholder-count="1">
                 <div class="c09-copier {{t.prCls}}">
                   <div class="c09-slot"><em class="{{t.litCls}}"></em><i>{{t.label}}</i><div class="c09-scan"><i></i></div></div>
                   <div class="c09-tray">
-                    <div class="c09-tkw c09-burnwrap">
-                      <div class="c09-tk fx-tear fx-burn {{t.burnCls}}" style="--fx-mask:url(#c09-hole-{{t.uid}});--fx-reach:430px">
-                        <div class="c09-side keep" style="clip-path:{{t.keepClip}}">
-                          <div class="c09-face {{t.faceCls}}"><div class="c09-tk-band"><span>JU · 自制票</span><span>{{t.code}}</span></div><div class="c09-tk-main"><div class="c09-tk-ttl">{{t.title}}</div><div class="c09-tk-when {{t.whenCls}}"><b>{{t.time}}</b><span>{{t.wd}}</span></div><sc-if value="{{t.hasOld}}" hint-placeholder-val="{{false}}"><div class="c09-tk-old">原定 {{t.old}}</div></sc-if><div class="c09-tk-meta"><span class="full"><b>{{t.hood}}</b> · {{t.area}}</span><span>集合 <b>{{t.meeting}}</b></span><span>局主 <b>{{t.host}}</b></span></div></div><div class="c09-tk-stk"><i class="c09-staple"></i><span class="c09-stk {{t.stk.cls}}" style="--r:{{t.stk.r}}">{{t.stk.text}}</span></div><div class="c09-tk-line"></div><div class="c09-tk-stub"><em>№ {{t.seat}}</em><b>副券</b><span>{{t.stubText}}</span></div></div>
-                        </div>
-                        <div class="c09-cut" style="clip-path:{{t.edgeClip}}"></div>
-                        <sc-if value="{{t.hasStub}}" hint-placeholder-val="{{true}}">
-                          <div class="c09-side stub {{t.stubCls}}" style="clip-path:{{t.stubClip}};transform:{{t.stubTf}};--drop:{{t.drop}}px;--dx:{{t.dx}}px">
-                            <div class="c09-face {{t.faceCls}}"><div class="c09-tk-band"><span>JU · 自制票</span><span>{{t.code}}</span></div><div class="c09-tk-main"><div class="c09-tk-ttl">{{t.title}}</div><div class="c09-tk-when {{t.whenCls}}"><b>{{t.time}}</b><span>{{t.wd}}</span></div><sc-if value="{{t.hasOld}}" hint-placeholder-val="{{false}}"><div class="c09-tk-old">原定 {{t.old}}</div></sc-if><div class="c09-tk-meta"><span class="full"><b>{{t.hood}}</b> · {{t.area}}</span><span>集合 <b>{{t.meeting}}</b></span><span>局主 <b>{{t.host}}</b></span></div></div><div class="c09-tk-stk"><i class="c09-staple"></i><span class="c09-stk {{t.stk.cls}}" style="--r:{{t.stk.r}}">{{t.stk.text}}</span></div><div class="c09-tk-line"></div><div class="c09-tk-stub"><em>№ {{t.seat}}</em><b>副券</b><span>{{t.stubText}}</span></div></div>
+                    <div class="c09-tkw c09-burnwrap" data-tk="{{t.key}}">
+                      <div class="c09-tk fx-tear fx-burn {{t.burnCls}} {{t.flipCls}}" style="--fx-mask:url(#c09-hole-{{t.uid}});--fx-reach:{{t.reach}}px;transform-origin:{{t.flipOrigin}}" onClick="{{t.faceTap}}">
+                        <sc-if value="{{t.front}}" hint-placeholder-val="{{true}}">
+                          <div class="c09-side keep" style="clip-path:{{t.keepClip}}">
+                            <div class="c09-face {{t.faceCls}}"><div class="c09-tk-band"><span>JU · 自制票</span><span>{{t.code}}</span></div><div class="c09-tk-main"><div class="c09-tk-ttl">{{t.title}}</div><div class="c09-tk-when {{t.whenCls}}"><b>{{t.time}}</b><span>{{t.wd}}</span></div><div class="c09-tk-meta"><span class="full"><b>{{t.hood}}</b> · {{t.area}}</span><span>集合 <b>{{t.meeting}}</b></span><span>局主 <b>{{t.host}}</b></span></div></div><div class="c09-tk-stk"><i class="c09-staple"></i><span class="c09-stk {{t.stk.cls}}" style="--r:{{t.stk.r}}">{{t.stk.text}}</span></div><div class="c09-tk-line"></div><div class="c09-tk-stub"><em>№ {{t.seat}}</em><b>副券</b><span><i>{{t.stubA}}</i><i>{{t.stubB}}</i></span></div></div>
                           </div>
+                          <div class="c09-cut" style="clip-path:{{t.edgeClip}}"></div>
+                          <sc-if value="{{t.hasStub}}" hint-placeholder-val="{{true}}">
+                            <div class="c09-side stub {{t.stubCls}}" style="clip-path:{{t.stubClip}};transform:{{t.stubTf}};--drop:{{t.drop}}px;--dx:{{t.dx}}px;--rz:{{t.rz}}deg">
+                              <div class="c09-face {{t.faceCls}}"><div class="c09-tk-band"><span>JU · 自制票</span><span>{{t.code}}</span></div><div class="c09-tk-main"><div class="c09-tk-ttl">{{t.title}}</div><div class="c09-tk-when {{t.whenCls}}"><b>{{t.time}}</b><span>{{t.wd}}</span></div><div class="c09-tk-meta"><span class="full"><b>{{t.hood}}</b> · {{t.area}}</span><span>集合 <b>{{t.meeting}}</b></span><span>局主 <b>{{t.host}}</b></span></div></div><div class="c09-tk-stk"><i class="c09-staple"></i><span class="c09-stk {{t.stk.cls}}" style="--r:{{t.stk.r}}">{{t.stk.text}}</span></div><div class="c09-tk-line"></div><div class="c09-tk-stub"><em>№ {{t.seat}}</em><b>副券</b><span><i>{{t.stubA}}</i><i>{{t.stubB}}</i></span></div></div>
+                            </div>
+                          </sc-if>
                         </sc-if>
-                        <svg class="fx-burn-svg" viewBox="0 0 342 200" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c09-hole-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="342" height="200"><rect width="342" height="200" fill="#fff"></rect><circle class="fx-hole" cx="326" cy="186" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="c09-char-ring" cx="326" cy="186" r="0" filter="url(#fx-rough-strong)"></circle></svg>
+                        <sc-if value="{{t.backOn}}" hint-placeholder-val="{{false}}">
+                          <div class="c09-side keep" style="clip-path:{{t.backClip}}"><div class="c09-face back"><i class="c09-staple"></i><b>JU.</b><span>有 JU，就开局</span><small>{{t.code}} · 影印 · 第 {{t.version}} 版</small></div></div>
+                          <div class="c09-cut" style="clip-path:{{t.backEdge}}"></div>
+                        </sc-if>
+                        <svg class="fx-burn-svg" viewBox="0 0 316 200" preserveAspectRatio="none" aria-hidden="true" style="clip-path:{{t.svgClip}}"><defs><mask id="c09-hole-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="316" height="200"><rect width="316" height="200" fill="#fff"></rect><circle class="fx-hole" cx="{{t.bx}}" cy="{{t.by}}" r="0" fill="#000" filter="url(#c09-rough)"></circle></mask></defs><g class="c09-front" filter="url(#c09-rough)"><circle class="c09-scorch" cx="{{t.bx}}" cy="{{t.by}}"></circle><circle class="c09-ember" cx="{{t.bx}}" cy="{{t.by}}"></circle><circle class="c09-charline" cx="{{t.bx}}" cy="{{t.by}}"></circle></g></svg>
+                        <i class="c09-tk-dot" style="left:{{t.dotX}}px;top:{{t.dotY}}px" aria-hidden="true"></i>
                       </div>
                       <div class="c09-flakes {{t.burnCls}}" aria-hidden="true"><sc-for list="{{t.flakes}}" as="f" hint-placeholder-count="0"><i class="c09-flake" style="left:{{f.x}}px;top:{{f.y}}px;--dx:{{f.dx}}px;--dy:{{f.dy}}px;--rot:{{f.rot}}deg;--d:{{f.d}}ms"></i></sc-for></div>
-                      <div class="c09-ashed {{t.ashCls}}"><i class="c09-char-dot"></i><span class="c09-stk gry" style="--r:-3deg">{{t.ashText}}</span></div>
                       <div class="c09-blank" aria-hidden="true"></div>
                       <sc-if value="{{t.hasScis}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-scis {{t.scisCls}}" data-act="{{t.scisAct}}" aria-label="{{t.scisAria}}" style="left:{{t.scisX}}px;top:{{t.scisY}}px" onPointerDown="{{t.down}}" onPointerMove="{{t.move}}" onPointerUp="{{t.up}}" onPointerCancel="{{t.up}}" onClick="{{t.tap}}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M8.6 7.6L20 16M8.6 16.4L20 8"/></svg></button></sc-if>
                     </div>
                   </div>
                 </div>
-                <sc-if value="{{t.hasHint}}" hint-placeholder-val="{{false}}"><p class="c09-tkhint {{t.hintCls}}"><i>✂</i><span>{{t.hint}}</span></p></sc-if>
+                <sc-if value="{{t.hasHint}}" hint-placeholder-val="{{false}}"><p class="c09-tkhint {{t.hintCls}}"><i>✂</i><span>{{t.hint}}</span><sc-if value="{{t.hasRetry}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn sm" data-act="retry" onClick="{{t.retry}}">重试</button></sc-if></p></sc-if>
+                <sc-if value="{{t.hasFlip}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-flipbtn" data-act="flip" aria-pressed="{{t.flipPressed}}" onClick="{{t.flip}}"><i>↻</i>{{t.flipLabel}}</button></sc-if>
               </sc-for>
-              <sc-if value="{{dt.pocket.on}}" hint-placeholder-val="{{false}}"><div class="c09-pocket" aria-label="副券口袋"><span class="c09-pocket-l">副券口袋</span><span class="c09-pocket-n">{{dt.pocket.count}}</span><sc-for list="{{dt.pocket.stubs}}" as="p" hint-placeholder-count="1"><div class="c09-pstub {{p.cls}}" style="left:{{p.x}}px;transform:rotate({{p.r}}deg)"><i>{{p.text}}</i></div></sc-for></div></sc-if>
+              <sc-if value="{{dt.result.on}}" hint-placeholder-val="{{false}}"><div class="c09-sep"></div><div class="c09-result"><span class="c09-stk big {{dt.result.cls}}">{{dt.result.tag}}</span><h3>{{dt.result.title}}</h3><p>{{dt.result.body}}</p></div></sc-if>
+              <sc-if value="{{dt.pocket.on}}" hint-placeholder-val="{{false}}"><div class="c09-pocket" aria-label="副券口袋"><span class="c09-pocket-l">副券口袋</span><span class="c09-pocket-n {{dt.pocket.nCls}}">{{dt.pocket.count}}</span><sc-for list="{{dt.pocket.stubs}}" as="p" hint-placeholder-count="1"><div class="c09-pstub {{p.cls}}" style="left:{{p.x}}px;top:{{p.y}}px;transform:rotate({{p.r}}deg) scale(.3)"><div><div class="c09-face" style="clip-path:{{p.clip}}"><div class="c09-tk-band"><span>JU · 自制票</span><span>{{p.code}}</span></div><div class="c09-tk-stub"><em>№ {{p.seat}}</em><b>副券</b><span><i>{{p.a}}</i><i>{{p.b}}</i></span></div></div></div></div></sc-for></div></sc-if>
               <sc-if value="{{dt.contact.on}}" hint-placeholder-val="{{false}}">
-                <div class="c09-contact"><i class="c09-tape"></i><h4>局主 · {{dt.contact.host}}</h4><div class="c09-wx"><b>{{dt.contact.wx}}</b><button type="button" class="c09-btn sm line" data-act="copy" onClick="{{dt.contact.copy}}">{{dt.contact.copyLabel}}</button></div><p>{{dt.contact.note}}</p><sc-if value="{{dt.contact.canMark}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn wide {{dt.contact.markCls}}" data-act="contacted" onClick="{{dt.contact.mark}}">已加微信</button></sc-if><sc-if value="{{dt.contact.marked}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn wide dis" aria-disabled="true">待赴约</button></sc-if></div>
+                <div class="c09-contact"><i class="c09-tape"></i><h4>局主 · {{dt.contact.host}}</h4><div class="c09-wx"><b>{{dt.contact.wx}}</b><button type="button" class="c09-btn sm line" data-act="copy" onClick="{{dt.contact.copy}}">{{dt.contact.copyLabel}}</button></div><p>{{dt.contact.note}}</p><sc-if value="{{dt.contact.canMark}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn wide {{dt.contact.markCls}}" data-act="contacted" onClick="{{dt.contact.mark}}">已加微信</button></sc-if><sc-if value="{{dt.contact.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{dt.contact.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{dt.contact.err.retry}}">重试</button></div></sc-if><sc-if value="{{dt.contact.marked}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn wide dis" aria-disabled="true">待赴约</button></sc-if></div>
               </sc-if>
               <sc-if value="{{dt.charred.on}}" hint-placeholder-val="{{false}}"><div class="c09-char"><i class="c09-char-dot"></i><h4>{{dt.charred.title}}</h4><p>原定 <b>{{dt.charred.when}}</b></p><p>{{dt.charred.text}}</p></div></sc-if>
               <sc-if value="{{dt.hist.on}}" hint-placeholder-val="{{false}}">
@@ -687,7 +821,7 @@ body{margin:0}
                 <div class="c09-h3">局内记录<small>{{dt.hist.recCount}} 条</small></div>
                 <sc-if value="{{dt.hist.noRec}}" hint-placeholder-val="{{false}}"><p class="c09-hint">还没有记录。</p></sc-if>
                 <ul class="c09-rec"><sc-for list="{{dt.hist.records}}" as="x" hint-placeholder-count="1"><li class="{{x.cls}}"><span>{{x.at}}</span>{{x.text}}</li></sc-for></ul>
-                <div class="c09-note"><input type="text" aria-label="补充这局的记录" placeholder="补充一句事实…" value="{{dt.hist.note}}" onInput="{{dt.hist.onNote}}"><button type="button" class="c09-btn sm {{dt.hist.addCls}}" onClick="{{dt.hist.add}}">补充</button></div>
+                <div class="c09-note"><input type="text" aria-label="补充这局的记录" placeholder="补充一句事实…" value="{{dt.hist.note}}" onInput="{{dt.hist.onNote}}"><button type="button" class="c09-btn sm {{dt.hist.addCls}}" onClick="{{dt.hist.add}}">补充</button></div><sc-if value="{{dt.hist.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{dt.hist.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{dt.hist.err.retry}}">重试</button></div></sc-if>
                 <div style="margin-top:10px"><button type="button" class="c09-link" onClick="{{dt.hist.report}}">不对劲？举报 ›</button><span class="c09-hint" style="margin-left:10px">受理后可在「设置 → 帮助与反馈」查询进度</span></div>
               </sc-if>
               <sc-if value="{{dt.hasSeats}}" hint-placeholder-val="{{false}}">
@@ -703,6 +837,7 @@ body{margin:0}
               <sc-if value="{{dt.hasRules}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-rules-btn" onClick="{{dt.openRules}}">参加约定 · 确认 / 信用 / 赴约<i>›</i></button></sc-if>
               <sc-if value="{{dt.act.on}}" hint-placeholder-val="{{false}}">
                 <div class="c09-acts">
+                  <sc-if value="{{dt.act.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{dt.act.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{dt.act.err.retry}}">重试</button></div></sc-if>
                   <sc-if value="{{dt.act.hasPrimary}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn {{dt.act.primaryCls}}" data-act="{{dt.act.primaryAct}}" onClick="{{dt.act.primary}}">{{dt.act.primaryLabel}}</button></sc-if>
                   <sc-if value="{{dt.act.hasSecondary}}" hint-placeholder-val="{{false}}"><button type="button" class="c09-btn soft" data-act="{{dt.act.secondaryAct}}" onClick="{{dt.act.secondary}}">{{dt.act.secondaryLabel}}</button></sc-if>
                   <sc-if value="{{dt.act.hasHint}}" hint-placeholder-val="{{false}}"><p class="c09-hint">{{dt.act.hint}}</p></sc-if>
@@ -715,11 +850,13 @@ body{margin:0}
       </sc-if>
       <sc-if value="{{mg.on}}" hint-placeholder-val="{{false}}">
         <div class="c09-over c09-mg {{mg.phase}}" style="{{mg.clip}}">
-          <div class="c09-inner" style="{{mg.inner}}" ref="{{overRef}}">
-            <div class="c09-dh c09-toner"><button type="button" class="c09-back" data-act="back" onClick="{{mg.close}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>返回 {{mg.backLabel}}</button><span class="c09-dh-r">贴纸纸 · 管理这局</span></div>
+          <div class="c09-inner" style="{{mg.inner}}" ref="{{overRef}}" onScroll="{{mg.onScroll}}">
+            <div class="c09-dh c09-toner"><button type="button" class="c09-back" data-act="back" onClick="{{mg.close}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>返回 {{mg.backLabel}}</button><span class="c09-dh-r">贴纸纸 · 管理这局</span><div class="c09-dh-fold {{mg.foldCls}}" aria-hidden="{{mg.foldHidden}}"><b>{{mg.title}}</b><span>{{mg.foldMeta}}</span></div></div>
             <div class="c09-burnwrap" style="position:relative">
               <sc-if value="{{mg.charred}}" hint-placeholder-val="{{false}}">
-                <div class="c09-mg-head c09-char {{mg.charCls}}" style="margin:12px 14px 0;clip-path:polygon(0 0,100% 0,100% 64%,94% 72%,97% 84%,86% 90%,80% 100%,0 100%)"><i class="c09-char-dot"></i><div class="c09-kick">已取消</div><h2 class="c09-mg-ttl" style="font-size:22px;color:#333">{{mg.title}}</h2><p>原定 <b>{{mg.whenZh}}</b> · {{mg.placeFull}}</p><p>{{mg.formedLine}}</p><p class="c09-hint" style="margin-top:6px">成员不计主动退出 · 联系入口已关闭 · 这页留在「历史 · 已取消」</p></div>
+                <div class="c09-mg-head c09-char {{mg.charCls}}" style="margin:12px 14px 0;clip-path:polygon(0 0,100% 0,100% 70%,95% 77%,98% 86%,88% 92%,83% 100%,0 100%);{{mg.charStyle}}"><i class="c09-char-dot"></i><div class="c09-kick">已取消</div><h2 class="c09-mg-ttl" style="font-size:22px;color:#333">{{mg.title}}</h2>
+                  <div class="c09-cardstrip"><button type="button" class="c09-obj" aria-label="查看完整局卡（已取消）" onClick="{{mg.openCard}}" style="border:0;background:none;padding:0;cursor:pointer"><div class="c09-mcard" style="--dots:{{mg.dots}}"><i>{{mg.en}}</i></div><div class="c09-mseats"><sc-for list="{{mg.miniSeats}}" as="x" hint-placeholder-count="3"><i class="{{x.cls}}"></i></sc-for></div></button><div class="c09-cs-t"><b>局卡</b> · 已取消 · 抽色<br>原定 <span class="when">{{mg.whenZh}}</span><br>{{mg.placeFull}}<br>{{mg.formedLine}}<br><button type="button" class="c09-link" onClick="{{mg.openCard}}">查看局卡 ›</button></div></div>
+                  <p class="c09-hint" style="margin-top:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">成员不计主动退出 · 这页留在「历史 · 已取消」</p></div>
               </sc-if>
               <sc-if value="{{mg.notCharred}}" hint-placeholder-val="{{true}}">
                 <div class="c09-page c09-mg-head fx-burn {{mg.burnCls}} {{mg.headCls}} {{mg.headAbs}}" style="--fx-mask:url(#c09-hole-mg-{{mg.uid}});--fx-reach:520px">
@@ -745,17 +882,17 @@ body{margin:0}
                 <sc-if value="{{mg.apps.none}}" hint-placeholder-val="{{false}}"><p class="c09-hint">没有待审的申请。</p></sc-if>
                 <sc-for list="{{mg.apps.rows}}" as="a" hint-placeholder-count="2">
                   <div class="c09-app" data-rid="{{a.rid}}">
-                    <div class="c09-app-top"><span class="c09-av">{{a.initial}}</span><span class="c09-app-n"><b>{{a.nick}}</b><small>{{a.ago}}</small></span><span class="c09-stk sm {{a.vbCls}}" style="--r:2deg">{{a.vb}}</span></div>
+                    <div class="c09-app-top"><span class="c09-av">{{a.initial}}</span><span class="c09-app-n"><b>{{a.nick}}</b><span class="c09-app-slot" data-slot="{{a.rid}}"><sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><span class="c09-stk app {{a.resCls}}" style="--r:{{a.resR}}">{{a.resStk}}</span></sc-if></span><small>{{a.ago}}</small></span><span class="c09-stk sm {{a.vbCls}}" style="--r:2deg">{{a.vb}}</span></div>
                     <sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><div class="c09-app-q">“{{a.note}}”</div></sc-if>
-                    <sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="c09-app-acts"><button type="button" class="c09-btn sm soft {{a.busyCls}}" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c09-btn sm {{a.busyCls}}" data-act="approve" onClick="{{a.approve}}">发出邀请</button></div></sc-if>
-                    <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="c09-app-res"><span>{{a.resultText}}</span><span class="c09-stk {{a.resCls}}" style="--r:{{a.resR}}">{{a.resStk}}</span></div></sc-if>
+                    <sc-if value="{{a.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{a.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{a.err.retry}}">重试</button></div></sc-if><sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="c09-app-acts"><button type="button" class="c09-btn sm soft {{a.rejCls}}" data-act="reject" disabled="{{a.lock}}" onClick="{{a.reject}}">谢绝</button><span class="c09-liner"><span class="c09-pit"><button type="button" class="c09-stk app c09-peelstk {{a.stkCls}}" data-act="approve" aria-label="{{a.approveAria}}" disabled="{{a.lock}}" style="--r:{{a.r0}};--r1:{{a.resR}};--sx:{{a.sx}}px;--sy:{{a.sy}}px;--dx:{{a.dx}}px;--dy:{{a.dy}}px" onPointerDown="{{a.down}}" onPointerMove="{{a.move}}" onPointerUp="{{a.up}}" onPointerCancel="{{a.cancelDrag}}" onClick="{{a.approve}}">邀请</button></span><i><b>邀请贴</b>揭下 · 贴到名字旁</i></span></div></sc-if>
+                    <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="c09-app-res"><span>{{a.resultText}}</span><sc-if value="{{a.peeled}}" hint-placeholder-val="{{false}}"><span class="c09-liner empty" aria-hidden="true"><span class="c09-pit"></span></span></sc-if></div></sc-if>
                   </div>
                 </sc-for>
                 <p class="c09-help">{{mg.apps.help}}</p>
               </sc-if>
               <sc-if value="{{mg.rep.on}}" hint-placeholder-val="{{false}}">
                 <div class="c09-h3">改期答复<i>{{mg.rep.answered}}</i><small>没有答复期限</small></div>
-                <div class="c09-rs-cmp" style="margin-bottom:6px"><span>原定 <s>{{mg.rep.old}}</s></span><i>→</i><b>{{mg.rep.now}}</b></div>
+                <div class="c09-rs-cmp" style="margin-bottom:6px"><span class="k">原定</span><s>{{mg.rep.old}}</s><span class="k to">改为</span><b>{{mg.rep.now}}</b></div>
                 <sc-for list="{{mg.rep.rows}}" as="x" hint-placeholder-count="2"><div class="c09-mem" data-rid="{{x.rid}}"><div class="c09-mem-top"><span class="c09-av {{x.avCls}}">{{x.initial}}</span><span class="c09-mem-n"><b>{{x.name}}</b></span><span class="c09-stk sm {{x.sCls}}" style="--r:{{x.r}}">{{x.answerText}}</span></div></div></sc-for>
                 <p class="c09-help">{{mg.rep.help}}</p>
               </sc-if>
@@ -789,6 +926,7 @@ body{margin:0}
                     <div class="c09-att-top"><span class="c09-av">{{x.initial}}</span><span class="c09-mem-n"><b>{{x.name}}</b><small>{{x.attLabel}}</small></span><sc-if value="{{x.showWx}}" hint-placeholder-val="{{false}}"><span style="font:400 13px/1 var(--fd)">{{x.wx}}</span><button type="button" class="c09-btn sm line" data-act="copy" onClick="{{x.copy}}">{{x.copyLabel}}</button></sc-if></div>
                     <sc-if value="{{x.choosing}}" hint-placeholder-val="{{false}}"><div class="c09-seg" role="group" aria-label="记录出席"><button type="button" class="{{x.onP}}" aria-pressed="{{x.prP}}" data-act="attend-present" onClick="{{x.present}}">出席</button><button type="button" class="{{x.onA}}" aria-pressed="{{x.prA}}" data-act="attend-absent" onClick="{{x.absent}}">未出席</button><button type="button" class="{{x.onU}}" aria-pressed="{{x.prU}}" data-act="attend-pending" onClick="{{x.undecided}}">待定</button></div></sc-if>
                     <sc-if value="{{x.stamped}}" hint-placeholder-val="{{false}}"><div class="c09-att-st"><span class="c09-stk {{x.stampCls}}" style="--r:{{x.r}}">{{x.stampText}}</span><button type="button" class="c09-link" onClick="{{x.correct}}">更正</button></div></sc-if>
+                    <sc-if value="{{x.err.on}}" hint-placeholder-val="{{false}}"><div class="c09-ialert" role="alert"><span>{{x.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{x.err.retry}}">重试</button></div></sc-if>
                     <sc-if value="{{x.hasTrail}}" hint-placeholder-val="{{false}}"><ul class="c09-trail"><sc-for list="{{x.trail}}" as="tr" hint-placeholder-count="2"><li>{{tr}}</li></sc-for></ul></sc-if>
                   </div>
                 </sc-for>
@@ -796,7 +934,7 @@ body{margin:0}
               </sc-if>
               <sc-if value="{{mg.plan.on}}" hint-placeholder-val="{{false}}">
                 <div class="c09-h3">这局的安排<small>{{mg.plan.note}}</small></div>
-                <ul class="c09-plan"><sc-for list="{{mg.plan.items}}" as="p" hint-placeholder-count="3"><li class="{{p.cls}}"><span class="c09-plan-t"><b>{{p.label}}</b><small>{{p.sub}}</small></span><sc-if value="{{p.hasBtn}}" hint-placeholder-val="{{true}}"><button type="button" class="c09-btn sm {{p.btnCls}}" data-act="{{p.act}}" onClick="{{p.go}}">{{p.btn}}</button></sc-if><sc-if value="{{p.inert}}" hint-placeholder-val="{{false}}"><span class="c09-stk sm dash">不在本范围</span></sc-if></li></sc-for></ul>
+                <ul class="c09-plan"><sc-for list="{{mg.plan.items}}" as="p" hint-placeholder-count="3"><li class="{{p.cls}}"><span class="c09-plan-t"><b>{{p.label}}</b><small>{{p.sub}}</small></span><sc-if value="{{p.hasBtn}}" hint-placeholder-val="{{true}}"><button type="button" class="c09-btn sm {{p.btnCls}}" data-act="{{p.act}}" onClick="{{p.go}}">{{p.btn}}</button></sc-if><sc-if value="{{p.inert}}" hint-placeholder-val="{{false}}"><span class="c09-stk sm dash">不在本范围</span></sc-if></li><sc-if value="{{p.err.on}}" hint-placeholder-val="{{false}}"><li class="c09-plan-err"><div class="c09-ialert" role="alert" style="margin:0;flex:1 1 auto"><span>{{p.err.message}}</span><button type="button" class="c09-btn sm" data-act="retry" onClick="{{p.err.retry}}">重试</button></div></li></sc-if></sc-for></ul>
               </sc-if>
             </div>
           </div>
@@ -821,18 +959,89 @@ body{margin:0}
           </div>
         </div>
       </sc-if>
+      <sc-if value="{{oedge.on}}" hint-placeholder-val="{{false}}"><div class="c09-oedge {{oedge.cls}}" style="{{oedge.style}}" aria-hidden="true"></div></sc-if>
+      <!-- M4: the page you tapped is a sticker; it peels up off the layer beneath (detail) and is pasted back on return. Same row model, same markup. -->
+      <sc-if value="{{peel.on}}" hint-placeholder-val="{{false}}">
+        <div class="c09-peel {{peel.phase}}" style="left:{{peel.x}}px;top:{{peel.y}}px;width:{{peel.w}}px;height:{{peel.h}}px;--py:{{peel.py}}px" aria-hidden="true">
+          <div class="c09-peel-card">
+            <div class="c09-peel-front">
+              <sc-if value="{{peel.r.isLead}}" hint-placeholder-val="{{false}}">
+                <div class="c09-row lead">
+                  <div class="c09-page c09-pg lead">
+                    <i class="c09-staple" style="top:26px"></i><i class="c09-staple" style="bottom:26px"></i>
+                    <div class="c09-lead-top">
+                      <div><div class="c09-time">{{peel.r.time}}</div><div class="c09-wd">{{peel.r.wd}}<span>{{peel.r.hood}}</span></div></div>
+                      <span class="c09-stk big {{peel.r.stk.cls}}" style="--r:{{peel.r.stk.r}}">{{peel.r.stk.text}}</span>
+                    </div>
+                    <div class="c09-ttl">{{peel.r.title}}</div>
+                    <sc-if value="{{peel.r.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c09-seatrow"><sc-for list="{{peel.r.seats}}" as="x" hint-placeholder-count="4"><i class="c09-seat {{x.cls}}"></i></sc-for><span class="c09-seattext">{{peel.r.seatText}}</span></div></sc-if>
+                    <div class="c09-need">{{peel.r.need}}</div>
+                    <sc-if value="{{peel.r.hasCd}}" hint-placeholder-val="{{false}}"><div class="c09-cd"><span>剩</span><b class="{{peel.r.cdCls}}">{{peel.r.cd}}</b></div><div class="c09-bar"><i class="{{peel.r.cdCls}}" style="width:{{peel.r.ratio}}%"></i></div></sc-if>
+                    <div class="c09-lead-cta"><span class="c09-btn wide">{{peel.r.cta}}</span><sc-if value="{{peel.r.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c09-ex">{{peel.r.extra}}</span></sc-if></div>
+                    <span class="c09-pno">{{peel.r.pno}}</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{peel.r.isRow}}" hint-placeholder-val="{{false}}">
+                <div class="c09-row">
+                  <div class="c09-page c09-pg">
+                    <i class="c09-staple" style="top:50%;margin-top:-2px"></i>
+                    <div class="c09-cr">
+                      <div><div class="c09-time">{{peel.r.time}}</div><div class="c09-wd">{{peel.r.wd}}<span>{{peel.r.hood}}</span></div></div>
+                      <div>
+                        <div class="c09-cr-ttl">{{peel.r.title}}</div>
+                        <div class="c09-cr-sub"><span class="c09-stk sm {{peel.r.stk.cls}}" style="--r:{{peel.r.stk.r}}">{{peel.r.stk.text}}</span><sc-if value="{{peel.r.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c09-cr-x {{peel.r.extraCls}}">{{peel.r.extra}}</span></sc-if></div>
+                        <sc-if value="{{peel.r.hasNeed}}" hint-placeholder-val="{{false}}"><div class="c09-cr-need">{{peel.r.need}}</div></sc-if>
+                        <sc-if value="{{peel.r.hasNext}}" hint-placeholder-val="{{false}}"><span class="c09-cr-next">{{peel.r.next}} ›</span></sc-if>
+                      </div>
+                      <div class="c09-obj">
+                        <sc-if value="{{peel.r.obj.isCard}}" hint-placeholder-val="{{true}}"><div class="c09-mcard" style="--dots:{{peel.r.obj.dots}}"><i>{{peel.r.obj.en}}</i></div><sc-if value="{{peel.r.obj.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c09-mseats"><sc-for list="{{peel.r.obj.seats}}" as="x" hint-placeholder-count="3"><i class="{{x.cls}}"></i></sc-for></div></sc-if></sc-if>
+                        <sc-if value="{{peel.r.obj.isTicket}}" hint-placeholder-val="{{false}}"><div class="c09-mtk {{peel.r.obj.cls}}"></div><sc-if value="{{peel.r.obj.hasDot}}" hint-placeholder-val="{{false}}"><i class="c09-mdot {{peel.r.obj.dotCls}}">{{peel.r.obj.dot}}</i></sc-if></sc-if>
+                        <sc-if value="{{peel.r.obj.isSpine}}" hint-placeholder-val="{{false}}"><div class="c09-spine {{peel.r.obj.cls}}"><sc-if value="{{peel.r.obj.hasDot}}" hint-placeholder-val="{{false}}"><i></i></sc-if></div></sc-if>
+                      </div>
+                    </div>
+                    <span class="c09-pno">{{peel.r.pno}}</span>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{peel.r.isDraft}}" hint-placeholder-val="{{false}}">
+                <div class="c09-row c09-draft">
+                  <div class="c09-page c09-pg">
+                    <div class="c09-mem-top">
+                      <div class="c09-cr" style="width:100%">
+                        <div><div class="c09-time">{{peel.r.time}}</div><div class="c09-wd">{{peel.r.wd}}<span>{{peel.r.hood}}</span></div></div>
+                        <div><div class="c09-cr-ttl {{peel.r.titleCls}}">{{peel.r.title}}</div><div class="c09-cr-sub"><span class="c09-stk sm dash">草稿</span><span class="{{peel.r.readyCls}}">{{peel.r.readyText}}</span></div><div class="c09-ago">{{peel.r.ago}}</div><sc-if value="{{peel.r.hasSource}}" hint-placeholder-val="{{false}}"><div class="c09-cr-need">由「{{peel.r.source}}」再开</div></sc-if></div>
+                        <div class="c09-obj"><div class="c09-mcard" style="--dots:.25;opacity:.6"><i>DRAFT</i></div></div>
+                      </div>
+                    </div>
+                    <div class="c09-dr-foot"><span class="c09-link c09-inert">继续编辑 ›<small>开局模块 · 不在本范围演示</small></span><span class="c09-del">删除</span></div>
+                    <span class="c09-pno">{{peel.r.pno}}</span>
+                  </div>
+                </div>
+              </sc-if>
+            </div>
+            <div class="c09-peel-back"></div>
+          </div>
+        </div>
+      </sc-if>
       <sc-if value="{{err.on}}" hint-placeholder-val="{{false}}"><div class="c09-err" role="alert"><span>{{err.message}}</span><button type="button" class="c09-btn sm" onClick="{{err.retry}}">重试</button><button type="button" class="c09-x" aria-label="关闭" onClick="{{err.dismiss}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div></sc-if>
       <div class="c09-toast {{toast.cls}}" role="status" aria-live="polite">{{toast.text}}</div>
     </div>
     <!-- @fx-svg -->
-    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="c09-char-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a1a"/><stop offset=".18" stop-color="#3a1d0c"/><stop offset=".6" stop-color="#0b0b0b"/><stop offset="1" stop-color="#000"/></linearGradient></defs></svg>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="c09-char-grad" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a1a"/><stop offset=".18" stop-color="#3a1d0c"/><stop offset=".6" stop-color="#0b0b0b"/><stop offset="1" stop-color="#000"/></linearGradient><filter id="c09-rough" filterUnits="userSpaceOnUse" x="-60" y="-60" width="440" height="320"><feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="4" seed="9" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="18" xChannelSelector="R" yChannelSelector="G"/></filter></defs></svg>
   </div>
   <!-- @panel -->
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
 /* @core */
-var C09_TK_W = 342, C09_TK_H = 200, C09_CUT = 256, C09_PAGE_TOP = 100, C09_BURN = 3000;
+var C09_TK_W = 316, C09_TK_H = 200, C09_CUT = 236, C09_PAGE_TOP = 100, C09_BURN = 3000;
+/* burn geometry (ticket px): the lighter starts at the paper's bottom-right corner; the hole stops short of the top-left corner,
+   which stays as the original fragment (band + title start) with a cooled charred rim; the sticker melts into a black dot on it */
+var C09_BURNGEO = { whole: { bx: 304, by: 188, reach: 250, dot: [36, 160] }, torn: { bx: 224, by: 188, reach: 200, dot: [24, 112] } };
+function c09Mirror(poly, ax) { return poly.replace(/(-?[\d.]+)px (-?[\d.]+)px/g, function (m, x, y) { return (ax - parseFloat(x)).toFixed(1) + 'px ' + y + 'px'; }); }
+/* pocket slot i: where the i-th stub (scaled .3, origin = box bottom-right) sits; returns the 316×200 box offset that puts the stub's centre there */
+function c09Slot(i) { var cx = 112 + i * 44, cy = 40, r = (i % 2 ? 5 : -6), sc = .3, a = r * Math.PI / 180; var vx = (C09_CUT + (C09_TK_W - C09_CUT) / 2) - C09_TK_W, vy = -C09_TK_H / 2; var rx = sc * (vx * Math.cos(a) - vy * Math.sin(a)), ry = sc * (vx * Math.sin(a) + vy * Math.cos(a)); return { x: cx - C09_TK_W - rx, y: cy - C09_TK_H - ry, r: r }; }
 function c09Initial(n) { n = n || ''; return n.charAt(0) || '?'; }
 function c09Pad(n) { return (n < 10 ? '0' : '') + n; }
 /* pinking-shears profile: regular zigzag with a little hand wobble */
@@ -841,36 +1050,50 @@ function c09Flakes(n, seed, x0, y0, spread) { var s = JU.fx.scatter(n, seed, spr
 var C09_DOTS = { invite: .35, riso: .55, acid: .7, street: .45, grain: .6, mono: .25 };
 var C09_TONE = { act: 'pink', soon: 'yel', wait: 'wht', kept: 'wht', closed: 'gry' };
 var C09_ROT = ['-2.5deg', '2deg', '-1.5deg', '3deg', '-3deg', '1.2deg'];
+/* D-table failure copy for the leave sheets (shown inside the sheet, above its buttons) */
+var C09_LEAVE_FAIL = { withdraw: '本机保存失败，请重试 · 申请还在', release: '无法保存退出，请重试 · 位置还为你留着', leaveQueue: '退出未保存，请重试', exit: '保存失败，尚未退出 · 票根仍然有效，请重试', decline: '保存失败，尚未退出。新时间仍待你答复，请重试。' };
 class Component extends DCLogic {
   constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; this.feedRef = { current: null }; this.overRef = { current: null }; this.rulesRef = { current: null }; this._prof = c09Zig(46, 3, 9); this._uid = 0; this._scroll = {}; this._sec = { joined: 'current', hosted: 'current' }; this._pno = {}; }
-  initialState(variant) { return Object.assign({}, JU.baseState(variant), { view: { name: 'list' }, roll: 'idle', restack: false, scrolled: false, busy: null, err: null, toast: null, undo: null, leaving: null, entering: null, landed: null, pocket: {}, printed: {}, burntOnce: {} }); }
+  initialState(variant) { this._queuedOpen = null; this._queuedRole = null; this._deleting = {}; this._inflight = {}; this._sheetT = null; this._appDrag = null; this._appDragged = false; return Object.assign({}, JU.baseState(variant), { view: { name: 'list' }, roll: 'idle', bookSel: null, restack: false, scrolled: false, busy: null, err: null, toast: null, undo: null, leaving: null, entering: null, landed: null, printed: {}, burntOnce: {} }); }
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
   say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.after(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* every state change goes through JU.engine: processing → result, or failure strip + retry */
   act(fn, payload, done, opts) {
-    var self = this; opts = opts || {};
-    this.setState({ busy: { fn: fn, key: opts.key || fn }, err: null });
+    var self = this; opts = opts || {}; var key = opts.key || fn;
+    /* one write per key at a time: repeated taps on the same thing while it is being written are swallowed, never sent twice */
+    this._inflight = this._inflight || {}; if (this._inflight[key]) return false; this._inflight[key] = true;
+    this.setState({ busy: { fn: fn, key: key }, err: null });
     this.after(opts.ms == null ? 460 : opts.ms, function () {
+      delete self._inflight[key];
       var res = JU.engine[fn](self.state.data, payload);
-      if (res.effect && res.effect.type === 'error') { self.setState({ data: res.data, busy: null, err: { message: res.effect.message, retry: function () { self.setState({ err: null }); self.act(fn, payload, done, opts); } } }); if (opts.fail) opts.fail(res.effect); return; }
+      if (res.effect && res.effect.type === 'error') {
+        /* a write that no longer applies (e.g. a second delete of the same draft) is not a retryable failure */
+        if (opts.quiet && opts.quiet(res.effect)) { self.setState({ busy: null }); return; }
+        self.setState({ data: res.data, busy: null, err: { key: key, inline: !!opts.inline, message: opts.msg || res.effect.message || '这一步没有生效，请刷新后重试。', retry: function () { self.setState({ err: null }); if (opts.retry) opts.retry(); else self.act(fn, payload, done, opts); } } });
+        if (opts.fail) opts.fail(res.effect); return; }
       self.setState({ data: res.data, busy: null });
       if (done) done(res.effect, res.data);
     });
+    return true;
   }
+  writing(key) { return !!(this._inflight && this._inflight[key]); }
+  cancelAfter(e) { if (!e) return; if (e.id) clearTimeout(e.id); this._timers = (this._timers || []).filter(function (t) { return t !== e; }); }
+  errAt(key) { var e = this.state.err; return e && e.inline && e.key === key ? { on: true, message: e.message, retry: e.retry } : { on: false, message: '', retry: function () { } }; }
   beforeReplay(name) {
     var self = this; var v = this.state.view; if (!v) return;
     if (name === 'open-entry') { this.setState({ view: { name: 'list' } }); return; }
     if (name === 'book-swap') return;
     if (v.name === 'detail') {
       var keys = Object.keys(v.tickets || {});
-      if (name === 'cut') keys.forEach(function (k) { var t = v.tickets[k]; if (t.torn || t.falling) self.setTicket(k, { torn: false, p: 0, falling: false, snap: false, drag: null }); }), this.patchView({ contact: false }), this.setState(function (s) { var p = Object.assign({}, s.pocket); var arr = (p[v.id] || []).slice(0, -1); p[v.id] = arr; return { pocket: p }; });
-      if (name === 'burn') keys.forEach(function (k) { var t = v.tickets[k]; if (t.burnt || t.burning) self.setTicket(k, { burnt: false, burning: false, flakes: [] }); }), this.patchView({ result: null });
+      if (name === 'cut') { keys.forEach(function (k) { var t = v.tickets[k]; if ((t.pocketAt || 0) > 10) self.setTicket(k, { torn: false, p: 1, falling: false, cutting: false, snap: false, drag: null, pocketed: false, pocketFresh: false }); }); this.patchView({ contact: false }); }
+      if (name === 'burn') { keys.forEach(function (k) { var t = v.tickets[k]; if (t.burnt || t.burning) self.setTicket(k, { burnt: false, burning: false, flakes: [] }); }); this.patchView({ result: null }); }
       if (name === 'copy') keys.forEach(function (k) { var t = v.tickets[k]; if (t.phase === 'ready' && !t.old) self.setTicket(k, { phase: 'idle' }); });
     }
     if (v.name === 'manage' && name === 'burn') this.patchView({ burn: null, charred: false, flakes: [] });
   }
+  onOverScroll(ev) { var on = ev.target.scrollTop > 48; var v = this.state.view; if (v && v.name !== 'list' && on !== !!v.fold) this.patchView({ fold: on }); }
   onScroll(ev) { var y = ev.target.scrollTop; var on = y > 44; this._scroll[this.state.role + ':' + this.state.section] = y; if (on !== this.state.scrolled) this.setState({ scrolled: on }); }
   restoreScroll() { var self = this; this.after(16, function () { var f = self.feedRef.current; if (!f) return; var y = self._scroll[self.state.role + ':' + self.state.section] || 0; f.scrollTop = y; self.setState({ scrolled: y > 44 }); }); }
   locate(id) {
@@ -880,18 +1103,30 @@ class Component extends DCLogic {
   }
   /* ------------------------------------------------ M1 / M2: two zines, tape tabs ------------------------------------------------ */
   switchRole(role) {
-    var self = this; if (this.state.role === role || this.state.roll !== 'idle') return;
+    var self = this;
+    /* taps during the swap are queued: the last one wins and runs when the swap lands */
+    if (this.state.roll !== 'idle') { this._queuedRole = role; this.setState({ bookSel: role }); return; }
+    if (this.state.role === role) return;
     this._sec[this.state.role] = this.state.section;
     this.motion('book-swap', function () {
-      self.setState({ roll: 'out' });
-      self.after(270, function () { self.setState({ role: role, section: self._sec[role] || 'current', view: { name: 'list' }, roll: 'in' }); self.restoreScroll(); self.after(440, function () { self.setState({ roll: 'idle' }); }); });
+      /* the selected tab flips on the tap frame (semantics first); the old book then leaves and the new one comes in */
+      self.setState({ roll: 'out', bookSel: role });
+      self.after(270, function () { self.setState({ role: role, section: self._sec[role] || 'current', view: { name: 'list' }, roll: 'in' }); self.restoreScroll(); self.after(440, function () { var q = self._queuedRole; self._queuedRole = null; self.setState({ roll: 'idle', bookSel: q && q !== role ? q : null }); if (q && q !== role) self.after(20, function () { self.switchRole(q); }); }); });
     });
   }
   switchSection(sec) { var self = this; if (this.state.section === sec) return; this.setState({ section: sec, view: { name: 'list' }, restack: true }); this.restoreScroll(); this.after(620, function () { self.setState({ restack: false }); }); }
   /* ------------------------------------------------ M4: sticker lifted → layer beneath ------------------------------------------------ */
+  /* a row's rect from layout (offsets), so the dimmed / scaled feed under an open layer does not skew the landing spot */
+  rowRect(id) {
+    var root = this.root(), f = this.feedRef.current; var el = root ? root.querySelector('.c09-feed [data-rid="r-' + id + '"]') : null; if (!el || !f) return null;
+    if (el.offsetParent !== f) return JU.fx.rectIn(el, root);
+    return { x: f.offsetLeft + el.offsetLeft, y: f.offsetTop + el.offsetTop - f.scrollTop, w: el.offsetWidth, h: el.offsetHeight };
+  }
+  /* row taps: ignored while a layer is open or opening; queued (last one wins) while a layer is closing */
+  tryOpen(fn) { var v = this.state.view; if (v && v.name !== 'list') { if (v.phase === 'out') this._queuedOpen = fn; return; } fn(); }
   openOver(kind, id, ev, extra, instant) {
-    var self = this; var root = this.root(); var el = ev && ev.currentTarget ? (ev.currentTarget.closest('.c09-row[data-rid]') || ev.currentTarget) : (root ? root.querySelector('[data-rid="r-' + id + '"]') : null);
-    var from = el && root ? JU.fx.rectIn(el, root) : { x: 16, y: 180, w: 358, h: 120 };
+    var self = this; var root = this.root();
+    var from = this.rowRect(id) || { x: 16, y: 180, w: 358, h: 120 };
     var view = Object.assign({ name: kind, id: id, phase: instant ? 'in' : 'start', from: from, instant: !!instant }, extra || {});
     this.setState({ view: view, err: null });
     if (instant) { this.after(16, function () { var o = self.overRef.current; if (o) o.scrollTop = 0; }); return; }
@@ -902,20 +1137,20 @@ class Component extends DCLogic {
     var id = v.id; var where = this.locate(id);
     if (where && where !== this.state.section) { this.setState({ section: where }); }
     this.after(30, function () {
-      var root = self.root(); var el = root ? root.querySelector('[data-rid="r-' + id + '"]') : null;
+      var root = self.root(); var el = root ? root.querySelector('.c09-feed [data-rid="r-' + id + '"]') : null;
       if (el) el.scrollIntoView({ block: 'center' });
-      var r = el && root ? JU.fx.rectIn(el, root) : null;
+      var r = el ? self.rowRect(id) : null;
       self.patchView({ phase: 'out', from: r || v.from, gone: !r });
       self.setState({ landed: id, err: null });
-      self.after(440, function () { self.setState({ view: { name: 'list' } }); var f = self.feedRef.current; if (f) self._scroll[self.state.role + ':' + self.state.section] = f.scrollTop; });
+      self.after(440, function () { self.setState({ view: { name: 'list' } }); var f = self.feedRef.current; if (f) self._scroll[self.state.role + ':' + self.state.section] = f.scrollTop; var q = self._queuedOpen; self._queuedOpen = null; if (q) self.after(30, q); });
       self.after(1600, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); });
     });
   }
   geom(v) {
     var root = this.root(); var W = root ? root.clientWidth : 390, H = root ? root.clientHeight : 844;
-    if (v.phase === 'in') return { clip: 'clip-path:inset(0px 0px 0px 0px round 0px)', inner: 'transform:translateY(0px)' };
+    if (v.phase === 'in') return { clip: 'clip-path:inset(0px 0px 0px 0px round 0px)', inner: 'transform:translateY(0px)', edge: 'left:0px;right:0px;transform:translateY(' + H + 'px)' };
     var f = v.from; var top = Math.max(0, f.y), left = Math.max(0, f.x), right = Math.max(0, W - f.x - f.w), bottom = Math.max(0, H - f.y - f.h);
-    return { clip: 'clip-path:inset(' + top.toFixed(1) + 'px ' + right.toFixed(1) + 'px ' + bottom.toFixed(1) + 'px ' + left.toFixed(1) + 'px round 3px)', inner: 'transform:translateY(' + (f.y - C09_PAGE_TOP).toFixed(1) + 'px)' };
+    return { clip: 'clip-path:inset(' + top.toFixed(1) + 'px ' + right.toFixed(1) + 'px ' + bottom.toFixed(1) + 'px ' + left.toFixed(1) + 'px round 3px)', inner: 'transform:translateY(' + (f.y - C09_PAGE_TOP).toFixed(1) + 'px)', edge: 'left:' + left.toFixed(1) + 'px;right:' + right.toFixed(1) + 'px;transform:translateY(' + (H - bottom).toFixed(1) + 'px)' };
   }
   applyJump(e) {
     var o = e.open;
@@ -931,7 +1166,8 @@ class Component extends DCLogic {
     else if (r.object === 'stamp') obj = { isTicket: true, cls: 'torn', hasDot: true, dotCls: r.attendance === 'present' ? '' : r.attendance === 'absent' ? 'gry' : r.attendance === 'pending' ? 'yel' : 'dash', dot: r.attendance === 'present' ? '出' : r.attendance === 'absent' ? '未' : r.attendance === 'pending' ? '待' : '' };
     else if (r.object === 'spine') obj = { isSpine: true, cls: (r.stage === 'cancelled' || r.stage === 'exited' || r.stage === 'declined') ? 'ash' : '', hasDot: r.stage === 'cancelled' || r.stage === 'exited' || r.stage === 'declined' };
     else obj = { isCard: true, dots: C09_DOTS[e.pack] || .4, en: e.en, hasSeats: r.stage === 'gathering', seats: r.seats.map(function (x) { return { cls: x.kind }; }) };
-    var extra = '', extraCls = ''; if (r.deadline) { extra = '剩 ' + r.leftText; extraCls = r.leftRatio < .25 ? 'hot' : ''; }
+    var live = !!r.deadline && r.group !== 'closed'; /* a reservation that has ended (expired / released) shows no countdown on its spine */
+    var extra = '', extraCls = ''; if (live) { extra = '剩 ' + r.leftText; extraCls = r.leftRatio < .25 ? 'hot' : ''; }
     if (r.stage === 'reschedule') extra = '改为 ' + r.newWhen.zh;
     if (r.stage === 'ended') extra = r.attendanceText;
     var when = r.stage === 'reschedule' ? r.oldWhen : r.when;
@@ -940,8 +1176,8 @@ class Component extends DCLogic {
       hasExtra: !!extra && !(lead && r.deadline), extra: extra, extraCls: extraCls, hasNext: !lead && !!r.cta, next: r.cta, hasNeed: !lead && r.group === 'closed', need: r.need, obj: obj, pno: pno,
       hasSeats: !!lead && r.stage === 'gathering', seats: r.seats.map(function (x) { return { cls: x.kind }; }), seatText: r.counts.confirmed + '/' + r.counts.capacity + ' 已确认（含局主）',
       hasCd: !!lead && !!r.deadline, cd: r.leftText, cdCls: r.leftRatio < .25 ? 'hot' : '', ratio: Math.round(r.leftRatio * 100), cta: r.cta || '查看', ctaAct: r.stage === 'tear' ? 'tear' : r.stage === 'contact' ? 'contact' : r.stage === 'reschedule' ? 'accept' : 'confirm',
-      aria: e.title + '，' + r.label + '，' + r.when.zh + '，' + r.place.hood + (r.deadline ? '，预留剩余 ' + r.leftText : ''),
-      open: function (ev) { self.motion('open-entry', function () { self.openDetail(r.id, ev, {}); }); } };
+      aria: e.title + '，' + r.label + '，' + r.when.zh + '，' + r.place.hood + (live ? '，预留剩余 ' + r.leftText : ''),
+      open: function () { self.tryOpen(function () { self.motion('open-entry', function () { self.openDetail(r.id, null, {}); }); }); } };
   }
   hostRow(r, lead, idx) {
     var self = this; var s = this.state; var e = r.event;
@@ -952,33 +1188,41 @@ class Component extends DCLogic {
       hasSeats: !!lead && e.status === 'open', seats: r.seats.map(function (x) { return { cls: x.kind }; }), seatText: r.seatText + '（含你）' + (r.seatMore ? ' · ' + r.seatMore : ''),
       hasCd: false, cta: r.cta || '管理这局', ctaAct: r.cta === '审核申请' ? 'approve' : r.cta === '记录出席' ? 'attend-present' : 'back', need: r.cta === '审核申请' ? '通过即发出 6 小时预留 · 确认前不占定' : r.cta === '记录出席' ? '散场后逐人记录出席 · 待核实、可更正' : r.formedLine,
       aria: e.title + '，' + r.life + '，' + r.label + '，' + r.when.zh,
-      open: function (ev) { self.motion('open-entry', function () { self.openManage(r.id, ev, {}); }); } };
+      open: function () { self.tryOpen(function () { self.motion('open-entry', function () { self.openManage(r.id, null, {}); }); }); } };
   }
   draftRow(d, idx) {
     var self = this; var s = this.state;
     return { id: d.id, rid: 'r-' + d.id, isLead: false, isRow: false, isDraft: true, cls: (s.leaving === d.id ? 'leaving ' : '') + (s.entering === d.id ? 'entering ' : '') + (s.landed === d.id ? 'landed ' : '') + (s.view.name !== 'list' && s.view.id === d.id ? 'src' : ''), time: d.when ? d.when.time : '--:--', wd: d.when ? d.when.wdZh + ' ' + d.when.md : '日期未定', hood: d.placeText, title: d.title, titleCls: d.untitled ? 'un' : '', readyCls: d.ready ? 'c09-dr-ready' : 'c09-dr-miss', readyText: d.missingText, ago: d.agoText, hasSource: !!d.source, source: d.source ? d.source.title : '', pno: this._pno[d.id], aria: '草稿 ' + d.title + '，' + d.missingText, delAria: '删除草稿「' + d.title + '」，可撤销',
-      del: function (ev) { ev.stopPropagation(); self.deleteDraft(d.id); },
-      open: function (ev) { self.motion('open-entry', function () { self.openDraft(d.id, ev, {}); }); } };
+      del: function (ev) { ev.stopPropagation(); self.deleteDraft(d.id); }, delOff: s.leaving === d.id ? true : null, err: this.errAt('draft-' + d.id),
+      open: function () { self.tryOpen(function () { self.motion('open-entry', function () { self.openDraft(d.id, null, {}); }); }); } };
   }
   /* ------------------------------------------------ list ------------------------------------------------ */
   listVals() {
     var self = this; var s = this.state; var joined = s.role === 'joined'; var n = 0; this._pno = {};
-    var out = { sections: [], empty: { on: false }, secs: [], foot: { main: '— 本期到此 · JU —', sub: '含评审样例 · 样例不计入你的真实记录' }, undo: { on: false }, secNote: '' };
+    var out = { sections: [], empty: { on: false }, secs: [], foot: { main: '— 本期到此 · JU —', sub: '含评审样例 · 样例不计入你的真实记录' }, undo: { on: false, err: { on: false } }, secNote: '' };
     var tab = function (label, key, count) { return { label: label, hasCount: count > 0, count: count, cls: s.section === key ? 'on' : '', sel: String(s.section === key), go: function () { self.switchSection(key); } }; };
     var number = function (rows) { rows.forEach(function (r) { self._pno[r.id] = 'p.' + c09Pad(++n); }); };
+    /* ds_many_history: inside a history group that spans months, a photocopied month slip goes in wherever the month changes */
+    var months = function (rows, mapped) {
+      if (s.section !== 'history') return mapped;
+      var ym = rows.map(function (r) { var iso = (r.event && r.event.iso) || ''; return iso.slice(0, 7); });
+      if (ym.filter(function (k, i) { return k && ym.indexOf(k) === i; }).length < 2) return mapped;
+      var out = [], prev = null; rows.forEach(function (r, i) { var k = ym[i]; if (k && k !== prev) { var nn = ym.filter(function (x) { return x === k; }).length; out.push({ id: 'mon-' + k + '-' + i, isMonth: true, isLead: false, isRow: false, isDraft: false, month: (+k.slice(5, 7)) + ' 月', monthNote: nn + ' 场' }); prev = k; } out.push(mapped[i]); });
+      return out;
+    };
     if (joined) {
       var j = JU.derive.joined(s.data);
       out.secs = [tab('当前', 'current', 0), tab('历史', 'history', j.counts.history)];
       var secs = s.section === 'history' ? j.sectionsHistory : j.sectionsCurrent; var leadId = s.section === 'current' && j.lead ? j.lead.id : null;
       secs.forEach(function (sc) { number(sc.rows); });
-      out.sections = secs.map(function (sc) { return { title: sc.title, note: sc.note, count: sc.rows.length, rows: sc.rows.map(function (r, i) { return self.joinedRow(r, r.id === leadId, i); }) }; });
+      out.sections = secs.map(function (sc) { return { title: sc.title, note: sc.note, count: sc.rows.length, rows: months(sc.rows, sc.rows.map(function (r, i) { return self.joinedRow(r, r.id === leadId, i); })) }; });
       if (!secs.length) { var k = s.section === 'history' ? 'emptyJoinedHistory' : (j.emptyKind === 'rested' ? 'emptyJoinedRested' : 'emptyJoinedFirst'); var c = JU.COPY[k]; out.empty = { on: true, stk: '空白页', stkCls: 'yel', title: c.title, body: c.body, hasBtn: s.section === 'history', btn: '回到当前', go: function () { self.switchSection('current'); }, hasInert: s.section !== 'history', inert: '去找局' }; }
       out.secNote = s.section === 'current' ? '按接下来要做什么排' : '散场与未成行分开';
     } else {
       var hx = JU.derive.hosted(s.data);
       out.secs = [tab('当前', 'current', 0), tab('草稿', 'drafts', hx.counts.drafts), tab('历史', 'history', hx.counts.history)];
       if (s.section === 'drafts') {
-        out.undo = s.undo ? { on: true, title: s.undo.title, go: function () { self.undoDelete(); } } : { on: false };
+        out.undo = s.undo ? { on: true, title: s.undo.title, go: function () { self.undoDelete(); }, err: this.errAt('undo') } : { on: false, err: { on: false } };
         number(hx.drafts);
         if (hx.drafts.length) out.sections = [{ title: '没写完的局', note: '只存活动内容', count: hx.drafts.length, rows: hx.drafts.map(function (d, i) { return self.draftRow(d, i); }) }];
         else out.empty = { on: true, stk: '空白页', stkCls: 'yel', title: JU.COPY.emptyDrafts.title, body: JU.COPY.emptyDrafts.body, hasBtn: false, hasInert: true, inert: '去开局' };
@@ -986,7 +1230,7 @@ class Component extends DCLogic {
       } else {
         var hs = s.section === 'history' ? hx.sectionsHistory : hx.sectionsCurrent; var hl = s.section === 'current' && hx.lead ? hx.lead.id : null;
         hs.forEach(function (sc) { number(sc.rows); });
-        out.sections = hs.map(function (sc) { return { title: sc.title, note: sc.note, count: sc.rows.length, rows: sc.rows.map(function (r, i) { return self.hostRow(r, r.id === hl, i); }) }; });
+        out.sections = hs.map(function (sc) { return { title: sc.title, note: sc.note, count: sc.rows.length, rows: months(sc.rows, sc.rows.map(function (r, i) { return self.hostRow(r, r.id === hl, i); })) }; });
         if (!hs.length) { if (s.section === 'history') out.empty = { on: true, stk: '空白页', stkCls: 'yel', title: JU.COPY.emptyHostedHistory.title, body: JU.COPY.emptyHostedHistory.body + '可以从中再开一局。', hasBtn: true, btn: '回到当前', go: function () { self.switchSection('current'); }, hasInert: false }; else if (hx.drafts.length) out.empty = { on: true, stk: '草稿还在', stkCls: 'pink', title: JU.COPY.emptyHostedDrafts.title, body: JU.COPY.emptyHostedDrafts.body, hasBtn: true, btn: '接着改草稿', go: function () { self.switchSection('drafts'); }, hasInert: false }; else out.empty = { on: true, stk: '空白页', stkCls: 'yel', title: JU.COPY.emptyHostedFirst.title, body: JU.COPY.emptyHostedFirst.body, hasBtn: false, hasInert: true, inert: '去开局' }; }
         out.secNote = s.section === 'current' ? '有任务的先排' : '可从散场的局再开';
       }
@@ -1001,8 +1245,8 @@ class Component extends DCLogic {
     var isHist = sf === 'history' || r.group === 'kept' || r.group === 'closed';
     var mode = isHist ? 'history' : (sf === 'ticket' || sf === 'contact' || sf === 'reschedule-reply' || r.object === 'ticket') ? 'ticket' : 'detail';
     var tickets = {}; var pkey = id + ':' + r.event.version; var needPrint = false;
-    if (mode === 'ticket' && r.stage !== 'reschedule') { needPrint = r.stage === 'tear' && !this.state.printed[pkey] && !instant; tickets.main = { phase: needPrint ? 'idle' : 'ready', torn: !!(r.ticket && r.ticket.torn), p: 0, uid: ++this._uid }; }
-    if (r.stage === 'reschedule') { tickets.old = { phase: 'ready', torn: !!(r.ticket && r.ticket.torn), p: 0, old: true, uid: ++this._uid }; needPrint = !this.state.printed[pkey] && !instant; tickets.fresh = { phase: needPrint ? 'idle' : 'ready', torn: false, p: 0, uid: ++this._uid }; }
+    if (mode === 'ticket' && r.stage !== 'reschedule') { needPrint = r.stage === 'tear' && !this.state.printed[pkey] && !instant; var tn = !!(r.ticket && r.ticket.torn); tickets.main = { phase: needPrint ? 'idle' : 'ready', torn: tn, p: 0, uid: ++this._uid, pocketed: tn, pocketAt: 2 }; }
+    if (r.stage === 'reschedule') { var to = !!(r.ticket && r.ticket.torn); tickets.old = { phase: 'ready', torn: to, p: 0, old: true, uid: ++this._uid, pocketed: to, pocketAt: 1 }; needPrint = !this.state.printed[pkey] && !instant; tickets.fresh = { phase: needPrint ? 'idle' : 'ready', torn: false, p: 0, uid: ++this._uid }; }
     if (mode === 'history' && r.ticket) { var burnNow = r.stage === 'cancelled' && !this.state.burntOnce[id]; var ashStatic = (r.stage === 'cancelled' && !burnNow) || r.stage === 'exited' || r.stage === 'declined'; tickets.main = { phase: 'ready', torn: !!r.ticket.torn, p: 0, uid: ++this._uid, voided: r.group === 'closed', burnt: ashStatic, burning: false, archived: r.stage === 'ended' }; if (burnNow) this.after(instant ? 120 : 700, function () { if (self.state.view.id !== id) return; self.burnTicket('main', function () { self.setState(function (s) { var b = Object.assign({}, s.burntOnce); b[id] = true; return { burntOnce: b }; }); }); }); }
     var sheet = null; if (sf === 'withdraw') sheet = this.exitSheetFor(r);
     var v = { mode: mode, tickets: tickets, pno: this._pno[id] || null, contact: sf === 'contact' || r.stage === 'contact' || r.stage === 'going', sheet: sheet, sheetPhase: sheet ? 'in' : '', result: null, note: '', copied: false, jumpKey: extra.jumpKey || null, freshRec: -1, flash: null };
@@ -1010,123 +1254,217 @@ class Component extends DCLogic {
     if (needPrint) this.after(520, function () { if (self.state.view.id !== id) return; self.printTicket(r.stage === 'reschedule' ? 'fresh' : 'main', pkey); });
   }
   exitSheetFor(r) { var st = r.stage; return st === 'pending' ? 'withdraw' : (st === 'invited' || st === 'invited_queue') ? 'release' : st === 'waitlist' ? 'leaveQueue' : st === 'reschedule' ? 'decline' : 'exit'; }
-  openSheet(kind, extra) { var self = this; this.patchView(Object.assign({ sheet: kind, sheetPhase: 'start', readEnd: false, rpText: '' }, extra || {})); this.after(24, function () { self.patchView({ sheetPhase: 'in' }); }); if (kind === 'rules') this.after(120, function () { var el = self.rulesRef.current; if (el && el.scrollHeight <= el.clientHeight + 4) self.patchView({ readEnd: true }); }); }
-  closeSheet() { var self = this; this.patchView({ sheetPhase: 'out' }); this.after(340, function () { self.patchView({ sheet: null, sheetPhase: '' }); }); }
+  openSheet(kind, extra) {
+    var self = this; var v = this.state.view;
+    /* a close that is still sliding out must not unmount the sheet that is opening now */
+    if (this._sheetT) { this.cancelAfter(this._sheetT); this._sheetT = null; }
+    var back = v.sheet === kind && v.sheetPhase === 'out'; /* reopened mid-close: it turns round from where it is */
+    this.patchView(Object.assign(back ? { sheet: kind, sheetPhase: 'in' } : { sheet: kind, sheetPhase: 'start', readEnd: false, rpText: '' }, extra || {}));
+    if (!back) this.after(24, function () { var w = self.state.view; if (w.sheet === kind && w.sheetPhase === 'start') self.patchView({ sheetPhase: 'in' }); });
+    if (kind === 'rules' && !back) this.after(120, function () { var el = self.rulesRef.current; if (el && el.scrollHeight <= el.clientHeight + 4) self.patchView({ readEnd: true }); });
+  }
+  closeSheet(force) {
+    var self = this; var v = this.state.view; if (!v.sheet || v.sheetPhase === 'out') return;
+    if (!force && this.writing('sheet')) return; /* the sheet stays put while its own write is in flight */
+    if (this._sheetT) this.cancelAfter(this._sheetT);
+    this.patchView({ sheetPhase: 'out' }); if (this.state.err && this.state.err.key === 'sheet') this.setState({ err: null });
+    this._sheetT = this.after(340, function () { self._sheetT = null; if (self.state.view.sheetPhase !== 'out') return; self.patchView({ sheet: null, sheetPhase: '' }); });
+  }
   setTicket(key, patch) { this.setState(function (s) { var t = Object.assign({}, s.view.tickets); t[key] = Object.assign({}, t[key] || {}, patch); return { view: Object.assign({}, s.view, { tickets: t }) }; }); }
   /* M8 print = photocopy: scan light sweeps, paper feeds out of the slot in three steps, toner lags the edge */
   printTicket(key, pkey) { var self = this; var id = this.state.view.id; this.motion('copy', function () { self.setTicket(key, { phase: 'printing' }); self.after(2620, function () { if (self.state.view.id !== id) return; self.setTicket(key, { phase: 'ready', stapled: true }); self.setState(function (s) { var p = Object.assign({}, s.printed); if (pkey) p[pkey] = true; return { printed: p }; }); }); }); }
   /* M8 cut: scissors dragged down the dotted line; pinking edge; stub drops into the page pocket */
-  canCut(t) { return t && t.phase === 'ready' && !t.torn && !t.old && !t.voided && !t.burning && !t.burnt && !t.falling && !this.state.busy; }
+  cuttable(t) { return !!t && t.phase === 'ready' && !t.torn && !t.old && !t.voided && !t.burning && !t.burnt && !t.falling && !t.cutting; }
+  canCut(t) { return this.cuttable(t) && !this.state.busy; }
   cutDown(key, ev) { var t = this.state.view.tickets[key]; if (!this.canCut(t)) return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this._dragged = false; this.setTicket(key, { drag: { y: ev.clientY, p0: t.p || 0 }, snap: false }); }
   cutMove(key, ev) { var t = this.state.view.tickets[key]; if (!t || !t.drag) return; var p = Math.max(0, Math.min(1, t.drag.p0 + (ev.clientY - t.drag.y) / 185)); if (Math.abs(ev.clientY - t.drag.y) > 4) this._dragged = true; this.setTicket(key, { p: p }); }
   cutUp(key, ev) { var t = this.state.view.tickets[key]; if (!t || !t.drag) return; if (t.p >= 0.55) { this._dragged = true; this.finishCut(key); } else this.setTicket(key, { drag: null, p: 0, snap: true, hintErr: t.p > 0.08 ? '没剪够 · 剪过一半才会断开' : '' }); }
-  cutTap(key) { var self = this; var t = this.state.view.tickets[key]; if (this._dragged || !this.canCut(t)) { this._dragged = false; return; } /* keyboard / tap: the scissors run the line by themselves */ this.setTicket(key, { drag: null, snap: true, auto: true }); for (var i = 1; i <= 10; i++) (function (i) { self.after(i * 48, function () { var tt = self.state.view.tickets && self.state.view.tickets[key]; if (!tt || !tt.auto) return; self.setTicket(key, { p: i / 10 }); if (i === 10) self.finishCut(key); }); })(i); }
+  cutTap(key, force) { var self = this; var t = this.state.view.tickets[key]; if ((this._dragged && !force) || !this.canCut(t)) { this._dragged = false; return; } this._dragged = false; /* keyboard / tap: the scissors run the line by themselves */ this.setTicket(key, { drag: null, snap: true, auto: true }); for (var i = 1; i <= 10; i++) (function (i) { self.after(i * 48, function () { var tt = self.state.view.tickets && self.state.view.tickets[key]; if (!tt || !tt.auto) return; self.setTicket(key, { p: i / 10 }); if (i === 10) self.finishCut(key); }); })(i); }
   finishCut(key) {
-    var self = this; var id = this.state.view.id; var root = this.root();
-    var tk = root ? root.querySelector('.c09-tkw') : null, pk = root ? root.querySelector('.c09-pocket') : null;
-    var drop = 300, dx = -40; if (tk && pk) { var a = tk.getBoundingClientRect(), b = pk.getBoundingClientRect(); drop = Math.round(b.top - a.top + 14); dx = Math.round(b.left + 24 - (a.left + C09_CUT)); }
-    this.setTicket(key, { drag: null, p: 1, snap: true, auto: false, drop: drop, dx: dx, hintErr: '' });
+    var self = this; var v = this.state.view; var id = v.id; var root = this.root(); var r = this.rowOf(id);
+    /* measure where the stub has to land: the next free slot in the page pocket (layout below the ticket is held still until it lands) */
+    var tk = root ? root.querySelector('.c09-over .c09-tkw[data-tk="' + key + '"]') : null, pk = root ? root.querySelector('.c09-over .c09-pocket') : null;
+    var sl = c09Slot(Object.keys(v.tickets).filter(function (k) { return v.tickets[k].pocketed; }).length);
+    var drop = 300, dx = -40; if (tk && pk && root) { var a = JU.fx.rectIn(tk, root), b = JU.fx.rectIn(pk, root); drop = Math.round(b.y + 1 - a.y + sl.y); dx = Math.round(b.x + 1 - a.x + sl.x); }
+    this.patchView({ hold: this.holdOf(r, v.tickets[key]) });
+    this.setTicket(key, { drag: null, p: 1, snap: true, auto: false, drop: drop, dx: dx, rz: sl.r, cutting: true, hintErr: '' });
+    /* the pocket is the stub's destination: bring it on screen (the fall is in page coordinates, so scrolling does not move the target) */
+    var o = this.overRef.current; if (o && pk) { var pb = pk.getBoundingClientRect(), ob = o.getBoundingClientRect(); var sx = o.offsetHeight ? ob.height / o.offsetHeight : 1; var over = (pb.bottom - ob.top) / sx - (o.clientHeight - 100); if (over > 0) { try { o.scrollTo({ top: o.scrollTop + over, behavior: 'smooth' }); } catch (e) { o.scrollTop += over; } } }
     var commit = key === 'fresh' ? 'acceptReschedule' : 'tearTicket';
-    this.act(commit, { eventId: id }, function (eff) { self.motion('cut', function () { self.stubFall(key, eff); }); }, { ms: 140, fail: function () { self.setTicket(key, { p: 0, snap: true, hintErr: '未能保存，请重新剪下副券' }); } });
+    this.act(commit, { eventId: id }, function (eff) { self.motion('cut', function () { self.stubFall(key, eff); }); }, { ms: 140, key: 'cut-' + key, inline: true, retry: function () { self.cutTap(key, true); }, fail: function () { self.setTicket(key, { p: 0, snap: true, cutting: false }); self.patchView({ hold: null }); } });
   }
   stubFall(key, eff) {
     var self = this; var id = this.state.view.id;
-    this.setTicket(key, { falling: true });
-    this.after(1000, function () { if (self.state.view.id !== id) return; self.setTicket(key, { torn: true, falling: false }); self.setState(function (s) { var p = Object.assign({}, s.pocket); var arr = (p[id] || []).concat([{ id: id + '-' + Date.now(), text: key === 'fresh' ? 'V' + self.rowOf(id).event.version : '№', fresh: true }]); p[id] = arr; return { pocket: p }; }); });
+    this.setTicket(key, { falling: true, cutting: false });
+    /* 850ms: the stub reaches its slot and slips behind the pocket flap → the pocket's own copy takes over and the count changes */
+    this.after(850, function () { if (self.state.view.id !== id) return; self._pk = Math.max(10, self._pk || 10) + 1; self.setTicket(key, { pocketed: true, pocketAt: self._pk, pocketFresh: true }); });
+    this.after(1000, function () { if (self.state.view.id !== id) return; self.setTicket(key, { torn: true, falling: false }); self.patchView({ hold: null }); });
     this.after(1250, function () { if (self.state.view.id !== id) return; if (key === 'fresh') self.setTicket('old', { voided: true }); self.patchView({ contact: true }); if (key === 'fresh') self.say('已接受改期 · 按新票根的时间见'); });
+    this.after(1500, function () { if (self.state.view.id !== id) return; self.setTicket(key, { pocketFresh: false }); });
+  }
+  /* what the page says right before a write: kept on screen until the motion that shows the write has landed */
+  holdOf(r, t) { var tone = r.group === 'closed' ? 'gry' : C09_TONE[r.group] || 'wht'; return { need: this.ticketNeed(r, t), kick: r.detailTitle, label: r.label, cls: tone }; }
+  /* the participant-ticket need line: one line, always present in ticket view so the ticket never jumps when the stage changes */
+  ticketNeed(r, t) {
+    if (!r) return '';
+    if (r.stage === 'tear') return t && (t.phase === 'printing' || t.phase === 'idle') ? '影印中 · 出纸完成前先别剪' : '剪下副券后可以联系局主 · 8 小时内联系';
+    if (r.stage === 'contact') return '副券已剪下 · 8 小时内加局主微信';
+    if (r.stage === 'reschedule') return '局主改了时间 · 剪下新票副券 = 接受';
+    return r.need || '';
+  }
+  flipTicket(key) {
+    var self = this; var id = this.state.view.id; var t = this.state.view.tickets && this.state.view.tickets[key]; if (!t || !t.archived || t.flipPhase) return;
+    this.setTicket(key, { flipPhase: 'flip-out' });
+    this.after(190, function () { if (self.state.view.id !== id) return; var tt = self.state.view.tickets[key]; self.setTicket(key, { flipped: !tt.flipped, flipPhase: 'flip-in' }); self.after(240, function () { if (self.state.view.id === id) self.setTicket(key, { flipPhase: '' }); }); });
+  }
+  /* keep the ticket in view while it burns (the user may have scrolled down to the exit button) */
+  revealTicket(key) {
+    var root = this.root(); var o = this.overRef.current; var el = root ? root.querySelector('.c09-over .c09-tkw[data-tk="' + key + '"]') : null; if (!o || !el) return;
+    var a = el.getBoundingClientRect(), b = o.getBoundingClientRect(); var sx = o.offsetHeight ? b.height / o.offsetHeight : 1; var top = (a.top - b.top) / sx;
+    if (top < 120 || top + 210 > o.clientHeight - 90) { var y = Math.max(0, o.scrollTop + top - 150); try { o.scrollTo({ top: y, behavior: 'smooth' }); } catch (e) { o.scrollTop = y; } }
   }
   /* M8 burn: the photocopy chars black from a corner, flakes drop, a charred blank page with a black dot remains */
   burnTicket(key, then) {
-    var self = this; var id = this.state.view.id; this._uid++;
+    var self = this; var id = this.state.view.id; this._uid++; var t0 = this.state.view.tickets[key]; var g = t0 && t0.torn ? C09_BURNGEO.torn : C09_BURNGEO.whole;
     this.motion('burn', function () {
-      self.setTicket(key, { burning: true, flakes: c09Flakes(12, 7 + self._uid, 300, 170, 90) });
+      self.setTicket(key, { burning: true, burnt: false, flakes: c09Flakes(12, 7 + self._uid, g.bx - 40, g.by - 30, 90) });
+      self.revealTicket(key);
       self.after(C09_BURN + 150, function () { if (self.state.view.id !== id) return; self.setTicket(key, { burning: false, burnt: true }); if (then) then(); });
     });
   }
+  /* the confirm happens in the rules sheet: processing on its button, failure inside it; the sheet closes only once the write has landed */
   confirmJoin() {
-    var self = this; var id = this.state.view.id; var r = this.rowOf(id);
-    this.closeSheet();
+    var self = this; var id = this.state.view.id; var r = this.rowOf(id); if (this.writing('sheet')) return;
     this.act('confirmReservation', { eventId: id }, function (eff) {
-      if (eff.formed) { var pkey = id + ':' + r.event.version; self.patchView({ mode: 'ticket', tickets: { main: { phase: 'idle', torn: false, p: 0, uid: ++self._uid } }, flash: 'formed' }); self.after(260, function () { self.printTicket('main', pkey); }); self.say('全员确认 · 成局出票'); }
-      else { self.patchView({ flash: 'seat' }); self.say('已确认 · 等其他人确认后出票'); }
-    });
+      self.closeSheet(true);
+      if (eff.formed) { var pkey = id + ':' + r.event.version; self.patchView({ mode: 'ticket', tickets: { main: { phase: 'idle', torn: false, p: 0, uid: ++self._uid } }, flash: 'formed' }); self.after(380, function () { if (self.state.view.id === id) self.printTicket('main', pkey); }); }
+      else self.patchView({ flash: 'seat' });
+    }, { key: 'sheet', inline: true, msg: '保存失败，请重试 · 还没有确认入局', retry: function () { self.confirmJoin(); } });
   }
+  /* withdraw / release / leave queue / exit / decline: the write runs while the sheet is still up (its button shows processing);
+     a failure stays in the sheet (D: 退出写入失败 → 停在确认层；拒绝 → 层内 alert). Success: the sheet goes, then the object changes. */
   leaveFlow() {
-    var self = this; var id = this.state.view.id; var kind = this.state.view.sheet;
+    var self = this; var v = this.state.view; var id = v.id; var kind = v.sheet; var r0 = this.rowOf(id);
+    if (!kind || this.writing('sheet')) return;
     var fn = { withdraw: 'withdrawApplication', release: 'releaseReservation', leaveQueue: 'leaveWaitlist', exit: 'exitEvent', decline: 'declineReschedule' }[kind];
-    this.closeSheet();
+    var bk = kind === 'decline' ? 'fresh' : 'main';
+    /* freeze what the burning ticket shows right now: the burn starts from exactly this face, not from the post-write state */
+    var t0 = v.tickets && v.tickets[bk]; if (t0) { var m0 = this.ticketModel(bk, t0, r0, v.mode); this.setTicket(bk, { frozen: { stk: m0.stk, time: m0.time, wd: m0.wd, whenCls: m0.whenCls, code: m0.code, seat: m0.seat } }); }
+    var tone = r0.group === 'closed' ? 'gry' : C09_TONE[r0.group] || 'wht';
+    this.patchView({ hold: v.mode === 'ticket' ? this.holdOf(r0, v.tickets.main || v.tickets.fresh) : { need: r0.need + (r0.stage === 'invited_queue' ? ' · 邀请的 6 小时已开始计时' : ''), kick: r0.detailTitle, label: r0.label, cls: tone } });
     this.act(fn, { eventId: id }, function (eff, data) {
       var rr = JU.derive.rowById(data, id); var res = { tag: rr.label, title: rr.detailTitle, body: rr.need, cls: 'gry' };
-      if (eff.burn) { self.patchView({ contact: false }); if (kind === 'decline') self.setTicket('old', { voided: true }); self.burnTicket(kind === 'decline' ? 'fresh' : 'main', function () { self.patchView({ result: res }); }); }
-      else self.patchView({ result: res, contact: false });
-    });
+      self.closeSheet(true);
+      if (eff.burn) { self.patchView({ contact: false }); if (kind === 'decline') self.setTicket('old', { voided: true }); self.after(300, function () { if (self.state.view.id !== id) return; self.burnTicket(bk, function () { self.patchView({ result: res, hold: null }); }); }); }
+      else { var o = self.overRef.current; var far = o && o.scrollTop > 4; if (far) { try { o.scrollTo({ top: 0, behavior: 'smooth' }); } catch (e) { o.scrollTop = 0; } } /* bring the page's sticker into view, then peel it */ self.after(far ? 420 : 260, function () { if (self.state.view.id === id) self.peelStatus(res); }); }
+    }, { key: 'sheet', inline: true, msg: C09_LEAVE_FAIL[kind], retry: function () { self.leaveFlow(); }, fail: function () { self.patchView({ hold: null }); if (t0) self.setTicket(bk, { frozen: null }); } });
+  }
+  /* non-burning endings (withdraw / release / leave queue): the status sticker curls up at its corner and comes off the page (380ms),
+     then the new grey sticker slaps on in the same spot and the result settles under it */
+  peelStatus(res) {
+    var self = this; var id = this.state.view.id;
+    this.patchView({ stkFx: 'peeloff', contact: false });
+    this.after(380, function () { if (self.state.view.id !== id) return; self.patchView({ stkFx: 'slap', result: res, hold: null }); self.after(300, function () { if (self.state.view.id === id) self.patchView({ stkFx: '' }); }); });
   }
   copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.after(2200, function () { self.patchView({ copied: false }); }); }
-  ticketModel(key, t, r) {
-    var self = this; var e = r.event; var rs = r.item.reschedule; var isOld = !!t.old;
+  ticketModel(key, t, r, mode) {
+    var self = this; var e = r.event; var rs = r.item.reschedule; var isOld = !!t.old; var fz = t.frozen || null;
     var when = isOld ? (rs ? JU.fmt.when(rs.oldIso) : r.when) : key === 'fresh' ? (rs ? JU.fmt.when(rs.newIso) : r.when) : (r.stage === 'cancelled' ? JU.fmt.when(e.iso) : r.when);
-    var p = t.torn ? 1 : (t.p || 0); var W = C09_TK_W, H = C09_TK_H;
-    var keep = JU.fx.tearClipV({ w: W, h: H, x: C09_CUT, profile: this._prof, progress: p, side: 'stub' });
-    var stub = JU.fx.tearClipV({ w: W, h: H, x: C09_CUT, profile: this._prof, progress: p });
-    var edge = JU.fx.tearClipV({ w: W, h: H, x: C09_CUT, profile: this._prof, progress: p, side: 'edge', edge: 1 });
-    var canCut = this.canCut(t);
-    var stk = isOld ? (t.voided ? { text: '作废', cls: 'gry', r: '-6deg' } : { text: '改期 · 不能用', cls: 'gry', r: '-6deg' }) : key === 'fresh' ? { text: '时间已改', cls: 'pink', r: '4deg' } : t.archived ? { text: r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席 · 待核实' : r.attendance === 'pending' ? '待定' : '等章', cls: r.attendance === 'present' ? 'pink' : r.attendance === 'absent' ? 'gry' : r.attendance === 'pending' ? 'yel' : 'dash', r: '-5deg' } : t.voided ? { text: '作废', cls: 'gry', r: '-6deg' } : t.torn ? { text: r.contactAdded ? '待赴约' : '已剪 · 待联系', cls: r.contactAdded ? 'yel' : 'pink', r: '3deg' } : { text: '待剪', cls: 'pink', r: '3deg' };
+    var p = t.torn ? 1 : (t.p || 0); var W = C09_TK_W, H = C09_TK_H, X = C09_CUT, pr = this._prof; var none = 'polygon(0px 0px,0px 0px,0px 0px)';
+    /* keep = left of the scissor line (pinking edge where cut); stub = right; edge = 2px dark fibre line along the cut */
+    var keep = JU.fx.tearClipV({ w: W, h: H, x: X, profile: pr, progress: p, side: 'stub' });
+    var stub = JU.fx.tearClipV({ w: W, h: H, x: X, profile: pr, progress: p });
+    var edge = JU.fx.tearClipV({ w: W, h: H, x: X, profile: pr, progress: p, side: 'edge', edge: 1 });
+    var g = t.torn ? C09_BURNGEO.torn : C09_BURNGEO.whole;
+    var canCut = this.canCut(t), cuttable = this.cuttable(t);
+    var stk = fz ? fz.stk : isOld ? (t.voided ? { text: '作废', cls: 'gry', r: '-6deg' } : { text: '改期 · 不能用', cls: 'gry', r: '-6deg' }) : key === 'fresh' && !t.torn ? { text: '时间已改', cls: 'pink', r: '4deg' } : t.archived ? { text: r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席 · 待核实' : r.attendance === 'pending' ? '待定' : '等章', cls: r.attendance === 'present' ? 'pink' : r.attendance === 'absent' ? 'gry' : r.attendance === 'pending' ? 'yel' : 'dash', r: '-5deg' } : t.voided ? { text: '作废', cls: 'gry', r: '-6deg' } : t.torn ? { text: r.contactAdded ? '待赴约' : '已剪 · 待联系', cls: r.contactAdded ? 'yel' : 'pink', r: '3deg' } : { text: '待剪', cls: 'pink', r: '3deg' };
     var seat = r.seats.map(function (x, i) { return x.you ? i + 1 : 0; }).filter(Boolean)[0] || '—';
-    var hint = t.hintErr ? t.hintErr : t.phase === 'printing' ? '影印中 · 出纸完成前不能剪' : canCut ? (key === 'fresh' ? '按住剪刀沿线往下剪，剪过一半就断开 = 接受新时间' : '按住剪刀沿线往下剪，剪过一半就断开') : '';
-    return { key: key, uid: 'c09-' + key + '-' + (t.uid || 0), label: key === 'fresh' ? 'COPY · 第 ' + e.version + ' 版' : isOld ? 'COPY · 第 ' + (e.version - 1) + ' 版 · 旧票' : 'COPY · JU',
-      prCls: t.phase === 'idle' ? 'measure' : t.phase === 'printing' ? 'printing' : 'ready', litCls: t.phase === 'printing' ? 'lit' : '',
-      burnCls: t.burning ? 'burning' : t.burnt ? 'burnt' : '', flakes: t.flakes || [], ashCls: (t.burnt || t.burning) ? 'on' : '', ashText: r.stage === 'declined' ? '拒绝改期 · 已作废' : r.stage === 'exited' ? '主动退出 · 已作废' : '局主取消 · 已作废',
-      faceCls: (t.voided || isOld) ? 'void' : '', keepClip: t.torn ? 'none' : keep, stubClip: stub, edgeClip: (t.torn || p <= 0) ? 'polygon(0px 0px,0px 0px,0px 0px)' : edge,
-      stubTf: t.falling ? '' : 'rotate(' + (-p * 7).toFixed(2) + 'deg) translate(' + (p * 5).toFixed(1) + 'px,0px)', hasStub: !t.torn, stubCls: (t.falling ? 'off ' : '') + (t.snap ? 'snap' : ''), drop: t.drop || 300, dx: t.dx == null ? -40 : t.dx,
-      hasScis: !t.torn && !t.falling && !isOld && !t.voided && !t.burnt && !t.burning && t.phase !== 'idle', scisCls: (canCut ? '' : 'dis ') + (t.snap ? 'snap' : ''), scisAct: key === 'fresh' ? 'accept' : 'tear', scisAria: key === 'fresh' ? '剪下新票副券，接受新时间' : '剪下副券，联系局主', scisX: C09_CUT, scisY: Math.round(p * (H - 16)) + 22,
+    var cutErr = this.errAt('cut-' + key); var hint = '';
+    if (cutErr.on) hint = cutErr.message + ' · 副券还在票上';
+    else if (t.hintErr) hint = t.hintErr;
+    else if (t.phase === 'printing' || t.phase === 'idle') hint = mode === 'ticket' && !isOld ? '影印中 · 出纸完成前不能剪' : '';
+    else if (t.cutting || t.falling) hint = '剪开了 · 副券落进下面的口袋';
+    else if (cuttable) hint = key === 'fresh' ? '按住剪刀沿线往下剪，剪过一半就断开 = 接受新时间' : '按住剪刀沿线往下剪，剪过一半就断开';
+    else if (mode === 'ticket' && t.burning) hint = '票根作废中 · 从右下角烧起';
+    else if (mode === 'ticket' && t.burnt) hint = '票根已作废 · 焦边留作记录';
+    else if (mode === 'ticket' && t.torn && !isOld) hint = '已剪开 · 副券收在下面的口袋';
+    var flipped = !!t.flipped, archived = !!t.archived && !t.burning && !t.burnt;
+    var code = fz ? fz.code : '№ ' + String(e.id).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) + '-' + (isOld ? e.version - 1 : e.version);
+    return { key: key, uid: 'c09-' + key + '-' + (t.uid || 0), version: isOld ? e.version - 1 : e.version, label: key === 'fresh' ? 'COPY · 第 ' + e.version + ' 版' : isOld ? 'COPY · 第 ' + (e.version - 1) + ' 版 · 旧票' : 'COPY · JU',
+      prCls: (t.phase === 'idle' ? 'measure' : t.phase === 'printing' ? 'printing' : 'ready') + (t.falling ? ' falling' : ''), litCls: t.phase === 'printing' ? 'lit' : '',
+      burnCls: t.burning ? 'burning' : t.burnt ? 'c09-charred' : '', flakes: t.burning ? (t.flakes || []) : [], reach: g.reach, bx: g.bx, by: g.by, dotX: g.dot[0], dotY: g.dot[1], svgClip: t.torn ? keep : 'none',
+      faceCls: ((t.voided || isOld) ? 'void ' : '') + (t.torn ? 'cut' : ''), keepClip: keep, stubClip: stub, edgeClip: p <= 0 ? none : edge,
+      stubTf: t.falling ? '' : 'translate(' + (p * 5).toFixed(1) + 'px,0px) rotate(' + (-p * 7).toFixed(2) + 'deg)', hasStub: !t.torn, stubCls: (t.falling ? 'off ' : '') + (t.snap ? 'snap' : ''), drop: t.drop || 300, dx: t.dx == null ? -40 : t.dx, rz: t.rz == null ? -6 : t.rz,
+      hasScis: !t.torn && !t.falling && !isOld && !t.voided && !t.burnt && !t.burning && t.phase === 'ready', scisCls: (canCut ? '' : 'dis ') + (t.snap ? 'snap' : ''), scisAct: key === 'fresh' ? 'accept' : 'tear', scisAria: key === 'fresh' ? '剪下新票副券，接受新时间' : '剪下副券，联系局主', scisX: X, scisY: Math.round(p * (H - 16)) + 22,
       down: function (ev) { self.cutDown(key, ev); }, move: function (ev) { self.cutMove(key, ev); }, up: function (ev) { self.cutUp(key, ev); }, tap: function () { self.cutTap(key); },
-      code: '№ ' + String(e.id).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 6) + '-' + (isOld ? e.version - 1 : e.version), seat: seat, time: when.time, wd: when.wdZh + ' ' + when.md, whenCls: isOld ? 'old' : '', hood: r.place.hood, area: r.place.area || '—', meeting: when.meeting, host: e.host.name, title: e.title, stk: stk,
-      hasOld: key === 'fresh' && !!rs, old: rs ? JU.fmt.when(rs.oldIso).zh : '', stubText: t.torn ? '' : isOld ? '旧票副券 · 答复前不能用' : key === 'fresh' ? '剪下 = 接受新时间' : '剪下，联系局主',
-      hasHint: !!hint, hint: hint, hintCls: t.hintErr ? 'err' : '' };
+      front: !flipped, backOn: flipped, backClip: t.torn ? c09Mirror(keep, X) : 'none', backEdge: t.torn ? c09Mirror(edge, X) : none, flipCls: t.flipPhase || '', flipOrigin: t.torn ? (X / 2) + 'px 50%' : '50% 50%',
+      hasFlip: archived, flipLabel: flipped ? '点一下 · 看正面' : '点一下 · 看背面', flipPressed: String(flipped), flip: function () { self.flipTicket(key); }, faceTap: archived ? function () { self.flipTicket(key); } : function () { },
+      code: code, seat: fz ? fz.seat : seat, time: fz ? fz.time : when.time, wd: fz ? fz.wd : when.wdZh + ' ' + when.md, whenCls: fz ? fz.whenCls : isOld ? 'old' : '', hood: r.place.hood, area: r.place.area || '—', meeting: when.meeting, host: e.host.name, title: e.title, stk: stk,
+      stubA: isOld ? '旧票副券' : key === 'fresh' ? '剪下 =' : '剪下，', stubB: isOld ? '答复前不能用' : key === 'fresh' ? '接受新时间' : '联系局主 →',
+      hasHint: !!hint, hint: hint, hintCls: (cutErr.on || t.hintErr) ? 'err' : '', hasRetry: cutErr.on, retry: cutErr.retry };
   }
   detailVals() {
     var s = this.state; var v = s.view; if (v.name !== 'detail') return { on: false };
     var self = this; var r = this.rowOf(v.id); if (!r) return { on: false }; var e = r.event; var g = this.geom(v);
     var tone = r.group === 'closed' ? 'gry' : C09_TONE[r.group] || 'wht';
-    var d = { on: true, phase: v.phase, clip: g.clip, inner: g.inner, close: function () { self.closeOver(); }, backLabel: '我参加的 · ' + (s.section === 'history' ? '历史' : '当前'), pno: v.pno || this._pno[r.id] || 'p.—',
+    var d = { on: true, phase: v.phase, clip: g.clip, inner: g.inner, close: function () { self.closeOver(); }, onScroll: function (ev) { self.onOverScroll(ev); }, foldCls: v.fold ? 'on' : '', foldHidden: String(!v.fold), foldMeta: (v.hold ? v.hold.label : r.label) + ' · ' + (r.stage === 'reschedule' || (v.tickets && v.tickets.old) ? r.place.hood : r.when.zh), backLabel: '我参加的 · ' + (s.section === 'history' ? '历史' : '当前'), pno: v.pno || this._pno[r.id] || 'p.—',
       stk: { text: r.label, cls: tone, r: '4deg' }, kick: r.detailTitle, title: e.title, heroCls: e.title.length > 16 ? 'sm' : '', time: r.when.time, wd: r.when.wdZh + ' ' + r.when.md, whenCls: r.stage === 'reschedule' ? 'old' : '', hasNew: r.stage === 'reschedule', newTime: r.newWhen ? r.newWhen.time : '', newWd: r.newWhen ? r.newWhen.wdZh + ' ' + r.newWhen.md : '', hood: r.place.hood, area: r.place.area || '—', meeting: (r.stage === 'reschedule' ? r.newWhen : r.when).meeting, host: e.host.name, hasNote: !!e.note, note: e.note,
-      result: { on: false }, deadline: { on: false }, hasNeed: false, need: '', tickets: [], pocket: { on: false }, contact: { on: false }, charred: { on: false }, hist: { on: false }, hasSeats: false, seats: [], hasQueue: false, queue: [], hasKv: false, kv: [], hasRules: false, act: { on: false } };
+      showWhen: !(v.tickets && v.tickets.old), needCls: '', result: { on: false }, deadline: { on: false }, hasNeed: false, need: '', tickets: [], pocket: { on: false }, contact: { on: false }, charred: { on: false }, hist: { on: false }, hasSeats: false, seats: [], hasQueue: false, queue: [], hasKv: false, kv: [], hasRules: false, act: { on: false } };
     if (r.stage === 'reschedule') { d.time = r.oldWhen.time; d.wd = r.oldWhen.wdZh + ' ' + r.oldWhen.md + ' · 原定'; }
     var done = !!v.result;
     if (v.result) d.result = { on: true, tag: v.result.tag, title: v.result.title, body: v.result.body, cls: v.result.cls };
-    var seatsModel = function () { return r.seats.map(function (x, i) { var st = x.kind === 'host' ? '局主' : x.kind === 'ok' ? '已确认' : x.kind === 'res' ? '已预留' : '空位'; var meta = x.kind === 'res' && x.deadline ? '剩 ' + JU.fmt.leftShort(Math.max(0, x.deadline - JU.NOW)) : x.kind === 'ok' && r.stage === 'gathering' ? '等成局出票' : ''; return { cls: (x.you ? 'you ' : '') + (x.kind === 'ok' && x.you && v.flash === 'seat' ? 'new' : ''), avCls: x.kind === 'host' ? 'host' : x.kind === 'res' ? 'res' : x.kind === 'open' ? 'open' : '', initial: x.kind === 'open' ? (i + 1) : c09Initial(x.name), name: x.kind === 'open' ? '空位' : (x.you ? x.name + '（你）' : x.name), hasMeta: !!meta, meta: meta, state: st, sCls: x.kind === 'host' ? 'blk' : x.kind === 'ok' ? 'pink' : x.kind === 'res' ? 'yel' : 'dash' }; }); };
-    var pocketModel = function () { var arr = s.pocket[r.id] || []; var base = (r.ticket && r.ticket.torn && !arr.length) ? [{ id: 'base', text: '№', fresh: false }] : []; var all = base.concat(arr); return { on: true, count: all.length ? '副券 × ' + all.length : '空', stubs: all.map(function (p, i) { return { cls: p.fresh ? 'new' : '', x: 100 + i * 46, r: (i % 2 ? 4 : -5), text: p.text }; }) }; };
+    /* after declining the new time your seat is released: drop yourself, pad with an empty seat, count without you (same as exit) */
+    var seatList = r.seats, cnt = r.counts;
+    if (r.stage === 'declined') { var mine = r.seats.filter(function (x) { return x.you; })[0]; seatList = r.seats.filter(function (x) { return !x.you; }); while (seatList.length < r.counts.capacity) seatList.push({ kind: 'open' }); cnt = Object.assign({}, r.counts, { confirmed: r.counts.confirmed - (mine && mine.kind === 'ok' ? 1 : 0) }); }
+    var seatsModel = function () { return seatList.map(function (x, i) { var st = x.kind === 'host' ? '局主' : x.kind === 'ok' ? '已确认' : x.kind === 'res' ? '已预留' : '空位'; var meta = x.kind === 'res' && x.deadline ? '剩 ' + JU.fmt.leftShort(Math.max(0, x.deadline - JU.NOW)) : x.kind === 'ok' && r.stage === 'gathering' ? '等成局出票' : ''; return { cls: (x.you ? 'you ' : '') + (x.kind === 'ok' && x.you && v.flash === 'seat' ? 'new' : ''), avCls: x.kind === 'host' ? 'host' : x.kind === 'res' ? 'res' : x.kind === 'open' ? 'open' : '', initial: x.kind === 'open' ? (i + 1) : c09Initial(x.name), name: x.kind === 'open' ? '空位' : (x.you ? x.name + '（你）' : x.name), hasMeta: !!meta, meta: meta, state: st, sCls: x.kind === 'host' ? 'blk' : x.kind === 'ok' ? 'pink' : x.kind === 'res' ? 'yel' : 'dash' }; }); };
+    /* pocket = the stubs this ticket view has actually received (torn before this visit, or landed just now) */
+    var pocketModel = function (models) {
+      var ks = Object.keys(v.tickets).filter(function (k) { return v.tickets[k].pocketed; }).sort(function (a, b) { return (v.tickets[a].pocketAt || 0) - (v.tickets[b].pocketAt || 0); });
+      var full = JU.fx.tearClipV({ w: C09_TK_W, h: C09_TK_H, x: C09_CUT, profile: self._prof, progress: 1 });
+      return { on: true, count: ks.length ? '副券 × ' + ks.length : '空', nCls: ks.some(function (k) { return v.tickets[k].pocketFresh; }) ? 'bump' : '',
+        stubs: ks.map(function (k, i) { var m = models[k]; var sl = c09Slot(i); return { cls: v.tickets[k].pocketFresh ? 'new' : '', x: sl.x.toFixed(1), y: sl.y.toFixed(1), r: sl.r, clip: full, code: m.code, seat: m.seat, a: m.stubA, b: m.stubB }; }) };
+    };
     if (v.mode === 'history') {
       d.hasKv = true; d.kv = [{ k: '原定', v: r.when.long, cls: '' }, { k: '地点', v: r.place.full, cls: '' }, { k: '局主', v: e.host.name, cls: '' }];
-      Object.keys(v.tickets).forEach(function (k) { d.tickets.push(self.ticketModel(k, v.tickets[k], r)); });
+      Object.keys(v.tickets).forEach(function (k) { d.tickets.push(self.ticketModel(k, v.tickets[k], r, 'history')); });
       var recs = (r.records || []).map(function (x, i) { return { at: JU.fmt.abs(x.at), text: x.text, cls: v.freshRec === i ? 'fresh' : '' }; });
-      d.hist = { on: true, stkCls: r.attendance === 'present' ? 'pink' : r.attendance === 'absent' ? 'gry' : r.attendance === 'pending' ? 'yel' : 'dash', stkText: r.stage !== 'ended' ? '不计出席' : r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席 · 待核实' : r.attendance === 'pending' ? '待定' : '等章', attNote: r.stage !== 'ended' ? '没成行的局不计出席' : r.attendance === 'absent' ? '待核实的事实 · 不自动处罚，可向局主补充说明' : r.attendance === 'present' ? '局主记录 · 带出席记录归档' : r.attendance === 'pending' ? '局主暂记待定 · 可更正' : '等局主记录', recCount: recs.length, noRec: !recs.length, records: recs, note: v.note || '', onNote: function (ev) { self.patchView({ note: ev.target.value }); }, addCls: (v.note || '').trim() ? '' : 'dis', add: function () { var txt = (self.state.view.note || '').trim(); if (!txt) return; self.act('addRecord', { eventId: r.id, text: '你补充：' + txt }, function (eff, data) { self.patchView({ note: '', freshRec: (JU.derive.rowById(data, r.id).records || []).length - 1 }); }, { ms: 300 }); }, report: function () { self.openSheet('report'); } };
-      if (r.stage !== 'ended') { d.hasNeed = true; d.need = r.need + (r.stage === 'cancelled' ? ' · 不计为未出席，也不影响成局信用' : r.stage === 'declined' ? ' · 未接受局主的新时间，位置已释放' : r.stage === 'exited' ? ' · 本次已退出，重新参加资格尚未开放' : r.stage === 'expired' ? ' · 条 00:00:00' : ' · 可重新申请（找局模块，本范围只写文案）'); }
+      d.hist = { on: true, stkCls: r.attendance === 'present' ? 'pink' : r.attendance === 'absent' ? 'gry' : r.attendance === 'pending' ? 'yel' : 'dash', stkText: r.stage !== 'ended' ? '不计出席' : r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席 · 待核实' : r.attendance === 'pending' ? '待定' : '等章', attNote: r.stage !== 'ended' ? '没成行的局不计出席' : r.attendance === 'absent' ? '待核实的事实 · 不自动处罚，可向局主补充说明' : r.attendance === 'present' ? '局主记录 · 带出席记录归档' : r.attendance === 'pending' ? '局主暂记待定 · 可更正' : '等局主记录', recCount: recs.length, noRec: !recs.length, records: recs, note: v.note || '', onNote: function (ev) { self.patchView({ note: ev.target.value }); }, addCls: (v.note || '').trim() ? '' : 'dis', err: this.errAt('record'), add: function () { var txt = (self.state.view.note || '').trim(); if (!txt) return; self.act('addRecord', { eventId: r.id, text: '你补充：' + txt }, function (eff, data) { self.patchView({ note: '', freshRec: (JU.derive.rowById(data, r.id).records || []).length - 1 }); }, { ms: 300, key: 'record', inline: true }); }, report: function () { self.openSheet('report'); } };
+      if (r.stage !== 'ended') { d.hasNeed = true; d.need = r.need + (r.stage === 'cancelled' ? ' · 不计为未出席，也不影响成局信用' : r.stage === 'declined' ? ' · 未接受局主的新时间，位置已释放' : r.stage === 'exited' ? ' · 本次已退出，重新参加资格尚未开放' : r.stage === 'expired' ? '' : ' · 可重新申请（找局模块，本范围只写文案）'); }
+      /* expired: the reservation tape has run out — an empty tape bar at 00:00:00 */
+      if (r.stage === 'expired') d.deadline = { on: true, kick: '预留倒计时 · 已走完', text: '00:00:00', copy: '预留已到期，没来得及确认', ratio: 0, hot: 'dead', barCls: 'empty' };
       if (r.group === 'closed' && !r.ticket) d.charred = { on: true, title: e.title, when: r.when.zh, text: r.need };
-      if (r.stage === 'ended') { d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = '当时的名单'; d.seatText = r.counts.confirmed + '/' + r.counts.capacity; d.seatNote = '含局主'; if (r.contactAdded && JU.NOW < r.endedAt + 24 * 3600000) d.contact = { on: true, host: e.host.name, wx: e.host.wx, copy: function () { self.copyWx(e.host.wx); }, copyLabel: v.copied === e.host.wx ? '已复制' : '复制', note: '散场 24 小时内仍可见局主微信。', canMark: false, marked: false }; }
+      if (r.stage === 'ended') { d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = '当时的名单'; d.seatText = r.counts.confirmed + '/' + r.counts.capacity; d.seatNote = '含局主'; if (r.contactAdded && JU.NOW < r.endedAt + 24 * 3600000) d.contact = { on: true, host: e.host.name, wx: e.host.wx, copy: function () { self.copyWx(e.host.wx); }, copyLabel: v.copied === e.host.wx ? '已复制' : '复制', note: '散场 24 小时内仍可见局主微信。', canMark: false, marked: false, err: { on: false } }; }
       return d;
     }
     if (v.mode === 'ticket') {
-      Object.keys(v.tickets).sort(function (a, b) { return a === 'old' ? -1 : b === 'old' ? 1 : 0; }).forEach(function (k) { d.tickets.push(self.ticketModel(k, v.tickets[k], r)); });
+      var models = {};
+      Object.keys(v.tickets).sort(function (a, b) { return a === 'old' ? -1 : b === 'old' ? 1 : 0; }).forEach(function (k) { var m = self.ticketModel(k, v.tickets[k], r, 'ticket'); models[k] = m; d.tickets.push(m); });
       var mt = v.tickets.main || v.tickets.fresh; var ready = mt && mt.phase === 'ready' && !mt.burning && !mt.burnt;
-      d.pocket = pocketModel();
-      if (r.stage === 'reschedule') { d.hasNeed = true; d.need = '局主改了时间。接受就剪下新票副券；去不了可以「去不了了」，释放席位、不记主动失约。旧票已贴「不能用」。'; }
-      else if (r.stage === 'tear') { d.hasNeed = true; d.need = ready ? '剪下副券后可以联系局主 · 剪票后 8 小时内联系' : '影印中 · 请稍等'; }
+      d.pocket = done ? { on: false } : pocketModel(models);
+      /* one fixed-height line above the ticket; held at its pre-write text until the stub lands / the burn ends */
+      d.hasNeed = true; d.needCls = 'tk'; d.need = v.hold ? v.hold.need : this.ticketNeed(r, mt);
+      if (v.hold) { d.kick = v.hold.kick; d.stk = { text: v.hold.label, cls: v.hold.cls, r: '4deg' }; }
+      if (v.stkFx) d.stk = Object.assign({}, d.stk, { cls: d.stk.cls + ' ' + v.stkFx });
       if (v.contact && !done && (r.stage === 'contact' || r.stage === 'going' || (r.stage === 'reschedule' && r.contactAdded))) {
-        d.contact = { on: true, host: e.host.name, wx: e.host.wx, copy: function () { self.copyWx(e.host.wx); }, copyLabel: v.copied === e.host.wx ? '已复制' : '复制', note: r.contactAdded ? JU.COPY.contactedNote + ' 此处为示例微信。' : JU.COPY.contactNote, canMark: !r.contactAdded && r.stage === 'contact', markCls: s.busy && s.busy.fn === 'markContacted' ? 'busy' : '', marked: r.contactAdded, mark: function () { self.act('markContacted', { eventId: r.id }, function () { self.say('已记录加微信 · 按最终时间赴约'); }); } };
+        var cErr = this.errAt('contact');
+        d.contact = { on: true, host: e.host.name, wx: e.host.wx, copy: function () { self.copyWx(e.host.wx); }, copyLabel: v.copied === e.host.wx ? '已复制' : '复制', note: r.contactAdded ? JU.COPY.contactedNote + ' 此处为示例微信。' : JU.COPY.contactNote, canMark: !r.contactAdded && r.stage === 'contact' && !cErr.on, markCls: s.busy && s.busy.fn === 'markContacted' ? 'busy' : '', marked: r.contactAdded, err: cErr, mark: function () { self.act('markContacted', { eventId: r.id }, null, { key: 'contact', inline: true }); } };
       }
       if (!done && ready) {
         if (r.stage === 'reschedule') d.act = { on: true, hasPrimary: false, hasSecondary: true, secondaryLabel: '去不了了', secondaryAct: 'decline', secondary: function () { self.openSheet('decline'); }, hasHint: true, hint: '不接受新时间 → 释放席位、作废票根，不记主动失约、不消耗退出机会' };
         else d.act = { on: true, hasPrimary: false, hasSecondary: true, secondaryLabel: '去不了了', secondaryAct: 'exit', secondary: function () { self.openSheet('exit'); }, hasHint: true, hint: '已确认的退出记为主动退出（每年 4 次）· 票根与联系关闭' };
       }
-      d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = '名单'; d.seatText = r.counts.confirmed + '/' + r.counts.capacity; d.seatNote = '含局主 · 他人只显名字';
+      d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = '名单'; d.seatText = cnt.confirmed + '/' + cnt.capacity; d.seatNote = '含局主 · 他人只显名字';
       d.hasRules = !done;
+      if (d.act.on) d.act.err = this.errAt('acts');
       return d;
     }
-    if (r.deadline && !done) d.deadline = { on: true, copy: JU.fmt.deadlineCopy(r.deadline), text: r.leftText, ratio: Math.round(r.leftRatio * 100), hot: r.leftRatio < .25 ? 'hot' : '' };
+    if (r.deadline && !done) d.deadline = { on: true, kick: '预留倒计时', copy: JU.fmt.deadlineCopy(r.deadline), text: r.leftText, ratio: Math.round(r.leftRatio * 100), hot: r.leftRatio < .25 ? 'hot' : '', barCls: '' };
     if (!done) { d.hasNeed = true; d.need = r.need + (r.stage === 'invited_queue' ? ' · 邀请的 6 小时已开始计时' : ''); }
+    /* the page keeps saying what it said before the write until its sticker has come off (peelStatus) */
+    if (v.hold) { d.kick = v.hold.kick; d.stk = { text: v.hold.label, cls: v.hold.cls, r: '4deg' }; d.hasNeed = true; d.need = v.hold.need; }
+    if (v.stkFx) d.stk = Object.assign({}, d.stk, { cls: d.stk.cls + ' ' + v.stkFx });
     if (r.stage === 'waitlist') { d.hasQueue = true; d.queueCount = r.item.queue.length; d.queue = r.item.queue.map(function (q, i) { return { no: i + 1, name: q.you ? '你' : (q.name || '').charAt(0) + '**', cls: q.you ? 'pink' : 'wht', avCls: q.you ? 'host' : 'res', state: q.you ? '候补第 ' + (i + 1) + ' 位' : '等位' }; }); d.queueHint = '轮到后需在 6 小时内确认 · 候补不占席位，退出不记缺席'; }
-    d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = r.stage === 'waitlist' ? '已进' : '名单'; d.seatText = r.counts.confirmed + '/' + r.counts.capacity; d.seatNote = r.stage === 'gathering' ? '全员确认后出票' : '含局主';
+    d.hasSeats = true; d.seats = seatsModel(); d.seatTitle = r.stage === 'waitlist' ? '已进' : '名单'; d.seatText = cnt.confirmed + '/' + cnt.capacity; d.seatNote = r.stage === 'gathering' ? '全员确认后出票' : '含局主';
     d.hasKv = true; d.kv = [{ k: '时间', v: r.when.long, cls: '' }, { k: '地点', v: r.place.full, cls: '' }, { k: '方式', v: e.joinMode === 'direct' ? '直接留位' : '申请制', cls: '' }];
     d.hasRules = !done;
     if (!done) {
@@ -1135,6 +1473,9 @@ class Component extends DCLogic {
       if (r.stage === 'waitlist') d.act = { on: true, hasPrimary: false, hasSecondary: true, secondaryLabel: '退出候补', secondaryAct: 'exit', secondary: function () { self.openSheet('leaveQueue'); }, hasHint: true, hint: '退出候补不记缺席；之后仍有位置时可以重新加入' };
       if (r.stage === 'gathering') d.act = { on: true, hasPrimary: true, primaryLabel: '等待全员确认', primaryAct: 'confirm', primaryCls: 'dis', primary: function () { }, hasSecondary: false, hasHint: true, hint: '包括局主全员确认后才出票 · 此阶段没有「去不了了」' };
     }
+    if (d.act.on) d.act.err = this.errAt('acts');
+    /* a failed confirm / withdraw whose action row is gone still shows where it happened: on the page */
+    else if (this.errAt('acts').on) d.act = { on: true, hasPrimary: false, hasSecondary: false, hasHint: false, err: this.errAt('acts') };
     return d;
   }
   participantSheetVals() {
@@ -1142,9 +1483,9 @@ class Component extends DCLogic {
     var base = { on: true, phase: v.sheetPhase, tone: '', hasId: true, idTitle: r.event.title, idSub: r.when.zh + ' · ' + r.place.hood, hasBody: true, hasKv: false, hasRed: false, isRules: false, isResched: false, isCard: false, isReport: false, hasNote: false, hasCancel: true, okCls: '', cancelLabel: '再想想', cancel: function () { self.closeSheet(); }, onScroll: function () { } };
     if (v.sheet === 'rules') {
       var invited = r.stage === 'invited' || r.stage === 'invited_queue';
-      return Object.assign(base, { title: '参加约定', tone: 'rules', hasBody: false, isRules: true, rules: JU.RULES, onScroll: function (ev) { var el = ev.target; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 6 && !self.state.view.readEnd) self.patchView({ readEnd: true }); }, readCls: v.readEnd ? 'ok' : '', readHint: v.readEnd ? '— 已到约定末尾 —' : '↓ 读到末尾', hasNote: invited, note: v.readEnd ? '已读完，可以确认' : '请读到末尾，再确认入局', noteCls: v.readEnd ? 'ok' : '', hasCancel: invited, cancelLabel: '先不确认', okLabel: invited ? '确认入局' : '知道了', okAct: invited ? 'confirm' : 'close', okCls: invited ? (v.readEnd ? (s.busy ? 'busy' : '') : 'dis') : 'line', ok: function () { if (!invited) { self.closeSheet(); return; } if (self.state.view.readEnd) self.confirmJoin(); } });
+      return Object.assign(base, { title: '参加约定', tone: 'rules', hasBody: false, isRules: true, rules: JU.RULES, onScroll: function (ev) { var el = ev.target; if (el.scrollTop + el.clientHeight >= el.scrollHeight - 6 && !self.state.view.readEnd) self.patchView({ readEnd: true }); }, readCls: v.readEnd ? 'ok' : '', readHint: v.readEnd ? '— 已到约定末尾 —' : '↓ 读到末尾', hasNote: invited, note: v.readEnd ? '已读完，可以确认' : '请读到末尾，再确认入局', noteCls: v.readEnd ? 'ok' : '', hasCancel: invited, cancelLabel: '先不确认', okLabel: invited ? '确认入局' : '知道了', okAct: invited ? 'confirm' : 'close', okCls: invited ? (v.readEnd ? '' : 'dis') : 'line', ok: function () { if (!invited) { self.closeSheet(); return; } if (self.state.view.readEnd) self.confirmJoin(); } });
     }
-    if (v.sheet === 'report') { var ok = (v.rpText || '').trim().length >= 4; return Object.assign(base, { title: '说说发生了什么', tone: 'pk', hasBody: false, isReport: true, text: v.rpText || '', onText: function (ev) { self.patchView({ rpText: ev.target.value }); }, who: r.seats.filter(function (x) { return x.kind === 'host' || (x.kind === 'ok' && !x.you); }).map(function (x) { return x.name + (x.kind === 'host' ? '（局主）' : ''); }), okLabel: '提交', okAct: 'close', okCls: ok ? '' : 'dis', ok: function () { var txt = (self.state.view.rpText || '').trim(); if (txt.length < 4) return; self.closeSheet(); self.act('addRecord', { eventId: r.id, kind: 'report', text: '举报已受理：' + txt }, function (eff, data) { self.patchView({ freshRec: (JU.derive.rowById(data, r.id).records || []).length - 1 }); self.say('已受理 · 可在「设置 → 帮助与反馈」查询进度'); }, { ms: 400 }); } }); }
+    if (v.sheet === 'report') { var ok = (v.rpText || '').trim().length >= 4; return Object.assign(base, { title: '说说发生了什么', tone: 'pk', hasBody: false, isReport: true, text: v.rpText || '', onText: function (ev) { self.patchView({ rpText: ev.target.value }); }, who: r.seats.filter(function (x) { return x.kind === 'host' || (x.kind === 'ok' && !x.you); }).map(function (x) { return x.name + (x.kind === 'host' ? '（局主）' : ''); }), okLabel: '提交', okAct: 'close', okCls: ok ? '' : 'dis', ok: function () { var txt = (self.state.view.rpText || '').trim(); if (txt.length < 4) return; self.closeSheet(); self.act('addRecord', { eventId: r.id, kind: 'report', text: '举报已受理：' + txt }, function (eff, data) { self.patchView({ freshRec: (JU.derive.rowById(data, r.id).records || []).length - 1 }); }, { ms: 400, key: 'record', inline: true }); } }); }
     var c = JU.COPY[v.sheet] || JU.COPY.exit; var act = { withdraw: 'withdraw', release: 'release', exit: 'exit', decline: 'decline', leaveQueue: 'exit' }[v.sheet] || 'exit';
     return Object.assign(base, { title: c.title, tone: 'pk', body: c.body, cancelLabel: c.cancel, okLabel: c.ok, okAct: act, okCls: 'red', ok: function () { self.leaveFlow(); } });
   }
@@ -1179,8 +1520,8 @@ class Component extends DCLogic {
     if (ended) mk('attendance', '出席', m.recorded + '/' + m.attendees.length, m.unrecorded > 0);
     mk('plan', '安排', null, false);
     var stkCls = cancelled ? 'gry' : m.todo ? 'pink' : m.section === 'resched' ? 'yel' : m.formed ? 'yel' : 'wht';
-    var wo = { on: true, phase: v.phase, clip: g.clip, inner: g.inner, close: function () { self.closeOver(); }, backLabel: '我发起的 · ' + (s.section === 'history' ? '历史' : '当前'),
-      charred: !!v.charred || v.burn === 'burning', notCharred: !v.charred || v.burn === 'burning', burningNow: v.burn === 'burning', charCls: v.burn === 'burning' ? 'beneath' : '', headAbs: v.burn === 'burning' ? 'c09-abs' : '', uid: v.uid, burnCls: v.burn === 'burning' ? 'burning' : v.burn === 'burnt' ? 'burnt' : '', flakes: v.flakes || [], headCls: cancelled ? 'void' : '',
+    var wo = { on: true, phase: v.phase, clip: g.clip, inner: g.inner, close: function () { self.closeOver(); }, onScroll: function (ev) { self.onOverScroll(ev); }, foldCls: v.fold ? 'on' : '', foldHidden: String(!v.fold), foldMeta: m.status + ' · ' + m.when.zh, backLabel: '我发起的 · ' + (s.section === 'history' ? '历史' : '当前'),
+      charred: !!v.charred || v.burn === 'burning', notCharred: !v.charred || v.burn === 'burning', burningNow: v.burn === 'burning', charCls: v.burn === 'burning' ? 'beneath' : '', charStyle: v.headH ? 'min-height:' + v.headH + 'px' : '', headAbs: v.burn === 'burning' ? 'c09-abs' : '', uid: v.uid, burnCls: v.burn === 'burning' ? 'burning' : v.burn === 'burnt' ? 'burnt' : '', flakes: v.flakes || [], headCls: cancelled ? 'void' : '',
       stk: { cls: stkCls }, life: m.life, status: m.status, title: e.title, whenZh: m.when.zh, hood: m.place.hood, placeFull: m.place.full, version: e.version, formedLine: m.formedLine, whenCls: v.fresh.when ? 'reprint' : '', en: e.en, dots: C09_DOTS[e.pack] || .4, cardChip: m.formed ? '已成局' : m.counts.reserved ? '席位已预留' : '仍可报名', openCard: function () { self.openSheet('card'); },
       miniSeats: m.seats.map(function (x) { return { cls: x.kind }; }),
       progL: ended ? m.recorded + '/' + m.attendees.length + ' 已记录出席' : '已确认 ' + m.counts.confirmed + '/' + e.capacity + '（含你）', progR: ended ? '出席 ' + m.present + ' · 未出席 ' + m.absent : (JU.fmt.seatLine(m.counts) || '满员'),
@@ -1188,13 +1529,18 @@ class Component extends DCLogic {
       chips: chips, secCls: v.secSwap ? 'swap' : '', apps: { on: false }, mem: { on: false }, leaves: { on: false }, wl: { on: false }, rep: { on: false }, att: { on: false }, plan: { on: false } };
     var tab = v.tab;
     if (tab === 'applications') {
-      wo.apps = { on: true, count: m.pendingApps.length, note: m.handledCount ? '已处理 ' + m.handledCount + ' · 通过即发出 6 小时预留' : '通过即发出 6 小时预留', none: !m.appsToShow.length, help: JU.COPY.approveHelp, rows: m.appsToShow.map(function (a, i) { var busy = s.busy && s.busy.key === 'app-' + a.id; return { rid: 'a-' + a.id, initial: c09Initial(a.nick), nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? 'wht' : 'gry', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled, resultText: a.resultText, resStk: a.status === 'approved' ? '已邀请' : '已谢绝', resCls: (a.status === 'approved' ? 'pink' : 'gry') + (v.fresh.app === a.id ? ' slap' : ''), resR: C09_ROT[i % C09_ROT.length], busyCls: busy ? 'busy' : '',
-        approve: function () { self.act('approve', { eventId: e.id, appId: a.id }, function (eff) { self.patchView({ fresh: { seat: eff.nick, app: a.id } }); }, { key: 'app-' + a.id }); },
-        reject: function () { self.act('reject', { eventId: e.id, appId: a.id }, function (eff) { self.patchView({ fresh: { app: a.id } }); }, { key: 'app-' + a.id, ms: 320 }); } }; }) };
+      wo.apps = { on: true, count: m.pendingApps.length, note: m.handledCount ? '已处理 ' + m.handledCount + ' · 通过即发出 6 小时预留' : '通过即发出 6 小时预留', none: !m.appsToShow.length, help: JU.COPY.approveHelp, rows: m.appsToShow.map(function (a, i) { var busy = s.busy && s.busy.key === 'app-' + a.id; var fly = v.appFly && v.appFly.id === a.id ? v.appFly : null; var drag = v.appDrag && v.appDrag.id === a.id ? v.appDrag : null; var approved = a.status === 'approved';
+        return { rid: 'a-' + a.id, initial: c09Initial(a.nick), nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? 'wht' : 'gry', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled && !self.errAt('app-' + a.id).on, resultText: a.resultText, resStk: approved ? '已邀请' : '已谢绝', resCls: (approved ? 'pink' : 'gry') + (v.fresh.app === a.id ? (approved ? ' press' : ' slap') : ''), resR: C09_ROT[i % C09_ROT.length], r0: C09_ROT[(i + 3) % C09_ROT.length], peeled: approved, err: self.errAt('app-' + a.id),
+          /* the row is locked from the first tap until the write lands: one write per application */
+          lock: busy || fly || self.writing('app-' + a.id) ? true : null, rejCls: busy && s.busy.fn === 'reject' ? 'busy' : '', approveAria: '发出邀请：揭下邀请贴，贴到 ' + (a.nick || '申请人') + ' 旁',
+          stkCls: fly ? 'fly' : drag ? 'drag' : v.appBack === a.id ? 'back' : '', sx: fly ? fly.sx : drag ? drag.dx : 0, sy: fly ? fly.sy : drag ? drag.dy : 0, dx: fly ? fly.dx : 0, dy: fly ? fly.dy : 0,
+          down: function (ev) { self.appDown(a, ev); }, move: function (ev) { self.appMove(a, ev); }, up: function (ev) { self.appUp(a, ev); }, cancelDrag: function () { self.appCancel(a); },
+          approve: function () { if (self._appDragged) { self._appDragged = false; return; } self.approveApp(e.id, a); },
+          reject: function () { if (v.appFly) return; self.act('reject', { eventId: e.id, appId: a.id }, function (eff) { self.patchView({ fresh: { app: a.id } }); }, { key: 'app-' + a.id, ms: 320, inline: true, quiet: function (ef) { return /已经处理过/.test(ef.message || ''); } }); } }; }) };
     }
     if (tab === 'members') {
       wo.mem = { on: true, basis: e.capacity + ' 个座位（含你）· 已确认 ' + m.counts.confirmed + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : ''), help: cancelled ? '已取消 · 成员不计主动退出；联系入口已关闭。' : m.formed ? '已成局 · 成员微信仅你可见，散场 24 小时后关闭。' : '全员（含你）确认后成局出票；预留到期按候补顺位自动补位。',
-        rows: m.roster.map(function (x, i) { var opened = !!v.openWx[x.id]; var meta = x.host ? '' : x.ticketText + (x.contactAdded ? ' · 已自报加微信' : '') + (x.leftText ? ' · ' + x.leftText : ''); return { rid: 'm-' + x.id, initial: x.host ? '主' : c09Initial(x.nick), name: x.host ? x.nick + '（局主）' : x.nick, avCls: x.host ? 'host' : x.tone === 'res' ? 'res' : x.tone === 'void' ? 'void' : '', hasMeta: !!meta, meta: meta, metaCls: x.leftRatio && x.leftRatio < .25 ? 'hot' : '', hasCd: !!x.deadline && !cancelled, ratio: Math.round(x.leftRatio * 100), state: x.stateText, sCls: x.tone === 'host' ? 'blk' : x.tone === 'ok' ? 'pink' : x.tone === 'res' ? 'yel' : x.tone === 'wait' ? 'wht' : 'gry', r: C09_ROT[i % C09_ROT.length], cls: (v.fresh.seat === x.nick ? 'new' : ''), expanded: String(opened), open: opened && !x.host, showWx: x.showWx, hideWx: !x.showWx, wx: x.wx, wxNote: cancelled ? '联系入口已关闭' : x.status === 'invited' ? '确认前不显示微信' : !m.formed ? '成局后才能看成员微信' : '联系方式已关闭', copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function (ev) { ev.stopPropagation(); self.copyWx(x.wx); },
+        rows: m.roster.map(function (x, i) { var opened = !!v.openWx[x.id]; var left = x.leftText && !cancelled && x.tone !== 'void' ? x.leftText : ''; var meta = x.host ? '' : [x.ticketText, x.contactAdded ? '已自报加微信' : '', left, cancelled && x.leftText ? '预留随取消结束' : ''].filter(Boolean).join(' · '); return { rid: 'm-' + x.id, initial: x.host ? '主' : c09Initial(x.nick), name: x.host ? x.nick + '（局主）' : x.nick, avCls: x.host ? 'host' : x.tone === 'res' ? 'res' : x.tone === 'void' ? 'void' : '', hasMeta: !!meta, meta: meta, metaCls: x.leftRatio && x.leftRatio < .25 ? 'hot' : '', hasCd: !!x.deadline && !cancelled, ratio: Math.round(x.leftRatio * 100), state: x.stateText, sCls: x.tone === 'host' ? 'blk' : x.tone === 'ok' ? 'pink' : x.tone === 'res' ? 'yel' : x.tone === 'wait' ? 'wht' : 'gry', r: C09_ROT[i % C09_ROT.length], cls: (v.fresh.seat === x.nick ? 'new' : ''), expanded: String(opened), open: opened && !x.host, showWx: x.showWx, hideWx: !x.showWx, wx: x.wx, wxNote: cancelled ? '联系入口已关闭' : x.status === 'invited' ? '确认前不显示微信' : !m.formed ? '成局后才能看成员微信' : '联系方式已关闭', copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function (ev) { ev.stopPropagation(); self.copyWx(x.wx); },
           toggle: function () { if (x.host) return; var o = Object.assign({}, self.state.view.openWx); o[x.id] = !o[x.id]; self.patchView({ openWx: o }); } }; }),
         openOn: open && m.counts.available > 0, openText: '还有 ' + m.counts.available + ' 个空位' };
       if (m.leaves.length) wo.leaves = { on: true, count: m.leaves.length, open: v.leavesOpen ? true : null, arrow: v.leavesOpen ? '˄' : '˅', toggle: function (ev) { ev.preventDefault(); self.patchView({ leavesOpen: !self.state.view.leavesOpen }); }, rows: m.leaves.map(function (l) { return { initial: c09Initial(l.nick), nick: l.nick, text: l.text, ago: JU.fmt.ago(l.at) }; }) };
@@ -1203,8 +1549,8 @@ class Component extends DCLogic {
     if (tab === 'replies') wo.rep = { on: true, answered: '已答复 ' + m.answered + '/' + m.reschedRoster.length, old: m.oldWhen ? m.oldWhen.zh : '', now: m.when.zh, help: JU.COPY.repliesHelp, rows: m.reschedRoster.map(function (x, i) { return { rid: 'm-' + x.id, initial: c09Initial(x.nick), name: x.nick, answerText: x.answerText, avCls: x.reschedule === 'declined' || x.status === 'declined' ? 'void' : '', sCls: x.reschedule === 'ask' ? 'wht' : x.reschedule === 'accepted' ? 'pink' : 'gry', r: C09_ROT[i % C09_ROT.length] }; }) };
     if (tab === 'attendance') {
       wo.att = { on: true, count: m.recorded + '/' + m.attendees.length, help: JU.COPY.attendanceHelp, contactNote: m.contactOpen ? '散场 24 小时内仍可查看成员微信' : '散场已超过 24 小时，联系方式已关闭',
-        rows: m.attendees.map(function (x, i) { var editing = !!v.editing[x.id]; var has = !!x.attendance; var choosing = !has || editing; var mkc = function (val) { return function () { self.act('attend', { eventId: e.id, memberId: x.id, value: val }, function (eff) { var ed = Object.assign({}, self.state.view.editing); delete ed[x.id]; if (eff.type === 'noop') { self.patchView({ editing: ed }); return; } var fr = Object.assign({}, self.state.view.fresh); fr[x.id] = true; self.patchView({ editing: ed, fresh: fr }); self.after(2400, function () { var f2 = Object.assign({}, self.state.view.fresh); delete f2[x.id]; self.patchView({ fresh: f2 }); }); }, { ms: 240 }); }; };
-          return { rid: 'm-' + x.id, initial: c09Initial(x.nick), name: x.nick, attLabel: x.attLabel, showWx: x.showWx, wx: x.wx, copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function () { self.copyWx(x.wx); },
+        rows: m.attendees.map(function (x, i) { var editing = !!v.editing[x.id]; var has = !!x.attendance; var choosing = !has || editing; var mkc = function (val) { return function () { self.act('attend', { eventId: e.id, memberId: x.id, value: val }, function (eff) { var ed = Object.assign({}, self.state.view.editing); delete ed[x.id]; if (eff.type === 'noop') { self.patchView({ editing: ed }); return; } var fr = Object.assign({}, self.state.view.fresh); fr[x.id] = true; self.patchView({ editing: ed, fresh: fr }); self.after(2400, function () { var f2 = Object.assign({}, self.state.view.fresh); delete f2[x.id]; self.patchView({ fresh: f2 }); }); }, { ms: 240, key: 'att-' + x.id, inline: true }); }; };
+          return { rid: 'm-' + x.id, err: self.errAt('att-' + x.id), initial: c09Initial(x.nick), name: x.nick, attLabel: x.attLabel, showWx: x.showWx, wx: x.wx, copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function () { self.copyWx(x.wx); },
             choosing: choosing, onP: has && x.attendance === 'present' ? 'on' : '', onA: has && x.attendance === 'absent' ? 'on' : '', onU: has && x.attendance === 'pending' ? 'on' : '', prP: has ? String(x.attendance === 'present') : 'false', prA: has ? String(x.attendance === 'absent') : 'false', prU: has ? String(x.attendance === 'pending') : 'false', present: mkc('present'), absent: mkc('absent'), undecided: mkc('pending'),
             stamped: has && !editing, stampCls: (x.attendance === 'present' ? 'pink' : x.attendance === 'absent' ? 'gry' : 'yel') + (v.fresh[x.id] ? ' slap' : ''), r: C09_ROT[(i + 2) % C09_ROT.length], stampText: x.attendance === 'present' ? '出席' : x.attendance === 'absent' ? '未出席 · 待核实' : '待定', correct: function () { var ed = Object.assign({}, self.state.view.editing); ed[x.id] = true; self.patchView({ editing: ed }); },
             hasTrail: x.attTrail.length >= 2, trail: x.attTrail }; }) };
@@ -1218,23 +1564,56 @@ class Component extends DCLogic {
       if (m.canCancel) items.push({ label: '取消这局', sub: '确认前会列出受影响的人', hasBtn: true, btn: '取消这局', btnCls: 'red', act: 'cancel', cls: '', go: function () { self.hostSheet('cancel'); } });
       if (!open) items.push({ label: '再开一局', sub: '只带入活动内容，成员与记录不复制 · 在「开局」里进行', hasBtn: false, inert: true, cls: 'ghost' });
       items.push({ label: '查看完整局卡', sub: '成员在详情里看到的是同一张局卡', hasBtn: true, btn: '查看局卡', btnCls: 'line', act: 'close', cls: '', go: function () { self.openSheet('card'); } });
+      items.forEach(function (p) { p.err = p.act ? self.errAt('plan-' + p.act) : { on: false }; if (!p.act) p.act = ''; });
       wo.plan = { on: true, note: cancelled ? '已取消 · 不能撤销' : ended ? '已散场' : '局主操作', items: items };
     }
     return wo;
   }
   rsNewIso() { var v = this.state.view; return v.rsDate && v.rsTime ? v.rsDate + 'T' + v.rsTime : ''; }
-  submitReschedule() { var self = this; var id = this.state.view.id; var iso = this.rsNewIso(); this.closeSheet(); this.act('propose', { eventId: id, newIso: iso }, function (eff) { var o = self.overRef.current; if (o) o.scrollTop = 0; self.patchView({ fresh: { when: true } }); self.say(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间'); self.after(200, function () { if (eff.asked) self.setTab('replies'); }); self.after(900, function () { self.patchView({ fresh: {} }); }); }); }
+  submitReschedule() { var self = this; var id = this.state.view.id; var iso = this.rsNewIso(); this.act('propose', { eventId: id, newIso: iso }, function (eff) { self.closeSheet(true); var o = self.overRef.current; if (o) o.scrollTop = 0; self.patchView({ fresh: { when: true } }); self.say(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间'); self.after(200, function () { if (eff.asked) self.setTab('replies'); }); self.after(900, function () { self.patchView({ fresh: {} }); }); }, { key: 'sheet', inline: true, retry: function () { self.submitReschedule(); } }); }
   submitCancel() {
-    var self = this; var id = this.state.view.id; this.closeSheet(); this._uid++;
+    var self = this; var id = this.state.view.id; this._uid++;
     this.act('cancel', { eventId: id }, function (eff) {
+      self.closeSheet(true);
       var o = self.overRef.current; if (o) o.scrollTop = 0;
-      self.motion('burn', function () {
-        self.patchView({ burn: 'burning', flakes: c09Flakes(14, 21 + self._uid, 320, 240, 110), tab: 'members' });
-        self.after(C09_BURN - 60, function () { if (self.state.view.id !== id) return; self.patchView({ burn: 'burnt', charred: true }); });
+      /* the burn starts once the sheet is gone (one main motion at a time); the charred page lands at the burning page's height */
+      self.after(320, function () {
+        if (self.state.view.id !== id) return; var root = self.root(); var hd = root ? root.querySelector('.c09-over .c09-mg-head.fx-burn') : null; var hh = hd ? hd.offsetHeight : 0;
+        self.motion('burn', function () {
+          self.patchView({ burn: 'burning', headH: hh, flakes: c09Flakes(14, 21 + self._uid, 320, 240, 110), tab: 'members' });
+          self.after(C09_BURN - 60, function () { if (self.state.view.id !== id) return; self.patchView({ burn: 'burnt', charred: true }); });
+        });
       });
-    }, { ms: 700 });
+    }, { ms: 700, key: 'sheet', inline: true, retry: function () { self.submitCancel(); } });
   }
-  submitEnd() { var self = this; var id = this.state.view.id; this.closeSheet(); this.act('end', { eventId: id }, function (eff) { var o = self.overRef.current; if (o) o.scrollTop = 0; self.patchView({ tab: 'attendance', secSwap: true }); self.after(300, function () { self.patchView({ secSwap: false }); }); }); }
+  submitEnd() { var self = this; var id = this.state.view.id; this.act('end', { eventId: id }, function (eff) { self.closeSheet(true); var o = self.overRef.current; if (o) o.scrollTop = 0; self.patchView({ tab: 'attendance', secSwap: true }); self.after(300, function () { self.patchView({ secSwap: false }); }); }, { key: 'sheet', inline: true, retry: function () { self.submitEnd(); } }); }
+  /* ---- M5 approve = sticker sheet: the invite sticker is peeled off its liner and stuck next to the applicant's name (tap, Enter, or drag) ---- */
+  appTarget(id) {
+    var root = this.root(); var row = root ? root.querySelector('.c09-over .c09-app[data-rid="a-' + id + '"]') : null; if (!row) return null;
+    var pit = row.querySelector('.c09-pit'), slot = row.querySelector('.c09-app-slot'), stk = row.querySelector('.c09-peelstk'); if (!pit || !slot || !stk) return null;
+    var P = JU.fx.rectIn(pit, root), S = JU.fx.rectIn(slot, root); var h = stk.offsetHeight || 23;
+    return { dx: Math.round(S.x - P.x), dy: Math.round(S.y + S.h / 2 - (P.y + h / 2)) };
+  }
+  approveApp(eventId, a, from) {
+    var self = this; if (this.writing('app-' + a.id) || this.state.view.appFly) return;
+    var tg = this.appTarget(a.id) || { dx: -120, dy: -90 };
+    this.patchView({ appFly: { id: a.id, sx: from ? from.sx : 0, sy: from ? from.sy : 0, dx: tg.dx, dy: tg.dy }, appDrag: null, appBack: null });
+    this.act('approve', { eventId: eventId, appId: a.id }, function (eff) { self.patchView({ appFly: null, fresh: { seat: eff.nick, app: a.id } }); },
+      { key: 'app-' + a.id, inline: true, quiet: function (ef) { if (/已经处理过/.test(ef.message || '')) { self.patchView({ appFly: null }); return true; } return false; },
+        fail: function () { self.patchView({ appFly: null }); }, retry: function () { self.setState({ err: null }); self.after(60, function () { self.approveApp(eventId, a); }); } });
+  }
+  appScale() { var root = this.root(); return root && root.offsetWidth ? root.getBoundingClientRect().width / root.offsetWidth : 1; }
+  appDown(a, ev) { if (this.writing('app-' + a.id) || this.state.view.appFly) return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this._appDragged = false; this._appDrag = { id: a.id, x0: ev.clientX, y0: ev.clientY }; }
+  appMove(a, ev) { var d = this._appDrag; if (!d || d.id !== a.id) return; var k = this.appScale(); var dx = (ev.clientX - d.x0) / k, dy = (ev.clientY - d.y0) / k; if (!this._appDragged && Math.abs(dx) + Math.abs(dy) < 6) return; this._appDragged = true; this.patchView({ appDrag: { id: a.id, dx: Math.round(dx), dy: Math.round(dy) }, appBack: null }); }
+  appUp(a, ev) {
+    var self = this; var d = this._appDrag; this._appDrag = null; if (!d || d.id !== a.id || !this._appDragged) return;
+    var dr = this.state.view.appDrag || { dx: 0, dy: 0 }; var tg = this.appTarget(a.id); var near = tg && Math.abs(dr.dx - tg.dx) < 90 && Math.abs(dr.dy - tg.dy) < 46;
+    var e = this.state.view.id;
+    if (near) { this.approveApp(e, a, { sx: dr.dx, sy: dr.dy }); return; }
+    /* released away from the name: the sticker goes back onto its liner */
+    this.patchView({ appDrag: null, appBack: a.id }); this.after(330, function () { if (self.state.view.appBack === a.id) self.patchView({ appBack: null }); });
+  }
+  appCancel(a) { this._appDrag = null; if (this.state.view.appDrag) this.patchView({ appDrag: null, appBack: a.id }); }
   hostSheetVals() {
     var s = this.state; var v = s.view; var self = this; var m = this.mg(v.id); if (!m) return { on: false }; var e = m.event;
     var base = { on: true, phase: v.sheetPhase, tone: '', hasId: true, idTitle: e.title, idSub: m.when.zh + ' · ' + m.place.hood, hasBody: false, hasKv: false, hasRed: false, isRules: false, isResched: false, isCard: false, isReport: false, hasNote: false, hasCancel: true, okCls: '', cancelLabel: '再想想', cancel: function () { self.closeSheet(); }, onScroll: function () { } };
@@ -1254,25 +1633,41 @@ class Component extends DCLogic {
     return { on: true, phase: v.phase, clip: g.clip, inner: g.inner, close: function () { self.closeOver(); }, title: d.title, titleCls: d.untitled ? 'un' : '', ago: d.agoText, kv: kv, readyStk: d.ready ? 'yel' : 'wht', readyText: d.missingText, hasSource: !!d.source, source: d.source ? d.source.title : '', del: function () { self.closeOver(); self.after(500, function () { self.deleteDraft(d.id); }); } };
   }
   deleteDraft(id) {
-    var self = this; this.setState({ leaving: id });
-    this.after(280, function () { self.setState({ leaving: null }); self.act('deleteDraft', { draftId: id }, function (eff) { self.setState({ undo: { draftId: id, title: eff.title } }); self.say('已删除「' + eff.title + '」'); self.after(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); }, { ms: 60 }); });
+    var self = this; this._deleting = this._deleting || {};
+    if (this._deleting[id] || this.state.leaving === id) return; /* repeated taps on a page that is already leaving */
+    this._deleting[id] = true; this.setState({ leaving: id });
+    this.after(280, function () {
+      self.act('deleteDraft', { draftId: id }, function (eff) { delete self._deleting[id]; self.setState({ leaving: null, undo: { draftId: id, title: eff.title } }); self.say('已删除「' + eff.title + '」'); self.after(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); },
+        { ms: 60, key: 'draft-' + id, inline: true, retry: function () { self.deleteDraft(id); }, quiet: function (eff) { if (/不存在/.test(eff.message || '')) { delete self._deleting[id]; self.setState({ leaving: null }); return true; } return false; }, fail: function () { delete self._deleting[id]; self.setState({ leaving: null }); } });
+    });
   }
-  undoDelete() { var self = this; var u = this.state.undo; if (!u) return; this.act('undoDelete', {}, function (eff) { self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(420, function () { self.setState({ entering: null }); }); self.after(1800, function () { self.setState({ landed: null }); }); }, { ms: 80 }); }
+  undoDelete() { var self = this; var u = this.state.undo; if (!u || (this.state.busy && this.state.busy.key === 'undo')) return; this.act('undoDelete', {}, function (eff) { self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(420, function () { self.setState({ entering: null }); }); self.after(1800, function () { self.setState({ landed: null }); }); }, { ms: 80, key: 'undo', inline: true }); }
+  /* M4 peel copy: the same row model as the list page under it */
+  peelVals(lv) {
+    var v = this.state.view; if (!v || v.name === 'list' || v.gone || !v.from) return { on: false };
+    var found = null; lv.sections.forEach(function (sc) { sc.rows.forEach(function (r) { if (r.id === v.id) found = r; }); }); if (!found) return { on: false };
+    var f = v.from; return { on: true, r: found, phase: v.phase, x: f.x.toFixed(1), y: f.y.toFixed(1), w: f.w.toFixed(1), h: f.h.toFixed(1), py: (-Math.max(0, f.y)).toFixed(1) };
+  }
   /* ------------------------------------------------ renderVals ------------------------------------------------ */
   renderVals() {
     var s = this.state; var self = this; var panel = this.panelVals(); panel.show = this.props.panel !== false;
     var j = JU.derive.joined(s.data), hx = JU.derive.hosted(s.data);
     var lv = this.listVals(); var over = s.view.name !== 'list' && s.view.phase !== 'out';
     var sheet = { on: false }; if (s.view.sheet && s.view.name === 'detail') sheet = this.participantSheetVals(); if (s.view.sheet && s.view.name === 'manage') sheet = this.hostSheetVals();
+    /* the sheet's own write: processing on its main button, the dismiss button rests, a failure sits above the buttons */
+    if (sheet.on) { var sw = !!(s.busy && s.busy.key === 'sheet'); sheet.okCls = (sheet.okCls || '') + (sw ? ' busy' : ''); sheet.cancelCls = sw ? 'dis' : ''; sheet.err = this.errAt('sheet'); }
+    var bk = s.bookSel || s.role; var ov = s.view; var edge = { on: false };
+    if (ov.name !== 'list' && !ov.gone && ov.from && !(s.review && s.review.rm)) { var gg = this.geom(ov); edge = { on: true, cls: ov.phase === 'start' ? 'start' : '', style: gg.edge }; }
     return {
       panel: panel, rootRef: this.rootRef, feedRef: this.feedRef, overRef: this.overRef, rulesRef: this.rulesRef,
       appCls: (s.busy ? ' c09-busy' : ''), busyOn: !!s.busy, topCls: s.scrolled && !over ? 'compact' : '',
       head: { date: 'WED 12.17 · 15:00' },
-      books: { joinedOn: s.role === 'joined' ? 'on' : '', hostedOn: s.role === 'hosted' ? 'on' : '', joinedSel: String(s.role === 'joined'), hostedSel: String(s.role === 'hosted'), badgeJOn: j.badge > 0, badgeJ: j.badge, badgeJAria: j.badge + ' 项要你回应', badgeHOn: hx.badge > 0, badgeH: hx.badge, badgeHAria: hx.badge + ' 项待你处理', toJoined: function () { self.switchRole('joined'); }, toHosted: function () { self.switchRole('hosted'); } },
+      books: { joinedOn: bk === 'joined' ? 'on' : '', hostedOn: bk === 'hosted' ? 'on' : '', joinedSel: String(bk === 'joined'), hostedSel: String(bk === 'hosted'), badgeJOn: j.badge > 0, badgeJ: j.badge, badgeJAria: j.badge + ' 项要你回应', badgeHOn: hx.badge > 0, badgeH: hx.badge, badgeHAria: hx.badge + ' 项待你处理', toJoined: function () { self.switchRole('joined'); }, toHosted: function () { self.switchRole('hosted'); } },
       feedCls: (over ? 'dim ' : '') + (s.roll === 'out' ? 'out ' : s.roll === 'in' ? 'in ' : '') + (s.restack ? 'restack' : ''), onScroll: function (ev) { self.onScroll(ev); },
       secs: lv.secs, secNote: lv.secNote, sections: lv.sections, empty: lv.empty, foot: lv.foot, undo: lv.undo,
       dt: this.detailVals(), mg: this.manageVals(), dr: this.draftVals(), sheet: sheet,
-      err: s.err ? { on: true, message: s.err.message, retry: s.err.retry, dismiss: function () { self.setState({ err: null }); } } : { on: false },
+      err: s.err && !s.err.inline ? { on: true, message: s.err.message, retry: s.err.retry, dismiss: function () { self.setState({ err: null }); } } : { on: false },
+      peel: this.peelVals(lv), oedge: edge,
       toast: { cls: s.toast && s.toast.on ? 'in' : '', text: s.toast ? s.toast.text : '' }
     };
   }
