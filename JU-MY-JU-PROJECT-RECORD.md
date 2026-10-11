@@ -9,8 +9,8 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-11 00:31 UTC（容器时钟为 UTC；用户时区未知） |
-| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `e401a3c`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
+| 最后更新 | 2026-10-11 00:33 UTC（容器时钟为 UTC；用户时区未知） |
+| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `a686591`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
 | 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 目前只发布了入口画板 `Main.dc.html`（十套索引）；C01/C04 画板**尚未发布**到画布（文件在 `concepts/project/`） |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：C00.dc.html、C01.dc.html、C04.dc.html） |
@@ -220,7 +220,7 @@
 - 视觉（当前代码值，来自规格）：字族 Noto Sans SC 400/500/700 + DM Mono 400/500（只两族）；时间 28px DM Mono 500（票面 40px），局名 20px/1.3（lead 21px/700，详情 24px/700），日期 / 地点 13.5px，状态点阵 12px DM Mono 字距 .06em，回单头 11px 字距 .14em；色板：纸 #f3efe6 / 阴面 #e9e4d8 / 墨 #1b1a18 / 灰墨 #5f5a51 / 淡墨 #9a9388 / 红印 #b3301f / 机壳 #242229–#302d36–#17161b / 出纸口 #09080b / 焦炭 #271e19–#3a2e26 / 余烬 #ff7a1a。构图：机壳顶板 96px（铭牌 + 两卷身份拨杆）→ 出纸口 → 342px 纸带居中可滚动 → 底栏 48px 存根槽。层级：第一眼大号 mono 时间 + 粗体局名；第二眼点阵状态行（反白 / 描边 / 点线灰 / 虚线淡 / 红描五态）；第三眼组名与说明。
 - 材质：热敏纸横向条纹 `repeating-linear-gradient` + 左右 6% 边缘暗化；纸边 1px 暗线 + 24px 下落阴影；齿孔 9px 节距点线 + 两侧半圆缺口；票 = 2.5px 墨边框一截纸 + 2px 点线齿孔副券；机壳哑光深灰 + 竖向拉丝；撕口 34 段 ±4.2px 纤维轮廓 + 1.6px 亮纤维带 + 5px 软阴影；焦边 feTurbulence 置换。主负责人观察（首屏两张）：纸面与机壳的明暗对比成立，大号时间与局名形成主次，状态点阵行可读；未核验详情与票面。
 - 动效（代理自报的当前代码值）：① 走纸打印 2200ms×k，三段走纸两次停顿（`c01-feed3`，linear 分段），印头 10px 暗渐变，打印中副券不可点；② 撕票：副券右端按下，`p = clamp((−dx + 1.15dy)/175)`，阈值 0.55，回弹 220ms；落下 820ms `cubic-bezier(.45,.02,.75,.5)` 旋转 12→−26°、rotateX 0→70°、scale .68 到底栏存根槽；主票 250→184px 底边锯齿；300ms 后联系层打印；③ 焦卷作废 2600ms（票）/ 2800ms（活动条）`cubic-bezier(.35,.05,.5,1)`：mask 圆孔 0→reach（`#fx-rough-strong` 毛边）+ 16px 炭圈 + 5px 余烬线（80% 后淡出）+ 10 粒纸灰落向底栏；烧尽后折叠为 0 高，原位出现焦炭残片 `.c01-char`。其余：共享元素展开 420ms `cubic-bezier(.2,.8,.2,1)`、身份切换 430ms 收卷 + 520ms 出卷、便签 380ms、回执 420ms/2.6s、印章 560ms、草稿删除 360ms + 撤销条 10s。
-- 验证分级：已写代码 ✔；已运行 ✔（主负责人 coverage-v2 50/50，0 错误）；已检查视觉：主负责人仅首屏两张 ✔，其余代理自报；已检查完整动效：代理自报（`evidence/C01/print|tear|cancel|…/sheet.png`），主负责人未看；已检查交互：代理自报；用户已认可 ✘。
+- 验证分级：已写代码 ✔；已运行 ✔（主负责人 coverage-v2 50/50，0 错误）；已检查视觉：主负责人看过首屏两张 + `evidence/C01/tear/sheet.png`（撕票 → 联系 → 复制 → 已加微信 20 帧）+ `evidence/C01/cancel/sheet.png`（取消便签 → 工单活动条起火 → 焦炭残片 → 历史·已取消 18 帧）✔；主负责人观察：撕票的副券旋转与纤维缝可见、存根落下后联系层以打印方式出现，流程连续；燃烧只在 2 帧内完成（1× 速度下抽帧稀疏），余烬环与焦炭残片成立，残片的锯齿边与列表里的焦边条目一致。其余帧序列（print / resched / end-att / draft-undo 等）仍为代理自报；已检查交互：代理自报；用户已认可 ✘。
 - 已知偏差：规格 §4 说在面板外加了一条「C01 本地演示」失败按钮——契约随后改为面板内置「下一次保存失败」，评审阶段应移除重复控件；代理自报「无种子场景能在确认时成局」——核心数据已改（brunch 容量 3），需确认 C01 已走通出票分支。
 
 ### 3.2 C02 站牌（未开始 · 方向卡）
@@ -234,7 +234,7 @@
 - 视觉（当前代码值）：Noto Sans SC 500 标题 27px 字距 .08em，局名 22/26px，行内 15/16px；Sora 600 倒计时 34/44/40px 字距 −.02/−.03em；眉注 Sora 600 10px 大写字距 .22em 与中文 13px 并置；色板 夜色 #050811/#0a1020/#101a33，文字四级 #f2f5ff α1/.76/.52/.30，强调 #ffc46b（要你回应 / 预留 / 倒计时 / 改期）、#72e6c6（就快见面 / 已确认 / 出席）、#a3b4ff（还在等 / 候补）、#cdb9ff（局主）、作废 rgba(176,188,220,.5)、危险 #ff6f7d；pack 色相六种。背景静止：四片径向色斑 + 五个模糊光斑 + 六个光点，无循环动画。
 - 材质：玻璃 `backdrop-filter: blur(14px) saturate(1.35)`，表面 160° 渐变 α.11→.045→.075，顶边 1px 高光 α.34，1px 内边 α.10，底部内阴影（厚度），落影 `0 20px 44px -24px`；lead 板更亮并带 tone 色外发光；厚玻璃（弹层 / 底栏）深色底 α.78–.84 + blur 26px；暗玻璃 / 书脊几乎不透光；通行证更亮玻璃 + 112° 全息三色带（screen 混合，静止）；景深按 `--z` 1/.975/.95 缩放，远层物件 blur .8/1.6px、变暗，文字始终清晰；进入详情时首页 `scale(.93) blur(10px) brightness(.5)`。主负责人观察（首屏两张）：第一眼主角明确（最前玻璃板 + 琥珀倒计时 + 金色 CTA），中文在玻璃上清晰；**问题**：底部固定导航压住列表最后一项（参加者首屏「还在等」组被导航遮住），需要底部安全区（已写入契约 §10 底部导航条款，待评审修复）。
 - 动效（代理自报）：① 景深展开：`clip-path: inset(板矩形 round 18px)` → `inset(0)`，内层 `translateY(from.y − 44px)` → 0，背景 scale 1→.93 / blur 0→10px / brightness 1→.5，480ms `cubic-bezier(.2,.8,.2,1)`，返回 400ms，落点高亮 1.4s；② 裂开撕票：副券按住下拖 `p=(dy+.25dx)/120`，`JU.fx.tearClip`（n=14, amp 3.2）把直线齿孔换成折线，裂纹 `stroke-dashoffset` 随 p 揭示，阈值 .55，回弹 420ms `cubic-bezier(.2,1.25,.3,1)`；碎裂 7 块 `c04-shard` 720ms `cubic-bezier(.4,0,.75,.4)` 每块延迟 85ms，位移 120–210px、旋转 ±22°；820ms 后联系层 460ms 弹起；③ 碎裂作废：从一点起裂纹 → 18 块径向碎片逐块坠落 → 带裂纹的空框残留 → 历史中变成暗色薄片（具体时长见 `spec/motion/C04.md` §2③）；另有通行证三段显现（出票）。
-- 验证分级：已写代码 ✔；已运行 ✔（主负责人 coverage-v2 50/50，0 错误）；已检查视觉：主负责人首屏两张 ✔（含上面的导航遮挡问题）；完整动效 / 交互：代理自报（`evidence/C04/card-detail|flow-tear|flow-exit|host-cancel|…/sheet.png`）；用户已认可 ✘。
+- 验证分级：已写代码 ✔；已运行 ✔（主负责人 coverage-v2 50/50，0 错误）；已检查视觉：主负责人看过首屏两张（含导航遮挡问题）+ `evidence/C04/flow-tear/sheet.png`（副券沿齿孔裂开 → 碎片坠落 → 联系层 → 已复制 → 待赴约 19 帧）+ `evidence/C04/host-cancel/sheet.png`（取消弹层 → 裂纹扩散 → 碎片逐块坠落 → 带裂纹的空框 + 「这局已取消」构图 → 历史暗色薄片 16 帧）✔；主负责人观察：两段破坏都作用于同一张通行证、有过程与残余、落点一致；裂纹网略显通用的「蛛网」形，可在复审时让裂纹更贴齿孔与起裂点；其余帧序列为代理自报；已检查交互：代理自报；用户已认可 ✘。
 - 代理自报的限制：通行证指针倾斜为 12px 步进的状态驱动；无实时倒计时（`JU.NOW` 固定）。
 
 ### 3.5 C05 缝线（未开始 · 方向卡）
@@ -300,8 +300,9 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 ```
 
 ### 5.2 分支、提交与未提交
-- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `e401a3c`。最近提交：
+- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `a686591`。最近提交：
 ```
+a686591 2026-10-11 00:31:29 +0000 Add project record (generated), contract pilot lessons, evidence set, build workflow v2
 e401a3c 2026-10-11 00:25:36 +0000 Pilot concepts C01 票据卷 and C04 夜玻璃, research ledger, core fixes from pilot feedback
 32659f4 2026-10-10 16:37:00 +0000 Add synthesized state inventory and dataset spec with lead reconciliation notes
 6953c77 2026-10-10 16:34:16 +0000 Add state-coverage tool and extraction notes
@@ -313,7 +314,11 @@ eb305dd 2026-10-10 16:11:31 +0000 Add SVG-mask burn primitive, @property registr
 ```
 - 生成本文时的工作区状态（`git status --short`）：
 ```
-?? tools/record/
+M tools/record/body.md
+?? spec/limits.md
+?? spec/motion-specs.md
+?? tools/coverage-matrix.cjs
+?? tools/motion-specs.cjs
 ```
 - 备份：除 origin 远端外无其他备份；容器临时目录（`/tmp/claude-0/.../scratchpad`）中的研究原图、私有构建、工作流日志不可迁移。
 
@@ -335,6 +340,7 @@ eb305dd 2026-10-10 16:11:31 +0000 Add SVG-mask burn primitive, @property registr
 | 2026-10-10 16:2x | 数据引擎 | Node 脚本 | 转移与变体计数正确（见 §4） |
 | 2026-10-11 00:2x | C01 / C04 | `tools/coverage.cjs` 50 状态 | 0 错误，`evidence/C0x/coverage-v2/sheet.png` |
 | 2026-10-11 00:2x | C01 / C04 首屏 | 肉眼看 `joined-home.png` / `hosted-home.png` | C01 层级成立；C04 主角明确但底部导航遮挡最后一组 |
+| 2026-10-11 00:4x | C01 撕票 / 取消，C04 撕票 / 取消 | 肉眼看四张 sheet.png（各 16–20 帧） | 四段都有触发 → 过程 → 落点，物件连续；C01 燃烧抽帧稀疏；C04 裂纹形态可再贴合起裂点 |
 
 ### 6.2 代理自报、未经主负责人复核
 - C01、C04 的详情 / 管理 / 打印 / 撕票 / 燃烧 / 改期 / 散场 / 草稿撤销 / 空态 / 长标题等帧序列（`evidence/C0x/*/sheet.png`，各目录 `log.json` 自报 errors 为空）。
