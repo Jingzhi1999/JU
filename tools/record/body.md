@@ -295,9 +295,12 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 
 ---
 
+### 6.5 主负责人复审第一轮（2026-10-11 05:4x UTC）
+全文见 `spec/lead-review.md`。要点：十套在构图 / 材质 / 字体 / 过渡上确实分开；共同短板是管理页（申请审核）结构雷同、个别终态偏弱、窄列截断。高优先级：C02 局名截断、C03 详情页首用大号英文撑场、C04 详情不透明 + 底栏遮挡、C07 作废终态残余缺失、C09 标题颗粒破碎。主负责人判断应保护的局部：C01 打印 / 撕票 / 焦卷，C04 裂开 / 碎裂，C02 翻牌与插卡，C05 布标与线脚，C06 便签改期，C10 帧与相纸。以上均**不是**用户认可。
+
 ## 7. 下一步（优先级最高的五项）
 
-1. **拿到八套并通过评审**（目标：十套源文件齐全、每套至少一轮独立评审无 blocker）。读 / 改：工作流返回、`evidence/CNN/review-N.md`、`concepts/src/CNN.dc.html`。依赖：`wf_e040b27e-e9f`。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 coverage）、`spec/state-inventory.md` 的语义规则。完成标准：十套 `tools/coverage.cjs` 50/50 且 0 错误；评审报告无 blocker。回归：全部十套 coverage。
+1. **拿到评审结果并修复**（目标：十套每套至少一轮独立评审，blocker 清零；评审之后再跑一轮「评审 + 主负责人复审（`spec/lead-review.md`）」合并修复）。读 / 改：工作流返回、`evidence/CNN/review-N.md`、`concepts/src/CNN.dc.html`。依赖：`wf_e040b27e-e9f`。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 coverage）、`spec/state-inventory.md` 的语义规则。完成标准：十套 `tools/coverage.cjs` 50/50 且 0 错误；评审报告无 blocker。回归：全部十套 coverage。
 2. **主负责人逐套复核视觉与动效**（目标：每套看两张首屏 + detail + manage + print/tear/burn 三组帧 + 一条自抽查流程）。读：`evidence/CNN/*/sheet.png`；改：`JU-MY-JU-PROJECT-RECORD.md` §3/§6。完成标准：每套在 §3 有「主负责人观察」与问题清单；发现的 blocker 转修复。
 3. **发布与附录**（目标：Design 画布十个画板 + 独立画布附录齐全）。读 / 改：`concepts/project/*`、`canvas.json`、`spec/motion-specs.md`（汇总 `spec/motion/*.md`）、`spec/coverage.md`（清单 × 十套）、`spec/limits.md`、`src/build.js` 附录映射。不可改：画布 URL；`Main.dc.html` 以外的画板文件名。完成标准：画布可见十个画板；独立画布附录四个标签有内容。回归：`tools/test/standalone.cjs` 通过。
 4. **修复试点已知问题**（§6.3 #1–#3）。完成标准：对应 capture 序列显示修复后状态。
