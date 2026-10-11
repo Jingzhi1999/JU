@@ -22,7 +22,7 @@ const [code, outdir] = process.argv.slice(2); const only = (() => { const i = pr
   }
   const cols = 8, rows = Math.ceil(files.length / cols);
   files.forEach((f, i) => fs.copyFileSync(f, `${outdir}/s${String(i).padStart(2, '0')}.png`));
-  try { execSync(`ffmpeg -y -loglevel error -framerate 1 -i '${outdir}/s%02d.png' -vf "scale=240:-1,tile=${cols}x${rows}:padding=4:margin=4:color=white" -frames:v 1 -update 1 '${outdir}/sheet.png'`); } catch (e) { errors.push('sheet failed: ' + String(e.stderr || e.message).slice(0, 200)); }
+  try { execSync(`ffmpeg -y -loglevel error -reinit_filter 0 -framerate 1 -i '${outdir}/s%02d.png' -vf "scale=240:-1,tile=${cols}x${rows}:padding=4:margin=4:color=white" -frames:v 1 -update 1 '${outdir}/sheet.png'`); } catch (e) { errors.push('sheet failed: ' + String(e.stderr || e.message).slice(0, 200)); }
   fs.readdirSync(outdir).filter(f => /^s\d+\.png$/.test(f)).forEach(f => fs.unlinkSync(`${outdir}/${f}`));
   fs.writeFileSync(`${outdir}/log.json`, JSON.stringify({ code, states: files.length, errors }, null, 1));
   console.log(JSON.stringify({ states: files.length, errors: errors.length, sheet: `${outdir}/sheet.png` }));

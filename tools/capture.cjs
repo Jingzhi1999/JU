@@ -34,7 +34,7 @@ const opt = (k, d) => { const i = process.argv.indexOf('--' + k); return i >= 0 
     else if (a.shot) { await shot(); }
   }
   const cols = +opt('cols', 6); const rows = Math.ceil(n / cols);
-  execSync(`ffmpeg -y -loglevel error -framerate 1 -pattern_type glob -i '${outdir}/f*.png' -vf "scale=${opt('scale', 300)}:-1,tile=${cols}x${rows}:padding=4:margin=4:color=white" '${outdir}/sheet.png'`);
+  execSync(`ffmpeg -y -loglevel error -reinit_filter 0 -framerate 1 -pattern_type glob -i '${outdir}/f*.png' -vf "scale=${opt('scale', 300)}:-1,tile=${cols}x${rows}:padding=4:margin=4:color=white" '${outdir}/sheet.png'`);
   fs.writeFileSync(`${outdir}/log.json`, JSON.stringify({ code, frames: n, errors }, null, 1));
   console.log(JSON.stringify({ frames: n, errors, sheet: `${outdir}/sheet.png` }));
   await b.close();
