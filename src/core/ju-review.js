@@ -25,6 +25,14 @@
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
+    /* hold(): a REAL-TIME window (toast visibility, undo window, live countdown tick). Same pause / reset / clear behaviour as
+       after(), and stretched at 0.5× speed, but never collapsed to 0 under reduced motion — reduced motion removes movement, not time. */
+    p.hold = function (ms, fn) {
+      var self = this; var r = this.state.review || {}; var k = r.speed === 0.5 ? 2 : 1;
+      var e = { fn: fn, remaining: Math.round(ms * k), id: null, due: 0 };
+      var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
+      e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
+    };
     p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
