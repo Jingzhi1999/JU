@@ -1,0 +1,17 @@
+// RM on: time from click to the settled result text for print / tear / cancel
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const path = require('path');
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
+  const errors = []; p.on('pageerror', e => errors.push(e.message));
+  await p.goto('file://' + path.resolve(process.env.JU_STANDALONE) + '#concept/C09'); await p.waitForTimeout(1200);
+  const M = "window.JUShell.mounts.stage['stage:C09:']"; const ev = (js) => p.evaluate(js);
+  await ev(`${M}.instance.toggleRM()`); await p.waitForTimeout(200);
+  const run = async (jump, click, expr, ms = 1500) => { await ev(`${M}.instance.jumpTo('${jump}')`); await p.waitForTimeout(1200); const before = await ev(expr); const t0 = Date.now(); await ev(`${M}.root.querySelector('${click}').click()`); const out = [['before', before]]; let last = before; while (Date.now() - t0 < ms) { const v = await ev(expr); if (v !== last) { out.push([Date.now() - t0, v]); last = v; } await p.waitForTimeout(10); } return out; };
+  const txt = (sel) => `((${M}.root.querySelector('${sel}')||{}).innerText||'').replace(/\\s+/g,' ').slice(0,120)`;
+  const res = { rm: await ev(`${M}.instance.state.review.rm`) };
+  res.print = await run('j-home', '.c09-feed [data-rid="r-run3k"]', `(${M}.instance.state.view&&${M}.instance.state.view.name)+' | '+${txt('.c09-dt .c09-tkhint')}+' | scissors='+!!${M}.root.querySelector('.c09-dt [data-act="tear"]')`);
+  res.tear = await run('j-d-tear', '.c09-dt [data-act="tear"]', `${txt('.c09-dt .c09-pocket')}+' | '+${txt('.c09-dt .c09-tkhint')}`);
+  res.cancel = await run('h-m-cancel', '.c09-sheet [data-act="cancel"]', `'sheet='+!!${M}.root.querySelector('.c09-sheet')+' | '+${txt('.c09-mg .c09-inner')}.slice(0,60)`);
+  res.errors = errors; console.log(JSON.stringify(res, null, 1)); await b.close();
+})();

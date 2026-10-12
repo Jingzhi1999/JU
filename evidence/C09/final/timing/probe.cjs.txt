@@ -1,0 +1,35 @@
+// measures undo-bar / toast / copied windows for C09 with RM on or off
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const path = require('path');
+const rm = process.argv[2] === 'rm';
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
+  const errors = []; p.on('pageerror', e => errors.push(e.message));
+  await p.goto('file://' + path.resolve(process.env.JU_STANDALONE) + '#concept/C09'); await p.waitForTimeout(1000);
+  const ev = (js) => p.evaluate(js);
+  const I = "window.JUShell.mounts.stage['stage:C09:'].instance";
+  const R = "window.JUShell.mounts.stage['stage:C09:'].root";
+  const poll = async (expr, ms) => { const t0 = Date.now(); const out = []; let last; while (Date.now() - t0 < ms) { const v = await ev(expr); if (v !== last) { out.push([Date.now() - t0, v]); last = v; } await p.waitForTimeout(50); } return out; };
+  const res = { rm };
+  // draft delete
+  await ev(`${I}.jumpTo('h-drafts')`); await p.waitForTimeout(800);
+  if (rm) await ev(`${I}.toggleRM()`); await p.waitForTimeout(200);
+  res.rmState = await ev(`${I}.state.review.rm`);
+  await ev(`${R}.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`);
+  res.undoBar = await poll(`!!${R}.querySelector('.c09-undo')`, 11500);
+  res.toastAfterDelete = null;
+  res.draftsAfter = await ev(`${R}.querySelectorAll('.c09-feed .c09-draft').length`);
+  // second run: undo at 8.5s
+  await ev(`${I}.jumpTo('h-drafts')`); await p.waitForTimeout(800);
+  await ev(`${R}.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`);
+  const toast = poll(`(${R}.querySelector('.c09-toast.in')||{}).textContent||''`, 4000); res.toastDelete = await toast;
+  await p.waitForTimeout(4500);
+  res.barAt8_5 = await ev(`!!${R}.querySelector('.c09-undo')`);
+  await ev(`${R}.querySelector('.c09-undo [data-act="undo"]').click()`); await p.waitForTimeout(600);
+  res.afterUndo = { drafts: await ev(`${R}.querySelectorAll('.c09-feed .c09-draft').length`), bar: await ev(`!!${R}.querySelector('.c09-undo')`), title: await ev(`(${R}.querySelector('.c09-feed .c09-draft .c09-cr-ttl')||{}).textContent`) };
+  // copy wx
+  await ev(`${I}.jumpTo('j-d-contact')`); await p.waitForTimeout(1500);
+  await ev(`${R}.querySelector('.c09-contact [data-act="copy"]').click()`);
+  res.copy = await poll(`((${R}.querySelector('.c09-toast.in')||{}).textContent||'') + ' | ' + ${R}.querySelector('.c09-contact [data-act="copy"]').textContent.trim()`, 3500);
+  res.errors = errors; console.log(JSON.stringify(res, null, 1)); await b.close();
+})();

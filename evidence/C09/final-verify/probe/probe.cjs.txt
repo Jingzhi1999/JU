@@ -1,0 +1,48 @@
+// C09 final-verify probe: undo bar / toast visibility (geometry, opacity, hit-test) and immediate results under RM.
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const path = require('path');
+const rm = process.argv[2] === 'rm';
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
+  const errors = []; p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+  await p.goto('file://' + path.resolve(process.env.JU_STANDALONE) + '#concept/C09'); await p.waitForTimeout(1200);
+  await p.evaluate(() => document.fonts.ready);
+  const M = "window.JUShell.mounts.stage['stage:C09:']";
+  const ev = (js) => p.evaluate(js);
+  await p.evaluate(`window.__M=${M}; window.__vis=function(sel){var R=__M.root;var e=R.querySelector(sel);if(!e)return 'absent';var ph=R.querySelector('.ju-phone')||R.host;var pr=(R.querySelector('.ju-phone')).getBoundingClientRect();var r=e.getBoundingClientRect();var cs=getComputedStyle(e);var op=parseFloat(cs.opacity);var inV=r.top>=pr.top-1&&r.bottom<=pr.bottom+1&&r.width>0&&r.height>0;var cx=r.left+r.width/2,cy=r.top+r.height/2;var SR=document.querySelector('.stage-host[data-code="C09"]').shadowRoot;var hit=SR.elementFromPoint(cx,cy);var onTop=!!hit&&(hit===e||e.contains(hit)||hit.contains(e));return (inV?'in':'out')+'|op'+op.toFixed(2)+'|'+(onTop?'top':'covered:'+(hit&&hit.className))+'|y'+Math.round(r.top-pr.top);};`);
+  const poll = async (expr, ms, every = 50) => { const t0 = Date.now(); const out = []; let last; while (Date.now() - t0 < ms) { const v = await ev(expr); if (v !== last) { out.push([Date.now() - t0, v]); last = v; } await p.waitForTimeout(every); } return out; };
+  const sample = async (expr, times) => { const t0 = Date.now(); const out = {}; for (const t of times) { const w = t - (Date.now() - t0); if (w > 0) await p.waitForTimeout(w); out[t] = [Date.now() - t0, await ev(expr)]; } return out; };
+  const res = { rm };
+  await ev(`${M}.instance.jumpTo('h-drafts')`); await p.waitForTimeout(900);
+  if (rm) await ev(`${M}.instance.toggleRM()`); await p.waitForTimeout(300);
+  res.rmState = await ev(`${M}.instance.state.review.rm`);
+  res.rmClass = await ev(`!!${M}.root.querySelector('.rm')`);
+  // Run 1: delete, sample undo bar + toast at fixed checkpoints until 11s
+  res.draftsBefore = await ev(`[].map.call(${M}.root.querySelectorAll('.c09-feed .c09-draft .c09-cr-ttl'),function(e){return e.textContent.trim();})`);
+  await ev(`${M}.root.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`);
+  const expr = `JSON.stringify({bar:__vis('.c09-undo'),btn:__vis('.c09-undo [data-act="undo"]'),toast:(${M}.root.querySelector('.c09-toast.in')?(${M}.root.querySelector('.c09-toast').textContent.trim()+' '+__vis('.c09-toast')):'off'),drafts:${M}.root.querySelectorAll('.c09-feed .c09-draft').length})`;
+  res.run1 = await sample(expr, [100, 300, 800, 1500, 2400, 2800, 3200, 5000, 7000, 8000, 9000, 9800, 10300, 10600, 11500]);
+  res.run1Changes = await (async () => { return null; })();
+  res.draftsAfterCommit = await ev(`[].map.call(${M}.root.querySelectorAll('.c09-feed .c09-draft .c09-cr-ttl'),function(e){return e.textContent.trim();})`);
+  // Run 2: delete, continuous poll to 8.5s, click undo
+  await ev(`${M}.instance.jumpTo('h-drafts')`); await p.waitForTimeout(900);
+  res.rmState2 = await ev(`${M}.instance.state.review.rm`);
+  await ev(`${M}.root.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`);
+  res.run2 = await poll(`(function(){var b=${M}.root.querySelector('.c09-undo');var t=${M}.root.querySelector('.c09-toast.in');return (b?'bar':'nobar')+'/'+(t?'toast':'notoast');})()`, 8500, 40);
+  res.undoBtnAt8_5 = await ev(`__vis('.c09-undo [data-act="undo"]')`);
+  // real pointer click on undo
+  const bb = await ev(`(function(){var r=${M}.root.querySelector('.c09-undo [data-act="undo"]').getBoundingClientRect();return [r.left+r.width/2,r.top+r.height/2];})()`);
+  await p.mouse.click(bb[0], bb[1]);
+  res.afterUndo = await sample(`JSON.stringify({drafts:[].map.call(${M}.root.querySelectorAll('.c09-feed .c09-draft .c09-cr-ttl'),function(e){return e.textContent.trim();}),bar:!!${M}.root.querySelector('.c09-undo'),toast:(${M}.root.querySelector('.c09-toast.in')||{}).textContent||''})`, [50, 300, 1500, 11000]);
+  res.engineDrafts = await ev(`(${M}.instance.state.data.drafts||[]).map(function(d){return d.title;})`);
+  // Toast: copy wx
+  await ev(`${M}.instance.jumpTo('j-d-contact')`); await p.waitForTimeout(1500);
+  await ev(`(function(){var b=${M}.root.querySelector('.c09-contact [data-act="copy"]');b.scrollIntoView({block:'center'});})()`); await p.waitForTimeout(400);
+  await ev(`${M}.root.querySelector('.c09-contact [data-act="copy"]').click()`);
+  res.copy = await sample(`(function(){var t=${M}.root.querySelector('.c09-toast');return (t.classList.contains('in')?'in ':'off ')+t.textContent.trim()+' '+__vis('.c09-toast')+' btn='+${M}.root.querySelector('.c09-contact [data-act="copy"]').textContent.trim();})()`, [100, 500, 1200, 2000, 2400, 2700, 3200]);
+  // Toast: reschedule submit
+  await ev(`${M}.instance.jumpTo('h-m-reschedule')`); await p.waitForTimeout(1500);
+  res.reschedForm = await ev(`(function(){var R=${M}.root;var s=R.querySelector('.c09-sheet');return s?[].map.call(s.querySelectorAll('input,button'),function(e){return e.tagName+':'+(e.type||'')+':'+(e.getAttribute('data-act')||'')+':'+(e.value||e.textContent.trim()).slice(0,20)+':'+(e.disabled?'dis':'');}):'nosheet';})()`);
+  res.errors = errors;
+  console.log(JSON.stringify(res, null, 1)); await b.close();
+})();

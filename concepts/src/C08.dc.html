@@ -831,6 +831,8 @@ body{margin:0}
 .scrub .c08-tk-side.stub.off{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 900ms * var(--k,1))!important}
 .scrub .c08-blk.leaving{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 360ms * var(--k,1))!important}
 .scrub .c08-undo i::after{animation-play-state:paused!important}
+/* reduced motion removes movement, not time: the undo bar's drain is the visible clock of the 10 s window, so it keeps its real duration */
+.app.rm .c08-undo i::after{animation-duration:var(--c08-uhold,10000ms)!important}
 /* reduced motion: results directly */
 .app.rm .c08-sc.dim .c08-blk:not(.src) > .c08-bc{clip-path:inset(-24px -24px -32px -24px);opacity:.25}
 </style>
@@ -1118,7 +1120,7 @@ body{margin:0}
           </div>
         </aside>
       </sc-if>
-      <sc-if value="{{undo.on}}"><div class="c08-undo c08-over {{undo.n}}" role="status"><span class="c08-ut"><b>已删除「{{undo.title}}」</b><sc-if value="{{undo.more}}"><small>{{undo.more}}</small></sc-if></span><button type="button" data-act="undo" onClick="{{undo.fn}}">撤销</button><i></i></div></sc-if>
+      <sc-if value="{{undo.on}}"><div class="c08-undo c08-over {{undo.n}}" role="status" style="--c08-uhold:{{undo.ms}}ms"><span class="c08-ut"><b>已删除「{{undo.title}}」</b><sc-if value="{{undo.more}}"><small>{{undo.more}}</small></sc-if></span><button type="button" data-act="undo" onClick="{{undo.fn}}">撤销</button><i></i></div></sc-if>
       <div class="c08-toast {{toastCls}}" role="status">{{toast}}</div>
     </div>
     <!-- @fx-svg -->
@@ -1183,14 +1185,14 @@ class Component extends DCLogic {
   setFx(patch) { this.setState(s => ({ fx: Object.assign({}, s.fx, patch) })); }
   /* every pane opening gets a token; a pane's close / unmount timers only touch the pane they were made for (rapid back → open another) */
   paneOpenNow() { const s = this.state; return !!(s.detail || s.manage || s.draftView); }
-  dropPaneTimers() { const keep = this._undoTimer; (this._timers || []).forEach(e => { if (e !== keep && e.id) clearTimeout(e.id); }); this._timers = keep ? [keep] : []; this._busy = false; if (this.state.toast) this.after(900, () => this.setState({ toast: '' })); if (this.state.landed) this.setState({ landed: null }); }
+  dropPaneTimers() { const keep = this._undoTimer; (this._timers || []).forEach(e => { if (e !== keep && e.id) clearTimeout(e.id); }); this._timers = keep ? [keep] : []; this._busy = false; if (this.state.toast) this.hold(900, () => this.setState({ toast: '' })); if (this.state.landed) this.setState({ landed: null }); }
   nextSeq() { if (this.paneOpenNow()) this.dropPaneTimers(); this._seq = (this._seq || 0) + 1; return this._seq; }
   isSeq(key, seq) { const p = this.state[key]; return !!(p && p.seq === seq); }
   setMg(patch) { this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, patch) })); }
   setD(patch) { this.setState(s => ({ detail: s.detail && Object.assign({}, s.detail, typeof patch === 'function' ? patch(s.detail) : patch) })); }
   /* keep a revealed element above the toast strip at the bottom of the pane */
   scrollPaneTo(sel) { this.after(60, () => { const root = this.rootRef.current; const pb = root && root.querySelector('.c08-pane .c08-pbody'); const el = pb && pb.querySelector(sel); if (!el) return; const k = this.kScale(); const a = el.getBoundingClientRect(), b = pb.getBoundingClientRect(); const over = (a.bottom - (b.bottom - 72 * k)) / k; if (over > 0 && pb.scrollTo) pb.scrollTo({ top: pb.scrollTop + over, behavior: 'smooth' }); }); }
-  toast(text) { this.setState({ toast: text }); this.after(2600, () => { if (this.state.toast === text) this.setState({ toast: '' }); }); }
+  toast(text) { this.setState({ toast: text }); /* real-time reading window (contract §11): hold(), never collapsed by reduced motion */ this.hold(2600, () => { if (this.state.toast === text) this.setState({ toast: '' }); }); }
   /* every state change goes through JU.engine; run() wraps it with processing / failure / retry */
   run(name, payload, done, opts) {
     opts = opts || {};
@@ -1211,7 +1213,7 @@ class Component extends DCLogic {
   joinedRow(id, data) { return JU.derive.rowById(data || this.state.data, id); }
   hostRow(id, data) { return JU.derive.hostRowById(data || this.state.data, id); }
   rowRect(id) { const root = this.rootRef.current; if (!root) return null; const el = root.querySelector('.c08-blk[data-rid="' + id + '"] .c08-bk'); if (!el) return null; const r = JU.fx.rectIn(el, root); if (r.w < 20 || r.y > this.Hh() || r.y + r.h < 100) return null; return r; }
-  landOn(id) { this.setState({ landed: id }); this.after(40, () => { const root = this.rootRef.current; const el = root && root.querySelector('.c08-blk[data-rid="' + id + '"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); }); this.after(1600, () => { if (this.state.landed === id) this.setState({ landed: null }); }); }
+  landOn(id) { this.setState({ landed: id }); this.after(40, () => { const root = this.rootRef.current; const el = root && root.querySelector('.c08-blk[data-rid="' + id + '"]'); if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' }); }); this.hold(1600, () => { if (this.state.landed === id) this.setState({ landed: null }); }); }
   /* measured transform that carries one element (scar / notch) onto another (the history-ruler slot); transform-origin 0 0 */
   markTf(fromSel, toSel) { const root = this.rootRef.current; const a = root && root.querySelector(fromSel), b = root && root.querySelector(toSel); if (!a || !b) return 'translate(0px,40px)'; const k = this.kScale(); const A = a.getBoundingClientRect(), B = b.getBoundingClientRect(); return 'translate(' + ((B.left - A.left) / k).toFixed(1) + 'px,' + ((B.top - A.top) / k).toFixed(1) + 'px) scale(' + (B.width / A.width).toFixed(3) + ',' + (B.height / A.height).toFixed(3) + ')'; }
   flyFrom(fromSel, toSel) { const root = this.rootRef.current; const pb = root && root.querySelector('.c08-pane .c08-pbody'); const a = root && root.querySelector(fromSel), b = root && root.querySelector(toSel); if (!pb || !a || !b) return null; const k = this.kScale(); const P = pb.getBoundingClientRect(), A = a.getBoundingClientRect(); return { x: (A.left - P.left) / k, y: (A.top - P.top) / k + pb.scrollTop, w: A.width / k, h: A.height / k, mtf: this.markTf(fromSel, toSel) }; }
@@ -1383,7 +1385,7 @@ class Component extends DCLogic {
       });
     }, { where: 'detail', ms: 320, busy: 'acceptReschedule', msg: fromDrag ? '新时间未保存，请重新撕下副券' : '新时间未保存，请重试', onError: () => this.setState({ tear: { p: 0, drag: null, spring: true } }) });
   }
-  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.after(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.hold(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   markContacted() { const id = this.state.detail.id; this.run('markContacted', { eventId: id }, () => { this.setD({ settle: true }); this.after(900, () => this.setD({ settle: false })); }, { where: 'detail' }); }
   addNote() { const id = this.state.detail.id; const text = (this.state.note || '').trim(); if (text.length < 4) return; this.run('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, () => { this.setState({ note: '', fx: { newRecord: true } }); this.after(600, () => this.setState({ fx: {} })); }, { where: 'detail', ms: 300, busy: 'note' }); }
   submitReport() { const id = this.state.detail.id; const text = (this.state.report || '').trim(); if (text.length < 4) return; const who = Object.keys(this.state.who).filter(k => this.state.who[k]); this.run('addRecord', { eventId: id, kind: 'report', text: '你记录：' + text + (who.length ? '（' + who.join('、') + '）' : '') }, () => { this.setState({ accepted: { text, who: who.slice(), at: JU.NOW } , report: '', who: {} }); }, { where: 'sheet', ms: 420, busy: 'report', keepSheet: true }); }
@@ -1475,7 +1477,8 @@ class Component extends DCLogic {
     this.after(380, () => this.run('deleteDraft', { draftId: id }, (eff) => {
       if (this._undoTimer) { if (this._undoTimer.id) clearTimeout(this._undoTimer.id); this._timers = (this._timers || []).filter(t => t !== this._undoTimer); this._undoTimer = null; }
       this.setState(s => { const lv = Object.assign({}, s.leaving); delete lv[id]; return { leaving: lv, undo: { title: eff.title, draftId: id, n: ((s.undo && s.undo.n) || 0) + 1, batch: (s.undo ? (s.undo.batch || 1) : 0) + 1 } }; });
-      this._undoTimer = this.after(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
+      /* the 10 s undo window is real time: hold(), so it stays up under reduced motion too (only the row's collapse above is an after()) */
+      this._undoTimer = this.hold(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
     }, { instant: true, force: true, onError: drop }));
   }
   undoDelete() {
@@ -1489,7 +1492,7 @@ class Component extends DCLogic {
     const s = this.state; if (!(s.detail || s.manage || s.draftView || s.sheet)) { fn(); return; }
     const u = this._undoTimer; const left = u ? Math.max(0, u.id ? u.due - Date.now() : u.remaining) : 0; const k = s.review && s.review.speed === 0.5 ? 2 : 1;
     this.clearTimers(); this._undoTimer = null;
-    if (s.undo && left > 0) this._undoTimer = this.after(left / k, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
+    if (s.undo && left > 0) this._undoTimer = this.hold(left / k, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
     this.setState(st => ({ sheet: null, busy: '', err: null, toast: '', detail: st.detail && Object.assign({}, st.detail, { phase: 'out', from: null, anim: '' }), manage: st.manage && Object.assign({}, st.manage, { phase: 'out', from: null, anim: '' }), draftView: st.draftView && Object.assign({}, st.draftView, { phase: 'out', from: null, anim: '' }) }));
     this.after(180, () => { this.setState(st => ({ detail: st.detail && st.detail.phase !== 'out' ? st.detail : null, manage: st.manage && st.manage.phase !== 'out' ? st.manage : null, draftView: st.draftView && st.draftView.phase !== 'out' ? st.draftView : null, view: { name: 'list' }, fx: {}, tear: TEAR0, landed: null, mSc: false })); fn(); });
   }
@@ -1942,7 +1945,7 @@ class Component extends DCLogic {
       ],
       onScroll: (ev) => { const y = ev.currentTarget.scrollTop; const sc = Math.max(0, Math.min(1, y / 56)); if (Math.abs(sc - s.sc) > 0.02 || (sc === 0) !== (s.sc === 0)) this.setState({ sc }); },
       d: this.detailVals(), m: this.manageVals(), dv: this.draftVals(), sh: this.sheetVals(),
-      undo: s.undo ? { on: true, title: s.undo.title, more: s.undo.batch > 1 ? '连删 ' + s.undo.batch + ' 份 · 撤销只恢复这一份，其余 ' + (s.undo.batch - 1) + ' 份已删除' : '', n: 'u' + ((s.undo.n || 0) % 2), fn: () => this.undoDelete() } : { on: false },
+      undo: s.undo ? { on: true, title: s.undo.title, more: s.undo.batch > 1 ? '连删 ' + s.undo.batch + ' 份 · 撤销只恢复这一份，其余 ' + (s.undo.batch - 1) + ' 份已删除' : '', n: 'u' + ((s.undo.n || 0) % 2), ms: 10000 * ((s.review || {}).speed === 0.5 ? 2 : 1), fn: () => this.undoDelete() } : { on: false },
       toast: s.toast, toastCls: s.toast ? 'in' + (paneOpen ? ' inpane' : '') : ''
     };
   }

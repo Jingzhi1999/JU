@@ -1,0 +1,19 @@
+// re-delete within the window: does the first delete's hold() timer cut the second window short?
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const path = require('path'); const rm = process.argv[2] === 'rm';
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
+  const errors = []; p.on('pageerror', e => errors.push(e.message));
+  await p.goto('file://' + path.resolve(process.env.JU_STANDALONE) + '#concept/C09'); await p.waitForTimeout(1200);
+  const M = "window.JUShell.mounts.stage['stage:C09:']"; const ev = (js) => p.evaluate(js);
+  await ev(`${M}.instance.jumpTo('h-drafts')`); await p.waitForTimeout(900);
+  if (rm) await ev(`${M}.instance.toggleRM()`); await p.waitForTimeout(300);
+  const t0 = Date.now(); const log = [];
+  await ev(`${M}.root.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`); log.push(['delete1', Date.now() - t0]);
+  await p.waitForTimeout(1500);
+  await ev(`${M}.root.querySelector('.c09-undo [data-act="undo"]').click()`); log.push(['undo1', Date.now() - t0]);
+  await p.waitForTimeout(2500);
+  await ev(`${M}.root.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`); const t2 = Date.now(); log.push(['delete2', t2 - t0]);
+  let last; while (Date.now() - t2 < 11500) { const v = await ev(`!!${M}.root.querySelector('.c09-undo')+'/'+${M}.root.querySelectorAll('.c09-feed .c09-draft').length+'/'+(${M}.instance.state.data.drafts||[]).length`); if (v !== last) { log.push([v, Date.now() - t2]); last = v; } await p.waitForTimeout(50); }
+  console.log(JSON.stringify({ rm, log, errors })); await b.close();
+})();

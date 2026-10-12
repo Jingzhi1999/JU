@@ -1162,13 +1162,8 @@ class Component extends DCLogic {
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
-  /* user-facing dwell times (undo window, receipt tongue, 已复制) are NOT shortened by 减少动态 — only animations are. Still scaled by 0.5× and held by 暂停 / the scrubber. */
-  hold(ms, fn) {
-    var self = this; var r = this.state.review || {}; var k = r.speed === 0.5 ? 2 : 1;
-    var e = { fn: fn, remaining: Math.round(ms * k), id: null, due: 0 };
-    var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
-    e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
-  }
+  /* timers: this.after() = animation completion (collapses to 0 under 减少动态, so results land at once); this.hold() (shared core, contract §11) =
+     real-time windows — undo 10 s, receipt toast, 已复制 — kept at full length under 减少动态, still 0.5×-stretched and held by 暂停 / the scrubber. */
   say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* a core motion completes on its own animationend; this guard only finishes it if that event was lost (it waits while the element still animates or is held by the scrubber) */
   guardAnim(find, done, ms) {

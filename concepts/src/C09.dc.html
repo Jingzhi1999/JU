@@ -1144,7 +1144,7 @@ class Component extends DCLogic {
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.after(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* every state change goes through JU.engine: processing → result, or failure strip + retry */
   act(fn, payload, done, opts) {
     var self = this; opts = opts || {}; var key = opts.key || fn;
@@ -1452,7 +1452,7 @@ class Component extends DCLogic {
     this.patchView({ stkFx: 'peeloff', contact: false });
     this.after(380, function () { if (self.state.view.id !== id) return; self.patchView({ stkFx: 'slap', result: res, hold: null }); self.after(300, function () { if (self.state.view.id === id) self.patchView({ stkFx: '' }); }); });
   }
-  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.after(2200, function () { self.patchView({ copied: false }); }); }
+  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.hold(2200, function () { self.patchView({ copied: false }); }); }
   ticketModel(key, t, r, mode) {
     var self = this; var e = r.event; var rs = r.item.reschedule; var isOld = !!t.old; var fz = t.frozen || null;
     var when = isOld ? (rs ? JU.fmt.when(rs.oldIso) : r.when) : key === 'fresh' ? (rs ? JU.fmt.when(rs.newIso) : r.when) : (r.stage === 'cancelled' ? JU.fmt.when(e.iso) : r.when);
@@ -1764,7 +1764,7 @@ class Component extends DCLogic {
     if (this._deleting[id] || this.state.leaving === id) return; /* repeated taps on a page that is already leaving */
     this._deleting[id] = true; this.setState({ leaving: id });
     this.after(280, function () {
-      self.act('deleteDraft', { draftId: id }, function (eff) { delete self._deleting[id]; self.setState({ leaving: null, undo: { draftId: id, title: eff.title } }); self.say('已删除「' + eff.title + '」'); self.after(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); },
+      self.act('deleteDraft', { draftId: id }, function (eff) { delete self._deleting[id]; self.setState({ leaving: null, undo: { draftId: id, title: eff.title } }); self.say('已删除「' + eff.title + '」'); self.hold(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); },
         { ms: 60, key: 'draft-' + id, inline: true, retry: function () { self.deleteDraft(id); }, quiet: function (eff) { if (/不存在/.test(eff.message || '')) { delete self._deleting[id]; self.setState({ leaving: null }); return true; } return false; }, fail: function () { delete self._deleting[id]; self.setState({ leaving: null }); } });
     });
   }

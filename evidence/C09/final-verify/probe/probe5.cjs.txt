@@ -1,0 +1,14 @@
+// two different drafts deleted 1.2 s apart, then undo: which come back? (single-slot undo, RM on/off)
+const { chromium } = require('/opt/node-tools/node_modules/playwright');
+const path = require('path'); const rm = process.argv[2] === 'rm';
+(async () => {
+  const b = await chromium.launch(); const p = await b.newPage({ viewport: { width: 1000, height: 1000 } });
+  await p.goto('file://' + path.resolve(process.env.JU_STANDALONE) + '#concept/C09'); await p.waitForTimeout(1200);
+  const M = "window.JUShell.mounts.stage['stage:C09:']"; const ev = (js) => p.evaluate(js);
+  await ev(`${M}.instance.jumpTo('h-drafts-many')`); await p.waitForTimeout(1000);
+  if (rm) await ev(`${M}.instance.toggleRM()`); await p.waitForTimeout(300);
+  const del = () => ev(`${M}.root.querySelector('.c09-feed .c09-draft [data-act="delete"]').click()`);
+  await del(); await p.waitForTimeout(1200); await del(); await p.waitForTimeout(1200);
+  await ev(`${M}.root.querySelector('.c09-undo [data-act="undo"]').click()`); await p.waitForTimeout(800);
+  console.log(JSON.stringify({ rm, after: await ev(`(${M}.instance.state.data.drafts||[]).map(function(d){return d.title;})`) })); await b.close();
+})();
