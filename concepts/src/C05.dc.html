@@ -20,6 +20,7 @@ body{margin:0}
   --serif:"Noto Serif SC","Songti SC","SimSun",serif;--num:"Cormorant","Noto Serif SC","Times New Roman",serif;--hand:"Zhi Mang Xing",cursive;--pw:350px;--gut:20px;
   background:var(--table)}
 .app *,.app *::before,.app *::after{box-sizing:border-box}
+.app{container-type:inline-size}
 .app :where(button){font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;color:inherit}
 .app button:disabled{cursor:default}
 .app input,.app textarea{font:inherit;color:inherit}
@@ -121,18 +122,23 @@ body{margin:0}
 .c05-timeline{display:flex;align-items:flex-end;gap:12px;padding-right:calc(var(--labw,70px) + 26px)}
 .c05-wdcol{display:flex;flex-direction:column;gap:4px;padding-bottom:3px;min-width:0;flex:1 1 auto}
 .c05-time{font:600 27px/1 var(--num);letter-spacing:.01em;color:var(--ink);font-variant-numeric:tabular-nums}
+/* reschedule: the old time is struck where it stands (list row and the same piece opened); the new time appears once (fix-r1 m4) */
+.c05-timeline.struck .c05-time,.c05-timeline.struck .c05-wd{text-decoration:line-through;text-decoration-color:var(--chalkr);text-decoration-thickness:2px}
+.c05-timeline.struck .c05-wd{text-decoration-thickness:1.2px}
 .c05-wd{font:500 12px/1 var(--serif);letter-spacing:.1em;color:var(--ink2);white-space:nowrap}
 .c05-hood{font:400 12px/1.2 var(--serif);letter-spacing:.06em;color:var(--ink2);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .c05-name{display:block;margin-top:9px;font:500 19px/1.4 var(--serif);letter-spacing:.02em;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:40px;text-wrap:balance}
 .c05-piece.lead .c05-time{font-size:42px;font-weight:600}
 .c05-piece.lead .c05-wd{font-size:13px}
 .c05-piece.lead .c05-name{font-size:24px;font-weight:500;line-height:1.38;color:var(--chalk);letter-spacing:.03em;margin-top:12px;padding-right:0}
+/* fix-r1 m3: titles and one-line facts break at spaces / 「 · 」 only (keep-all), never inside a word; a segment longer than the line still wraps */
+.c05-name,.c05-extra,.c05-need,.c05-tag-title,.c05-dtitle,.c05-apnote,.c05-rsrow,.c05-swname,.c05-receipt .rt,.c05-voidobj b{word-break:keep-all;overflow-wrap:anywhere}
 .c05-extra{display:block;margin-top:7px;font:400 12.5px/1.5 var(--serif);letter-spacing:.04em;color:var(--ink2);text-wrap:pretty}
 .c05-pc .c05-extra:has(~ .c05-next):not(:has(~ .c05-stitches)){padding-right:88px}
 .c05-extra.hot{color:var(--chalkr)}
 .c05-extra.chg{color:var(--chalkr)}
 .c05-extra .c05-num{font-size:14px;font-weight:600}
-.c05-next{position:absolute;right:20px;bottom:14px;font:500 12.5px/1 var(--serif);letter-spacing:.08em;color:var(--chalk);display:inline-flex;align-items:center;gap:3px}
+.c05-next{position:absolute;right:20px;bottom:14px;font:500 12.5px/1 var(--serif);letter-spacing:.08em;color:var(--chalk);display:inline-flex;align-items:center;gap:3px;white-space:nowrap}
 .c05-next::after{content:"›";font-size:15px}
 .c05-need{margin:10px 0 0;font:400 13px/1.6 var(--serif);color:var(--ink2);letter-spacing:.02em;text-wrap:balance}
 .c05-cdrow{display:flex;align-items:baseline;gap:12px;margin-top:14px}
@@ -156,8 +162,17 @@ body{margin:0}
 .c05-stitches{flex-wrap:wrap;row-gap:6px}
 .c05-stitches small{font:500 11.5px/1.3 var(--serif);color:var(--ink2);letter-spacing:.06em;margin-left:6px}
 @keyframes c05-stitchin{0%{transform:scaleX(.1);opacity:0;transform-origin:0 50%}100%{transform:none;opacity:1}}
-/* mini tag on rows */
-.c05-mt{position:absolute;right:22px;top:46px;width:28px;height:52px;pointer-events:none}
+/* mini tag on rows: a fixed right column (44–96px) under the white label; rows that carry it are tall enough that the
+   inline entry 「动词 ›」 sits below the tag, and the text column keeps clear of it (fix-r1 M1) */
+.c05-mt{position:absolute;right:22px;top:44px;width:28px;height:52px;pointer-events:none}
+.c05-piece.hasobj .c05-pc{min-height:132px}
+.c05-piece.hasobj .c05-name{padding-right:46px}
+.c05-piece.hasobj .c05-extra{padding-right:48px}
+.c05-mt .mtk{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.c05-mt.ok .mtk{stroke:var(--chalk);stroke-width:1.7}
+.c05-mt.abs .mtk{stroke:var(--ink3);stroke-width:1.3;stroke-dasharray:2 1.6}
+.c05-mt.und .mtk{stroke:var(--string2);stroke-width:1.5}
+.c05-mt.none .mtk{stroke:var(--ink4);stroke-width:1;stroke-dasharray:1.6 1.6}
 .c05-mt svg{display:block;width:100%;height:100%;overflow:visible}
 .c05-mt .mtc{fill:var(--card);stroke:rgba(60,50,30,.25);stroke-width:1}
 .c05-mt .mts{fill:none;stroke:var(--string2);stroke-width:1.6;stroke-linecap:round}
@@ -165,13 +180,16 @@ body{margin:0}
 .c05-mt .mtt{font:600 9px var(--num);fill:var(--ink3);letter-spacing:.1em}
 .c05-mt .mtr{fill:none;stroke:var(--chalkr);stroke-width:1.4}
 /* attendance mark on ended rows */
-.c05-att{position:absolute;right:22px;top:46px}
-.c05-att.ok{color:var(--chalk)}.c05-att.abs{color:var(--ink3)}.c05-att.und{color:var(--string2)}.c05-att.none{background-color:transparent;box-shadow:none;border:1.5px dashed rgba(135,140,156,.6);color:var(--ink3)}
+.c05-att.ok{color:var(--chalk)}.c05-att.abs{color:var(--ink3)}.c05-att.und{color:var(--string2)}
 .c05-att.fresh{animation:c05-markin calc(520ms * var(--k,1)) cubic-bezier(.2,1.15,.3,1) both}
 @keyframes c05-markin{0%{transform:scale(1.6) rotate(-7deg);opacity:0}60%{transform:scale(.97) rotate(1deg);opacity:1}100%{transform:none}}
-/* landed chalk tick */
-.c05-piece.landed .c05-cloth::before{background:linear-gradient(160deg,rgba(59,75,114,.14),rgba(59,75,114,.05) 40%,rgba(60,50,30,.04));transition:background calc(1200ms * var(--k,1)) ease}
-.c05-piece.landing{opacity:0;transition:none}
+/* landed chalk tint: its own layer under the text, faded in only AFTER the hand-off (fix-r1 m1: the row appears in the same frame the
+   flying piece is removed — no opacity fade-in, no tint jump) */
+.c05-tint{position:absolute;inset:0;pointer-events:none;background:linear-gradient(160deg,rgba(59,75,114,.15),rgba(59,75,114,.05) 40%,rgba(60,50,30,.03));opacity:0;transition:opacity calc(1200ms * var(--k,1)) ease}
+.c05-piece.landed:not(.landing) .c05-tint{opacity:1;transition-duration:calc(700ms * var(--k,1))}
+.c05-piece.landed,.c05-piece.landing{transition-property:filter,transform}
+.c05-piece.landing{opacity:0}
+.c05-piece.outline .c05-tint{display:none}
 .c05-piece.leaving{animation:c05-leave calc(300ms * var(--k,1)) cubic-bezier(.4,0,.8,.4) both}
 @keyframes c05-leave{0%{opacity:1;transform:none}100%{opacity:0;transform:translateX(22px) rotate(1.5deg)}}
 .c05-rowwrap{overflow:hidden;transition:height calc(300ms * var(--k,1)) cubic-bezier(.4,0,.6,1)}
@@ -209,7 +227,7 @@ body{margin:0}
 .c05-over{position:absolute;inset:0;z-index:30}
 .c05-over.c05-full{background:var(--table)}
 .c05-over.c05-full.start,.c05-over.c05-full.in,.c05-over.c05-full.out{transition:clip-path calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
-.c05-over.c05-full.out{background-color:rgba(225,218,200,0);transition:clip-path calc(460ms * var(--k,1)) cubic-bezier(.4,0,.7,.5) calc(120ms * var(--k,1)),background-color calc(200ms * var(--k,1)) ease calc(220ms * var(--k,1))}
+.c05-over.c05-full.out{background-color:rgba(225,218,200,0);transition:clip-path calc(460ms * var(--k,1)) cubic-bezier(.45,.05,.25,1) calc(120ms * var(--k,1)),background-color calc(200ms * var(--k,1)) ease calc(220ms * var(--k,1))}
 .c05-over.out .c05-stick{opacity:0;box-shadow:none;transition:opacity calc(180ms * var(--k,1)) ease}
 .c05-oscroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:0 0 120px;scrollbar-width:none}
 .c05-oscroll::-webkit-scrollbar{display:none}
@@ -237,7 +255,7 @@ body{margin:0}
 .c05-backbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .c05-topnote{margin-left:auto;flex:0 0 auto;font:italic 500 12px/1 var(--num);letter-spacing:.14em;color:var(--ink3)}
 .c05-sheetwrap{transition:transform calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);perspective:1100px;perspective-origin:50% 0}
-.c05-over.out .c05-sheetwrap{transition-timing-function:cubic-bezier(.4,0,.7,.5);transition-delay:calc(120ms * var(--k,1))}
+.c05-over.out .c05-sheetwrap{transition-timing-function:cubic-bezier(.45,.05,.25,1);transition-delay:calc(120ms * var(--k,1))}
 .c05-over.flat .c05-sheetwrap{transform:none!important;perspective:none}
 .c05-sheet{position:relative;width:auto;margin:0 var(--gut);filter:drop-shadow(1px 2px 0 rgba(90,78,52,.12)) drop-shadow(8px 14px 14px rgba(70,60,40,.2))}
 .c05-sheet:not(.draft)>.c05-cloth{background:transparent}
@@ -252,12 +270,61 @@ body{margin:0}
 .c05-sheet .c05-time{font-size:42px}
 .c05-sheet .c05-name{font-size:24px;line-height:1.38;color:var(--chalk);margin-top:12px;padding-right:0;-webkit-line-clamp:3}
 .c05-sheet .c05-pc{padding-bottom:30px}
-.c05-sheet .c05-time,.c05-sheet .c05-name,.c05-sheet .c05-pc{transition:font-size calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),margin calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),padding calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),color calc(460ms * var(--k,1)) ease}
+.c05-sheet .c05-time,.c05-sheet .c05-name,.c05-sheet .c05-pc{transition:font-size calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),margin calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),padding calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),min-height calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),color calc(460ms * var(--k,1)) ease}
 .c05-over.flat .c05-sheet .c05-time,.c05-over.flat .c05-sheet .c05-name,.c05-over.flat .c05-sheet .c05-pc{transition:none}
-.c05-over.fromrow.start .c05-sheet .c05-pc,.c05-over.fromrow.out .c05-sheet .c05-pc{padding:18px 20px 30px}
+.c05-over.fromrow.start .c05-sheet .c05-pc,.c05-over.fromrow.out .c05-sheet .c05-pc{padding:18px 20px 16px}
 .c05-over.fromrow.start .c05-sheet .c05-time,.c05-over.fromrow.out .c05-sheet .c05-time{font-size:27px}
-.c05-over.fromrow.start .c05-sheet .c05-name,.c05-over.fromrow.out .c05-sheet .c05-name{font-size:19px;margin-top:9px;color:var(--ink)}
+.c05-over.fromrow.start .c05-sheet .c05-name,.c05-over.fromrow.out .c05-sheet .c05-name{font-size:19px;margin-top:9px;color:var(--ink);padding-right:40px;-webkit-line-clamp:2}
 .c05-over.out .c05-sheet .c05-grainline{opacity:0}
+/* fix-r1 m1: while the piece travels to / from its row (start · out, opened from a non-lead row) the head carries exactly the row's
+   content — its sub-line, seat stitches, inline entry and mini tag (.c05-rowonly) — and the same padding / min-height, so the hand-off
+   to the row is the same shape; the detail-only lines (.c05-leadonly) fold away. Both collapse / expand with the font-size transition. */
+.c05-rowonly{display:none}
+.c05-sheet .c05-leadonly{max-height:48px;overflow:hidden}
+.c05-over.fromrow .c05-sheet .c05-rowonly{display:block;overflow:hidden;max-height:0;opacity:0;margin-top:0}
+.c05-over.fromrow .c05-sheet .c05-stitches.c05-rowonly,.c05-over.fromrow .c05-sheet .c05-draftacts.c05-rowonly{display:flex}
+.c05-over.fromrow.start .c05-sheet .c05-draftacts.c05-rowonly,.c05-over.fromrow.out .c05-sheet .c05-draftacts.c05-rowonly{margin-top:12px}
+.c05-over.fromrow .c05-sheet .c05-next.c05-rowonly{display:inline-flex;max-height:none;overflow:visible;margin:0}
+.c05-over.fromrow .c05-sheet .c05-mt.c05-rowonly{max-height:none;overflow:visible;margin:0}
+.c05-over.fromrow .c05-sheet .c05-rowonly,.c05-sheet .c05-leadonly{transition:max-height calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),margin calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(220ms * var(--k,1)) ease}
+.c05-over.fromrow.start .c05-sheet .c05-rowonly,.c05-over.fromrow.out .c05-sheet .c05-rowonly{max-height:48px;opacity:1}
+.c05-over.fromrow.start .c05-sheet .c05-extra.c05-rowonly,.c05-over.fromrow.out .c05-sheet .c05-extra.c05-rowonly{margin-top:7px}
+.c05-over.fromrow.start .c05-sheet .c05-stitches.c05-rowonly,.c05-over.fromrow.out .c05-sheet .c05-stitches.c05-rowonly{margin-top:10px}
+.c05-over.fromrow.start .c05-sheet .c05-leadonly,.c05-over.fromrow.out .c05-sheet .c05-leadonly{max-height:0;opacity:0;margin-top:0}
+/* same for a lead row: its countdown, baseline, need line and tape CTA ride on the travelling head (.c05-leadrow) */
+.c05-leadrow{display:none}
+.c05-over.fromlead .c05-sheet .c05-leadrow{display:block;overflow:hidden;max-height:0;opacity:0;margin-top:0;transition:max-height calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),margin calc(460ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(220ms * var(--k,1)) ease}
+.c05-over.fromlead .c05-sheet .c05-cdrow.c05-leadrow,.c05-over.fromlead .c05-sheet .c05-cta.c05-leadrow,.c05-over.fromlead .c05-sheet .c05-stitches.c05-leadrow{display:flex}
+.c05-over.fromlead.start .c05-sheet .c05-stitches.c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-stitches.c05-leadrow{margin-top:10px}
+.c05-over.fromlead.start .c05-sheet .c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-leadrow{max-height:96px;opacity:1}
+.c05-over.fromlead.start .c05-sheet .c05-cdrow.c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-cdrow.c05-leadrow{margin-top:14px}
+.c05-over.fromlead.start .c05-sheet .c05-bast.c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-bast.c05-leadrow{margin-top:10px;overflow:visible}
+.c05-over.fromlead.start .c05-sheet .c05-need.c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-need.c05-leadrow{margin-top:10px}
+.c05-over.fromlead.start .c05-sheet .c05-cta.c05-leadrow,.c05-over.fromlead.out .c05-sheet .c05-cta.c05-leadrow{margin-top:16px}
+.c05-over.fromlead.start .c05-sheet .c05-leadonly,.c05-over.fromlead.out .c05-sheet .c05-leadonly{max-height:0;opacity:0;margin-top:0}
+.c05-over.fromlead.start .c05-sheet .c05-pc,.c05-over.fromlead.out .c05-sheet .c05-pc{padding-bottom:20px}
+.c05-over.fromlead.start .c05-sheet .c05-name,.c05-over.fromlead.out .c05-sheet .c05-name{-webkit-line-clamp:2}
+.c05-sheet .c05-cta.c05-leadrow .c05-tape{min-width:168px}
+.c05-over.flat .c05-sheet .c05-rowonly,.c05-over.flat .c05-sheet .c05-leadonly,.c05-over.flat .c05-sheet .c05-leadrow{transition:none}
+.c05-over.out .c05-ashlayer{opacity:0;transition:opacity calc(190ms * var(--k,1)) ease}
+.c05-over.fromrow.objrow.start .c05-sheet .c05-pc,.c05-over.fromrow.objrow.out .c05-sheet .c05-pc{min-height:132px}
+.c05-over.fromrow.objrow.start .c05-sheet .c05-name,.c05-over.fromrow.objrow.out .c05-sheet .c05-name{padding-right:46px}
+.c05-over.fromrow.objrow.start .c05-sheet .c05-extra,.c05-over.fromrow.objrow.out .c05-sheet .c05-extra{padding-right:48px}
+.c05-over.fromrow.start .c05-sheet .c05-extra.c05-rowonly:has(~ .c05-next),.c05-over.fromrow.out .c05-sheet .c05-extra.c05-rowonly:has(~ .c05-next){padding-right:88px}
+/* fix-r1 M3: returning to an outline row (未成行 · 已取消), the flying head turns into the outline material on the way —
+   an opaque table-coloured face with the dashed edge and folded corner of the list row — so nothing shows through and nothing swaps at the landing */
+.c05-sheet>.c05-cloth>.c05-pc{isolation:isolate}
+.c05-sheet>.c05-cloth>.c05-pc::before,.c05-sheet>.c05-cloth>.c05-pc::after{content:"";position:absolute;pointer-events:none;opacity:0}
+.c05-sheet>.c05-cloth>.c05-pc::before{inset:0;z-index:-1;background-color:var(--table);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.28) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(70,58,36,.08) 0 1px,transparent 1px 3px);border:1.5px dashed rgba(135,140,156,.7);border-radius:2px}
+.c05-sheet>.c05-cloth>.c05-pc::after{right:-1px;top:-1px;width:26px;height:26px;z-index:1;background:linear-gradient(225deg,var(--table) 50%,transparent 50%);border-left:1.5px dashed rgba(135,140,156,.7);border-bottom:1.5px dashed rgba(135,140,156,.7)}
+.c05-over.tocharred .c05-sheet>.c05-cloth>.c05-pc::after{background:linear-gradient(225deg,var(--table) 46%,var(--char) 46% 60%,var(--scorch) 60% 72%,transparent 72%);border-color:var(--scorch)}
+.c05-over.tooutline.out .c05-sheet>.c05-cloth>.c05-pc::before,.c05-over.tooutline.out .c05-sheet>.c05-cloth>.c05-pc::after{opacity:1;transition:opacity calc(380ms * var(--k,1)) ease calc(40ms * var(--k,1))}
+.c05-over.fromrow.tooutline.out .c05-sheet>.c05-cloth>.c05-pc{padding:19.5px 21.5px 17.5px}
+.c05-over.fromrow.tooutline.out .c05-pieceash .c05-ashhead{padding-bottom:17.5px;border-bottom:1.5px dashed var(--ash)}
+.c05-over.tooutline.out .c05-sheet{filter:drop-shadow(1px 2px 0 rgba(90,78,52,0)) drop-shadow(8px 14px 14px rgba(70,60,40,0));transition:filter calc(380ms * var(--k,1)) ease}
+.c05-over.tooutline.out .c05-sheet .c05-time,.c05-over.tooutline.out .c05-sheet .c05-wd,.c05-over.tooutline.out .c05-sheet .c05-hood,.c05-over.tooutline.out .c05-sheet .c05-name{color:var(--ink3)}
+.c05-sheet .c05-wd,.c05-sheet .c05-hood{transition:color calc(460ms * var(--k,1)) ease}
+.c05-over.out .c05-sheet.closed>.c05-cloth{border-color:transparent;background-color:transparent;transition:border-color calc(240ms * var(--k,1)) ease,background-color calc(240ms * var(--k,1)) ease}
 .c05-grainline{position:absolute;right:28px;bottom:8px;font:italic 500 10px/1 var(--num);letter-spacing:.2em;color:var(--ink3);display:flex;align-items:center;gap:6px}
 .c05-grainline svg{width:34px;height:10px;stroke:currentColor;fill:none;stroke-width:1.2}
 /* the flap: the lower half of the piece folds open along a chalk line */
@@ -362,8 +429,13 @@ body{margin:0}
 .app .fx-burn.burning .c05-scorch{stroke:#8a5e38;stroke-width:32px!important;opacity:.6}
 .app .fx-burn.burning .c05-char{stroke:#2b1c14;stroke-width:12px!important}
 .app .fx-burn.burning .c05-glow{stroke:#f0b060;stroke-width:3px!important}
-.c05-tag.fx-burn.burning .c05-fuzz{stroke-width:3px;stroke:rgba(90,70,50,.7);stroke-dasharray:1.5 2.5}
-@keyframes c05-hole{0%{r:0;animation-timing-function:cubic-bezier(.5,0,.8,.6)}12%{r:calc(var(--fx-reach) * .07);animation-timing-function:cubic-bezier(.42,.12,.5,1)}88%{r:var(--fx-reach)}100%{r:var(--fx-reach)}}
+/* fix-r1 m6: the burn front is displaced by a coarse fixed noise field (c05-burnedge: 60px lumps ±15px over fine roughness, in user space so
+   hole, char band and residue stay aligned) — the front advances unevenly instead of as a clean arc; the fuzz ring is a wide, irregularly dashed
+   stroke whose outer half reads as short singed fibres standing off the char band */
+.c05-tag.fx-burn.burning .c05-fuzz{stroke-width:18px;stroke:rgba(58,36,22,.62);stroke-dasharray:.8 2.6 1.3 4.2 .6 3.1 1 5.4}
+/* fix-r1: explicit stops (linear between them) so the front keeps eating to the end — the last remnant (far corner, ≈.89 reach) goes at ≈82%;
+   measured round-2 curve had r = .85 reach by 55% and nothing left to burn after it */
+@keyframes c05-hole{0%{r:0;animation-timing-function:cubic-bezier(.5,0,.8,.6)}12%{r:calc(var(--fx-reach) * .07);animation-timing-function:linear}30%{r:calc(var(--fx-reach) * .3);animation-timing-function:linear}50%{r:calc(var(--fx-reach) * .55);animation-timing-function:linear}70%{r:calc(var(--fx-reach) * .78);animation-timing-function:linear}82%{r:calc(var(--fx-reach) * .91);animation-timing-function:linear}90%{r:var(--fx-reach)}100%{r:var(--fx-reach)}}
 .app .fx-burn.burning .fx-hole{animation:c05-hole calc(var(--fx-dur) * var(--k,1)) linear forwards}
 .app .fx-burn.burning .fx-ember,.app .fx-burn.burning .c05-fuzz{animation:c05-hole calc(var(--fx-dur) * var(--k,1)) linear forwards,fx-ember-fade calc(var(--fx-dur) * var(--k,1)) linear forwards}
 .app.scrub .fx-burn.burning .fx-hole,.app.scrub .fx-burn.burning .fx-ember,.app.scrub .fx-burn.burning .c05-fuzz{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
@@ -383,7 +455,7 @@ body{margin:0}
 .c05-ashlayer{position:absolute;inset:0;pointer-events:none;z-index:6}
 .c05-ash{background:var(--char);width:5px;height:5px}
 .c05-ash.grey{background:var(--ash)}
-.c05-string{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;z-index:3}
+.c05-string{position:absolute;left:0;top:0;width:314px;height:304px;pointer-events:none;overflow:visible;z-index:3}
 .c05-str-sh{fill:none;stroke:var(--string2);stroke-linecap:round}
 .c05-str{fill:none;stroke:var(--string);stroke-linecap:round;stroke-dasharray:2.6 1.4}
 .c05-string.draw .c05-str,.c05-string.draw .c05-str-sh{stroke-dasharray:400;stroke-dashoffset:400;animation:c05-strdraw calc(520ms * var(--k,1)) cubic-bezier(.4,.1,.5,1) forwards}
@@ -400,8 +472,10 @@ body{margin:0}
 .c05-string.charred .c05-knot{fill:var(--char)}
 .c05-remsvg.burn{animation:c05-strlight calc(2600ms * var(--k,1)) linear both}
 /* progressive break: past p .75 the light strand has gone and fibres splay at the weak point */
-.c05-string.fraying .c05-str{opacity:0;transition:opacity calc(120ms * var(--k,1)) ease}
-.c05-fray path{fill:none;stroke:var(--string2);stroke-width:1;stroke-linecap:round}
+/* fix-r1 m5: past p .75 the light strand parts at the weak point — a widening gap with splayed fibre ends on both sides (no radial "asterisk") */
+.c05-fray path{fill:none;stroke-linecap:round}
+.c05-fray .fl{stroke:var(--string);stroke-width:1}
+.c05-fray .fd{stroke:var(--string2);stroke-width:.9}
 .c05-knot{fill:var(--string2);transform-origin:30px 22px}
 .c05-string.draw .c05-knot{animation:c05-knot calc(260ms * var(--k,1)) cubic-bezier(.2,1.4,.3,1) calc(480ms * var(--k,1)) both}
 @keyframes c05-knot{0%{transform:scale(0)}100%{transform:scale(1)}}
@@ -441,7 +515,7 @@ body{margin:0}
 .c05-tagarea.hist .c05-tagwrap{cursor:default;top:22px}
 .c05-tagarea.hist .c05-pocket,.c05-tagarea.hist .c05-edge{display:none}
 .c05-attbig{position:absolute;right:6px;top:150px;padding:6px 12px;font-size:12.5px;z-index:6;transform:rotate(-4deg)}
-.c05-attbig.none{background:transparent;border:1.5px dashed rgba(135,140,156,.6);box-shadow:none;color:var(--ink3);background-image:none}
+.c05-attbig.none{background:var(--card);border:1.5px dashed rgba(135,140,156,.6);box-shadow:none;color:var(--ink3);background-image:none}
 .c05-attbig.abs{color:var(--ink3)}.c05-attbig.ok{color:var(--chalk)}.c05-attbig.und{color:var(--string2)}
 .c05-recs{display:flex;flex-direction:column;gap:8px;margin-top:4px}
 .c05-rec{display:flex;gap:10px;font:400 12.5px/1.5 var(--serif);color:var(--ink2);padding:6px 0;border-bottom:1px dotted rgba(59,75,114,.3)}
@@ -465,26 +539,124 @@ body{margin:0}
 .c05-ledger::before{content:"";position:absolute;left:8px;top:6px;bottom:6px;width:1.5px;background:repeating-linear-gradient(0deg,var(--thread) 0 7px,transparent 7px 12px);opacity:.55}
 .c05-ltitle{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 -16px 0 -22px;padding:0 16px 9px 22px;border-bottom:1px solid rgba(59,75,114,.16);font:500 11.5px/1 var(--serif);letter-spacing:.24em;color:var(--ink3);margin-bottom:12px}
 .c05-ltitle>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.c05-ltitle .c05-num{font-size:12px;letter-spacing:.1em;font-weight:600}
+.c05-ltitle .c05-num{font-size:12px;letter-spacing:.1em;font-weight:600;white-space:nowrap;flex:0 0 auto}
 .c05-ltabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 -16px 14px -22px;padding:0 16px 12px 22px;border-bottom:1px solid rgba(59,75,114,.18);box-shadow:0 3px 0 -2px rgba(59,75,114,.1)}
 .c05-ltab{position:relative;border:1px solid rgba(59,75,114,.35);background:transparent;padding:6px 10px;font:500 12px/1 var(--serif);letter-spacing:.08em;color:var(--ink2);display:inline-flex;align-items:center;gap:5px}
 .c05-ltab b{font:600 12px/1 var(--num);letter-spacing:.02em}
 .c05-ltab.on{background:#fff;color:var(--ink);border-color:transparent;box-shadow:0 1px 0 rgba(60,50,30,.12)}
 .c05-ltab .dot{width:6px;height:6px;border-radius:50%;background:var(--chalkr)}
 .c05-lsec{animation:c05-secin calc(220ms * var(--k,1)) ease both}
-.c05-approw{display:flex;gap:10px;padding:8px 0 10px;border-bottom:1px dotted rgba(59,75,114,.35)}
-.c05-approw:last-child{border-bottom:0}
-.c05-approw .c05-av{margin-top:2px}
-.c05-apbody{flex:1 1 auto;min-width:0}
-.c05-apname{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;font:500 14px/1.4 var(--serif);color:var(--ink)}
-.c05-apname .c05-vb{font:400 10.5px/1 var(--serif);letter-spacing:.04em;color:var(--green);padding:2px 5px;border:1px solid rgba(44,106,76,.4)}
-.c05-apname .c05-vb.no{color:var(--ink3);border-color:rgba(135,140,156,.5)}
-.c05-apnote{margin:3px 0 0;font:400 12.5px/1.5 var(--serif);color:var(--ink2)}
-.c05-apago{margin:2px 0 0;font:400 11px/1.4 var(--serif);color:var(--ink3)}
-.c05-apacts{display:flex;gap:8px;margin-top:8px;align-items:center}
-.c05-apacts .c05-tape{min-height:36px;padding:0 14px;font-size:13px;letter-spacing:.12em}
-.c05-apresult{margin-top:8px;font:500 12.5px/1.5 var(--serif);color:var(--chalk);animation:c05-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
-.c05-apresult.no{color:var(--ink3)}
+/* ---- 申请 = 来样 (fix-r1, lead 「管理页结构雷同」): each application is a swatch of bleached cloth pinned to the order book, pinked at the
+   foot; above them the tape-measure seating chart (座位表) that an invitation basts a seat onto. The decision happens on the swatch's seam:
+   a basting thread runs from the scissors (谢绝 = snip it) to the needle (发出邀请 = sew it). Results land in place as a sewn white label. ---- */
+.c05-tapem{margin:2px 0 18px}
+.c05-tmcap{display:flex;align-items:baseline;gap:8px;margin:0 0 8px;font:500 11.5px/1 var(--serif);letter-spacing:.2em;color:var(--ink3)}
+.c05-tmcap b{font:600 14px/1 var(--num);letter-spacing:.04em;color:var(--ink)}
+.c05-tmcap small{margin-left:auto;font:400 11.5px/1 var(--serif);letter-spacing:.04em;color:var(--ink2);white-space:nowrap}
+.c05-tmrow{display:flex;align-items:stretch;filter:drop-shadow(1px 1px 0 rgba(90,78,52,.14)) drop-shadow(3px 5px 5px rgba(70,60,40,.18))}
+.c05-tmtip{flex:0 0 9px;margin:5px 0;background:linear-gradient(#dcdad3,#a5a39c 55%,#cfcdc6);border-radius:1.5px 0 0 1.5px}
+.c05-tmstrip{position:relative;flex:1 1 auto;min-width:0;display:flex;height:52px;background-color:#f4ecd6;
+  background-image:repeating-linear-gradient(90deg,rgba(38,44,61,.5) 0 1px,transparent 1px 6px),repeating-linear-gradient(90deg,rgba(38,44,61,.35) 0 1px,transparent 1px 6px),linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,0) 45%);
+  background-size:100% 5px,100% 3px,auto;background-position:0 0,0 100%,0 0;background-repeat:no-repeat;clip-path:polygon(0 0,100% 0,calc(100% - 7px) 50%,100% 100%,0 100%)}
+.c05-tmslot{position:relative;flex:1 1 0;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:6px;padding:0 3px 9px;border-left:1px solid rgba(38,44,61,.32)}
+.c05-tmslot:first-child{border-left:0}
+.c05-tmslot:last-child{padding-right:9px}
+.c05-tmslot em{position:absolute;left:4px;top:8px;font:italic 600 11px/1 var(--num);color:var(--ink3)}
+.c05-tmslot i{display:block;width:22px;height:5px;border-radius:1px}
+.c05-tmslot.host i{background:var(--thread);box-shadow:0 -4px 0 -1px var(--thread)}
+.c05-tmslot.ok i{background:var(--thread)}
+.c05-tmslot.res i{background:repeating-linear-gradient(90deg,var(--chalk) 0 5px,transparent 5px 8px);opacity:.85}
+.c05-tmslot.open i{background:radial-gradient(circle,rgba(43,52,80,.38) 0 1.2px,transparent 1.5px) 0 0/6px 5px}
+.c05-tmslot small{max-width:100%;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:500 10.5px/1.1 var(--serif);letter-spacing:.02em;color:var(--ink2)}
+.c05-tmslot.res small{color:var(--chalk)}
+.c05-tmslot.open small{color:var(--ink3);font-weight:400}
+.c05-tmslot.new i{animation:c05-stitchin calc(500ms * var(--k,1)) cubic-bezier(.2,1.1,.3,1) calc(240ms * var(--k,1)) both}
+.c05-tmslot.new small{animation:c05-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) calc(240ms * var(--k,1)) both}
+.c05-tmslot.new::after{content:"";position:absolute;inset:0;background:rgba(59,75,114,.1);animation:c05-tmflash calc(1400ms * var(--k,1)) ease both}
+@keyframes c05-tmflash{0%,20%{opacity:0}35%{opacity:1}100%{opacity:0}}
+.c05-swatches{display:flex;flex-direction:column;gap:18px;margin:2px 0 8px}
+.c05-swatch{position:relative;margin-left:4px;filter:drop-shadow(1px 1px 0 rgba(90,78,52,.12)) drop-shadow(4px 7px 7px rgba(70,60,40,.2))}
+.c05-swcloth{position:relative;padding:15px 14px 21px 16px;border:1.5px dashed transparent;background-color:var(--cloth);
+  background-image:linear-gradient(160deg,rgba(255,255,255,.4),rgba(255,255,255,0) 35%),repeating-linear-gradient(0deg,rgba(255,255,255,.4) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(80,68,44,.05) 0 1px,transparent 1px 3px);
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50% / 10px 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50% / 10px 100%}
+.c05-pin{position:absolute;left:-2px;top:-14px;width:34px;height:34px;z-index:3;overflow:visible}
+.c05-pin .ps{stroke:#a9a7a0;stroke-width:1.4;stroke-linecap:round}
+.c05-pin .psh{stroke:rgba(60,50,30,.22);stroke-width:1.4;stroke-linecap:round}
+.c05-pin .ph{fill:var(--chalkr)}
+.c05-pin .phl{fill:rgba(255,255,255,.7)}
+.c05-swatch.ok .c05-pin .ph{fill:var(--chalk)}
+.c05-swtop{display:grid;grid-template-columns:42px minmax(0,1fr) auto;column-gap:12px;row-gap:5px;align-items:center}
+.c05-swav{grid-row:1 / span 2;position:relative;width:42px;height:42px;display:flex;align-items:center;justify-content:center;background:var(--cloth2);box-shadow:inset 0 0 0 1px rgba(60,50,30,.12);font:500 17px/1 var(--serif);color:var(--ink)}
+.c05-swav::before{content:"";position:absolute;inset:3px;border:1px dashed rgba(43,52,80,.42);pointer-events:none}
+.c05-swav.plain{background:var(--cloth3)}
+.c05-swav.plain b{opacity:0}
+.c05-swatch.ok .c05-swav::before{inset:-4px;border:1.5px dashed var(--chalk)}
+.c05-swx{position:absolute;inset:0;width:100%;height:100%;opacity:0;overflow:visible}
+.c05-swx path{fill:none;stroke:var(--chalk);stroke-width:2.4;stroke-linecap:round}
+.c05-swatch.no .c05-swx{opacity:.78}
+.c05-swname{grid-column:2;grid-row:1;min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:500 15.5px/1.3 var(--serif);letter-spacing:.03em;color:var(--ink)}
+.c05-swago{grid-column:2 / -1;grid-row:2;font:400 11.5px/1.3 var(--serif);letter-spacing:.04em;color:var(--ink3)}
+/* the verification is a woven brand label (织唛) sewn at the swatch's right edge — not a status label */
+.c05-woven{grid-column:3;grid-row:1;position:relative;display:inline-flex;align-items:center;height:22px;margin-right:-15.5px;padding:0 13px 0 12px;background-color:var(--thread);
+  background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.08) 0 1px,transparent 1px 2px),linear-gradient(90deg,transparent calc(100% - 5px),rgba(0,0,0,.32) calc(100% - 5px));color:#ece5d3;font:500 10.5px/1 var(--serif);letter-spacing:.06em;white-space:nowrap;box-shadow:0 1px 1px rgba(30,30,40,.22)}
+.c05-woven::before{content:"";position:absolute;left:5px;top:5px;bottom:5px;width:1px;background:repeating-linear-gradient(0deg,#ece5d3 0 2px,transparent 2px 4px);opacity:.75}
+.c05-woven.no{background-color:var(--cloth3);color:var(--ink2);box-shadow:none;background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.25) 0 1px,transparent 1px 2px),linear-gradient(90deg,transparent calc(100% - 5px),rgba(60,50,30,.16) calc(100% - 5px))}
+.c05-woven.no::before{background:repeating-linear-gradient(0deg,var(--ink3) 0 2px,transparent 2px 4px)}
+.c05-swnote{margin:11px 0 0 54px;font:400 13px/1.6 var(--serif);letter-spacing:.02em;color:var(--ink2);text-wrap:pretty}
+.c05-swseam{display:flex;align-items:center;gap:8px;min-height:38px;margin-top:12px}
+.c05-snip{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;gap:5px;min-width:68px;min-height:34px;padding:0 11px 0 9px;border:1.5px solid rgba(96,101,122,.55);border-radius:3px 7px 4px 8px/7px 3px 8px 4px;background:transparent;color:var(--ink2);font:500 12.5px/1 var(--serif);letter-spacing:.12em;white-space:nowrap}
+.c05-snip:active{background:rgba(96,101,122,.08)}
+.c05-snip svg,.c05-snipmark svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linecap:round}
+.c05-snip.busy svg{animation:c05-snipping calc(300ms * var(--k,1)) ease-in-out infinite alternate}
+@keyframes c05-snipping{0%{transform:none}100%{transform:scaleX(.72)}}
+.c05-snipmark{flex:0 0 22px;display:inline-flex;align-items:center;justify-content:flex-start;color:var(--ink3)}
+.c05-snipmark .kn{fill:currentColor;stroke:none}
+.c05-swatch.ok .c05-snipmark{color:var(--chalk)}
+.c05-swthread{position:relative;flex:1 1 auto;min-width:20px;height:12px}
+.c05-swthread::before,.c05-swthread::after{content:"";position:absolute;top:5px;width:50%;height:2px;background:repeating-linear-gradient(90deg,var(--thread) 0 6px,transparent 6px 11px);opacity:.7}
+.c05-swthread::before{left:0;transform-origin:0 50%}
+.c05-swthread::after{right:0;transform-origin:100% 50%;background-position:right 0 top 0}
+.c05-swthread i{position:absolute;left:0;right:0;top:4.5px;height:3px;background:repeating-linear-gradient(90deg,var(--thread) 0 8px,rgba(255,255,255,.65) 8px 9px,transparent 9px 11px);transform:scaleX(0);transform-origin:0 50%;opacity:0}
+.c05-swatch.busy .c05-swthread::before,.c05-swatch.busy .c05-swthread::after{animation:c05-baste calc(600ms * var(--k,1)) linear infinite}
+@keyframes c05-baste{to{background-position:11px 0}}
+.c05-needle{flex:0 0 auto;min-height:36px;padding:0 15px 0 11px;gap:7px;font-size:13px;letter-spacing:.12em}
+.c05-needle svg{width:24px;height:10px;flex:0 0 24px}
+.c05-needle .nd{fill:#e9e4d6;stroke:none}
+.c05-needle .ne{fill:var(--tape)}
+.c05-needle.busy svg{opacity:0}
+/* another swatch is being written: this needle waits, it does not turn into a grey "disabled" slab */
+.c05-needle:disabled:not(.busy){background-color:var(--tape);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.07) 0 2px,transparent 2px 6px);color:#fff;opacity:.55;box-shadow:none}
+.c05-needle:disabled:not(.busy)::before{border-color:rgba(255,255,255,.55)}
+.c05-snip:disabled:not(.busy){opacity:.55}
+.c05-appsec>.c05-h3{margin-bottom:16px}
+.c05-swres{flex:0 1 auto;min-width:0;white-space:nowrap}
+.c05-swres.ok{color:var(--chalk)}
+.c05-swres.no{color:var(--ink3);background-color:var(--cloth2);box-shadow:none}
+/* sewn: the basting becomes a running seam left → right, then the label settles where the needle was */
+.c05-swatch.ok .c05-swthread::before,.c05-swatch.ok .c05-swthread::after{opacity:0}
+.c05-swatch.ok .c05-swthread i{transform:none;opacity:1}
+.c05-swatch.ok.fresh .c05-swthread i{animation:c05-sew calc(520ms * var(--k,1)) cubic-bezier(.4,.1,.3,1) both}
+@keyframes c05-sew{0%{transform:scaleX(0);opacity:1}100%{transform:none;opacity:1}}
+.c05-swatch.fresh .c05-swres{animation:c05-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) calc(200ms * var(--k,1)) both}
+.c05-swatch.ok.fresh .c05-swav::before{animation:c05-settle calc(420ms * var(--k,1)) ease both}
+/* snipped: the thread parts at the scissors and recoils, the pin is pulled, the swatch becomes the outline material of every 未成行 piece */
+.c05-swatch.no{filter:none}
+.c05-swatch.no .c05-swcloth{background-color:transparent;background-image:none;border-color:rgba(135,140,156,.7)}
+.c05-swatch.no .c05-swname,.c05-swatch.no .c05-swnote{color:var(--ink3)}
+.c05-swatch.no .c05-woven{opacity:.5}
+.c05-swatch.no .c05-pin{opacity:0}
+.c05-swatch.no .c05-swthread::before{transform:scaleX(.16) rotate(-7deg);opacity:.45}
+.c05-swatch.no .c05-swthread::after{transform:scaleX(.05);opacity:0}
+.c05-swatch.no.fresh .c05-swthread::before{animation:c05-snipL calc(480ms * var(--k,1)) cubic-bezier(.2,1.3,.3,1) both}
+.c05-swatch.no.fresh .c05-swthread::after{animation:c05-snipR calc(420ms * var(--k,1)) cubic-bezier(.3,.6,.4,1) both}
+@keyframes c05-snipL{0%{transform:none;opacity:.7}100%{transform:scaleX(.16) rotate(-7deg);opacity:.45}}
+@keyframes c05-snipR{0%{transform:none;opacity:.7}100%{transform:scaleX(.05);opacity:0}}
+.c05-swatch.no.fresh .c05-pin{animation:c05-unpin calc(380ms * var(--k,1)) cubic-bezier(.5,0,.7,.4) both}
+@keyframes c05-unpin{0%{opacity:1;transform:none}100%{opacity:0;transform:translate(-7px,-15px) rotate(-14deg)}}
+.c05-swatch.no.fresh .c05-swcloth{animation:c05-unbleach calc(420ms * var(--k,1)) ease both}
+@keyframes c05-unbleach{0%{background-color:var(--cloth);border-color:transparent}100%{background-color:transparent;border-color:rgba(135,140,156,.7)}}
+.c05-swatch.no.fresh .c05-swx{animation:c05-settle calc(320ms * var(--k,1)) ease calc(120ms * var(--k,1)) both}
+.c05-swatch .c05-alert{margin-top:8px}
 @keyframes c05-settle{0%{opacity:.25;transform:translateY(5px)}100%{opacity:1;transform:none}}
 .c05-wxrow{display:flex;align-items:center;gap:8px;flex-wrap:nowrap;white-space:nowrap;margin-top:2px;font:500 12.5px/1 var(--num);letter-spacing:.06em;color:var(--ink2)}
 .c05-wxrow .c05-serif{font:400 11.5px/1 var(--serif);letter-spacing:.08em;color:var(--ink3)}
@@ -520,12 +692,20 @@ body{margin:0}
 .c05-sheet .c05-cloth.fx-burn{--fx-dur:3000ms;--fx-reach:460px}
 .c05-sheet .c05-cloth.fx-burn.burning .c05-scorch{stroke-width:40px!important}
 .c05-sheet .c05-cloth.fx-burn.burning .c05-char{stroke-width:16px!important}
-.c05-sheet .c05-cloth.fx-burn.burning .c05-fuzz{stroke-width:3.5px;stroke:rgba(90,70,50,.7);stroke-dasharray:1.5 2.5}
+.c05-sheet .c05-cloth.fx-burn.burning .c05-fuzz{stroke-width:22px;stroke:rgba(58,36,22,.6);stroke-dasharray:.8 2.6 1.3 4.2 .6 3.1 1 5.4}
 .c05-sheet .c05-cloth .c05-fuzz{r:0;fill:none}
 .scrub .c05-sheet .c05-cloth.fx-burn.burning .c05-fuzz{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
 .c05-sheet .c05-cloth.fx-burn.burnt{opacity:0;visibility:hidden}
 .c05-sheet.ashed{filter:none}
-.c05-pieceash{position:absolute;inset:0;--fx-dur:3000ms;border:1.5px dashed var(--ash);background:rgba(222,215,199,.28);pointer-events:none;opacity:0;transition:opacity calc(500ms * var(--k,1)) ease}
+.c05-pieceash{position:absolute;inset:0;--fx-dur:3000ms;pointer-events:none;opacity:0;transition:opacity calc(500ms * var(--k,1)) ease}
+/* fix-r1 M3: the grey-line residue is two opaque table-coloured parts (head + flap) with dashed edges — the flap folds back on the way
+   home exactly like the cloth flap, so the outline that flies to the 历史 · 已取消 row never lets the list's text through */
+.c05-pieceash .c05-ashhead,.c05-pieceash .c05-ashflap{position:relative;background-color:var(--table);background-image:repeating-linear-gradient(0deg,rgba(255,255,255,.28) 0 1px,transparent 1px 3px),repeating-linear-gradient(90deg,rgba(70,58,36,.08) 0 1px,transparent 1px 3px)}
+.c05-pieceash .c05-ashhead{border:1.5px dashed var(--ash);border-bottom:0}
+.c05-pieceash .c05-ashflap{border:1.5px dashed var(--ash);border-top:0;transform-origin:50% 0}
+.c05-over.out .c05-pieceash .c05-ashflap{transform:perspective(1400px) rotateX(-72deg);opacity:0;transition:transform calc(300ms * var(--k,1)) cubic-bezier(.5,0,.8,.4),opacity calc(190ms * var(--k,1)) ease calc(20ms * var(--k,1))}
+.c05-over.out .c05-pieceash .c05-ashmark{opacity:0;transition:opacity calc(190ms * var(--k,1)) ease}
+.c05-pieceash::after{z-index:2}
 .c05-pieceash.rising{transition:none;-webkit-mask:var(--c05-res);mask:var(--c05-res);animation:c05-resin calc(var(--fx-dur) * var(--k,1)) linear both}
 .app.scrub .c05-pieceash.rising{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k,1))!important}
 .c05-pieceash.on{opacity:1}
@@ -636,6 +816,11 @@ body{margin:0}
 @keyframes c05-grow{0%{max-height:0}100%{max-height:320px}}
 .c05-rowwrap.leavingwrap{transition:height calc(300ms * var(--k,1)) cubic-bezier(.4,0,.6,1)}
 .app.rm .c05-tagwrap.printing,.app.rm .c05-tagwrap.falling{animation-duration:1ms}
+/* fix-r1 m7: below 376px the big time on the lead / opened piece steps down so 「time · date」 never runs under a wide status label */
+@container (max-width: 375px){
+  .c05-sheet .c05-time,.c05-piece.lead .c05-time{font-size:36px}
+  .c05-sheet .c05-pc .c05-timeline,.c05-piece.lead .c05-timeline{padding-right:calc(var(--labw,70px) + 14px)}
+}
 </style>
 </helmet>
 <div class="ju-stage">
@@ -644,6 +829,7 @@ body{margin:0}
       <div class="c05-weave"></div>
       <svg class="c05-grain" aria-hidden="true"><defs>
         <filter id="c05-fibre" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="n"></feTurbulence><feColorMatrix in="n" type="saturate" values="0" result="g"></feColorMatrix><feComponentTransfer in="g"><feFuncA type="table" tableValues="0 0.11"></feFuncA></feComponentTransfer></filter>
+        <filter id="c05-burnedge" filterUnits="userSpaceOnUse" x="-60" y="-60" width="480" height="600"><feTurbulence type="fractalNoise" baseFrequency="0.016" numOctaves="3" seed="13" result="n"></feTurbulence><feDisplacementMap in="SourceGraphic" in2="n" scale="30" xChannelSelector="R" yChannelSelector="G"></feDisplacementMap></filter>
         <radialGradient id="c05-charg"><stop offset="0" stop-color="#eec070"></stop><stop offset=".3" stop-color="#b96a32"></stop><stop offset=".68" stop-color="#4b3020"></stop><stop offset="1" stop-color="#2a1c15"></stop></radialGradient>
       </defs><rect width="100%" height="100%" filter="url(#c05-fibre)"></rect></svg>
       <header class="c05-head {{backCls}}">
@@ -670,16 +856,16 @@ body{margin:0}
               <div class="c05-rowwrap {{r.wrapCls}}" style="{{r.wrapStyle}}">
                 <div class="c05-piece {{r.cls}}" data-rid="{{r.rid}}">
                   <div class="c05-cloth">
+                    <i class="c05-tint" aria-hidden="true"></i>
                     <button type="button" class="c05-hit" aria-label="{{r.aria}}" onClick="{{r.open}}"></button>
                     <div class="c05-pc" style="--labw:{{r.labw}}px">
                       <span class="c05-lab {{r.chipCls}}">{{r.chipText}}</span>
-                      <div class="c05-timeline"><b class="c05-time">{{r.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{r.wd}}</span><span class="c05-hood">{{r.hood}}</span></span></div>
+                      <div class="c05-timeline {{r.timeCls}}"><b class="c05-time">{{r.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{r.wd}}</span><span class="c05-hood">{{r.hood}}</span></span></div>
                       <span class="c05-name">{{r.title}}</span>
                       <sc-if value="{{r.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra {{r.extraCls}}">{{r.extra}}</span></sc-if>
                       <sc-if value="{{r.isDraft}}" hint-placeholder-val="{{false}}"><div class="c05-draftmeta"><span class="{{r.readyCls}}">{{r.readyText}}</span><span>{{r.ago}}</span><sc-if value="{{r.hasSource}}" hint-placeholder-val="{{false}}"><span>由「{{r.source}}」再开</span></sc-if></div><div class="c05-draftacts"><button type="button" class="c05-link inert" disabled="disabled">继续编辑 › 不在本范围</button><button type="button" class="c05-chalkbtn small" data-act="delete" onClick="{{r.del}}">删除</button></div></sc-if>
                       <sc-if value="{{r.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c05-stitches"><sc-for list="{{r.seats}}" as="st" hint-placeholder-count="4"><i class="{{st.cls}}"></i></sc-for><small>{{r.seatText}}</small></div></sc-if>
-                      <sc-if value="{{r.obj.ticket}}" hint-placeholder-val="{{false}}"><span class="c05-mt {{r.obj.cls}}" aria-hidden="true"><svg viewBox="0 0 28 52"><path class="mtx" d="M3 3 l6 6 M9 3 l-6 6" filter="url(#fx-rough)"></path><path class="mts" d="{{r.obj.str}}"></path><path class="mtc" d="M10 14 h15 v35 h-19 v-31 z"></path><circle cx="11" cy="19" r="2" fill="none" stroke="#8f8e89"></circle><text class="mtt" x="11" y="37">JU</text><sc-if value="{{r.obj.changed}}" hint-placeholder-val="{{false}}"><path class="mtr" d="M8 26 l16 16 M24 26 l-16 16"></path></sc-if></svg></span></sc-if>
-                      <sc-if value="{{r.obj.stamp}}" hint-placeholder-val="{{false}}"><span class="c05-lab c05-att {{r.obj.cls}}">{{r.obj.text}}</span></sc-if>
+                      <sc-if value="{{r.obj.ticket}}" hint-placeholder-val="{{false}}"><span class="c05-mt {{r.obj.cls}}" aria-hidden="true"><svg viewBox="0 0 28 52"><path class="mtx" d="M3 3 l6 6 M9 3 l-6 6" filter="url(#fx-rough)"></path><path class="mts" d="{{r.obj.str}}"></path><path class="mtc" d="M10 14 h15 v35 h-19 v-31 z"></path><circle cx="11" cy="19" r="2" fill="none" stroke="#8f8e89"></circle><text class="mtt" x="11" y="{{r.obj.ty}}">JU</text><sc-if value="{{r.obj.changed}}" hint-placeholder-val="{{false}}"><path class="mtr" d="M8 26 l16 16 M24 26 l-16 16"></path></sc-if><sc-if value="{{r.obj.marked}}" hint-placeholder-val="{{false}}"><path class="mtk" d="{{r.obj.markD}}"></path></sc-if></svg></span></sc-if>
                       <sc-if value="{{r.lead}}" hint-placeholder-val="{{false}}">
                         <sc-if value="{{r.hasBar}}" hint-placeholder-val="{{false}}"><div class="c05-cdrow"><b>{{r.leftText}}</b><span>预留剩余</span></div><div class="c05-bast {{r.barCls}}" style="--p:{{r.ratio}}"><i></i></div></sc-if>
                         <p class="c05-need">{{r.need}}</p>
@@ -711,9 +897,10 @@ body{margin:0}
                 <div class="c05-cloth lead">
                   <div class="c05-pc" style="--labw:{{detail.row.labw}}px">
                     <span class="c05-lab {{detail.row.chipCls}}">{{detail.row.chipText}}</span>
-                    <div class="c05-timeline"><b class="c05-time">{{detail.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{detail.row.wd}}</span><span class="c05-hood">{{detail.row.hood}}</span></span></div>
+                    <div class="c05-timeline {{detail.row.timeCls}}"><b class="c05-time">{{detail.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{detail.row.wd}}</span><span class="c05-hood">{{detail.row.hood}}</span></span></div>
                     <span class="c05-name">{{detail.row.title}}</span>
-                    <sc-if value="{{detail.row.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra {{detail.row.extraCls}}">{{detail.row.extra}}</span></sc-if>
+                    <sc-if value="{{detail.row.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra c05-leadonly {{detail.row.extraCls}}">{{detail.row.extra}}</span></sc-if>
+                    <sc-if value="{{detail.row.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c05-stitches c05-leadrow"><sc-for list="{{detail.row.seats}}" as="st" hint-placeholder-count="4"><i class="{{st.cls}}"></i></sc-for><small>{{detail.row.seatText}}</small></div></sc-if><sc-if value="{{detail.row.hasBar}}" hint-placeholder-val="{{false}}"><div class="c05-cdrow c05-leadrow"><b>{{detail.row.leftText}}</b><span>预留剩余</span></div><div class="c05-bast c05-leadrow {{detail.row.barCls}}" style="--p:{{detail.row.ratio}}"><i></i></div></sc-if><p class="c05-need c05-leadrow">{{detail.row.need}}</p><sc-if value="{{detail.row.hasCta}}" hint-placeholder-val="{{false}}"><div class="c05-cta c05-leadrow" aria-hidden="true"><span class="c05-tape">{{detail.row.cta}}</span><span class="c05-hint">{{detail.row.ctaHint}}</span></div></sc-if><sc-if value="{{detail.rowx.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra c05-rowonly {{detail.rowx.extraCls}}">{{detail.rowx.extra}}</span></sc-if><sc-if value="{{detail.rowx.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c05-stitches c05-rowonly"><sc-for list="{{detail.rowx.seats}}" as="st" hint-placeholder-count="4"><i class="{{st.cls}}"></i></sc-for><small>{{detail.rowx.seatText}}</small></div></sc-if><sc-if value="{{detail.rowx.hasNext}}" hint-placeholder-val="{{false}}"><span class="c05-next c05-rowonly">{{detail.rowx.next}}</span></sc-if><sc-if value="{{detail.rowx.obj.ticket}}" hint-placeholder-val="{{false}}"><span class="c05-mt c05-rowonly {{detail.rowx.obj.cls}}" aria-hidden="true"><svg viewBox="0 0 28 52"><path class="mtx" d="M3 3 l6 6 M9 3 l-6 6" filter="url(#fx-rough)"></path><path class="mts" d="{{detail.rowx.obj.str}}"></path><path class="mtc" d="M10 14 h15 v35 h-19 v-31 z"></path><circle cx="11" cy="19" r="2" fill="none" stroke="#8f8e89"></circle><text class="mtt" x="11" y="{{detail.rowx.obj.ty}}">JU</text><sc-if value="{{detail.rowx.obj.changed}}" hint-placeholder-val="{{false}}"><path class="mtr" d="M8 26 l16 16 M24 26 l-16 16"></path></sc-if><sc-if value="{{detail.rowx.obj.marked}}" hint-placeholder-val="{{false}}"><path class="mtk" d="{{detail.rowx.obj.markD}}"></path></sc-if></svg></span></sc-if>
                     <span class="c05-grainline"><svg viewBox="0 0 34 10" aria-hidden="true"><path d="M1 5 H33 M29 1 l4 4 -4 4 M5 1 l-4 4 4 4"></path></svg>布纹</span>
                   </div>
                   <div class="c05-flap">
@@ -728,8 +915,8 @@ body{margin:0}
                         <div class="c05-tagarea {{t.areaCls}}">
                           <svg class="c05-tack" viewBox="0 0 60 44" aria-hidden="true"><path d="M24 16 l12 12 M36 16 l-12 12" filter="url(#fx-rough)"></path></svg>
                           <svg class="c05-string {{t.strCls}}" viewBox="0 0 314 304" aria-hidden="true">
-                            <sc-if value="{{t.strOn}}" hint-placeholder-val="{{false}}"><path class="c05-str-sh" d="{{t.strD}}" style="stroke-width:{{t.strW2}}px"></path><path class="c05-str" d="{{t.strD}}" style="stroke-width:{{t.strW}}px"></path><circle class="c05-knot" cx="30" cy="22" r="3.4"></circle></sc-if>
-                            <sc-if value="{{t.frayOn}}" hint-placeholder-val="{{false}}"><g class="c05-fray"><path d="{{t.frayD}}"></path></g></sc-if>
+                            <sc-if value="{{t.strOn}}" hint-placeholder-val="{{false}}"><path class="c05-str-sh" d="{{t.strD}}" style="stroke-width:{{t.strW2}}px"></path><path class="c05-str" d="{{t.strLD}}" style="stroke-width:{{t.strW}}px"></path><circle class="c05-knot" cx="30" cy="22" r="3.4"></circle></sc-if>
+                            <sc-if value="{{t.frayOn}}" hint-placeholder-val="{{false}}"><g class="c05-fray"><path class="fl" d="{{t.frayL}}"></path><path class="fd" d="{{t.frayD}}"></path></g></sc-if>
                             <sc-if value="{{t.stubOn}}" hint-placeholder-val="{{false}}"><g class="c05-stub {{t.stubCls}}"><path d="M30 22 q 7 9 3 21"></path><path class="fr" d="M33 43 l-5 6 M33 43 l-1.5 8 M33 43 l2 7.5 M33 43 l6 5"></path><circle class="c05-knot" cx="30" cy="22" r="3.4"></circle></g></sc-if>
                           </svg>
                           <div class="c05-tagwrap {{t.wrapCls}}" style="{{t.wrapStyle}}" data-act="{{t.act}}" aria-label="{{t.aria}}" onPointerDown="{{t.down}}" onPointerMove="{{t.move}}" onPointerUp="{{t.up}}" onPointerCancel="{{t.up}}" onClick="{{t.flip}}">
@@ -742,7 +929,7 @@ body{margin:0}
                               <span class="c05-tag-place">{{t.place}}</span>
                               <span class="c05-tag-foot"><b>局主 {{t.host}}</b><span>{{t.code}}</span></span>
                               <sc-if value="{{t.hasStamp}}" hint-placeholder-val="{{false}}"><span class="c05-tag-stamp {{t.stampCls}}">{{t.stamp}}</span></sc-if>
-                              <svg class="fx-burn-svg" viewBox="0 0 232 176" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c05-hole-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="232" height="176"><rect width="232" height="176" fill="#fff"></rect><circle class="fx-hole" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask><mask id="c05-res-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="232" height="176"><rect width="232" height="176" fill="#000"></rect><circle class="fx-hole" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="#fff" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="fx-ember c05-scorch" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="fx-ember c05-char" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="fx-ember c05-glow" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="c05-fuzz" cx="{{t.cx}}" cy="{{t.cy}}" r="0" filter="url(#fx-rough-strong)"></circle></svg>
+                              <svg class="fx-burn-svg" viewBox="0 0 232 176" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c05-hole-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="232" height="176"><rect width="232" height="176" fill="#fff"></rect><circle class="fx-hole" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="#000" filter="url(#c05-burnedge)"></circle></mask><mask id="c05-res-{{t.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="232" height="176"><rect width="232" height="176" fill="#000"></rect><circle class="fx-hole" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="#fff" filter="url(#c05-burnedge)"></circle></mask></defs><circle class="fx-ember c05-scorch" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="fx-ember c05-char" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="fx-ember c05-glow" cx="{{t.cx}}" cy="{{t.cy}}" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="c05-fuzz" cx="{{t.cx}}" cy="{{t.cy}}" r="0" filter="url(#c05-burnedge)"></circle></svg>
                             </div>
                             <div class="c05-tagash {{t.ashCls}}" style="--c05-res:url(#c05-res-{{t.uid}})"><svg class="c05-ashmark" viewBox="0 0 232 176" preserveAspectRatio="none" aria-hidden="true"><path class="sc" d="M0 53 A250 250 0 0 1 37 0" filter="url(#fx-rough)"></path><path class="ch" d="M0 53 A250 250 0 0 1 37 0" filter="url(#fx-rough)"></path><path class="sc" d="M232 144 A26 26 0 0 0 197 176" filter="url(#fx-rough)"></path><path class="ch" d="M232 144 A26 26 0 0 0 197 176" filter="url(#fx-rough)"></path></svg><span class="c05-tag-k">{{t.k}}</span><b class="c05-tag-title">{{t.title}}</b><span class="c05-tag-time">{{t.time}}</span><span class="c05-tag-wd">{{t.wd}}</span><span class="c05-tag-stamp">{{t.ashText}}</span></div>
                             <sc-if value="{{t.hasBack}}" hint-placeholder-val="{{false}}"><div class="c05-tagback" aria-hidden="{{t.backHidden}}"><i></i><b>JU.</b><span>有 JU，就开局</span><small>{{t.code}}</small></div></sc-if>
@@ -812,7 +999,8 @@ body{margin:0}
                     <span class="c05-lab {{wo.row.chipCls}}">{{wo.row.chipText}}</span>
                     <div class="c05-timeline"><b class="c05-time">{{wo.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{wo.row.wd}}</span><span class="c05-hood">{{wo.row.hood}}</span></span></div>
                     <span class="c05-name">{{wo.row.title}}</span>
-                    <span class="c05-extra {{wo.statusCls}}">{{wo.status}}</span>
+                    <span class="c05-extra c05-leadonly {{wo.statusCls}}">{{wo.status}}</span>
+                    <sc-if value="{{wo.row.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c05-stitches c05-leadrow"><sc-for list="{{wo.row.seats}}" as="st" hint-placeholder-count="4"><i class="{{st.cls}}"></i></sc-for><small>{{wo.row.seatText}}</small></div></sc-if><sc-if value="{{wo.row.hasBar}}" hint-placeholder-val="{{false}}"><div class="c05-cdrow c05-leadrow"><b>{{wo.row.leftText}}</b><span>预留剩余</span></div><div class="c05-bast c05-leadrow {{wo.row.barCls}}" style="--p:{{wo.row.ratio}}"><i></i></div></sc-if><p class="c05-need c05-leadrow">{{wo.row.need}}</p><sc-if value="{{wo.row.hasCta}}" hint-placeholder-val="{{false}}"><div class="c05-cta c05-leadrow" aria-hidden="true"><span class="c05-tape">{{wo.row.cta}}</span><span class="c05-hint">{{wo.row.ctaHint}}</span></div></sc-if><sc-if value="{{wo.rowx.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra c05-rowonly {{wo.rowx.extraCls}}">{{wo.rowx.extra}}</span></sc-if><sc-if value="{{wo.rowx.hasSeats}}" hint-placeholder-val="{{false}}"><div class="c05-stitches c05-rowonly"><sc-for list="{{wo.rowx.seats}}" as="st" hint-placeholder-count="4"><i class="{{st.cls}}"></i></sc-for><small>{{wo.rowx.seatText}}</small></div></sc-if><sc-if value="{{wo.rowx.hasNext}}" hint-placeholder-val="{{false}}"><span class="c05-next c05-rowonly">{{wo.rowx.next}}</span></sc-if><sc-if value="{{wo.rowx.obj.ticket}}" hint-placeholder-val="{{false}}"><span class="c05-mt c05-rowonly {{wo.rowx.obj.cls}}" aria-hidden="true"><svg viewBox="0 0 28 52"><path class="mtx" d="M3 3 l6 6 M9 3 l-6 6" filter="url(#fx-rough)"></path><path class="mts" d="{{wo.rowx.obj.str}}"></path><path class="mtc" d="M10 14 h15 v35 h-19 v-31 z"></path><circle cx="11" cy="19" r="2" fill="none" stroke="#8f8e89"></circle><text class="mtt" x="11" y="{{wo.rowx.obj.ty}}">JU</text><sc-if value="{{wo.rowx.obj.changed}}" hint-placeholder-val="{{false}}"><path class="mtr" d="M8 26 l16 16 M24 26 l-16 16"></path></sc-if><sc-if value="{{wo.rowx.obj.marked}}" hint-placeholder-val="{{false}}"><path class="mtk" d="{{wo.rowx.obj.markD}}"></path></sc-if></svg></span></sc-if>
                     <span class="c05-grainline"><svg viewBox="0 0 34 10" aria-hidden="true"><path d="M1 5 H33 M29 1 l4 4 -4 4 M5 1 l-4 4 4 4"></path></svg>布纹</span>
                   </div>
                   <div class="c05-flap">
@@ -823,18 +1011,40 @@ body{margin:0}
                       <div class="c05-acts"><button type="button" class="c05-link" onClick="{{wo.openCard}}">查看完整局卡 ›</button></div>
                     </div>
                   </div>
-                  <svg class="fx-burn-svg" viewBox="0 0 350 {{wo.headH}}" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c05-hole-{{wo.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="350" height="{{wo.headH}}"><rect width="350" height="{{wo.headH}}" fill="#fff"></rect><circle class="fx-hole" cx="338" cy="12" r="0" fill="#000" filter="url(#fx-rough-strong)"></circle></mask><mask id="c05-res-{{wo.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="350" height="{{wo.headH}}"><rect width="350" height="{{wo.headH}}" fill="#000"></rect><circle class="fx-hole" cx="338" cy="12" r="0" fill="#fff" filter="url(#fx-rough-strong)"></circle></mask></defs><circle class="fx-ember c05-scorch" cx="338" cy="12" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="fx-ember c05-char" cx="338" cy="12" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="fx-ember c05-glow" cx="338" cy="12" r="0" fill="none" filter="url(#fx-rough-strong)"></circle><circle class="c05-fuzz" cx="338" cy="12" r="0" filter="url(#fx-rough-strong)"></circle></svg>
+                  <svg class="fx-burn-svg" viewBox="0 0 350 {{wo.headH}}" preserveAspectRatio="none" aria-hidden="true"><defs><mask id="c05-hole-{{wo.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="350" height="{{wo.headH}}"><rect width="350" height="{{wo.headH}}" fill="#fff"></rect><circle class="fx-hole" cx="338" cy="12" r="0" fill="#000" filter="url(#c05-burnedge)"></circle></mask><mask id="c05-res-{{wo.uid}}" maskUnits="userSpaceOnUse" x="0" y="0" width="350" height="{{wo.headH}}"><rect width="350" height="{{wo.headH}}" fill="#000"></rect><circle class="fx-hole" cx="338" cy="12" r="0" fill="#fff" filter="url(#c05-burnedge)"></circle></mask></defs><circle class="fx-ember c05-scorch" cx="338" cy="12" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="fx-ember c05-char" cx="338" cy="12" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="fx-ember c05-glow" cx="338" cy="12" r="0" fill="none" filter="url(#c05-burnedge)"></circle><circle class="c05-fuzz" cx="338" cy="12" r="0" filter="url(#c05-burnedge)"></circle></svg>
                 </div>
-                <div class="c05-pieceash {{wo.ashCls}}" style="--c05-res:url(#c05-res-{{wo.uid}});--fx-dur:3000ms"><svg class="c05-ashmark" viewBox="0 0 350 {{wo.headH}}" preserveAspectRatio="none" aria-hidden="true"><path class="sc" d="{{wo.arcD}}" filter="url(#fx-rough)"></path><path class="ch" d="{{wo.arcD}}" filter="url(#fx-rough)"></path></svg><div class="c05-pc"><span class="c05-lab">已取消</span><div class="c05-timeline"><b class="c05-time">{{wo.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{wo.row.wd}}</span><span class="c05-hood">{{wo.row.hood}}</span></span></div><span class="c05-name">{{wo.row.title}}</span><span class="c05-extra">票根作废 · 联系已关闭 · 成员不计主动退出</span></div><div class="c05-fold"></div><div class="c05-body"><p class="c05-need">{{wo.formedLine}}</p><div class="c05-acts"><button type="button" class="c05-link" onClick="{{wo.openCard}}">查看完整局卡 ›</button></div></div></div>
+                <div class="c05-pieceash {{wo.ashCls}}" style="--c05-res:url(#c05-res-{{wo.uid}});--fx-dur:3000ms"><svg class="c05-ashmark" viewBox="0 0 350 {{wo.headH}}" preserveAspectRatio="none" aria-hidden="true"><path class="sc" d="{{wo.arcD}}" filter="url(#fx-rough)"></path><path class="ch" d="{{wo.arcD}}" filter="url(#fx-rough)"></path></svg><div class="c05-pc c05-ashhead" style="--labw:{{wo.row.labw}}px"><span class="c05-lab">已取消</span><div class="c05-timeline"><b class="c05-time">{{wo.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{wo.row.wd}}</span><span class="c05-hood">{{wo.row.hood}}</span></span></div><span class="c05-name">{{wo.row.title}}</span><span class="c05-extra c05-leadonly">{{wo.ashLine}}</span><sc-if value="{{wo.rowx.hasExtra}}" hint-placeholder-val="{{false}}"><span class="c05-extra c05-rowonly">{{wo.rowx.extra}}</span></sc-if></div><div class="c05-ashflap"><div class="c05-fold"></div><div class="c05-body"><p class="c05-need">{{wo.formedLine}}</p><div class="c05-acts"><button type="button" class="c05-link" onClick="{{wo.openCard}}">查看完整局卡 ›</button></div></div></div></div>
                 <div class="c05-ashlayer"><sc-for list="{{wo.ash}}" as="a" hint-placeholder-count="0"><i class="fx-ash c05-ash {{a.cls}}" style="{{a.style}}"></i></sc-for></div>
               </div>
               <div class="c05-ledgerwrap">
                 <div class="c05-ledger">
                   <div class="c05-ltitle"><span>订单 · {{wo.title}}</span><span class="c05-num">{{wo.whenEn}}</span></div>
                   <div class="c05-ltabs" role="tablist"><sc-for list="{{wo.chips}}" as="c" hint-placeholder-count="4"><button type="button" class="c05-ltab {{c.cls}}" role="tab" aria-selected="{{c.sel}}" onClick="{{c.go}}">{{c.label}}<sc-if value="{{c.hasCount}}" hint-placeholder-val="{{false}}"><b>{{c.count}}</b></sc-if><sc-if value="{{c.todo}}" hint-placeholder-val="{{false}}"><i class="dot"></i></sc-if></button></sc-for></div>
-                  <sc-if value="{{wo.apps.on}}" hint-placeholder-val="{{false}}"><div class="c05-lsec">
+                  <sc-if value="{{wo.apps.on}}" hint-placeholder-val="{{false}}"><div class="c05-lsec c05-appsec">
                     <h3 class="c05-h3">申请<b>{{wo.apps.count}}</b><small>{{wo.apps.note}}</small></h3>
-                    <sc-for list="{{wo.apps.rows}}" as="a" hint-placeholder-count="2"><div class="c05-approw"><span class="c05-av {{a.avCls}}">{{a.initial}}</span><div class="c05-apbody"><div class="c05-apname">{{a.nick}}<span class="c05-vb {{a.vbCls}}">{{a.vb}}</span></div><sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><p class="c05-apnote">“{{a.note}}”</p></sc-if><p class="c05-apago">{{a.ago}}</p><sc-if value="{{a.pending}}" hint-placeholder-val="{{false}}"><div class="c05-apacts"><button type="button" class="c05-tape {{a.busyCls}}" data-act="approve" disabled="{{a.dis}}" onClick="{{a.approve}}">发出邀请</button><button type="button" class="c05-chalkbtn small" data-act="reject" disabled="{{a.dis}}" onClick="{{a.reject}}">谢绝</button></div></sc-if><sc-if value="{{a.alertOn}}" hint-placeholder-val="{{false}}"><div class="c05-alert" role="alert"><span>{{a.alertText}}</span><button type="button" class="c05-chalkbtn small red" onClick="{{a.retry}}">重试</button></div></sc-if><sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><p class="c05-apresult {{a.resCls}}">{{a.resultText}}</p></sc-if></div></div></sc-for>
+                    <sc-if value="{{wo.tape.on}}" hint-placeholder-val="{{false}}"><div class="c05-tapem" role="img" aria-label="{{wo.tape.aria}}"><div class="c05-tmcap"><span>座位表</span><b>{{wo.tape.conf}}</b><small>{{wo.tape.more}}</small></div><div class="c05-tmrow"><i class="c05-tmtip" aria-hidden="true"></i><div class="c05-tmstrip"><sc-for list="{{wo.tape.slots}}" as="t" hint-placeholder-count="5"><span class="c05-tmslot {{t.cls}}"><em>{{t.no}}</em><i></i><small>{{t.name}}</small></span></sc-for></div></div></div></sc-if>
+                    <div class="c05-swatches"><sc-for list="{{wo.apps.rows}}" as="a" hint-placeholder-count="2">
+                      <div class="c05-swatch {{a.cls}}" data-rid="{{a.id}}">
+                        <svg class="c05-pin" viewBox="0 0 34 34" aria-hidden="true"><path class="psh" d="M10 26 L31 5"></path><path class="ps" d="M8 25 L29 4"></path><circle class="ph" cx="8" cy="25" r="4.4"></circle><circle class="phl" cx="6.6" cy="23.5" r="1.3"></circle></svg>
+                        <div class="c05-swcloth">
+                          <div class="c05-swtop">
+                            <span class="c05-swav {{a.avCls}}"><b>{{a.initial}}</b><svg class="c05-swx" viewBox="0 0 42 42" aria-hidden="true"><path d="M9 10 L33 32 M33 10 L9 32" filter="url(#fx-rough)"></path></svg></span>
+                            <b class="c05-swname">{{a.nick}}</b>
+                            <span class="c05-woven {{a.vbCls}}">{{a.vb}}</span>
+                            <span class="c05-swago">{{a.ago}}</span>
+                          </div>
+                          <sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><p class="c05-swnote">“{{a.note}}”</p></sc-if>
+                          <div class="c05-swseam">
+                            <sc-if value="{{a.pending}}" hint-placeholder-val="{{false}}"><button type="button" class="c05-snip {{a.snipCls}}" data-act="reject" disabled="{{a.dis}}" aria-label="谢绝 {{a.nick}}" onClick="{{a.reject}}"><svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="4" cy="12.2" r="2.3"></circle><circle cx="12" cy="12.2" r="2.3"></circle><path d="M5.5 10.4 L11.6 2.2 M10.5 10.4 L4.4 2.2"></path></svg><span>谢绝</span></button></sc-if>
+                            <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><span class="c05-snipmark" aria-hidden="true"><svg viewBox="0 0 16 16"><sc-if value="{{a.isNo}}" hint-placeholder-val="{{false}}"><circle cx="4" cy="12.2" r="2.3"></circle><circle cx="12" cy="12.2" r="2.3"></circle><path d="M5.5 10.4 L9.2 2.8 M10.5 10.4 L6.8 2.8"></path></sc-if><sc-if value="{{a.isOk}}" hint-placeholder-val="{{false}}"><path d="M16 8 H9"></path><circle class="kn" cx="7.2" cy="8" r="2.6"></circle><path d="M5 9.6 q -1.6 1.8 -3.4 1.4"></path></sc-if></svg></span></sc-if>
+                            <span class="c05-swthread" aria-hidden="true"><i></i></span>
+                            <sc-if value="{{a.pending}}" hint-placeholder-val="{{false}}"><button type="button" class="c05-tape c05-needle {{a.busyCls}}" data-act="approve" disabled="{{a.dis}}" aria-label="发出邀请 给 {{a.nick}}" onClick="{{a.approve}}"><svg viewBox="0 0 24 10" aria-hidden="true"><path class="nd" d="M1.5 5 Q 2 3.6 5 4.1 L22.5 5 L5 5.9 Q 2 6.4 1.5 5 Z"></path><ellipse class="ne" cx="4.2" cy="5" rx="1.6" ry=".55"></ellipse></svg><span>发出邀请</span></button></sc-if>
+                            <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><span class="c05-lab c05-swres {{a.resCls}}" role="status">{{a.resultText}}</span></sc-if>
+                          </div>
+                          <sc-if value="{{a.alertOn}}" hint-placeholder-val="{{false}}"><div class="c05-alert" role="alert"><span>{{a.alertText}}</span><button type="button" class="c05-chalkbtn small red" onClick="{{a.retry}}">重试</button></div></sc-if>
+                        </div>
+                      </div>
+                    </sc-for></div>
                     <sc-if value="{{wo.apps.none}}" hint-placeholder-val="{{false}}"><p class="c05-p">没有待审的申请。</p></sc-if>
                     <p class="c05-p c05-help">{{wo.apps.help}}</p>
                   </div></sc-if>
@@ -884,7 +1094,8 @@ body{margin:0}
                     <span class="c05-lab wait">草稿</span>
                     <div class="c05-timeline"><b class="c05-time">{{dr.row.time}}</b><span class="c05-wdcol"><span class="c05-wd">{{dr.row.wd}}</span><span class="c05-hood">{{dr.row.hood}}</span></span></div>
                     <span class="c05-name">{{dr.row.title}}</span>
-                    <div class="c05-draftmeta"><span class="{{dr.row.readyCls}}">{{dr.row.readyText}}</span><span>{{dr.row.ago}}</span></div>
+                    <div class="c05-draftmeta"><span class="{{dr.row.readyCls}}">{{dr.row.readyText}}</span><span>{{dr.row.ago}}</span><sc-if value="{{dr.row.hasSource}}" hint-placeholder-val="{{false}}"><span>由「{{dr.row.source}}」再开</span></sc-if></div>
+                    <div class="c05-draftacts c05-rowonly" aria-hidden="true"><span class="c05-link inert">继续编辑 › 不在本范围</span><span class="c05-chalkbtn small">删除</span></div>
                   </div>
                   <div class="c05-flap">
                     <div class="c05-fold"></div>
@@ -935,9 +1146,12 @@ function c05Initial(n) { n = n || ''; return n ? n.charAt(0) : '?'; }
 function c05LabW(t) { t = String(t || ''); var w = 24; for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); w += c >= 0x2e80 ? 11.9 : c === 32 ? 3.6 : c === 0xb7 ? 5 : 7.2; } return Math.ceil(w); }
 /* keep "空 2" / "预留 1" as unbreakable units; only break at the " · " separators */
 function c05Chip(text, lead) { var w = c05LabW(text); if (lead && w > 104 && text.indexOf(' · ') > 0) { var parts = text.split(' · '); return { text: parts.join('\n'), cls: ' two', w: Math.max.apply(null, parts.map(c05LabW)) }; } return { text: text, cls: '', w: w }; }
-function c05Nb(s) { return String(s || '').split(' · ').map(function (x) { return x.replace(/ /g, ' '); }).join(' · '); }
+function c05Nb(s) { return String(s || '').split(' · ').map(function (x) { return x.replace(/ /g, ' '); }).join(' · '); }
+/* titles: a 「 · 」 separator stays at the end of its line, never starts the next one (fix-r1 m3) */
+function c05Sep(s) { return String(s || '').replace(/ · /g, ' · '); }
 /* radius of the burn front at time fraction f (mirrors @keyframes c05-hole: slow ignition to 7% at 12%, ease-in-out to 100% at 88%) */
-function c05Front(f, reach) { if (f <= 0.12) { var a = f / 0.12; return reach * 0.07 * a * a; } if (f >= 0.88) return reach; var u = (f - 0.12) / 0.76; return reach * (0.07 + 0.93 * (u * u * (3 - 2 * u))); }
+var C05_FRONT = [[0.12, 0.07], [0.30, 0.30], [0.50, 0.55], [0.70, 0.78], [0.82, 0.91], [0.90, 1]];
+function c05Front(f, reach) { if (f <= 0.12) { var a = f / 0.12; return reach * 0.07 * a * a; } for (var i = 1; i < C05_FRONT.length; i++) { var a0 = C05_FRONT[i - 1], a1 = C05_FRONT[i]; if (f <= a1[0]) return reach * (a0[1] + (a1[1] - a0[1]) * (f - a0[0]) / (a1[0] - a0[0])); } return reach; }
 /* ash flakes born ON the char front as it passes (not before it): each flake starts where the front is at its delay, inside the face, then falls */
 function c05BurnAsh(n, seed, cx, cy, reach, w, h, dur, a0, a1, grey) {
   var r = JU.fx.rand(seed), out = [];
@@ -952,7 +1166,7 @@ function c05BurnAsh(n, seed, cx, cy, reach, w, h, dur, a0, a1, grey) {
 /* consequence line of each leave outcome (the title and sub-line already carry the state) */
 var C05_CONSEQ = { withdraw: '不影响信用。仍有位置时可以重新报名（在找局模块）。', release: '不记主动失约，也不消耗主动退出机会；想再参加需要重新申请。', leaveQueue: '不记缺席。之后仍可重新加入候补，排在队尾。', exit: '记为主动退出，占同一账户每年 4 次机会之一（只陈述，不评分）。', decline: '这是局主改期：不记你的主动失约，也不消耗主动退出机会；旧吊牌不恢复。' };
 var C05_FAIL = { withdrawApplication: '本机保存失败，请重试', releaseReservation: '无法保存退出，请重试', exitEvent: '无法保存退出，请重试', leaveWaitlist: '退出未保存，请重试', declineReschedule: '保存失败，尚未退出。新时间仍待你答复，请重试。', confirmReservation: '保存失败，请重试', tearTicket: '未能保存，请重新撕下副券', acceptReschedule: '新时间未保存，请重新撕下副券', markContacted: '本机保存失败，请重试', addRecord: '提交失败，内容已保留。请重试。' };
-function c05StringD(dy, p, ty0) { var tx = C05_TAG.tack[0], ty = C05_TAG.tack[1]; var ex = C05_TAG.x + C05_TAG.eye[0], ey = ty0 + C05_TAG.eye[1] + dy; var mx = (tx + ex) / 2, my = (ty + ey) / 2 + 24 * (1 - p); return 'M' + tx + ' ' + ty + ' Q' + mx.toFixed(1) + ' ' + my.toFixed(1) + ' ' + ex + ' ' + ey.toFixed(1); }
+function c05StringD(dy, p, ty0, tagX) { var tx = C05_TAG.tack[0], ty = C05_TAG.tack[1]; var ex = (tagX == null ? C05_TAG.x : tagX) + C05_TAG.eye[0], ey = ty0 + C05_TAG.eye[1] + dy; var mx = (tx + ex) / 2, my = (ty + ey) / 2 + 24 * (1 - p); return 'M' + tx + ' ' + ty + ' Q' + mx.toFixed(1) + ' ' + my.toFixed(1) + ' ' + ex + ' ' + ey.toFixed(1); }
 class Component extends DCLogic {
   constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'hosted') this.state.role = 'hosted'; this.tableRef = { current: null }; this.overRef = { current: null }; this.oscrollRef = { current: null }; this.headRef = { current: null }; this._uid = 0; }
   initialState(variant) {
@@ -1039,7 +1253,8 @@ class Component extends DCLogic {
     var el = ev && ev.currentTarget ? (ev.currentTarget.closest('.c05-piece[data-rid]') || ev.currentTarget) : (root ? root.querySelector('.c05-piece[data-rid="' + id + '"]') : null);
     var from = el && root ? JU.fx.rectIn(el, root) : { x: 20, y: 240, w: 350, h: 110 };
     var fromRow = !instant && !!(el && el.classList && el.classList.contains('c05-piece') && !el.classList.contains('lead'));
-    var view = Object.assign({ name: kind, id: id, phase: instant ? 'flat' : 'start', from: from, fromRow: fromRow, collapsed: false, unblur: false }, extra || {});
+    var objRow = fromRow && el.classList.contains('hasobj'), fromLead = !instant && !!(el && el.classList && el.classList.contains('c05-piece') && el.classList.contains('lead'));
+    var view = Object.assign({ name: kind, id: id, phase: instant ? 'flat' : 'start', from: from, fromRow: fromRow, fromLead: fromLead, objRow: objRow, toOutline: false, toCharred: false, collapsed: false, unblur: false }, extra || {});
     this.setState({ view: view, err: null });
     if (instant) { this.after(16, function () { if (self._ov === seq) self.scrollOverTop(); }); return; }
     this.after(20, function () { if (self._ov !== seq) return; var o = self.overRef.current; if (o) void o.getBoundingClientRect(); self.patchView({ phase: 'in' }); });
@@ -1055,14 +1270,18 @@ class Component extends DCLogic {
       var root = self.root(); var el = root ? root.querySelector('.c05-piece[data-rid="' + id + '"]') : null;
       if (el) el.scrollIntoView({ block: 'center' });
       var r = el && root ? JU.fx.rectIn(el, root) : null;
-      self.patchView({ phase: 'out', from: r || v.from, gone: !r, slip: null, fromRow: !!el && !el.classList.contains('lead'), collapsed: false, unblur: false });
+      /* the flying piece takes the landing row's shape and material: row content / min-height (hasobj), outline + charred corner (fix-r1 M3 · m1) */
+      var cl = el ? el.classList : null;
+      self.patchView({ phase: 'out', from: r || v.from, gone: !r, slip: null, fromRow: !!el && !cl.contains('lead'), fromLead: !!el && cl.contains('lead'), objRow: !!cl && cl.contains('hasobj'), toOutline: !!cl && cl.contains('outline'), toCharred: !!cl && cl.contains('charred'), collapsed: false, unblur: false });
       self.setState({ landed: id, err: null });
       /* the list stays dimmed until the piece has nearly closed into its row, so a half-folded flap never sits over sharp list text */
       self.after(400, function () { if (self._ov === seq) self.patchView({ unblur: true }); });
-      self.after(620, function () { if (self._ov === seq && self.state.view.phase === 'out') self.setState({ view: { name: 'list' } }); });
+      /* unmount once the piece has settled on its row (travel ends ≈600ms after the 'out' render; a section switch can delay that render by a frame or two) */
+      self.after(700, function () { if (self._ov === seq && self.state.view.phase === 'out') self.setState({ view: { name: 'list' } }); });
       self.after(1700, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); });
     });
   }
+  ovFlags(v) { return (v.fromRow ? 'fromrow ' : '') + (v.fromLead ? 'fromlead ' : '') + (v.objRow ? 'objrow ' : '') + (v.toOutline ? 'tooutline ' : '') + (v.toCharred ? 'tocharred ' : '') + (v.collapsed ? 'collapsed ' : ''); }
   overGeo(v) {
     var W = 390, H = 844; var root = this.root(); if (root) { W = root.clientWidth || W; H = root.clientHeight || H; }
     var f = v.from || { x: 20, y: 240, w: 350, h: 110 }; var moving = v.phase === 'start' || v.phase === 'out';
@@ -1078,20 +1297,23 @@ class Component extends DCLogic {
   }
   /* ------------------------------------------------ row models ------------------------------------------------ */
   joinedRow(r, lead) {
-    var self = this, s = this.state; var obj = { ticket: false, stamp: false, cls: '', text: '', str: '', changed: false };
-    if (r.object === 'ticket') { var torn = !!(r.ticket && r.ticket.torn); obj = { ticket: true, stamp: false, cls: torn ? 'torn' : '', changed: r.stage === 'reschedule', str: torn ? 'M6 6 q 3 5 1 10' : 'M6 6 Q 8 14 11 19', text: '' }; }
-    if (r.object === 'stamp') obj = { ticket: false, stamp: true, str: '', changed: false, cls: r.attendance === 'present' ? 'ok' : r.attendance === 'absent' ? 'abs' : r.attendance === 'pending' ? 'und' : 'none', text: r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席' : r.attendance === 'pending' ? '待定' : '等记录' };
+    var self = this, s = this.state; var obj = { ticket: false, cls: '', str: '', changed: false, ty: 37, marked: false, markD: '' };
+    if (r.object === 'ticket') { var torn = !!(r.ticket && r.ticket.torn); obj = { ticket: true, cls: torn ? 'torn' : '', changed: r.stage === 'reschedule', str: torn ? 'M6 6 q 3 5 1 10' : 'M6 6 Q 8 14 11 19', ty: 37, marked: false, markD: '' }; }
+    /* ended rows: one white label only (the status); the attendance record rides on the archived mini tag in the object column,
+       its words stay in the text column (fix-r1 M2 — no second label stacked over 「已散场」) */
+    if (r.object === 'stamp') { var tornA = !!(r.ticket && r.ticket.torn), ak = r.attendance === 'present' ? 'ok' : r.attendance === 'absent' ? 'abs' : r.attendance === 'pending' ? 'und' : 'none';
+      obj = { ticket: true, cls: 'arch ' + ak + (tornA ? ' torn' : ''), changed: false, str: tornA ? 'M6 6 q 3 5 1 10' : 'M6 6 Q 8 14 11 19', ty: 31, marked: true, markD: { ok: 'M10.5 40.5 l3.6 3.7 l7.4 -8.4', abs: 'M15.5 35.4 a5.2 5.2 0 1 1 -0.01 0', und: 'M12.6 37.6 q0 -3.1 3 -3.1 q3 0 3 2.7 q0 2 -3 3 v1.9 M15.6 45.6 v.3', none: 'M10.5 35.5 h10 v10 h-10 z' }[ak] }; }
     var outline = r.tone === 'void'; var charred = r.stage === 'cancelled' || r.stage === 'exited' || r.stage === 'declined';
     var extra = '', extraCls = '';
     if (r.deadline) { extra = '剩 ' + r.leftText + ' · 到期前确认'; extraCls = r.leftRatio < .25 ? 'hot' : ''; }
-    if (r.stage === 'reschedule') { extra = '改为 ' + r.newWhen.zh + ' · 旧牌不能用'; extraCls = 'chg'; }
+    if (r.stage === 'reschedule') { extra = c05Nb('改为 ' + r.newWhen.zh + ' · 旧牌不能用'); extraCls = 'chg'; }
     if (r.stage === 'gathering') extra = r.need;
     if (r.stage === 'ended') extra = r.attendanceText; if (r.tone === 'void') { extra = r.need; extraCls = ''; }
     if (r.stage === 'pending' || r.stage === 'waitlist') extra = r.need;
     var when = r.stage === 'reschedule' ? r.oldWhen : r.when;
     var ctaAct = { '阅读并确认': 'confirm', '撕开票根': 'tear', '联系局主': 'contact', '查看票根': 'ticket', '答复新时间': 'accept' }[r.cta] || 'open';
     var ctaHint = { invited: '读完三类约定才能确认', invited_queue: '候补轮到你 · 读完约定再确认', tear: '按住吊牌向下拉，拉断棉线', contact: '撕线后 8 小时内联系', going: '已加微信 · 按最终时间赴约', reschedule: '系上新吊牌，拉断 = 接受' }[r.stage] || '';
-    return { id: r.id, rid: r.id, isDraft: false, cls: (lead ? 'lead ' : '') + (outline ? 'outline ' : '') + (charred ? 'charred ' : '') + (s.landed === r.id ? 'landed ' : '') + (s.view.phase === 'out' && s.view.id === r.id ? 'landing ' : ''), wrapCls: '', wrapStyle: '', time: when.time, wd: when.wdZh + ' ' + when.md, hood: r.place.hood, title: r.event.title,
+    return { id: r.id, rid: r.id, isDraft: false, cls: (lead ? 'lead ' : '') + (outline ? 'outline ' : '') + (charred ? 'charred ' : '') + (obj.ticket && !lead ? 'hasobj ' : '') + (s.landed === r.id ? 'landed ' : '') + (s.view.phase === 'out' && s.view.id === r.id ? 'landing ' : ''), wrapCls: '', wrapStyle: '', timeCls: r.stage === 'reschedule' ? 'struck' : '', time: when.time, wd: when.wdZh + ' ' + when.md, hood: r.place.hood, title: c05Sep(r.event.title),
       chipCls: r.tone + c05Chip(r.label, lead).cls, chipText: c05Chip(r.label, lead).text, labw: c05Chip(r.label, lead).w, hasExtra: !!extra && !lead, extra: extra, extraCls: extraCls, hasNext: !lead && !!r.cta, next: r.cta, obj: obj,
       hasSeats: r.stage === 'gathering', seats: r.seats.map(function (x) { return { cls: x.kind }; }), seatText: c05Nb(r.counts.confirmed + '/' + r.counts.capacity + ' 已确认（含局主）'),
       lead: !!lead, need: r.need, hasBar: !!r.deadline, leftText: r.leftText, ratio: r.leftRatio, barCls: r.leftRatio < .25 ? 'hot' : '', hasCta: !!r.cta, cta: r.cta, ctaAct: ctaAct, ctaHint: ctaHint,
@@ -1101,10 +1323,11 @@ class Component extends DCLogic {
   hostRow(r, lead) {
     var self = this, s = this.state; var cancelled = r.event.status === 'cancelled', ended = r.event.status === 'ended';
     var chipCls = r.todo ? 'act' : r.section === 'resched' ? 'wait' : r.section === 'formed' ? 'go' : ended ? 'kept' : cancelled ? 'void' : 'wait';
-    var obj = { ticket: false, stamp: ended && !r.unrecorded && r.nonHost > 0, cls: 'ok', text: r.present + '/' + r.nonHost + ' 到场', str: '', changed: false };
+    /* host rows carry no object: the attendance tally is written once, in the text column (fix-r1 M2) */
+    var obj = { ticket: false, cls: '', str: '', changed: false, ty: 37, marked: false, markD: '' };
     /* history side reads n/N 人到场 (待定 not counted); the current side keeps the to-do label */
     var inHist = s.section === 'history' && ended; var label = inHist ? (r.nonHost ? r.present + '/' + r.nonHost + ' 人到场' + (r.unrecorded ? ' · ' + r.unrecorded + ' 人待记录' : '') : '已散场') : r.label;
-    return { id: r.id, rid: r.id, isDraft: false, cls: (lead ? 'lead ' : '') + (cancelled ? 'outline charred ' : '') + (s.landed === r.id ? 'landed ' : '') + (s.view.phase === 'out' && s.view.id === r.id ? 'landing ' : ''), wrapCls: '', wrapStyle: '', time: r.when.time, wd: r.when.wdZh + ' ' + r.when.md, hood: r.place.hood, title: r.event.title,
+    return { id: r.id, rid: r.id, isDraft: false, cls: (lead ? 'lead ' : '') + (cancelled ? 'outline charred ' : '') + (s.landed === r.id ? 'landed ' : '') + (s.view.phase === 'out' && s.view.id === r.id ? 'landing ' : ''), wrapCls: '', wrapStyle: '', timeCls: '', time: r.when.time, wd: r.when.wdZh + ' ' + r.when.md, hood: r.place.hood, title: c05Sep(r.event.title),
       chipCls: chipCls + c05Chip(r.life, lead).cls, chipText: c05Chip(r.life, lead).text, labw: c05Chip(r.life, lead).w, hasExtra: !lead, extra: label, extraCls: r.todo && !inHist ? 'chg' : '', hasNext: !lead && !!r.cta, next: r.cta, obj: obj,
       hasSeats: r.event.status === 'open', seats: r.seats.map(function (x) { return { cls: x.kind }; }), seatText: c05Nb(r.seatText + ' 含你' + (r.seatMore ? ' · ' + r.seatMore : '')),
       lead: !!lead, need: r.cta === '审核申请' ? r.label + ' · 通过即发出 6 小时预留，确认前不占定' : r.cta === '记录出席' ? r.label + ' · 逐人记录，待核实、可更正' : r.label + ' · ' + r.formedLine, hasBar: false, ratio: 0, barCls: '', hasCta: !!r.cta, cta: r.cta, ctaAct: r.cta === '审核申请' ? 'approve' : 'attend-present', ctaHint: r.cta === '审核申请' ? '打开订单簿逐份审核' : '打开订单簿逐人记录',
@@ -1114,7 +1337,7 @@ class Component extends DCLogic {
   draftRow(d) {
     var self = this, s = this.state; var leaving = s.leaving === d.id;
     return { id: d.id, rid: d.id, isDraft: true, cls: 'draft ' + (leaving ? 'leaving ' : '') + (s.landed === d.id ? 'landed ' : '') + (s.view.phase === 'out' && s.view.id === d.id ? 'landing ' : ''), wrapCls: (leaving ? 'leavingwrap ' : '') + (leaving && s.leavingGone ? 'gone ' : '') + (s.entering === d.id ? 'entering' : ''), wrapStyle: leaving ? 'height:' + (s.rowH || 150) + 'px' : '',
-      time: d.when ? d.when.time : '--:--', wd: d.when ? d.when.wdZh + ' ' + d.when.md : '日期未定', hood: d.placeText, title: d.title, chipCls: 'wait', chipText: '草稿', labw: c05LabW('草稿'), hasExtra: false, extra: '', extraCls: '', hasNext: false, next: '', obj: { ticket: false, stamp: false }, hasSeats: false, seats: [], lead: false, hasCta: false,
+      time: d.when ? d.when.time : '--:--', wd: d.when ? d.when.wdZh + ' ' + d.when.md : '日期未定', hood: d.placeText, title: c05Sep(d.title), chipCls: 'wait', chipText: '草稿', labw: c05LabW('草稿'), hasExtra: false, extra: '', extraCls: '', hasNext: false, next: '', timeCls: '', obj: { ticket: false }, hasSeats: false, seats: [], lead: false, hasCta: false,
       readyCls: d.ready ? 'ok' : 'miss', readyText: d.missingText, ago: d.agoText, hasSource: !!d.source, source: d.source ? d.source.title : '', aria: d.title + '，草稿，' + d.missingText,
       del: function (ev) { ev.stopPropagation && ev.stopPropagation(); var row = ev.currentTarget.closest('.c05-rowwrap'); self.deleteDraft(d.id, row ? row.getBoundingClientRect().height : 150); },
       open: function (ev) { self.motion('open', function () { self.openDraft(d.id, ev, {}); }); } };
@@ -1182,7 +1405,7 @@ class Component extends DCLogic {
   exitSlipFor(r) { var st = r.stage; return st === 'pending' ? 'withdraw' : (st === 'invited' || st === 'invited_queue') ? 'release' : st === 'waitlist' ? 'leaveQueue' : st === 'reschedule' ? 'decline' : 'exit'; }
   /* slips carry their own sequence number: closing then quickly reopening never lets the old close unmount the new layer */
   openSlip(kind, extra) { var self = this, sq = ++this._sl; this.setState({ err: null }); this.patchView(Object.assign({ slip: kind, slipPhase: 'start', readEnd: false }, extra || {})); this.after(20, function () { if (self._sl === sq) self.patchView({ slipPhase: 'in' }); }); if (kind === 'rules') this.after(80, function () { if (self._sl !== sq) return; var el = self.root() && self.root().querySelector('.c05-rules'); if (el && el.scrollHeight <= el.clientHeight + 4) self.patchView({ readEnd: true }); }); }
-  closeSlip() { var self = this; if (!this.state.view.slip || this._busy) return; var sq = ++this._sl; this.patchView({ slipPhase: 'out' }); this.after(380, function () { if (self._sl === sq) self.patchView({ slip: null, slipPhase: '' }); }); }
+  closeSlip() { var self = this; if (!this.state.view.slip || this._busy) return; var sq = ++this._sl; this.patchView({ slipPhase: 'out' }); this.after(380, function () { if (self._sl === sq) self.patchView({ slip: null, slipPhase: '', slipSnap: null }); }); }
   setTag(key, patch) { this.setState(function (s) { var t = Object.assign({}, s.view.tags); t[key] = Object.assign({}, t[key] || {}, patch); return { view: Object.assign({}, s.view, { tags: t }) }; }); }
   /* 出票 = 挂牌：the tag is pulled out from under the cloth edge in three pulls, then the string is tied to the chalk cross */
   printTag(key) { var self = this, id = this.state.view.id; this.motion('print', function () { self.setTag(key, { phase: 'printing', cut: false }); self.after(2000, function () { if (self.state.view.id !== id) return; self.setTag(key, { phase: 'tying' }); }); self.after(2700, function () { if (self.state.view.id !== id) return; self.setTag(key, { phase: 'ready' }); }); }); }
@@ -1246,10 +1469,22 @@ class Component extends DCLogic {
     var printing = t.phase === 'printing', idle = t.phase === 'idle', tying = t.phase === 'tying', ready = t.phase === 'ready';
     var canTear = ready && !t.torn && !isOld && !t.hist && !t.voided && !t.burning && !t.burnt && !t.falling && !t.snapping && !this.state.busy;
     var cut = !!(t.cut || t.torn); var ty0 = isOld ? 20 : (t.hist ? 22 : 36);
+    /* fix-r1 m7: the tag keeps the same 8px tuck under the cloth edge at any phone width (area = width − 76; 64px at 390, 34px at 360) */
+    var rootW = (this.root() && this.root().clientWidth) || 390, tagX = Math.max(30, Math.min(C05_TAG.x, rootW - 326));
     var showStr = tying || ready;
     var fraying = held && p > 0.75 && !cut;
-    var frayD = '';
-    if (fraying) { var tx = C05_TAG.tack[0], ty = C05_TAG.tack[1], ex = C05_TAG.x + C05_TAG.eye[0], ey = ty0 + C05_TAG.eye[1] + dy; var L = Math.sqrt((ex - tx) * (ex - tx) + (ey - ty) * (ey - ty)) || 1; var ux = (ex - tx) / L, uy = (ey - ty) / L, nx = -uy, ny = ux; var px = tx + (ex - tx) * 0.3, py = ty + (ey - ty) * 0.3; var g = (p - 0.75) / 0.25; var seg = function (a, b) { return 'M' + px.toFixed(1) + ' ' + py.toFixed(1) + ' l' + ((nx * a + ux * b) * (0.6 + g * 0.6)).toFixed(1) + ' ' + ((ny * a + uy * b) * (0.6 + g * 0.6)).toFixed(1); }; frayD = seg(5, 2) + seg(-4.5, 3) + seg(3.5, -3) + seg(-6, -1.5) + seg(2, 5.5); }
+    var strD = c05StringD(dy, p, ty0, tagX), strLD = strD, frayD = '', frayL = '';
+    if (fraying) {
+      /* the string is a quadratic tack → eyelet; the light strand parts around t=.42 with a gap that widens with p, its two ends splaying into fibres */
+      var P0 = [C05_TAG.tack[0], C05_TAG.tack[1]], P2 = [tagX + C05_TAG.eye[0], ty0 + C05_TAG.eye[1] + dy], P1 = [(P0[0] + P2[0]) / 2, (P0[1] + P2[1]) / 2 + 24 * (1 - p)];
+      var Q = function (u) { var a = (1 - u) * (1 - u), b = 2 * (1 - u) * u, c = u * u; return [a * P0[0] + b * P1[0] + c * P2[0], a * P0[1] + b * P1[1] + c * P2[1]]; };
+      var T = function (u) { var x = 2 * (1 - u) * (P1[0] - P0[0]) + 2 * u * (P2[0] - P1[0]), y = 2 * (1 - u) * (P1[1] - P0[1]) + 2 * u * (P2[1] - P1[1]), l = Math.sqrt(x * x + y * y) || 1; return [x / l, y / l]; };
+      var poly = function (u0, u1) { var o = ''; for (var i = 0; i <= 8; i++) { var q = Q(u0 + (u1 - u0) * i / 8); o += (i ? ' L' : 'M') + q[0].toFixed(1) + ' ' + q[1].toFixed(1); } return o; };
+      var g = (p - 0.75) / 0.25, tw = 0.42, dl = 0.02 + 0.075 * g; strLD = poly(0, tw - dl) + ' ' + poly(tw + dl, 1);
+      var hairs = function (u, dir, angs, lens, cls) { var q = Q(u), t = T(u), o = ''; angs.forEach(function (a, i) { var r = a * Math.PI / 180, cx = t[0] * Math.cos(r) - t[1] * Math.sin(r), cy = t[0] * Math.sin(r) + t[1] * Math.cos(r), L = lens[i] * (0.6 + g * 1.0) * dir; o += 'M' + q[0].toFixed(1) + ' ' + q[1].toFixed(1) + ' q' + (cx * L * 0.5 - cy * 0.8).toFixed(1) + ' ' + (cy * L * 0.5 + cx * 0.8).toFixed(1) + ' ' + (cx * L).toFixed(1) + ' ' + (cy * L).toFixed(1); }); return o; };
+      frayL = hairs(tw - dl, 1, [-30, -9, 16, 34], [5, 6.5, 6, 4.5]) + hairs(tw + dl, -1, [-24, 6, 28], [5.5, 6.5, 4.5]);
+      frayD = hairs(tw - dl * 0.4, 1, [-48, 44], [3.5, 3]) + hairs(tw + dl * 0.4, -1, [40], [3.5]);
+    }
     var stamp = isOld ? (t.voided ? '作废' : '改期') : key === 'fresh' ? '时间已改' : (t.voided ? '作废' : '');
     var att = t.hist && r.stage === 'ended'; var flippable = att && !t.burnt;
     var hint = isOld ? (t.voided ? '旧牌已作废 · 不能再用' : '旧牌 · 答复前不能用，撕没撕都不算数') : printing ? '挂牌中 · 吊牌从布边下抽出，一停一抽' : tying ? '系线中 · 棉线穿过扣眼，在粉线叉上打结' : canTear ? '按住吊牌向下拉，拉断棉线' : t.snapping ? '线绷紧了 · 正在记录' : t.falling ? '线断了 · 吊牌落进存根袋' : t.burning ? '布边起毛、焦黑…' : t.burnt ? (cut ? '已烧毁 · 只剩灰线轮廓' : '已烧毁 · 只剩灰线轮廓和一截焦线头') : t.torn && !t.hist ? (key === 'fresh' ? '新吊牌已撕下 · 旧牌作废' : '棉线已断 · 线头留在裁片上') : flippable ? (t.flipped ? '点一下 · 翻回正面' : '点一下 · 看背面') : t.hist ? (r.ticket && r.ticket.torn ? '已撕 · 归档' : '未撕 · 归档') : '';
@@ -1258,13 +1493,13 @@ class Component extends DCLogic {
       label: key === 'fresh' ? '新版吊牌 · 第 ' + e.version + ' 版' : isOld ? '旧吊牌 · 第 ' + (e.version - 1) + ' 版' : t.hist ? '归档吊牌' : '吊牌 · 票根', note: key === 'fresh' ? '拉断棉线 = 接受新时间' : isOld ? (t.voided ? '已作废' : '答复前不能使用') : canTear ? '撕线后 8 小时内联系局主' : (t.burning || t.burnt) && !t.hist ? '已作废' : t.torn && !t.hist ? '已撕 · 吊牌归你' : '',
       areaCls: (isOld ? 'old ' : '') + (t.hist ? 'hist ' : ''),
       wrapCls: (idle ? 'hidden ' : '') + (printing ? 'printing ' : '') + (t.drag ? 'drag lifted ' : '') + (t.snapping ? 'lifted ' : '') + (t.falling ? 'falling ' : '') + (t.torn && !t.falling && !t.hist && !isOld ? 'torn ' : '') + (isOld ? 'old ' : '') + (flippable ? 'flippable ' : '') + (flippable && t.flipped ? 'flipped ' : ''),
-      wrapStyle: held ? 'transform:translateY(' + dy.toFixed(1) + 'px)' : (t.falling ? '--dy:' + C05_TAG.pull + 'px' : ''),
+      wrapStyle: 'left:' + tagX + 'px;' + (held ? 'transform:translateY(' + dy.toFixed(1) + 'px)' : (t.falling ? '--dy:' + C05_TAG.pull + 'px' : '')),
       tagCls: (isOld ? 'old ' : '') + (t.voided && !t.burnt ? 'void ' : '') + (t.burning ? 'burning ' : '') + (t.burnt ? 'burnt ' : ''),
-      strOn: showStr && !cut, stubOn: showStr && cut, strCls: tying ? 'draw' : t.burning && !cut ? 'burn' : t.burnt && !cut ? 'charred' : fraying ? 'fraying' : '', stubCls: t.falling ? 'recoil' : '', strD: c05StringD(dy, p, ty0), strW: (2.6 - p * 1.1).toFixed(2), strW2: (3.4 - p * 1.1).toFixed(2),
-      frayOn: fraying, frayD: frayD,
+      strOn: showStr && !cut, stubOn: showStr && cut, strCls: tying ? 'draw' : t.burning && !cut ? 'burn' : t.burnt && !cut ? 'charred' : fraying ? 'fraying' : '', stubCls: t.falling ? 'recoil' : '', strD: strD, strLD: strLD, strW: (2.6 - p * 1.1).toFixed(2), strW2: (3.4 - p * 1.1).toFixed(2),
+      frayOn: fraying, frayD: frayD, frayL: frayL, tagX: tagX,
       remOn: cut && !t.burnt, remCls: t.falling ? 'swing' : t.burning ? 'burn' : '',
       cx: 222, cy: 168, ash: t.ash || [], ashCls: t.burning ? 'rising' : t.burnt ? 'on' : '', ashText: r.stage === 'cancelled' ? '局主取消' : r.stage === 'declined' ? '拒绝改期' : '作废',
-      k: (key === 'fresh' ? 'JU · 票根 · V' + e.version : isOld ? 'JU · 票根 · V' + (e.version - 1) : 'JU · 票根 · V' + (r.ticket ? r.ticket.version : e.version)), title: e.title, time: when.time, wd: when.wdZh + ' ' + when.md, meeting: when.meeting, place: r.place.full, host: e.host.name, code: 'JU-' + String(e.id).toUpperCase().slice(0, 7),
+      k: (key === 'fresh' ? 'JU · 票根 · V' + e.version : isOld ? 'JU · 票根 · V' + (e.version - 1) : 'JU · 票根 · V' + (r.ticket ? r.ticket.version : e.version)), title: c05Sep(e.title), time: when.time, wd: when.wdZh + ' ' + when.md, meeting: when.meeting, place: r.place.full, host: e.host.name, code: 'JU-' + String(e.id).toUpperCase().slice(0, 7),
       hasStamp: !!stamp, stamp: stamp, stampCls: (stamp === '作废' ? 'grey ' : '') + (t.stampFresh && stamp === '作废' ? 'fresh' : ''),
       hasBack: flippable, backHidden: t.flipped ? 'false' : 'true',
       hasAtt: att, attCls: r.attendance === 'present' ? 'ok' : r.attendance === 'absent' ? 'abs' : r.attendance === 'pending' ? 'und' : 'none', attText: r.attendance === 'present' ? '出席' : r.attendance === 'absent' ? '未出席 · 待核实' : r.attendance === 'pending' ? '待定' : '等记录',
@@ -1275,11 +1510,14 @@ class Component extends DCLogic {
   detailVals() {
     var s = this.state, v = s.view; if (v.name !== 'detail') return { on: false };
     var self = this, r = this.rowOf(v.id); if (!r) return { on: false };
-    var row = this.joinedRow(r, true); row.hasExtra = row.lead && r.stage === 'reschedule'; row.extra = r.stage === 'reschedule' ? '改为 ' + r.newWhen.zh : ''; row.extraCls = 'chg';
+    /* the opened piece says only that the time changed — the new time lives once, on the new tag; the old one is struck in the time column (fix-r1 m4) */
+    var row = this.joinedRow(r, true); row.hasExtra = row.lead && r.stage === 'reschedule'; row.extra = r.stage === 'reschedule' ? '局主改了时间 · 答复前旧吊牌不能用' : ''; row.extraCls = 'chg';
+    var rowx = this.joinedRow(r, false), travelling = v.fromRow && (v.phase === 'start' || v.phase === 'out');
+    if (travelling) { row.chipText = rowx.chipText; row.chipCls = rowx.chipCls; row.labw = rowx.labw; }
     var g = this.overGeo(v); var e = r.event; var done = !!v.result;
     var closed = r.group === 'closed', charred = r.stage === 'cancelled' || r.stage === 'exited' || r.stage === 'declined';
     var tagErr = this.errAt('tag'), ctErr = this.errAt('contact'), hErr = this.errAt('hist');
-    var d = { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, ovCls: (v.fromRow ? 'fromrow ' : '') + (v.collapsed ? 'collapsed ' : '') + (s.toast && s.toast.on ? 'toasting' : ''), onScroll: function (ev) { self.onOverScroll(ev); }, sheetCls: (v.mode === 'history' && closed ? 'closed ' : '') + (v.mode === 'history' && closed && charred ? 'charred' : ''),
+    var d = { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, rowx: rowx, ovCls: this.ovFlags(v) + (s.toast && s.toast.on ? 'toasting' : ''), onScroll: function (ev) { self.onOverScroll(ev); }, sheetCls: (v.mode === 'history' && closed ? 'closed ' : '') + (v.mode === 'history' && closed && charred ? 'charred' : ''),
       bar: { title: e.title, stat: r.label, statCls: r.tone }, receipt: { on: false }, alert: tagErr ? { on: true, text: tagErr.message, retry: tagErr.retry } : { on: false }, close: function () { self.closeOver(); }, backLabel: '我参加的 · ' + (s.section === 'history' ? '历史' : '当前'), topnote: v.mode === 'history' ? '归档' : v.mode === 'ticket' ? '票根' : '局内',
       title: r.detailTitle, deadline: { on: false }, hasNeed: false, need: '', result: { on: false }, tickets: [], contact: { on: false }, act: { on: false }, hasSeats: false, seats: [], seatMarks: [], hasQueue: false, queue: [], hasKv: false, kv: [], hist: { on: false }, hasRules: v.mode !== 'history', openRules: function () { self.openSlip('rules'); } };
     if (v.result) d.result = { on: true, cls: v.result.pending ? 'pending' : '', pending: !!v.result.pending, done: !v.result.pending, wait: '吊牌作废中 · 联系已关闭', main: v.result.main, hasMore: !!v.result.more, more: v.result.more || '' };
@@ -1311,7 +1549,7 @@ class Component extends DCLogic {
       ['old', 'main', 'fresh'].forEach(function (k) { if (v.tags[k]) d.tickets.push(self.tagModel(k, v.tags[k], r)); });
       var mt = v.tags.fresh || v.tags.main; var ready = mt && mt.phase === 'ready' && !mt.burning && !mt.burnt && !mt.falling && !mt.snapping;
       var pulling = mt && (mt.snapping || mt.falling), hanging = mt && (mt.phase === 'idle' || mt.phase === 'printing' || mt.phase === 'tying');
-      if (r.stage === 'reschedule') { d.hasNeed = !done; d.need = '局主改了时间 · 改为 ' + r.newWhen.zh + '。接受就拉断新吊牌的棉线；去不了可以「去不了了」，不记主动失约。'; }
+      if (r.stage === 'reschedule') { d.hasNeed = !done; d.need = '接受新时间就拉断新吊牌的棉线；去不了可以「去不了了」，不记主动失约。'; }
       else if (r.stage === 'tear') { d.hasNeed = !done; d.need = ready ? '撕开副券后可以联系局主 · 撕票后 8 小时内联系' : mt && mt.snapping ? '线绷紧了 · 正在记录' : mt && mt.falling ? '线断了 · 吊牌落进存根袋' : (mt && mt.torn ? '棉线已断 · 可以联系局主了' : '出票中 · 吊牌正在系上'); }
       else if (r.stage === 'contact') { d.hasNeed = !done; d.need = '撕票后 8 小时内联系局主 · 加了微信就记一下'; }
       else if (r.stage === 'going') { d.hasNeed = !done; d.need = r.need; }
@@ -1365,6 +1603,8 @@ class Component extends DCLogic {
     this.openOver('manage', id, ev, v, instant);
   }
   setTab(tab) { if (this.state.view.tab === tab) return; this.patchView({ tab: tab }); }
+  /* the swatch that was just decided plays its sew / snip once; the seat it basted flashes on the tape */
+  freshApp(appId, nick) { var self = this; var f = Object.assign({}, this.state.view.fresh, { app: appId }); if (nick) f.seat = nick; this.patchView({ fresh: f }); this.after(2500, function () { var v = self.state.view; if (v.fresh && v.fresh.app === appId) self.patchView({ fresh: Object.assign({}, v.fresh, { app: null }) }); }); }
   hostSlip(kind) { var m = this.mg(this.state.view.id); this.openSlip(kind, { rsDate: m.when.iso.slice(0, 10), rsTime: m.when.time }); }
   manageVals() {
     var s = this.state, v = s.view; if (v.name !== 'manage') return { on: false };
@@ -1381,22 +1621,31 @@ class Component extends DCLogic {
     /* the last scorched arc (≈93% of the reach, near the far corner) stays as a static char mark on the outline */
     var ar = reach * 0.93, ay = 12 + Math.sqrt(Math.max(0, ar * ar - 338 * 338)), ax = 338 - Math.sqrt(Math.max(0, ar * ar - (H - 12) * (H - 12)));
     var arcD = ar > 338 && ar > H - 12 ? 'M0 ' + ay.toFixed(1) + ' A' + ar.toFixed(1) + ' ' + ar.toFixed(1) + ' 0 0 0 ' + ax.toFixed(1) + ' ' + H : 'M0 0';
-    var wo = { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, ovCls: (v.fromRow ? 'fromrow ' : '') + (v.collapsed ? 'collapsed ' : '') + (s.toast && s.toast.on ? 'toasting' : ''), onScroll: function (ev) { self.onOverScroll(ev); }, bar: { title: e.title, stat: m.status, statCls: m.todo ? 'act' : cancelled ? 'void' : ended ? 'kept' : 'wait' }, reach: reach, arcD: arcD, close: function () { self.closeOver(); }, backLabel: '我发起的 · ' + (s.section === 'history' ? '历史' : '当前'), tag: 'JU-' + String(e.id).toUpperCase().slice(0, 7), title: e.title, whenEn: m.when.en,
+    var rowx = this.hostRow(m, false); if (v.fromRow && (v.phase === 'start' || v.phase === 'out')) { row.chipText = rowx.chipText; row.chipCls = rowx.chipCls; row.labw = rowx.labw; }
+    var wo = { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, rowx: rowx, ovCls: this.ovFlags(v) + (s.toast && s.toast.on ? 'toasting' : ''), ashLine: (m.formed ? '票根作废' : '未出票') + ' · 联系已关闭 · 成员不计主动退出', onScroll: function (ev) { self.onOverScroll(ev); }, bar: { title: e.title, stat: m.status, statCls: m.todo ? 'act' : cancelled ? 'void' : ended ? 'kept' : 'wait' }, reach: reach, arcD: arcD, close: function () { self.closeOver(); }, backLabel: '我发起的 · ' + (s.section === 'history' ? '历史' : '当前'), tag: 'JU-' + String(e.id).toUpperCase().slice(0, 7), title: e.title, whenEn: m.when.en,
       status: m.status + (cancelled ? '' : ' · ' + m.when.zh), statusCls: m.todo ? 'chg' : '', uid: 'wo-' + e.id, headH: v.headH || 240, burnCls: v.burn === 'burning' ? 'burning' : (v.burn === 'burnt' || v.charred) ? 'burnt' : '', ash: v.ash || [], ashCls: v.burn === 'burning' ? 'rising' : v.charred ? 'on' : '', sheetCls: v.charred && v.burn !== 'burning' ? 'ashed' : '',
       hasSeats: !cancelled, progL: ended ? m.recorded + '/' + m.attendees.length + ' 已记录出席' : '已确认 ' + m.counts.confirmed + '/' + e.capacity + '（含你）', progR: ended ? '出席 ' + m.present + ' · 未出席 ' + m.absent + (m.undecided ? ' · 待定 ' + m.undecided : '') : (JU.fmt.seatLine(m.counts) || '满员'),
       seats: ended ? m.attendees.map(function (x) { return { cls: x.attendance === 'present' ? 'ok' : x.attendance === 'absent' ? 'abs' : x.attendance === 'pending' ? 'und' : 'open', title: x.nick + ' ' + x.attLabel }; }) : m.seats.map(function (x) { return { cls: x.kind + (v.fresh.seat === x.name ? ' new' : ''), title: x.name || '空位' }; }),
       formedLine: m.formedLine, openCard: function () { self.openSlip('card'); }, chips: chips,
-      apps: { on: false }, mem: { on: false }, leaves: { on: false }, wl: { on: false }, rep: { on: false }, att: { on: false }, plan: { on: false } };
+      apps: { on: false }, tape: { on: false }, mem: { on: false }, leaves: { on: false }, wl: { on: false }, rep: { on: false }, att: { on: false }, plan: { on: false } };
     var tab = v.tab; var appErr = this.errAt('app'), attErr = this.errAt('att');
     if (tab === 'applications') {
+      var fr = v.fresh || {};
+      /* 座位表: one slot per seat, numbered like a tape measure; an invitation bastes the next open slot (res) — the seat change is visible where the decision is made */
+      var nameOf = function (x) { return x.kind === 'host' ? '你' : x.kind === 'open' ? '空' : (x.name || '—'); };
+      wo.tape = { on: true, conf: '已确认 ' + m.counts.confirmed + '/' + e.capacity, more: '含你' + (JU.fmt.seatLine(m.counts) ? ' · ' + JU.fmt.seatLine(m.counts) : ''), aria: '座位表：已确认 ' + m.counts.confirmed + '/' + e.capacity + '，含你' + (JU.fmt.seatLine(m.counts) ? '，' + JU.fmt.seatLine(m.counts) : ''),
+        slots: m.seats.map(function (x, i) { return { no: i + 1, cls: x.kind + (x.kind === 'res' && fr.seat && fr.seat === x.name ? ' new' : ''), name: nameOf(x) }; }) };
       wo.apps = { on: true, count: m.pendingApps.length, note: m.handledCount ? '已处理 ' + m.handledCount + ' · 通过即发出 6 小时预留' : '通过即发出 6 小时预留', none: !m.appsToShow.length, help: JU.COPY.approveHelp,
-        rows: m.appsToShow.map(function (a) { return { initial: c05Initial(a.nick), avCls: a.verified ? '' : 'plain', nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? '' : 'no', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled, resultText: a.resultText, resCls: a.status === 'rejected' ? 'no' : '', busyCls: s.busy && s.busy.key === 'app-' + a.id && s.busy.fn === 'approve' ? 'busy' : '', dis: !!s.busy, alertOn: !!(appErr && appErr.key === 'app-' + a.id), alertText: appErr ? appErr.message : '', retry: appErr ? appErr.retry : null,
-          approve: function () { self.act('approve', { eventId: e.id, appId: a.id }, function (eff) { self.patchView({ fresh: { seat: eff.nick } }); }, { key: 'app-' + a.id }); },
-          reject: function () { self.act('reject', { eventId: e.id, appId: a.id }, null, { key: 'app-' + a.id, ms: 320 }); } }; }) };
+        rows: m.appsToShow.map(function (a) { var mine = s.busy && s.busy.key === 'app-' + a.id; var st = a.status === 'rejected' ? 'no' : a.status === 'approved' ? 'ok' : a.handled ? 'gone' : '';
+          return { id: a.id, cls: st + (fr.app === a.id ? ' fresh' : '') + (mine ? ' busy' : ''), initial: c05Initial(a.nick), avCls: a.verified ? '' : 'plain', nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? '' : 'no', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled, isOk: st === 'ok', isNo: st === 'no', resultText: a.resultText, resCls: st === 'no' ? 'no' : 'ok',
+            busyCls: mine && s.busy.fn === 'approve' ? 'busy' : '', snipCls: mine && s.busy.fn === 'reject' ? 'busy' : '', dis: !!s.busy, alertOn: !!(appErr && appErr.key === 'app-' + a.id), alertText: appErr ? appErr.message : '', retry: appErr ? appErr.retry : null,
+            approve: function () { self.act('approve', { eventId: e.id, appId: a.id }, function (eff) { self.freshApp(a.id, eff.nick); }, { key: 'app-' + a.id }); },
+            reject: function () { self.act('reject', { eventId: e.id, appId: a.id }, function () { self.freshApp(a.id, null); }, { key: 'app-' + a.id, ms: 320 }); } }; }) };
     }
     if (tab === 'members') {
       wo.mem = { on: true, basis: e.capacity + ' 个座位（含你）· 已确认 ' + m.counts.confirmed + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : ''), help: cancelled ? '已取消 · 成员不计主动退出；联系入口已关闭。' : m.formed ? '已成局 · 成员微信仅你可见，散场 24 小时后关闭。' : '全员（含你）确认后成局出票；预留到期按候补顺位自动补位。',
-        rows: m.roster.map(function (x) { var meta = x.host ? '' : [x.ticketText, x.contactAdded ? '已自报加微信' : ''].filter(Boolean).join(' · '); return { id: x.id, initial: x.host ? '主' : c05Initial(x.nick), name: x.host ? '你' : x.nick, avCls: x.host ? 'host' : x.tone === 'res' ? 'res' : x.tone === 'void' ? 'void' : '', hasMeta: !!meta, meta: meta, hasCd: !!x.deadline && !cancelled, left: x.leftText, ratio: x.leftRatio, state: x.stateText, sCls: x.tone === 'host' ? 'ok' : x.tone, showWx: x.showWx, wx: x.wx, copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function () { self.copyWx(x.wx); } }; }),
+        /* a never-formed event never issued tickets: its cancelled members read 「未出票」, not 「票根作废」 (fix-r1 m8, G8) */
+        rows: m.roster.map(function (x) { var tk = cancelled && !m.formed && x.ticketText === '票根作废' ? '未出票' : x.ticketText; var meta = x.host ? '' : [tk, x.contactAdded ? '已自报加微信' : ''].filter(Boolean).join(' · '); return { id: x.id, initial: x.host ? '主' : c05Initial(x.nick), name: x.host ? '你' : x.nick, avCls: x.host ? 'host' : x.tone === 'res' ? 'res' : x.tone === 'void' ? 'void' : '', hasMeta: !!meta, meta: meta, hasCd: !!x.deadline && !cancelled, left: x.leftText, ratio: x.leftRatio, state: x.stateText, sCls: x.tone === 'host' ? 'ok' : x.tone, showWx: x.showWx, wx: x.wx, copyLabel: v.copied === x.wx ? '已复制' : '复制', copy: function () { self.copyWx(x.wx); } }; }),
         openOn: open && m.counts.available > 0, openText: '还有 ' + m.counts.available + ' 个空位' };
       if (m.leaves.length) wo.leaves = { on: true, count: m.leaves.length, open: v.leavesOpen, toggle: function (ev) { ev.preventDefault(); self.patchView({ leavesOpen: !self.state.view.leavesOpen }); }, rows: m.leaves.map(function (l) { return { initial: c05Initial(l.nick), nick: l.nick, text: l.text, ago: JU.fmt.ago(l.at) }; }) };
     }
@@ -1425,7 +1674,8 @@ class Component extends DCLogic {
     return wo;
   }
   rsNewIso() { var v = this.state.view; return v.rsDate && v.rsTime ? v.rsDate + 'T' + v.rsTime : ''; }
-  submitReschedule() { var self = this, id = this.state.view.id, iso = this.rsNewIso(); if (!iso || iso === this.mg(id).event.iso) return; this.act('propose', { eventId: id, newIso: iso }, function (eff) { self.closeSlip(); self.scrollOverTop(); self.patchView({ fresh: { when: true } }); self.say(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间'); if (eff.asked) self.after(200, function () { self.setTab('replies'); }); }, { where: 'slip' }); }
+  /* the sheet folds away showing what was submitted (snapshot taken before the write), not the re-derived "same time" state (fix-r1 m2) */
+  submitReschedule() { var self = this, id = this.state.view.id, iso = this.rsNewIso(); if (!iso || iso === this.mg(id).event.iso) return; var snap = this.hostSlipVals(); this.act('propose', { eventId: id, newIso: iso }, function (eff) { var inert = function () { }; self.patchView({ slipSnap: Object.assign({}, snap, { okDis: false, cancelDis: false, okCls: '', same: false, alert: { on: false }, ok: inert, cancel: inert, pick: inert, onDate: inert, onTime: inert }) }); self.closeSlip(); self.scrollOverTop(); self.patchView({ fresh: { when: true } }); self.say(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间'); if (eff.asked) self.after(200, function () { self.setTab('replies'); }); }, { where: 'slip' }); }
   submitCancel() {
     var self = this, id = this.state.view.id; this._uid++;
     this.act('cancel', { eventId: id }, function () {
@@ -1445,6 +1695,7 @@ class Component extends DCLogic {
     var s = this.state, v = s.view, self = this, m = this.mg(v.id); if (!m) return { on: false }; var e = m.event;
     var sErr = this.errAt('slip');
     var base = { on: true, phase: v.slipPhase, hasId: true, idTitle: e.title, idSub: m.when.zh + ' · ' + m.place.hood, hasBody: false, isRules: false, isResched: false, isCard: false, hasKv: false, hasRed: false, hasCancel: true, hasOk: true, okCls: '', okDis: !!s.busy, cancelDis: !!s.busy, alert: sErr ? { on: true, text: sErr.message, retry: sErr.retry } : { on: false }, cancelLabel: '再想想', cancel: function () { self.closeSlip(); } };
+    if (v.slip === 'reschedule' && v.slipPhase === 'out' && v.slipSnap) return Object.assign({}, v.slipSnap, { phase: 'out' });
     if (v.slip === 'reschedule') { var iso = this.rsNewIso(); var same = !!iso && iso === e.iso; var ready = !!iso && !same; var nw = iso ? JU.fmt.when(iso) : null; var dw = v.rsDate ? JU.fmt.when(v.rsDate + 'T' + (v.rsTime || '12:00')) : null; return Object.assign(base, { title: JU.COPY.reschedule.title, isResched: true, oldWhen: m.when.zh, newWhen: nw ? nw.zh : '选好新的日期和时间', newCls: nw ? '' : 'ph', date: v.rsDate, time: v.rsTime, dateWd: dw ? dw.wdZh + ' ' : '选日期', dateMd: dw ? dw.md : '', dateCls: dw ? '' : 'ph', timeText: v.rsTime || '--:--', timeCls: v.rsTime ? '' : 'ph', pick: function (ev) { try { if (ev.currentTarget.showPicker) ev.currentTarget.showPicker(); } catch (x) { } }, onDate: function (ev) { self.patchView({ rsDate: ev.target.value }); }, onTime: function (ev) { self.patchView({ rsTime: ev.target.value }); }, same: same, sameText: JU.COPY.reschedule.same, desc: m.rescheduleDesc, okLabel: JU.COPY.reschedule.ok, okAct: 'propose', okCls: (ready ? '' : 'dis') + (s.busy && s.busy.fn === 'propose' ? ' busy' : ''), okDis: !ready || !!s.busy, ok: function () { self.submitReschedule(); } }); }
     if (v.slip === 'cancel') { var a = m.cancelAffected; var kv = []; if (a.confirmed) kv.push({ k: '已确认', v: a.confirmed + ' 人（不含你）', cls: '' }); if (a.reserved) kv.push({ k: '已预留', v: a.reserved + ' 人', cls: '' }); if (a.queue) kv.push({ k: '候补', v: a.queue + ' 人', cls: '' }); if (a.pending) kv.push({ k: '待审申请', v: a.pending + ' 份', cls: '' }); return Object.assign(base, { title: JU.COPY.cancelEvent.title, hasBody: true, body: JU.COPY.cancelEvent.body, hasKv: kv.length > 0, kv: kv, hasRed: true, red: JU.COPY.cancelEvent.irreversible, okLabel: JU.COPY.cancelEvent.ok, okAct: 'cancel', okCls: 'red' + (s.busy && s.busy.fn === 'cancel' ? ' busy' : ''), ok: function () { self.submitCancel(); } }); }
     if (v.slip === 'end') return Object.assign(base, { title: JU.COPY.endEvent.title, hasBody: true, body: JU.COPY.endEvent.body, okLabel: JU.COPY.endEvent.ok, okAct: 'end', okCls: s.busy && s.busy.fn === 'end' ? 'busy' : '', ok: function () { self.submitEnd(); } });
@@ -1459,7 +1710,7 @@ class Component extends DCLogic {
     var row = this.draftRow(d); var g = this.overGeo(v); var miss = d.draft.missing;
     var kv = [{ k: '局名', v: d.untitled ? '还没写' : d.title, cls: miss.indexOf('局名') >= 0 ? 'miss' : '' }, { k: '日期', v: d.when ? d.when.wdZh + ' ' + d.when.md : '还没选', cls: miss.indexOf('日期') >= 0 ? 'miss' : 'c05-num' }, { k: '时间', v: d.when ? d.when.time : '还没选', cls: miss.indexOf('时间') >= 0 ? 'miss' : 'c05-num' }, { k: '地点', v: d.place ? d.place.full : '还没写', cls: miss.indexOf('地点') >= 0 ? 'miss' : '' }, { k: '人数', v: d.capacity + ' 人局（含你）', cls: '' }, { k: '报名', v: d.draft.joinMode === 'direct' ? '直接留位' : '申请制', cls: '' }];
     if (d.source) kv.push({ k: '来源', v: '由「' + d.source.title + '」再开 · 只带入活动内容', cls: '' });
-    return { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, ovCls: (v.fromRow ? 'fromrow ' : '') + (v.collapsed ? 'collapsed' : ''), onScroll: function (ev) { self.onOverScroll(ev); }, bar: { title: d.title, stat: '草稿', statCls: 'wait' }, close: function () { self.closeOver(); }, kv: kv, del: function () { self.closeOver(); self.after(640, function () { var root = self.root(); var el = root ? root.querySelector('.c05-piece[data-rid="' + d.id + '"]') : null; var wrap = el ? el.closest('.c05-rowwrap') : null; self.deleteDraft(d.id, wrap ? wrap.getBoundingClientRect().height : 150); }); } };
+    return { on: true, phase: v.phase, style: g.style, wrapStyle: g.wrapStyle, row: row, ovCls: this.ovFlags(v), onScroll: function (ev) { self.onOverScroll(ev); }, bar: { title: d.title, stat: '草稿', statCls: 'wait' }, close: function () { self.closeOver(); }, kv: kv, del: function () { self.closeOver(); self.after(640, function () { var root = self.root(); var el = root ? root.querySelector('.c05-piece[data-rid="' + d.id + '"]') : null; var wrap = el ? el.closest('.c05-rowwrap') : null; self.deleteDraft(d.id, wrap ? wrap.getBoundingClientRect().height : 150); }); } };
   }
   /* ------------------------------------------------ renderVals ------------------------------------------------ */
   renderVals() {

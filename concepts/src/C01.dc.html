@@ -102,6 +102,8 @@ body{margin:0}
 .c01-time.sm{font-size:22px;min-width:66px}
 .c01-dp{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px;font-size:13.5px;line-height:1.35;color:var(--ink2);padding-top:1px}
 .c01-dp .c01-wd{color:var(--ink);font-weight:500}
+/* ds_long: an over-long place keeps to two printed lines beside the time */
+.c01-dp > span:not(.c01-wd){display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .c01-obj{flex:0 0 auto}
 .c01-title{margin:8px 0 0;font-size:20px;font-weight:500;line-height:1.3;letter-spacing:.005em;color:var(--ink);text-wrap:balance}
 /* ds_long: a list entry's title never takes more than two printed lines (composed at the separators; the second line is cut with an ellipsis) */
@@ -261,6 +263,8 @@ body{margin:0}
 .c01-over.in .c01-rowcopy{transition-delay:calc(100ms * var(--k,1))}
 .c01-rowcopy.gone{opacity:0}
 .c01-over.out .c01-rowcopy{transition:transform calc(380ms * var(--k,1)) cubic-bezier(.4,0,.6,1) calc(110ms * var(--k,1)),opacity calc(200ms * var(--k,1)) ease}
+/* landing: the copy hands over to the list row (which may now be printed differently, e.g. faded after an exit) — a 140ms cross-fade, never two inks at once */
+.c01-over.land .c01-rowcopy{opacity:0;transition:opacity calc(140ms * var(--k,1)) ease}
 /* the list countdown hands over to the single countdown line of the detail (G10: one countdown on screen) */
 .c01-rowcopy .c01-hand{transition:opacity calc(200ms * var(--k,1)) ease}
 .c01-over.in .c01-rowcopy .c01-hand{opacity:0;transition-delay:calc(380ms * var(--k,1))}
@@ -434,7 +438,8 @@ body{margin:0}
 .c01-err .t b{display:block;color:var(--red);font:500 10.5px/1 var(--mono);letter-spacing:.16em;margin-bottom:4px}
 /* failure inside the slip that made the write (C9 / p_exit: the alert stays where the action happened) */
 .c01-serr{display:flex;align-items:center;gap:10px;margin-top:12px;padding:9px 10px;border:2px solid var(--red);border-radius:2px;background:rgba(243,239,230,.7);font-size:12.5px;line-height:1.5;color:var(--ink)}
-.c01-serr .t{flex:1 1 auto}
+.c01-serr .t{flex:1 1 auto;min-width:0}
+.c01-serr .c01-btn{flex:0 0 auto;white-space:nowrap}
 .c01-serr .t b{display:block;color:var(--red);font:500 10px/1 var(--mono);letter-spacing:.16em;margin-bottom:3px}
 /* report slip fields */
 .c01-field{display:flex;flex-direction:column;gap:5px;margin-top:12px;font-size:12px;letter-spacing:.06em;color:var(--ink2)}
@@ -535,18 +540,80 @@ body{margin:0}
 .c01-wochips .c01-tab{padding:4px 9px;font-size:12px}
 .c01-wochips .c01-tab.todo .c01-cnt{color:var(--red);opacity:1;font-weight:500}
 .c01-wochips .c01-tab.on.todo .c01-cnt{color:#ffb4ab}
-.c01-app{padding:10px 0;border-bottom:1px dotted rgba(27,26,24,.3)}
-.c01-app:last-child{border-bottom:0}
-.c01-app .r{display:flex;align-items:center;gap:10px}
-.c01-app .r .n{flex:1 1 auto;min-width:0}
-.c01-app .r .n b{font-weight:500;font-size:14px}
-.c01-app .r .n small{display:block;font:400 11px/1.4 var(--mono);letter-spacing:.04em;color:var(--ink2)}
-.c01-app .vb{font:500 10px/1 var(--mono);letter-spacing:.08em;padding:3px 6px;border:1.2px solid var(--ink);border-radius:2px;white-space:nowrap}
-.c01-app .vb.no{border-style:dashed;color:var(--ink2);border-color:var(--ink2)}
-.c01-app q{display:block;margin:6px 0 0 38px;font-size:13px;color:var(--ink);line-height:1.5;quotes:"“" "”"}
-.c01-app .a{display:flex;gap:8px;margin:8px 0 0 38px;justify-content:flex-end}
-.c01-app .res{margin:8px 0 0 38px;font:500 12px/1.4 var(--mono);letter-spacing:.04em;color:var(--ink)}
-.c01-app .res::before{content:"→ "}
+/* ---------- 申请审核 = request slips. Each application is a two-part slip printed onto the work order (1.5px ink frame — thinner than a
+   ticket's 2.5px, solid unlike a void slip's dashes): header band (№ · 申请于), body (monogram · name · verification badge · note),
+   a punched perforation, and the decision coupon. Tearing a coupon off uncovers the carbon copy underneath = the in-place result. ---------- */
+.c01-ap{position:relative;margin:12px 0 0;border:1.5px solid var(--ink);border-radius:2px;background:var(--paper);box-shadow:0 1px 0 rgba(27,26,24,.12),0 6px 10px -9px rgba(0,0,0,.45)}
+.c01-ap .c01-aph{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:7px 12px 6px;border-bottom:1px solid rgba(27,26,24,.45);font:400 10.5px/1 var(--mono);letter-spacing:.1em;color:var(--ink2);white-space:nowrap}
+.c01-ap .c01-aph b{color:var(--ink);font-weight:500;font-family:"Noto Sans SC",sans-serif;letter-spacing:.12em}
+.c01-ap .c01-apb{padding:10px 12px 10px}
+.c01-ap .c01-apn{display:flex;align-items:center;gap:9px}
+.c01-ap .c01-apn i{flex:0 0 24px;height:24px;display:flex;align-items:center;justify-content:center;border:1.5px solid var(--ink);border-radius:1px;font:700 12px/1 "Noto Sans SC",sans-serif;font-style:normal;color:var(--ink)}
+.c01-ap .c01-apn b{flex:1 1 auto;min-width:0;font-size:18px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c01-ap .vb{flex:0 0 auto;font:500 10px/1 var(--mono);letter-spacing:.06em;padding:4px 6px 3px;border:1.2px solid var(--ink);border-radius:2px;white-space:nowrap;color:var(--ink)}
+.c01-ap .vb::before{content:"✓ "}
+.c01-ap .vb.no{border-style:dashed;color:var(--ink2);border-color:var(--ink2)}
+.c01-ap .vb.no::before{content:"· "}
+.c01-ap q{display:block;margin:9px 0 0 33px;font-size:13.5px;color:var(--ink);line-height:1.55;quotes:"“" "”"}
+/* perforation: dotted cut with two punched notches biting into the frame */
+.c01-ap .c01-apcut{position:relative;height:12px;margin:0 -1.5px;overflow:hidden}
+.c01-ap .c01-apcut::before{content:"";position:absolute;left:14px;right:14px;top:5px;border-top:2px dotted rgba(27,26,24,.62)}
+.c01-ap .c01-apcut i{position:absolute;top:0;width:12px;height:12px;border-radius:50%;background:var(--paper);border:1.5px solid var(--ink)}
+.c01-ap .c01-apcut i.l{left:-6px}.c01-ap .c01-apcut i.r{right:-6px}
+.c01-ap .c01-apfoot{position:relative;height:64px}
+/* the decision coupon: 谢绝 (outline) | 发出邀请 (reverse print), split by a vertical perforation */
+.c01-cps{display:flex;height:64px}
+.c01-cp{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:4px;border:0;padding:8px 12px;text-align:left;font-size:14px;font-weight:500;letter-spacing:.04em;line-height:1.2;color:var(--ink);background:transparent}
+.c01-cp small{max-width:100%;font:400 10.5px/1.25 var(--mono);letter-spacing:.02em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c01-cp.no{flex:0 0 34%;min-width:0;border-right:2px dotted rgba(27,26,24,.62)}
+.c01-cp.no small{color:var(--ink2)}
+.c01-cp.no:active{background:rgba(27,26,24,.08)}
+.c01-cp.yes{flex:1 1 0;min-width:0;margin:4px 4px 4px 6px;padding-right:28px;background:var(--ink);color:var(--paper);border-radius:1px}
+.c01-cp.yes small{color:rgba(243,239,230,.74)}
+.c01-cp.yes::after{content:"";position:absolute;right:12px;top:50%;width:8px;height:8px;margin-top:-4px;border-top:2px solid var(--paper);border-right:2px solid var(--paper);transform:rotate(45deg)}
+.c01-cp.yes:active{background:#000}
+.c01-busy .c01-cp{pointer-events:none}
+/* the carbon copy under the coupon = the result, in the same 64px (rows never move, F04) */
+.c01-apres{display:flex;align-items:center;gap:10px;height:64px;padding:6px 12px;background-color:var(--paper2);background-image:repeating-linear-gradient(180deg,rgba(60,40,10,.04) 0 1px,transparent 1px 3px)}
+.c01-apres .t{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.c01-apres .t b{font-size:12.5px;font-weight:500;line-height:1.32;color:var(--ink)}
+.c01-apres .t small{font:400 10.5px/1.3 var(--mono);letter-spacing:.03em;color:var(--ink2)}
+.c01-apres .st{flex:0 0 auto;border:2px solid var(--red);color:var(--red);padding:3px 7px 2px;font-size:13px;font-weight:700;letter-spacing:.16em;border-radius:2px;transform:rotate(-8deg);mix-blend-mode:multiply;white-space:nowrap}
+.c01-apres .st.grey{border-color:var(--ink2);color:var(--ink2)}
+.c01-ap.fresh .c01-apres .t{animation:c01-inkin calc(420ms * var(--k,1)) ease-out calc(160ms * var(--k,1)) both}
+.c01-ap.fresh .c01-apres .st{animation:c01-vst calc(560ms * var(--k,1)) cubic-bezier(.2,1.1,.3,1) calc(320ms * var(--k,1)) both}
+/* a declined slip keeps its place but loses ink: dashed frame, grey name */
+.c01-ap.nope{border-style:dashed;border-color:var(--ink25)}
+.c01-ap.nope .c01-apn b,.c01-ap.nope q{color:var(--ink2)}
+.c01-ap.nope .c01-apn i{border-color:var(--ink25);color:var(--ink2)}
+.c01-ap.done .c01-apcut::before{border-top-color:rgba(27,26,24,.3)}
+/* the torn-off coupon: a copy of the pressed half that leaves along the perforation (sent up-and-out / dropped away) */
+.c01-cpghost{position:absolute;top:0;bottom:0;z-index:3;display:flex;flex-direction:column;justify-content:center;gap:4px;padding:8px 12px;font-size:14px;font-weight:500;letter-spacing:.04em;line-height:1.2;pointer-events:none;clip-path:polygon(0 4px,6% 0,12% 4px,18% 0,24% 4px,30% 0,36% 4px,42% 0,48% 4px,54% 0,60% 4px,66% 0,72% 4px,78% 0,84% 4px,90% 0,96% 4px,100% 0,100% 100%,0 100%);box-shadow:0 10px 18px -8px rgba(0,0,0,.6)}
+.c01-cpghost small{font:400 10.5px/1.25 var(--mono);letter-spacing:.03em;white-space:nowrap}
+.c01-cpghost.yes{right:0;width:66%;background:var(--ink);color:var(--paper);transform-origin:0 0;animation:c01-cpsend calc(560ms * var(--k,1)) cubic-bezier(.45,.05,.65,1) forwards}
+.c01-cpghost.yes small{color:rgba(243,239,230,.74)}
+.c01-cpghost.no{left:0;width:34%;background:var(--paper);color:var(--ink);border:1.5px solid var(--ink);border-top:0;transform-origin:100% 0;animation:c01-cpdrop calc(560ms * var(--k,1)) cubic-bezier(.5,0,.75,.4) forwards}
+.c01-cpghost.no small{color:var(--ink2)}
+@keyframes c01-cpsend{0%{transform:none;opacity:1}24%{transform:translate(3px,-5px) rotate(-2deg);opacity:1}100%{transform:translate(78px,-58px) rotate(9deg);opacity:0}}
+@keyframes c01-cpdrop{0%{transform:none;opacity:1}24%{transform:translate(-2px,4px) rotate(2.5deg);opacity:1}100%{transform:translate(-26px,84px) rotate(-14deg);opacity:0}}
+.rm .c01-cpghost{display:none}
+.c01-aperr{margin:0 10px 10px}
+/* no seat left (or the queue goes first): the invitation half is printed as an outline — still pressable, the engine's refusal prints in the slip */
+.c01-cp.yes.full{background:transparent;color:var(--ink2);border:1.5px dashed var(--ink25)}
+.c01-cp.yes.full small{color:var(--ink2)}
+.c01-cp.yes.full::after{border-color:var(--ink25)}
+/* seat ledger on the sticky tab head (applications only) */
+.c01-ledger{flex:1 0 100%;display:flex;align-items:center;gap:8px;margin-top:2px;padding-top:7px;border-top:1px dotted rgba(27,26,24,.35);font:400 11px/1 var(--mono);letter-spacing:.06em;color:var(--ink2)}
+.c01-ledger .k{color:var(--ink);font-family:"Noto Sans SC",sans-serif;font-weight:500;font-size:11.5px;letter-spacing:.08em}
+.c01-ledger .c01-seats{margin-top:0;flex-wrap:nowrap;gap:2px}
+.c01-ledger .c01-seg{width:17px;height:8px}
+.c01-ledger .v{margin-left:auto;white-space:nowrap;color:var(--ink)}
+/* receipt totals */
+.c01-tot{margin:14px 0 0;padding:6px 0;border-top:1.5px solid var(--ink);border-bottom:1.5px solid var(--ink);font:400 12px/1.9 var(--mono);letter-spacing:.04em;color:var(--ink2)}
+.c01-tot div{display:flex;align-items:baseline;gap:6px}
+.c01-tot span{font-family:"Noto Sans SC",sans-serif;font-size:12.5px;letter-spacing:.06em}
+.c01-tot i{flex:1 1 auto;border-bottom:1px dotted rgba(27,26,24,.45);transform:translateY(-4px)}
+.c01-tot b{font-weight:500;color:var(--ink)}
 .c01-plan{margin:0;padding:0;list-style:none}
 .c01-plan li{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px dotted rgba(27,26,24,.3)}
 .c01-plan li:last-child{border-bottom:0}
@@ -849,19 +916,37 @@ body{margin:0}
               <sc-if value="{{wo.charred.on}}" hint-placeholder-val="{{false}}"><div class="c01-charslot {{wo.charred.cls}}" style="--seq:2860ms"><div class="c01-char"><div class="c01-cwhen">{{wo.charred.when}}</div><div class="c01-ctitle"><sc-for list="{{wo.ctparts}}" as="tp" hint-placeholder-count="1"><span class="{{tp.cls}}">{{tp.t}}</span></sc-for></div><div class="c01-cst">已取消 · 票根作废 · 联系已关闭</div></div></div></sc-if>
             </div>
             <div class="c01-perf"></div>
-            <div class="c01-wochips" role="tablist"><sc-for list="{{wo.chips}}" as="c" hint-placeholder-count="4"><button type="button" role="tab" class="c01-tab {{c.cls}}" aria-selected="{{c.sel}}" onClick="{{c.go}}">{{c.label}}<sc-if value="{{c.hasCount}}" hint-placeholder-val="{{false}}"><span class="c01-cnt">{{c.count}}</span></sc-if></button></sc-for></div>
+            <div class="c01-wochips" role="tablist"><sc-for list="{{wo.chips}}" as="c" hint-placeholder-count="4"><button type="button" role="tab" class="c01-tab {{c.cls}}" aria-selected="{{c.sel}}" onClick="{{c.go}}">{{c.label}}<sc-if value="{{c.hasCount}}" hint-placeholder-val="{{false}}"><span class="c01-cnt">{{c.count}}</span></sc-if></button></sc-for>
+              <!-- seat ledger: printed on the sticky head while slips are reviewed, so every invitation visibly takes a seat -->
+              <sc-if value="{{wo.ledger.on}}" hint-placeholder-val="{{false}}"><div class="c01-ledger" role="status" aria-label="{{wo.ledger.aria}}"><span class="k">席位</span><span class="c01-seats"><sc-for list="{{wo.ledger.seats}}" as="sg" hint-placeholder-count="5"><i class="c01-seg {{sg.cls}}"></i></sc-for></span><span class="v">{{wo.ledger.text}}</span></div></sc-if>
+            </div>
             <sc-if value="{{wo.sec.on}}" hint-placeholder-val="{{true}}">
             <div class="c01-pr {{wo.sec.cls}}" style="--h:{{wo.sec.h}}px;--dur:{{wo.sec.dur}}ms" ref="{{secRef}}">
               <!-- applications -->
               <sc-if value="{{wo.apps.on}}" hint-placeholder-val="{{false}}">
                 <div class="c01-h3">申请<span class="c01-cnt">{{wo.apps.count}}</span><span class="c01-note">{{wo.apps.note}}</span></div>
                 <sc-if value="{{wo.apps.none}}" hint-placeholder-val="{{false}}"><div class="c01-need">没有待审的申请。</div></sc-if>
+                <!-- each application = a two-part request slip printed on the work order: the body (who · verification · note · when) and,
+                     along its perforation, the decision coupon. Tearing a coupon off sends it (发出邀请 → up and out / 谢绝 → drops away) and
+                     uncovers the carbon copy underneath, which IS the in-place result; the slip never changes height or position. -->
                 <sc-for list="{{wo.apps.rows}}" as="a" hint-placeholder-count="2">
-                  <div class="c01-app"><div class="r"><div class="c01-av">{{a.initial}}</div><div class="n"><b>{{a.nick}}</b><small>{{a.ago}}</small></div><span class="vb {{a.vbCls}}">{{a.vb}}</span></div><sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><q>{{a.note}}</q></sc-if>
-                    <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="res c01-inkin">{{a.resultText}}</div></sc-if>
-                    <sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="a"><button type="button" class="c01-btn line sm" data-act="reject" onClick="{{a.reject}}">谢绝<sc-if value="{{a.busyReject}}" hint-placeholder-val="{{false}}"><span class="c01-dots"><i></i><i></i><i></i></span></sc-if></button><button type="button" class="c01-btn sm" data-act="approve" onClick="{{a.approve}}">发出邀请<sc-if value="{{a.busyApprove}}" hint-placeholder-val="{{false}}"><span class="c01-dots"><i></i><i></i><i></i></span></sc-if></button></div></sc-if>
+                  <div class="c01-ap {{a.cls}}" data-rid="{{a.rid}}">
+                    <div class="c01-aph"><span><b>申请单</b> · №{{a.no}}</span><span>{{a.ago}}</span></div>
+                    <div class="c01-apb">
+                      <div class="c01-apn"><i aria-hidden="true">{{a.initial}}</i><b>{{a.nick}}</b><span class="vb {{a.vbCls}}">{{a.vb}}</span></div>
+                      <sc-if value="{{a.hasNote}}" hint-placeholder-val="{{false}}"><q>{{a.note}}</q></sc-if>
+                    </div>
+                    <div class="c01-apcut" aria-hidden="true"><i class="l"></i><i class="r"></i></div>
+                    <div class="c01-apfoot">
+                      <sc-if value="{{a.handled}}" hint-placeholder-val="{{false}}"><div class="c01-apres"><div class="t"><b>→ {{a.resultText}}</b><small>{{a.resultSub}}</small></div><span class="st {{a.stampCls}}">{{a.stamp}}</span></div></sc-if>
+                      <sc-if value="{{a.pending}}" hint-placeholder-val="{{true}}"><div class="c01-cps"><button type="button" class="c01-cp no" data-act="reject" onClick="{{a.reject}}" aria-label="谢绝 {{a.nick}} 的申请"><span>谢绝<sc-if value="{{a.busyReject}}" hint-placeholder-val="{{false}}"><span class="c01-dots"><i></i><i></i><i></i></span></sc-if></span><small>席位不变</small></button><button type="button" class="c01-cp yes {{a.yesCls}}" data-act="approve" onClick="{{a.approve}}" aria-label="向 {{a.nick}} 发出邀请"><span>发出邀请<sc-if value="{{a.busyApprove}}" hint-placeholder-val="{{false}}"><span class="c01-dots"><i></i><i></i><i></i></span></sc-if></span><small>{{a.yesSub}}</small></button></div></sc-if>
+                      <sc-if value="{{a.ghost}}" hint-placeholder-val="{{false}}"><span class="c01-cpghost {{a.ghostCls}}" aria-hidden="true"><span>{{a.ghostText}}</span><small>{{a.ghostSub}}</small></span></sc-if>
+                    </div>
+                    <sc-if value="{{a.errOn}}" hint-placeholder-val="{{false}}"><div class="c01-serr c01-aperr" role="alert"><div class="t"><b>没有保存成功</b>{{a.errMsg}}</div><button type="button" class="c01-btn sm" data-act="retry" onClick="{{a.retry}}">重试</button></div></sc-if>
                   </div>
                 </sc-for>
+                <!-- receipt totals: what is still waiting, what this session sent -->
+                <sc-if value="{{wo.apps.hasTot}}" hint-placeholder-val="{{false}}"><div class="c01-tot"><div><span>待审</span><i></i><b>{{wo.apps.tPend}} 份</b></div><div><span>本次 · 发出邀请</span><i></i><b>{{wo.apps.tInv}} 份</b></div><div><span>本次 · 谢绝</span><i></i><b>{{wo.apps.tRej}} 份</b></div></div></sc-if>
                 <p class="c01-help">{{wo.apps.help}}</p>
               </sc-if>
               <!-- members -->
@@ -1190,7 +1275,9 @@ class Component extends DCLogic {
       if (feed) { if (moved) feed.scrollTop = 0; else if (self._feedTop != null) feed.scrollTop = self._feedTop; }
       if (feed && el) { var fr = feed.getBoundingClientRect(), er = el.getBoundingClientRect(); var top = er.top - fr.top, bot = er.bottom - fr.top; if (top < 96 || bot > feed.clientHeight - 6) feed.scrollTop = Math.max(0, feed.scrollTop + top - 130); }
       var r = el && root ? JU.fx.rectIn(el, root) : null;
-      self.patchView({ phase: 'out', from: r || v.from, gone: !r, slip: null });
+      /* the entry copy sits at the top of the second sheet; if the sheet was scrolled, its flight starts from where it scrolled to (outScroll) */
+      var ov = self.overRef.current; var os = ov ? ov.scrollTop : 0;
+      self.patchView({ phase: 'out', from: r || v.from, gone: !r, slip: null, outScroll: os });
       self.setState({ err: null });
       self.after(r ? 500 : 260, function () { if (self._closeTok !== tok || self.state.view.id !== id || self.state.view.phase !== 'out') return; self.patchView({ phase: 'land' }); self.setState({ landed: id }); });
       self.after(r ? 660 : 420, function () { if (self._closeTok !== tok || self.state.view.id !== id || self.state.view.phase !== 'land') return; self._closeTok = null; self.setState({ view: { name: 'list' } }); });
@@ -1242,10 +1329,12 @@ class Component extends DCLogic {
   deleteDraft(id, h) {
     var self = this; if (this._leaving || this.state.leaving || this.state.busy || this._actTok) return; this._leaving = id;
     this.setState({ leaving: id, rowH: Math.round(h) });
+    /* the undo bar takes the deleted row's place in the printed (sorted) list — not the engine's storage index */
+    var shown = JU.derive.hosted(this.state.data).drafts.map(function (d) { return d.id; }).indexOf(id);
     this.after(370, function () {
       var ok = self.act('deleteDraft', { draftId: id }, function (eff) {
         self._leaving = null;
-        self.setState({ leaving: null, undo: { draftId: id, title: eff.title, index: eff.index || 0 } });
+        self.setState({ leaving: null, undo: { draftId: id, title: eff.title, index: shown >= 0 ? shown : (eff.index || 0) } });
         if (self.state.view.name === 'draft') self.setState({ view: { name: 'list' } });
         self.hold(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
       }, { ms: 60, failMsg: '没有删除成功，草稿还在。请重试。', fail: function () { self._leaving = null; self.setState({ leaving: null, entering: id }); self.after(460, function () { self.setState({ entering: null }); }); } });
@@ -1362,7 +1451,7 @@ class Component extends DCLogic {
       this.act(fresh ? 'acceptReschedule' : 'tearTicket', { eventId: this.state.view.id }, function (eff) { self.motion('tear', function () { self.tearFall(key, eff); }); }, { ms: 120, noRetry: true, failMsg: fresh ? '新时间未保存，请重新撕下副券' : '未能保存，请重新撕下副券', fail: function () { self.setTicket(key, { p: 0, snap: true }); } });
     } else this.setTicket(key, { drag: null, p: 0, snap: true });
   }
-  tearFall(key) { var self = this; this._seq = 'tear'; this.setState({ rsm: false }); this.setTicket(key, { falling: true }); this.guardAnim(function () { return self.tkEl(key, '.c01-side.stub'); }, function () { self.tearLanded(key); }, C01_FALL + 400); }
+  tearFall(key) { var self = this; this._seq = 'tear'; this.setState({ rsm: false }); this.setTicket(key, { falling: true }); this.patchView({ tore: key }); this.guardAnim(function () { return self.tkEl(key, '.c01-side.stub'); }, function () { self.tearLanded(key); }, C01_FALL + 400); }
   tearLanded(key) {
     var self = this; var v = this.state.view; var t = v.tickets && v.tickets[key]; if (!t || !t.falling) return; var id = v.id; this._seq = null;
     this.setTicket(key, { torn: true, falling: false });
@@ -1449,13 +1538,15 @@ class Component extends DCLogic {
     var row = this.joinedRow(r, true); row.cls = ''; var bk = s.busy ? s.busy.key : '';
     /* hand-offs: the list countdown → the single deadline line; the list attendance stamp + its sub-text → the stamp on the archived ticket */
     if (r.deadline || r.stage === 'ended') row.extraCls += ' c01-hand'; row.obj = Object.assign({}, row.obj, { hand: r.stage === 'ended' ? 'c01-hand' : '' });
-    var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST);
+    var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST + ((v.phase === 'out' || v.phase === 'land') ? (v.outScroll || 0) : 0));
     var e = r.event; var done = !!v.result; var tp = c01Lines(e.title, C01_CAP.char, 2);
     /* the page head keeps the title it was printed with; the outcome prints below it as a result (no second copy of the same title) */
     var closedNow = v.mode !== 'history' && (r.group === 'closed' || r.group === 'kept');
+    /* while a torn stub is still falling, the head keeps the lines it was printed with (no re-ink under a moving object) */
+    var holdHead = Object.keys(v.tickets || {}).some(function (k) { return v.tickets[k].falling; });
     var d = { on: true, phase: v.phase, paperStyle: this.paperStyle(v), dy: Math.round(dy), rowCls: v.gone && (v.phase === 'out' || v.phase === 'land') ? 'gone' : '', row: row, close: function () { self.closeOver(); }, backLabel: '我参加的 · ' + (s.section === 'history' ? '历史' : '当前'), backCls: (s.busy ? 'dis ' : '') + (v.col ? 'col' : ''), colTitle: e.title, onScroll: this.overScroll(),
       body: { on: v.bodyPhase !== 'none', cls: v.bodyPhase, h: v.bodyH || 0, dur: v.bodyDur || 900 }, tail: { on: v.tailPhase !== 'none', cls: v.tailPhase || 'ready', h: v.tailH || 0, dur: 700 },
-      title: closedNow ? (v.headTitle || r.detailTitle) : r.detailTitle, sub: r.place.full,
+      title: closedNow || holdHead ? (v.headTitle || r.detailTitle) : r.detailTitle, sub: r.place.full,
       deadline: { on: false }, hasNeed: false, need: '', seatBar: { on: false }, tickets: [], arch: { on: false }, contact: { on: false }, hasSeats: false, seats: [], hasQueue: false, queue: [], hasKv: false, kv: [], hist: { on: false }, result: { on: false }, act: { on: false }, charred: { on: false }, vslip: { on: false }, rules: { on: false }, hasAfter: false, after: '' };
     var rules = { on: true, go: function () { self.openSlip('rules', { readOnly: true }); } };
     var charText = r.stage === 'declined' ? '新版票作废 · 席位已释放 · 不记主动失约' : r.stage === 'exited' ? '票根作废 · 联系已关闭 · 记为主动退出' : r.stage === 'cancelled' ? '局主取消 · 票根作废 · 联系已关闭' : '票根作废';
@@ -1501,8 +1592,11 @@ class Component extends DCLogic {
       Object.keys(v.tickets).sort(function (a, b) { return a === 'old' ? -1 : b === 'old' ? 1 : 0; }).forEach(function (k) { d.tickets.push(self.ticketModel(k, v.tickets[k], r)); });
       var mt = v.tickets.main || v.tickets.fresh; var ready = mt && mt.phase === 'ready' && !mt.burning && !mt.burnt;
       /* the head line is printed once and never re-inked while the ticket feeds below it */
-      if (r.stage === 'reschedule') { d.hasNeed = true; d.need = '局主改了时间。接受就撕下新版副券；去不了可以「去不了了」，不记主动失约。'; }
-      else if (r.stage === 'tear') { d.hasNeed = true; d.need = '撕开副券后可以联系局主 · 撕票后 8 小时内联系'; }
+      /* the line under the head stays in place for the whole visit: after a tear it is re-inked with the outcome instead of being removed (no jump under the landing stub) */
+      if (r.stage === 'reschedule' || (v.tore === 'fresh' && holdHead)) { d.hasNeed = true; d.need = '局主改了时间。接受就撕下新版副券；去不了可以「去不了了」，不记主动失约。'; }
+      else if (v.tore === 'fresh') { d.hasNeed = true; d.need = '已接受新时间 · 按新票根（第 ' + e.version + ' 版）的时间见。旧票已作废，不再使用。'; }
+      else if (r.stage === 'tear' || (v.tore === 'main' && holdHead)) { d.hasNeed = true; d.need = '撕开副券后可以联系局主 · 撕票后 8 小时内联系'; }
+      else if (v.tore === 'main') { d.hasNeed = true; d.need = '副券已撕下 · 撕票后 8 小时内联系局主'; }
       if (v.contact && !done && (r.stage === 'contact' || r.stage === 'going' || (r.stage === 'reschedule' && r.contactAdded))) {
         d.contact = { on: true, host: e.host.name, wx: e.host.wx, copy: function () { self.copyWx(e.host.wx); }, copyLabel: v.copied === e.host.wx ? '已复制' : '复制', note: r.contactAdded ? JU.COPY.contactedNote + ' 此处为示例微信。' : JU.COPY.contactNote, canMark: !r.contactAdded && r.stage === 'contact', busy: bk === 'markContacted', mark: function () { self.act('markContacted', { eventId: r.id }, function () { self.say('已记录加微信 · 按最终时间赴约'); }, { key: 'markContacted', failMsg: '本机保存失败，请重试' }); } };
       }
@@ -1567,12 +1661,12 @@ class Component extends DCLogic {
     var v = { tab: tab, slip: slip, slipPhase: slip ? 'in' : '', openM: openM, leavesOpen: leavesOpen, editing: {}, fresh: {}, copied: false, rsDate: m.when.iso ? m.when.iso.slice(0, 10) : '', rsTime: m.when.time, burn: null, secPhase: 'ready', secH: 0, jumpKey: extra.jumpKey || null, intent: tab };
     this.openOver('manage', id, ev, v, instant);
   }
-  setTab(tab) { if (this.state.view.tab === tab) return; this.setState({ err: null }); this.patchView({ tab: tab, secPhase: 'measure', secH: 0 }); this.measureBody(this.secRef, 'sec'); }
+  setTab(tab) { if (this.state.view.tab === tab) return; this.setState({ err: null }); this.patchView({ tab: tab, secPhase: 'measure', secH: 0, fresh: {} }); this.measureBody(this.secRef, 'sec'); }
   hostSlip(kind) { var m = this.mg(this.state.view.id); this.openSlip(kind, { rsDate: m.when.iso.slice(0, 10), rsTime: m.when.time }); }
   manageVals() {
     var s = this.state; var v = s.view; if (v.name !== 'manage') return { on: false };
     var self = this; var m = this.mg(v.id); if (!m) return { on: false }; var e = m.event; var row = this.hostRow(m, true); row.cls = ''; var bk = s.busy ? s.busy.key : '';
-    var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST);
+    var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST + ((v.phase === 'out' || v.phase === 'land') ? (v.outScroll || 0) : 0));
     var ended = e.status === 'ended', cancelled = e.status === 'cancelled', open = e.status === 'open';
     var chips = []; var mk = function (key, label, count, todo) { chips.push({ key: key, label: label, hasCount: count != null && count !== '', count: count, cls: (v.tab === key ? 'on ' : '') + (todo ? 'todo' : ''), sel: v.tab === key ? 'true' : 'false', go: function () { self.setTab(key); } }); };
     if (m.apps.length && !cancelled) mk('applications', '申请', m.pendingApps.length || (m.handledCount ? '✓' : ''), m.pendingApps.length > 0);
@@ -1592,13 +1686,26 @@ class Component extends DCLogic {
       progL: ended ? m.recorded + '/' + m.attendees.length + ' 已记录出席' : '已确认 ' + m.counts.confirmed + '/' + e.capacity + '（含你）', progR: ended ? '出席 ' + m.present + ' · 未出席 ' + m.absent : (JU.fmt.seatLine(m.counts) || '满员'),
       hasSeats: !cancelled, seats: ended ? m.attendees.map(function (x) { return { cls: x.attendance === 'present' ? 'ok' : x.attendance === 'absent' ? 'abs' : x.attendance === 'pending' ? 'und' : 'open', title: x.nick + ' ' + x.attLabel }; }) : m.seats.map(function (x) { return { cls: x.kind + (v.fresh.seat === x.name ? ' new' : ''), title: x.name || '空位' }; }),
       formedLine: m.formedLine, chips: chips, sec: { on: v.secPhase !== 'none', cls: v.secPhase, h: v.secH || 0, dur: 700 },
-      apps: { on: false }, mem: { on: false }, leaves: { on: false }, wl: { on: false }, rep: { on: false }, att: { on: false }, plan: { on: false } };
+      apps: { on: false }, ledger: { on: false, seats: [] }, mem: { on: false }, leaves: { on: false }, wl: { on: false }, rep: { on: false }, att: { on: false }, plan: { on: false } };
     var it = m.item; var tab = v.tab;
     if (tab === 'applications') {
       var rowsA = m.apps.filter(function (a) { return !a.handled || (it.handled || []).indexOf(a.id) >= 0; });
-      wo.apps = { on: true, count: m.pendingApps.length, note: m.handledCount ? '已处理 ' + m.handledCount : '通过即发出 6 小时预留', none: !rowsA.length, help: JU.COPY.approveHelp, rows: rowsA.map(function (a) { return { initial: c01Initial(a.nick), nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? '' : 'no', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled, resultText: a.resultText, busyApprove: bk === 'app-' + a.id + '-approve', busyReject: bk === 'app-' + a.id + '-reject',
-        approve: function () { self.act('approve', { eventId: e.id, appId: a.id }, function (eff) { self.patchView({ fresh: { seat: eff.nick } }); self.say('已发出邀请 · ' + eff.nick + ' 有 6 小时确认'); }, { key: 'app-' + a.id + '-approve', failMsg: '这一步没有生效，请重试。邀请还没有发出。' }); },
-        reject: function () { self.act('reject', { eventId: e.id, appId: a.id }, function () { self.say('已谢绝 · 对方会看到「这次没留住」'); }, { key: 'app-' + a.id + '-reject', ms: 320, failMsg: '这一步没有生效，请重试。' }); } }; }) };
+      var mine = it.handled || []; var tInv = 0, tRej = 0; m.apps.forEach(function (a) { if (mine.indexOf(a.id) < 0) return; if (a.status === 'approved') tInv++; if (a.status === 'rejected') tRej++; });
+      var fa = v.fresh && v.fresh.app; var avail = m.counts.available; var queued = m.queue.length > 0;
+      /* results print in place (C2): a write failure prints inside the slip that made it, never in a strip at the screen edge */
+      var yesSub = queued ? '候补优先 · 按顺位邀请' : avail > 0 ? '占 1 个空位 · 预留 6 小时' : '已无空位';
+      wo.apps = { on: true, count: m.pendingApps.length, note: m.handledCount ? '已处理 ' + m.handledCount : '通过即发出 6 小时预留', none: !rowsA.length, help: JU.COPY.approveHelp, hasTot: rowsA.length > 0, tPend: m.pendingApps.length, tInv: tInv, tRej: tRej,
+        rows: rowsA.map(function (a) {
+          var ok = a.status === 'approved', no = a.status === 'rejected'; var fresh = !!fa && fa.id === a.id; var ae = s.err && s.err.where === 'app:' + a.id ? s.err : null;
+          var no2 = String(m.apps.indexOf(a) + 1); if (no2.length < 2) no2 = '0' + no2;
+          return { rid: 'app-' + a.id, no: no2, cls: (a.handled ? 'done ' : '') + (no ? 'nope ' : '') + (fresh ? 'fresh' : ''), initial: c01Initial(a.nick || '?'), nick: a.nick || '未填称呼', ago: a.agoText, vb: a.verifiedLabel, vbCls: a.verified ? '' : 'no', hasNote: !!a.note, note: a.note, handled: a.handled, pending: !a.handled, resultText: a.resultText,
+            resultSub: ok ? '预留 6 小时 · 成员区可看倒计时' : no ? '席位不变 · 不影响对方信用' : '', stamp: ok ? '已邀请' : no ? '谢绝' : '', stampCls: ok ? '' : 'grey', yesSub: yesSub, yesCls: queued || avail <= 0 ? 'full' : '',
+            ghost: fresh && !!fa.kind, ghostCls: fa && fa.kind === 'approve' ? 'yes' : 'no', ghostText: fa && fa.kind === 'approve' ? '发出邀请' : '谢绝', ghostSub: fa && fa.kind === 'approve' ? '邀请 → ' + (a.nick || '对方') : '席位不变',
+            errOn: !!ae, errMsg: ae ? ae.message : '', retry: ae ? ae.retry : null,
+            busyApprove: bk === 'app-' + a.id + '-approve', busyReject: bk === 'app-' + a.id + '-reject',
+            approve: function () { self.act('approve', { eventId: e.id, appId: a.id }, function (eff) { self.decided(a.id, 'approve', { seat: eff.nick }); }, { key: 'app-' + a.id + '-approve', where: 'app:' + a.id, failMsg: '这一步没有生效，请重试。邀请还没有发出。', fail: function () { self.revealApp(a.id); } }); },
+            reject: function () { self.act('reject', { eventId: e.id, appId: a.id }, function () { self.decided(a.id, 'reject', {}); }, { key: 'app-' + a.id + '-reject', ms: 320, where: 'app:' + a.id, failMsg: '这一步没有生效，请重试。', fail: function () { self.revealApp(a.id); } }); } }; }) };
+      wo.ledger = { on: !cancelled, seats: m.seats.map(function (x) { return { cls: x.kind + (v.fresh.seat && v.fresh.seat === x.name ? ' new' : '') }; }), text: '确认 ' + m.counts.confirmed + '/' + e.capacity + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : '') + ' · 空 ' + avail, aria: '席位：已确认 ' + m.counts.confirmed + '，预留 ' + m.counts.reserved + '，空 ' + avail };
     }
     if (tab === 'members') {
       /* after a cancel the table only states facts from before it: no reserved counts, no countdowns */
@@ -1632,6 +1739,17 @@ class Component extends DCLogic {
       wo.plan = { on: true, note: cancelled ? '不能撤销' : ended ? '已散场' : '局主操作', items: items };
     }
     return wo;
+  }
+  /* 申请审核 result: the pressed coupon tears off (its copy leaves for ~560ms) and the carbon copy under it — already the result — stays in place */
+  decided(appId, kind, extra) {
+    var self = this; var id = this.state.view.id;
+    this.patchView({ fresh: Object.assign({}, extra, { app: { id: appId, kind: kind } }) });
+    this.after(760, function () { var v = self.state.view; if (v.id !== id || !v.fresh || !v.fresh.app || v.fresh.app.id !== appId) return; self.patchView({ fresh: Object.assign({}, v.fresh, { app: { id: appId, kind: '' } }) }); });
+  }
+  /* a refusal / failure prints inside the slip, under its coupon: bring that line above the tray if it landed below the fold */
+  revealApp(appId) {
+    var self = this;
+    this.after(40, function () { var ov = self.overRef.current; var rt = self.root(); var el = rt ? rt.querySelector('.c01-over [data-rid="app-' + appId + '"]') : null; if (!ov || !el) return; var d = el.getBoundingClientRect().bottom - ov.getBoundingClientRect().bottom + 12; if (d > 0) { var rm = self.state.review && self.state.review.rm; try { ov.scrollTo({ top: ov.scrollTop + d, behavior: rm ? 'auto' : 'smooth' }); } catch (x) { ov.scrollTop += d; } } });
   }
   /* host actions — each confirmation slip stays open with its button's dots until the write returns; a failure prints inside the slip */
   rsNewIso() { var v = this.state.view; return v.rsDate && v.rsTime ? v.rsDate + 'T' + v.rsTime : ''; }
@@ -1678,7 +1796,7 @@ class Component extends DCLogic {
   draftVals() {
     var s = this.state; var v = s.view; if (v.name !== 'draft') return { on: false }; var self = this;
     var d = JU.derive.hosted(s.data).drafts.filter(function (x) { return x.id === v.id; })[0]; if (!d) return { on: false };
-    var row = this.draftRow(d); var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST); var miss = d.draft.missing;
+    var row = this.draftRow(d); var dy = v.phase === 'in' ? 0 : (v.from.y - C01_OVER_TOP - C01_REST + ((v.phase === 'out' || v.phase === 'land') ? (v.outScroll || 0) : 0)); var miss = d.draft.missing;
     var kv = [{ k: '局名', v: d.untitled ? '还没写' : d.title, cls: miss.indexOf('局名') >= 0 ? 'miss' : '' }, { k: '日期', v: d.when ? d.when.wdZh + ' ' + d.when.md : '还没选', cls: miss.indexOf('日期') >= 0 ? 'miss' : 'mono' }, { k: '时间', v: d.when ? d.when.time : '还没选', cls: miss.indexOf('时间') >= 0 ? 'miss' : 'mono' }, { k: '地点', v: d.place ? d.place.full : '还没写', cls: miss.indexOf('地点') >= 0 ? 'miss' : '' }, { k: '人数', v: d.capacity + ' 人局（含你）· 再邀 ' + d.seats + ' 人', cls: '' }, { k: '方式', v: d.draft.joinMode === 'direct' ? '直接留位' : '申请制', cls: '' }];
     return { on: true, phase: v.phase, dy: Math.round(dy), rowCls: v.gone && (v.phase === 'out' || v.phase === 'land') ? 'gone' : '', row: row, close: function () { self.closeOver(); }, backCls: (s.busy ? 'dis ' : '') + (v.col ? 'col' : ''), colTitle: d.title, onScroll: this.overScroll(), body: { on: v.bodyPhase !== 'none', cls: v.bodyPhase, h: v.bodyH || 0, dur: v.bodyDur || 900 }, kv: kv, readyCls: d.ready ? 'c01-ready' : 'c01-miss', readyText: d.missingText, ago: d.agoText, hasSource: !!d.source, source: d.source ? d.source.title : '', del: function () { self.closeOver(); self.after(720, function () { self.deleteDraft(d.id, 170); }); } };
   }
@@ -1688,7 +1806,7 @@ class Component extends DCLogic {
     var j = JU.derive.joined(s.data), hx = JU.derive.hosted(s.data);
     var lv = this.listVals(); var over = s.view.name !== 'list';
     var slip = { on: false }; if (s.view.slip && s.view.name === 'detail') slip = this.participantSlipVals(); if (s.view.slip && s.view.name === 'manage') slip = this.hostSlipVals();
-    var se = s.err && s.err.where !== 'slip' ? s.err : null;
+    var se = s.err && s.err.where !== 'slip' && String(s.err.where).indexOf('app:') !== 0 ? s.err : null;
     var vals = {
       rootRef: this.rootRef, feedRef: this.feedRef, overRef: this.overRef, bodyRef: this.bodyRef, tailRef: this.tailRef, secRef: this.secRef, stripRef: this.stripRef,
       appCls: (s.busy ? ' c01-busy' : '') + (over ? ' c01-over-on' : '') + (s.rsm ? ' c01-rsm' : ''), busyOn: !!s.busy, rsmF: s.rsm ? s.rsmF : 0,
