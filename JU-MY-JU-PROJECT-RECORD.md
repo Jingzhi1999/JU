@@ -9,8 +9,8 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-12 02:05 UTC（容器时钟为 UTC；用户时区未知） |
-| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `1885929`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
+| 最后更新 | 2026-10-12 02:06 UTC（容器时钟为 UTC；用户时区未知） |
+| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `30370fa`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
 | 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 版本 5（2026-10-11 19:5x UTC，标签「After review round 2」）：入口画板 + 十套画板，内容为提交 `8246121` 的源文件（即第 2 轮评审所测版本）；主负责人修复轮完成后会再发 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：C00.dc.html、C01.dc.html、C02.dc.html、C03.dc.html、C04.dc.html、C05.dc.html、C06.dc.html、C07.dc.html、C08.dc.html、C09.dc.html、C10.dc.html） |
@@ -337,8 +337,9 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 ```
 
 ### 5.2 分支、提交与未提交
-- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `1885929`。最近提交：
+- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `30370fa`。最近提交：
 ```
+30370fa 2026-10-12 02:05:35 +0000 Core hold() for real-time windows under reduced motion; reduced-motion undo sweep; record fix-round verdicts
 1885929 2026-10-12 02:01:54 +0000 Lead fix round: all ten concepts fixed and verified by fresh reviewers (fix-r1 / verify-r1 reports and evidence)
 4a6becc 2026-10-11 20:08:00 +0000 Stop tracking private .build/ outputs (regenerable)
 b503e12 2026-10-11 20:07:39 +0000 Standalone rebuilt from post-round-2 sources; canvas v5; record review verdicts and evidence policy
@@ -358,7 +359,6 @@ a686591 2026-10-11 00:31:29 +0000 Add project record (generated), contract pilot
 e401a3c 2026-10-11 00:25:36 +0000 Pilot concepts C01 票据卷 and C04 夜玻璃, research ledger, core fixes from pilot feedback
 32659f4 2026-10-10 16:37:00 +0000 Add synthesized state inventory and dataset spec with lead reconciliation notes
 6953c77 2026-10-10 16:34:16 +0000 Add state-coverage tool and extraction notes
-63bbac2 2026-10-10 16:30:03 +0000 Shared agreement copy, preview host hooks, matrix appendix wiring
 ```
 - 生成本文时的工作区状态（`git status --short`）：
 ```
@@ -373,11 +373,7 @@ M JU-My-Ju-Fable51-10-Concepts.html
  M concepts/project/C08.dc.html
  M concepts/project/C09.dc.html
  M concepts/project/C10.dc.html
- M spec/concept-contract.md
- M src/core/ju-review.js
  M tools/record/body.md
-?? tools/test/rm-undo-sweep-ctl.cjs
-?? tools/test/rm-undo-sweep.cjs
 ```
 - 备份：除 origin 远端外无其他备份；容器临时目录（`/tmp/claude-0/.../scratchpad`）中的研究原图、私有构建、工作流日志不可迁移。
 - 证据入库策略（2026-10-11 19:4x UTC 起）：评审 / 修复 / 验证目录中的原始逐帧 `fNN.png` 不入库（`.gitignore`），只入库拼图 `sheet.png`、各状态截图、`log.json` 与报告；新入库的 PNG 经 `tools/shrink-sheets.py` 压成 256 色调色板（宽 ≤1400px），文件名不变。原始逐帧仍在容器 `evidence/` 下，容器回收后丢失。私有构建 `.build/` 不入库（可用 `JU_STANDALONE=… node src/build.js` 重建）。
@@ -462,7 +458,7 @@ M JU-My-Ju-Fable51-10-Concepts.html
 | C09 影印贴纸 | 7 / 2 | 通过 | 0 / 0 / 4 | — |
 | C10 胶片 | 11 / 2 | 通过 | 0 / 0 / 3 | — |
 
-主负责人复审（`spec/lead-review.md`）中的「管理页结构雷同」一行，各套在本轮重做了申请审核的构图（例：C01 双联齿孔申请单撕券 + 盖章、C02 ARRIVALS 翻牌板 + 拨杆、C03 来稿夹 + 批注栏、C07 申请格阵、C08 申请挂在时间尺上、C09 贴纸纸、C10 接触印样圈选——据各套 `fix-r1.md` 与验证报告，主负责人尚未逐张看图核实）。
+主负责人复审（`spec/lead-review.md`）中的「管理页结构雷同」一行，各套在本轮重做了申请审核的构图（例：C01 双联齿孔申请单撕券 + 盖章、C02 ARRIVALS 翻牌板 + 拨杆、C03 来稿夹 + 批注栏、C07 申请格阵、C08 申请挂在时间尺上、C09 贴纸纸、C10 接触印样圈选）。**主负责人 2026-10-12 02:1x UTC 逐张看过十套修复后的 `manage.png` 与 `joined-home.png`（并排拼图）核实**：十套申请审核的构图与「邀请 / 谢绝」动作形态各不相同（C04 玻璃滑块、C05 剪刀 / 线、C06 夹板 + 橡皮章也已重做）；首屏上 C02 局名两行不再截断、C04 列表让出底栏、C09 标题不再碎裂、C10 显示帧计数与下一帧露边。C07 次级格仍偏卡片化（minor 级，未再提）。
 
 ## 7. 下一步（优先级最高的五项）
 
