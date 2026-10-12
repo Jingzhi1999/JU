@@ -1192,7 +1192,7 @@ class Component extends DCLogic {
   setD(patch) { this.setState(s => ({ detail: s.detail && Object.assign({}, s.detail, typeof patch === 'function' ? patch(s.detail) : patch) })); }
   /* keep a revealed element above the toast strip at the bottom of the pane */
   scrollPaneTo(sel) { this.after(60, () => { const root = this.rootRef.current; const pb = root && root.querySelector('.c08-pane .c08-pbody'); const el = pb && pb.querySelector(sel); if (!el) return; const k = this.kScale(); const a = el.getBoundingClientRect(), b = pb.getBoundingClientRect(); const over = (a.bottom - (b.bottom - 72 * k)) / k; if (over > 0 && pb.scrollTo) pb.scrollTo({ top: pb.scrollTop + over, behavior: 'smooth' }); }); }
-  toast(text) { this.setState({ toast: text }); /* real-time reading window (contract §11): hold(), never collapsed by reduced motion */ this.hold(2600, () => { if (this.state.toast === text) this.setState({ toast: '' }); }); }
+  toast(text) { this.setState({ toast: text }); /* real-time reading window (contract §11): hold(), never collapsed by reduced motion */ this.holdKey('toast', 2600, () => { if (this.state.toast === text) this.setState({ toast: '' }); }); }
   /* every state change goes through JU.engine; run() wraps it with processing / failure / retry */
   run(name, payload, done, opts) {
     opts = opts || {};
@@ -1385,7 +1385,7 @@ class Component extends DCLogic {
       });
     }, { where: 'detail', ms: 320, busy: 'acceptReschedule', msg: fromDrag ? '新时间未保存，请重新撕下副券' : '新时间未保存，请重试', onError: () => this.setState({ tear: { p: 0, drag: null, spring: true } }) });
   }
-  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.hold(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.holdKey('copy', 1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   markContacted() { const id = this.state.detail.id; this.run('markContacted', { eventId: id }, () => { this.setD({ settle: true }); this.after(900, () => this.setD({ settle: false })); }, { where: 'detail' }); }
   addNote() { const id = this.state.detail.id; const text = (this.state.note || '').trim(); if (text.length < 4) return; this.run('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, () => { this.setState({ note: '', fx: { newRecord: true } }); this.after(600, () => this.setState({ fx: {} })); }, { where: 'detail', ms: 300, busy: 'note' }); }
   submitReport() { const id = this.state.detail.id; const text = (this.state.report || '').trim(); if (text.length < 4) return; const who = Object.keys(this.state.who).filter(k => this.state.who[k]); this.run('addRecord', { eventId: id, kind: 'report', text: '你记录：' + text + (who.length ? '（' + who.join('、') + '）' : '') }, () => { this.setState({ accepted: { text, who: who.slice(), at: JU.NOW } , report: '', who: {} }); }, { where: 'sheet', ms: 420, busy: 'report', keepSheet: true }); }

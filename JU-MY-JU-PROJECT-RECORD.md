@@ -9,10 +9,10 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-12 02:06 UTC（容器时钟为 UTC；用户时区未知） |
-| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `30370fa`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
+| 最后更新 | 2026-10-12 04:43 UTC（容器时钟为 UTC；用户时区未知） |
+| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `6013a1e`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
-| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 版本 5（2026-10-11 19:5x UTC，标签「After review round 2」）：入口画板 + 十套画板，内容为提交 `8246121` 的源文件（即第 2 轮评审所测版本）；主负责人修复轮完成后会再发 |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — **版本 7（2026-10-12 03:xx UTC）**：入口画板 + 十套画板，内容 = 提交 `6013a1e` 之后的源文件（修复轮 + 定向收尾 + 主负责人定时器修复，含 C08 复制修复）。版本 6 标签「After fix round and final verification」，版本 7 标签「C08 repeat-copy fix」 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：C00.dc.html、C01.dc.html、C02.dc.html、C03.dc.html、C04.dc.html、C05.dc.html、C06.dc.html、C07.dc.html、C08.dc.html、C09.dc.html、C10.dc.html） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-My-Ju-Fable51-10-Concepts.html`（总览 / 方案 / 对比 / 附录四个视图，`#concept/C01` 直达）；字体来自 Google Fonts（离线时退回系统字体）。无需安装；Node 22 + Playwright（已预装于容器）仅用于构建与截图验证 |
 | 构建 | `node src/build.js`（写 `concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=<path> node src/build.js`（并行开发用，不写共享文件） |
@@ -31,25 +31,23 @@
 | 状态 | 事项 |
 |---|---|
 | 已完成（有材料） | 附件语义抽取（`spec/extracts/*.md`）；共同状态清单 `spec/state-inventory.md` + 数据规格 `spec/ju-data.spec.md`；共享运行时 / 数据引擎 / 动效工具 / 评审面板 / 构建与截图工具；十套方向卡与差异矩阵 `spec/directions.md`；实现契约 `spec/concept-contract.md`（含试点经验 §10）；研究台账 `research/ledger.md` + `ledger.json`（94 例）+ 证据 `research/evidence/`；试点 C01 票据卷、C04 夜玻璃两套源文件及其自验证据 |
-| 进行中（后台） | 构建与评审工作流（`wf_e040b27e-e9f`）与主负责人修复轮（`wf_2df3dba6-cd1`，2026-10-11 19:5x → 10-12 01:5x UTC，20 个代理全部完成）均已结束：十套全部通过新评审代理的验证（§6.7）。02:0x UTC 主负责人自查发现「减少动态」下 5 套（C02 C05 C06 C08 C09）草稿撤销条消失（`tools/test/rm-undo-sweep.cjs` 对照：关闭减少动态时十套都正常）；根因是共享定时器 `after()` 在减少动态下缩为 0ms。已在核心加 `hold()`（真实时间窗口，契约 §11），并启动定向收尾工作流 `wf_a11e059b-919`：十套各自把 toast / 撤销 / 倒计时 / 复制反馈改用 `hold()`，C04 修「成局后出票前闪现成品通行证」，C06 修展开视图局名被截断；每套一个新的聚焦验证代理（`evidence/CNN/final.md`、`final-verify.md`） |
+| 进行中（后台） | **无**。全部工作流已结束：构建与评审 `wf_e040b27e-e9f`、主负责人修复轮 `wf_2df3dba6-cd1`、定向收尾 `wf_a11e059b-919`（2026-10-12 02:0x–03:xx UTC，20 个代理全部完成；8 套通过，C01 / C07 各有 1 个新 major：删除 → 撤销 → 再删同一条时第一次的撤销定时器提前关闭第二次窗口）。主负责人随后在核心加入 `holdKey / cancelKey / cancelTimer`（契约 §11），并亲自修改 C01 C02 C03 C05 C06 C07 C08 C09 C10 的撤销 / toast / 复制定时器，用回归脚本验证（§6.8）。 |
 | 受阻 / 失败 | 无硬性阻塞。已知限制：设计画布（claude.ai）无法在容器内渲染，只能用独立画布做截图验证；容器评审画布无 GPU（SwiftShader），性能不代表真机；Dribbble 页面可截图但部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
-| 未开始 | 十套全部通过评审后的主负责人复审；把十套画板发布到 Design 画布；附录（差异矩阵 / 动效分段汇总 / 覆盖矩阵 / 限制）；最终独立画布构建与推送；最终答复 |
+| 未开始 / 待用户 | **用户审阅**（十套均未经用户看过）；按用户反馈选择方向后进入下一轮深化 |
 
 ### 0.3 当前具体位置
-- 已有可操作方案：C01（`concepts/src/C01.dc.html`，`concepts/src/C01.dc.html` 214 KB；`concepts/src/C04.dc.html` 259 KB；`JU-My-Ju-Fable51-10-Concepts.html` 4005 KB；`src/core/ju-data.js` 67 KB；`src/runtime/dc-mini-runtime.js` 10 KB 内见大小）与 C04；两者在主负责人补丁后的核心上重新跑过 `tools/coverage.cjs`：50/50 状态可到达、0 错误（主负责人于 2026-10-11 00:2x UTC 实跑，`evidence/C01/coverage-v2/`、`evidence/C04/coverage-v2/`）。主负责人**只亲眼看过**两套的参加者 / 局主首屏四张图（`evidence/C0x/joined-home.png`、`hosted-home.png`）；其余截图与动效帧为试点代理自报，尚未复核。
-- 其余八套：源文件已由工作流建成（C02 180 KB、C03 168 KB、C05 157 KB、C06 176 KB、C07 175 KB、C08 162 KB、C09 159 KB、C10 166 KB，均为代理自报已自验 50/50 状态），评审与修复进行中。主负责人于 05:2x UTC 看过十套的参加者 / 局主首屏（§3 各节「主负责人观察」），尚未看其余截图。
-- 用户**尚未审阅任何一套**。Design 画布自 05:3x UTC（版本 4）起包含 Main + 十套画板（评审修复后会重发）。
+- 十套方案全部建成、经两轮独立评审、一轮主负责人修复轮（含新评审代理逐条验证）、一轮定向收尾，以及主负责人亲自的定时器修复与回归（§6.6–§6.8）。十套都已发布到 Design 画布（版本 7）并打包进独立画布 `JU-My-Ju-Fable51-10-Concepts.html`。
+- 每套的规格与核心动效分段：`spec/motion/CNN.md`（汇总 `spec/motion-specs.md`）；状态覆盖：`spec/coverage.md`（10 × 50 全部可到达，0 错误）；参考映射：`spec/concept-refs.md`；主负责人复审：`spec/lead-review.md`；各轮报告：`evidence/CNN/review-1.md`、`review-2.md`、`fix-r1.md`、`verify-r1.md`、`final.md`、`final-verify.md`。
+- 用户**尚未审阅任何一套**；本文所有「通过」都是代理评审或主负责人判断，不是用户验收。
 
 ### 0.4 当前最重要的问题
-1. 十套的视觉质量是否达到用户要求，目前只有代理自验与主负责人对首屏的初步观察；需要主负责人逐套看详情、管理页、打印 / 撕票 / 燃烧帧序列。
-2. 并行构建对共享核心的依赖：若评审 / 修复阶段再改 `src/core/*`，需要对十套重跑 coverage。
-3. Design 画布尚未承载十套；发布需要在全部构建后进行（每套一个画板，`concepts/project/CNN.dc.html` + `canvas.json`）。
+1. 视觉验收只能由用户做：目前没有任何一套得到用户认可或否定。
+2. 所有动效只在无头 Chromium（无 GPU）中看过；真机流畅度与触控手感未验证。
+3. 各套仍有若干 minor（§6.8 末尾），以及主负责人记下的 C02 空态构图偏空。
 
 ### 0.5 下一个应执行的具体动作
-1. 等待工作流 `wf_e040b27e-e9f` 完成；读取其返回（每套的 missing / reviews / blockers），对未通过的方案按评审报告安排修复。
-2. 主负责人逐套打开 `evidence/CNN/` 的 sheet.png 复核（至少：两张首屏、detail、manage、print / tear / burn 帧），并用 `tools/capture.cjs` 自行抽查两条流程；记录结论到本文 §7。
-3. `node src/build.js` 生成最终独立画布；把 `concepts/project/C01–C10.dc.html` 与更新后的 `canvas.json` 发布到 Design 画布；在独立画布附录中嵌入 `spec/directions.md`、`spec/motion-specs.md`、`spec/coverage.md`、`research/ledger.md`、`spec/limits.md`。
-4. 提交并推送；最终答复先给画布链接，再按套说明核心差异与最值得体验的动作。
+1. 等用户在画布里操作十套并给出反馈；把反馈逐条写入 §1.2 / §1.3（附画板与状态）。
+2. 按用户选定的方向，读该套的 `final-verify.md` 与 `spec/motion/CNN.md`，进入下一轮深化；每次修改后跑 §7 末尾的回归序列。
 
 ---
 
@@ -217,7 +215,7 @@
 方向卡、六维差异矩阵与物件 / 数字之分见 `spec/directions.md`（主负责人撰写，是设计意图，不是实现记录）。以下按实际状态记录；未开始的方案只保留方向卡要点，不虚构参数。
 
 ### 3.1 C01 票据卷（已实现 · 代理自报 · 主负责人仅看过首屏）
-- 源文件 `concepts/src/C01.dc.html`；规格全文 `spec/motion/C01.md`（代理撰写）；证据 `evidence/C01/`：`approve/`（15 文件，含 sheet.png，含 log.json）；`back-print/`（20 文件，含 sheet.png，含 log.json）；`cancel/`（35 文件，含 sheet.png，含 log.json）；`card-detail-back/`（32 文件，含 sheet.png，含 log.json）；`confirm-flow/`（24 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`coverage-v2/`（52 文件，含 sheet.png，含 log.json）；`decline-burn/`（39 文件，含 sheet.png，含 log.json）；`detail.png`；`draft-undo/`（29 文件，含 sheet.png，含 log.json）；`empty/`（7 文件，含 sheet.png，含 log.json）；`end-att/`（11 文件，含 sheet.png，含 log.json）；`exit-burn/`（40 文件，含 sheet.png，含 log.json）；`fail-retry/`（15 文件，含 sheet.png，含 log.json）；`fix-r1/`（25 文件）；`fix-r1.md`；`half-scrub/`（33 文件，含 sheet.png，含 log.json）；`history/`（49 文件，含 sheet.png，含 log.json）；`home/`（6 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long/`（7 文件，含 sheet.png，含 log.json）；`manage-open/`（21 文件，含 sheet.png，含 log.json）；`manage-sticky/`（9 文件，含 sheet.png，含 log.json）；`manage.png`；`members/`（7 文件，含 sheet.png，含 log.json）；`print/`（38 文件，含 sheet.png，含 log.json）；`replay/`（18 文件，含 sheet.png，含 log.json）；`replay-rm/`（7 文件，含 sheet.png，含 log.json）；`resched/`（6 文件，含 sheet.png，含 log.json）；`resched-accept/`（21 文件，含 sheet.png，含 log.json）；`resched-slip/`（14 文件，含 sheet.png，含 log.json）；`result.png`；`review-1/`（23 文件）；`review-1.md`；`review-2/`（23 文件）；`review-2.md`；`rm-half/`（14 文件，含 sheet.png，含 log.json）；`roll-switch/`（16 文件，含 sheet.png，含 log.json）；`rules-entry/`（8 文件，含 sheet.png，含 log.json）；`scroll/`（8 文件，含 sheet.png，含 log.json）；`stage/`（4 文件，含 sheet.png，含 log.json）；`tear/`（32 文件，含 sheet.png，含 log.json）；`verify-r1/`（35 文件）；`verify-r1.md`；`withdraw-queue/`（21 文件，含 sheet.png，含 log.json）。
+- 源文件 `concepts/src/C01.dc.html`；规格全文 `spec/motion/C01.md`（代理撰写）；证据 `evidence/C01/`：`approve/`（15 文件，含 sheet.png，含 log.json）；`back-print/`（20 文件，含 sheet.png，含 log.json）；`cancel/`（35 文件，含 sheet.png，含 log.json）；`card-detail-back/`（32 文件，含 sheet.png，含 log.json）；`confirm-flow/`（24 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`coverage-v2/`（52 文件，含 sheet.png，含 log.json）；`decline-burn/`（39 文件，含 sheet.png，含 log.json）；`detail.png`；`draft-undo/`（29 文件，含 sheet.png，含 log.json）；`empty/`（7 文件，含 sheet.png，含 log.json）；`end-att/`（11 文件，含 sheet.png，含 log.json）；`exit-burn/`（40 文件，含 sheet.png，含 log.json）；`fail-retry/`（15 文件，含 sheet.png，含 log.json）；`final/`（7 文件）；`final-verify/`（19 文件）；`final-verify.md`；`final.md`；`fix-r1/`（25 文件）；`fix-r1.md`；`half-scrub/`（33 文件，含 sheet.png，含 log.json）；`history/`（49 文件，含 sheet.png，含 log.json）；`home/`（6 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long/`（7 文件，含 sheet.png，含 log.json）；`manage-open/`（21 文件，含 sheet.png，含 log.json）；`manage-sticky/`（9 文件，含 sheet.png，含 log.json）；`manage.png`；`members/`（7 文件，含 sheet.png，含 log.json）；`print/`（38 文件，含 sheet.png，含 log.json）；`replay/`（18 文件，含 sheet.png，含 log.json）；`replay-rm/`（7 文件，含 sheet.png，含 log.json）；`resched/`（6 文件，含 sheet.png，含 log.json）；`resched-accept/`（21 文件，含 sheet.png，含 log.json）；`resched-slip/`（14 文件，含 sheet.png，含 log.json）；`result.png`；`review-1/`（23 文件）；`review-1.md`；`review-2/`（23 文件）；`review-2.md`；`rm-half/`（14 文件，含 sheet.png，含 log.json）；`roll-switch/`（16 文件，含 sheet.png，含 log.json）；`rules-entry/`（8 文件，含 sheet.png，含 log.json）；`scroll/`（8 文件，含 sheet.png，含 log.json）；`stage/`（4 文件，含 sheet.png，含 log.json）；`tear/`（32 文件，含 sheet.png，含 log.json）；`verify-r1/`（35 文件）；`verify-r1.md`；`withdraw-queue/`（21 文件，含 sheet.png，含 log.json）。
 - 视觉（当前代码值，来自规格）：字族 Noto Sans SC 400/500/700 + DM Mono 400/500（只两族）；时间 28px DM Mono 500（票面 40px），局名 20px/1.3（lead 21px/700，详情 24px/700），日期 / 地点 13.5px，状态点阵 12px DM Mono 字距 .06em，回单头 11px 字距 .14em；色板：纸 #f3efe6 / 阴面 #e9e4d8 / 墨 #1b1a18 / 灰墨 #5f5a51 / 淡墨 #9a9388 / 红印 #b3301f / 机壳 #242229–#302d36–#17161b / 出纸口 #09080b / 焦炭 #271e19–#3a2e26 / 余烬 #ff7a1a。构图：机壳顶板 96px（铭牌 + 两卷身份拨杆）→ 出纸口 → 342px 纸带居中可滚动 → 底栏 48px 存根槽。层级：第一眼大号 mono 时间 + 粗体局名；第二眼点阵状态行（反白 / 描边 / 点线灰 / 虚线淡 / 红描五态）；第三眼组名与说明。
 - 材质：热敏纸横向条纹 `repeating-linear-gradient` + 左右 6% 边缘暗化；纸边 1px 暗线 + 24px 下落阴影；齿孔 9px 节距点线 + 两侧半圆缺口；票 = 2.5px 墨边框一截纸 + 2px 点线齿孔副券；机壳哑光深灰 + 竖向拉丝；撕口 34 段 ±4.2px 纤维轮廓 + 1.6px 亮纤维带 + 5px 软阴影；焦边 feTurbulence 置换。主负责人观察（首屏两张）：纸面与机壳的明暗对比成立，大号时间与局名形成主次，状态点阵行可读；未核验详情与票面。
 - 动效（代理自报的当前代码值）：① 走纸打印 2200ms×k，三段走纸两次停顿（`c01-feed3`，linear 分段），印头 10px 暗渐变，打印中副券不可点；② 撕票：副券右端按下，`p = clamp((−dx + 1.15dy)/175)`，阈值 0.55，回弹 220ms；落下 820ms `cubic-bezier(.45,.02,.75,.5)` 旋转 12→−26°、rotateX 0→70°、scale .68 到底栏存根槽；主票 250→184px 底边锯齿；300ms 后联系层打印；③ 焦卷作废 2600ms（票）/ 2800ms（活动条）`cubic-bezier(.35,.05,.5,1)`：mask 圆孔 0→reach（`#fx-rough-strong` 毛边）+ 16px 炭圈 + 5px 余烬线（80% 后淡出）+ 10 粒纸灰落向底栏；烧尽后折叠为 0 高，原位出现焦炭残片 `.c01-char`。其余：共享元素展开 420ms `cubic-bezier(.2,.8,.2,1)`、身份切换 430ms 收卷 + 520ms 出卷、便签 380ms、回执 420ms/2.6s、印章 560ms、草稿删除 360ms + 撤销条 10s。
@@ -233,7 +231,7 @@
 - **视觉**：深色机械板 `#121417`（顶光 + 细横纹 + SVG 噪点）；每局一行翻牌：时间 5 格（Unbounded 700 15px，格 18×32）| 局名长翻片（Noto Sans SC 700 16px）| 状态 2–4 格中文翻牌（12.5px，琥珀 = 要你回应 / 白 = 就快见面 / 灰 = 还在等 / 红 = 未成行）；行下两行小字（Archivo Narrow 大写副信息 + 状态文字与「动词 + 名词 ›」）；lead 块放大（时间 23px 格 27×46、两行局名、倒计时翻牌 HH:MM:SS、3px 进度条、钢面琥珀按键）；板头「我的局 + DEPARTURES 眉注 + 站钟 15:00」、身份牌「参加 / 发起」（滑动琥珀板按像素反色）、分区标签、列头条；底部钢轨导航。票 = 磨砂塑料磁条卡（318×200，左缘琥珀线带、顶带编号、大字时间、局名、等宽大写地点 / 集合、底部磁条）；读卡器 = 钢面壳体（槽口、红 / 琥珀 / 绿灯、琥珀点阵显示屏、碎屑窗）。管理 = 从右侧拉出的操作盘（座位灯轨、局卡条、各区块、折叠的离开记录、这局的安排）；弹层 = 底部升起的钢面操作面板。空态 = 翻牌拼字 + 一句说明 + 禁用钢键。
 - **三个核心动作（当前代码值，详见 spec/motion/C02.md）**：① 状态翻牌：每格四层，上半旧面 170ms 翻下、下半新面 210ms 翻上（延迟 160ms）、落定 1.5px「咔」，格间错峰 55ms；整板翻（身份 / 分区）行 rotateX 220ms 出 / 320ms 入，错峰 22ms。② 过闸撕票：先出票（2200ms 三段走卡 + 自下而上印字）→ 按住卡向下推入槽（p = dy/150，跟手）→ ≥0.55 先写入再吞卡 260ms → 读卡 → 打孔（壳体下沉 2px、真孔 mask、碎屑落入窗内 300ms）→ 吐卡 460ms → 绿灯 PASSED + 联系条升起；<0.55 回弹 240ms；写入失败回弹 + 红灯故障条 + 重试。③ 过热作废：卡在槽口（10%）过热 2800ms：槽口热浪、焦黑层沿毛边圆从卡底推进（r 0→152px）、余烬环同半径、5 枚塑料起泡、磁条变黑 + 裂纹、卡面翘曲 −2.2°；落定为焦黑残骸 + 显示屏 VOID，牌面翻成「已取消 / 已退出」，结果块与历史落点。
 - **覆盖**：参加者 18 个 stage 的列表行 / 详情 / 票面 / 历史展开；局内动作：阅读约定（滚到底才可确认）→ 确认入局（brunch 成局即出票）、放弃预留、撤回、退出候补（无二次确认）、撕票、复制、已加微信、改期接受（新票过闸）/ 拒绝（新票过热）、主动退出（票过热）、历史补充记录（≥4 字 + 涉及人 chips）；局主 12 个表面（申请 / 成员 / 候补 / 联系复制 / 离开记录折叠 / 改时间校验 / 改期答复 / 取消受影响人 + 过热 / 记为散场 / 出席三段 + 更正轨迹 / 完整局卡 / 已取消的局）；草稿摘要 + 删除 + 撤销（10s）；8 个数据集与 7 种空态；`armFail` 失败 + 重试（申请、撕票、取消、删草稿均试过）；`.rm`、0.5×、关键帧滑杆（取消序列 30% / 70%）；惰性入口（继续编辑 / 再开一局 / 去找局 / 去开局）禁用并注明。
-- **证据**：`evidence/C02/`：`burn-void/`（17 文件，含 sheet.png，含 log.json）；`cancel/`（32 文件，含 sheet.png，含 log.json）；`card-detail-back/`（25 文件，含 sheet.png，含 log.json）；`confirm-flow/`（22 文件，含 sheet.png，含 log.json）；`contact-back/`（22 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`decline-exit/`（20 文件，含 sheet.png，含 log.json）；`detail.png`；`draft-undo/`（18 文件，含 sheet.png，含 log.json）；`empty-long/`（8 文件，含 sheet.png，含 log.json）；`end-att/`（19 文件，含 sheet.png，含 log.json）；`exit-burn/`（21 文件，含 sheet.png，含 log.json）；`fail-retry/`（10 文件，含 sheet.png，含 log.json）；`fix-1/`（22 文件）；`fix-2/`（19 文件）；`fix-r1/`（24 文件）；`fix-r1.md`；`history/`（26 文件，含 sheet.png，含 log.json）；`home/`（7 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long/`（8 文件，含 sheet.png，含 log.json）；`manage/`（21 文件，含 sheet.png，含 log.json）；`manage.png`；`print/`（17 文件，含 sheet.png，含 log.json）；`punch-close/`（26 文件，含 sheet.png，含 log.json）；`resched-accept/`（29 文件，含 sheet.png，含 log.json）；`resched-sheet/`（15 文件，含 sheet.png，含 log.json）；`result.png`；`review-1/`（42 文件）；`review-1.md`；`review-2/`（29 文件）；`review-2.md`；`rm-half-scrub/`（16 文件，含 sheet.png，含 log.json）；`switch-scroll/`（14 文件，含 sheet.png，含 log.json）；`tear/`（34 文件，含 sheet.png，含 log.json）；`verify-r1/`（44 文件）；`verify-r1.md`；`widths/`（19 文件，含 log.json）。
+- **证据**：`evidence/C02/`：`burn-void/`（17 文件，含 sheet.png，含 log.json）；`cancel/`（32 文件，含 sheet.png，含 log.json）；`card-detail-back/`（25 文件，含 sheet.png，含 log.json）；`confirm-flow/`（22 文件，含 sheet.png，含 log.json）；`contact-back/`（22 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`decline-exit/`（20 文件，含 sheet.png，含 log.json）；`detail.png`；`draft-undo/`（18 文件，含 sheet.png，含 log.json）；`empty-long/`（8 文件，含 sheet.png，含 log.json）；`end-att/`（19 文件，含 sheet.png，含 log.json）；`exit-burn/`（21 文件，含 sheet.png，含 log.json）；`fail-retry/`（10 文件，含 sheet.png，含 log.json）；`final/`（9 文件）；`final-verify/`（19 文件）；`final-verify.md`；`final.md`；`fix-1/`（22 文件）；`fix-2/`（19 文件）；`fix-r1/`（24 文件）；`fix-r1.md`；`history/`（26 文件，含 sheet.png，含 log.json）；`home/`（7 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long/`（8 文件，含 sheet.png，含 log.json）；`manage/`（21 文件，含 sheet.png，含 log.json）；`manage.png`；`print/`（17 文件，含 sheet.png，含 log.json）；`punch-close/`（26 文件，含 sheet.png，含 log.json）；`resched-accept/`（29 文件，含 sheet.png，含 log.json）；`resched-sheet/`（15 文件，含 sheet.png，含 log.json）；`result.png`；`review-1/`（42 文件）；`review-1.md`；`review-2/`（29 文件）；`review-2.md`；`rm-half-scrub/`（16 文件，含 sheet.png，含 log.json）；`switch-scroll/`（14 文件，含 sheet.png，含 log.json）；`tear/`（34 文件，含 sheet.png，含 log.json）；`verify-r1/`（44 文件）；`verify-r1.md`；`widths/`（19 文件，含 log.json）。
 - **已知问题 / 待复核（代理自评，不是用户反馈）**：余烬环 9px 偏粗偏橙，可能需要收细；焦黑终态近似一个毛边圆（「熔化塑料」的读法成立，但与方向卡「磁条处焦黑」的局部感相比偏大）；过闸时打孔发生在槽内，用户只能从碎屑窗与吐出后的孔看到结果（已按「分离部分落入归宿」处理）；详情返回时牌面与列表短暂交叉淡出（约 200ms）；翻牌在 0.5× 下只看了取消序列的帧；360 / 430 宽只做了横向溢出断言，无截图；真机触控手感未验证。
 - **工程备注**：私有构建命令 `JU_STANDALONE=/home/user/JU/.build/C02.html node src/build.js`（`.build/` 未跟踪、未提交）；`concepts/src/C02.dc.html`、`spec/motion/C02.md`、`evidence/C02/` 截至本次记录为**未跟踪文件**（未 commit）；共享画布尚未重建、Design 画布未发布 C02。
 
@@ -244,7 +242,7 @@
 杂志目录 → 跨页：Noto Serif SC 700 局名 26–34px + Instrument Serif 页码；铜版纸 #f7f5f0、墨 #111、校对红 #c8102e；3D 翻页（折线在书脊）；撕角券；烧页（焦洞扩大、灰屑、焦边页框留在历史）。参数待实现后记录。
 
 ### 3.4 C04 夜玻璃（已实现 · 代理自报 · 主负责人仅看过首屏）
-- 源文件 `concepts/src/C04.dc.html`；规格全文 `spec/motion/C04.md`；证据 `evidence/C04/`：`bounds/`（19 文件，含 sheet.png，含 log.json）；`card-detail/`（24 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`coverage-v2/`（52 文件，含 sheet.png，含 log.json）；`detail-open-back/`（26 文件，含 sheet.png，含 log.json）；`detail.png`；`empty-state/`（8 文件，含 sheet.png，含 log.json）；`fail-retry/`（11 文件，含 sheet.png，含 log.json）；`fast-clicks/`（10 文件，含 sheet.png，含 log.json）；`fix-r1/`（23 文件）；`fix-r1.md`；`flow-cancelled-first/`（25 文件，含 sheet.png，含 log.json）；`flow-confirm/`（23 文件，含 sheet.png，含 log.json）；`flow-decline/`（32 文件，含 sheet.png，含 log.json）；`flow-exit/`（34 文件，含 sheet.png，含 log.json）；`flow-leave/`（10 文件，含 sheet.png，含 log.json）；`flow-note/`（6 文件，含 sheet.png，含 log.json）；`flow-report/`（20 文件，含 sheet.png，含 log.json）；`flow-resched/`（38 文件，含 sheet.png，含 log.json）；`flow-tear/`（40 文件，含 sheet.png，含 log.json）；`flow-withdraw/`（13 文件，含 sheet.png，含 log.json）；`header-collapse/`（15 文件，含 sheet.png，含 log.json）；`home/`（17 文件，含 sheet.png，含 log.json）；`host-approve/`（10 文件，含 sheet.png，含 log.json）；`host-cancel/`（40 文件，含 sheet.png，含 log.json）；`host-drafts/`（11 文件，含 sheet.png，含 log.json）；`host-end/`（11 文件，含 sheet.png，含 log.json）；`host-resched/`（18 文件，含 sheet.png，含 log.json）；`host-tabs/`（10 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long-title/`（9 文件，含 sheet.png，含 log.json）；`manage.png`；`pass-materialise/`（21 文件，含 sheet.png，含 log.json）；`probes-fix2.json`；`reduced-motion/`（20 文件，含 sheet.png，含 log.json）；`result.png`；`return-nav/`（14 文件，含 sheet.png，含 log.json）；`review-1/`（50 文件）；`review-1.md`；`review-2/`（28 文件）；`review-2.md`；`scrub/`（30 文件，含 sheet.png，含 log.json）；`section-switch/`（24 文件，含 sheet.png，含 log.json）；`t-jumps/`（9 文件，含 sheet.png，含 log.json）；`verify-r1/`（39 文件）；`verify-r1.md`；`widths/`（16 文件）。
+- 源文件 `concepts/src/C04.dc.html`；规格全文 `spec/motion/C04.md`；证据 `evidence/C04/`：`bounds/`（19 文件，含 sheet.png，含 log.json）；`card-detail/`（24 文件，含 sheet.png，含 log.json）；`coverage/`（52 文件，含 sheet.png，含 log.json）；`coverage-matrix/`（52 文件，含 sheet.png，含 log.json）；`coverage-v2/`（52 文件，含 sheet.png，含 log.json）；`detail-open-back/`（26 文件，含 sheet.png，含 log.json）；`detail.png`；`empty-state/`（8 文件，含 sheet.png，含 log.json）；`fail-retry/`（11 文件，含 sheet.png，含 log.json）；`fast-clicks/`（10 文件，含 sheet.png，含 log.json）；`final/`（11 文件）；`final-verify/`（18 文件）；`final-verify.md`；`final.md`；`fix-r1/`（23 文件）；`fix-r1.md`；`flow-cancelled-first/`（25 文件，含 sheet.png，含 log.json）；`flow-confirm/`（23 文件，含 sheet.png，含 log.json）；`flow-decline/`（32 文件，含 sheet.png，含 log.json）；`flow-exit/`（34 文件，含 sheet.png，含 log.json）；`flow-leave/`（10 文件，含 sheet.png，含 log.json）；`flow-note/`（6 文件，含 sheet.png，含 log.json）；`flow-report/`（20 文件，含 sheet.png，含 log.json）；`flow-resched/`（38 文件，含 sheet.png，含 log.json）；`flow-tear/`（40 文件，含 sheet.png，含 log.json）；`flow-withdraw/`（13 文件，含 sheet.png，含 log.json）；`header-collapse/`（15 文件，含 sheet.png，含 log.json）；`home/`（17 文件，含 sheet.png，含 log.json）；`host-approve/`（10 文件，含 sheet.png，含 log.json）；`host-cancel/`（40 文件，含 sheet.png，含 log.json）；`host-drafts/`（11 文件，含 sheet.png，含 log.json）；`host-end/`（11 文件，含 sheet.png，含 log.json）；`host-resched/`（18 文件，含 sheet.png，含 log.json）；`host-tabs/`（10 文件，含 sheet.png，含 log.json）；`hosted-home.png`；`joined-home.png`；`long-title/`（9 文件，含 sheet.png，含 log.json）；`manage.png`；`pass-materialise/`（21 文件，含 sheet.png，含 log.json）；`probes-fix2.json`；`reduced-motion/`（20 文件，含 sheet.png，含 log.json）；`result.png`；`return-nav/`（14 文件，含 sheet.png，含 log.json）；`review-1/`（50 文件）；`review-1.md`；`review-2/`（28 文件）；`review-2.md`；`scrub/`（30 文件，含 sheet.png，含 log.json）；`section-switch/`（24 文件，含 sheet.png，含 log.json）；`t-jumps/`（9 文件，含 sheet.png，含 log.json）；`verify-r1/`（39 文件）；`verify-r1.md`；`widths/`（16 文件）。
 - 视觉（当前代码值）：Noto Sans SC 500 标题 27px 字距 .08em，局名 22/26px，行内 15/16px；Sora 600 倒计时 34/44/40px 字距 −.02/−.03em；眉注 Sora 600 10px 大写字距 .22em 与中文 13px 并置；色板 夜色 #050811/#0a1020/#101a33，文字四级 #f2f5ff α1/.76/.52/.30，强调 #ffc46b（要你回应 / 预留 / 倒计时 / 改期）、#72e6c6（就快见面 / 已确认 / 出席）、#a3b4ff（还在等 / 候补）、#cdb9ff（局主）、作废 rgba(176,188,220,.5)、危险 #ff6f7d；pack 色相六种。背景静止：四片径向色斑 + 五个模糊光斑 + 六个光点，无循环动画。
 - 材质：玻璃 `backdrop-filter: blur(14px) saturate(1.35)`，表面 160° 渐变 α.11→.045→.075，顶边 1px 高光 α.34，1px 内边 α.10，底部内阴影（厚度），落影 `0 20px 44px -24px`；lead 板更亮并带 tone 色外发光；厚玻璃（弹层 / 底栏）深色底 α.78–.84 + blur 26px；暗玻璃 / 书脊几乎不透光；通行证更亮玻璃 + 112° 全息三色带（screen 混合，静止）；景深按 `--z` 1/.975/.95 缩放，远层物件 blur .8/1.6px、变暗，文字始终清晰；进入详情时首页 `scale(.93) blur(10px) brightness(.5)`。主负责人观察（首屏两张）：第一眼主角明确（最前玻璃板 + 琥珀倒计时 + 金色 CTA），中文在玻璃上清晰；**问题**：底部固定导航压住列表最后一项（参加者首屏「还在等」组被导航遮住），需要底部安全区（已写入契约 §10 底部导航条款，待评审修复）。
 - 动效（代理自报）：① 景深展开：`clip-path: inset(板矩形 round 18px)` → `inset(0)`，内层 `translateY(from.y − 44px)` → 0，背景 scale 1→.93 / blur 0→10px / brightness 1→.5，480ms `cubic-bezier(.2,.8,.2,1)`，返回 400ms，落点高亮 1.4s；② 裂开撕票：副券按住下拖 `p=(dy+.25dx)/120`，`JU.fx.tearClip`（n=14, amp 3.2）把直线齿孔换成折线，裂纹 `stroke-dashoffset` 随 p 揭示，阈值 .55，回弹 420ms `cubic-bezier(.2,1.25,.3,1)`；碎裂 7 块 `c04-shard` 720ms `cubic-bezier(.4,0,.75,.4)` 每块延迟 85ms，位移 120–210px、旋转 ±22°；820ms 后联系层 460ms 弹起；③ 碎裂作废：从一点起裂纹 → 18 块径向碎片逐块坠落 → 带裂纹的空框残留 → 历史中变成暗色薄片（具体时长见 `spec/motion/C04.md` §2③）；另有通行证三段显现（出票）。
@@ -337,8 +335,12 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 ```
 
 ### 5.2 分支、提交与未提交
-- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `30370fa`。最近提交：
+- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `6013a1e`。最近提交：
 ```
+6013a1e 2026-10-12 04:40:02 +0000 Keyed real-time timers (holdKey/cancelKey) fix re-delete undo and repeat-copy across seven concepts; regression tests; final coverage matrix 10×50/50; motion-spec appendix regenerated
+e7839a3 2026-10-12 04:27:53 +0000 Final targeted pass: real-time windows on hold() across all ten, C04 print flash and C06 title truncation fixed (final.md / final-verify.md)
+ca0ccdd 2026-10-12 02:06:49 +0000 Checkpoint: in-progress final targeted pass (sources and evidence so far)
+7dc6157 2026-10-12 02:06:14 +0000 Record: lead verified reworked 申请审核 and home fixes across all ten
 30370fa 2026-10-12 02:05:35 +0000 Core hold() for real-time windows under reduced motion; reduced-motion undo sweep; record fix-round verdicts
 1885929 2026-10-12 02:01:54 +0000 Lead fix round: all ten concepts fixed and verified by fresh reviewers (fix-r1 / verify-r1 reports and evidence)
 4a6becc 2026-10-11 20:08:00 +0000 Stop tracking private .build/ outputs (regenerable)
@@ -355,25 +357,49 @@ eba174d 2026-10-11 05:18:20 +0000 Ten-concept standalone build, canvas publish v
 f9305e0 2026-10-11 05:14:29 +0000 Concepts C02 C03 C05–C10 from the build workflow, reference mapping, motion specs, C01/C04 round-1 reviews
 e92e5e8 2026-10-11 00:34:00 +0000 Record: pilots published to canvas; lead observations of print/attendance/draft flows
 bc6985f 2026-10-11 00:33:11 +0000 Record lead observations of pilot tear/cancel sequences; add limits appendix and appendix generators
-a686591 2026-10-11 00:31:29 +0000 Add project record (generated), contract pilot lessons, evidence set, build workflow v2
-e401a3c 2026-10-11 00:25:36 +0000 Pilot concepts C01 票据卷 and C04 夜玻璃, research ledger, core fixes from pilot feedback
-32659f4 2026-10-10 16:37:00 +0000 Add synthesized state inventory and dataset spec with lead reconciliation notes
-6953c77 2026-10-10 16:34:16 +0000 Add state-coverage tool and extraction notes
 ```
 - 生成本文时的工作区状态（`git status --short`）：
 ```
 M JU-My-Ju-Fable51-10-Concepts.html
- M concepts/project/C01.dc.html
- M concepts/project/C02.dc.html
- M concepts/project/C03.dc.html
- M concepts/project/C04.dc.html
- M concepts/project/C05.dc.html
- M concepts/project/C06.dc.html
- M concepts/project/C07.dc.html
  M concepts/project/C08.dc.html
- M concepts/project/C09.dc.html
- M concepts/project/C10.dc.html
- M tools/record/body.md
+ M concepts/src/C08.dc.html
+ M evidence/C08/coverage-matrix/b-drafts.png
+ M evidence/C08/coverage-matrix/b-empty-h.png
+ M evidence/C08/coverage-matrix/b-empty.png
+ M evidence/C08/coverage-matrix/b-long-h.png
+ M evidence/C08/coverage-matrix/b-long.png
+ M evidence/C08/coverage-matrix/b-single-h.png
+ M evidence/C08/coverage-matrix/b-single.png
+ M evidence/C08/coverage-matrix/h-draft.png
+ M evidence/C08/coverage-matrix/h-drafts-many.png
+ M evidence/C08/coverage-matrix/h-drafts.png
+ M evidence/C08/coverage-matrix/h-history-many.png
+ M evidence/C08/coverage-matrix/h-history.png
+ M evidence/C08/coverage-matrix/h-home.png
+ M evidence/C08/coverage-matrix/h-m-attendance.png
+ M evidence/C08/coverage-matrix/h-m-cancel.png
+ M evidence/C08/coverage-matrix/h-m-cancelled.png
+ M evidence/C08/coverage-matrix/h-m-card.png
+ M evidence/C08/coverage-matrix/h-m-contact.png
+ M evidence/C08/coverage-matrix/h-m-end.png
+ M evidence/C08/coverage-matrix/h-m-leaves.png
+ M evidence/C08/coverage-matrix/h-m-members.png
+ M evidence/C08/coverage-matrix/h-m-replies.png
+ M evidence/C08/coverage-matrix/h-m-reschedule.png
+ M evidence/C08/coverage-matrix/h-m-review.png
+ M evidence/C08/coverage-matrix/h-m-waitlist.png
+ M evidence/C08/coverage-matrix/h-pending.png
+ M evidence/C08/coverage-matrix/j-d-absent.png
+ M evidence/C08/coverage-matrix/j-d-cancelled.png
+ M evidence/C08/coverage-matrix/j-d-contact.png
+ M evidence/C08/coverage-matrix/j-d-declined.png
+ M evidence/C08/coverage-matrix/j-d-ended.png
+ M evidence/C08/coverage-matrix/j-d-exited.png
+ M evidence/C08/coverage-matrix/j-d-expired.png
+ M evidence/C08/coverage-matrix/j-d-gathering.png
+ M evidence/C08/coverage-matrix/j-d-going.png
+ M evidence/C08/coverage-matrix/j-d-invited.png
+ M evidence/C08/coverage-matrix/j-d-invitedq.png
 ```
 - 备份：除 origin 远端外无其他备份；容器临时目录（`/tmp/claude-0/.../scratchpad`）中的研究原图、私有构建、工作流日志不可迁移。
 - 证据入库策略（2026-10-11 19:4x UTC 起）：评审 / 修复 / 验证目录中的原始逐帧 `fNN.png` 不入库（`.gitignore`），只入库拼图 `sheet.png`、各状态截图、`log.json` 与报告；新入库的 PNG 经 `tools/shrink-sheets.py` 压成 256 色调色板（宽 ≤1400px），文件名不变。原始逐帧仍在容器 `evidence/` 下，容器回收后丢失。私有构建 `.build/` 不入库（可用 `JU_STANDALONE=… node src/build.js` 重建）。
@@ -460,15 +486,27 @@ M JU-My-Ju-Fable51-10-Concepts.html
 
 主负责人复审（`spec/lead-review.md`）中的「管理页结构雷同」一行，各套在本轮重做了申请审核的构图（例：C01 双联齿孔申请单撕券 + 盖章、C02 ARRIVALS 翻牌板 + 拨杆、C03 来稿夹 + 批注栏、C07 申请格阵、C08 申请挂在时间尺上、C09 贴纸纸、C10 接触印样圈选）。**主负责人 2026-10-12 02:1x UTC 逐张看过十套修复后的 `manage.png` 与 `joined-home.png`（并排拼图）核实**：十套申请审核的构图与「邀请 / 谢绝」动作形态各不相同（C04 玻璃滑块、C05 剪刀 / 线、C06 夹板 + 橡皮章也已重做）；首屏上 C02 局名两行不再截断、C04 列表让出底栏、C09 标题不再碎裂、C10 显示帧计数与下一帧露边。C07 次级格仍偏卡片化（minor 级，未再提）。
 
+### 6.8 最终回归（主负责人亲自运行，2026-10-12 03:xx UTC，提交 `6013a1e` + C08 修复）
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 全部状态可到达 | `tools/coverage-matrix.cjs`（10 × 50） | 十套 50/50，0 页面 / 控制台错误（C08 修复后单独重跑 50/50，0 错误）；`spec/coverage.md` |
+| 减少动态下草稿撤销 | `tools/test/rm-undo-sweep.cjs`（对照 `rm-undo-sweep-ctl.cjs`） | 十套删除后 800ms 撤销条仍在（修复前 C02 C05 C06 C08 C09 失败） |
+| 删除 → 撤销 → 再删同一条 | `tools/test/timer-regress.cjs`（常规与减少动态各一次） | 十套在第一次删除 ≈11.7s 后撤销仍在、可恢复（修复前 C01 C07 失败） |
+| 连续两次复制 | `tools/test/copy-regress.cjs` | 十套第二次复制后 1.6s「已复制」仍在（修复前 C08 失败；C01 C07 C10 由验证代理报告，修复后通过） |
+| 独立画布 | `tools/test/standalone.cjs` | 总览 10 卡 / 20 预览、方案视图 + 面板、对比、附录；0 错误 |
+| 十套关键状态并排 | 主负责人看 `evidence/CNN/coverage-matrix/` 拼图：改期答复、局主取消、完全空、长标题、出席记录 | 均有完整构图；旧 / 新票关系与残余形态各自成立；C02 空态构图偏空（仅一行翻牌标题 + 说明，minor，未修） |
+
+各套仍开的 minor（不阻塞）见 `evidence/CNN/final-verify.md`（C01 6 项 O1–O6，C02 5 项，C03 1 项，C04 2 项，C05 2 项，C06 5 项，C07 3 项，C08 5 项，C09 5 项，C10 4 项）。这些都是代理评审的结论，主负责人未逐项复核。
+
 ## 7. 下一步（优先级最高的五项）
 
-1. **拿到评审结果并修复**（目标：十套每套至少一轮独立评审，blocker 清零；评审之后再跑一轮「评审 + 主负责人复审（`spec/lead-review.md`）」合并修复）。读 / 改：工作流返回、`evidence/CNN/review-N.md`、`concepts/src/CNN.dc.html`。依赖：`wf_e040b27e-e9f`。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 coverage）、`spec/state-inventory.md` 的语义规则。完成标准：十套 `tools/coverage.cjs` 50/50 且 0 错误；评审报告无 blocker。回归：全部十套 coverage。
-2. **主负责人逐套复核视觉与动效**（目标：每套看两张首屏 + detail + manage + print/tear/burn 三组帧 + 一条自抽查流程）。读：`evidence/CNN/*/sheet.png`；改：`JU-MY-JU-PROJECT-RECORD.md` §3/§6。完成标准：每套在 §3 有「主负责人观察」与问题清单；发现的 blocker 转修复。
-3. **发布与附录**（目标：Design 画布十个画板 + 独立画布附录齐全）。读 / 改：`concepts/project/*`、`canvas.json`、`spec/motion-specs.md`（汇总 `spec/motion/*.md`）、`spec/coverage.md`（清单 × 十套）、`spec/limits.md`、`src/build.js` 附录映射。不可改：画布 URL；`Main.dc.html` 以外的画板文件名。完成标准：画布可见十个画板；独立画布附录四个标签有内容。回归：`tools/test/standalone.cjs` 通过。
-4. **修复试点已知问题**（§6.3 #1–#3）。完成标准：对应 capture 序列显示修复后状态。
-5. **最终提交与答复**（目标：推送 `claude/eager-brahmagupta-ct0owo`；答复先给画布链接，再按套说明差异与最值得体验的动作；附录链接）。不可改：不创建 PR（用户未要求）。完成标准：远端 HEAD 包含全部交付；本文 §0 更新为最终状态。
+1. **用户审阅十套并选方向**（目标：用户在 Design 画布或独立画布里实际操作十套，指出认可 / 否定的方向与局部）。读：画布、`spec/directions.md`、`spec/lead-review.md`。不可改：在用户反馈前不要冻结任何一套为最终方案，也不要删除任何一套。完成标准：§1.2 / §1.3 有用户原话与对应画板。
+2. **按用户选择深化**（目标：被选中的 1–3 个方向进入下一轮：补足真机体验、动效精修、各套 `final-verify.md` 的 minor）。读 / 改：`concepts/src/CNN.dc.html`、`spec/motion/CNN.md`、`evidence/CNN/final-verify.md`。依赖：第 1 项。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 `tools/coverage-matrix.cjs` 与 `tools/test/*regress*.cjs`）；被用户认可的局部。完成标准：评审 0 blocker / 0 major，回归脚本全过。
+3. **真机 / 桌面浏览器复看长动效**（打印 / 撕票 / 燃烧 / 碎裂 / 翻页），记录帧率与触控手感；容器内只做过无头 Chromium。
+4. **补研究缺口**（可选）：用户点名的 A Magazine Curated By 两期与 Yohji Yamamoto 系列页尚未作为独立案例立案（§2.1）。
+5. **C02 空态构图**等 minor 的统一清理（按第 2 项选中的方向优先）。
 
----
+回归检查（任何修改后）：`node src/build.js` → `node tools/coverage-matrix.cjs` → `node tools/test/rm-undo-sweep.cjs` → `node tools/test/timer-regress.cjs` → `node tools/test/copy-regress.cjs` → `node tools/test/standalone.cjs`。
 
 ## 8. 辅助文件索引
 | 文件 | 内容 | 与当前实现的关系 |

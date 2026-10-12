@@ -12,7 +12,7 @@
 | 最后更新 | {{NOW}}（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `{{BRANCH}}`，HEAD `{{HEAD}}`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
-| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — 版本 5（2026-10-11 19:5x UTC，标签「After review round 2」）：入口画板 + 十套画板，内容为提交 `8246121` 的源文件（即第 2 轮评审所测版本）；主负责人修复轮完成后会再发 |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — **版本 7（2026-10-12 03:xx UTC）**：入口画板 + 十套画板，内容 = 提交 `6013a1e` 之后的源文件（修复轮 + 定向收尾 + 主负责人定时器修复，含 C08 复制修复）。版本 6 标签「After fix round and final verification」，版本 7 标签「C08 repeat-copy fix」 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：{{SRCS}}） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-My-Ju-Fable51-10-Concepts.html`（总览 / 方案 / 对比 / 附录四个视图，`#concept/C01` 直达）；字体来自 Google Fonts（离线时退回系统字体）。无需安装；Node 22 + Playwright（已预装于容器）仅用于构建与截图验证 |
 | 构建 | `node src/build.js`（写 `concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=<path> node src/build.js`（并行开发用，不写共享文件） |
@@ -31,25 +31,23 @@
 | 状态 | 事项 |
 |---|---|
 | 已完成（有材料） | 附件语义抽取（`spec/extracts/*.md`）；共同状态清单 `spec/state-inventory.md` + 数据规格 `spec/ju-data.spec.md`；共享运行时 / 数据引擎 / 动效工具 / 评审面板 / 构建与截图工具；十套方向卡与差异矩阵 `spec/directions.md`；实现契约 `spec/concept-contract.md`（含试点经验 §10）；研究台账 `research/ledger.md` + `ledger.json`（94 例）+ 证据 `research/evidence/`；试点 C01 票据卷、C04 夜玻璃两套源文件及其自验证据 |
-| 进行中（后台） | 构建与评审工作流（`wf_e040b27e-e9f`）与主负责人修复轮（`wf_2df3dba6-cd1`，2026-10-11 19:5x → 10-12 01:5x UTC，20 个代理全部完成）均已结束：十套全部通过新评审代理的验证（§6.7）。02:0x UTC 主负责人自查发现「减少动态」下 5 套（C02 C05 C06 C08 C09）草稿撤销条消失（`tools/test/rm-undo-sweep.cjs` 对照：关闭减少动态时十套都正常）；根因是共享定时器 `after()` 在减少动态下缩为 0ms。已在核心加 `hold()`（真实时间窗口，契约 §11），并启动定向收尾工作流 `wf_a11e059b-919`：十套各自把 toast / 撤销 / 倒计时 / 复制反馈改用 `hold()`，C04 修「成局后出票前闪现成品通行证」，C06 修展开视图局名被截断；每套一个新的聚焦验证代理（`evidence/CNN/final.md`、`final-verify.md`） |
+| 进行中（后台） | **无**。全部工作流已结束：构建与评审 `wf_e040b27e-e9f`、主负责人修复轮 `wf_2df3dba6-cd1`、定向收尾 `wf_a11e059b-919`（2026-10-12 02:0x–03:xx UTC，20 个代理全部完成；8 套通过，C01 / C07 各有 1 个新 major：删除 → 撤销 → 再删同一条时第一次的撤销定时器提前关闭第二次窗口）。主负责人随后在核心加入 `holdKey / cancelKey / cancelTimer`（契约 §11），并亲自修改 C01 C02 C03 C05 C06 C07 C08 C09 C10 的撤销 / toast / 复制定时器，用回归脚本验证（§6.8）。 |
 | 受阻 / 失败 | 无硬性阻塞。已知限制：设计画布（claude.ai）无法在容器内渲染，只能用独立画布做截图验证；容器评审画布无 GPU（SwiftShader），性能不代表真机；Dribbble 页面可截图但部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
-| 未开始 | 十套全部通过评审后的主负责人复审；把十套画板发布到 Design 画布；附录（差异矩阵 / 动效分段汇总 / 覆盖矩阵 / 限制）；最终独立画布构建与推送；最终答复 |
+| 未开始 / 待用户 | **用户审阅**（十套均未经用户看过）；按用户反馈选择方向后进入下一轮深化 |
 
 ### 0.3 当前具体位置
-- 已有可操作方案：C01（`concepts/src/C01.dc.html`，{{SIZES}} 内见大小）与 C04；两者在主负责人补丁后的核心上重新跑过 `tools/coverage.cjs`：50/50 状态可到达、0 错误（主负责人于 2026-10-11 00:2x UTC 实跑，`evidence/C01/coverage-v2/`、`evidence/C04/coverage-v2/`）。主负责人**只亲眼看过**两套的参加者 / 局主首屏四张图（`evidence/C0x/joined-home.png`、`hosted-home.png`）；其余截图与动效帧为试点代理自报，尚未复核。
-- 其余八套：源文件已由工作流建成（C02 180 KB、C03 168 KB、C05 157 KB、C06 176 KB、C07 175 KB、C08 162 KB、C09 159 KB、C10 166 KB，均为代理自报已自验 50/50 状态），评审与修复进行中。主负责人于 05:2x UTC 看过十套的参加者 / 局主首屏（§3 各节「主负责人观察」），尚未看其余截图。
-- 用户**尚未审阅任何一套**。Design 画布自 05:3x UTC（版本 4）起包含 Main + 十套画板（评审修复后会重发）。
+- 十套方案全部建成、经两轮独立评审、一轮主负责人修复轮（含新评审代理逐条验证）、一轮定向收尾，以及主负责人亲自的定时器修复与回归（§6.6–§6.8）。十套都已发布到 Design 画布（版本 7）并打包进独立画布 `JU-My-Ju-Fable51-10-Concepts.html`。
+- 每套的规格与核心动效分段：`spec/motion/CNN.md`（汇总 `spec/motion-specs.md`）；状态覆盖：`spec/coverage.md`（10 × 50 全部可到达，0 错误）；参考映射：`spec/concept-refs.md`；主负责人复审：`spec/lead-review.md`；各轮报告：`evidence/CNN/review-1.md`、`review-2.md`、`fix-r1.md`、`verify-r1.md`、`final.md`、`final-verify.md`。
+- 用户**尚未审阅任何一套**；本文所有「通过」都是代理评审或主负责人判断，不是用户验收。
 
 ### 0.4 当前最重要的问题
-1. 十套的视觉质量是否达到用户要求，目前只有代理自验与主负责人对首屏的初步观察；需要主负责人逐套看详情、管理页、打印 / 撕票 / 燃烧帧序列。
-2. 并行构建对共享核心的依赖：若评审 / 修复阶段再改 `src/core/*`，需要对十套重跑 coverage。
-3. Design 画布尚未承载十套；发布需要在全部构建后进行（每套一个画板，`concepts/project/CNN.dc.html` + `canvas.json`）。
+1. 视觉验收只能由用户做：目前没有任何一套得到用户认可或否定。
+2. 所有动效只在无头 Chromium（无 GPU）中看过；真机流畅度与触控手感未验证。
+3. 各套仍有若干 minor（§6.8 末尾），以及主负责人记下的 C02 空态构图偏空。
 
 ### 0.5 下一个应执行的具体动作
-1. 等待工作流 `wf_e040b27e-e9f` 完成；读取其返回（每套的 missing / reviews / blockers），对未通过的方案按评审报告安排修复。
-2. 主负责人逐套打开 `evidence/CNN/` 的 sheet.png 复核（至少：两张首屏、detail、manage、print / tear / burn 帧），并用 `tools/capture.cjs` 自行抽查两条流程；记录结论到本文 §7。
-3. `node src/build.js` 生成最终独立画布；把 `concepts/project/C01–C10.dc.html` 与更新后的 `canvas.json` 发布到 Design 画布；在独立画布附录中嵌入 `spec/directions.md`、`spec/motion-specs.md`、`spec/coverage.md`、`research/ledger.md`、`spec/limits.md`。
-4. 提交并推送；最终答复先给画布链接，再按套说明核心差异与最值得体验的动作。
+1. 等用户在画布里操作十套并给出反馈；把反馈逐条写入 §1.2 / §1.3（附画板与状态）。
+2. 按用户选定的方向，读该套的 `final-verify.md` 与 `spec/motion/CNN.md`，进入下一轮深化；每次修改后跑 §7 末尾的回归序列。
 
 ---
 
@@ -335,15 +333,27 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 
 主负责人复审（`spec/lead-review.md`）中的「管理页结构雷同」一行，各套在本轮重做了申请审核的构图（例：C01 双联齿孔申请单撕券 + 盖章、C02 ARRIVALS 翻牌板 + 拨杆、C03 来稿夹 + 批注栏、C07 申请格阵、C08 申请挂在时间尺上、C09 贴纸纸、C10 接触印样圈选）。**主负责人 2026-10-12 02:1x UTC 逐张看过十套修复后的 `manage.png` 与 `joined-home.png`（并排拼图）核实**：十套申请审核的构图与「邀请 / 谢绝」动作形态各不相同（C04 玻璃滑块、C05 剪刀 / 线、C06 夹板 + 橡皮章也已重做）；首屏上 C02 局名两行不再截断、C04 列表让出底栏、C09 标题不再碎裂、C10 显示帧计数与下一帧露边。C07 次级格仍偏卡片化（minor 级，未再提）。
 
+### 6.8 最终回归（主负责人亲自运行，2026-10-12 03:xx UTC，提交 `6013a1e` + C08 修复）
+| 检查 | 方法 | 结果 |
+|---|---|---|
+| 全部状态可到达 | `tools/coverage-matrix.cjs`（10 × 50） | 十套 50/50，0 页面 / 控制台错误（C08 修复后单独重跑 50/50，0 错误）；`spec/coverage.md` |
+| 减少动态下草稿撤销 | `tools/test/rm-undo-sweep.cjs`（对照 `rm-undo-sweep-ctl.cjs`） | 十套删除后 800ms 撤销条仍在（修复前 C02 C05 C06 C08 C09 失败） |
+| 删除 → 撤销 → 再删同一条 | `tools/test/timer-regress.cjs`（常规与减少动态各一次） | 十套在第一次删除 ≈11.7s 后撤销仍在、可恢复（修复前 C01 C07 失败） |
+| 连续两次复制 | `tools/test/copy-regress.cjs` | 十套第二次复制后 1.6s「已复制」仍在（修复前 C08 失败；C01 C07 C10 由验证代理报告，修复后通过） |
+| 独立画布 | `tools/test/standalone.cjs` | 总览 10 卡 / 20 预览、方案视图 + 面板、对比、附录；0 错误 |
+| 十套关键状态并排 | 主负责人看 `evidence/CNN/coverage-matrix/` 拼图：改期答复、局主取消、完全空、长标题、出席记录 | 均有完整构图；旧 / 新票关系与残余形态各自成立；C02 空态构图偏空（仅一行翻牌标题 + 说明，minor，未修） |
+
+各套仍开的 minor（不阻塞）见 `evidence/CNN/final-verify.md`（C01 6 项 O1–O6，C02 5 项，C03 1 项，C04 2 项，C05 2 项，C06 5 项，C07 3 项，C08 5 项，C09 5 项，C10 4 项）。这些都是代理评审的结论，主负责人未逐项复核。
+
 ## 7. 下一步（优先级最高的五项）
 
-1. **拿到评审结果并修复**（目标：十套每套至少一轮独立评审，blocker 清零；评审之后再跑一轮「评审 + 主负责人复审（`spec/lead-review.md`）」合并修复）。读 / 改：工作流返回、`evidence/CNN/review-N.md`、`concepts/src/CNN.dc.html`。依赖：`wf_e040b27e-e9f`。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 coverage）、`spec/state-inventory.md` 的语义规则。完成标准：十套 `tools/coverage.cjs` 50/50 且 0 错误；评审报告无 blocker。回归：全部十套 coverage。
-2. **主负责人逐套复核视觉与动效**（目标：每套看两张首屏 + detail + manage + print/tear/burn 三组帧 + 一条自抽查流程）。读：`evidence/CNN/*/sheet.png`；改：`JU-MY-JU-PROJECT-RECORD.md` §3/§6。完成标准：每套在 §3 有「主负责人观察」与问题清单；发现的 blocker 转修复。
-3. **发布与附录**（目标：Design 画布十个画板 + 独立画布附录齐全）。读 / 改：`concepts/project/*`、`canvas.json`、`spec/motion-specs.md`（汇总 `spec/motion/*.md`）、`spec/coverage.md`（清单 × 十套）、`spec/limits.md`、`src/build.js` 附录映射。不可改：画布 URL；`Main.dc.html` 以外的画板文件名。完成标准：画布可见十个画板；独立画布附录四个标签有内容。回归：`tools/test/standalone.cjs` 通过。
-4. **修复试点已知问题**（§6.3 #1–#3）。完成标准：对应 capture 序列显示修复后状态。
-5. **最终提交与答复**（目标：推送 `{{BRANCH}}`；答复先给画布链接，再按套说明差异与最值得体验的动作；附录链接）。不可改：不创建 PR（用户未要求）。完成标准：远端 HEAD 包含全部交付；本文 §0 更新为最终状态。
+1. **用户审阅十套并选方向**（目标：用户在 Design 画布或独立画布里实际操作十套，指出认可 / 否定的方向与局部）。读：画布、`spec/directions.md`、`spec/lead-review.md`。不可改：在用户反馈前不要冻结任何一套为最终方案，也不要删除任何一套。完成标准：§1.2 / §1.3 有用户原话与对应画板。
+2. **按用户选择深化**（目标：被选中的 1–3 个方向进入下一轮：补足真机体验、动效精修、各套 `final-verify.md` 的 minor）。读 / 改：`concepts/src/CNN.dc.html`、`spec/motion/CNN.md`、`evidence/CNN/final-verify.md`。依赖：第 1 项。不可改：`src/core/*` 的 API 形状（改了要对十套重跑 `tools/coverage-matrix.cjs` 与 `tools/test/*regress*.cjs`）；被用户认可的局部。完成标准：评审 0 blocker / 0 major，回归脚本全过。
+3. **真机 / 桌面浏览器复看长动效**（打印 / 撕票 / 燃烧 / 碎裂 / 翻页），记录帧率与触控手感；容器内只做过无头 Chromium。
+4. **补研究缺口**（可选）：用户点名的 A Magazine Curated By 两期与 Yohji Yamamoto 系列页尚未作为独立案例立案（§2.1）。
+5. **C02 空态构图**等 minor 的统一清理（按第 2 项选中的方向优先）。
 
----
+回归检查（任何修改后）：`node src/build.js` → `node tools/coverage-matrix.cjs` → `node tools/test/rm-undo-sweep.cjs` → `node tools/test/timer-regress.cjs` → `node tools/test/copy-regress.cjs` → `node tools/test/standalone.cjs`。
 
 ## 8. 辅助文件索引
 | 文件 | 内容 | 与当前实现的关系 |
