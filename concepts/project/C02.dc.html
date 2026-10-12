@@ -297,7 +297,9 @@ body{margin:0}
 .c02-undo{position:absolute;left:12px;right:12px;bottom:92px;z-index:31;display:flex;align-items:center;gap:12px;padding:10px 12px 10px 14px;border-radius:5px;background:linear-gradient(#2a2e34,#1c1f24);box-shadow:0 0 0 1px rgba(255,255,255,.1),0 14px 28px -12px rgba(0,0,0,.9);transform:translateY(16px);opacity:0;transition:transform calc(260ms * var(--k,1)) var(--ease),opacity calc(200ms * var(--k,1))}
 .c02-undo.in{transform:none;opacity:1}
 .c02-undo .t{flex:1 1 auto;font-size:13px;color:var(--paint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c02-undo .bar{position:absolute;left:0;bottom:0;height:2px;background:var(--amber);animation:c02-undobar calc(10000ms * var(--k,1)) linear both}
+.c02-undo .bar{position:absolute;left:0;bottom:0;height:2px;background:var(--amber);animation:c02-undobar calc(10000ms * var(--kt,1)) linear both}
+/* the bar is the undo window's clock, not decoration: it runs on --kt (speed only, like hold()) and keeps its real 10s under reduced motion */
+.rm .c02-undo .bar{animation-duration:calc(10000ms * var(--kt,1))!important}
 @keyframes c02-undobar{0%{width:100%}100%{width:0}}
 .c02-fault{display:flex;align-items:center;gap:10px;margin:10px 0 0;padding:10px 12px;border-radius:4px;background:#2a1511;box-shadow:0 0 0 1px rgba(255,90,60,.5);font-size:12.5px;color:#ffb3a3}
 .c02-fault .lamp{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 8px var(--red);flex:0 0 auto}
@@ -780,7 +782,7 @@ body{margin:0}
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone">
-    <div class="app{{panel.rootCls}}{{appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}">
+    <div class="app{{panel.rootCls}}{{appCls}}" style="--k:{{panel.k}};--kt:{{kt}};--frame:{{panel.frame}}" ref="{{rootRef}}">
       <div class="c02-board">
         <header class="c02-head">
           <div class="c02-h1">
@@ -1780,7 +1782,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -1877,7 +1884,7 @@ class Component extends DCLogic {
     for (let i = 0; i < n; i++) { const ch = text[i] || ''; const pv = fl ? (from[i] || '') : ch; const probe = ch || pv; const pn = /[，、。：；！？]/.test(probe); const gap = probe === ' '; const nar = (c) => c === ' ' || c === ':' || c === '·' || /[，、。：；！？]/.test(c); const pvx = fl && ch && pv && nar(ch) && !nar(pv) ? '' : pv; /* a narrow cell never shows half of the old full-width glyph mid-flip */ const zh = !pn && /[^\x00-\x7f]/.test(probe); const sp = gap || pn || probe === ':' || probe === '·'; out.push({ ch: ch === ' ' ? '' : ch, pv: pvx === ' ' ? '' : pvx, cls: (zh ? 'zh ' : '') + (sp ? 'sp ' : '') + (gap ? 'gap ' : '') + (pn ? 'pn ' : '') + (fl ? 'flip' : ''), i }); }
     return out;
   }
-  toast(text) { this.setState({ toast: text, toastOn: true }); this.after(2600, () => { if (this.state.toast === text) this.setState({ toastOn: false }); }); }
+  toast(text) { this.setState({ toast: text, toastOn: true }); /* real-time reading window: hold(), so it stays 2.6s under reduced motion too */ this.holdKey('toast', 2600, () => { if (this.state.toast === text) this.setState({ toastOn: false }); }); }
   /* every state change goes through JU.engine; `run` adds processing / failure / retry around it */
   run(name, payload, done, opts) {
     opts = opts || {}; const key = opts.busy || name;
@@ -1894,9 +1901,9 @@ class Component extends DCLogic {
     this.setState({ busy: key, err: null }); this.after(opts.ms || 480, go);
   }
   faultAt(where) { const e = this.state.err; return e && e.where === where ? e : null; }
-  copy(text, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => { }); } catch (e) { } this.setState({ copied: key }); if (!this.state.detail) this.toast('微信号已复制'); /* in the ticket view the reader display answers instead (已复制 · COPIED), so nothing drops over the hero row */ this.after(2200, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copy(text, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => { }); } catch (e) { } this.setState({ copied: key }); if (!this.state.detail) this.toast('微信号已复制'); /* in the ticket view the reader display answers instead (已复制 · COPIED), so nothing drops over the hero row */ this.holdKey('copy', 2200, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   leftText(row) { return JU.fmt.left(Math.max(0, (row.left || 0) - this.state.tick * 1000)); }
-  startTick() { if (this._ticking) return; this._ticking = true; const step = () => { this._ticking = false; if (this.state.detail || this.state.manage || this.state.sheet) { return; } const j = JU.derive.joined(this.state.data); if (!(j.lead && j.lead.deadline) || this.state.role !== 'joined') return; this.setState(s => ({ tick: s.tick + 1 })); this._ticking = true; this.after(1000, step); }; this.after(1000, step); }
+  startTick() { if (this._ticking) return; this._ticking = true; const step = () => { this._ticking = false; if (this.state.detail || this.state.manage || this.state.sheet) { return; } const j = JU.derive.joined(this.state.data); if (!(j.lead && j.lead.deadline) || this.state.role !== 'joined') return; if ((j.lead.left || 0) - this.state.tick * 1000 <= 0) return; /* reached 00:00:00 — stop, nothing left to count */ this.setState(s => ({ tick: s.tick + 1 })); this._ticking = true; this.hold(1000, step); }; this.hold(1000, step); } /* the live 6h countdown is wall-clock time: hold() keeps one tick per second under reduced motion */
   /* ---------------------------------------------------------------- board (list) ---------------------------------------------------------------- */
   switchRole(role) {
     if (role === this.state.role || this.state.board) return;
@@ -2326,11 +2333,11 @@ class Component extends DCLogic {
       this.setState({ leaving: id });
       this.after(380, () => this.run('deleteDraft', { draftId: id }, (eff) => {
         this.setState({ leaving: null, undo: { id, title: eff.title, on: true } });
-        this.after(10000, () => { const u = this.state.undo; if (u && u.id === id) { const res = JU.engine.commitUndo(this.state.data); this.setState({ data: res.data, undo: null }); } });
+        this.holdKey('undo', 10000, () => { const u = this.state.undo; /* the 10s undo window is real time (hold), never collapsed by reduced motion */ if (u && u.id === id) { const res = JU.engine.commitUndo(this.state.data); this.setState({ data: res.data, undo: null }); } });
       }, { instant: true, where: 'list', fail: () => { this.setState({ leaving: null, entering: id }); this.after(460, () => { if (this.state.entering === id) this.setState({ entering: null }); }); } }));
     });
   }
-  undoDelete() { const u = this.state.undo; if (!u) return; this.run('undoDelete', {}, (eff) => { this.setState({ undo: null, entering: eff.draftId }); this.after(460, () => { if (this.state.entering === eff.draftId) this.setState({ entering: null }); }); }, { instant: true, where: 'list' }); }
+  undoDelete() { const u = this.state.undo; if (!u) return; this.run('undoDelete', {}, (eff) => { this.cancelKey('undo'); this.setState({ undo: null, entering: eff.draftId }); this.after(460, () => { if (this.state.entering === eff.draftId) this.setState({ entering: null }); }); }, { instant: true, where: 'list' }); }
   /* ---------------------------------------------------------------- sheet vals ---------------------------------------------------------------- */
   sheetVals() {
     const sh = this.state.sheet; if (!sh) return { on: false };
@@ -2401,7 +2408,7 @@ class Component extends DCLogic {
     this.lastMotion = this.lastMotion || { name: 'flap', fn: () => this.forceUpdate() };
     const det = this.detailVals(), man = this.manageVals();
     return {
-      panel, rootRef: this.rootRef, scrollRef: this.scrollRef, dbodyRef: this.dbodyRef, mscrollRef: this.mscrollRef, rulesRef: this.rulesRef,
+      panel, kt: s.review.speed === 0.5 ? 2 : 1 /* real-time CSS clock (undo bar): speed only, like hold() */, rootRef: this.rootRef, scrollRef: this.scrollRef, dbodyRef: this.dbodyRef, mscrollRef: this.mscrollRef, rulesRef: this.rulesRef,
       appCls: (s.compact ? ' compact' : '') + (s.blank === true ? ' blank' : ''), brandCaps: 'DEPARTURES · ' + (s.role === 'joined' ? '我参加的' : '我发起的'), clockCells: this.cells('clock', '15:00'), clockCaps: 'THU 12.17 · NOW',
       platesCls: plate === 'hosted' ? 'r' : 'l', jBadge: j.badge || false, hBadge: h.badge || false, toJoined: () => this.switchRole('joined'), toHosted: () => this.switchRole('hosted'),
       tabs: tabs.map(t => ({ label: t.label, n: t.n || false, cls: s.section === t.key ? 'on' : '', go: () => this.switchSection(t.key) })),

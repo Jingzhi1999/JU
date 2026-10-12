@@ -1961,7 +1961,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -2051,15 +2056,11 @@ class Component extends DCLogic {
   flush(sel) { const root = this.rootRef.current; const el = root && root.querySelector(sel); if (el) { void getComputedStyle(el).clipPath; void getComputedStyle(el).transform; void el.offsetWidth; } }
   W() { const r = this.rootRef.current; return r ? r.clientWidth : 390; }
   Hh() { const r = this.rootRef.current; return r ? r.clientHeight : 844; }
-  /* product timer: like after() (speed, pause, reset) but never shortened by reduced motion — only motion durations are */
-  keep(ms, fn) {
-    const r = this.state.review || {}; if (!r.rm) return this.after(ms, fn);
-    const self = this; const e = { fn, remaining: ms, id: null, due: 0 };
-    e.arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(t => t !== e); e.fn(); }, e.remaining); };
-    this._timers.push(e); if (!this._paused) e.arm(); return e;
-  }
+  /* timers (contract §11): this.after() = animation completion / sequencing (0 ms under 减少动态, so the result lands at once);
+     this.hold() (shared core) = a real-time window — toast, 已复制 dwell, the 10 s draft undo, a "show for N s" cue — same pause / reset /
+     0.5× behaviour as after(), but never collapsed by 减少动态 (it removes movement, not time) */
   /* the text stays in the pill until its fade has finished (no empty amber ghost) */
-  toast(text) { this.setState({ toast: text, toastText: text }); this.keep(2600, () => { if (this.state.toast === text) this.clearToast(); }); }
+  toast(text) { this.setState({ toast: text, toastText: text }); this.holdKey('toast', 2600, () => { if (this.state.toast === text) this.clearToast(); }); }
   clearToast() { if (!this.state.toast) return; this.setState({ toast: '' }); this.after(420, () => { if (!this.state.toast) this.setState({ toastText: '' }); }); }
   /* M4 return, step 0: rewind a scrolled pane body to the top (eased, ~160ms) so the hero is in the pane window before it flies home */
   rewind(sel, done) {
@@ -2255,7 +2256,7 @@ class Component extends DCLogic {
     });
   }
   acceptByButton() { const id = this.state.detail.id; this.run('acceptReschedule', { eventId: id }, (eff) => this.cutDrop(eff), { ms: 300 }); }
-  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.keep(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.holdKey('copy', 1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   markContacted() { const id = this.state.detail.id; this.run('markContacted', { eventId: id }, () => { this.setState({ fx: { settle: true } }); this.after(900, () => this.setState(s => (s.fx.settle ? { fx: {} } : {}))); }, { where: 'contact' }); }
   addNote() { const id = this.state.detail.id; const text = (this.state.note || '').trim(); if (!text) return; this.run('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, () => { this.setState({ note: '', fx: { newRecord: true } }); this.after(700, () => this.setState(s => (s.fx.newRecord ? { fx: {} } : {}))); }, { ms: 300, where: 'note' }); }
   openRules(readOnly) { this.setState({ rulesRead: false }); this.openSheet('rules', { readOnly: !!readOnly }); this.after(700, () => this.checkRulesEnd()); }
@@ -2303,8 +2304,8 @@ class Component extends DCLogic {
   }
   advanceApp(appId) {
     /* after the pencil mark has been drawn, move the loupe to the next applicant still waiting */
-    /* product dwell (keep): the in-place result stays readable before the light moves on, also under reduced motion */
-    this.keep(900, () => { const mg = this.state.manage; if (!mg || mg.focus !== appId) return; const m = JU.derive.manage(this.state.data, mg.id); const next = m && m.appsToShow.filter(a => !a.handled)[0]; if (next) this.focusApp(next.id); });
+    /* real-time dwell (hold): the in-place result stays readable before the light moves on, also under reduced motion */
+    this.hold(900, () => { const mg = this.state.manage; if (!mg || mg.focus !== appId) return; const m = JU.derive.manage(this.state.data, mg.id); const next = m && m.appsToShow.filter(a => !a.handled)[0]; if (next) this.focusApp(next.id); });
   }
   approve(appId) { const id = this.state.manage.id; this.run('approve', { eventId: id, appId }, () => { this.setState(s => ({ fx: { progSettle: true }, manage: s.manage && Object.assign({}, s.manage, { focus: appId, fresh: appId }) })); this.after(800, () => this.setState(s => (s.fx.progSettle ? { fx: {} } : {}))); this.advanceApp(appId); }, { busy: 'approve:' + appId, where: 'loupe' }); }
   reject(appId) { const id = this.state.manage.id; this.run('reject', { eventId: id, appId }, () => { this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { focus: appId, fresh: appId }) })); this.advanceApp(appId); }, { busy: 'reject:' + appId, where: 'loupe' }); }
@@ -2315,7 +2316,8 @@ class Component extends DCLogic {
       this.closeSheet(() => {
         this.setState(s => ({ manage: Object.assign({}, s.manage, { tab: 'replies', whenCls: 'reprint', oldShown: true, titleSettle: true }), fx: { progSettle: true } }));
         this.toast(eff.asked ? '已改时间 · 等 ' + eff.asked + ' 位成员答复' : '已改时间');
-        this.after(1800, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { whenCls: '', oldShown: false, titleSettle: false }), fx: {} })));
+        this.after(1800, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { whenCls: '', titleSettle: false }), fx: {} })));
+        this.hold(1800, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { oldShown: false }) })));
       });
     }, { where: 'sheet' });
   }
@@ -2329,7 +2331,7 @@ class Component extends DCLogic {
     this.after(3000, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { cstage: 'void', titleSettle: false }) })));
   }
   endEvent() { const id = this.state.manage.id; this.run('end', { eventId: id }, () => { this.closeSheet(() => { this.setState(s => ({ manage: Object.assign({}, s.manage, { tab: 'attendance', titleSettle: true }), fx: { progSettle: true } })); this.after(1000, () => this.setState(s => ({ manage: s.manage && Object.assign({}, s.manage, { titleSettle: false }), fx: {} }))); }); }, { where: 'sheet' }); }
-  attend(memberId, value) { const id = this.state.manage.id; this.run('attend', { eventId: id, memberId, value }, (eff) => { if (eff.type === 'noop') { this.setState({ attEdit: null }); return; } this.setState({ attEdit: null, attFresh: memberId, fx: { progSettle: true } }); this.after(800, () => this.setState(s => (s.fx.progSettle ? { fx: {} } : {}))); this.after(2500, () => { if (this.state.attFresh === memberId) this.setState({ attFresh: null }); }); }, { ms: 260, busy: 'att:' + memberId, where: 'att' }); }
+  attend(memberId, value) { const id = this.state.manage.id; this.run('attend', { eventId: id, memberId, value }, (eff) => { if (eff.type === 'noop') { this.setState({ attEdit: null }); return; } this.setState({ attEdit: null, attFresh: memberId, fx: { progSettle: true } }); this.after(800, () => this.setState(s => (s.fx.progSettle ? { fx: {} } : {}))); this.hold(2500, () => { if (this.state.attFresh === memberId) this.setState({ attFresh: null }); }); }, { ms: 260, busy: 'att:' + memberId, where: 'att' }); }
   /* ---------------------------------------------------------------- drafts ---------------------------------------------------------------- */
   deleteDraft(id) {
     if (this.state.leaving) return;
@@ -2337,7 +2339,7 @@ class Component extends DCLogic {
     this.after(430, () => this.run('deleteDraft', { draftId: id }, (eff) => {
       this.setState({ leaving: null, undo: { title: eff.title, draftId: id } });
       if (this._undoTimer) { this._timers = (this._timers || []).filter(t => t !== this._undoTimer); if (this._undoTimer.id) clearTimeout(this._undoTimer.id); }
-      this._undoTimer = this.keep(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
+      this._undoTimer = this.hold(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true }); });
     }, { instant: true, where: 'home', onError: () => this.setState({ leaving: null }) }));
   }
   undoDelete() {

@@ -1656,7 +1656,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -1779,14 +1784,9 @@ class Component extends DCLogic {
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
-  /* user-facing dwell times (undo window, receipt tongue, 已复制) are NOT shortened by 减少动态 — only animations are. Still scaled by 0.5× and held by 暂停 / the scrubber. */
-  hold(ms, fn) {
-    var self = this; var r = this.state.review || {}; var k = r.speed === 0.5 ? 2 : 1;
-    var e = { fn: fn, remaining: Math.round(ms * k), id: null, due: 0 };
-    var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
-    e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
-  }
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
+  /* timers: this.after() = animation completion (collapses to 0 under 减少动态, so results land at once); this.hold() (shared core, contract §11) =
+     real-time windows — undo 10 s, receipt toast, 已复制 — kept at full length under 减少动态, still 0.5×-stretched and held by 暂停 / the scrubber. */
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* a core motion completes on its own animationend; this guard only finishes it if that event was lost (it waits while the element still animates or is held by the scrubber) */
   guardAnim(find, done, ms) {
     var self = this; var tries = 0;
@@ -1953,12 +1953,12 @@ class Component extends DCLogic {
         self._leaving = null;
         self.setState({ leaving: null, undo: { draftId: id, title: eff.title, index: shown >= 0 ? shown : (eff.index || 0) } });
         if (self.state.view.name === 'draft') self.setState({ view: { name: 'list' } });
-        self.hold(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
+        self.holdKey('undo', 10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
       }, { ms: 60, failMsg: '没有删除成功，草稿还在。请重试。', fail: function () { self._leaving = null; self.setState({ leaving: null, entering: id }); self.after(460, function () { self.setState({ entering: null }); }); } });
       if (!ok) { self._leaving = null; self.setState({ leaving: null }); }
     });
   }
-  undoDelete() { var self = this; var u = this.state.undo; if (!u || this.state.busy || this._actTok) return; this.act('undoDelete', {}, function (eff) { self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(460, function () { self.setState({ entering: null }); }); self.after(2000, function () { self.setState({ landed: null }); }); }, { ms: 80, failMsg: '没有恢复成功，请重试。' }); }
+  undoDelete() { var self = this; var u = this.state.undo; if (!u || this.state.busy || this._actTok) return; this.act('undoDelete', {}, function (eff) { self.cancelKey('undo'); self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(460, function () { self.setState({ entering: null }); }); self.after(2000, function () { self.setState({ landed: null }); }); }, { ms: 80, failMsg: '没有恢复成功，请重试。' }); }
   /* ------------------------------------------------ list vals ------------------------------------------------ */
   listVals() {
     var self = this; var s = this.state; var joined = s.role === 'joined';
@@ -2124,7 +2124,7 @@ class Component extends DCLogic {
     var self = this; var id = this.state.view.id;
     this.act('addRecord', { eventId: id, kind: 'report', text: '你提交了一条举报 · 已受理' }, function (eff, data) { self.closeSlip(); var rr = JU.derive.rowById(data, id); self.patchView({ rcptFresh: true, note: '', who: {}, freshRec: ((rr && rr.records) || []).length - 1 }); }, { key: 'addRecord', ms: 420, where: 'slip', failMsg: '提交失败，内容已保留。请重试。' });
   }
-  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.hold(2200, function () { if (self.state.view.copied === wx) self.patchView({ copied: false }); }); }
+  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.holdKey('copy', 2200, function () { if (self.state.view.copied === wx) self.patchView({ copied: false }); }); }
   ticketModel(key, t, r) {
     var self = this; var e = r.event; var isOld = !!t.old; var rs = r.item.reschedule; var when = isOld ? (rs ? JU.fmt.when(rs.oldIso) : r.when) : (key === 'fresh' ? (rs ? JU.fmt.when(rs.newIso) : r.when) : r.when); var oldZh = rs ? JU.fmt.when(rs.oldIso).zh : '';
     var H = t.torn ? C01_TK_TORN_H : C01_TK_H; var p = t.torn ? 1 : (t.p || 0); var gap = t.torn ? 0 : p * 6;

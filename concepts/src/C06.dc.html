@@ -1242,7 +1242,7 @@ class Component extends DCLogic {
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* every state change goes through JU.engine: processing → result, or failure slip + retry */
   /* one write per key at a time: a second tap while the first is processing is ignored (no duplicate write, no fake "already handled" failure).
      opts.at = where a failure is shown ('' sheet edge · 'slip' inside the confirm layer · 'stub' on the ticket); opts.errMsg = the action's own copy;
@@ -1597,7 +1597,7 @@ class Component extends DCLogic {
       return { view: Object.assign({}, self.state.view, { was: r0, freeze: true }) };
     } });
   }
-  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.hold(2200, function () { self.patchView({ copied: false }); }); }
+  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.holdKey('copy', 2200, function () { self.patchView({ copied: false }); }); }
   ticketItem(key, t, r, tk) {
     var self = this; var e = r.event; var rs = r.item.reschedule; var isOld = key === 'old'; var when = isOld ? (rs ? JU.fmt.when(rs.oldIso) : r.when) : (key === 'fresh' ? (rs ? JU.fmt.when(rs.newIso) : r.when) : r.when);
     var interactive = !isOld && !t.torn && !t.falling && !t.rest && !t.burning && !t.burnt && !t.totray && tk.phase === 'ready' && !tk.snapshot;
@@ -1889,10 +1889,10 @@ class Component extends DCLogic {
       var res = JU.engine.deleteDraft(self.state.data, { draftId: id });
       if (res.effect && res.effect.type === 'error') { self.setState({ data: res.data, leaving: null, entering: id, lerr: { message: res.effect.message, retry: function () { self.setState({ lerr: null }); self.deleteDraft(id, h); } } }); self.after(480, function () { self.setState({ entering: null }); }); return; }
       self.setState({ data: res.data, leaving: null, undo: { draftId: id, title: res.effect.title } });
-      self.hold(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
+      self.holdKey('undo', 10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
     });
   }
-  undoDelete() { var self = this; var u = this.state.undo; if (!u) return; this.act('undoDelete', {}, function (eff) { self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(480, function () { self.setState({ entering: null }); }); self.after(1900, function () { self.setState({ landed: null }); }); }, { ms: 80 }); }
+  undoDelete() { var self = this; var u = this.state.undo; if (!u) return; this.act('undoDelete', {}, function (eff) { self.cancelKey('undo'); self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(480, function () { self.setState({ entering: null }); }); self.after(1900, function () { self.setState({ landed: null }); }); }, { ms: 80 }); }
   /* ------------------------------------------------ renderVals ------------------------------------------------ */
   renderVals() {
     var s = this.state; var self = this; var panel = this.panelVals(); panel.show = this.props.panel !== false;

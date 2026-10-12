@@ -1262,7 +1262,7 @@ class Component extends DCLogic {
     for (let i = 0; i < n; i++) { const ch = text[i] || ''; const pv = fl ? (from[i] || '') : ch; const probe = ch || pv; const pn = /[，、。：；！？]/.test(probe); const gap = probe === ' '; const nar = (c) => c === ' ' || c === ':' || c === '·' || /[，、。：；！？]/.test(c); const pvx = fl && ch && pv && nar(ch) && !nar(pv) ? '' : pv; /* a narrow cell never shows half of the old full-width glyph mid-flip */ const zh = !pn && /[^\x00-\x7f]/.test(probe); const sp = gap || pn || probe === ':' || probe === '·'; out.push({ ch: ch === ' ' ? '' : ch, pv: pvx === ' ' ? '' : pvx, cls: (zh ? 'zh ' : '') + (sp ? 'sp ' : '') + (gap ? 'gap ' : '') + (pn ? 'pn ' : '') + (fl ? 'flip' : ''), i }); }
     return out;
   }
-  toast(text) { this.setState({ toast: text, toastOn: true }); /* real-time reading window: hold(), so it stays 2.6s under reduced motion too */ this.hold(2600, () => { if (this.state.toast === text) this.setState({ toastOn: false }); }); }
+  toast(text) { this.setState({ toast: text, toastOn: true }); /* real-time reading window: hold(), so it stays 2.6s under reduced motion too */ this.holdKey('toast', 2600, () => { if (this.state.toast === text) this.setState({ toastOn: false }); }); }
   /* every state change goes through JU.engine; `run` adds processing / failure / retry around it */
   run(name, payload, done, opts) {
     opts = opts || {}; const key = opts.busy || name;
@@ -1279,7 +1279,7 @@ class Component extends DCLogic {
     this.setState({ busy: key, err: null }); this.after(opts.ms || 480, go);
   }
   faultAt(where) { const e = this.state.err; return e && e.where === where ? e : null; }
-  copy(text, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => { }); } catch (e) { } this.setState({ copied: key }); if (!this.state.detail) this.toast('微信号已复制'); /* in the ticket view the reader display answers instead (已复制 · COPIED), so nothing drops over the hero row */ this.hold(2200, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copy(text, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).catch(() => { }); } catch (e) { } this.setState({ copied: key }); if (!this.state.detail) this.toast('微信号已复制'); /* in the ticket view the reader display answers instead (已复制 · COPIED), so nothing drops over the hero row */ this.holdKey('copy', 2200, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   leftText(row) { return JU.fmt.left(Math.max(0, (row.left || 0) - this.state.tick * 1000)); }
   startTick() { if (this._ticking) return; this._ticking = true; const step = () => { this._ticking = false; if (this.state.detail || this.state.manage || this.state.sheet) { return; } const j = JU.derive.joined(this.state.data); if (!(j.lead && j.lead.deadline) || this.state.role !== 'joined') return; if ((j.lead.left || 0) - this.state.tick * 1000 <= 0) return; /* reached 00:00:00 — stop, nothing left to count */ this.setState(s => ({ tick: s.tick + 1 })); this._ticking = true; this.hold(1000, step); }; this.hold(1000, step); } /* the live 6h countdown is wall-clock time: hold() keeps one tick per second under reduced motion */
   /* ---------------------------------------------------------------- board (list) ---------------------------------------------------------------- */
@@ -1711,11 +1711,11 @@ class Component extends DCLogic {
       this.setState({ leaving: id });
       this.after(380, () => this.run('deleteDraft', { draftId: id }, (eff) => {
         this.setState({ leaving: null, undo: { id, title: eff.title, on: true } });
-        this.hold(10000, () => { const u = this.state.undo; /* the 10s undo window is real time (hold), never collapsed by reduced motion */ if (u && u.id === id) { const res = JU.engine.commitUndo(this.state.data); this.setState({ data: res.data, undo: null }); } });
+        this.holdKey('undo', 10000, () => { const u = this.state.undo; /* the 10s undo window is real time (hold), never collapsed by reduced motion */ if (u && u.id === id) { const res = JU.engine.commitUndo(this.state.data); this.setState({ data: res.data, undo: null }); } });
       }, { instant: true, where: 'list', fail: () => { this.setState({ leaving: null, entering: id }); this.after(460, () => { if (this.state.entering === id) this.setState({ entering: null }); }); } }));
     });
   }
-  undoDelete() { const u = this.state.undo; if (!u) return; this.run('undoDelete', {}, (eff) => { this.setState({ undo: null, entering: eff.draftId }); this.after(460, () => { if (this.state.entering === eff.draftId) this.setState({ entering: null }); }); }, { instant: true, where: 'list' }); }
+  undoDelete() { const u = this.state.undo; if (!u) return; this.run('undoDelete', {}, (eff) => { this.cancelKey('undo'); this.setState({ undo: null, entering: eff.draftId }); this.after(460, () => { if (this.state.entering === eff.draftId) this.setState({ entering: null }); }); }, { instant: true, where: 'list' }); }
   /* ---------------------------------------------------------------- sheet vals ---------------------------------------------------------------- */
   sheetVals() {
     const sh = this.state.sheet; if (!sh) return { on: false };

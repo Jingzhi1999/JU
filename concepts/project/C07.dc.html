@@ -1669,7 +1669,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -1882,9 +1887,9 @@ class Component extends DCLogic {
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
   patchSheet(patch) { this.setState(function (s) { return s.sheet ? { sheet: Object.assign({}, s.sheet, patch) } : {}; }); }
   setPass(key, patch) { this.setState(function (s) { var v = s.view; if (!v.passes || !v.passes[key]) return {}; var passes = Object.assign({}, v.passes); passes[key] = Object.assign({}, passes[key], patch); return { view: Object.assign({}, v, { passes: passes }) }; }); }
-  /* semantic durations (undo window, toast, 已复制) keep their real length under 减少动态; speed and pause still apply (core after() scales rm to 0) */
-  afterReal(ms, fn) { var r = this.state.review || {}; if (!r.rm) return this.after(ms, fn); var self = this; var e = { fn: fn, remaining: Math.round(ms * (r.speed === 0.5 ? 2 : 1)), id: null, due: 0 }; e.arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); }; this._timers.push(e); if (!this._paused) e.arm(); return e; }
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.afterReal(2600, function () { self.setState(function (s) { return s.toast.text === text ? { toast: { text: text, on: false } } : {}; }); }); }
+  /* real-time windows (toast, 10 s draft undo, 已复制) use the core hold(): real length under 减少动态, still paused / reset / stretched at 0.5×.
+     after() stays for animation-completion settles, which collapse to 0 under 减少动态 so the result appears at once. */
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast.text === text ? { toast: { text: text, on: false } } : {}; }); }); }
   /* every write goes through JU.engine: processing → result | failure + retry (in place, keyed) */
   act(fn, payload, key, done, ms, onErr) {
     var self = this; this.setState({ busy: { key: key, fn: fn }, err: null });
@@ -1898,7 +1903,7 @@ class Component extends DCLogic {
   errFor(key) { var e = this.state.err; return e && e.key === key ? { on: true, message: e.message, retry: e.retry, title: '没有保存成功' } : { on: false }; }
   busyFor(key, fn) { var b = this.state.busy; if (!b || b.key !== key) return ''; return b.fn === fn ? 'busy' : 'dim'; }
   busyIs(key) { return this.state.busy && this.state.busy.key === key ? 'busy' : ''; }
-  copy(text, key) { var self = this; try { if (navigator.clipboard) { var pr = navigator.clipboard.writeText(text); if (pr && pr.catch) pr.catch(function () { }); } } catch (e) { } this.setState({ copied: key }); this.say('微信号已复制'); this.afterReal(2600, function () { self.setState(function (s) { return s.copied === key ? { copied: null } : {}; }); }); }
+  copy(text, key) { var self = this; try { if (navigator.clipboard) { var pr = navigator.clipboard.writeText(text); if (pr && pr.catch) pr.catch(function () { }); } } catch (e) { } this.setState({ copied: key }); this.say('微信号已复制'); this.holdKey('copy', 2600, function () { self.setState(function (s) { return s.copied === key ? { copied: null } : {}; }); }); }
   locate(id) {
     var s = this.state;
     if (s.role === 'joined') { var j = JU.derive.joined(s.data); if (j.current.some(function (r) { return r.id === id; })) return 'current'; if (j.history.some(function (r) { return r.id === id; })) return 'history'; return null; }
@@ -2132,10 +2137,10 @@ class Component extends DCLogic {
     this.act('deleteDraft', { draftId: id }, fromOver ? 'sheet' : 'global', function (eff) {
       self.setState({ undo: { id: id, title: eff.title, at: Date.now() }, tight: true }); self.after(700, function () { self.setState({ tight: false }); });
       if (fromOver) { self.setState(function (s) { return { frozen: null }; }); self.patchView({ phase: 'out', gone: true }); self.after(400, function () { self.setState({ view: { name: 'list' }, frozen: null }); }); }
-      self.afterReal(10000, function () { if (self.state.undo && self.state.undo.id === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
+      self.holdKey('undo', 10000, function () { if (self.state.undo && self.state.undo.id === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
     }, 260);
   }
-  undoDelete() { var self = this; var r = JU.engine.undoDelete(this.state.data); if (r.effect.type === 'error') { this.say(r.effect.message); return; } this.setState({ data: r.data, undo: null, landed: r.effect.draftId, tight: true }); this.after(700, function () { self.setState({ tight: false }); }); this.after(1600, function () { self.setState({ landed: null }); }); }
+  undoDelete() { var self = this; var r = JU.engine.undoDelete(this.state.data); if (r.effect.type === 'error') { this.say(r.effect.message); return; } this.cancelKey('undo'); this.setState({ data: r.data, undo: null, landed: r.effect.draftId, tight: true }); this.after(700, function () { self.setState({ tight: false }); }); this.after(1600, function () { self.setState({ landed: null }); }); }
   /* ================================================ view models ================================================ */
   seatsCls(seats) { return seats.map(function (x) { return x.kind === 'host' ? 'host' : x.kind === 'ok' ? 'ok' : x.kind === 'res' ? 'res' : ''; }); }
   joinedTile(r, size, lead) {

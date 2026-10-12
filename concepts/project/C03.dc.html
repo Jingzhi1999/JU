@@ -549,6 +549,9 @@ body{margin:0}
 .c03-strip .c03-tk{width:334px;height:94px;grid-column:1 / -1}
 /* the 编辑部 strip paints only inside its own box: scorch / rough filter regions can never leave a residue on the lines above it (fix-r1) */
 .c03-tk.c03-stk{contain:paint}
+/* …so its text must fit the 96px box: place and status line stay on one line (the full place is printed in the meta line right above),
+   keeping 「查看局卡 ›」 inside the strip for long addresses; the burn geometry stays the 334×96 it was drawn for (final pass) */
+.c03-stk .c03-splace,.c03-stk .c03-sline{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @keyframes c03-pen{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
 @keyframes c03-settle{0%{transform:translateY(5px);opacity:.25}100%{transform:translateY(0);opacity:1}}
 .c03-settle{animation:c03-settle calc(280ms * var(--k,1)) ease both}
@@ -1637,7 +1640,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -1755,7 +1763,9 @@ class Component extends DCLogic {
   /* ------------------------------------------------ helpers ------------------------------------------------ */
   root() { return this.rootRef.current; }
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
-  say(text, extra) { var self = this; var t = Object.assign({ text: text, on: true, time: '' }, extra || {}); this.setState({ toast: t }); if (!t.sticky) this.after(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
+  /* timers (contract §11): after() settles an animation and drops to 0 under 减少动态; hold() is a real-time window
+     (toast, 10 s undo, 「已复制」, the 2 s landing bookmark) and keeps its full length under 减少动态 */
+  say(text, extra) { var self = this; var t = Object.assign({ text: text, on: true, time: '' }, extra || {}); this.setState({ toast: t }); if (!t.sticky) this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* every write goes through JU.engine: processing → result, or failure + retry at the place it happened */
   act(fn, payload, done, opts) {
     var self = this; opts = opts || {};
@@ -1831,7 +1841,7 @@ class Component extends DCLogic {
       var k = rv.speed === 0.5 ? 2 : 1; var frac = Math.min(1, Math.max(0, (Date.now() - this._turnAt) / (900 * k))); if (frac > .97) return;
       var id0 = v.id; this.setState({ view: Object.assign({}, v, { phase: 'out', rev: +(1 - frac).toFixed(3) }), mark: null, landed: id0 });
       this.after(Math.round(frac * 900) + 20, function () { self.setState(function (s) { return s.view.phase === 'out' && s.view.id === id0 ? { view: { name: 'list' } } : {}; }); });
-      this.after(2000, function () { self.setState(function (s) { return s.landed === id0 ? { landed: null } : {}; }); });
+      this.hold(2000, function () { self.setState(function (s) { return s.landed === id0 ? { landed: null } : {}; }); });
       return;
     }
     var id = v.id; var rmNow = !!(this.state.review || {}).rm;
@@ -1846,7 +1856,7 @@ class Component extends DCLogic {
         self.patchView({ phase: 'out' }); self.setState({ landed: id, mark: null });
         self.after(820, function () { self.setState({ view: { name: 'list' } }); var p = self.pgRefs[0].current; self.setState({ sy: p ? p.scrollTop : 0 }); });
       }
-      self.after(2000, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); });
+      self.hold(2000, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); });
     });
   }
   /* switch the contents to the section the row lives in now (remembering the scroll of the section it leaves) */
@@ -1861,7 +1871,7 @@ class Component extends DCLogic {
     if (moved || !inView) pg.scrollTop = Math.max(0, Math.round(top - (pg.clientHeight - h) / 2));
   }
   /* the write landed after the page had already been closed: follow the row to its new section and bookmark it there */
-  landLater(id, data) { var self = this; var moved = this.landSection(id, data); this.after(30, function () { self.revealRow(id, moved); var p = self.pgRefs[0].current; self.setState({ landed: id, sy: p ? p.scrollTop : 0 }); }); this.after(2030, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); }); }
+  landLater(id, data) { var self = this; var moved = this.landSection(id, data); this.after(30, function () { self.revealRow(id, moved); var p = self.pgRefs[0].current; self.setState({ landed: id, sy: p ? p.scrollTop : 0 }); }); this.hold(2030, function () { self.setState(function (s) { return s.landed === id ? { landed: null } : {}; }); }); }
   /* applyJump: every JU.INDEX surface maps straight onto a view, shown instantly */
   applyJump(e) {
     var o = e.open;
@@ -1953,7 +1963,7 @@ class Component extends DCLogic {
   }
   leaveQueueNow(id) { var self = this; this.act('leaveWaitlist', { eventId: id }, function () { }, { key: 'leave' }); }
   contactedNow(id) { var self = this; this.act('markContacted', { eventId: id }, function () { self.closeSheet(); }, { key: 'contacted', ms: 320 }); }
-  copyWx(wx) { var self = this; try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.setState({ copied: true }); this.say('微信号已复制'); this.after(2600, function () { self.setState({ copied: false }); }); }
+  copyWx(wx) { var self = this; try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.setState({ copied: true }); this.say('微信号已复制'); this.holdKey('copy', 2600, function () { self.setState({ copied: false }); }); }
   addNote(id) { var self = this; var text = (this.state.noteVal || '').trim(); if (text.length < 4) return; this.act('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, function () { self.setState({ noteVal: '' }); }, { key: 'note', ms: 240 }); }
   submitReport(id) { var self = this; var sh = this.state.sheet; if (!sh) return; var who = Object.keys(sh.who).filter(function (k) { return sh.who[k]; }); var text = '局内记录：' + sh.text.trim() + (who.length ? ' · 涉及 ' + who.join('、') : ''); this.act('addRecord', { eventId: id, kind: 'report', text: text }, function () { self.patchSheet({ done: true }); }, { key: 'report', ms: 420 }); }
   /* ------------------------------------------------ host writes ------------------------------------------------ */
@@ -1969,10 +1979,10 @@ class Component extends DCLogic {
     /* the row's words fade first (120ms), then its height closes (260ms); the row stays collapsed until the write lands */
     var self = this; this.setState({ leaving: id, leavePhase: 'fade', rowH: Math.round(h || 160) });
     this.after(130, function () { self.setState(function (s) { return s.leaving === id ? { leavePhase: 'collapse' } : {}; }); });
-    this.after(420, function () { self.act('deleteDraft', { draftId: id }, function (eff) { self.setState({ leaving: null, leavePhase: null }); self.say('已删除「' + eff.title + '」', { hasUndo: true, sticky: true, undo: function () { self.undoDelete(); } }); self.after(10000, function () { var t = self.state.toast; if (t && t.hasUndo && t.on) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, toast: Object.assign({}, t, { on: false }) }); } }); }, { ms: 60, key: 'delete', fail: function () { self.setState({ leaving: null, leavePhase: null }); } }); });
+    this.after(420, function () { self.act('deleteDraft', { draftId: id }, function (eff) { self.setState({ leaving: null, leavePhase: null }); self.say('已删除「' + eff.title + '」', { hasUndo: true, sticky: true, undo: function () { self.undoDelete(); } }); self.holdKey('undo', 10000, function () { var t = self.state.toast; if (t && t.hasUndo && t.on) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, toast: Object.assign({}, t, { on: false }) }); } }); }, { ms: 60, key: 'delete', fail: function () { self.setState({ leaving: null, leavePhase: null }); } }); });
   }
   /* undo: the bar fades out with its words still on it, and is cleared only after it has gone */
-  undoDelete() { var self = this; this.act('undoDelete', {}, function (eff) { self.setState(function (s) { return { toast: s.toast ? Object.assign({}, s.toast, { on: false }) : null, entering: eff.draftId, landed: eff.draftId }; }); self.after(300, function () { self.setState(function (s) { return s.toast && !s.toast.on ? { toast: null } : {}; }); }); self.after(460, function () { self.setState({ entering: null }); }); self.after(2000, function () { self.setState({ landed: null }); }); }, { ms: 80, key: 'undo' }); }
+  undoDelete() { var self = this; this.act('undoDelete', {}, function (eff) { self.cancelKey('undo'); self.setState(function (s) { return { toast: s.toast ? Object.assign({}, s.toast, { on: false }) : null, entering: eff.draftId, landed: eff.draftId }; }); self.after(300, function () { self.setState(function (s) { return s.toast && !s.toast.on ? { toast: null } : {}; }); }); self.after(460, function () { self.setState({ entering: null }); }); self.hold(2000, function () { self.setState({ landed: null }); }); }, { ms: 80, key: 'undo' }); }
   /* ------------------------------------------------ scroll (M3) ------------------------------------------------ */
   onPgScroll(ev) { var self = this; var y = ev.currentTarget.scrollTop; if (this._raf) return; this._raf = requestAnimationFrame(function () { self._raf = null; self.setState({ sy: y }); }); }
   onSpScroll(ev) { var self = this; var el = ev.currentTarget; if (this._raf2) return; this._raf2 = requestAnimationFrame(function () { self._raf2 = null; var y = el.scrollTop; var patch = { spy: y };

@@ -1294,7 +1294,7 @@ body{margin:0}
                 <sc-if value="{{D.agree}}" hint-placeholder-val="{{false}}">
                   <div class="sec"><div class="sec-h"><span class="caps">AGREEMENT</span><span class="zh">这一步的约定</span><span class="note">{{D.agree.note}}</span></div>
                     <div class="agree g"><sc-for list="{{D.agree.rows}}" as="ag" hint-placeholder-count="3"><div class="ag {{ag.cls}}"><span class="caps">{{ag.en}}<b>{{ag.zh}}</b></span><div><div class="h">{{ag.head}}</div><div class="b">{{ag.body}}</div></div></div></sc-for></div>
-                    <sc-if value="{{D.agreeLink}}" hint-placeholder-val="{{false}}"><div class="agl"><button type="button" class="weak" data-act="rules" onClick="{{D.agreeLink.go}}">{{D.agreeLink.label}}</button></div></sc-if>
+                    <sc-if value="{{D.agreeLink}}" hint-placeholder-val="{{false}}"><div class="agl"><button type="button" class="weak" data-act="rules" onClick="{{D.agreeLink.go}}" disabled="{{D.agreeLink.disabled}}">{{D.agreeLink.label}}</button></div></sc-if>
                   </div>
                 </sc-if>
               </div>
@@ -1303,7 +1303,7 @@ body{margin:0}
               <sc-if value="{{D.acts}}" hint-placeholder-val="{{false}}">
                 <div class="acts {{D.actsFresh}}">
                   <sc-if value="{{D.acts.primary}}" hint-placeholder-val="{{true}}"><button type="button" class="cta {{D.acts.primary.cls}}" data-act="{{D.acts.primary.act}}" onClick="{{D.acts.primary.go}}" disabled="{{D.acts.primary.disabled}}">{{D.acts.primary.label}}<sc-if value="{{D.acts.primary.arrow}}" hint-placeholder-val="{{true}}"><svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"></path></svg></sc-if></button></sc-if>
-                  <sc-if value="{{D.acts.secondary}}" hint-placeholder-val="{{false}}"><button type="button" class="weak" data-act="rules" onClick="{{D.acts.secondary.go}}">{{D.acts.secondary.label}}</button></sc-if>
+                  <sc-if value="{{D.acts.secondary}}" hint-placeholder-val="{{false}}"><button type="button" class="weak" data-act="rules" onClick="{{D.acts.secondary.go}}" disabled="{{D.acts.secondary.disabled}}">{{D.acts.secondary.label}}</button></sc-if>
                 </div>
               </sc-if>
               <!-- agreement (rules) layer -->
@@ -2052,7 +2052,12 @@ body{margin:0}
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
     };
-    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; };
+    /* cancelTimer(handle): cancel one pending after()/hold() timer. holdKey(key, ms, fn): a hold() that first cancels the previous
+       timer started under the same key (one undo window, one toast, one copy feedback at a time). cancelKey(key): cancel it. */
+    p.cancelTimer = function (e) { if (!e) return; if (e.id) clearTimeout(e.id); e.id = null; this._timers = (this._timers || []).filter(function (t) { return t !== e; }); };
+    p.holdKey = function (key, ms, fn) { this._keyed = this._keyed || {}; this.cancelTimer(this._keyed[key]); var self = this; var e = this.hold(ms, function () { if (self._keyed[key] === e) delete self._keyed[key]; fn(); }); this._keyed[key] = e; return e; };
+    p.cancelKey = function (key) { if (this._keyed && this._keyed[key]) { this.cancelTimer(this._keyed[key]); delete this._keyed[key]; } };
+    p.clearTimers = function () { (this._timers || []).forEach(function (e) { if (e.id) clearTimeout(e.id); }); this._timers = []; this._keyed = {}; };
     /* pause / resume all pending timers (used by 暂停 and the keyframe scrubber so a long effect's completion does not fire mid-review) */
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
@@ -2185,14 +2190,9 @@ class Component extends DCLogic {
   }
   /* ---------------------------------------------------------------- timers: tokens + scrubbable long motions ---------------------------------------------------------------- */
   cancelT(e) { if (!e) return; if (e.id) clearTimeout(e.id); this._timers = (this._timers || []).filter(t => t !== e); }
-  /* content durations (toast 2.6s, the 10s undo window, the processing beat) are read by people, not watched as motion:
-     reduced motion must not collapse them, so they run on real time (still paused / cleared / slowed with the review timers) */
-  afterReal(ms, fn) {
-    const r = this.state.review || {}; if (!r.rm) return this.after(ms, fn);
-    const self = this; const e = { fn, remaining: Math.round(ms * (r.speed === 0.5 ? 2 : 1)), id: null, due: 0 };
-    e.arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = (self._timers || []).filter(t => t !== e); e.fn(); }, e.remaining); };
-    this._timers.push(e); if (!this._paused) e.arm(); return e;
-  }
+  /* timer contract (§11): after() = animation-completion settles (0ms under reduced motion, so results land at once);
+     hold() (shared core) = real-time windows read by people — toast 2.6s, copy-success dwell 1.8s, the 10s undo window,
+     the processing beat — paused / cleared / slowed with the review timers, never collapsed by reduced motion */
   tok() { this._tk = (this._tk || 0) + 1; return this._tk; }
   /* a long motion (print 2200ms / shatter 3200ms) records its completion timer with its offset, so releasing the keyframe scrub resumes from the scrubbed frame */
   lmStart(name, dur) { this._lm = { name, dur, list: [] }; if (this.state.resume) this.setState({ resume: null }); }
@@ -2228,7 +2228,7 @@ class Component extends DCLogic {
   flush(sel) { const root = this.rootRef.current; const el = root && root.querySelector(sel); if (el) { void getComputedStyle(el).clipPath; void getComputedStyle(el).transform; void el.offsetWidth; } }
   W() { const r = this.rootRef.current; return r ? r.clientWidth : 390; }
   Hh() { const r = this.rootRef.current; return r ? r.clientHeight : 844; }
-  toast(text) { this.cancelT(this._toastT); this.setState({ toast: text }); this._toastT = this.afterReal(2600, () => { this._toastT = null; if (this.state.toast === text) this.setState({ toast: '' }); }); }
+  toast(text) { this.cancelT(this._toastT); this.setState({ toast: text }); this._toastT = this.hold(2600, () => { this._toastT = null; if (this.state.toast === text) this.setState({ toast: '' }); }); }
   /* every state change goes through JU.engine; `run` adds the local processing / failure states around it */
   run(name, payload, done, opts) {
     opts = opts || {};
@@ -2242,7 +2242,7 @@ class Component extends DCLogic {
       if (done) done(res.effect, res.data);
     };
     if (opts.instant) { go(); return; }
-    this._busy = true; this.setState({ busy: opts.busy || name, err: null }); this.afterReal(opts.ms || 420, go);
+    this._busy = true; this.setState({ busy: opts.busy || name, err: null }); this.hold(opts.ms || 420, go);
   }
   /* reviewers / capture: arm one failure for the next engine action (JU.engine.setFailNext) */
   failNext() { const r = JU.engine.setFailNext(this.state.data, { on: true }); this.setState({ data: r.data }); }
@@ -2348,12 +2348,13 @@ class Component extends DCLogic {
     const d = this.curD(); if (!d) return; const id = d.id, tok = d.tok;
     this.run('confirmReservation', { eventId: id }, (eff) => {
       if (!this.liveD(tok)) return;
-      this.setState(s => ({ detail: Object.assign({}, s.detail, { layer: 'rules-out' }), fx: { settle: true } }));
-      this.after(520, () => { if (!this.liveD(tok)) return; this.setState(s => ({ detail: Object.assign({}, s.detail, { layer: null, printed: !eff.formed }) })); if (eff.formed) this.after(200, () => { if (this.liveD(tok)) this.startPrint(); }); });
+      /* formed: the pass does not exist until it is printed — it is hidden (unprinted, inert) in the same frame as the write, not after the rules sheet closes */
+      this.setState(s => ({ detail: Object.assign({}, s.detail, { layer: 'rules-out', printed: !eff.formed }), fx: { settle: true } }));
+      this.after(520, () => { if (!this.liveD(tok)) return; this.setState(s => ({ detail: Object.assign({}, s.detail, { layer: null }) })); if (eff.formed) this.after(200, () => { if (this.liveD(tok)) this.startPrint(); }); });
       this.after(1400, () => { if (this.liveD(tok) && this.state.fx.settle) this.setState({ fx: {} }); });
     }, { where: 'rules' });
   }
-  tearDown(ev) { const s = this.state; if (!s.detail || !s.detail.printed || s.fx.shatterStub || s.fx.hold || s.fx.shatter || s.busy || this._busy) return; if (ev.currentTarget.setPointerCapture) { try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } } this.setState({ tear: { p: 0, drag: { x: ev.clientX, y: ev.clientY }, spring: false } }); }
+  tearDown(ev) { const s = this.state; if (!s.detail || !s.detail.printed || s.detail.layer === 'rules' || s.detail.layer === 'rules-out' || s.fx.shatterStub || s.fx.hold || s.fx.shatter || s.busy || this._busy) return; if (ev.currentTarget.setPointerCapture) { try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } } this.setState({ tear: { p: 0, drag: { x: ev.clientX, y: ev.clientY }, spring: false } }); }
   tearMove(ev) { const t = this.state.tear; if (!t.drag) return; const p = Math.max(0, Math.min(1, ((ev.clientY - t.drag.y) * 1 + (ev.clientX - t.drag.x) * .25) / 120)); this.setState({ tear: { p, drag: t.drag, spring: false } }); }
   /* the pre-tear face (tag / title / no CTA) is kept until the shards have gone: the result never appears before the object finishes */
   preTear(row) { return { st: row.stage, en: STAGE_EN[row.stage] || '', label: row.label, tone: row.tone, title: row.detailTitle }; }
@@ -2379,7 +2380,7 @@ class Component extends DCLogic {
     this.after(170, () => { if (!this.liveD(tok)) return; this.setState({ flip: { side: next, ph: 'open' } }); this.after(20, () => { if (!this.liveD(tok)) return; this.flush('.pass.flipable'); this.setState({ flip: { side: next, ph: 'unfold' } }); this.after(280, () => { if (this.state.flip && this.state.flip.ph === 'unfold') this.setState({ flip: { side: next, ph: '' } }); }); }); });
   }
   seatNo(row) { const seatIdx = row.item.members.filter(m => m.status === 'confirmed' || m.status === 'host' || m.you).findIndex(m => m.you); return 'NO.' + (seatIdx >= 0 ? String(seatIdx + 1).padStart(2, '0') : '--') + ' / ' + row.event.capacity; }
-  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.cancelT(this._copyT); this._copyT = this.afterReal(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
+  copyWx(wx, key) { try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(wx).catch(() => { }); } catch (e) { } this.setState({ copied: key }); this.toast('微信号已复制'); this.cancelT(this._copyT); this._copyT = this.hold(1800, () => { if (this.state.copied === key) this.setState({ copied: '' }); }); }
   markContacted() { const dd = this.curD(); if (!dd) return; const id = dd.id; this.run('markContacted', { eventId: id }, () => { }, { where: 'detail' }); }
   addNote() { const dd = this.curD(); if (!dd) return; const id = dd.id; const text = (this.state.note || '').trim(); if (!text) return; this.run('addRecord', { eventId: id, kind: 'note', text: '你补充：' + text }, () => { this.setState({ note: '', fx: { newRecord: true } }); this.after(600, () => this.setState({ fx: {} })); }, { where: 'detail', ms: 300 }); }
   /* in-event report (p_history): thick-glass layer; the write is a record on this event (facts, never a score) */
@@ -2529,7 +2530,7 @@ class Component extends DCLogic {
       this.setState({ leaving: null, undo: { title: eff.title, draftId: id } });
       this.cancelT(this._undoTimer);
       /* the 10s undo window is content time: it survives reduced motion (G12 undo before delete) */
-      this._undoTimer = this.afterReal(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true, force: true }); });
+      this._undoTimer = this.hold(10000, () => { this._undoTimer = null; this.run('commitUndo', {}, () => this.setState({ undo: null }), { instant: true, force: true }); });
     }, { instant: true, force: true }));
   }
   undoDelete() {
@@ -2651,7 +2652,7 @@ class Component extends DCLogic {
       return D;
     }
     const weakFor = { pending: ['撤回', 'withdraw', 'withdraw'], invited: ['去不了了', 'release', 'release'], invited_queue: ['去不了了', 'release', 'release'], waitlist: ['退出候补', 'leaveQueue', 'withdraw'], tear: ['去不了了', 'exit', 'exit'], contact: ['去不了了', 'exit', 'exit'], going: ['去不了了', 'exit', 'exit'], reschedule: ['去不了了', 'decline', 'decline'] };
-    if (weakFor[stV]) D.weak = { label: weakFor[stV][0], act: weakFor[stV][2], go: () => this.openSheet(weakFor[stV][1]), disabled: !!fx.print || !!fx.shatterStub || !!fx.hold || !!s.busy };
+    if (weakFor[stV]) D.weak = { label: weakFor[stV][0], act: weakFor[stV][2], go: () => this.openSheet(weakFor[stV][1]), disabled: !!fx.print || !d.printed || !!fx.shatterStub || !!fx.hold || !!s.busy };
     const members = row.item.members.filter(m => m.status !== 'open').map(m => { const kind = m.status === 'host' ? 'host' : m.status === 'confirmed' ? 'ok' : m.status === 'invited' ? 'res' : 'void'; return { name: m.you ? '你' : m.name, init: init(m.you ? row.item.members.filter(x => x.you)[0].name : m.name), state: m.status === 'host' ? '局主' : m.status === 'confirmed' ? '已确认' : m.status === 'invited' ? (m.deadline ? '已预留 ' + Math.max(1, Math.ceil((m.deadline - JU.NOW) / 3600000)) + 'h' : '已预留') : m.status === 'exited' || m.status === 'declined' || m.status === 'released' ? '位置已释放' : m.status, cls: 't-' + kind + (m.you ? ' you' : '') + (fx.settle && m.you ? ' settle' : '') }; });
     const openN = Math.max(0, e.capacity - members.filter(m => m.cls.indexOf('t-void') < 0).length);
     for (let i = 0; i < openN; i++) members.push({ name: '空位', init: '', state: '等人', cls: 't-open' });
@@ -2674,14 +2675,14 @@ class Component extends DCLogic {
         const newPass = this.passVals(row, { main: true, torn: false, when: nw, oldText: '原定 ' + ow.md + ' ' + ow.time, mark: '时间已改', markCls: 'go', resched: true });
         D.passes = [newPass];
         D.tearHint = pre ? '副券碎裂分离中…' : !d.printed || fx.print ? '' : '局主改了时间。接受：向下拖开新票的副券（或点下面的按钮）；去不了：右上角「去不了了」。';
-        D.acts = pre ? null : { primary: { label: '接受新时间', cls: s.busy === 'acceptReschedule' ? 'busy' : '', act: 'accept', go: () => this.acceptByButton(), disabled: !!fx.print || !!fx.shatterStub, arrow: true }, secondary: { label: '参加约定 ›', go: () => this.openRules(true) } };
+        D.acts = pre ? null : { primary: { label: '接受新时间', cls: s.busy === 'acceptReschedule' ? 'busy' : '', act: 'accept', go: () => this.acceptByButton(), disabled: !!fx.print || !d.printed || !!fx.shatterStub, arrow: true }, secondary: { label: '参加约定 ›', go: () => this.openRules(true), disabled: !!fx.print || !d.printed } };
       } else {
         const torn = !!(row.ticket && row.ticket.torn); const shownTorn = torn && !pre;
-        D.passTitle = shownTorn ? '通行证 · 已撕' : '通行证'; D.passNote = pre ? '副券碎裂分离中' : shownTorn ? '副券已撕 · 8 小时内联系局主' : '全员确认 · 已出票';
+        D.passTitle = shownTorn ? '通行证 · 已撕' : '通行证'; D.passNote = pre ? '副券碎裂分离中' : shownTorn ? '副券已撕 · 8 小时内联系局主' : !d.printed || fx.print ? '全员确认 · 出票中' : '全员确认 · 已出票';
         D.passes = [this.passVals(row, { main: true, torn })];
         if (stV === 'tear' && d.printed && !pre) D.tearHint = '按住副券向下拖，玻璃沿齿孔裂开；过半后松手，副券碎裂分离。';
         if (pre) { D.tearHint = '副券碎裂分离中…'; D.acts = null; }
-        else if (st === 'tear') D.acts = { secondary: { label: '参加约定 ›', go: () => this.openRules(true) } };
+        else if (st === 'tear') D.acts = { secondary: { label: '参加约定 ›', go: () => this.openRules(true), disabled: !!fx.print || !d.printed } };
         else if (st === 'contact') D.acts = { primary: { label: '已加微信', cls: 'go' + (s.busy === 'markContacted' ? ' busy' : ''), act: 'contacted', go: () => this.markContacted(), disabled: false, arrow: false }, secondary: { label: '参加约定 ›', go: () => this.openRules(true) } };
         else if (st === 'going') D.acts = { primary: { label: '待赴约 · ' + (row.need), cls: 'go', act: 'contacted', go: () => { }, disabled: true, arrow: false }, secondary: { label: '参加约定 ›', go: () => this.openRules(true) } };
       }
@@ -2700,7 +2701,7 @@ class Component extends DCLogic {
     }
     if (fx.hold && D.acts && D.acts.primary) D.acts = Object.assign({}, D.acts, { primary: Object.assign({}, D.acts.primary, { disabled: true }) });
     /* a footer with only the rules link would float over the content: the link moves under the agreement summary instead */
-    if (D.acts && !D.acts.primary && D.acts.secondary && D.agree) { D.agreeLink = { label: '参加约定全文 ›', go: D.acts.secondary.go }; D.acts = null; }
+    if (D.acts && !D.acts.primary && D.acts.secondary && D.agree) { D.agreeLink = { label: '参加约定全文 ›', go: D.acts.secondary.go, disabled: !!D.acts.secondary.disabled }; D.acts = null; }
     /* layers */
     if (d.layer === 'rules' || d.layer === 'rules-out') {
       const canConfirm = !d.rulesRO && D.isInvited;

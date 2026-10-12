@@ -1182,7 +1182,7 @@ class Component extends DCLogic {
   patchView(patch) { this.setState(function (s) { return { view: Object.assign({}, s.view, patch) }; }); }
   /* toasts only where the inventory allows them (复制 · 改期已发出 · 接受改期); they take the sticky bar's right slot (never over page content)
      the toast's reading window is real time (hold): reduced motion drops its slide-in, never its 2.6 s on screen */
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast && s.toast.text === text ? { toast: Object.assign({}, s.toast, { on: false }) } : {}; }); }); }
   /* every write goes through JU.engine: processing → result, or an inline alert at the trigger + retry (same payload).
      One write at a time: a second tap while busy is ignored (no false "already handled" failure). */
   act(fn, payload, done, opts) {
@@ -1347,9 +1347,9 @@ class Component extends DCLogic {
   deleteDraft(id, h) {
     var self = this; this.setState({ leaving: id, leavingGone: false, rowH: Math.round(h) });
     this.after(30, function () { self.setState({ leavingGone: true }); });
-    this.after(360, function () { self.setState({ leaving: null, leavingGone: false }); self.act('deleteDraft', { draftId: id }, function (eff) { self.setState({ undo: { draftId: id, title: eff.title } }); self.hold(10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); }, { ms: 60 }); });
+    this.after(360, function () { self.setState({ leaving: null, leavingGone: false }); self.act('deleteDraft', { draftId: id }, function (eff) { self.setState({ undo: { draftId: id, title: eff.title } }); self.holdKey('undo', 10000, function () { if (self.state.undo && self.state.undo.draftId === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } }); }, { ms: 60 }); });
   }
-  undoDelete() { var self = this, u = this.state.undo; if (!u) return; this.act('undoDelete', {}, function (eff) { self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(480, function () { self.setState({ entering: null }); }); self.after(1800, function () { self.setState({ landed: null }); }); }, { ms: 80 }); }
+  undoDelete() { var self = this, u = this.state.undo; if (!u) return; this.act('undoDelete', {}, function (eff) { self.cancelKey('undo'); self.setState({ undo: null, entering: eff.draftId, landed: eff.draftId }); self.after(480, function () { self.setState({ entering: null }); }); self.after(1800, function () { self.setState({ landed: null }); }); }, { ms: 80 }); }
   /* ------------------------------------------------ list ------------------------------------------------ */
   listVals() {
     var self = this, s = this.state, joined = s.role === 'joined';
@@ -1463,7 +1463,7 @@ class Component extends DCLogic {
       } else self.patchView({ result: res, contact: false });
     }, { where: 'slip' });
   }
-  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.hold(2200, function () { self.patchView({ copied: false }); }); }
+  copyWx(wx) { var self = this; try { if (navigator.clipboard) navigator.clipboard.writeText(wx).catch(function () { }); } catch (e) { } this.patchView({ copied: wx }); this.say('微信号已复制'); this.holdKey('copy', 2200, function () { self.patchView({ copied: false }); }); }
   tagModel(key, t, r) {
     var self = this, e = r.event, rs = r.item.reschedule, isOld = !!t.old;
     var when = isOld ? (rs ? JU.fmt.when(rs.oldIso) : r.when) : (key === 'fresh' ? (rs ? JU.fmt.when(rs.newIso) : r.when) : r.when);

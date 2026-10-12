@@ -1267,7 +1267,7 @@ class Component extends DCLogic {
   setPass(key, patch) { this.setState(function (s) { var v = s.view; if (!v.passes || !v.passes[key]) return {}; var passes = Object.assign({}, v.passes); passes[key] = Object.assign({}, passes[key], patch); return { view: Object.assign({}, v, { passes: passes }) }; }); }
   /* real-time windows (toast, 10 s draft undo, 已复制) use the core hold(): real length under 减少动态, still paused / reset / stretched at 0.5×.
      after() stays for animation-completion settles, which collapse to 0 under 减少动态 so the result appears at once. */
-  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.hold(2600, function () { self.setState(function (s) { return s.toast.text === text ? { toast: { text: text, on: false } } : {}; }); }); }
+  say(text) { var self = this; this.setState({ toast: { text: text, on: true } }); this.holdKey('toast', 2600, function () { self.setState(function (s) { return s.toast.text === text ? { toast: { text: text, on: false } } : {}; }); }); }
   /* every write goes through JU.engine: processing → result | failure + retry (in place, keyed) */
   act(fn, payload, key, done, ms, onErr) {
     var self = this; this.setState({ busy: { key: key, fn: fn }, err: null });
@@ -1281,7 +1281,7 @@ class Component extends DCLogic {
   errFor(key) { var e = this.state.err; return e && e.key === key ? { on: true, message: e.message, retry: e.retry, title: '没有保存成功' } : { on: false }; }
   busyFor(key, fn) { var b = this.state.busy; if (!b || b.key !== key) return ''; return b.fn === fn ? 'busy' : 'dim'; }
   busyIs(key) { return this.state.busy && this.state.busy.key === key ? 'busy' : ''; }
-  copy(text, key) { var self = this; try { if (navigator.clipboard) { var pr = navigator.clipboard.writeText(text); if (pr && pr.catch) pr.catch(function () { }); } } catch (e) { } this.setState({ copied: key }); this.say('微信号已复制'); this.hold(2600, function () { self.setState(function (s) { return s.copied === key ? { copied: null } : {}; }); }); }
+  copy(text, key) { var self = this; try { if (navigator.clipboard) { var pr = navigator.clipboard.writeText(text); if (pr && pr.catch) pr.catch(function () { }); } } catch (e) { } this.setState({ copied: key }); this.say('微信号已复制'); this.holdKey('copy', 2600, function () { self.setState(function (s) { return s.copied === key ? { copied: null } : {}; }); }); }
   locate(id) {
     var s = this.state;
     if (s.role === 'joined') { var j = JU.derive.joined(s.data); if (j.current.some(function (r) { return r.id === id; })) return 'current'; if (j.history.some(function (r) { return r.id === id; })) return 'history'; return null; }
@@ -1515,10 +1515,10 @@ class Component extends DCLogic {
     this.act('deleteDraft', { draftId: id }, fromOver ? 'sheet' : 'global', function (eff) {
       self.setState({ undo: { id: id, title: eff.title, at: Date.now() }, tight: true }); self.after(700, function () { self.setState({ tight: false }); });
       if (fromOver) { self.setState(function (s) { return { frozen: null }; }); self.patchView({ phase: 'out', gone: true }); self.after(400, function () { self.setState({ view: { name: 'list' }, frozen: null }); }); }
-      self.hold(10000, function () { if (self.state.undo && self.state.undo.id === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
+      self.holdKey('undo', 10000, function () { if (self.state.undo && self.state.undo.id === id) { var r = JU.engine.commitUndo(self.state.data); self.setState({ data: r.data, undo: null }); } });
     }, 260);
   }
-  undoDelete() { var self = this; var r = JU.engine.undoDelete(this.state.data); if (r.effect.type === 'error') { this.say(r.effect.message); return; } this.setState({ data: r.data, undo: null, landed: r.effect.draftId, tight: true }); this.after(700, function () { self.setState({ tight: false }); }); this.after(1600, function () { self.setState({ landed: null }); }); }
+  undoDelete() { var self = this; var r = JU.engine.undoDelete(this.state.data); if (r.effect.type === 'error') { this.say(r.effect.message); return; } this.cancelKey('undo'); this.setState({ data: r.data, undo: null, landed: r.effect.draftId, tight: true }); this.after(700, function () { self.setState({ tight: false }); }); this.after(1600, function () { self.setState({ landed: null }); }); }
   /* ================================================ view models ================================================ */
   seatsCls(seats) { return seats.map(function (x) { return x.kind === 'host' ? 'host' : x.kind === 'ok' ? 'ok' : x.kind === 'res' ? 'res' : ''; }); }
   joinedTile(r, size, lead) {

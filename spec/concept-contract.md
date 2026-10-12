@@ -139,3 +139,4 @@ JU.mixin(Component);
 
 ## 11. 修复轮补充（2026-10-12）
 - **`this.hold(ms, fn)`**：用于「真实时间」的窗口——toast 显示时长、草稿撤销 10 秒、倒计时的逐秒 tick、复制成功反馈停留。它与 `after()` 一样受暂停 / 重置 / 清除控制、0.5× 时拉长，但在「减少动态」下**不会**变成 0ms（减少动态去掉的是运动，不是时间）。`after()` 仍用于动画完成的落定。
+- **`this.cancelTimer(handle)` / `this.holdKey(key, ms, fn)` / `this.cancelKey(key)`**（2026-10-12 加入核心）：同一类真实时间窗口一次只能有一个——用 `holdKey('undo', 10000, …)`、`holdKey('toast', 2600, …)`、`holdKey('copy', 2200, …)`，新的会自动取消旧的；撤销成功时 `cancelKey('undo')`。否则「删除 → 撤销 → 再删同一条」时第一次的定时器会提前关闭第二次的撤销窗口。
