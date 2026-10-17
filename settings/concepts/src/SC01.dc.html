@@ -240,7 +240,8 @@ button.sr:active{background:rgba(27,26,23,.045)}
 .para .q .na{font:400 11px/1.6 var(--serif);color:var(--ink3);margin-left:auto;flex:0 0 auto;letter-spacing:.08em}
 .para .a{margin:4px 0 0;color:var(--ink);font-size:12.5px}
 .para .a.dim{color:var(--ink2)}
-.para .tg{appearance:none;border:0;background:transparent;font:400 11px/1 var(--serif);letter-spacing:.14em;color:var(--ink2);cursor:pointer;padding:4px 0 2px;margin-left:auto;display:block;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(27,26,23,.35)}
+.para .tg{appearance:none;border:0;background:transparent;font:400 11px/1.6 var(--serif);letter-spacing:.14em;color:var(--ink2);cursor:pointer;padding:4px 0 0;margin-left:auto;display:block;text-decoration:underline;text-underline-offset:3px;text-decoration-color:rgba(27,26,23,.35);white-space:nowrap}
+.para .q .tg{padding:0;flex:0 0 auto;display:inline;margin-left:auto}
 .para .tg:active{color:var(--ink)}
 .para .qa{cursor:pointer}
 /* ---- toast slip, undo slip, dialogs ---- */
@@ -558,7 +559,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
               <p class="lead dim">常见问题按「参加约定」整理；针对某个局或某个人的事在局内「举报」，对产品的意见写在下面。</p>
               <div class="h2">【常见问题】<span class="n">{{help.qaCount}} 条</span></div>
               <sc-for list="{{help.qas}}" as="q" hint-placeholder-count="5">
-                <div class="para"><div class="q qa" data-act="open" data-rid="{{q.key}}" onClick="{{q.toggle}}"><span class="n">{{q.n}}</span><span>{{q.q}}</span></div><sc-if value="{{q.open}}" hint-placeholder-val="{{false}}"><p class="a">{{q.a}}</p></sc-if><button type="button" class="tg" data-act="open" onClick="{{q.toggle}}">{{q.tg}}</button></div>
+                <div class="para"><div class="q qa" role="button" data-act="open" data-rid="{{q.key}}" onClick="{{q.toggle}}"><span class="n">{{q.n}}</span><span>{{q.q}}</span><sc-if value="{{q.closed}}" hint-placeholder-val="{{true}}"><span class="tg">展開 ⌄</span></sc-if></div><sc-if value="{{q.open}}" hint-placeholder-val="{{false}}"><p class="a">{{q.a}}</p><button type="button" class="tg" data-act="close" onClick="{{q.toggle}}">收合 ⌃</button></sc-if></div>
               </sc-for>
               <div class="btns"><button type="button" class="btn" data-act="open" data-rid="rules" onClick="{{help.openRules}}">规则全文</button><button type="button" class="btn" data-act="open" data-rid="reports" onClick="{{help.openReports}}">我的举报</button><span class="sp"></span><button type="button" class="btn pri" data-act="feedback" onClick="{{help.openFeedback}}">写反馈</button></div>
               <div class="{{fb.cls}}" style="{{fb.style}}" data-anim="form:fb"><sc-if value="{{fb.on}}" hint-placeholder-val="{{false}}">
@@ -606,7 +607,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
               <sc-for list="{{rules.groups}}" as="g" hint-placeholder-count="3">
                 <div class="h2" style="padding-top:6px">【{{g.name}}】<span class="n">{{g.line}}</span></div>
                 <sc-for list="{{g.items}}" as="r" hint-placeholder-count="6">
-                  <div class="para"><div class="q {{r.qaCls}}" onClick="{{r.toggle}}"><span class="n">{{r.n}}</span><span>{{r.title}}</span><sc-if value="{{r.na}}" hint-placeholder-val="{{false}}"><span class="na">只列标题</span></sc-if></div><sc-if value="{{r.open}}" hint-placeholder-val="{{false}}"><p class="a">{{r.body}}</p></sc-if><sc-if value="{{r.hasBody}}" hint-placeholder-val="{{true}}"><button type="button" class="tg" data-act="open" onClick="{{r.toggle}}">{{r.tg}}</button></sc-if></div>
+                  <div class="para"><div class="q {{r.qaCls}}" role="button" data-act="open" data-rid="rule-{{r.n}}" onClick="{{r.toggle}}"><span class="n">{{r.n}}</span><span>{{r.title}}</span><sc-if value="{{r.na}}" hint-placeholder-val="{{false}}"><span class="na">只列标题</span></sc-if><sc-if value="{{r.closed}}" hint-placeholder-val="{{false}}"><span class="tg">展開 ⌄</span></sc-if></div><sc-if value="{{r.open}}" hint-placeholder-val="{{false}}"><p class="a">{{r.body}}</p><button type="button" class="tg" data-act="close" onClick="{{r.toggle}}">收合 ⌃</button></sc-if></div>
                 </sc-for>
               </sc-for>
               <p class="note">{{about.policyNote}}</p>
@@ -850,7 +851,7 @@ class Component extends DCLogic {
       this.setState(s => ({ inks: Object.assign({}, s.inks, inks) }));
       this.exitEdit(() => {
         const marks = {}; changed.forEach(k => { marks[k] = MD; });
-        this.setState(s => ({ marks: Object.assign({}, s.marks, marks) }));
+        this.after(360, () => this.setState(s => ({ marks: Object.assign({}, s.marks, marks) })));   /* the stamp lands once the re-printed ink has darkened */
         this.say(res.effect.nothing ? '没有改动 · 已按原值印回' : '已保存 · 新资料只用于之后的报名');
       });
     }));
@@ -1121,7 +1122,7 @@ class Component extends DCLogic {
     const withBody = JUS.RULES.filter(r => r.body); const fbs = JUS.derive.feedback(d);
     const qas = withBody.map(r => ({ key: 'r' + r.n, n: r.n, q: r.title, a: r.body })).concat([{ key: 'rep', n: '＋', q: '举报和反馈有什么不同？', a: '针对某个局或某个人的事，在散场页点「举报」，进度在「我的举报」；对产品的意见用「写反馈」。两者分开保存。' }]);
     const fa2 = this.animOf('form:fb'); const fb = s.fb;
-    out.help = { rowCls: rowCls('help'), openRow: () => this.openRow('help'), sub: qas.length + ' 条常见问题 · ' + (fbs.length ? fbs.length + ' 条反馈已提交' : '还没写过反馈'), see: see('help'), qaCount: qas.length, qas: qas.map(x => ({ key: x.key, n: x.n, q: x.q, a: x.a, open: !!s.qaOpen[x.key], tg: s.qaOpen[x.key] ? '收合 ⌃' : '展開 ⌄', toggle: () => this.setState(st => ({ qaOpen: Object.assign({}, st.qaOpen, { [x.key]: !st.qaOpen[x.key] }) })) })),
+    out.help = { rowCls: rowCls('help'), openRow: () => this.openRow('help'), sub: qas.length + ' 条常见问题 · ' + (fbs.length ? fbs.length + ' 条反馈已提交' : '还没写过反馈'), see: see('help'), qaCount: qas.length, qas: qas.map(x => ({ key: x.key, n: x.n, q: x.q, a: x.a, open: !!s.qaOpen[x.key], closed: !s.qaOpen[x.key], toggle: () => this.setState(st => ({ qaOpen: Object.assign({}, st.qaOpen, { [x.key]: !st.qaOpen[x.key] }) })) })),
       openRules: () => this.openRow('about', { rulesAll: true }), openReports: () => this.openRow('reports'), openFeedback: () => this.openFb(), hasFeedback: fbs.length > 0, feedbackCount: fbs.length, feedback: fbs.map((f, i) => ({ no: pad2(i + 1), text: f.text, localNo: f.localNo, atText: f.atText, statusLabel: f.statusLabel })) };
     out.fb = { on: !!fb || fa2.on, cls: fa2.cls, style: fa2.style, form: !(fb && fb.done), done: !!(fb && fb.done), doneNo: fb && fb.done ? fb.done : '', text: fb ? fb.text : '', err: fb ? fb.err : '', errCls: fb && fb.err ? 'err' : '', fail: !!(fb && fb.fail), failMsg: fb && fb.fail ? fb.fail : '', saving: !!(fb && fb.saving), setText: (ev) => this.setState(st => st.fb ? ({ fb: Object.assign({}, st.fb, { text: ev.target.value, err: '' }) }) : null), submit: () => this.submitFb(), cancel: () => this.closeFb() };
     /* privacy / account / about / rules */
@@ -1131,7 +1132,7 @@ class Component extends DCLogic {
     out.acc = { rowCls: rowCls('account'), openRow: () => this.openRow('account'), title: live ? '本机演示会话' : '演示会话已结束', sub: live ? '开始于 ' + JUS.fmt.dateTime(d.session.startedAt) + ' · ' + d.session.device : '记录、举报与资料仍在本机', ended: !live, live, see: see('account'), sessionLabel: live ? '进行中 · ' + d.session.device : '已结束', sessionBody: live ? '开始于 ' + JUS.fmt.dateTime(d.session.startedAt) + ' · ' + JUS.COPY.demoOnly : JUS.COPY.demoOnly, storageKey: 'jus:' + CONCEPT.code + ':v1', askEnd: () => this.armTear(), restart: () => this.restart() };
     const ab = JUS.derive.about(d);
     out.about = { rowCls: rowCls('about'), openRow: () => this.openRow('about'), version: ab.version, rulesVersion: ab.rulesVersion, see: see('about'), built: ab.built ? ab.built.slice(0, 16).replace('T', ' ') + ' UTC' : '本次构建', cities: ab.cities, demo: ab.demo, policyNote: ab.policyNote, toggleAll: () => this.setState(st => ({ rulesAll: !st.rulesAll, ruleOpen: {} })), allLabel: s.rulesAll ? '全部收合' : '全部展開' };
-    out.rules = { groups: JUS.RULE_GROUPS.map(g => ({ name: g.name, line: g.line, items: JUS.RULES.filter(r => r.group === g.key).map(r => { const op = !!r.body && (s.rulesAll || !!s.ruleOpen[r.n]); return { n: r.n, title: r.title, body: r.body, hasBody: !!r.body, na: !r.body, open: op, qaCls: r.body ? 'qa' : '', tg: op ? '收合 ⌃' : '展開 ⌄', toggle: () => { if (!r.body) return; this.setState(st => ({ ruleOpen: Object.assign({}, st.ruleOpen, { [r.n]: !(st.rulesAll || st.ruleOpen[r.n]) }), rulesAll: false })); } }; }) })) };
+    out.rules = { groups: JUS.RULE_GROUPS.map(g => ({ name: g.name, line: g.line, items: JUS.RULES.filter(r => r.group === g.key).map(r => { const op = !!r.body && (s.rulesAll || !!s.ruleOpen[r.n]); return { n: r.n, title: r.title, body: r.body, hasBody: !!r.body, na: !r.body, open: op, closed: !!r.body && !op, qaCls: r.body ? 'qa' : '', toggle: () => { if (!r.body) return; this.setState(st => ({ ruleOpen: Object.assign({}, st.ruleOpen, { [r.n]: !(st.rulesAll || st.ruleOpen[r.n]) }), rulesAll: false })); } }; }) })) };
     /* tear corner */
     const t = s.tear; const ended = !live;
     out.tear = { idle: live && t.phase === 'idle', armed: t.phase === 'armed', torn: t.phase === 'torn', ended, hasHole: ended, hasStub: !ended, stubCls: (t.phase === 'armed' ? 'armed' : '') + (t.drag ? ' drag' : '') + (t.phase === 'torn' ? ' gone' : ''), style: '--tx:' + (t.x || 0).toFixed(1) + 'px;--tr:' + ((t.x || 0) * 0.08).toFixed(2) + 'deg',

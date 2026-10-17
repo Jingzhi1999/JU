@@ -32,7 +32,7 @@ body{margin:0}
 .fold{position:absolute;left:20px;width:310px;border-radius:7px;transform-origin:0 100%;
   transition:top calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),transform calc(220ms * var(--k,1)) cubic-bezier(.2,.7,.2,1),height calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
 .fold.receded{transform:scale(.97);transform-origin:50% 0;transition:top calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),transform calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),height calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
-.fold.drag{transition:none}
+.fold.drag,.fold.pulling,.fold.out{transition:none}
 .fback{position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.4);backdrop-filter:blur(14px) saturate(1.12);-webkit-backdrop-filter:blur(14px) saturate(1.12);
   box-shadow:0 0 0 1px rgba(255,255,255,.6) inset,0 0 0 1px rgba(40,30,18,.09),0 12px 24px -16px rgba(var(--sh),.5);transition:box-shadow calc(420ms * var(--k,1)) ease}
 .fold.pulled .fback,.fold.pulling .fback{box-shadow:0 0 0 1px rgba(255,255,255,.7) inset,0 0 0 1px rgba(40,30,18,.1),0 26px 40px -20px rgba(var(--sh),.6)}
@@ -52,22 +52,22 @@ body{margin:0}
 @keyframes sc03-pull-fast{0%{transform:translateY(var(--dy0)) translate(var(--dxd,10px),var(--dyd,-24px)) rotate(var(--rot,-6deg));height:var(--h0);z-index:9}100%{transform:translate(0,0) rotate(0);height:var(--h1);z-index:9}}
 @keyframes sc03-focus{0%{filter:blur(1.4px)}45%{filter:blur(1.4px)}100%{filter:blur(0)}}
 @keyframes sc03-clear{0%{opacity:.34}45%{opacity:.34}100%{opacity:.12}}
-.fold.pulling{animation:sc03-pull calc(560ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.fold.pulling{animation:sc03-pull calc(560ms * var(--k,1)) cubic-bezier(.4,.05,.2,1) both}
 .fold.pulling.fast{animation-name:sc03-pull-fast;animation-duration:calc(200ms * var(--k,1))}
 .fold.pulling .fbody{animation:sc03-focus calc(560ms * var(--k,1)) ease both}
 .fold.pulling.fast .fbody{animation-duration:calc(200ms * var(--k,1))}
 .fold.pulling .ffront{animation:sc03-clear calc(560ms * var(--k,1)) ease both}
 .fold.pulling.fast .ffront{animation-duration:calc(200ms * var(--k,1))}
-@keyframes sc03-insert{0%{transform:none;height:var(--h1);z-index:9}68%{z-index:9}72%{z-index:var(--z0)}100%{transform:translateY(var(--dy0)) rotate(0);height:var(--h0);z-index:var(--z0)}}
-.fold.out{animation:sc03-insert calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes sc03-insert{0%{transform:translateY(calc(-1 * var(--dy0)));height:var(--h1);z-index:9}68%{z-index:9}72%{z-index:var(--z0)}100%{transform:none;height:var(--h0);z-index:var(--z0)}}
+.fold.out{animation:sc03-insert calc(420ms * var(--k,1)) cubic-bezier(.4,.05,.2,1) both}
 .fold.out .fbody{filter:blur(0)}
 .fold.out .ffront{opacity:.34}
 .scrub .fold.pulling,.scrub .fold.pulling .fbody,.scrub .fold.pulling .ffront{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 560ms * var(--k,1))!important}
 .scrub .fold.pulling.fast,.scrub .fold.pulling.fast .fbody,.scrub .fold.pulling.fast .ffront{animation-delay:calc(-1 * var(--frame,0) * 200ms * var(--k,1))!important}
 .scrub .fold.out{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
 /* the mouth preview while a tab is being dragged (SM02): the first paper rises out of the opening */
-.peek{position:absolute;left:18px;right:18px;top:-30px;height:40px;border-radius:3px 3px 0 0;background:var(--ppr);box-shadow:0 -1px 1px rgba(0,0,0,.05),0 -6px 10px -8px rgba(var(--sh),.4);padding:8px 12px;box-sizing:border-box;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-  opacity:var(--p,0);transform:translateY(calc((1 - var(--p,0)) * 30px));transition:opacity calc(200ms * var(--k,1)) ease,transform calc(200ms * var(--k,1)) ease;pointer-events:none}
+.peek{position:absolute;left:18px;right:18px;top:-36px;height:44px;border-radius:3px 3px 0 0;background:var(--ppr);box-shadow:0 -1px 1px rgba(0,0,0,.05),0 -6px 10px -8px rgba(var(--sh),.4);padding:11px 12px;box-sizing:border-box;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:var(--p,0);transform:translateY(calc((1 - var(--p,0)) * 34px));transition:opacity calc(200ms * var(--k,1)) ease,transform calc(200ms * var(--k,1)) ease;pointer-events:none}
 .fold.drag .peek{transition:none}
 /* index tabs = matte stickers wrapped over the right edge */
 .tabx{position:absolute;right:-40px;top:6px;width:46px;height:48px;border:0;padding:0;border-radius:0 7px 7px 0;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;
@@ -93,6 +93,9 @@ body{margin:0}
   box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 12px -10px rgba(var(--sh),.5);transform:rotate(var(--r,0deg))}
 .ppr::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 86%,rgba(0,0,0,.03))}
 button.ppr{cursor:pointer}
+.ppr,.fcard,.mrow{transition:opacity calc(120ms * var(--k,1)) ease}
+.ppr.ghost,.slip.ghost,.fcard.ghost,.mrow.ghost{opacity:0!important;pointer-events:none}
+.wm{position:absolute;right:16px;bottom:16px;font-size:92px;font-weight:700;line-height:1;color:var(--ink);opacity:.045;pointer-events:none;letter-spacing:.06em;writing-mode:vertical-rl;user-select:none}
 button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
 .ppr .who{font-size:28px;font-weight:700;line-height:1.2;letter-spacing:.01em;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
 .ppr .who.long{font-size:21px;line-height:1.25}
@@ -211,8 +214,8 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
 .pbig::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0) 18%,rgba(0,0,0,0) 90%,rgba(0,0,0,.035))}
 @keyframes sc03-lift{0%{left:var(--x0);top:var(--y0);width:var(--w0);height:var(--h0);transform:rotate(var(--r0,0deg));box-shadow:0 1px 1px rgba(0,0,0,.06),0 6px 10px -8px rgba(40,30,18,.4)}100%{left:12px;top:40px;width:366px;height:736px;transform:none;box-shadow:0 1px 1px rgba(0,0,0,.08),0 26px 44px -22px rgba(40,30,18,.65)}}
 @keyframes sc03-drop{0%{left:12px;top:40px;width:366px;height:736px;transform:none;box-shadow:0 1px 1px rgba(0,0,0,.08),0 26px 44px -22px rgba(40,30,18,.65)}100%{left:var(--x0);top:var(--y0);width:var(--w0);height:var(--h0);transform:rotate(var(--r0,0deg));box-shadow:0 1px 1px rgba(0,0,0,.06),0 6px 10px -8px rgba(40,30,18,.4)}}
-.pbig.lifting{animation:sc03-lift calc(440ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.pbig.dropping{animation:sc03-drop calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.pbig.lifting{animation:sc03-lift calc(440ms * var(--k,1)) cubic-bezier(.42,.05,.2,1) both}
+.pbig.dropping{animation:sc03-drop calc(420ms * var(--k,1)) cubic-bezier(.42,.05,.2,1) both}
 .scrub .pbig.lifting{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 440ms * var(--k,1))!important}
 .scrub .pbig.dropping{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
 .carry{position:absolute;left:0;top:0;right:0;padding:12px 14px;opacity:1;transition:opacity calc(160ms * var(--k,1)) ease;pointer-events:none;z-index:3;overflow:hidden;max-height:100%}
@@ -227,6 +230,8 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
 .phead .stk.sm{height:30px}
 .pbody{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 18px 26px;box-sizing:border-box;opacity:0;transition:opacity calc(260ms * var(--k,1)) ease calc(240ms * var(--k,1))}
 .pbig.in .pbody{opacity:1}
+.pbig.dropping .pbody,.pbig.dropping .phead{opacity:0;transition-delay:0ms;transition-duration:calc(100ms * var(--k,1))}
+.pbig.dropping .carry{opacity:1;transition-delay:0ms}
 .pg{animation:sc03-pushin calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 .pg.pop{animation-name:sc03-popin}
 @keyframes sc03-pushin{from{transform:translateX(42px);opacity:0}to{transform:translateX(0);opacity:1}}
@@ -368,7 +373,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
         <sc-for list="{{folds}}" as="f" hint-placeholder-count="5">
           <div class="fold {{f.cls}}" style="{{f.style}}" data-rid="{{f.key}}">
             <div class="peek" style="--p:{{f.peekP}}">{{f.peekTitle}}</div>
-            <div class="fback"></div>
+            <div class="fback"><span class="wm">{{f.label}}</span></div>
             <div class="fbody">
               <div class="strip" onClick="{{f.pullStrip}}">
                 <button type="button" class="bk" data-act="back" onClick="{{f.insert}}" aria-label="放回">‹ 放回</button>
@@ -377,21 +382,21 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
               </div>
 
               <sc-if value="{{f.isProfile}}" hint-placeholder-val="{{false}}">
-                <button type="button" class="ppr" style="--r:-.4deg" data-act="open" data-rid="profile" onClick="{{prof.open}}" aria-label="个人资料 · 抽出这张纸">
+                <button type="button" class="ppr {{prof.gProfile}}" style="--r:-.4deg" data-act="open" data-rid="profile" onClick="{{prof.open}}" aria-label="个人资料 · 抽出这张纸">
                   <div class="who {{prof.whoCls}}">{{prof.name}}</div>
                   <div class="kv"><span>微信</span><b class="mono">{{prof.wx}}</b></div>
                   <div class="kv"><span>邮箱</span><b>{{prof.emailShort}}</b><i class="tag {{prof.emailTagCls}}">{{prof.emailTag}}</i></div>
                   <div class="foot">{{prof.footer}}</div>
                 </button>
-                <button type="button" class="ppr sm" style="--r:.3deg" data-act="open" data-rid="privacy" onClick="{{prof.openPrivacy}}"><div class="ph">隐私与可见性</div><div class="pl">{{priv.line}}</div></button>
-                <button type="button" class="ppr sm" style="--r:-.2deg" data-act="open" data-rid="account" onClick="{{prof.openAccount}}"><div class="ph">账户与本机数据</div><div class="pl">{{acc.line}}</div></button>
+                <button type="button" class="ppr sm {{prof.gPrivacy}}" style="--r:.3deg" data-act="open" data-rid="privacy" onClick="{{prof.openPrivacy}}"><div class="ph">隐私与可见性</div><div class="pl">{{priv.line}}</div></button>
+                <button type="button" class="ppr sm {{prof.gAccount}}" style="--r:-.2deg" data-act="open" data-rid="account" onClick="{{prof.openAccount}}"><div class="ph">账户与本机数据</div><div class="pl">{{acc.line}}</div></button>
               </sc-if>
 
               <sc-if value="{{f.isFav}}" hint-placeholder-val="{{false}}">
                 <p class="lead">{{fav.lead}}</p>
                 <sc-if value="{{fav.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{fav.emptyTitle}}</b><span>{{fav.emptyBody}}</span><button type="button" class="stk" data-act="seam-feed" onClick="{{fav.goFind}}">{{fav.emptyCta}}</button></div></sc-if>
                 <sc-for list="{{fav.active}}" as="r" hint-placeholder-count="3">
-                  <div class="slip {{r.cls}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
+                  <div class="slip {{r.cls}} {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
                     <button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="t">{{r.title}}</div><div class="m">{{r.when}} · {{r.place}} · {{r.host}}</div><div><span class="st {{r.stCls}}">{{r.st}}</span><sc-if value="{{r.rel}}" hint-placeholder-val="{{false}}"><span class="rel">{{r.rel}}</span></sc-if><sc-if value="{{r.cityLine}}" hint-placeholder-val="{{false}}"><span class="rel">{{r.cityLine}}</span></sc-if></div></button>
                     <button type="button" class="rmv" data-act="unfav" onClick="{{r.remove}}" aria-label="拿出收藏">拿出</button>
                   </div>
@@ -399,7 +404,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
                 <sc-if value="{{fav.hasArchived}}" hint-placeholder-val="{{false}}">
                   <div class="gh">已结束 · 已取消 <b>{{fav.archivedCount}}</b></div>
                   <sc-for list="{{fav.archived}}" as="r" hint-placeholder-count="2">
-                    <div class="slip arch {{r.cls}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
+                    <div class="slip arch {{r.cls}} {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
                       <button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="t">{{r.title}}</div><div class="m">{{r.when}} · {{r.place}}</div><div><span class="st closed">{{r.st}}</span></div></button>
                       <button type="button" class="rmv" data-act="unfav" onClick="{{r.remove}}" aria-label="拿出收藏">拿出</button>
                     </div>
@@ -457,7 +462,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
                 <sc-for list="{{rec.groups}}" as="g" hint-placeholder-count="3">
                   <div class="gh">{{g.title}} <b>{{g.count}}</b></div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
-                    <div class="slip" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.kindLabel}} · {{r.atText}}</div><div class="t">{{r.label}}</div><div class="m">{{r.title}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
+                    <div class="slip {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.kindLabel}} · {{r.atText}}</div><div class="t">{{r.label}}</div><div class="m">{{r.title}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
                   </sc-for>
                 </sc-for>
                 <p class="lead" style="margin-top:4px">{{rec.help}}</p>
@@ -467,7 +472,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
                 <sc-for list="{{rep.groups}}" as="g" hint-placeholder-count="2">
                   <div class="gh">{{g.title}} <b>{{g.count}}</b></div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
-                    <div class="slip" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.id}} · {{r.updatedText}}</div><div class="t">{{r.title}}</div><div class="m">{{r.text}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
+                    <div class="slip {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.id}} · {{r.updatedText}}</div><div class="t">{{r.title}}</div><div class="m">{{r.text}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
                   </sc-for>
                 </sc-for>
                 <p class="lead">{{rep.mock}}</p>
@@ -506,7 +511,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
           <p class="hint">{{feed.hint}}</p>
           <sc-if value="{{feed.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{feed.emptyTitle}}</b><span>遇到想去的，右滑收进收藏。</span></div></sc-if>
           <sc-for list="{{feed.rows}}" as="e" hint-placeholder-count="4">
-            <div class="fcard {{e.dragCls}}" data-rid="{{e.id}}" style="--fx:{{e.fx}}px;--fr:{{e.fr}}deg;--wo:{{e.wo}};--wb:{{e.wb}};--wr:{{e.wr}}deg;--ft:{{e.ft}}" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.cancel}}">
+            <div class="fcard {{e.dragCls}} {{e.ghost}}" data-rid="{{e.id}}" style="--fx:{{e.fx}}px;--fr:{{e.fr}}deg;--wo:{{e.wo}};--wb:{{e.wb}};--wr:{{e.wr}}deg;--ft:{{e.ft}}" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.cancel}}">
               <div class="ppr ev" onClick="{{e.open}}"><div class="t">{{e.title}}</div><div class="m">{{e.when}} · {{e.place}} · {{e.host}} · {{e.capLine}}</div><div class="favtab {{e.tabOn}}">★</div>
                 <div class="wash {{e.washReady}}"><span class="ic">{{e.washIcon}}</span><span>{{e.washText}}</span></div>
               </div>
@@ -522,15 +527,15 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
         <div class="feed" style="top:104px">
           <div class="mhead">我参加的 · {{mine.currentCount}}</div>
           <sc-for list="{{mine.current}}" as="r" hint-placeholder-count="3">
-            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span><span class="snp">{{r.snap}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+            <div class="mrow {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span><span class="snp">{{r.snap}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
           </sc-for>
           <div class="mhead">我发起的 · {{mine.hostedCount}}</div>
           <sc-for list="{{mine.hosted}}" as="r" hint-placeholder-count="2">
-            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+            <div class="mrow {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
           </sc-for>
           <div class="mhead">历史 · {{mine.historyCount}}</div>
           <sc-for list="{{mine.history}}" as="r" hint-placeholder-count="3">
-            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.label}}</span><span class="snp">{{r.reportLine}}</span></div><button type="button" class="rep" data-act="report" onClick="{{r.report}}">{{r.reportCta}}</button><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+            <div class="mrow {{r.ghost}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.label}}</span><span class="snp">{{r.reportLine}}</span></div><button type="button" class="rep" data-act="report" onClick="{{r.report}}">{{r.reportCta}}</button><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
           </sc-for>
           <p class="hint">按扣扣上 = 收藏 · 局内的继续编辑、再开一局、报名等完整流程不在本范围演示。</p>
         </div>
@@ -945,7 +950,7 @@ class Component extends DCLogic {
       const home = GEO.slot0 + GEO.pitch * k; let top = home, h = GEO.fh, z = 1 + k, cls = 'rest', vars = '';
       const dragging = s.tabDrag && s.tabDrag.key === f.key;
       if (pull && pull.key === f.key) {
-        top = GEO.pullTop; h = GEO.pullH; z = GEO.z; cls = pull.phase + (pull.fast ? ' fast' : '');
+        const outP = pull.phase === 'out'; top = outP ? home : GEO.pullTop; h = outP ? GEO.fh : GEO.pullH; z = outP ? 1 + k : GEO.z; cls = pull.phase + (pull.fast ? ' fast' : '');
         vars = ';--dy0:' + (home - GEO.pullTop) + 'px;--h0:' + GEO.fh + 'px;--h1:' + GEO.pullH + 'px;--z0:' + (1 + k);
         if (pull.pose) { const p = pull.pose.p; vars += ';--dxd:' + (p * 10).toFixed(1) + 'px;--dyd:' + (-p * 24).toFixed(1) + 'px;--rot:' + (-6 * Math.min(1, p * 1.4)).toFixed(2) + 'deg'; }
       } else if (pulledOn) { const r = others.indexOf(f); top = GEO.slot0 + GEO.pitch * (r + 1); z = 1 + r; cls = 'receded'; }
@@ -960,7 +965,7 @@ class Component extends DCLogic {
       if (f.key === 'profile') { sum1 = '邮箱 ' + sum.emailLabel + (d.you.emailVerified && d.you.emailDomain ? ' · ' + d.you.emailDomain : '') + ' · ' + sum.sessionLabel; }
       return { key: f.key, label: f.label, label2: f.label2, color: f.color, aria: f.aria + (pull && pull.key === f.key ? ' · 已抽出，再点放回' : ' · 点或拖标签抽出'), cls, style,
         isProfile: f.key === 'profile', isFav: f.key === 'fav', isPrefs: f.key === 'prefs', isRecords: f.key === 'records', isHelp: f.key === 'help',
-        peekP: dragging ? s.tabDrag.p.toFixed(2) : '0', peekTitle: peekOf(f.key), dot: f.key === 'records' && sum.attention > 0, sum1, sum2, sum1Cls, sum2Cls,
+        peekP: dragging ? Math.min(1, s.tabDrag.p / 0.6).toFixed(2) : '0', peekTitle: peekOf(f.key), dot: f.key === 'records' && sum.attention > 0, sum1, sum2, sum1Cls, sum2Cls,
         tabClick: () => this.tabClick(f.key), tabDown: (ev) => this.tabDown(ev, f.key), tabMove: (ev) => this.tabMove(ev, f.key), tabUp: (ev) => this.tabUp(ev, f.key, false), tabCancel: (ev) => this.tabUp(ev, f.key, true),
         insert: (ev) => { ev.stopPropagation(); this.guardLeave(() => this.insertFolder()); }, pullStrip: () => { if (pulledOn && pull.key === f.key) return; this.pullFolder(f.key); } };
     });
@@ -999,6 +1004,7 @@ class Component extends DCLogic {
     const nameLong = Array.from(d.you.name).length > 7;
     out.prof = { name: d.you.name, whoCls: nameLong ? 'long' : '', wx: d.you.wx || '未填写', email: d.you.email || '未填写', emailShort: d.you.email ? (d.you.emailDomain || d.you.email.split('@')[1] || d.you.email) : '未填写', emailTag: sum.emailLabel, emailTagCls: d.you.email ? (d.you.emailVerified ? 'ok' : 'warn') : 'off',
       footer: '称呼 · 局主与同局成员可见 ｜ 微信 · 成局后仅局主 ｜ 邮箱 · 只显示验证标记', savedLine: s.saved, snapshotNote: JUS.COPY.snapshotNote, wxPolicy: JUS.COPY.wxPolicy, copy: () => this.copyWx(),
+      gProfile: pname === 'profile' ? 'ghost' : '', gPrivacy: pname === 'privacy' ? 'ghost' : '', gAccount: pname === 'account' ? 'ghost' : '',
       open: (ev) => this.openPaper('profile', null, ev), openPrivacy: (ev) => this.openPaper('privacy', null, ev), openAccount: (ev) => this.openPaper('account', null, ev),
       edit: () => this.setState({ edit: this.newEdit(), saved: '', dir: 'push' }) };
     const ed = s.edit || this.newEdit(); const emailChanged = ed.email.trim() !== ed.orig.email && ed.email.trim() !== '';
@@ -1008,7 +1014,7 @@ class Component extends DCLogic {
       setName: (ev) => this.setEdit({ name: ev.target.value, errors: Object.assign({}, ed.errors, { name: '' }) }), setWx: (ev) => this.setEdit({ wx: ev.target.value, errors: Object.assign({}, ed.errors, { wx: '' }) }), setEmail: (ev) => this.setEdit({ email: ev.target.value, verifiedNow: false, sent: false, errors: Object.assign({}, ed.errors, { email: '' }) }), setCode: (ev) => this.setEdit({ code: ev.target.value.replace(/\D/g, '').slice(0, 6), codeErr: '' }),
       send: () => this.sendCode(), verify: () => this.verifyCode(), save: () => this.saveProfile(), cancel: () => this.guardLeave(() => this.setState({ edit: null, dir: 'pop' })) };
     /* ---- favorites ---- */
-    const favCell = (r, i) => ({ id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, cityLine: r.crossCity ? r.city.name + ' · ' + r.city.tzLabel : '', st: r.status.label, stCls: r.status.key === 'open' ? 'open' : r.status.key === 'cancelled' ? 'bad' : 'closed', rel: r.relation.kind === 'none' ? '' : r.relation.label, rot: rot3(i), cls: s.leaving[r.id] ? 'leaving' : '', open: (ev) => this.openPaper('fav-detail', r.id, ev), remove: () => this.removeFav(r.id, r.title) });
+    const favCell = (r, i) => ({ id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, cityLine: r.crossCity ? r.city.name + ' · ' + r.city.tzLabel : '', st: r.status.label, stCls: r.status.key === 'open' ? 'open' : r.status.key === 'cancelled' ? 'bad' : 'closed', rel: r.relation.kind === 'none' ? '' : r.relation.label, rot: rot3(i), cls: s.leaving[r.id] ? 'leaving' : '', ghost: pname === 'fav-detail' && paper.id === r.id ? 'ghost' : '', open: (ev) => this.openPaper('fav-detail', r.id, ev), remove: () => this.removeFav(r.id, r.title) });
     out.fav = { count: favs.count, lead: favs.count ? '收藏不等于报名；拿出不影响已报名的局。' : '', empty: favs.count === 0, emptyTitle: JUS.COPY.favEmpty.title, emptyBody: JUS.COPY.favEmpty.body, emptyCta: JUS.COPY.favEmpty.cta, hasAny: favs.count > 0, active: favs.active.map(favCell), archived: favs.archived.map(favCell), hasArchived: favs.archived.length > 0, archivedCount: favs.archived.length, goFind: () => this.setState({ tab: 'find', paper: null, pstack: [] }) };
     /* ---- detail (fav / seam) ---- */
     const detId = paper ? paper.id : null; const detE = detId ? d.events[detId] : null;
@@ -1032,7 +1038,7 @@ class Component extends DCLogic {
     const kinds = [['出席记录', recs.attendance], ['主动退出', recs.exits], ['安排变化', recs.changes]];
     const sCls = (r) => r.pendingReview ? 'pend' : r.status === 'verified' || r.status === 'corrected' ? 'open' : 'closed';
     let ri = 0;
-    out.rec = { lead: recs.lead, exitLine: recs.exitLine, quotaNoCount: JUS.COPY.quotaNoCount, empty: recs.empty, emptyTitle: JUS.COPY.creditEmpty, help: JUS.COPY.recordHelp, groups: kinds.filter(k => k[1].length).map(k => ({ title: k[0], count: k[1].length, rows: k[1].map(r => ({ id: r.id, kindLabel: r.kindLabel, atText: r.atText, label: r.label, title: r.title, statusLabel: r.statusLabel, sCls: sCls(r), rot: rot3(ri++), open: (ev) => this.openPaper('record-detail', r.id, ev) })) })) };
+    out.rec = { lead: recs.lead, exitLine: recs.exitLine, quotaNoCount: JUS.COPY.quotaNoCount, empty: recs.empty, emptyTitle: JUS.COPY.creditEmpty, help: JUS.COPY.recordHelp, groups: kinds.filter(k => k[1].length).map(k => ({ title: k[0], count: k[1].length, rows: k[1].map(r => ({ id: r.id, kindLabel: r.kindLabel, atText: r.atText, label: r.label, title: r.title, statusLabel: r.statusLabel, sCls: sCls(r), rot: rot3(ri++), ghost: (pname === 'record-detail' || pname === 'record-form') && paper.id === r.id ? 'ghost' : '', open: (ev) => this.openPaper('record-detail', r.id, ev) })) })) };
     const rd = paper && (pname === 'record-detail' || pname === 'record-form') ? JUS.derive.record(d, paper.id) : null;
     if (rd) { const notes = rd.supplements.map(x => ({ kind: '补充', text: x.text, atText: JUS.fmt.dateTime(x.at), status: '已保存本机' })).concat(rd.appeals.map(a => ({ kind: a.kind === 'dispute' ? '出席异议' : '申诉', text: a.reason, atText: JUS.fmt.dateTime(a.at), status: '待核实 · 未处罚' })));
       out.rd = { kindLabel: rd.kindLabel, statusLabel: rd.statusLabel, label: rd.label, title: rd.title, when: rd.when.zh, place: rd.place.hood, host: rd.host, atText: rd.atText, quotaLabel: rd.quotaLabel, appealLine: rd.appealLine, hasNotes: notes.length > 0, noteCount: notes.length, notes, canDispute: rd.canDispute, canAppeal: rd.canAppeal, help: rd.type === 'absence_reported' ? JUS.COPY.recordHelp : rd.type === 'active_withdrawal' ? JUS.COPY.quotaRule : '安排变化不记失约、不消耗机会；这里只保留事实。',
@@ -1040,7 +1046,7 @@ class Component extends DCLogic {
       const rf = s.rf || this.newRf('supplement', rd.id); const K = { supplement: ['补充说明', '补充事实或说明', '比如：当天高烧，已私信局主。', '保存说明', '只追加，不改写原记录；保存后标「已保存本机」。'], dispute: ['出席异议', '说明你当天的情况', '比如：我当天到场了，有签到照片。', '提出异议', '异议只对「未出席记录」提出一次；提出后状态为待核实，不自动处罚。'], appeal: ['信用申诉', JUS.COPY.appealLabel, '比如：家人突发状况，提前告知了局主。', JUS.COPY.appealCta, '申诉说明保存在本机，尚未提交审核服务；每条退出记录只能申诉一次。'] }[rf.kind];
       out.rf = { kindLabel: K[0], label: rd.label, title: rd.title, formLabel: K[1], placeholder: K[2], cta: rf.saving ? '保存中…' : K[3], note: K[4], text: rf.text, count: rf.text.length, err: rf.err, errCls: rf.err ? 'err' : '', fail: !!rf.fail, failMsg: rf.fail || '', saving: rf.saving, setText: (ev) => this.setState(st => ({ rf: Object.assign({}, st.rf, { text: ev.target.value, err: '' }) })), save: () => this.saveRf(), cancel: () => this.goBack() };
     } else { out.rd = {}; out.rf = { text: '' }; }
-    const repRow = (r, i) => ({ id: r.id, updatedText: r.updatedText, title: r.title, text: r.text, statusLabel: r.statusLabel, sCls: r.needsMore ? 'pend' : r.status === 'resolved' ? 'open' : 'closed', rot: rot3(i + 1), open: (ev) => this.openPaper('report-detail', r.id, ev) });
+    const repRow = (r, i) => ({ id: r.id, updatedText: r.updatedText, title: r.title, text: r.text, statusLabel: r.statusLabel, sCls: r.needsMore ? 'pend' : r.status === 'resolved' ? 'open' : 'closed', rot: rot3(i + 1), ghost: (pname === 'report-detail' || pname === 'report-supp') && paper.id === r.id ? 'ghost' : '', open: (ev) => this.openPaper('report-detail', r.id, ev) });
     out.rep = { count: reps.count, lead: reps.count ? JUS.COPY.reportNote : '', empty: reps.empty, emptyTitle: JUS.COPY.reportsEmpty, mock: JUS.COPY.reportMock, groups: [['处理中', reps.open], ['已处理', reps.closed]].filter(g => g[1].length).map(g => ({ title: g[0], count: g[1].length, rows: g[1].map(repRow) })) };
     const rp = paper && (pname === 'report-detail' || pname === 'report-supp') ? JUS.derive.report(d, paper.id) : null;
     if (rp) { out.rpd = { id: rp.id, statusLabel: rp.statusLabel, led: rp.needsMore ? 'wait' : rp.status === 'resolved' ? 'on' : rp.status === 'submitted' ? '' : 'on', needsText: rp.needsMore ? rp.needsText || '' : '', title: rp.title, whoName: rp.whoName, when: rp.when.zh, host: rp.host, updatedText: rp.updatedText, text: rp.text, hasShots: rp.shots.length > 0, shots: rp.shots, timeline: rp.timelineRows.map((t, i, a) => Object.assign({}, t, { cls: i === a.length - 1 ? 'now' : '' })), hasSupp: rp.supplementRows.length > 0, supps: rp.supplementRows, needsMore: rp.needsMore, mock: JUS.COPY.reportMock, supplement: () => this.pushPaper('report-supp', rp.id, { rs: this.newRs(rp.id) }) };
@@ -1061,14 +1067,14 @@ class Component extends DCLogic {
     const feed = JUS.derive.feed(d, s.feedFilter === 'favs' ? 'fav' : 'all'); const feedAll = JUS.derive.feed(d, 'all');
     out.feed = { city: feed.city.name, sub: feedAll.count + ' 个局 · 这两天 · 收藏 ' + feedAll.favCount, allOn: s.feedFilter === 'all' ? 'on' : '', favOn: s.feedFilter === 'favs' ? 'on' : '', favCount: feedAll.favCount, pillAll: JUS.FAV.copy.pillAll, pillFavs: JUS.FAV.copy.pillFavs, showAll: () => this.setState({ feedFilter: 'all' }), showFav: () => this.setState({ feedFilter: 'favs' }), empty: feed.count === 0, emptyTitle: s.feedFilter === 'favs' ? JUS.FAV.copy.emptyCity : '这个城市这两天还没局', hint: s.feedFilter === 'favs' ? JUS.FAV.copy.hintOn : '右滑收进收藏 · 左滑拿出收藏 · 点一张进详情',
       rows: feed.rows.map((r, i) => { const fx = s.fx[r.id] || 0; const dragging = s.drag && s.drag.id === r.id && s.drag.axis === 'x'; const idle = dragging && s.drag.idle; const fp = Math.min(1, Math.abs(fx) / 96); const rt = fx > 0;
-        return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, capLine: '共 ' + r.capacity + ' 人', tabOn: r.fav ? 'on' : '', dragCls: dragging ? 'drag' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: (fp * (idle ? 0.5 : 1)).toFixed(2), wr: (fp * 13 * (rt ? 1 : -1)).toFixed(1), ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
+        return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, capLine: '共 ' + r.capacity + ' 人', tabOn: r.fav ? 'on' : '', dragCls: dragging ? 'drag' : '', ghost: pname === 'seam-detail' && paper.id === r.id ? 'ghost' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: (fp * (idle ? 0.5 : 1)).toFixed(2), wr: (fp * 13 * (rt ? 1 : -1)).toFixed(1), ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
           wb: idle ? 'linear-gradient(126deg,rgba(226,228,232,.78) 0%,rgba(200,204,214,.68) 100%)' : rt ? 'linear-gradient(126deg,rgba(75,99,192,.9) 0%,rgba(104,150,226,.84) 44%,rgba(170,214,240,.76) 100%)' : 'linear-gradient(126deg,rgba(31,29,27,.88) 0%,rgba(76,72,66,.8) 52%,rgba(130,124,114,.72) 100%)',
           washIcon: rt ? JUS.FAV.icon.on : JUS.FAV.icon.off, washText: idle ? (r.fav ? JUS.FAV.copy.alreadyOn : JUS.FAV.copy.notOn) : (rt ? JUS.FAV.copy.add : JUS.FAV.copy.remove), washReady: Math.abs(fx) > JUS.FAV.throwPx ? 'ready' : '',
           down: (ev) => this.feedDown(ev, r.id), move: (ev) => this.feedMove(ev, r.id), up: (ev) => this.feedUp(ev, r.id, false), cancel: (ev) => this.feedUp(ev, r.id, true),
           open: (ev) => { if (this._suppressClick === r.id) { this._suppressClick = null; return; } this.openPaper('seam-detail', r.id, ev); } }; }) };
     /* ---- seam mine ---- */
     const mine = JUS.derive.mine(d); let mi = 0;
-    const mrow = (r, hist) => { const rp0 = d.reports.filter(x => x.eventId === r.id).sort((a, b) => b.createdAt - a.createdAt)[0]; const i = mi++; return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, label: r.label, snap: r.snapshotLabel || '', rot: rot3(i), favOn: r.fav ? 'on' : '', favAct: r.fav ? 'unfav' : 'fav', favAria: (r.fav ? '已收藏 · 点按扣拿出' : '未收藏 · 点按扣收进'), press: press('fav|' + r.id), toggle: () => this.toggleFav(r.id, r.title), reportLine: hist ? (rp0 ? '已举报 · ' + (JUS.REPORT_LABELS[rp0.status] || rp0.status) : '散场后遇到问题，或对记录有异议') : '', reportCta: rp0 && rp0.status !== 'resolved' ? '查看回执' : '不对劲？举报', report: (ev) => this.openPaper('seam-report', r.id, ev, { sr: this.newSr(r.id) }) }; };
+    const mrow = (r, hist) => { const rp0 = d.reports.filter(x => x.eventId === r.id).sort((a, b) => b.createdAt - a.createdAt)[0]; const i = mi++; return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, label: r.label, snap: r.snapshotLabel || '', rot: rot3(i), ghost: pname === 'seam-report' && paper.id === r.id ? 'ghost' : '', favOn: r.fav ? 'on' : '', favAct: r.fav ? 'unfav' : 'fav', favAria: (r.fav ? '已收藏 · 点按扣拿出' : '未收藏 · 点按扣收进'), press: press('fav|' + r.id), toggle: () => this.toggleFav(r.id, r.title), reportLine: hist ? (rp0 ? '已举报 · ' + (JUS.REPORT_LABELS[rp0.status] || rp0.status) : '散场后遇到问题，或对记录有异议') : '', reportCta: rp0 && rp0.status !== 'resolved' ? '查看回执' : '不对劲？举报', report: (ev) => this.openPaper('seam-report', r.id, ev, { sr: this.newSr(r.id) }) }; };
     out.mine = { sub: mine.current.length + ' 个进行中 · ' + mine.hosted.length + ' 个我发起 · ' + mine.history.length + ' 个历史', currentCount: mine.current.length, hostedCount: mine.hosted.length, historyCount: mine.history.length, current: mine.current.map(r => mrow(r, false)), hosted: mine.hosted.map(r => mrow(r, false)), history: mine.history.map(r => mrow(r, true)) };
     const sr = s.sr; const srE = sr ? d.events[sr.eventId] : null;
     if (sr && srE) { const doneRep = sr.done ? d.reports.filter(x => x.id === sr.done)[0] : null; const hostN = JUS.derive.hostName(d, srE);

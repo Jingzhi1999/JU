@@ -107,6 +107,12 @@ body{margin:0}
 @keyframes sc09-pback-out{from{width:40px;margin-right:0;opacity:1}to{width:0;margin-right:-10px;opacity:0}}
 .carry{position:absolute;left:0;top:0;right:0;height:var(--sc09-h0);padding:16px 20px;pointer-events:none;z-index:3;display:flex;flex-direction:column;align-items:flex-start;overflow:hidden;white-space:nowrap;box-sizing:border-box;color:var(--ink)}
 .carry.hero{padding:18px 22px;border-radius:0}
+.carry.rowc{padding:16px 60px 16px 20px;white-space:normal}
+.carry.rowc .lab{display:none}
+.carry.rowc .t{font-size:16px;font-weight:600;line-height:1.35;display:block}
+.carry.rowc .m{font-size:13px;color:var(--mute);line-height:1.45;margin-top:4px;display:block}
+.page.rowlift.inflating .phead h2{animation:sc09-fade calc(200ms * var(--k,1)) ease calc(200ms * var(--k,1)) both}
+.page.rowlift.deflating .phead h2{animation:sc09-unfade calc(120ms * var(--k,1)) ease both}
 .carry .lab{visibility:hidden}
 .page.inflating .carry{animation:sc09-carry calc(220ms * var(--k,1)) ease calc(40ms * var(--k,1)) both}
 .page.deflating .carry{animation:sc09-fade calc(200ms * var(--k,1)) ease calc(160ms * var(--k,1)) both}
@@ -150,7 +156,7 @@ body{margin:0}
 .fld.edit .well{grid-template-rows:1fr;margin-top:8px}
 .fld .well > div{overflow:hidden;min-height:0}
 .fld .wi{display:block;background:rgba(255,255,255,.5);border-radius:16px;padding:9px 14px;box-shadow:inset 0 2px 4px rgba(var(--sh),.18);transition:opacity calc(160ms * var(--k,1)) ease}
-.fld:not(.edit) .wi{opacity:0}
+.fld:not(.edit) .wi{opacity:0;transition-duration:0ms}
 .fld input{appearance:none;border:0;background:transparent;font:inherit;font-size:19px;font-weight:600;color:var(--ink);width:100%;padding:0;outline:0;box-sizing:border-box;min-height:28px}
 .fld input.wx{font-family:var(--num)}
 .fld input::placeholder{color:rgba(120,110,100,.55);font-weight:500}
@@ -442,6 +448,7 @@ body{margin:0}
           <div class="carry {{carry.cls}}"><span class="lab">{{page.title}}</span>
             <sc-if value="{{carry.hero}}" hint-placeholder-val="{{false}}"><span class="name {{home.nameCls}}">{{carry.title}}</span><span class="meta"><span><b class="wx">{{carry.line1}}</b> 微信</span><span><b>{{carry.line2}}</b></span></span></sc-if>
             <sc-if value="{{carry.plain}}" hint-placeholder-val="{{true}}"><span class="val {{carry.valCls}}">{{carry.title}}</span><span class="sub">{{carry.line1}}</span></sc-if>
+            <sc-if value="{{carry.row}}" hint-placeholder-val="{{false}}"><span class="t">{{carry.title}}</span><span class="m">{{carry.line1}}</span></sc-if>
           </div>
           <div class="phead"><button type="button" class="pback" data-act="back" onClick="{{goBack}}" aria-label="返回上一级"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button><h2>{{page.title}}</h2><span class="psub">{{page.sub}}</span></div>
           <div class="pbody"><div class="pg {{page.dir}}">
@@ -812,7 +819,7 @@ class Component extends DCLogic {
     if (S === 'seam-feed') { this.setState({ tab: 'find', lift: null, view: { name: 'home' }, stack: [], feedFilter: o.state === 'fav' ? 'fav' : 'all' }); return; }
     if (S === 'seam-feed-detail') { this.setState({ tab: 'find', feedFilter: 'all', view: { name: 'seam-detail', id: o.id }, stack: [], dir: '', lift: { phase: 'in', from: null, item: 'seam', push: {}, rid: null } }); return; }
     if (S === 'seam-mine') { this.setState({ tab: 'mine', lift: null, view: { name: 'home' }, stack: [] }); return; }
-    if (S === 'seam-report') { this.setState({ tab: 'mine', view: { name: 'seam-report', id: o.id }, stack: [], dir: '', lift: { phase: 'in', from: null, item: 'seam', push: {}, rid: null }, sr: this.newSr(o.id) }); return; }
+    if (S === 'seam-report') { this.setState({ tab: 'mine', view: { name: 'seam-report', id: o.id }, stack: [], dir: '', lift: { phase: 'in', from: null, item: 'seam', push: {}, rid: null }, sr: Object.assign(this.newSr(o.id), { done: null }) }); return; }
   }
   beforeReplay(name) {
     if (name === 'inflate') { this.setState({ lift: null, view: { name: 'home' }, stack: [], dir: '', settleItem: null, edit: null, rf: null, rs: null, fb: null, sr: null, danger: null, pulse: null, skinPreview: null }); }
@@ -948,7 +955,7 @@ class Component extends DCLogic {
     /* page shell */
     const half = name === 'appearance';
     const from = lift ? lift.from : null;
-    const liftCls = (from ? (lift.phase === 'in' ? 'inflating' : 'deflating') : 'settled') + (half ? ' half' : '') + (s.pulse ? ' pulse-' + s.pulse : '');
+    const liftCls = (from ? (lift.phase === 'in' ? 'inflating' : 'deflating') : 'settled') + (half ? ' half' : '') + (s.pulse ? ' pulse-' + s.pulse : '') + (liftItem === 'seam' ? ' rowlift' : '');
     const liftStyle = from ? `--sc09-x0:${from.x.toFixed(1)}px;--sc09-y0:${from.y.toFixed(1)}px;--sc09-w0:${from.w.toFixed(1)}px;--sc09-h0:${from.h.toFixed(1)}px;--sc09-r0:${from.r};--sc09-c0:${from.c};--sc09-t0:${from.t0};--sc09-tc0:${from.tc0}` : '';
     const page = { title: pageDef.title || '', sub: pageDef.sub || '', dir: s.dir };
     page.isProfileAny = name === 'profile' || name === 'profile-edit'; page.isFavorites = name === 'favorites'; page.isDetail = name === 'fav-detail' || name === 'seam-detail'; page.isCity = name === 'city'; page.isNotify = name === 'notify'; page.isAppearance = name === 'appearance';
@@ -962,11 +969,11 @@ class Component extends DCLogic {
       if (it === 'look') return { cls: '', hero: false, plain: true, title: sum.skin.name, line1: home.motionShort, valCls: '' };
       if (it === 'records') return { cls: '', hero: false, plain: true, title: home.recMain, line1: home.recSub, valCls: '' };
       if (it === 'reports') return { cls: '', hero: false, plain: true, title: home.repMain, line1: home.repSub, valCls: '' };
-      if (it === 'seam' && v.id && d.events[v.id]) { const e = d.events[v.id]; return { cls: '', hero: false, plain: true, title: e.title, line1: JUS.fmt.when(e.iso).zh + ' · ' + JUS.fmt.place(e.loc).hood, valCls: 'ev' }; }
+      if (it === 'seam' && v.id && d.events[v.id]) { const e = d.events[v.id]; const jj = JUS.derive.joinedRow(d, v.id); return { cls: 'rowc', hero: false, plain: false, row: true, title: e.title, line1: JUS.fmt.when(e.iso).zh + ' · ' + JUS.fmt.place(e.loc).hood + (jj ? ' · ' + jj.label : ' · ' + JUS.derive.hostName(d, e)), valCls: '' }; }
       return { cls: '', hero: false, plain: true, title: '', line1: { help: home.helpSub, privacy: '谁能看见你', account: home.accSub, about: '18 条约定' }[it] || '', valCls: '' };
     };
     const out = { panel, rootRef: this.rootRef, userRm: d.appearance.reduceMotion ? ' rm-user' : '', skin, tabSettings: s.tab === 'settings', tabFind: s.tab === 'find', tabMine: s.tab === 'mine', tabCreate: s.tab === 'create', home, page,
-      lift: { on: liftOn, cls: liftCls, style: liftStyle }, carry: liftOn ? carryOf(liftItem) : { cls: '', hero: false, plain: false, title: '', line1: '', line2: '', valCls: '' }, goBack: () => this.goBack(), closeAll: () => this.closeAll(),
+      lift: { on: liftOn, cls: liftCls, style: liftStyle }, carry: liftOn ? carryOf(liftItem) : { cls: '', hero: false, plain: false, row: false, title: '', line1: '', line2: '', valCls: '' }, goBack: () => this.goBack(), closeAll: () => this.closeAll(),
       nav: { i: { find: 0, create: 1, mine: 2, settings: 3 }[s.tab], findOn: s.tab === 'find' ? 'on' : '', mineOn: s.tab === 'mine' ? 'on' : '', settingsOn: s.tab === 'settings' ? 'on' : '', find: () => this.switchTab('find'), mine: () => this.switchTab('mine'), settings: () => this.switchTab('settings'), create: () => { this.switchTab('create'); this.say('开局流程不在本离线演示中'); } },
       undo: { on: !!s.undo, text: s.undo ? '已取消收藏 · ' + s.undo.title + (s.undo.last ? ' · 收藏夹空了' : '') : '', restore: () => this.restoreFav() },
       toast: { on: !!s.toast, text: s.toast ? s.toast.text : '', sel: s.toast ? s.toast.sel : '' },

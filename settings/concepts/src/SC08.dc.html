@@ -138,12 +138,14 @@ body{margin:0}
 .drawer.in.half{top:47%;height:calc(53% - 64px)}
 .drawer.out.nofrom{opacity:0}
 .drawer.start.nofrom{opacity:0}
-.carry{position:absolute;left:0;top:0;right:0;height:38px;display:flex;align-items:center;gap:8px;padding:0 10px 0 9px;opacity:1;transition:opacity calc(140ms * var(--k,1)) ease;pointer-events:none;z-index:3;box-sizing:border-box}
+.carry{position:absolute;left:0;top:0;right:0;height:38px;display:flex;align-items:center;gap:8px;padding:0 10px 0 9px;opacity:1;transition:opacity calc(120ms * var(--k,1)) ease;pointer-events:none;z-index:3;box-sizing:border-box}
 .carry .lbl{font-size:15px;font-weight:500;letter-spacing:.06em;color:var(--ink);white-space:nowrap}
 .carry .dots{flex:1 1 auto;height:0;border-top:2px dotted rgba(217,182,98,.55);margin:0 2px;min-width:12px}
 .carry .val{font-size:13.5px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:178px}
-.drawer.in .carry{opacity:0;transition-delay:calc(60ms * var(--k,1))}
-.dhead{height:46px;display:flex;align-items:center;gap:10px;padding:0 12px 0 8px;border-bottom:1px solid rgba(255,255,255,.08);flex:0 0 auto;opacity:0;transition:opacity calc(200ms * var(--k,1)) ease calc(120ms * var(--k,1))}
+.drawer.in .carry{opacity:0;transition-delay:calc(40ms * var(--k,1))}
+.drawer.out .carry{opacity:1;transition-delay:calc(90ms * var(--k,1))}
+.drawer.out .dhead,.drawer.out .dbody{opacity:0;transition-delay:0ms;transition-duration:calc(110ms * var(--k,1))}
+.dhead{height:46px;display:flex;align-items:center;gap:10px;padding:0 12px 0 8px;border-bottom:1px solid rgba(255,255,255,.08);flex:0 0 auto;opacity:0;transition:opacity calc(200ms * var(--k,1)) ease calc(200ms * var(--k,1))}
 .drawer.in .dhead{opacity:1}
 .dhead h2{margin:0;font-size:16px;font-weight:500;letter-spacing:.08em;flex:1 1 auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .dhead .en{font:500 10px var(--mono);letter-spacing:.16em;color:var(--brass-hi);flex:0 0 auto}
@@ -276,7 +278,8 @@ body{margin:0}
 .lg-row .c-f.ok{color:#2f6a3c}
 .lg-row .c-d{font:400 11px var(--mono);color:var(--pmute);text-align:right;white-space:nowrap}
 .lg-foot{font-size:10.5px;letter-spacing:.12em;color:var(--pmute);padding-top:8px;text-align:right}
-.mine-row{grid-template-columns:26px 1fr 96px 30px 30px}
+.mine-row{grid-template-columns:26px 1fr 92px 30px 38px}
+.mine-head{grid-template-columns:26px 1fr 92px 68px}
 .mine-row .hookb{appearance:none;border:0;background:transparent;width:30px;height:30px;cursor:pointer;padding:0;display:flex;align-items:center;justify-content:center;color:#a39a86}
 .mine-row .hookb.on{color:#9a6a12}
 .mine-row .hookb svg{width:18px;height:18px}
@@ -496,7 +499,7 @@ body{margin:0}
         <div class="felt ledger">
           <div class="book">
             <div class="bk-title"><span>门卫登记簿 · {{mine.you}}</span><span>LOGBOOK</span></div>
-            <div class="lg-head"><span>#</span><span>局名</span><span>事实</span><span>日期</span></div>
+            <div class="lg-head mine-head"><span>#</span><span>局名</span><span>事实</span><span>钩 · 日期</span></div>
             <div class="sub-h">我参加的 · {{mine.currentCount}}</div>
             <sc-for list="{{mine.current}}" as="r" hint-placeholder-count="3">
               <div class="lg-row mine-row" data-rid="{{r.id}}"><span class="c-n">{{r.n}}</span><span class="c-t">{{r.title}}</span><span class="c-f">{{r.label}}</span><button type="button" class="hookb {{r.favOn}}" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 3v7a4 4 0 1 1-8 0"/><circle cx="12" cy="3" r="1.4" fill="currentColor"/></svg></button><span class="c-d">{{r.date}}</span></div>
@@ -612,6 +615,7 @@ body{margin:0}
                   <sc-if value="{{ntf.canRequest}}" hint-placeholder-val="{{false}}"><button type="button" class="btn sm ghost" style="color:#2b2112;box-shadow:inset 0 0 0 1.5px rgba(43,33,18,.5)" data-act="request-permission" onClick="{{ntf.request}}">{{ntf.buttonLabel}}</button></sc-if>
                   <sc-if value="{{ntf.showDisabled}}" hint-placeholder-val="{{false}}"><button type="button" class="btn sm ghost" style="color:#2b2112;box-shadow:inset 0 0 0 1.5px rgba(43,33,18,.5)" disabled="{{true}}">{{ntf.buttonLabel}}</button></sc-if>
                 </div>
+              </div>
               </div>
               <div class="sec"><h4>投递牌 · 提醒服务</h4>
                 <div class="keytag brass flat {{ntf.carrierCls}}"><span class="ring"></span><div class="tx"><b class="eng">{{ntf.serviceTitle}}</b><p>{{ntf.serviceCopy}}</p></div></div>
@@ -1113,7 +1117,7 @@ class Component extends DCLogic {
       carrierCls: d.notify.serviceConnected ? 'ok' : '', carrierLabel: '投递 · ' + (d.notify.serviceConnected ? '已连接' : '未开通'),
       openNotify: () => this.openPlate('notify', '.mhead'), openHelp: () => this.openPlate('help', '.plate-sm[data-rid="help"]'), openAbout: () => this.openPlate('about', '.plate-sm[data-rid="about"]'), openAccount: () => this.openPlate('account', '.plate-sm[data-rid="account"]'),
       bellCls: s.bell ? 'down' + (s.bell.phase === 'down' ? ' pressing' : '') : '', bellLamp: bellLit ? 'lit' : '', pressBell: () => this.pressBell(),
-      bellLine: bellLit ? (openFacts ? openFacts + ' 个局里有人现在能联系你' : '现在没有人能看到你的微信') : (openFacts ? openFacts + ' 个局里有人能联系你 · 按铃看规则' : '按铃查看谁能联系你'),
+      bellLine: bellLit ? (openFacts ? openFacts + ' 个局里有人现在能看到你的资料' : '现在没有人能看到你的资料') : (openFacts ? openFacts + ' 个局里有人能看到你的资料 · 按铃看规则' : '按铃查看谁能联系你'),
       drawer: { on: drOn, phase: (dr ? dr.phase : '') + (name === 'appearance' ? ' half' : '') + (dr && !dr.from ? ' nofrom' : ''), dim: dr && dr.phase === 'in' ? 'in' : '', style: dr && dr.phase !== 'in' && dr.from ? 'left:' + dr.from.x.toFixed(1) + 'px;top:' + dr.from.y.toFixed(1) + 'px;width:' + dr.from.w.toFixed(1) + 'px;height:' + dr.from.h.toFixed(1) + 'px' : '' },
       carry: { num: ROW_NUM[drRow] || '', label: ROW_LABEL[drRow] || '', value: rv[drRow] ? rv[drRow].value : '' },
       page, goBack: () => this.goBack(), closeAll: () => this.closeAll(),
