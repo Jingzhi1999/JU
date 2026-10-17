@@ -9,7 +9,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-17 21:0x UTC（容器时钟为 UTC；用户时区未知） |
+| 最后更新 | 2026-10-17 19:2x UTC（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮提交见 §F；已推送到 origin 同名分支 |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器临时，**只有已提交并推送的内容可迁移**） |
 | 设置工程子目录 | `settings/`（独立于上一轮：`settings/spec/`、`settings/concepts/{src,project}`、`settings/src/{core,shell,build.js}`、`settings/research/`、`settings/tools/`、`settings/evidence/`）；复用仓库根 `src/runtime/`（preact + dc-mini-runtime）与 `src/core/ju-fx.*`（几何 / 动效原语）|
@@ -17,7 +17,7 @@
 | 交付入口 2 | 独立评审画布 `JU-Settings-Fablo51-10-Concepts.html`（仓库根；`JUS_ONLY=SC05 node settings/src/build.js` 生成；当前只含 SC05；全部完成后用 `node settings/src/build.js` 生成十套） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-Settings-Fablo51-10-Concepts.html`（总览 / 方案 / 对比 / 附录；`#concept/SC01` 直达）。字体来自 Google Fonts（容器内已验证可达，HTTP 200；离线退回系统字体）。无需安装；Node 22 + Playwright（`/opt/node-tools/node_modules/playwright`，Chromium 已预装）+ ffmpeg 仅用于构建与截图验证 |
 | 构建 | `node settings/src/build.js`（写 `settings/concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/src/build.js`（并行开发用，不写共享文件） |
-| 验证工具 | `node settings/tools/capture.cjs <CODE> <outdir> '<actions json>'`（操作并抽帧，生成 sheet.png + log.json）；`node settings/tools/coverage.cjs <CODE> <outdir>`（跳转全部状态索引截图）；两者支持 `JU_STANDALONE` |
+| 验证工具 | `node settings/tools/capture.cjs <CODE> <outdir> '<actions json>'`（操作并抽帧，生成 sheet.png + log.json）；`node settings/tools/coverage.cjs <CODE> <outdir>`（跳转全部状态索引截图）；`node settings/tools/widths.cjs <CODE>`（360 / 390 / 430 三行对照 + 横向溢出列表）；三者支持 `JU_STANDALONE`。主负责人复核：`bash settings/tools/review-check.sh <CODE>`（私有构建 + coverage + 证据清单 + 禁用词）、`python3 -I settings/tools/review-sheet.py <CODE>`（命名截图拼图 → `.build/review-<CODE>.jpg`）。聚合：`node settings/tools/coverage-matrix.cjs`（→ `settings/spec/coverage.md`）、`node settings/tools/motion-specs.cjs`（→ `settings/spec/motion-specs.md`）、`node settings/tools/test/standalone.cjs`（独立画布冒烟）、`node settings/tools/test/core-regress.cjs`（引擎回归 31 项） |
 
 ### A.1 工作状态总表
 
@@ -102,7 +102,10 @@ settings/src/core/jus-review.js          评审 mixin（after / hold / holdKey /
 settings/src/core/jus-panel.html|css     评审面板（手机画面外）
 settings/src/shell/                      独立画布外壳（总览 / 方案 / 对比 / 附录）
 settings/src/build.js                    构建脚本
-settings/tools/capture.cjs|coverage.cjs  截图 / 抽帧 / 覆盖工具（默认指向设置画布）
+settings/tools/capture.cjs|coverage.cjs|widths.cjs  截图 / 抽帧 / 覆盖 / 宽度工具（默认指向设置画布）
+settings/tools/review-check.sh|review-sheet.py  主负责人复核门槛与拼图
+settings/tools/coverage-matrix.cjs|motion-specs.cjs  十套覆盖矩阵与动效规格合集
+settings/tools/test/standalone.cjs|core-regress.cjs  独立画布冒烟 / 引擎回归
 settings/spec/                           方向卡、（待写）功能归属表、状态契约、动效规格、覆盖表、限制
 settings/spec/extracts/                  三模块抽取（代理产出中）
 settings/research/                       研究草稿与合并台账（证据在 research/evidence/）
