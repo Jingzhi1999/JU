@@ -387,7 +387,7 @@
       return { rows: rows, attendance: rows.filter(function (r) { return r.kindLabel === '出席记录'; }), exits: rows.filter(function (r) { return r.type === 'active_withdrawal'; }), changes: rows.filter(function (r) { return r.kindLabel === '安排变化'; }), count: rows.length, exitCount: exits, exitLine: exits ? '本机记录中的主动告知退出：' + exits + ' 次' : '本机记录中没有主动退出', pending: rows.filter(function (r) { return r.pendingReview; }).length, empty: rows.length === 0, lead: JUS.COPY.creditSettings };
     },
     record: function (d, id) { var r = d.records.filter(function (x) { return x.id === id; })[0]; return r ? recordRow(d, r) : null; },
-    reports: function (d) { var rows = d.reports.slice().sort(function (a, b) { return b.at - a.at; }).map(function (r) { return reportRow(d, r); }); return { rows: rows, open: rows.filter(function (r) { return r.open; }), closed: rows.filter(function (r) { return !r.open; }), needMore: rows.filter(function (r) { return r.needsMore; }), count: rows.length, empty: rows.length === 0 }; },
+    reports: function (d) { var rows = d.reports.slice().sort(function (a, b) { return (b.updatedAt || b.createdAt || 0) - (a.updatedAt || a.createdAt || 0); }).map(function (r) { return reportRow(d, r); }); return { rows: rows, open: rows.filter(function (r) { return r.open; }), closed: rows.filter(function (r) { return !r.open; }), needMore: rows.filter(function (r) { return r.needsMore; }), count: rows.length, empty: rows.length === 0 }; },
     report: function (d, id) { var r = d.reports.filter(function (x) { return x.id === id; })[0]; return r ? reportRow(d, r) : null; },
     feedback: function (d) { return d.feedback.slice().sort(function (a, b) { return b.at - a.at; }).map(function (f) { return Object.assign({}, f, { atText: fmt.dateTime(f.at), statusLabel: f.status === 'submitted' ? '已提交' : '本地已保存' }); }); },
     notify: function (d) {
@@ -537,7 +537,7 @@
     { key: 's-report-needmore', group: G.rec, label: '举报详情 · 需补充', open: { surface: 'report-detail', id: 'DEMO-MWZK1A-1' } },
     { key: 's-report-supplement', group: G.rec, label: '举报补充 · 填写', open: { surface: 'report-supplement', id: 'DEMO-MWZK1A-1' } },
     { key: 's-report-received', group: G.rec, label: '举报详情 · 已受理', open: { surface: 'report-detail', id: 'DEMO-MWRQ7C-1' } },
-    { key: 's-report-file', group: G.seam, label: '我的局 · 举报填写（桌游夜）', open: { surface: 'seam-report', id: 'boardgame' } },
+    { key: 's-report-file', group: G.seam, label: '我的局 · 举报填写（周五爵士小酒馆）', open: { surface: 'seam-report', id: 'jazz' } },
     { key: 's-reports-empty', group: G.rec, label: '举报 · 空态', variant: 'empty', open: { surface: 'reports' } },
     { key: 's-help', group: G.help, label: '帮助与反馈', open: { surface: 'help' } },
     { key: 's-feedback', group: G.help, label: '产品反馈 · 填写', open: { surface: 'feedback' } },

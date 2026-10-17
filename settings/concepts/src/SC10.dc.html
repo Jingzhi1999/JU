@@ -145,7 +145,7 @@ body{margin:0}
 .sheetstr path{fill:none;stroke:var(--string);stroke-width:1.8;stroke-linecap:round}
 .sheet.in.half .sheetstr{top:-60px;height:68px}
 .carry{position:absolute;left:0;top:0;right:0;bottom:0;padding:22px 14px 12px;opacity:1;transition:opacity calc(160ms * var(--k,1)) ease;pointer-events:none;z-index:3;overflow:hidden;border-radius:inherit}
-.sheet.in .carry{opacity:0;transition-delay:calc(60ms * var(--k,1))}
+.sheet.in .carry{opacity:0;transition-delay:calc(200ms * var(--k,1));transition-duration:calc(200ms * var(--k,1))}
 .carry .cv{position:absolute;left:14px;top:30px;bottom:14px;font-size:30px;letter-spacing:.06em}
 .carry .cv.mid{font-size:16px;letter-spacing:.16em;color:var(--mute)}
 .carry .ch{position:absolute;left:46px;right:12px;top:30px;font-size:14px;font-weight:500;line-height:1.35;color:var(--ink)}
@@ -923,13 +923,13 @@ class Component extends DCLogic {
   pullDown(ev, rid) { if (ev.pointerType === 'mouse' && ev.button !== 0) return; if (this.state.lift) return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this.setState({ pull: { rid, x0: ev.clientX, y0: ev.clientY, dy: 0, axis: null } }); }
   pullMove(ev, rid) {
     const g = this.state.pull; if (!g || g.rid !== rid) return; const dx = ev.clientX - g.x0, dyRaw = ev.clientY - g.y0;
-    if (!g.axis) { if (Math.hypot(dx, dyRaw) < 6) return; g.axis = Math.abs(dyRaw) > Math.abs(dx) ? 'y' : 'x'; if (g.axis === 'y') this._suppressClick = rid; }
+    if (!g.axis) { if (Math.hypot(dx, dyRaw) < 6) return; g.axis = Math.abs(dyRaw) > Math.abs(dx) ? 'y' : 'x'; if (g.axis === 'y') this.suppress(rid); }
     if (g.axis !== 'y') return;
     const dy = Math.max(0, Math.min(GEO.pullMax, dyRaw * 0.9)); g.dy = dy; this.setState({ pull: g });
   }
   pullUp(ev, rid, cancel) {
     const g = this.state.pull; if (!g || g.rid !== rid) return; const dy = cancel ? 0 : g.dy;
-    if (dy > GEO.pullGo) { this._suppressClick = rid; this.setState({ pull: null }); this.openItem(rid, ev.currentTarget); return; }
+    if (dy > GEO.pullGo) { this.suppress(rid); this.setState({ pull: null }); this.openItem(rid, ev.currentTarget); return; }
     this.setState({ pull: null }); if (dy > 2) this.swingTag(rid);
   }
   swingTag(rid, kind) { this.setState(s => ({ swing: Object.assign({}, s.swing, { [rid]: kind || 'swing' }) })); this.afterKey('swing-' + rid, 1150, () => this.setState(s => { const w = Object.assign({}, s.swing); delete w[rid]; return { swing: w }; })); }
@@ -941,7 +941,10 @@ class Component extends DCLogic {
     else if (rid === 'favorites') this.open('favorites', null, from, 'favorites');
     else if (rid.indexOf('fav:') === 0) { const id = rid.slice(4); this.open('fav-detail', id, from, 'fav:' + id, { stack: [{ name: 'favorites' }] }); }
   }
-  tagClick(rid, ev) { if (this._suppressClick === rid) { this._suppressClick = null; return; } this.openItem(rid, ev.currentTarget.closest('.hang')); }
+  /* a click that follows a drag is ignored only briefly (pointer capture routes the synthetic click to the hanger, so it is never consumed there) */
+  suppress(rid) { this._sup = { rid, at: Date.now() }; }
+  suppressed(rid) { const s = this._sup; if (s && s.rid === rid && Date.now() - s.at < 600) { this._sup = null; return true; } return false; }
+  tagClick(rid, ev) { if (this.suppressed(rid)) return; this.openItem(rid, ev.currentTarget.closest('.hang')); }
   /* ---------- navigation ---------- */
   open(name, id, from, item, extra) {
     const s = this.state;
@@ -1001,7 +1004,7 @@ class Component extends DCLogic {
     if (S === 'account') { this.setState(liftIn('account')); if (o.state === 'confirm') this.after(40, () => this.askEnd()); return; }
     if (S === 'about') { this.setState(liftIn('about')); return; }
     if (S === 'rules') { this.setState(Object.assign(liftIn('rules'), { stack: [{ name: 'about' }] })); return; }
-    if (S === 'seam-feed') { this.setState({ tab: 'find', lift: null, view: { name: 'home' }, stack: [], feedFilter: o.state === 'fav' ? 'favs' : 'all' }); return; }
+    if (S === 'seam-feed') { this.setState({ tab: 'find', lift: null, view: { name: 'home' }, stack: [], feedFilter: o.state === 'fav' ? 'fav' : 'all' }); return; }
     if (S === 'seam-feed-detail') { this.setState({ tab: 'find', feedFilter: 'all', view: { name: 'seam-detail', id: o.id }, stack: [], dir: '', lift: { phase: 'in', from: null, item: 'seam' } }); return; }
     if (S === 'seam-mine') { this.setState({ tab: 'mine', lift: null, view: { name: 'home' }, stack: [] }); return; }
     if (S === 'seam-report') { this.setState({ tab: 'mine', view: { name: 'seam-report', id: o.id }, stack: [], dir: '', lift: { phase: 'in', from: null, item: 'seam' }, sr: Object.assign(this.newSr(o.id), { done: null }) }); return; }
@@ -1136,7 +1139,7 @@ class Component extends DCLogic {
   }
   feedUp(ev, id, cancel) {
     const g = this.state.drag; if (!g || g.id !== id) return; const on = JUS.derive.isFav(this.state.data, id); const dx = cancel ? 0 : (this.state.fx[id] || 0);
-    if (g.axis === 'x') this._suppressClick = id;
+    if (g.axis === 'x') this.suppress(id);
     const add = !cancel && dx > JUS.FAV.throwPx && !on, del = !cancel && dx < -JUS.FAV.throwPx && on;
     this.setState(s => ({ drag: null, fx: Object.assign({}, s.fx, { [id]: 0 }) }));
     if (add || del) { const res = this.act(add ? 'favorite' : 'unfavorite', { eventId: id }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } const e = this.state.data.events[id]; this.say((add ? JUS.FAV.copy.add : JUS.FAV.copy.remove) + ' · ' + e.title + (add ? ' · 共 ' + res.effect.count + ' 个' : res.effect.last ? ' · 收藏杆空了' : '')); }
@@ -1269,13 +1272,13 @@ class Component extends DCLogic {
     out.rules = { groups: JUS.RULE_GROUPS.map(g => ({ name: g.name, line: g.line, items: JUS.RULES.filter(r => r.group === g.key).map(r => ({ n: r.n, title: r.title, body: r.body, cls: r.body ? '' : 'na' })) })) };
     /* seam feed */
     const feed = JUS.derive.feed(d, s.feedFilter); const feedAll = JUS.derive.feed(d, 'all');
-    out.feed = { city: feed.city.name, sub: feedAll.count + ' 个局 · 这两天', allOn: s.feedFilter === 'all' ? 'on' : '', favOn: s.feedFilter === 'favs' ? 'on' : '', favCount: feedAll.favCount, showAll: () => this.setState({ feedFilter: 'all' }), showFav: () => this.setState({ feedFilter: 'favs' }), empty: feed.count === 0, emptyTitle: s.feedFilter === 'favs' ? JUS.FAV.copy.emptyCity : '这个城市这两天还没局', hint: '右滑挂上收藏 · 左滑拿下 · 点一张进详情',
+    out.feed = { city: feed.city.name, sub: feedAll.count + ' 个局 · 这两天', allOn: s.feedFilter === 'all' ? 'on' : '', favOn: s.feedFilter === 'fav' ? 'on' : '', favCount: feedAll.favCount, showAll: () => this.setState({ feedFilter: 'all' }), showFav: () => this.setState({ feedFilter: 'fav' }), empty: feed.count === 0, emptyTitle: s.feedFilter === 'fav' ? JUS.FAV.copy.emptyCity : '这个城市这两天还没局', hint: '右滑挂上收藏 · 左滑拿下 · 点一张进详情',
       rows: feed.rows.map(r => { const fx = s.fx[r.id] || 0; const dragging = s.drag && s.drag.id === r.id && s.drag.axis === 'x'; const idle = dragging && s.drag.idle; const fp = Math.min(1, Math.abs(fx) / 96); const rt = fx > 0;
         return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, capLine: '共 ' + r.capacity + ' 人', tabOn: r.fav ? 'on' : '', dragCls: dragging ? 'drag' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: (fp * (idle ? 0.5 : 1)).toFixed(2), wr: (fp * 13 * (rt ? 1 : -1)).toFixed(1), ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
           wb: idle ? 'linear-gradient(126deg,rgba(226,232,247,.72) 0%,rgba(198,208,232,.62) 100%)' : rt ? 'linear-gradient(126deg,rgba(58,74,206,.9) 0%,rgba(88,146,232,.84) 44%,rgba(150,224,250,.76) 100%)' : 'linear-gradient(126deg,rgba(26,32,50,.88) 0%,rgba(66,76,102,.8) 52%,rgba(120,130,154,.72) 100%)',
           washIcon: rt ? JUS.FAV.icon.on : JUS.FAV.icon.off, washText: idle ? (r.fav ? JUS.FAV.copy.alreadyOn : JUS.FAV.copy.notOn) : (rt ? JUS.FAV.copy.add : JUS.FAV.copy.remove), washReady: Math.abs(fx) > JUS.FAV.throwPx ? 'ready' : '',
           down: (ev) => this.feedDown(ev, r.id), move: (ev) => this.feedMove(ev, r.id), up: (ev) => this.feedUp(ev, r.id, false), cancel: (ev) => this.feedUp(ev, r.id, true),
-          open: () => { if (this._suppressClick === r.id) { this._suppressClick = null; return; } this.open('seam-detail', r.id, null, 'seam'); } }; }) };
+          open: () => { if (this.suppressed(r.id)) return; this.open('seam-detail', r.id, null, 'seam'); } }; }) };
     /* seam mine */
     const mine = JUS.derive.mine(d);
     const mrow = (r, hist) => { const rp0 = d.reports.filter(x => x.eventId === r.id).sort((a, b) => b.createdAt - a.createdAt)[0]; return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, label: r.label, snap: r.snapshotLabel || '', favOn: r.fav ? 'on' : '', favAct: r.fav ? 'unfav' : 'fav', toggle: () => this.toggleFav(r.id, r.title), reportLine: hist ? (rp0 ? '已举报 · ' + (JUS.REPORT_LABELS[rp0.status] || rp0.status) : '散场后遇到问题，或对记录有异议') : '', reportCta: rp0 && rp0.status !== 'resolved' ? '查看回执' : '不对劲？举报', report: () => this.open('seam-report', r.id, null, 'seam', { sr: this.newSr(r.id) }) }; };
