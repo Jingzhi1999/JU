@@ -278,7 +278,10 @@ body{margin:0}
 .sw .mag{right:8px;top:8px;left:auto;width:18px;height:18px;opacity:0;transform:scale(.4);transition:transform calc(380ms * var(--k,1)) cubic-bezier(.18,1.5,.36,1),opacity calc(200ms * var(--k,1)) ease}
 .sw.on .mag{opacity:1;transform:scale(1)}
 /* help */
-.qa{border-bottom:1px solid var(--line);padding:10px 0}
+.helpmenu{background:#fff;border-radius:4px;padding:6px 14px 10px;box-shadow:0 1px 1px rgba(var(--shadow),.08),0 10px 14px -10px rgba(var(--shadow),.5);position:relative;margin:4px 0 14px;background-image:repeating-linear-gradient(180deg,transparent 0 31px,rgba(0,0,0,.035) 31px 32px)}
+.helpmenu .mag{left:50%;top:-10px;margin-left:-11px}
+.helpmenu h5{margin:12px 0 2px;font-family:"Long Cang",cursive;font-size:17px;font-weight:400;color:#2d2a25;letter-spacing:.04em}
+.qa{border-bottom:1px dashed rgba(0,0,0,.14);padding:9px 0}
 .qa summary{list-style:none;cursor:pointer;font-size:15px;font-weight:500;display:flex;justify-content:space-between;align-items:center;gap:10px}
 .qa summary::-webkit-details-marker{display:none}
 .qa summary::after{content:"＋";color:var(--mute);font-weight:400}
@@ -632,7 +635,9 @@ body{margin:0}
 
             <sc-if value="{{page.isHelp}}" hint-placeholder-val="{{false}}">
               <p class="lead">常见问题按「参加约定」整理；遇到具体活动的问题去「我的举报」，对产品的意见用下面的反馈。</p>
-              <sc-for list="{{help.qas}}" as="q" hint-placeholder-count="5"><details class="qa"><summary>{{q.q}}</summary><p>{{q.a}}</p></details></sc-for>
+              <div class="helpmenu"><div class="mag green"></div>
+                <sc-for list="{{help.groups}}" as="g" hint-placeholder-count="3"><h5>{{g.name}} · {{g.line}}</h5><sc-for list="{{g.qas}}" as="q" hint-placeholder-count="3"><details class="qa"><summary>{{q.q}}</summary><p>{{q.a}}</p></details></sc-for></sc-for>
+              </div>
               <div class="btnrow"><button type="button" class="btn ghost" data-act="open" data-rid="rules" onClick="{{help.openRules}}">规则全文</button><button type="button" class="btn ghost" data-act="open" data-rid="reports" onClick="{{help.openReports}}">我的举报</button><button type="button" class="btn" data-act="feedback" onClick="{{help.openFeedback}}">写反馈</button></div>
               <sc-if value="{{help.hasFeedback}}" hint-placeholder-val="{{false}}"><div class="grp" style="margin-top:18px"><h4>我的反馈 · {{help.feedbackCount}}</h4><sc-for list="{{help.feedback}}" as="f" hint-placeholder-count="1"><div class="fbrow">{{f.text}}<small>{{f.localNo}} · {{f.atText}} · {{f.statusLabel}}</small></div></sc-for></div></sc-if>
             </sc-if>
@@ -852,13 +857,20 @@ class Component extends DCLogic {
     try { navigator.clipboard.writeText(wx).then(() => done(true), () => done(false)); } catch (e) { done(false); }
   }
   /* ---------- favorites ---------- */
+  measureCells() { const root = this.rootRef.current; const m = {}; if (!root) return m; root.querySelectorAll('.fcell[data-rid]').forEach(el => { m[el.dataset.rid] = el.getBoundingClientRect(); }); return m; }
+  componentDidUpdate() {
+    if (!this._flip) return; const before = this._flip; this._flip = null; const root = this.rootRef.current; if (!root) return;
+    const k = this.state.review.rm || this.state.data.appearance.reduceMotion ? 0 : (this.state.review.speed === 0.5 ? 2 : 1);
+    root.querySelectorAll('.fcell[data-rid]').forEach(el => { const b = before[el.dataset.rid]; if (!b) return; const a = el.getBoundingClientRect(); const dx = b.left - a.left, dy = b.top - a.top; if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.style.transition = 'none'; el.style.transform = 'translate(' + dx + 'px,' + dy + 'px)'; void el.getBoundingClientRect(); el.style.transition = 'transform ' + (360 * k) + 'ms cubic-bezier(.2,.9,.3,1.04)'; el.style.transform = ''; });
+  }
   removeFav(id, title) {
     this.motion('fav-remove', () => {
       this.setState(s => ({ leaving: Object.assign({}, s.leaving, { [id]: true }) }));
-      this.after(380, () => { const res = this.act('unfavorite', { eventId: id }); this.setState(s => { const l = Object.assign({}, s.leaving); delete l[id]; return { leaving: l, undo: res.effect.type === 'error' ? null : { id, title, last: !!res.effect.last } }; }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.holdKey('undo', 10000, () => this.setState({ undo: null })); });
+      this.after(380, () => { this._flip = this.measureCells(); const res = this.act('unfavorite', { eventId: id }); this.setState(s => { const l = Object.assign({}, s.leaving); delete l[id]; return { leaving: l, undo: res.effect.type === 'error' ? null : { id, title, last: !!res.effect.last } }; }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.holdKey('undo', 10000, () => this.setState({ undo: null })); });
     });
   }
-  restoreFav() { const u = this.state.undo; if (!u) return; this.cancelKey('undo'); const res = this.act('favorite', { eventId: u.id }); this.setState({ undo: null, snapItem: null }); this.say(res.effect.type === 'error' ? res.effect.message : '已放回 · ' + u.title); }
+  restoreFav() { const u = this.state.undo; if (!u) return; this.cancelKey('undo'); this._flip = this.measureCells(); const res = this.act('favorite', { eventId: u.id }); this.setState({ undo: null, snapItem: null }); this.say(res.effect.type === 'error' ? res.effect.message : '已放回 · ' + u.title); }
   toggleFav(id, title) { const on = JUS.derive.isFav(this.state.data, id); const res = this.act('toggleFavorite', { eventId: id }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.say(on ? '已取下 · ' + title : '已吸上门 · ' + title + ' · 共 ' + res.effect.count + ' 个'); }
   /* ---------- records / reports forms ---------- */
   newRf(kind, recordId) { const k = kind + '|' + recordId; return { kind, recordId, text: this.state.drafts[k] || '', err: '', fail: null, saving: false }; }
@@ -1000,7 +1012,7 @@ class Component extends DCLogic {
     } else { out.rpd = {}; out.rs = { mats: [], text: '' }; }
     /* help / feedback */
     const withBody = JUS.RULES.filter(r => r.body); const fbs = JUS.derive.feedback(d);
-    out.help = { qas: withBody.map(r => ({ q: r.title, a: r.body })).concat([{ q: '举报和反馈有什么不同？', a: '针对某个局或某个人的事，在散场页点「举报」，进度在「我的举报」；对产品的意见用「写反馈」。两者分开保存。' }]), openRules: () => this.push('rules'), openReports: () => this.push('reports'), openFeedback: () => this.push('feedback', null, { fb: { text: '', err: '', fail: null, saving: false, done: null } }), hasFeedback: fbs.length > 0, feedbackCount: fbs.length, feedback: fbs };
+    out.help = { groups: JUS.RULE_GROUPS.map(g => ({ name: g.name, line: g.line, qas: withBody.filter(r => r.group === g.key).map(r => ({ q: r.title, a: r.body })) })).concat([{ name: '其他', line: '举报、反馈与本地演示', qas: [{ q: '举报和反馈有什么不同？', a: '针对某个局或某个人的事，在散场页点「举报」，进度在「我的举报」；对产品的意见用「写反馈」。两者分开保存。' }, { q: '这里的数据会上传吗？', a: '不会。' + JUS.COPY.demoOnly + '；收藏、资料、偏好与记录只保存在本机浏览器。' }] }]), openRules: () => this.push('rules'), openReports: () => this.push('reports'), openFeedback: () => this.push('feedback', null, { fb: { text: '', err: '', fail: null, saving: false, done: null } }), hasFeedback: fbs.length > 0, feedbackCount: fbs.length, feedback: fbs };
     const fb = s.fb || { text: '', err: '', fail: null, saving: false, done: null };
     out.fb = { text: fb.text, err: fb.err, errCls: fb.err ? 'err' : '', fail: !!fb.fail, failMsg: fb.fail || '', done: !!fb.done, doneNo: fb.done || '', saving: fb.saving || !!fb.done, setText: (ev) => this.setState(st => ({ fb: Object.assign({}, st.fb, { text: ev.target.value, err: '' }) })), cancel: () => this.goBack(), submit: () => { const f = this.state.fb; if (!f || f.saving) return; this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: true, fail: null }) })); this.after(420, () => { const res = this.act('submitFeedback', { text: this.state.fb.text }); if (res.effect.type === 'invalid') { this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: false, err: res.effect.errors.text }) })); return; } if (res.effect.type === 'error') { this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: false, fail: res.effect.message }) })); return; } const no = res.data.feedback.filter(x => x.id === res.effect.id)[0].localNo; this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: false, done: no }) })); }); } };
     /* privacy / account / about / rules */

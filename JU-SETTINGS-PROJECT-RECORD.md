@@ -87,7 +87,7 @@
 
 ## E. 设置 SC01—SC10 的真实规格与进度
 - 方向卡：`settings/spec/directions.md`（六维 + 差异矩阵 + 淘汰方向）；参考映射：`settings/spec/concept-refs.md`。
-- **SC05 冰箱门**（主负责人亲自实现；已写代码 · 已运行 · 已检查静态视觉 · 已观看核心动效抽帧 · 已检查交互与状态；用户未审阅）：源 `settings/concepts/src/SC05.dc.html`（~121 KB）；规格与三个核心动作分段 `settings/spec/motion/SC05.md`（构图坐标、字体字号、色板、材质、每段时长与曲线、实际观察与建议值分开）；证据 `settings/evidence/SC05/`（home / dense / favorites / favorites-after-remove / record-detail / record-supplement(-saved) / report-supplement / saved(-home) / edge-empty / edge-fail / edge-denied / edge-long / edge-invalid / seam-feed / seam-feed-detail / seam-mine / appearance-preview；`motion-1` 取下与放回、`motion-2` 翻面开关、`motion-3` 拿起名片 → 编辑 → 保存 → 贴回、`motion-seam-swipe` 入局滑动收藏；`coverage/` 49 个索引状态 0 错误）。已知问题见 `spec/motion/SC05.md` 末尾（收藏网格补位无 FLIP、帮助页偏平、词磁贴 lift 前 100ms 内容少）。
+- **SC05 冰箱门**（主负责人亲自实现；已写代码 · 已运行 · 已检查静态视觉 · 已观看核心动效抽帧 · 已检查交互与状态；用户未审阅）：源 `settings/concepts/src/SC05.dc.html`（~121 KB）；规格与三个核心动作分段 `settings/spec/motion/SC05.md`（构图坐标、字体字号、色板、材质、每段时长与曲线、实际观察与建议值分开）；证据 `settings/evidence/SC05/`（home / dense / favorites / favorites-after-remove / record-detail / record-supplement(-saved) / report-supplement / saved(-home) / edge-empty / edge-fail / edge-denied / edge-long / edge-invalid / seam-feed / seam-feed-detail / seam-mine / appearance-preview；`motion-1` 取下与放回、`motion-2` 翻面开关、`motion-3` 拿起名片 → 编辑 → 保存 → 贴回、`motion-seam-swipe` 入局滑动收藏；`coverage/` 49 个索引状态 0 错误）。已知问题见 `spec/motion/SC05.md` 末尾（词磁贴 lift 前 100ms 内容少、无真机触控）；原先的「收藏网格补位无 FLIP」「帮助页偏平」已修（`componentDidUpdate` FLIP 位移 360ms；帮助页改为门上的菜单纸，证据 `help.png` 与重抽的 `motion-1/`）。
 - SC01 / SC02 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10：代理构建中（未完成、无证据、无代码值可记录）。
 
 ## F. 代码地图与可迁移性
