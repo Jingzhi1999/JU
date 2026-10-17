@@ -78,13 +78,13 @@ body{margin:0}
 .tabx:active{filter:brightness(.96)}
 .fold.pulled .tabx,.fold.pulling .tabx{box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 1px 1px rgba(0,0,0,.1),0 10px 14px -7px rgba(var(--sh),.55)}
 /* the band at the top of every folder: group label + current values */
-.strip{position:relative;min-height:60px;padding:11px 16px 0 16px;box-sizing:border-box;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.strip{position:relative;min-height:62px;padding:9px 16px 0 16px;box-sizing:border-box;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
 .fold.pulled .strip{cursor:default;padding-top:12px}
 .strip .bk{display:none;appearance:none;border:0;font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);height:30px;padding:0 10px 0 8px;border-radius:6px;cursor:pointer;flex:0 0 auto;margin-top:1px}
 .fold.pulled .strip .bk,.fold.pulling .strip .bk{display:inline-flex;align-items:center}
 .strip .stxt{flex:1 1 auto;min-width:0}
-.strip .gl{font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--ink)}
-.strip .sm{font-size:12.5px;color:var(--ink);opacity:.86;line-height:1.4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .gl{font-size:12px;line-height:1.25;font-weight:500;letter-spacing:.08em;color:var(--ink)}
+.strip .sm{font-size:12.5px;color:var(--ink);opacity:.86;line-height:1.3;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .strip .sm.warn,.warn{color:var(--red)}
 .strip .cnt{flex:0 0 auto;font:500 28px/1 "DM Mono",ui-monospace,monospace;color:var(--ink);padding-top:3px;letter-spacing:-.02em}
 .strip .cnt small{font:400 11px/1 "Noto Sans SC",sans-serif;margin-left:3px;color:var(--mute)}
@@ -715,3 +715,370 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
   <!-- @panel -->
 </div>
 </x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["home","dense"],"default":"home"},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+const FOLDERS = [
+  { key: 'help', label: '帮助', label2: '帮助与反馈 · 关于', color: '#b3a6c6', aria: '帮助与反馈 · 关于 JU' },
+  { key: 'records', label: '记录', label2: '我的记录 · 我的举报', color: '#8dbb98', aria: '我的记录 · 我的举报' },
+  { key: 'prefs', label: '偏好', label2: '偏好', color: '#e8c158', aria: '偏好：通知 · 城市 · 外观' },
+  { key: 'fav', label: '收藏', label2: '收藏的局', color: '#f08868', aria: '收藏的局' },
+  { key: 'profile', label: '资料', label2: '资料 · 隐私 · 账户', color: '#86a0e8', aria: '个人资料 · 隐私 · 账户' }
+];
+const GEO = { slot0: 70, pitch: 62, fh: 456, pullTop: 70, pullH: 710, z: 9 };
+const PAPER = {
+  'profile': { title: '个人资料', fold: 'profile' }, 'privacy': { title: '隐私与可见性', fold: 'profile' }, 'account': { title: '账户与本机数据', fold: 'profile' },
+  'fav-detail': { title: '收藏 · 详情', fold: 'fav' }, 'record-detail': { title: '记录', fold: 'records' }, 'record-form': { title: '补充与申诉', fold: 'records' },
+  'report-detail': { title: '举报进度', fold: 'records' }, 'report-supp': { title: '补充材料', fold: 'records' }, 'feedback': { title: '写反馈', fold: 'help' }, 'rules': { title: '参加约定', fold: 'help' },
+  'seam-detail': { title: '活动', fold: null }, 'seam-report': { title: '举报', fold: null }
+};
+const DEFAULT_FROM = { x: 34, y: 210, w: 282, h: 120 };
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); if (p.preset === 'dense') { this.state.pull = { key: 'prefs', phase: 'pulled' }; } }
+  componentDidMount() { this.fitWidth(390); }
+  initialState(variant) {
+    return Object.assign({}, JUS.baseState(variant), { tab: 'settings', pull: null, tabDrag: null, paper: null, pstack: [], dir: '', edit: null, rf: null, rs: null, fb: null, sr: null, drafts: {}, cityQ: '', skinPreview: null, applied: false, feedFilter: 'all', drag: null, fx: {}, leaving: {}, undo: null, toast: null, confirm: null, qaOpen: {}, seal: 'on', press: null, sysDialog: false, saved: '' });
+  }
+  /* ---------- geometry helpers (the wall is scaled by --wk; rects are converted back to wall px) ---------- */
+  wk() { const root = this.rootRef.current; const ph = root && root.closest ? root.closest('.ju-phone') : null; const v = ph ? parseFloat(getComputedStyle(ph).getPropertyValue('--wk')) : 1; return v && isFinite(v) ? v : 1; }
+  rectOf(el) { const root = this.rootRef.current; if (!el || !root) return null; const wall = root.querySelector('.wall') || root; const a = el.getBoundingClientRect(), b = wall.getBoundingClientRect(); const k = this.wk(); return { x: (a.left - b.left) / k, y: (a.top - b.top) / k, w: a.width / k, h: a.height / k }; }
+  /* ---------- folders: pull out / insert back ---------- */
+  pullFolder(key, fast, pose) {
+    const s = this.state; if (s.pull && s.pull.key === key && s.pull.phase !== 'out') return;
+    const go = () => this.motion('pull', () => { this.setState({ pull: { key, phase: 'pulling', fast: !!fast, pose: pose || null }, tabDrag: null }); this.afterKey('pull', fast ? 200 : 560, () => this.setState(st => st.pull && st.pull.key === key && st.pull.phase === 'pulling' ? { pull: { key, phase: 'pulled' } } : {})); });
+    if (s.pull && s.pull.phase !== 'out') { this.insertFolder(); this.after(300, go); } else go();
+  }
+  insertFolder() {
+    const s = this.state; if (!s.pull || s.pull.phase === 'out') return;
+    this.setState({ pull: Object.assign({}, s.pull, { phase: 'out' }), skinPreview: null, applied: false });
+    this.afterKey('pull', 420, () => this.setState(st => st.pull && st.pull.phase === 'out' ? { pull: null, cityQ: '' } : {}));
+  }
+  tabDown(ev, key) { if (ev.pointerType === 'mouse' && ev.button !== 0) return; const s = this.state; if (s.pull && s.pull.key === key && s.pull.phase !== 'out') return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this._tg = { key, x: ev.clientX, y: ev.clientY, moved: false, p: 0 }; }
+  tabMove(ev, key) { const g = this._tg; if (!g || g.key !== key) return; const k = this.wk(); const dx = (ev.clientX - g.x) / k, dy = (ev.clientY - g.y) / k; if (!g.moved) { if (Math.hypot(dx, dy) < 6) return; g.moved = true; } const p = Math.max(0, Math.min(1, Math.max(dx, -dy) / 80)); g.p = p; this.setState({ tabDrag: { key, p } }); }
+  tabUp(ev, key, cancel) { const g = this._tg; if (!g || g.key !== key) return; this._tg = null; if (!g.moved) return; this._suppressTab = key; if (!cancel && g.p >= 0.6) this.pullFolder(key, true, { p: g.p }); else this.setState({ tabDrag: null }); }
+  tabClick(key) { if (this._suppressTab === key) { this._suppressTab = null; return; } const s = this.state; if (s.pull && s.pull.key === key && s.pull.phase !== 'out') { this.guardLeave(() => this.insertFolder()); return; } this.pullFolder(key); }
+  scrollSec(sec) { const root = this.rootRef.current; const body = root && root.querySelector('.fold.pulled .fbody'); const el = body && body.querySelector('[data-sec="' + sec + '"]'); if (body && el) body.scrollTop = Math.max(0, el.offsetTop - 66); }
+  /* ---------- papers: pull out of the mouth / insert back ---------- */
+  openPaper(name, id, ev, extra) {
+    const s = this.state;
+    if (s.paper && s.paper.phase !== 'out') { this.setState(Object.assign({ pstack: s.pstack.concat([{ name: s.paper.name, id: s.paper.id }]), paper: Object.assign({}, s.paper, { name, id }), dir: 'push' }, extra || {})); return; }
+    const el = ev && ev.currentTarget ? (ev.currentTarget.closest('.ppr, .slip, .mrow') || ev.currentTarget) : null; const from = el ? this.rectOf(el) : null;
+    const rot = el && el.style ? (el.style.getPropertyValue('--r') || '0deg') : '0deg';
+    this._lastOpen = { name, id, from, rot, extra };
+    this.motion('paper', () => {
+      this.setState(Object.assign({ paper: { name, id, phase: from ? 'lifting' : 'in', from, rot }, pstack: [], dir: '' }, extra || {}));
+      if (from) this.afterKey('paper', 440, () => this.setState(st => st.paper && st.paper.phase === 'lifting' ? { paper: Object.assign({}, st.paper, { phase: 'in' }) } : {}));
+    });
+  }
+  pushPaper(name, id, extra) { this.setState(s => Object.assign({ pstack: s.pstack.concat([{ name: s.paper.name, id: s.paper.id }]), paper: Object.assign({}, s.paper, { name, id }), dir: 'push' }, extra || {})); }
+  popPaper() { this.setState(s => { const st = s.pstack.slice(); const v = st.pop() || { name: s.paper.name, id: s.paper.id }; return { pstack: st, paper: Object.assign({}, s.paper, { name: v.name, id: v.id }), dir: 'pop', rf: null, rs: null, fb: null }; }); }
+  closePaper() {
+    const s = this.state; if (!s.paper || s.paper.phase === 'out') return;
+    const from = s.paper.from || DEFAULT_FROM;
+    this.setState({ paper: Object.assign({}, s.paper, { phase: 'out', from }) });
+    this.afterKey('paper', 420, () => this.setState(st => st.paper && st.paper.phase === 'out' ? { paper: null, pstack: [], dir: '', edit: null, rf: null, rs: null, fb: null, sr: null, seal: 'on', saved: '' } : {}));
+  }
+  guardLeave(fn) {
+    const s = this.state; const name = s.paper ? s.paper.name : '';
+    if (name === 'profile' && s.edit && s.edit.dirty) { this.setState({ confirm: { title: JUS.COPY.unsaved.title, body: JUS.COPY.unsaved.body, keepLabel: JUS.COPY.unsaved.keep, discardLabel: JUS.COPY.unsaved.discard, danger: false, act: 'discard', onDiscard: () => { this.setState({ edit: null, confirm: null }); this.act('clearEmailPending'); fn(); } } }); return; }
+    if (name === 'record-form' && s.rf && s.rf.text) { const k = s.rf.kind + '|' + s.rf.recordId; this.setState(st => ({ drafts: Object.assign({}, st.drafts, { [k]: st.rf.text }) })); this.say('草稿已保留在本机'); }
+    if (name === 'report-supp' && s.rs && s.rs.text) { this.setState(st => ({ drafts: Object.assign({}, st.drafts, { ['supp|' + st.rs.reportId]: st.rs.text }) })); this.say('草稿已保留在本机'); }
+    if (name === 'feedback' && s.fb && s.fb.text && !s.fb.done) { this.setState(st => ({ drafts: Object.assign({}, st.drafts, { feedback: st.fb.text }) })); this.say('草稿已保留在本机'); }
+    fn();
+  }
+  goBack() { this.guardLeave(() => { const s = this.state; if (s.paper && s.paper.phase !== 'out') { if (s.pstack.length) this.popPaper(); else this.closePaper(); } else if (s.pull) this.insertFolder(); }); }
+  say(text, sel) { this.setState({ toast: { text, sel: sel || '' } }); this.holdKey('toast', 2600, () => this.setState({ toast: null })); }
+  pressSnap(key) { this.setState({ press: key }); this.afterKey('press', 280, () => this.setState(st => st.press === key ? { press: null } : {})); }
+  /* ---------- state index ---------- */
+  applyJump(e) {
+    const o = e.open; const S = o.surface;
+    const F = (key, extra) => Object.assign({ tab: 'settings', pull: { key, phase: 'pulled' }, paper: null, pstack: [], tabDrag: null, dir: '' }, extra || {});
+    const P = (key, name, id, extra) => Object.assign(F(key), { paper: { name, id: id || null, phase: 'in', from: null, rot: '0deg' } }, extra || {});
+    const focus = (sec) => this.after(60, () => this.scrollSec(sec));
+    if (S === 'home') { this.setState({ tab: 'settings', pull: null, paper: null, pstack: [] }); return; }
+    if (S === 'profile') { this.setState(P('profile', 'profile', null, { saved: o.state === 'saved' ? '已保存 · 刚刚 · 新资料只用于之后的报名' : '' })); return; }
+    if (S === 'profile-edit') {
+      const ed = this.newEdit(); this.setState(P('profile', 'profile', null, { edit: ed }));
+      if (o.state === 'invalid') { this.setState(s => ({ edit: Object.assign({}, s.edit, { name: '阿禾阿禾阿禾阿禾阿禾阿禾', wx: 'ahe ju', email: 'ahe@gmail.com', dirty: true }) })); this.after(40, () => this.saveProfile()); }
+      if (o.state === 'code') { this.setState(s => ({ edit: Object.assign({}, s.edit, { email: 'ahe.weekend@stern.nyu.edu', dirty: true }) })); this.after(40, () => this.sendCode()); }
+      if (o.state === 'fail') { this.setState(s => ({ edit: Object.assign({}, s.edit, { name: '阿禾二', dirty: true }) })); this.armFail(); this.after(40, () => this.saveProfile()); }
+      return;
+    }
+    if (S === 'favorites') { this.setState(F('fav')); return; }
+    if (S === 'favorite-detail') { this.setState(P('fav', 'fav-detail', o.id)); return; }
+    if (S === 'city') { this.setState(F('prefs', { cityQ: o.state === 'noresult' ? '成都' : '' })); focus('city'); return; }
+    if (S === 'notify') { this.setState(F('prefs')); focus('notify'); if (o.state === 'requesting') this.after(40, () => this.requestPerm()); return; }
+    if (S === 'appearance') { this.setState(F('prefs', { skinPreview: o.state === 'preview' ? o.id : null })); focus('look'); return; }
+    if (S === 'records') { this.setState(F('records')); return; }
+    if (S === 'record-detail') { this.setState(P('records', 'record-detail', o.id)); return; }
+    if (S === 'record-supplement' || S === 'record-dispute' || S === 'record-appeal') { const kind = S.split('-')[1]; this.setState(P('records', 'record-form', o.id, { pstack: [{ name: 'record-detail', id: o.id }], rf: this.newRf(kind, o.id) })); return; }
+    if (S === 'reports') { this.setState(F('records')); focus('reports'); return; }
+    if (S === 'report-detail') { this.setState(P('records', 'report-detail', o.id)); return; }
+    if (S === 'report-supplement') { this.setState(P('records', 'report-supp', o.id, { pstack: [{ name: 'report-detail', id: o.id }], rs: this.newRs(o.id) })); return; }
+    if (S === 'help') { this.setState(F('help')); return; }
+    if (S === 'feedback') { this.setState(P('help', 'feedback', null, { fb: this.newFb() })); return; }
+    if (S === 'privacy') { this.setState(P('profile', 'privacy')); return; }
+    if (S === 'account') { this.setState(P('profile', 'account', null, { seal: o.state === 'confirm' ? 'off' : 'on' })); if (o.state === 'confirm') this.after(40, () => this.askEnd()); return; }
+    if (S === 'about') { this.setState(F('help')); focus('about'); return; }
+    if (S === 'rules') { this.setState(P('help', 'rules')); return; }
+    if (S === 'seam-feed') { this.setState({ tab: 'find', pull: null, paper: null, pstack: [], feedFilter: o.state === 'fav' ? 'favs' : 'all' }); return; }
+    if (S === 'seam-feed-detail') { this.setState({ tab: 'find', feedFilter: 'all', pull: null, paper: { name: 'seam-detail', id: o.id, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '' }); return; }
+    if (S === 'seam-mine') { this.setState({ tab: 'mine', pull: null, paper: null, pstack: [] }); return; }
+    if (S === 'seam-report') { this.setState({ tab: 'mine', pull: null, paper: { name: 'seam-report', id: o.id, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: this.newSr(o.id) }); return; }
+  }
+  beforeReplay(name) {
+    if (name === 'pull') { const s = this.state; if (s.pull) this.setState({ pull: null, tabDrag: null }); }
+    if (name === 'paper') { if (this.state.paper) this.setState({ paper: null, pstack: [], edit: null, rf: null, rs: null, fb: null, sr: null }); }
+  }
+  /* ---------- profile ---------- */
+  newEdit() { const y = this.state.data.you; return { name: y.name, wx: y.wx, email: y.email, orig: { name: y.name, wx: y.wx, email: y.email }, errors: {}, code: '', codeErr: '', sent: false, resendLeft: 0, verifiedNow: false, verifiedDomain: '', fail: null, saving: false, dirty: false }; }
+  setEdit(patch) { this.setState(s => ({ edit: Object.assign({}, s.edit, patch, { dirty: true }) })); }
+  sendCode() {
+    const ed = this.state.edit; if (!ed) return; const res = this.act('requestEmailCode', { email: ed.email });
+    if (res.effect.type === 'invalid') { this.setEdit({ errors: Object.assign({}, ed.errors, res.effect.errors) }); return; }
+    if (res.effect.type === 'error') { this.setEdit({ fail: res.effect.message }); return; }
+    this.setEdit({ sent: true, resendLeft: 59, code: '', codeErr: '', errors: Object.assign({}, ed.errors, { email: '' }) });
+    const tick = () => { const e = this.state.edit; if (!e || !e.sent) return; if (e.resendLeft <= 0) return; this.setState(s => ({ edit: Object.assign({}, s.edit, { resendLeft: s.edit.resendLeft - 1 }) })); this.holdKey('resend', 1000, tick); };
+    this.holdKey('resend', 1000, tick);
+  }
+  verifyCode() {
+    const ed = this.state.edit; if (!ed) return; const res = this.act('verifyEmailCode', { code: ed.code });
+    if (res.effect.type === 'invalid') { this.setEdit({ codeErr: res.effect.errors.code }); return; }
+    if (res.effect.type === 'error') { this.setEdit({ fail: res.effect.message }); return; }
+    this.cancelKey('resend'); this.setEdit({ verifiedNow: true, verifiedDomain: res.effect.domain, sent: false, codeErr: '' });
+  }
+  saveProfile() {
+    const ed = this.state.edit; if (!ed || ed.saving) return;
+    this.setEdit({ saving: true, fail: null });
+    this.after(420, () => {
+      const e2 = this.state.edit; if (!e2) return;
+      const res = this.act('saveProfile', { name: e2.name, wx: e2.wx, email: e2.email });
+      if (res.effect.type === 'invalid') { this.setEdit({ saving: false, errors: res.effect.errors }); return; }
+      if (res.effect.type === 'error') { this.setEdit({ saving: false, fail: res.effect.message }); return; }
+      this.setState({ edit: null, saved: res.effect.nothing ? '没有改动' : '已保存 · 刚刚 · 新资料只用于之后的报名', dir: 'pop' });
+      this.say(res.effect.nothing ? '没有改动' : '已保存 · 放回后袋面透出新资料');
+    });
+  }
+  copyWx() {
+    const wx = this.state.data.you.wx; const done = (ok) => { const res = this.act('copyResult', { ok, value: wx }); this.say(res.effect.message, res.effect.type === 'copy-failed' ? wx : ''); };
+    if (this.state.data.flags.copyFailNext) { done(false); return; }
+    try { navigator.clipboard.writeText(wx).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+  }
+  /* ---------- favorites ---------- */
+  removeFav(id, title) {
+    this.setState(s => ({ leaving: Object.assign({}, s.leaving, { [id]: true }) }));
+    this.after(360, () => { const res = this.act('unfavorite', { eventId: id }); this.setState(s => { const l = Object.assign({}, s.leaving); delete l[id]; return { leaving: l, undo: res.effect.type === 'error' ? null : { id, title, last: !!res.effect.last } }; }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.holdKey('undo', 10000, () => this.setState({ undo: null })); });
+  }
+  restoreFav() { const u = this.state.undo; if (!u) return; this.cancelKey('undo'); const res = this.act('favorite', { eventId: u.id }); this.setState({ undo: null }); this.say(res.effect.type === 'error' ? res.effect.message : '已放回 · ' + u.title); }
+  toggleFav(id, title) { const on = JUS.derive.isFav(this.state.data, id); this.pressSnap('fav|' + id); const res = this.act('toggleFavorite', { eventId: id }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.say(on ? '已拿出收藏 · ' + title : '已收进收藏 · ' + title + ' · 共 ' + res.effect.count + ' 个'); }
+  /* ---------- notify / permission ---------- */
+  requestPerm() { const res = this.act('requestPermission'); if (res.effect.type === 'error') { this.say(JUS.COPY.permissionError); return; } this.setState({ sysDialog: true }); this.after(1300, () => { const r2 = this.act('resolvePermission'); this.setState({ sysDialog: false }); this.say(r2.data.notify.permission === 'granted' ? '系统已允许通知 · 消息提醒暂未开通' : '系统拒绝了通知权限'); }); }
+  /* ---------- records / reports / feedback / seam report ---------- */
+  newRf(kind, recordId) { const k = kind + '|' + recordId; return { kind, recordId, text: this.state.drafts[k] || '', err: '', fail: null, saving: false }; }
+  saveRf() {
+    const rf = this.state.rf; if (!rf || rf.saving) return; const r = JUS.derive.record(this.state.data, rf.recordId); if (!r) return;
+    this.setState(s => ({ rf: Object.assign({}, s.rf, { saving: true, fail: null, err: '' }) }));
+    this.after(420, () => { const f = this.state.rf; if (!f) return; const action = f.kind === 'dispute' ? 'fileDispute' : f.kind === 'appeal' ? 'fileAppeal' : 'addSupplement'; const res = this.act(action, { recordId: f.recordId, text: f.text });
+      if (res.effect.type === 'invalid') { this.setState(s => ({ rf: Object.assign({}, s.rf, { saving: false, err: res.effect.errors.text }) })); return; }
+      if (res.effect.type === 'error') { this.setState(s => ({ rf: Object.assign({}, s.rf, { saving: false, fail: res.effect.message === JUS.COPY.saveFail ? JUS.COPY.appealFail : res.effect.message }) })); return; }
+      const k = f.kind + '|' + f.recordId; this.setState(s => { const dr = Object.assign({}, s.drafts); delete dr[k]; return { drafts: dr }; }); this.popPaper(); this.say(res.effect.message || JUS.COPY.appealSaved); });
+  }
+  newRs(reportId) { return { reportId, text: this.state.drafts['supp|' + reportId] || '', mats: [], err: '', fail: null, saving: false }; }
+  submitRs() {
+    const rs = this.state.rs; if (!rs || rs.saving) return;
+    this.setState(s => ({ rs: Object.assign({}, s.rs, { saving: true, fail: null, err: '' }) }));
+    this.after(650, () => { const f = this.state.rs; if (!f) return; const res = this.act('supplementReport', { reportId: f.reportId, text: f.text, materials: f.mats });
+      if (res.effect.type === 'invalid') { this.setState(s => ({ rs: Object.assign({}, s.rs, { saving: false, err: res.effect.errors.text }) })); return; }
+      if (res.effect.type === 'error') { this.setState(s => ({ rs: Object.assign({}, s.rs, { saving: false, fail: JUS.COPY.supplementFail }) })); return; }
+      this.setState(s => { const dr = Object.assign({}, s.drafts); delete dr['supp|' + f.reportId]; return { drafts: dr }; }); this.popPaper(); this.say('已补充 · 转为处理中'); });
+  }
+  newFb() { return { text: this.state.drafts.feedback || '', err: '', fail: null, saving: false, done: null }; }
+  submitFb() {
+    const f = this.state.fb; if (!f || f.saving || f.done) return; this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: true, fail: null, err: '' }) }));
+    this.after(420, () => { const g = this.state.fb; if (!g) return; const res = this.act('submitFeedback', { text: g.text });
+      if (res.effect.type === 'invalid') { this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: false, err: res.effect.errors.text }) })); return; }
+      if (res.effect.type === 'error') { this.setState(st => ({ fb: Object.assign({}, st.fb, { saving: false, fail: res.effect.message }) })); return; }
+      const no = res.data.feedback.filter(x => x.id === res.effect.id)[0].localNo; this.setState(st => { const dr = Object.assign({}, st.drafts); delete dr.feedback; return { fb: Object.assign({}, st.fb, { saving: false, done: no }), drafts: dr }; }); });
+  }
+  newSr(eventId) { const existing = this.state.data.reports.filter(r => r.eventId === eventId).sort((a, b) => b.createdAt - a.createdAt)[0]; return { eventId, text: '', who: {}, mats: [], err: '', whoErr: '', fail: null, saving: false, done: existing && existing.status !== 'resolved' ? existing.id : null }; }
+  submitSr() {
+    const sr = this.state.sr; if (!sr || sr.saving) return; const d = this.state.data; const e = d.events[sr.eventId]; const who = Object.keys(sr.who).filter(k => sr.who[k]);
+    this.setState(s => ({ sr: Object.assign({}, s.sr, { saving: true, fail: null, err: '', whoErr: '' }) }));
+    this.after(650, () => { const f = this.state.sr; if (!f) return; const names = who.map(k => k === 'host' ? JUS.derive.hostName(d, e) + '（局主）' : k); const res = this.act('fileReport', { eventId: f.eventId, text: f.text, who, whoName: names.join('、'), materials: f.mats });
+      if (res.effect.type === 'invalid') { this.setState(s => ({ sr: Object.assign({}, s.sr, { saving: false, err: res.effect.errors.text || '', whoErr: res.effect.errors.who || '' }) })); return; }
+      if (res.effect.type === 'error') { this.setState(s => ({ sr: Object.assign({}, s.sr, { saving: false, fail: '提交失败，内容已保留。请重试。' }) })); return; }
+      this.setState(s => ({ sr: Object.assign({}, s.sr, { saving: false, done: res.effect.reportId }) })); });
+  }
+  /* ---------- account (seal → red button → confirm) ---------- */
+  peelSeal() { if (this.state.seal !== 'on') return; this.setState({ seal: 'peeling' }); this.afterKey('seal', 440, () => this.setState({ seal: 'off' })); }
+  askEnd() { this.setState({ confirm: { title: '退出登录？', body: '只结束本机的演示会话；已提交的记录、举报与资料都保留，不会发出任何真实请求。', keepLabel: '再想想', discardLabel: '退出登录', danger: true, act: 'confirm', onDiscard: () => { this.setState({ confirm: null }); const res = this.act('endDemoSession'); if (res.effect.type === 'error') this.say(res.effect.message); else this.say('演示会话已结束 · 本机数据保留'); } } }); }
+  /* ---------- feed gesture (V27 favMove / favEnd, verbatim parameters from JUS.FAV) ---------- */
+  feedDown(ev, id) { if (ev.pointerType === 'mouse' && ev.button !== 0) return; try { ev.currentTarget.setPointerCapture(ev.pointerId); } catch (e) { } this.setState({ drag: { id, x: ev.clientX, y: ev.clientY, axis: null, idle: false } }); }
+  feedMove(ev, id) {
+    const g = this.state.drag; if (!g || g.id !== id) return; const k = this.wk(); const dx = (ev.clientX - g.x) / k, dy = (ev.clientY - g.y) / k;
+    if (!g.axis) { if (Math.hypot(dx, dy) < JUS.FAV.deadZone) return; g.axis = Math.abs(dx) > Math.abs(dy) * JUS.FAV.axisRatio ? 'x' : 'y'; }
+    if (g.axis !== 'x') return;
+    const on = JUS.derive.isFav(this.state.data, id); const idle = (dx > 0 && on) || (dx < 0 && !on);
+    const x = idle ? dx * JUS.FAV.idleDamp : Math.max(-JUS.FAV.clamp, Math.min(JUS.FAV.clamp, dx));
+    g.idle = idle; this.setState(s => ({ drag: g, fx: Object.assign({}, s.fx, { [id]: x }) }));
+  }
+  feedUp(ev, id, cancel) {
+    const g = this.state.drag; if (!g || g.id !== id) return; const on = JUS.derive.isFav(this.state.data, id); const dx = cancel ? 0 : (this.state.fx[id] || 0);
+    if (g.axis === 'x') this._suppressClick = id;
+    const add = !cancel && dx > JUS.FAV.throwPx && !on, del = !cancel && dx < -JUS.FAV.throwPx && on;
+    this.setState(s => ({ drag: null, fx: Object.assign({}, s.fx, { [id]: 0 }) }));
+    if (add || del) { const res = this.act(add ? 'favorite' : 'unfavorite', { eventId: id }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } const e = this.state.data.events[id]; this.say((add ? JUS.FAV.copy.add : JUS.FAV.copy.remove) + ' · ' + e.title + (add ? ' · 共 ' + res.effect.count + ' 个' : res.effect.last ? ' · 收藏夹空了' : '')); }
+  }
+  /* ---------- render ---------- */
+  renderVals() {
+    const s = this.state, d = s.data; const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const sum = JUS.derive.summary(d); const favs = JUS.derive.favorites(d); const n = JUS.derive.notify(d); const recs = JUS.derive.records(d); const reps = JUS.derive.reports(d);
+    const skin = s.skinPreview || d.appearance.skin; const pull = s.pull; const pulledOn = pull && pull.phase !== 'out';
+    const paper = s.paper; const pname = paper ? paper.name : ''; const rot3 = (i) => (((i % 3) - 1) * 0.45).toFixed(2);
+    const press = (k) => s.press === k ? 'press' : '';
+    const fbCount = d.feedback.length; const qaCount = JUS.RULES.filter(r => r.body).length + 1;
+    const onNames = n.cats.filter(c => c.on).map(c => c.label);
+    const permShort = { default: '未申请系统权限', requesting: '系统权限请求中', granted: n.serviceConnected ? '已允许 · 提醒已连接' : '已允许 · 提醒暂未开通', denied: '通知已拒绝', unsupported: '暂不支持通知' }[n.permission];
+    /* ---- folders ---- */
+    const others = FOLDERS.filter(f => !pulledOn || f.key !== pull.key);
+    const peekOf = (key) => key === 'profile' ? d.you.name : key === 'fav' ? (favs.active[0] ? favs.active[0].title : (favs.all[0] ? favs.all[0].title : JUS.COPY.favEmpty.title)) : key === 'prefs' ? '通知与提醒 · ' + n.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类开启' : key === 'records' ? (recs.rows[0] ? recs.rows[0].label + ' · ' + recs.rows[0].statusLabel : JUS.COPY.creditEmpty) : '常见问题 · ' + qaCount + ' 条';
+    const folds = FOLDERS.map((f, k) => {
+      const home = GEO.slot0 + GEO.pitch * k; let top = home, h = GEO.fh, z = 1 + k, cls = 'rest', vars = '';
+      const dragging = s.tabDrag && s.tabDrag.key === f.key;
+      if (pull && pull.key === f.key) {
+        top = GEO.pullTop; h = GEO.pullH; z = GEO.z; cls = pull.phase + (pull.fast ? ' fast' : '');
+        vars = ';--dy0:' + (home - GEO.pullTop) + 'px;--h0:' + GEO.fh + 'px;--h1:' + GEO.pullH + 'px;--z0:' + (1 + k);
+        if (pull.pose) { const p = pull.pose.p; vars += ';--dxd:' + (p * 10).toFixed(1) + 'px;--dyd:' + (-p * 24).toFixed(1) + 'px;--rot:' + (-6 * Math.min(1, p * 1.4)).toFixed(2) + 'deg'; }
+      } else if (pulledOn) { const r = others.indexOf(f); top = GEO.slot0 + GEO.pitch * (r + 1); z = 1 + r; cls = 'receded'; }
+      let transform = '';
+      if (dragging) { const p = s.tabDrag.p; transform = 'transform:translate(' + (p * 10).toFixed(1) + 'px,' + (-p * 24).toFixed(1) + 'px) rotate(' + (-6 * Math.min(1, p * 1.4)).toFixed(2) + 'deg);'; z = GEO.z; cls += ' drag'; }
+      const style = 'top:' + top + 'px;height:' + h + 'px;z-index:' + z + ';' + transform + vars;
+      let sum1 = '', sum2 = '', sum1Cls = '', sum2Cls = '';
+      if (f.key === 'help') { sum1 = '问答 ' + qaCount + ' 条 · 反馈 ' + fbCount + ' 条'; sum2 = '约定 ' + JUS.RULES.length + ' 条 · ' + JUS.RULES_VERSION; }
+      if (f.key === 'records') { sum1 = '记录 ' + sum.recordLabel; sum1Cls = sum.pendingRecords ? 'warn' : ''; sum2 = '举报 ' + sum.reportLabel; sum2Cls = sum.needMore ? 'warn' : ''; }
+      if (f.key === 'prefs') { sum1 = sum.cityLabel + ' · 提醒 ' + n.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类开启'; sum2 = permShort + ' · ' + sum.appearanceLabel; sum2Cls = n.permission === 'denied' ? 'warn' : ''; }
+      if (f.key === 'fav') { sum1 = favs.count ? '最近：' + favs.all[0].title : JUS.COPY.favEmpty.body; sum2 = favs.count ? (favs.active.length + ' 个可报名 · ' + favs.archived.length + ' 个已结束或取消') : ''; }
+      if (f.key === 'profile') { sum1 = '邮箱 ' + sum.emailLabel + (d.you.emailVerified && d.you.emailDomain ? ' · ' + d.you.emailDomain : '') + ' · ' + sum.sessionLabel; }
+      return { key: f.key, label: f.label, label2: f.label2, color: f.color, aria: f.aria + (pull && pull.key === f.key ? ' · 已抽出，再点放回' : ' · 点或拖标签抽出'), cls, style,
+        isProfile: f.key === 'profile', isFav: f.key === 'fav', isPrefs: f.key === 'prefs', isRecords: f.key === 'records', isHelp: f.key === 'help',
+        peekP: dragging ? s.tabDrag.p.toFixed(2) : '0', peekTitle: peekOf(f.key), dot: f.key === 'records' && sum.attention > 0, sum1, sum2, sum1Cls, sum2Cls,
+        tabClick: () => this.tabClick(f.key), tabDown: (ev) => this.tabDown(ev, f.key), tabMove: (ev) => this.tabMove(ev, f.key), tabUp: (ev) => this.tabUp(ev, f.key, false), tabCancel: (ev) => this.tabUp(ev, f.key, true),
+        insert: (ev) => { ev.stopPropagation(); this.guardLeave(() => this.insertFolder()); }, pullStrip: () => { if (pulledOn && pull.key === f.key) return; this.pullFolder(f.key); } };
+    });
+    /* ---- paper (level 2) ---- */
+    const pstyle = paper && paper.from ? '--x0:' + paper.from.x.toFixed(1) + 'px;--y0:' + paper.from.y.toFixed(1) + 'px;--w0:' + paper.from.w.toFixed(1) + 'px;--h0:' + paper.from.h.toFixed(1) + 'px;--r0:' + (paper.rot || '0deg') : '';
+    const pcls = paper ? (paper.phase === 'lifting' ? 'lifting' : paper.phase === 'out' ? 'dropping' : 'in') : '';
+    const page = { title: (PAPER[pname] || {}).title || '', dir: s.dir, leftLabel: '‹ 放回', leftAct: 'back', leftFn: () => this.goBack(), right: '', rightAct: 'save', rightFn: () => { }, rightDisabled: false, rightBusy: false };
+    ['profile', 'privacy', 'account', 'record-detail', 'record-form', 'report-detail', 'report-supp', 'feedback', 'rules', 'seam-report'].forEach(k => { page['is' + k.split('-').map(x => x[0].toUpperCase() + x.slice(1)).join('')] = pname === k; });
+    page.isProfileView = pname === 'profile' && !s.edit; page.isProfileEdit = pname === 'profile' && !!s.edit; page.isDetail = pname === 'fav-detail' || pname === 'seam-detail';
+    if (s.pstack.length) { page.leftLabel = '‹ 返回'; }
+    if (page.isProfileEdit) { page.leftLabel = '取消'; page.leftAct = 'cancel'; page.title = '编辑资料'; page.right = s.edit.saving ? '保存中…' : '保存'; page.rightFn = () => this.saveProfile(); page.rightDisabled = !!s.edit.saving; page.rightBusy = !!s.edit.saving; }
+    if (pname === 'seam-report') page.leftLabel = '‹ 我的局';
+    if (pname === 'seam-detail') page.leftLabel = '‹ 找局';
+    /* ---- carry (what the paper shows while it is moving) ---- */
+    let carry = { cls: '', title: page.title, line: '' };
+    const favRow0 = favs.all[0];
+    if (pname === 'profile') carry = { cls: d.you.name.length > 7 ? '' : 'big', title: d.you.name, line: '微信 ' + (d.you.wx || '未填写') + ' · 邮箱 ' + sum.emailLabel };
+    if (pname === 'privacy') carry = { cls: '', title: '隐私与可见性', line: JUS.COPY.privacyLead };
+    if (pname === 'account') carry = { cls: '', title: '账户与本机数据', line: '本机演示会话 · ' + d.session.device };
+    if (pname === 'fav-detail' || pname === 'seam-detail') { const e = paper && d.events[paper.id]; if (e) carry = { cls: '', title: e.title, line: JUS.fmt.when(e.iso).zh + ' · ' + JUS.fmt.place(e.loc).hood }; }
+    if (pname === 'record-detail' || pname === 'record-form') { const r = paper && JUS.derive.record(d, paper.id); if (r) carry = { cls: '', title: r.label, line: r.title + ' · ' + r.statusLabel }; }
+    if (pname === 'report-detail' || pname === 'report-supp') { const r = paper && JUS.derive.report(d, paper.id); if (r) carry = { cls: '', title: r.title, line: r.statusLabel + ' · ' + r.id }; }
+    if (pname === 'feedback') carry = { cls: '', title: '写反馈', line: '对产品的建议或问题' };
+    if (pname === 'rules') carry = { cls: '', title: '参加约定 · 18 条', line: JUS.RULES_VERSION };
+    if (pname === 'seam-report') { const e = paper && d.events[paper.id]; if (e) carry = { cls: '', title: '举报 · ' + e.title, line: '事实陈述，不评分、不自动处罚' }; }
+    const out = { panel, rootRef: this.rootRef, userRm: d.appearance.reduceMotion ? ' rm-user' : '', appCls: paper ? ' paperon' : '', skin, skCotton: skin === 'cotton' ? 'on' : '', skHalo: skin === 'halo' ? 'on' : '', skSunset: skin === 'sunset' ? 'on' : '',
+      sessionLabel: sum.sessionLabel, tabSettings: s.tab === 'settings', tabFind: s.tab === 'find', tabMine: s.tab === 'mine', tabCreate: s.tab === 'create', folds, page, carry,
+      paper: { on: !!paper, cls: pcls, style: pstyle, backCls: paper && paper.phase !== 'out' ? 'in' : '' }, goBack: () => this.goBack(),
+      nav: { findOn: s.tab === 'find' ? 'on' : '', mineOn: s.tab === 'mine' ? 'on' : '', settingsOn: s.tab === 'settings' ? 'on' : '', find: () => this.setState({ tab: 'find', paper: null, pstack: [] }), mine: () => this.setState({ tab: 'mine', paper: null, pstack: [] }), settings: () => this.setState({ tab: 'settings', paper: null, pstack: [] }), create: () => { this.setState({ tab: 'create', paper: null, pstack: [] }); this.say('开局流程不在本离线演示中'); } },
+      undo: { on: !!s.undo, text: s.undo ? '已拿出 · ' + s.undo.title + (s.undo.last ? ' · 袋子空了' : '') : '', restore: () => this.restoreFav() },
+      toast: { on: !!s.toast, text: s.toast ? s.toast.text : '', sel: s.toast ? s.toast.sel : '' },
+      sys: { on: !!s.sysDialog },
+      confirm: s.confirm ? { on: true, title: s.confirm.title, body: s.confirm.body, keepLabel: s.confirm.keepLabel, discardLabel: s.confirm.discardLabel, dangerCls: s.confirm.danger ? 'red' : '', discardAct: s.confirm.act || 'discard', keep: () => this.setState({ confirm: null }), discard: s.confirm.onDiscard } : { on: false }
+    };
+    /* ---- profile ---- */
+    const nameLong = Array.from(d.you.name).length > 7;
+    out.prof = { name: d.you.name, whoCls: nameLong ? 'long' : '', wx: d.you.wx || '未填写', email: d.you.email || '未填写', emailShort: d.you.email ? (d.you.emailDomain || d.you.email.split('@')[1] || d.you.email) : '未填写', emailTag: sum.emailLabel, emailTagCls: d.you.email ? (d.you.emailVerified ? 'ok' : 'warn') : 'off',
+      footer: '称呼 · 局主与同局成员可见 ｜ 微信 · 成局后仅局主 ｜ 邮箱 · 只显示验证标记', savedLine: s.saved, snapshotNote: JUS.COPY.snapshotNote, wxPolicy: JUS.COPY.wxPolicy, copy: () => this.copyWx(),
+      open: (ev) => this.openPaper('profile', null, ev), openPrivacy: (ev) => this.openPaper('privacy', null, ev), openAccount: (ev) => this.openPaper('account', null, ev),
+      edit: () => this.setState({ edit: this.newEdit(), saved: '', dir: 'push' }) };
+    const ed = s.edit || this.newEdit(); const emailChanged = ed.email.trim() !== ed.orig.email && ed.email.trim() !== '';
+    out.edit = { name: ed.name, wx: ed.wx, email: ed.email, nameErr: ed.errors.name || '', wxErr: ed.errors.wx || '', emailErr: ed.errors.email || '', nameErrCls: ed.errors.name ? 'err' : '', wxErrCls: ed.errors.wx ? 'err' : '', emailErrCls: ed.errors.email ? 'err' : '', emailHint: JUS.COPY.emailHint,
+      needCode: emailChanged && !ed.verifiedNow, codeSent: ed.sent, canSend: !ed.sent || ed.resendLeft <= 0, sendLabel: ed.sent ? JUS.COPY.profileErrors.codeResend : '发送验证码', codeLed: ed.sent ? 'wait' : '', codeTitle: ed.sent ? '验证码已发到 ' + ed.email.trim() + '（本机测试码，不发邮件）' : '改了邮箱，保存前要先验证', code: ed.code, codeErr: ed.codeErr, codeErrCls: ed.codeErr ? 'err' : '', resendText: ed.resendLeft > 0 ? ed.resendLeft + ' 秒后可重新发送 · 5 分钟内有效' : '可以重新发送', verifiedNow: ed.verifiedNow, verifiedDomain: ed.verifiedDomain,
+      fail: !!ed.fail, failMsg: ed.fail || '', saving: ed.saving, saveLabel: ed.saving ? '保存中…' : '保存', snapshotNote: JUS.COPY.snapshotNote,
+      setName: (ev) => this.setEdit({ name: ev.target.value, errors: Object.assign({}, ed.errors, { name: '' }) }), setWx: (ev) => this.setEdit({ wx: ev.target.value, errors: Object.assign({}, ed.errors, { wx: '' }) }), setEmail: (ev) => this.setEdit({ email: ev.target.value, verifiedNow: false, sent: false, errors: Object.assign({}, ed.errors, { email: '' }) }), setCode: (ev) => this.setEdit({ code: ev.target.value.replace(/\D/g, '').slice(0, 6), codeErr: '' }),
+      send: () => this.sendCode(), verify: () => this.verifyCode(), save: () => this.saveProfile(), cancel: () => this.guardLeave(() => this.setState({ edit: null, dir: 'pop' })) };
+    /* ---- favorites ---- */
+    const favCell = (r, i) => ({ id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, cityLine: r.crossCity ? r.city.name + ' · ' + r.city.tzLabel : '', st: r.status.label, stCls: r.status.key === 'open' ? 'open' : r.status.key === 'cancelled' ? 'bad' : 'closed', rel: r.relation.kind === 'none' ? '' : r.relation.label, rot: rot3(i), cls: s.leaving[r.id] ? 'leaving' : '', open: (ev) => this.openPaper('fav-detail', r.id, ev), remove: () => this.removeFav(r.id, r.title) });
+    out.fav = { count: favs.count, lead: favs.count ? '收藏不等于报名；拿出不影响已报名的局。' : '', empty: favs.count === 0, emptyTitle: JUS.COPY.favEmpty.title, emptyBody: JUS.COPY.favEmpty.body, emptyCta: JUS.COPY.favEmpty.cta, hasAny: favs.count > 0, active: favs.active.map(favCell), archived: favs.archived.map(favCell), hasArchived: favs.archived.length > 0, archivedCount: favs.archived.length, goFind: () => this.setState({ tab: 'find', paper: null, pstack: [] }) };
+    /* ---- detail (fav / seam) ---- */
+    const detId = paper ? paper.id : null; const detE = detId ? d.events[detId] : null;
+    if (detE && (pname === 'fav-detail' || pname === 'seam-detail')) { const st = JUS.derive.eventStatus(d, detE); const j = JUS.derive.joinedRow(d, detId), h = JUS.derive.hostedRow(d, detId); const on = JUS.derive.isFav(d, detId); const canSee = !!(j && j.ticket && j.ticket.torn); const hostWx = detE.host === 'you' ? d.you.wx : detE.host.wx; const city = JUS.cityByKey(detE.city);
+      out.det = { title: detE.title, when: JUS.fmt.when(detE.iso).zh, placeFull: JUS.fmt.place(detE.loc).full, host: JUS.derive.hostName(d, detE), cap: '共 ' + detE.capacity + ' 人（含局主）', cityLine: city.name + ' · ' + city.tzLabel, joinMode: detE.joinMode === 'direct' ? '直接加入' : '申请后由局主通过', st: st.label, stTag: st.key === 'open' ? 'ok' : st.key === 'cancelled' ? 'warn' : 'off', rel: j ? j.label : h ? '你发起的 · ' + h.label : '',
+        contactLed: h || canSee ? 'on' : '', contactLine: h ? '这是你发起的局 · 成员撕开有效票后可见你的微信' : canSee ? hostWx + ' · ' + JUS.COPY.contactRules.window : JUS.COPY.contactRules.beforeFormed + '；未报名或未撕开有效票时看不到局主微信。',
+        favAct: on ? 'unfav' : 'fav', favLabel: on ? '拿出收藏' : '收进收藏', toggleFav: () => this.toggleFav(detId, detE.title), applyLabel: st.closed ? st.label : j ? '已报名 · ' + j.label : detE.joinMode === 'direct' ? '直接加入 · 入局' : '申请报名 · 入局' };
+    } else out.det = {};
+    /* ---- prefs: notify / city / look ---- */
+    out.ntf = { deliverLabel: n.deliverLabel, deliverLed: n.canDeliver ? 'on' : n.permission === 'denied' || n.permission === 'unsupported' ? 'bad' : '', permTitle: n.permCopy.title, permBody: n.permCopy.body, permLed: n.permission === 'granted' ? 'on' : n.permission === 'denied' || n.permission === 'unsupported' ? 'bad' : n.permission === 'requesting' ? 'wait' : '', buttonLabel: n.buttonLabel, canRequest: n.canRequest, requesting: n.permission === 'requesting', showDisabled: !n.canRequest && n.permission !== 'requesting', serviceCopy: n.serviceCopy, serviceLed: n.serviceConnected ? 'on' : '', prefHint: JUS.COPY.prefHint,
+      sumLine: onNames.length ? '已开启 ' + onNames.length + ' 类：' + onNames.join('、') : '全部关闭 · 不会发出任何提醒', footer: '开关只影响提醒本身 · 系统权限与提醒服务分别决定能否送达',
+      request: () => this.requestPerm(),
+      cats: n.cats.map(c => ({ key: c.key, label: c.label, sub: c.sub, on: c.on ? 'on' : '', word: c.on ? '开' : '关', press: press('n|' + c.key), aria: c.label + (c.on ? ' 开' : ' 关'), toggle: () => this.motion('snap', () => { this.pressSnap('n|' + c.key); const res = this.act('setNotifyPref', { key: c.key, on: !c.on }); if (res.effect.type === 'error') this.say(res.effect.message); }) })) };
+    const q = s.cityQ.trim().toLowerCase(); const cityRows = JUS.CITIES.filter(c => !q || c.name.includes(q) || c.en.toLowerCase().includes(q) || c.key.toLowerCase().includes(q));
+    out.city = { current: sum.cityLabel, q: s.cityQ, setQ: (ev) => this.setState({ cityQ: ev.target.value }), clearQ: () => this.setState({ cityQ: '' }), noResult: cityRows.length === 0, noResultTitle: JUS.CITY_COPY.noResult, retry: JUS.CITY_COPY.retry, scope: JUS.COPY.cityScope, customNote: JUS.CITY_COPY.customNote, rows: cityRows.map(c => ({ key: c.key, name: c.name, tzLabel: c.tzLabel, on: d.prefs.city === c.key ? 'on' : '', press: press('c|' + c.key), pick: () => { this.pressSnap('c|' + c.key); const res = this.act('setCity', { city: c.key }); if (res.effect.type === 'error') this.say(res.effect.message); else if (!res.effect.same) this.say('默认浏览 ' + c.name + ' · 不改动已参加的局'); } })) };
+    const curSkin = d.appearance.skin; const prevName = (JUS.SKINS.filter(x => x.key === s.skinPreview)[0] || {}).name;
+    out.look = { skins: JUS.SKINS.map(k => ({ key: k.key, name: k.name, line: k.line, on: skin === k.key ? 'on' : '', press: press('s|' + k.key), pick: () => { this.pressSnap('s|' + k.key); this.setState({ skinPreview: k.key === curSkin ? null : k.key, applied: false }); } })), changed: !!s.skinPreview && s.skinPreview !== curSkin, previewName: prevName, applied: s.applied, currentName: sum.skin.name,
+      apply: () => { const res = this.act('applySkin', { skin: s.skinPreview }); if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.setState({ skinPreview: null, applied: true }); this.holdKey('applied', 2600, () => this.setState({ applied: false })); }, cancel: () => this.setState({ skinPreview: null }),
+      rmOn: d.appearance.reduceMotion ? 'on' : '', rmWord: d.appearance.reduceMotion ? '开' : '关', rmPress: press('rm'), toggleRm: () => { this.pressSnap('rm'); const res = this.act('setReduceMotion', { on: !d.appearance.reduceMotion }); if (res.effect.type === 'error') this.say(res.effect.message); } };
+    /* ---- records / reports ---- */
+    const kinds = [['出席记录', recs.attendance], ['主动退出', recs.exits], ['安排变化', recs.changes]];
+    const sCls = (r) => r.pendingReview ? 'pend' : r.status === 'verified' || r.status === 'corrected' ? 'open' : 'closed';
+    let ri = 0;
+    out.rec = { lead: recs.lead, exitLine: recs.exitLine, quotaNoCount: JUS.COPY.quotaNoCount, empty: recs.empty, emptyTitle: JUS.COPY.creditEmpty, help: JUS.COPY.recordHelp, groups: kinds.filter(k => k[1].length).map(k => ({ title: k[0], count: k[1].length, rows: k[1].map(r => ({ id: r.id, kindLabel: r.kindLabel, atText: r.atText, label: r.label, title: r.title, statusLabel: r.statusLabel, sCls: sCls(r), rot: rot3(ri++), open: (ev) => this.openPaper('record-detail', r.id, ev) })) })) };
+    const rd = paper && (pname === 'record-detail' || pname === 'record-form') ? JUS.derive.record(d, paper.id) : null;
+    if (rd) { const notes = rd.supplements.map(x => ({ kind: '补充', text: x.text, atText: JUS.fmt.dateTime(x.at), status: '已保存本机' })).concat(rd.appeals.map(a => ({ kind: a.kind === 'dispute' ? '出席异议' : '申诉', text: a.reason, atText: JUS.fmt.dateTime(a.at), status: '待核实 · 未处罚' })));
+      out.rd = { kindLabel: rd.kindLabel, statusLabel: rd.statusLabel, label: rd.label, title: rd.title, when: rd.when.zh, place: rd.place.hood, host: rd.host, atText: rd.atText, quotaLabel: rd.quotaLabel, appealLine: rd.appealLine, hasNotes: notes.length > 0, noteCount: notes.length, notes, canDispute: rd.canDispute, canAppeal: rd.canAppeal, help: rd.type === 'absence_reported' ? JUS.COPY.recordHelp : rd.type === 'active_withdrawal' ? JUS.COPY.quotaRule : '安排变化不记失约、不消耗机会；这里只保留事实。',
+        supplement: () => this.pushPaper('record-form', rd.id, { rf: this.newRf('supplement', rd.id) }), dispute: () => this.pushPaper('record-form', rd.id, { rf: this.newRf('dispute', rd.id) }), appeal: () => this.pushPaper('record-form', rd.id, { rf: this.newRf('appeal', rd.id) }) };
+      const rf = s.rf || this.newRf('supplement', rd.id); const K = { supplement: ['补充说明', '补充事实或说明', '比如：当天高烧，已私信局主。', '保存说明', '只追加，不改写原记录；保存后标「已保存本机」。'], dispute: ['出席异议', '说明你当天的情况', '比如：我当天到场了，有签到照片。', '提出异议', '异议只对「未出席记录」提出一次；提出后状态为待核实，不自动处罚。'], appeal: ['信用申诉', JUS.COPY.appealLabel, '比如：家人突发状况，提前告知了局主。', JUS.COPY.appealCta, '申诉说明保存在本机，尚未提交审核服务；每条退出记录只能申诉一次。'] }[rf.kind];
+      out.rf = { kindLabel: K[0], label: rd.label, title: rd.title, formLabel: K[1], placeholder: K[2], cta: rf.saving ? '保存中…' : K[3], note: K[4], text: rf.text, count: rf.text.length, err: rf.err, errCls: rf.err ? 'err' : '', fail: !!rf.fail, failMsg: rf.fail || '', saving: rf.saving, setText: (ev) => this.setState(st => ({ rf: Object.assign({}, st.rf, { text: ev.target.value, err: '' }) })), save: () => this.saveRf(), cancel: () => this.goBack() };
+    } else { out.rd = {}; out.rf = { text: '' }; }
+    const repRow = (r, i) => ({ id: r.id, updatedText: r.updatedText, title: r.title, text: r.text, statusLabel: r.statusLabel, sCls: r.needsMore ? 'pend' : r.status === 'resolved' ? 'open' : 'closed', rot: rot3(i + 1), open: (ev) => this.openPaper('report-detail', r.id, ev) });
+    out.rep = { count: reps.count, lead: reps.count ? JUS.COPY.reportNote : '', empty: reps.empty, emptyTitle: JUS.COPY.reportsEmpty, mock: JUS.COPY.reportMock, groups: [['处理中', reps.open], ['已处理', reps.closed]].filter(g => g[1].length).map(g => ({ title: g[0], count: g[1].length, rows: g[1].map(repRow) })) };
+    const rp = paper && (pname === 'report-detail' || pname === 'report-supp') ? JUS.derive.report(d, paper.id) : null;
+    if (rp) { out.rpd = { id: rp.id, statusLabel: rp.statusLabel, led: rp.needsMore ? 'wait' : rp.status === 'resolved' ? 'on' : rp.status === 'submitted' ? '' : 'on', needsText: rp.needsMore ? rp.needsText || '' : '', title: rp.title, whoName: rp.whoName, when: rp.when.zh, host: rp.host, updatedText: rp.updatedText, text: rp.text, hasShots: rp.shots.length > 0, shots: rp.shots, timeline: rp.timelineRows.map((t, i, a) => Object.assign({}, t, { cls: i === a.length - 1 ? 'now' : '' })), hasSupp: rp.supplementRows.length > 0, supps: rp.supplementRows, needsMore: rp.needsMore, mock: JUS.COPY.reportMock, supplement: () => this.pushPaper('report-supp', rp.id, { rs: this.newRs(rp.id) }) };
+      const rs = s.rs || this.newRs(rp.id);
+      out.rs = { needsText: rp.needsText || '需要补充', label: JUS.COPY.reportSupplementLabel, placeholder: JUS.COPY.reportSupplementPlaceholder, cta: rs.saving ? '提交中…' : JUS.COPY.reportSupplementCta, text: rs.text, err: rs.err, errCls: rs.err ? 'err' : '', fail: !!rs.fail, failMsg: rs.fail || '', saving: rs.saving, mats: rs.mats.map((m, i) => ({ name: m.name, remove: () => this.setState(st => ({ rs: Object.assign({}, st.rs, { mats: st.rs.mats.filter((x, j) => j !== i) }) })) })), addMat: () => { if (rs.mats.length >= 6) { this.say('最多6张'); return; } this.setState(st => ({ rs: Object.assign({}, st.rs, { mats: st.rs.mats.concat([{ name: '截图 ' + (st.rs.mats.length + 1) + '.jpg', size: 0 }]) }) })); }, setText: (ev) => this.setState(st => ({ rs: Object.assign({}, st.rs, { text: ev.target.value, err: '' }) })), submit: () => this.submitRs(), cancel: () => this.goBack() };
+    } else { out.rpd = {}; out.rs = { mats: [], text: '' }; }
+    /* ---- help / feedback / about / rules ---- */
+    const withBody = JUS.RULES.filter(r => r.body); const fbs = JUS.derive.feedback(d);
+    const qas = withBody.map(r => ({ key: r.n, q: r.title, a: r.body })).concat([{ key: 'diff', q: '举报和反馈有什么不同？', a: '针对某个局或某个人的事，在散场页点「举报」，进度在「我的举报」；对产品的意见用「写反馈」。两者分开保存。' }]);
+    out.help = { qas: qas.map(x => ({ q: x.q, a: x.a, cls: s.qaOpen[x.key] ? 'open' : '', mark: s.qaOpen[x.key] ? '收合' : '展开', toggle: () => this.setState(st => ({ qaOpen: Object.assign({}, st.qaOpen, { [x.key]: !st.qaOpen[x.key] }) })) })), openRules: (ev) => this.openPaper('rules', null, ev), openReports: () => { this.pullFolder('records'); this.after(620, () => this.scrollSec('reports')); }, openFeedback: (ev) => this.openPaper('feedback', null, ev, { fb: this.newFb() }), hasFeedback: fbs.length > 0, feedbackCount: fbs.length, feedback: fbs };
+    const fb = s.fb || this.newFb();
+    out.fb = { text: fb.text, err: fb.err, errCls: fb.err ? 'err' : '', fail: !!fb.fail, failMsg: fb.fail || '', done: !!fb.done, doneNo: fb.done || '', saving: fb.saving || !!fb.done, busy: !!fb.saving, cancelLabel: fb.done ? '放回' : '取消', setText: (ev) => this.setState(st => ({ fb: Object.assign({}, st.fb, { text: ev.target.value, err: '' }) })), cancel: () => this.goBack(), submit: () => this.submitFb() };
+    const pv = JUS.derive.privacy(d); out.priv = { lead: pv.lead, general: pv.general, facts: pv.facts, noToggles: pv.noToggles, line: pv.facts.length + ' 个进行中的局 · 谁能看见你，由成局、票根与散场状态决定' };
+    out.acc = { live: d.session.kind === 'demo', ended: d.session.kind !== 'demo', line: d.session.kind === 'demo' ? '本机演示会话 · ' + d.session.device + ' · 退出只结束本机演示' : '演示会话已结束 · 可重新开始', sessionLabel: '本机演示会话 · ' + d.session.device, sessionBody: '开始于 ' + JUS.fmt.dateTime(d.session.startedAt) + ' · ' + JUS.COPY.demoOnly, storageKey: 'jus:' + CONCEPT.code + ':v1', sealCls: s.seal === 'on' ? '' : s.seal, sealed: s.seal !== 'off', peel: () => this.peelSeal(), askEnd: () => this.askEnd(), restart: () => { const res = this.act('restartDemoSession'); if (res.effect.type === 'error') this.say(res.effect.message); else this.setState({ seal: 'on' }); } };
+    const ab = JUS.derive.about(d); out.about = { version: ab.version, rulesVersion: ab.rulesVersion, built: ab.built ? ab.built.slice(0, 16).replace('T', ' ') + ' UTC' : '本次构建', cities: ab.cities, policyNote: ab.policyNote, demo: ab.demo };
+    out.rules = { groups: JUS.RULE_GROUPS.map(g => ({ name: g.name, line: g.line, items: JUS.RULES.filter(r => r.group === g.key).map(r => ({ n: r.n, title: r.title, body: r.body, cls: r.body ? '' : 'na' })) })) };
+    /* ---- seam feed ---- */
+    const feed = JUS.derive.feed(d, s.feedFilter === 'favs' ? 'fav' : 'all'); const feedAll = JUS.derive.feed(d, 'all');
+    out.feed = { city: feed.city.name, sub: feedAll.count + ' 个局 · 这两天 · 收藏 ' + feedAll.favCount, allOn: s.feedFilter === 'all' ? 'on' : '', favOn: s.feedFilter === 'favs' ? 'on' : '', favCount: feedAll.favCount, pillAll: JUS.FAV.copy.pillAll, pillFavs: JUS.FAV.copy.pillFavs, showAll: () => this.setState({ feedFilter: 'all' }), showFav: () => this.setState({ feedFilter: 'favs' }), empty: feed.count === 0, emptyTitle: s.feedFilter === 'favs' ? JUS.FAV.copy.emptyCity : '这个城市这两天还没局', hint: s.feedFilter === 'favs' ? JUS.FAV.copy.hintOn : '右滑收进收藏 · 左滑拿出收藏 · 点一张进详情',
+      rows: feed.rows.map((r, i) => { const fx = s.fx[r.id] || 0; const dragging = s.drag && s.drag.id === r.id && s.drag.axis === 'x'; const idle = dragging && s.drag.idle; const fp = Math.min(1, Math.abs(fx) / 96); const rt = fx > 0;
+        return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, host: r.host, capLine: '共 ' + r.capacity + ' 人', tabOn: r.fav ? 'on' : '', dragCls: dragging ? 'drag' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: (fp * (idle ? 0.5 : 1)).toFixed(2), wr: (fp * 13 * (rt ? 1 : -1)).toFixed(1), ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
+          wb: idle ? 'linear-gradient(126deg,rgba(226,228,232,.78) 0%,rgba(200,204,214,.68) 100%)' : rt ? 'linear-gradient(126deg,rgba(75,99,192,.9) 0%,rgba(104,150,226,.84) 44%,rgba(170,214,240,.76) 100%)' : 'linear-gradient(126deg,rgba(31,29,27,.88) 0%,rgba(76,72,66,.8) 52%,rgba(130,124,114,.72) 100%)',
+          washIcon: rt ? JUS.FAV.icon.on : JUS.FAV.icon.off, washText: idle ? (r.fav ? JUS.FAV.copy.alreadyOn : JUS.FAV.copy.notOn) : (rt ? JUS.FAV.copy.add : JUS.FAV.copy.remove), washReady: Math.abs(fx) > JUS.FAV.throwPx ? 'ready' : '',
+          down: (ev) => this.feedDown(ev, r.id), move: (ev) => this.feedMove(ev, r.id), up: (ev) => this.feedUp(ev, r.id, false), cancel: (ev) => this.feedUp(ev, r.id, true),
+          open: (ev) => { if (this._suppressClick === r.id) { this._suppressClick = null; return; } this.openPaper('seam-detail', r.id, ev); } }; }) };
+    /* ---- seam mine ---- */
+    const mine = JUS.derive.mine(d); let mi = 0;
+    const mrow = (r, hist) => { const rp0 = d.reports.filter(x => x.eventId === r.id).sort((a, b) => b.createdAt - a.createdAt)[0]; const i = mi++; return { id: r.id, title: r.title, when: r.when.zh, place: r.place.hood, label: r.label, snap: r.snapshotLabel || '', rot: rot3(i), favOn: r.fav ? 'on' : '', favAct: r.fav ? 'unfav' : 'fav', favAria: (r.fav ? '已收藏 · 点按扣拿出' : '未收藏 · 点按扣收进'), press: press('fav|' + r.id), toggle: () => this.toggleFav(r.id, r.title), reportLine: hist ? (rp0 ? '已举报 · ' + (JUS.REPORT_LABELS[rp0.status] || rp0.status) : '散场后遇到问题，或对记录有异议') : '', reportCta: rp0 && rp0.status !== 'resolved' ? '查看回执' : '不对劲？举报', report: (ev) => this.openPaper('seam-report', r.id, ev, { sr: this.newSr(r.id) }) }; };
+    out.mine = { sub: mine.current.length + ' 个进行中 · ' + mine.hosted.length + ' 个我发起 · ' + mine.history.length + ' 个历史', currentCount: mine.current.length, hostedCount: mine.hosted.length, historyCount: mine.history.length, current: mine.current.map(r => mrow(r, false)), hosted: mine.hosted.map(r => mrow(r, false)), history: mine.history.map(r => mrow(r, true)) };
+    const sr = s.sr; const srE = sr ? d.events[sr.eventId] : null;
+    if (sr && srE) { const doneRep = sr.done ? d.reports.filter(x => x.id === sr.done)[0] : null; const hostN = JUS.derive.hostName(d, srE);
+      out.sr = { done: !!doneRep, form: !doneRep, doneTitle: doneRep ? srE.title + ' · ' + JUS.fmt.dateTime(doneRep.createdAt) : '', doneId: doneRep ? doneRep.id : '', doneStatus: doneRep ? JUS.REPORT_LABELS[doneRep.status] : '', viewProgress: () => { this.setState({ tab: 'settings', pull: { key: 'records', phase: 'pulled' }, paper: { name: 'report-detail', id: sr.done, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: null }); },
+        title: srE.title, when: JUS.fmt.when(srE.iso).zh, who: [{ key: 'host', name: hostN + '（局主）' }].map(w => ({ name: w.name, on: sr.who[w.key] ? 'on' : '', toggle: () => this.setState(st => ({ sr: Object.assign({}, st.sr, { who: Object.assign({}, st.sr.who, { [w.key]: !st.sr.who[w.key] }), whoErr: '' }) })) })), whoErr: sr.whoErr, text: sr.text, err: sr.err, errCls: sr.err ? 'err' : '', fail: !!sr.fail, failMsg: sr.fail || '', saving: sr.saving, cta: sr.saving ? '提交中…' : '提交举报', mats: sr.mats.map((m, i) => ({ name: m.name, remove: () => this.setState(st => ({ sr: Object.assign({}, st.sr, { mats: st.sr.mats.filter((x, j) => j !== i) }) })) })), addMat: () => { if (sr.mats.length >= 6) { this.say('最多6张'); return; } this.setState(st => ({ sr: Object.assign({}, st.sr, { mats: st.sr.mats.concat([{ name: '截图 ' + (st.sr.mats.length + 1) + '.jpg', size: 0 }]) }) })); }, setText: (ev) => this.setState(st => ({ sr: Object.assign({}, st.sr, { text: ev.target.value, err: '' }) })), submit: () => this.submitSr() };
+    } else out.sr = { form: false, done: false, who: [], mats: [] };
+    return out;
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>

@@ -27,11 +27,10 @@ body{margin:0}
 .glow.halo{background:radial-gradient(85% 55% at 90% -10%,rgba(255,96,18,.26),transparent 62%),radial-gradient(60% 40% at -6% 80%,rgba(186,164,222,.34),transparent 60%)}
 .glow.sunset{background:linear-gradient(180deg,rgba(255,122,51,.22) 0%,rgba(255,197,61,.12) 48%,rgba(51,160,255,.18) 100%)}
 .app[data-skin="cotton"] .glow.cotton,.app[data-skin="halo"] .glow.halo,.app[data-skin="sunset"] .glow.sunset{opacity:1}
-.sheet{position:absolute;left:0;right:0;top:0;bottom:56px;overflow:auto;z-index:1;background-color:var(--paper);
-  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:100% 13px,13px 100%;background-attachment:local,local;
-  transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1);scrollbar-width:none}
+.sheet{position:absolute;left:0;right:0;top:0;bottom:56px;overflow:auto;z-index:1;background-color:var(--paper);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1);scrollbar-width:none}
 .sheet::-webkit-scrollbar{display:none}
-.form{padding:12px 14px 30px;box-sizing:border-box;min-height:100%}
+/* the faint grid lives on the scrolling content itself (a background on the scroller doubles its lines where text layers meet it) */
+.form{padding:12px 14px 30px;box-sizing:border-box;min-height:100%;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:100% 13px,13px 100%;background-position:0 1px,1px 0}
 /* ---- form head ---- */
 .hd .t1{display:flex;justify-content:space-between;align-items:baseline;gap:10px;padding-top:6px}
 .hd .ttl{font:400 11.5px/1 var(--serif);letter-spacing:.24em;color:var(--ink)}
@@ -136,7 +135,9 @@ button.sr:active{background:rgba(27,26,23,.045)}
 .tcell{position:relative;appearance:none;border:0;border-left:1px solid var(--line);background:transparent;width:100%;height:100%;min-height:48px;cursor:pointer;padding:0;margin:0;overflow:visible;box-sizing:border-box}
 .tcell:active{background:rgba(184,50,42,.06)}
 .tcell .stamp{position:absolute;left:50%;top:50%;margin:-13px 0 0 -13px}
-.tcell .strike{position:absolute;left:12px;top:9px;right:12px;bottom:9px;width:auto;height:auto;overflow:visible;pointer-events:none}
+.tcell .strike{position:absolute;left:50%;top:50%;width:40px;height:40px;margin:-20px 0 0 -20px;overflow:visible;pointer-events:none;transform:translate(var(--dx,0px),var(--dy,0px))}
+.tcell .strike.old line{opacity:.35}
+.tcell .stamp.old{opacity:.34}
 .tcell .strike line{stroke:var(--verm);stroke-width:1.8;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-dasharray:1;stroke-dashoffset:1;opacity:.9;mix-blend-mode:multiply}
 .tcell .strike.draw line{--sc01-dur:calc(200ms * var(--k,1));animation:sc01-draw var(--sc01-dur) ease-out both}
 .tcell .strike.flat line{stroke-dashoffset:0}
@@ -158,6 +159,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
 .box .sq path{stroke:var(--verm);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;opacity:.9;mix-blend-mode:multiply}
 .box.on .sq path{--sc01-dur:calc(240ms * var(--k,1));animation:sc01-draw var(--sc01-dur) ease-out both}
 .box.pre .sq path{stroke:var(--ink2);stroke-width:1.5;stroke-dasharray:.07 .05;stroke-dashoffset:0;opacity:.85;animation:none}
+.box.was .sq path{stroke-dashoffset:0;opacity:.28;animation:none}
 .box .tx b{display:block;font:500 14px/1.2 var(--sans)}
 .box .tx small{display:block;font:400 10px/1.3 var(--mono);color:var(--ink3);letter-spacing:.04em;margin-top:1px}
 .box .sw{width:14px;height:14px;border:1px solid var(--line);flex:0 0 auto;box-sizing:border-box}
@@ -191,6 +193,8 @@ button.sr:active{background:rgba(27,26,23,.045)}
 .fill textarea{font:400 14px/1.6 var(--sans);min-height:92px;resize:none}
 .fill input.mono{font:500 15px/1.4 var(--mono)}
 .fill input.code{font:500 20px/1.3 var(--mono);letter-spacing:.42em;text-align:center}
+.fill .pv{display:block;font:500 16px/1.35 var(--sans);color:var(--ink);overflow-wrap:anywhere;padding-top:1px}
+.fill .pv.mono{font:500 15px/1.4 var(--mono)}
 .fill .val{display:block;font:400 10.5px/1.4 var(--sans);color:var(--verm);min-height:15px;margin-top:3px;letter-spacing:.02em}
 .fill .val.ok{color:var(--ink2)}
 .fill.err input,.fill.err textarea{border-bottom:1px solid var(--verm)}
@@ -301,6 +305,9 @@ button.sr:active{background:rgba(27,26,23,.045)}
 .frow .fc .tx span{display:block;font:400 11.5px/1.5 var(--sans);color:var(--ink2);margin-top:1px}
 .frow .fc .mk{display:flex;align-items:center;justify-content:center;border-left:1px solid var(--line);position:relative;font:400 10px/1.3 var(--serif);color:var(--ink3);letter-spacing:.06em;text-align:center}
 .frow .fc .mk .star{position:absolute;left:50%;top:50%;margin:-12px 0 0 -12px;width:24px;height:24px;line-height:24px;font-size:20px;color:var(--verm);opacity:.9;mix-blend-mode:multiply;transform:rotate(-4deg);filter:url(#sc01-ink);text-align:center}
+.frow .fc .mk .star.ink{color:var(--ink3);filter:none;mix-blend-mode:normal;opacity:.45;transform:none}
+.frow .fc .mk .star.land,.frow .fc .mk .star.land2{--sc01-dur:calc(520ms * var(--k,1));animation:sc01-land var(--sc01-dur) cubic-bezier(.2,1.1,.3,1) both;--rot:-4deg}
+.frow .fc .mk .star.land2{animation-name:sc01-land2}
 .frow .fc .wash{position:absolute;inset:0;background:rgba(140,134,122,.3);display:flex;align-items:center;justify-content:center;font:500 12px/1 var(--sans);color:var(--ink);opacity:var(--wo,0);pointer-events:none;letter-spacing:.14em;z-index:2}
 .frow.on .fc{background:rgba(236,231,219,1)}
 .frow.on .fc .tx b{color:var(--ink)}
@@ -354,9 +361,9 @@ button.sr:active{background:rgba(27,26,23,.045)}
             <button type="button" class="row {{prof.rowCls}}" data-rid="email" data-act="open" onClick="{{prof.open}}"><span class="c f">邮箱</span><span class="c v"><span class="{{prof.emailInk}}">{{prof.email}}</span><sc-if value="{{prof.emailSub}}" hint-placeholder-val="{{false}}"><span class="sub">{{prof.emailSub}}</span></sc-if></span><span class="c s"><sc-if value="{{prof.emailStamp}}" hint-placeholder-val="{{true}}"><span class="stamp {{prof.emailStampCls}}" style="--rot:{{prof.emailRot}}deg">{{prof.emailStamp}}<small>{{prof.emailDate}}</small></span></sc-if><sc-if value="{{prof.emailNone}}" hint-placeholder-val="{{false}}"><span class="see">未填写</span></sc-if></span></button>
           </sc-if>
           <sc-if value="{{prof.editing}}" hint-placeholder-val="{{false}}">
-            <div class="row first ed" data-row="profile" data-rid="name"><span class="c f">称呼</span><span class="c v"><div class="{{fx.name.cls}} fill {{edit.nameErrCls}}" style="{{fx.name.style}}" data-anim="fill:name"><label class="ins" for="sc01-name">必填 · 最多 10 个字</label><input id="sc01-name" data-field="name" type="text" value="{{edit.name}}" onInput="{{edit.setName}}" autocomplete="off" placeholder="比如「阿禾」"><span class="val">{{edit.nameErr}}</span></div></span><span class="c s"><span class="see pen">填写中</span></span></div>
-            <div class="row ed" data-rid="wx"><span class="c f">微信号</span><span class="c v"><div class="{{fx.wx.cls}} fill {{edit.wxErrCls}}" style="{{fx.wx.style}}" data-anim="fill:wx"><label class="ins" for="sc01-wx">必填 · 字母、数字、下划线或短横线</label><input id="sc01-wx" class="mono" data-field="wx" type="text" value="{{edit.wx}}" onInput="{{edit.setWx}}" autocomplete="off" placeholder="填写微信号，不是昵称"><span class="val">{{edit.wxErr}}</span></div></span><span class="c s"><span class="see pen">填写中</span></span></div>
-            <div class="row ed" data-rid="email"><span class="c f">邮箱</span><span class="c v"><div class="{{fx.email.cls}} fill {{edit.emailErrCls}}" style="{{fx.email.style}}" data-anim="fill:email"><label class="ins" for="sc01-mail">选填 · 工作或学校邮箱</label><input id="sc01-mail" data-field="email" type="email" value="{{edit.email}}" onInput="{{edit.setEmail}}" autocomplete="off" placeholder="例如 you@nyu.edu"><span class="val">{{edit.emailErr}}</span></div></span><span class="c s"><sc-if value="{{edit.verifiedNow}}" hint-placeholder-val="{{false}}"><span class="stamp land" style="--rot:-3deg">已验证<small>{{hd.md}}</small></span></sc-if><sc-if value="{{edit.showPen}}" hint-placeholder-val="{{true}}"><span class="see pen">{{edit.emailPen}}</span></sc-if></span></div>
+            <div class="row first ed" data-row="profile" data-rid="name"><span class="c f">称呼</span><span class="c v"><div class="{{fx.name.cls}} fill {{edit.nameErrCls}}" style="{{fx.name.style}}" data-anim="fill:name"><sc-if value="{{edit.leaving}}" hint-placeholder-val="{{false}}"><span class="pv {{prof.nameInk}}">{{prof.name}}</span></sc-if><sc-if value="{{edit.active}}" hint-placeholder-val="{{true}}"><label class="ins" for="sc01-name">必填 · 最多 10 个字</label><input id="sc01-name" data-field="name" type="text" value="{{edit.name}}" onInput="{{edit.setName}}" autocomplete="off" placeholder="比如「阿禾」"><span class="val">{{edit.nameErr}}</span></sc-if></div></span><span class="c s"><span class="see pen">填写中</span></span></div>
+            <div class="row ed" data-rid="wx"><span class="c f">微信号</span><span class="c v"><div class="{{fx.wx.cls}} fill {{edit.wxErrCls}}" style="{{fx.wx.style}}" data-anim="fill:wx"><sc-if value="{{edit.leaving}}" hint-placeholder-val="{{false}}"><span class="pv mono {{prof.wxInk}}">{{prof.wx}}</span></sc-if><sc-if value="{{edit.active}}" hint-placeholder-val="{{true}}"><label class="ins" for="sc01-wx">必填 · 字母、数字、下划线或短横线</label><input id="sc01-wx" class="mono" data-field="wx" type="text" value="{{edit.wx}}" onInput="{{edit.setWx}}" autocomplete="off" placeholder="填写微信号，不是昵称"><span class="val">{{edit.wxErr}}</span></sc-if></div></span><span class="c s"><span class="see pen">填写中</span></span></div>
+            <div class="row ed" data-rid="email"><span class="c f">邮箱</span><span class="c v"><div class="{{fx.email.cls}} fill {{edit.emailErrCls}}" style="{{fx.email.style}}" data-anim="fill:email"><sc-if value="{{edit.leaving}}" hint-placeholder-val="{{false}}"><span class="pv {{prof.emailInk}}">{{prof.email}}</span></sc-if><sc-if value="{{edit.active}}" hint-placeholder-val="{{true}}"><label class="ins" for="sc01-mail">选填 · 工作或学校邮箱</label><input id="sc01-mail" data-field="email" type="email" value="{{edit.email}}" onInput="{{edit.setEmail}}" autocomplete="off" placeholder="例如 you@nyu.edu"><span class="val">{{edit.emailErr}}</span></sc-if></div></span><span class="c s"><sc-if value="{{edit.verifiedNow}}" hint-placeholder-val="{{false}}"><span class="stamp land" style="--rot:-3deg">已验证<small>{{hd.md}}</small></span></sc-if><sc-if value="{{edit.showPen}}" hint-placeholder-val="{{true}}"><span class="see pen">{{edit.emailPen}}</span></sc-if></span></div>
             <sc-if value="{{edit.needCode}}" hint-placeholder-val="{{false}}">
               <div class="slip"><div class="sl">邮箱验证<span class="d">{{edit.codeTitle}}</span></div>
                 <p class="dim">{{edit.emailHint}}</p>
@@ -451,7 +458,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
               <div class="row" data-rid="deliver"><span class="c f">能否送达</span><span class="c v"><span style="font-size:14px" class="{{ntf.deliverCls}}">{{ntf.deliverLabel}}</span></span><span class="c s"><span class="see">{{ntf.deliverShort}}</span></span></div>
               <div class="h2">【我想收到的提醒】<span class="n">{{ntf.onCount}}/6 开启 · 点格盖章</span></div>
               <sc-for list="{{ntf.cats}}" as="c" hint-placeholder-count="6">
-                <div class="row" data-rid="{{c.key}}"><span class="c f">{{c.label}}</span><span class="c v"><span class="sub" style="font-size:12px;color:var(--ink)">{{c.sub}}</span></span><button type="button" class="tcell {{c.dimCls}}" data-act="toggle" data-rid="{{c.key}}" onClick="{{c.toggle}}" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}"><sc-for list="{{c.stamps}}" as="st" hint-placeholder-count="1"><sc-if value="{{st.strike}}" hint-placeholder-val="{{false}}"><svg class="strike {{st.strikeCls}}" viewBox="0 0 40 40" preserveAspectRatio="none"><line x1="3" y1="37" x2="37" y2="3" pathLength="1"/></svg></sc-if><span class="stamp round {{st.cls}}" style="{{st.style}}">{{st.t}}</span></sc-for></button></div>
+                <div class="row" data-rid="{{c.key}}"><span class="c f">{{c.label}}</span><span class="c v"><span class="sub" style="font-size:12px;color:var(--ink)">{{c.sub}}</span></span><button type="button" class="tcell {{c.dimCls}}" data-act="toggle" data-rid="{{c.key}}" onClick="{{c.toggle}}" aria-label="{{c.aria}}" aria-pressed="{{c.pressed}}"><sc-for list="{{c.stamps}}" as="st" hint-placeholder-count="1"><sc-if value="{{st.strike}}" hint-placeholder-val="{{false}}"><svg class="strike {{st.strikeCls}}" style="{{st.strikeStyle}}" viewBox="0 0 40 40"><line x1="4" y1="36" x2="36" y2="4" pathLength="1"/></svg></sc-if><span class="stamp round {{st.cls}}" style="{{st.style}}">{{st.t}}</span></sc-for></button></div>
                 <sc-if value="{{c.err}}" hint-placeholder-val="{{false}}"><div class="rowerr">{{c.err}}<button type="button" class="btn sm red" data-act="retry" onClick="{{c.toggle}}">重试</button></div></sc-if>
               </sc-for>
               <p class="note">{{ntf.prefHint}}</p>
@@ -472,7 +479,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
               <p class="note">这是产品里的背景选择；方案本身不是皮肤。评审面板里的「减少动态」是评审开关，与下面的用户偏好独立。</p>
             </div>
           </sc-if></div>
-          <div class="row" data-rid="reduce-motion"><span class="c f">减少动态</span><span class="c v"><span style="font-size:14px">{{look.rmLabel}}</span><span class="sub">开启后所有运动直接呈现结果；状态与反馈仍完整。</span></span><button type="button" class="tcell" data-act="reduce-motion" data-rid="rm" onClick="{{look.toggleRm}}" aria-label="减少动态" aria-pressed="{{look.rmPressed}}"><sc-for list="{{look.rmStamps}}" as="st" hint-placeholder-count="1"><sc-if value="{{st.strike}}" hint-placeholder-val="{{false}}"><svg class="strike {{st.strikeCls}}" viewBox="0 0 40 40" preserveAspectRatio="none"><line x1="3" y1="37" x2="37" y2="3" pathLength="1"/></svg></sc-if><span class="stamp round {{st.cls}}" style="{{st.style}}">{{st.t}}</span></sc-for></button></div>
+          <div class="row" data-rid="reduce-motion"><span class="c f">减少动态</span><span class="c v"><span style="font-size:14px">{{look.rmLabel}}</span><span class="sub">开启后所有运动直接呈现结果；状态与反馈仍完整。</span></span><button type="button" class="tcell" data-act="reduce-motion" data-rid="rm" onClick="{{look.toggleRm}}" aria-label="减少动态" aria-pressed="{{look.rmPressed}}"><sc-for list="{{look.rmStamps}}" as="st" hint-placeholder-count="1"><sc-if value="{{st.strike}}" hint-placeholder-val="{{false}}"><svg class="strike {{st.strikeCls}}" style="{{st.strikeStyle}}" viewBox="0 0 40 40"><line x1="4" y1="36" x2="36" y2="4" pathLength="1"/></svg></sc-if><span class="stamp round {{st.cls}}" style="{{st.style}}">{{st.t}}</span></sc-for></button></div>
           <sc-if value="{{look.rmErr}}" hint-placeholder-val="{{false}}"><div class="rowerr">{{look.rmErr}}<button type="button" class="btn sm red" data-act="retry" onClick="{{look.toggleRm}}">重试</button></div></sc-if>
         </div></div>
 
@@ -636,7 +643,7 @@ button.sr:active{background:rgba(27,26,23,.045)}
             <div class="frow {{e.dragCls}} {{e.onCls}}" data-rid="{{e.id}}" style="--fx:{{e.fx}}px;--fr:{{e.fr}}deg;--wo:{{e.wo}};--ft:{{e.ft}}" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.cancel}}">
               <div class="rv l {{e.lCls}}" style="--rw:{{e.lw}}px"><span class="ic">{{e.lIcon}}</span><span class="wd">{{e.lText}}</span></div>
               <div class="rv r {{e.rCls}}" style="--rw:{{e.rw}}px"><span class="ic">{{e.rIcon}}</span><span class="wd">{{e.rText}}</span></div>
-              <button type="button" class="fc" data-act="open" onClick="{{e.open}}"><span class="no">{{e.no}}</span><span class="tx"><b>{{e.title}}</b><span>{{e.line}}</span></span><span class="mk"><sc-if value="{{e.fav}}" hint-placeholder-val="{{false}}"><span class="star">★</span></sc-if><sc-if value="{{e.notFav}}" hint-placeholder-val="{{true}}">未收藏</sc-if></span><span class="wash">{{e.washText}}</span></button>
+              <button type="button" class="fc" data-act="open" onClick="{{e.open}}"><span class="no">{{e.no}}</span><span class="tx"><b>{{e.title}}</b><span>{{e.line}}</span></span><span class="mk"><sc-if value="{{e.fav}}" hint-placeholder-val="{{false}}"><span class="star {{e.starCls}}">★</span></sc-if><sc-if value="{{e.notFav}}" hint-placeholder-val="{{true}}"><span class="star ink">☆</span></sc-if></span><span class="wash">{{e.washText}}</span></button>
             </div>
             <div class="{{e.detCls}}" style="{{e.detStyle}}" data-anim="sub:feed:{{e.id}}"><sc-if value="{{e.detOn}}" hint-placeholder-val="{{false}}">
               <div class="slip"><div class="sl">局 · 详情<span class="d">{{e.det.joinMode}}</span></div>
@@ -890,14 +897,15 @@ class Component extends DCLogic {
       const res = this.act(actName, Object.assign({}, payload || {}, { on: next }));
       if (res.effect.type === 'error') { this.setState(s => ({ rowErr: Object.assign({}, s.rowErr, { [key]: res.effect.message }) })); return; }
       this._lastToggle = { key, from: on, actName, payload };
-      const rot = this._rnd() * 6 - 3; const seq = ++this._seq;
+      const rot = this._rnd() * 6 - 3; const seq = ++this._seq; dx += seq % 2 ? 5 : -5; dy += seq % 2 ? -3 : 3;
       this.setState(s => { const list = (s.stamps[key] || this.baseStamps(on)).slice(); list.push({ seq, kind: next ? 'on' : 'off', rot, dx, dy, strike: !next }); while (list.length > 3) list.shift(); const re = Object.assign({}, s.rowErr); delete re[key]; return { stamps: Object.assign({}, s.stamps, { [key]: list }), rowErr: re }; });
     });
   }
   baseStamps(on) { return [{ seq: 0, kind: on ? 'on' : 'off', rot: on ? -3 : 2.5, dx: 0, dy: 0, strike: false, base: true }]; }
   stampList(key, on) {
     const list = this.state.stamps[key] || this.baseStamps(on);
-    return list.map(st => ({ t: st.kind === 'on' ? '开' : '关', strike: !!st.strike, strikeCls: st.base ? 'flat' : 'draw', cls: (st.base ? '' : (st.seq % 2 ? 'land' : 'land2')) + (st.strike ? ' late' : ''), style: '--rot:' + st.rot.toFixed(1) + 'deg;--dx:' + st.dx.toFixed(1) + 'px;--dy:' + st.dy.toFixed(1) + 'px' }));
+    return list.map((st, i) => { const last = i === list.length - 1; const prev = list[i - 1] || st;
+      return { t: st.kind === 'on' ? '开' : '关', strike: !!st.strike, strikeCls: (st.base || !last ? 'flat' : 'draw') + (last ? '' : ' old'), strikeStyle: '--dx:' + prev.dx.toFixed(1) + 'px;--dy:' + prev.dy.toFixed(1) + 'px', cls: (st.base || !last ? '' : (st.seq % 2 ? 'land' : 'land2')) + (st.strike && last ? ' late' : '') + (last ? '' : ' old'), style: '--rot:' + st.rot.toFixed(1) + 'deg;--dx:' + st.dx.toFixed(1) + 'px;--dy:' + st.dy.toFixed(1) + 'px' }; });
   }
   requestPerm() {
     const res = this.act('requestPermission'); if (res.effect.type === 'error') { this.say(JUS.COPY.permissionError); return; }
@@ -1061,7 +1069,7 @@ class Component extends DCLogic {
     out.fx = { name: this.animOf('fill:name'), wx: this.animOf('fill:wx'), email: this.animOf('fill:email') };
     const e0 = ed || this.newEdit(); const emailChanged = e0.email.trim() !== e0.orig.email && e0.email.trim() !== '';
     out.edit = { name: e0.name, wx: e0.wx, email: e0.email, nameErr: e0.errors.name || '', wxErr: e0.errors.wx || '', emailErr: e0.errors.email || '', nameErrCls: e0.errors.name ? 'err' : '', wxErrCls: e0.errors.wx ? 'err' : '', emailErrCls: e0.errors.email ? 'err' : '', emailHint: JUS.COPY.emailHint,
-      needCode: emailChanged && !e0.verifiedNow, verifiedNow: e0.verifiedNow, showPen: !e0.verifiedNow, emailPen: emailChanged ? '待验证' : '填写中', codeSent: e0.sent, notSent: !e0.sent, canSend: e0.sent && e0.resendLeft <= 0, sendLabel: JUS.COPY.profileErrors.codeResend, codeTitle: e0.sent ? '已发送 · 5 分钟内有效' : '改了邮箱', emailTrim: e0.email.trim(), code: e0.code, codeErr: e0.codeErr, codeErrCls: e0.codeErr ? 'err' : '', resendText: e0.resendLeft > 0 ? e0.resendLeft + ' 秒后可重新发送' : '可以重新发送',
+      leaving: !!e0.leaving, active: !e0.leaving, needCode: emailChanged && !e0.verifiedNow && !e0.leaving, verifiedNow: e0.verifiedNow, showPen: !e0.verifiedNow, emailPen: emailChanged ? '待验证' : '填写中', codeSent: e0.sent, notSent: !e0.sent, canSend: e0.sent && e0.resendLeft <= 0, sendLabel: JUS.COPY.profileErrors.codeResend, codeTitle: e0.sent ? '已发送 · 5 分钟内有效' : '改了邮箱', emailTrim: e0.email.trim(), code: e0.code, codeErr: e0.codeErr, codeErrCls: e0.codeErr ? 'err' : '', resendText: e0.resendLeft > 0 ? e0.resendLeft + ' 秒后可重新发送' : '可以重新发送',
       fail: !!e0.fail, failMsg: e0.fail || '', saving: e0.saving, saveLabel: e0.saving ? '保存中…' : '保存', dirtyLabel: e0.dirty ? '有改动 · 未保存' : '未改动', snapshotNote: JUS.COPY.snapshotNote,
       setName: (ev) => this.setEdit({ name: ev.target.value, errors: Object.assign({}, e0.errors, { name: '' }) }), setWx: (ev) => this.setEdit({ wx: ev.target.value, errors: Object.assign({}, e0.errors, { wx: '' }) }), setEmail: (ev) => this.setEdit({ email: ev.target.value, verifiedNow: false, sent: false, errors: Object.assign({}, e0.errors, { email: '' }) }), setCode: (ev) => this.setEdit({ code: ev.target.value.replace(/\D/g, '').slice(0, 6), codeErr: '' }),
       send: () => this.sendCode(), verify: () => this.verifyCode(), save: () => this.saveProfile(), cancel: () => this.guardLeave(() => { }) };
@@ -1084,7 +1092,7 @@ class Component extends DCLogic {
     /* appearance */
     const curSkin = d.appearance.skin; const prevName = (JUS.SKINS.filter(x => x.key === s.skinPreview)[0] || {}).name || '';
     out.look = { rowCls: rowCls('appearance'), openRow: () => this.openRow('appearance'), ink: this.ink('skin'), name: sum.skin.name, line: sum.skin.line, mark: s.marks.skin || '', markCls: this.landCls('skin'), noMark: !s.marks.skin, see: see('appearance'),
-      skins: JUS.SKINS.map(k => ({ key: k.key, name: k.name, line: k.line, cls: k.key === curSkin ? (s.skinPreview && s.skinPreview !== curSkin ? '' : 'on') : (s.skinPreview === k.key ? 'pre' : ''), pick: () => this.setState({ skinPreview: k.key === curSkin ? null : k.key, applied: false }) })),
+      skins: JUS.SKINS.map(k => ({ key: k.key, name: k.name, line: k.line, cls: k.key === curSkin ? (s.skinPreview && s.skinPreview !== curSkin ? 'was' : 'on') : (s.skinPreview === k.key ? 'pre' : ''), pick: () => this.setState({ skinPreview: k.key === curSkin ? null : k.key, applied: false }) })),
       changed: !!s.skinPreview && s.skinPreview !== curSkin, previewName: prevName, applied: s.applied, currentName: sum.skin.name,
       apply: () => { const res = this.act('applySkin', { skin: s.skinPreview }); if (res.effect.type === 'error') { this.say(res.effect.message, { act: () => out.look.apply(), actLabel: '重试' }); return; } const seq = ++this._seq; this.setState(st => ({ skinPreview: null, applied: true, marks: Object.assign({}, st.marks, { skin: MD }), inks: Object.assign({}, st.inks, { skin: seq }) })); this.holdKey('applied', 2600, () => this.setState({ applied: false })); }, cancel: () => this.setState({ skinPreview: null }),
       rmLabel: d.appearance.reduceMotion ? '开 · 直接呈现结果' : '关 · 正常动态', rmPressed: d.appearance.reduceMotion ? 'true' : 'false', rmStamps: this.stampList('rm', d.appearance.reduceMotion), rmErr: s.rowErr.rm || '', toggleRm: (ev) => this.toggle('rm', d.appearance.reduceMotion, ev, 'setReduceMotion', {}) };
@@ -1132,7 +1140,7 @@ class Component extends DCLogic {
     const feed = JUS.derive.feed(d, s.feedFilter); const feedAll = JUS.derive.feed(d, 'all');
     out.feed = { no: 'JU-入局 01 · ' + YMD, city: feed.city.name, sub: feedAll.count + ' 个局 · 这两天', favCount: feedAll.favCount, allOn: s.feedFilter === 'all' ? 'on' : '', favOn: s.feedFilter === 'fav' ? 'on' : '', showAll: () => this.setState({ feedFilter: 'all' }), showFav: () => this.setState({ feedFilter: 'fav' }), pillAll: JUS.FAV.copy.pillAll, pillFavs: JUS.FAV.copy.pillFavs, hint: '右滑 → ☆ 收进收藏 · 左滑 ← ★ 拿出收藏 · 点一行看详情', count: feed.count, empty: feed.count === 0, emptyTitle: s.feedFilter === 'fav' ? JUS.FAV.copy.emptyCity : '这个城市这两天还没局', emptyBody: s.feedFilter === 'fav' ? '回到「全部」，右滑收进想去的局。' : '换个默认浏览城市试试。',
       rows: feed.rows.map((r, i) => { const fx = s.fx[r.id] || 0; const dragging = s.drag && s.drag.id === r.id && s.drag.axis === 'x'; const idle = dragging && s.drag.idle; const ax = Math.abs(fx); const ready = ax > JUS.FAV.throwPx; const rt = fx > 0; const lw = rt && !idle ? Math.min(ax, 190) : 0, rw = !rt && !idle ? Math.min(ax, 190) : 0; const steps = (w) => (w >= 66 ? 's3' : w >= 44 ? 's2' : ''); const da = this.animOf('sub:feed:' + r.id); const detOn = s.sub.feed === r.id || da.on;
-        return { id: r.id, no: pad2(i + 1), title: r.title, line: r.when.zh + ' · ' + r.place.hood + ' · ' + r.host + ' · 共 ' + r.capacity + ' 人', fav: r.fav, notFav: !r.fav, dragCls: dragging ? 'drag' : '', onCls: s.sub.feed === r.id ? 'on' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: idle ? Math.min(1, ax / 22).toFixed(2) : '0', ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
+        return { id: r.id, no: pad2(i + 1), title: r.title, line: r.when.zh + ' · ' + r.place.hood + ' · ' + r.host + ' · 共 ' + r.capacity + ' 人', fav: r.fav, notFav: !r.fav, starCls: this.landCls('star:' + r.id), dragCls: dragging ? 'drag' : '', onCls: s.sub.feed === r.id ? 'on' : '', fx: fx.toFixed(1), fr: (fx * JUS.FAV.rotatePerPx).toFixed(2), wo: idle ? Math.min(1, ax / 22).toFixed(2) : '0', ft: dragging ? 'none' : 'transform ' + JUS.FAV.release,
           lCls: steps(lw) + (ready && rt && !idle ? ' ready' : ''), lw: lw.toFixed(0), lIcon: JUS.FAV.icon.off, lText: JUS.FAV.copy.add, rCls: steps(rw) + (ready && !rt && !idle ? ' ready' : ''), rw: rw.toFixed(0), rIcon: JUS.FAV.icon.on, rText: JUS.FAV.copy.remove, washText: idle ? (r.fav ? JUS.FAV.copy.alreadyOn : JUS.FAV.copy.notOn) : '',
           down: (ev) => this.feedDown(ev, r.id), move: (ev) => this.feedMove(ev, r.id), up: (ev) => this.feedUp(ev, r.id, false), cancel: (ev) => this.feedUp(ev, r.id, true),
           open: () => { if (this._suppressClick === r.id) { this._suppressClick = null; return; } this.openSub('feed', r.id); }, detCls: da.cls, detStyle: da.style, detOn, det: detOn ? this.detOf(r.id, 'feed') : {} }; }) };

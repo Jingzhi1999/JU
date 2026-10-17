@@ -118,6 +118,7 @@ body{margin:0}
 .e-fld.err input{border-bottom:2px solid var(--ink);padding-bottom:5px}
 .e-fld .e-err{display:block;font-size:12px;color:var(--ink);margin-top:5px;min-height:14px;line-height:1.4}
 .e-fld .e-err:empty{display:none}
+.e-err:not(:empty)::before{content:"";display:inline-block;width:7px;height:7px;background:var(--led);margin:0 5px 0 0;vertical-align:1px}
 .e-fld .e-hint{display:block;font-size:12px;color:var(--g1);margin-top:5px;line-height:1.5}
 .e-fld .e-count{display:block;font-size:11px;color:var(--g2);text-align:right;margin-top:3px}
 .e-code{display:flex;gap:10px;align-items:flex-end}
@@ -140,6 +141,8 @@ body{margin:0}
 .e-kv .e-vl{max-width:66%;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-all;line-height:1.4}
 .e-kv.print,.e-row.print{animation:sc07-print calc(520ms * var(--k,1)) steps(1,end) both}
 @keyframes sc07-print{0%{background:var(--ink);color:#fff}62%{background:var(--ink);color:#fff}100%{background:transparent;color:inherit}}
+.e-kv.print .e-lb,.e-kv.print .e-ld,.e-row.print .e-ld,.e-row.print .e-sub,.e-box.print h4{color:inherit}
+.e-box.print{animation:sc07-print calc(520ms * var(--k,1)) steps(1,end) both}
 .scrub .e-kv.print,.scrub .e-row.print{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 520ms * var(--k,1))!important}
 /* entry lists: date / text / status word */
 .e-list{margin:0}
@@ -661,6 +664,7 @@ class Component extends DCLogic {
   /* ---------- partial refresh: the content region inverts ~120ms, the new content appears, residue clears row by row ---------- */
   refresh(fn) {
     if (this.state.flash) { fn(); return; }
+    if (this.state.data.appearance.reduceMotion) { fn(); this.setState({ flash: false, settle: false }); return; }   /* user preference: the refresh collapses to one frame, result complete */
     this.setState({ flash: true });
     this.after(120, () => { fn(); this.setState({ flash: false, settle: true }); this.afterKey('settle', 520, () => this.setState({ settle: false })); });
   }
@@ -672,7 +676,7 @@ class Component extends DCLogic {
     if (n.from.view.name === 'home') this._homeScroll = n.homeScroll;
     this.refresh(() => {
       this.setState(st => {
-        const patch = Object.assign({ view: n.to, confirm: null }, n.extra || {});
+        const patch = Object.assign({ view: n.to, confirm: null, undo: null }, n.extra || {});
         if (n.mode === 'push') patch.stack = st.stack.concat([st.view]);
         if (n.mode === 'root') { patch.stack = []; patch.tab = n.tab; }
         if (n.mode === 'pop') patch.stack = n.stackAfter;
@@ -695,7 +699,7 @@ class Component extends DCLogic {
   goBack() { this.guardLeave(() => { const s = this.state; const extra = this.leaveCleanup(); if (s.stack.length) this.pop(extra); else if (s.tab !== 'settings') { this._nav = this.snapshotNav('root', { name: 'home' }, extra); this._nav.tab = 'settings'; this.motion('refresh', () => this.doNav()); } }); }
   switchTab(name) { this.guardLeave(() => { const extra = this.leaveCleanup(); const n = this.snapshotNav('root', { name }, extra); n.tab = ROOT_TAB[name]; this._nav = n; this.motion('refresh', () => this.doNav()); if (name === 'create') this.say('开局流程不在本范围演示'); }); }
   say(text, sel) { this.setState({ msg: { text, sel: sel || '' }, undo: null }); this.holdKey('toast', 2600, () => this.setState({ msg: null })); }
-  flashRow(key) { this.setState({ rowFlash: key }); this.afterKey('rowflash', 110, () => this.setState({ rowFlash: null })); }
+  flashRow(key) { if (this.state.data.appearance.reduceMotion) return; this.setState({ rowFlash: key }); this.afterKey('rowflash', 110, () => this.setState({ rowFlash: null })); }
   /* ③ 反相落定: rows invert to print the new value, then settle */
   commit(keys) { const o = {}; keys.forEach(k => { o[k] = true; }); this._lastPrint = keys; this.motion('commit', () => { this.setState({ print: {} }); this.after(16, () => { this.setState({ print: o }); this.afterKey('print', 640, () => this.setState({ print: {} })); }); }); }
   /* ---------- state index ---------- */

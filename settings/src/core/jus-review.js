@@ -27,7 +27,8 @@
     };
     /* after(): an ANIMATION completion timer — scaled by speed, collapsed to 0 under reduced motion, paused with 暂停 / scrub, cleared on reset */
     p.after = function (ms, fn) {
-      var self = this; var r = this.state.review || {}; var k = r.rm ? 0 : (r.speed === 0.5 ? 2 : 1);
+      var self = this; var r = this.state.review || {}; var d = this.state.data; var userRm = !!(d && d.appearance && d.appearance.reduceMotion);
+      var k = (r.rm || userRm) ? 0 : (r.speed === 0.5 ? 2 : 1); /* review 减少动态 与 用户偏好 减少动态 都把动画完成计时器归零 */
       var e = { fn: fn, remaining: Math.round(ms * k), id: null, due: 0 };
       var arm = function () { e.due = Date.now() + e.remaining; e.id = setTimeout(function () { self._timers = self._timers.filter(function (t) { return t !== e; }); e.fn(); }, e.remaining); };
       e.arm = arm; this._timers.push(e); if (!this._paused) arm(); return e;
