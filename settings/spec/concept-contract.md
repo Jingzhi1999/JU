@@ -142,3 +142,17 @@ JUS.mixin(Component);
 - **Shadow DOM**：每套在独立画布里运行在各自的 shadow root；`document.querySelector` 查不到你的元素，用 `this.rootRef.current.querySelector`。
 - **预览缩放**：总览预览以 `scale(.5)` 显示；`rectIn` 已按根元素比例换算。
 - **惰性入口**：找局 / 开局的完整流程不在本范围：接缝里「去找局」「报名」等按钮保留文字与位置，禁用态或说明「不在本范围演示」，不跳转；但**设置内部**打开的详情、编辑器与记录必须在本方案内完成，不留「看似能用、实际没有结果」的按钮。
+
+## 11. 试点 SC05 冰箱门 补充的坑（2026-10-17）
+
+- **类名碰撞**：方案内所有类名要唯一且不与面板 CSS（`.ju-*`）冲突。SC05 曾把门的退后态写成 `.door.back`，与返回按钮 `.back{width:40px;height:40px}` 撞名，整扇门塌成 40px。给状态类加前缀（`.lifted`、`.scNN-xxx`）。
+- **共享元素展开要带内容走**：展开用的层在起点就要显示被拿起物件的内容（SC05 的 `.carry` 层：名片的称呼 / 微信 / 邮箱，白板的几行，字磁贴的字），落定后再交叉淡入页面内容（先淡出 carry，延迟 ≈ 60ms；页头 ≈ 200ms、正文 ≈ 240ms 后淡入），返回时反向。不要让一张空白矩形飞过去。
+- **起点矩形**：行内按钮作为点击目标时，用 `ev.currentTarget.closest('.paper')`（整件物件）取起点矩形，不要用按钮自己的小矩形。
+- **内联样式 vs 类几何**：`start / out` 阶段用内联 `left/top/width/height` 写起点；`in` 阶段清空内联样式让类决定几何，CSS 过渡会在两者之间插值。切到 `in` 前读一次布局（`void el.getBoundingClientRect()`）。
+- **拖动与点击**：横向拖动结束后要屏蔽紧随其后的 click（`_suppressClick = id`）；行根元素 `touch-action:pan-y`（不是 `none`），纵向滚动才不会被吞；`setPointerCapture` 用 try/catch。
+- **半高面板**：外观预览时面板只占下半（SC05 `.sheet.in.half`），让被预览的背景可见；面板几何变化本身就是过渡。
+- **验证码倒计时**：`holdKey('resend', 1000, tick)` 自链；验证通过时 `cancelKey('resend')`。
+- **capture 工具**：`drag` 现在会先 `scrollIntoView`；点击要选到真正带处理函数的元素（`.fcell[data-rid=x] .flyer`，而不是容器 `.fcell`），对容器 `click()` 不会触发子元素的处理函数。
+- **证据体积**：抽帧全部完成后运行 `python3 -I settings/tools/shrink-evidence.py SCNN`，把 `motion-*/`、`coverage/` 的 PNG 转成 JPEG（命名状态图保留 PNG）。
+- **第二个完整参考实现**：`settings/concepts/src/SC05.dc.html`（约 120 KB）：lift / carry、接缝手势（`feedDown/Move/Up`）、资料编辑与验证码、记录 / 举报表单与草稿保留、索引跳转 `applyJump` 的完整映射。逻辑结构可以借鉴，视觉与运动必须按你自己的方向卡重做。
+

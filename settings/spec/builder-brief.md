@@ -8,7 +8,7 @@
 3. `settings/spec/concept-refs.md` 中你的那一节（5–8 个参考案例的具体转译；证据图在 `research/evidence/<slug>/`，用 Read 打开至少三张看一眼再动手）
 4. `settings/spec/state-contract.md`（对象模型、作用域、保存模型、收藏手势参数、文案、冲突处理决定）
 5. `settings/src/core/jus-data.js`（读 `JUS.derive.*`、`JUS.engine.*`、`JUS.COPY/FAV/RULES/SKINS/CITIES/NOTIFY_CATS/REPORT_LABELS/creditLabel/creditStatus`、`JUS.INDEX`）与 `settings/src/core/jus-review.js`（mixin 方法）
-6. `settings/concepts/src/SC00.dc.html`（管线样例：骨架、拖拽收藏、FLIP 详情、toast、失败重试的最小写法）与 `src/core/ju-fx.css`（可用的效果原语）
+6. `settings/concepts/src/SC00.dc.html`（管线样例）与 `settings/concepts/src/SC05.dc.html`（试点 SC05 冰箱门：完整参考实现，读它的结构与 `applyJump` 映射，不要抄它的视觉），以及 `src/core/ju-fx.css`（可用的效果原语）；契约 §11 是试点踩过的坑
 7. `settings/concepts/concepts.json` 中你的条目（名称、一句话、三个核心动作、备注）
 
 ## 你写的文件
@@ -23,6 +23,7 @@ JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/src/build.js
 JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/tools/capture.cjs SCNN /home/user/JU/.build/SCNN-cap-xxx '<actions json>'
 JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/tools/coverage.cjs SCNN /home/user/JU/settings/evidence/SCNN/coverage
 ```
+交付前运行 `python3 -I settings/tools/shrink-evidence.py SCNN` 压缩抽帧。
 `capture.cjs` 动作：`{"click":"css"}`、`{"drag":{"from":"css","to":[dx,dy],"steps":8,"shots":true}}`、`{"jump":"index-key"}`、`{"wait":ms,"shot":true}`、`{"shots":n,"every":ms}`、`{"eval":"js（可用 root, inst）"}`、`{"speed":0.5}`、`{"scroll":"css","to":y}`。所有 css 在你的 shadow root 内查询（`root.querySelector`），优先用 `data-act` / `data-rid` / `.scNN-over` 选择器。输入文本：`{"eval":"var i=root.querySelector('[data-field=name]'); i.value='阿禾二'; i.dispatchEvent(new Event('input',{bubbles:true}))"}`。
 每次改动后至少跑一遍契约 §8 的序列，用 Read 打开 `sheet.png` 逐帧看；`log.json` 的 `errors` 必须为空。看到文字模糊 / 残影 / 重叠 / 白块 / 半空卡住 / 层级错乱 / 挤压 / 低对比灰字遍布 / 首屏没有主角，就改设计，不要只修功能。
 
