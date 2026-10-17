@@ -9,12 +9,12 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-17 19:3x UTC（容器时钟为 UTC；用户时区未知） |
+| 最后更新 | 2026-10-17 21:0x UTC（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮提交见 §F；已推送到 origin 同名分支 |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器临时，**只有已提交并推送的内容可迁移**） |
 | 设置工程子目录 | `settings/`（独立于上一轮：`settings/spec/`、`settings/concepts/{src,project}`、`settings/src/{core,shell,build.js}`、`settings/research/`、`settings/tools/`、`settings/evidence/`）；复用仓库根 `src/runtime/`（preact + dc-mini-runtime）与 `src/core/ju-fx.*`（几何 / 动效原语）|
-| 交付入口 1（规划中） | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6 — 本轮新建；当前只有入口画板（十套索引，标「画板制作中」），方案画板随实现逐套加入 |
-| 交付入口 2（规划中） | 独立评审画布 `JU-Settings-Fablo51-10-Concepts.html`（仓库根；由 `node settings/src/build.js` 生成；当前为空壳，不含方案） |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6 — 入口画板 + 已完成方案的画板（当前：SC05 冰箱门；其余随完成加入） |
+| 交付入口 2 | 独立评审画布 `JU-Settings-Fablo51-10-Concepts.html`（仓库根；`JUS_ONLY=SC05 node settings/src/build.js` 生成；当前只含 SC05；全部完成后用 `node settings/src/build.js` 生成十套） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-Settings-Fablo51-10-Concepts.html`（总览 / 方案 / 对比 / 附录；`#concept/SC01` 直达）。字体来自 Google Fonts（容器内已验证可达，HTTP 200；离线退回系统字体）。无需安装；Node 22 + Playwright（`/opt/node-tools/node_modules/playwright`，Chromium 已预装）+ ffmpeg 仅用于构建与截图验证 |
 | 构建 | `node settings/src/build.js`（写 `settings/concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/src/build.js`（并行开发用，不写共享文件） |
 | 验证工具 | `node settings/tools/capture.cjs <CODE> <outdir> '<actions json>'`（操作并抽帧，生成 sheet.png + log.json）；`node settings/tools/coverage.cjs <CODE> <outdir>`（跳转全部状态索引截图）；两者支持 `JU_STANDALONE` |
@@ -24,7 +24,7 @@
 | 状态 | 事项 |
 |---|---|
 | 已完成（有材料） | 现场核对（§B.2）；三份源码抽取 `settings/spec/extracts/extract-{v27,r3,myju}-settings.md`（代理产出，主负责人通读并据此写契约）；功能归属表 `settings/spec/function-map.md`；跨模块状态契约 `settings/spec/state-contract.md`；共享设置核心 `settings/src/core/jus-data.js`（Node 转移测试通过，见 §G）；评审 mixin / 面板 / 外壳 / 构建 / 截图工具；管线测试画板 `SC00`（私有构建 + capture 0 错误）；研究：新增 29 例（UI 12、动效 8、编辑 4、设计师 5）合并为 `settings/research/ledger.md`（共 123 例）；参考映射 `settings/spec/concept-refs.md`（每套 6–11 例跨 ≥3 类）；十套方向卡 `settings/spec/directions.md`；实现契约 `settings/spec/concept-contract.md` + 代理简报 `settings/spec/builder-brief.md`；Design 画布入口画板（版本 2） |
-| 进行中 | 试点：SC02 面板（构建代理）与 SC05 冰箱门（主负责人亲自）——各做首页 + 信息较密二级页 + 完整编辑 / 保存 / 返回与收藏变化 |
+| 进行中 | 九套由构建代理并行实现（SC01 / SC02 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10，每套按 `settings/spec/builder-brief.md`，私有构建），主负责人逐套复看 |
 | 受阻 / 失败 | 无硬性阻塞。已知限制同上一轮：Design 画布无法在容器内渲染（只能用独立画布截图验证）；容器无 GPU；部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
 | 未开始 | 其余八套实现；逐套证据；覆盖表 `settings/spec/coverage.md`；动效规格汇总 `settings/spec/motion-specs.md`；用户审阅 |
 
@@ -87,7 +87,8 @@
 
 ## E. 设置 SC01—SC10 的真实规格与进度
 - 方向卡：`settings/spec/directions.md`（六维 + 差异矩阵 + 淘汰方向）；参考映射：`settings/spec/concept-refs.md`。
-- 实现状态：SC02 面板、SC05 冰箱门 试点进行中（未完成，无证据）；其余八套未开始；没有代码值可记录。
+- **SC05 冰箱门**（主负责人亲自实现；已写代码 · 已运行 · 已检查静态视觉 · 已观看核心动效抽帧 · 已检查交互与状态；用户未审阅）：源 `settings/concepts/src/SC05.dc.html`（~121 KB）；规格与三个核心动作分段 `settings/spec/motion/SC05.md`（构图坐标、字体字号、色板、材质、每段时长与曲线、实际观察与建议值分开）；证据 `settings/evidence/SC05/`（home / dense / favorites / favorites-after-remove / record-detail / record-supplement(-saved) / report-supplement / saved(-home) / edge-empty / edge-fail / edge-denied / edge-long / edge-invalid / seam-feed / seam-feed-detail / seam-mine / appearance-preview；`motion-1` 取下与放回、`motion-2` 翻面开关、`motion-3` 拿起名片 → 编辑 → 保存 → 贴回、`motion-seam-swipe` 入局滑动收藏；`coverage/` 49 个索引状态 0 错误）。已知问题见 `spec/motion/SC05.md` 末尾（收藏网格补位无 FLIP、帮助页偏平、词磁贴 lift 前 100ms 内容少）。
+- SC01 / SC02 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10：代理构建中（未完成、无证据、无代码值可记录）。
 
 ## F. 代码地图与可迁移性
 ```
@@ -113,8 +114,9 @@ src/runtime/ · src/core/ju-fx.*          复用上一轮运行时与动效原�
 ## G. 验证与缺陷
 验证分级：已写代码 / 已运行 / 已检查静态视觉 / 已观看完整动效 / 已检查交互与状态 / 用户明确认可。
 - 共享核心 `jus-data.js`：**已运行**（Node vm 转移测试，主负责人亲自）：收藏幂等与取消、已报名活动收藏后阶段与票根不变、资料校验（称呼 10 字 / 微信字符 / 免费邮箱）、未验证邮箱不可保存、验证码错 / 对、保存后快照不变、保存失败武装与重试、权限申请与预设回答（允许 / 拒绝）、城市切换不改活动城市、记录补充 / 异议（第二次拒绝）/ 申诉、举报补充（需补充 → 处理中；非需补充拒绝）、新举报状态为已提交、八个变体全部派生无错。
-- 管线 `SC00`：**已运行 + 已检查静态视觉**（主负责人看过 `.build/cap-sc00/sheet.png` 18 帧与 `cap-sc00b` 7 帧：拖拽收藏、toast、FLIP 详情、索引跳转、失败态、面板模拟；`log.json` errors 为空）。SC00 不是交付方案。
-- 缺陷：暂无登记（试点开始后记录）。
+- 管线 `SC00`：**已运行 + 已检查静态视觉**（主负责人看过 `.build/cap-sc00/sheet.png` 18 帧与 `cap-sc00b` 7 帧）。SC00 不是交付方案。
+- **SC05 冰箱门**（主负责人亲自）：**已运行 · 已检查静态视觉 · 已观看核心动效抽帧 · 已检查交互与状态**。看过的接触表：`.build/sc05-cap1…cap8`（首页、名片 lift、资料编辑 → 验证码错 / 对 → 保存 → 贴回、收藏取下 / 放回 / 清空 → 空态、外观半高面板预览 / 贴上、记录详情 → 出席异议 → 保存、举报详情 → 补充 → 处理中、帮助 / 隐私 / 账户退出与重新开始 / 关于 / 规则、长文本变体、保存失败重试、校验失败、城市无结果与切换、权限拒绝 / 不支持 / 已连接、未保存返回确认、入局滑动四种情形、只看收藏、接缝详情、我的局收藏切换与举报填写 → 回执 → 查看进度）；`coverage` 49/49 无错误。修过的缺陷：门的退后态类名 `.back` 与返回按钮撞名导致门塌成 40px（改 `.lifted`）；名片长邮箱与角标重叠（值截断）；传单标题断行（`text-wrap:balance`）；收藏关系标签压住标题（移入文字行）；lift 起点为空白矩形（加 `.carry` 层）；外观预览看不见门（半高面板）；白板 / 铁盒整件只能进一个页（改为逐行目标）。
+- 工具缺陷：`capture.cjs` 的 drag 以前不滚动目标到视口内（已修，`scrollIntoView`）。
 
 ## H. 接手后的前三至五项动作
 1. **完成或复核试点**（目标：SC02、SC05 各自通过契约 §9 完成定义）。读：`settings/spec/builder-brief.md`、`concept-contract.md`、`settings/concepts/src/SC02.dc.html` / `SC05.dc.html`、`settings/evidence/SC02|SC05/`。依赖：无。不可改：`settings/src/core/*` 的 API 形状（改了要对已建方案重跑 coverage）、原始附件、上一轮 `concepts/`。完成标准：coverage 全部状态 0 错误；7 类证据齐；三个核心动作帧序列可看；收藏接缝三处一致。
