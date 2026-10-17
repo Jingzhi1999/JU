@@ -9,7 +9,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-17 23:3x UTC（容器时钟为 UTC；用户时区未知） |
+| 最后更新 | 2026-10-17 23:4x UTC（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮提交见 §F；已推送到 origin 同名分支 |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器临时，**只有已提交并推送的内容可迁移**） |
 | 设置工程子目录 | `settings/`（独立于上一轮：`settings/spec/`、`settings/concepts/{src,project}`、`settings/src/{core,shell,build.js}`、`settings/research/`、`settings/tools/`、`settings/evidence/`）；复用仓库根 `src/runtime/`（preact + dc-mini-runtime）与 `src/core/ju-fx.*`（几何 / 动效原语）|
@@ -24,7 +24,7 @@
 | 状态 | 事项 |
 |---|---|
 | 已完成（有材料） | 现场核对（§B.2）；三份源码抽取 `settings/spec/extracts/extract-{v27,r3,myju}-settings.md`；功能归属表 `settings/spec/function-map.md`；跨模块状态契约 `settings/spec/state-contract.md`；共享设置核心 `settings/src/core/jus-data.js`（引擎回归 31 项通过）；评审 mixin `jus-review.js`；研究台账 123 例 `settings/research/ledger.md`；方向卡 `settings/spec/directions.md`；**十套方案全部实现并通过主负责人门槛**（SC05 主负责人亲自；其余九套由构建代理实现，主负责人逐套跑 `review-check.sh` / `widths.cjs` / `review-sheet.py`、读首屏与核心动效帧序列、用方案自己的导航验证收藏接缝，见 §G）；共享构建十套（独立画布 3.0 MB，冒烟 0 错误）；Design 画布版本 4（Main + SC01…SC10）；动效规格合集 `settings/spec/motion-specs.md`；全部提交并推送到 `claude/new-session-ix9g6p` |
-| 进行中 | 覆盖矩阵 `settings/spec/coverage.md`（`coverage-matrix.cjs` 在共享画布上对十套各跑 49 个索引状态；结果见本文 §G 末尾与该文件） |
+| 进行中 | 无（等待用户审阅） |
 | 受阻 / 失败 | 无硬性阻塞。已知限制：Design 画布无法在容器内渲染（只能用独立画布截图验证）；容器无 GPU、无真机；无视频录制；部分研究站点在本网络被拒；19:2x–22:40 UTC 因会话用量限制停工一次（§A.3） |
 | 未开始 | 用户审阅（用户尚未看过任何一套）；按用户反馈的二轮修改；真机触控验证 |
 
@@ -35,7 +35,7 @@
 ### A.3 当前最重要的问题
 1. **视觉验收只能由用户做**：十套都只经过主负责人（模型）在无头浏览器截图上的复看；没有任何一套得到用户认可或否定。
 2. **Design 画布渲染未核对**：官方 `support.js` 运行时在容器内不可用；十个画板按 `.dc.html` 规范发布，逻辑类用了 `componentDidMount` / `componentDidUpdate` / `ResizeObserver` / `ref`，这些在独立画布的 `dc-mini-runtime` 上验证过，在官方画布上未验证。若画布上某板空白或报错，先用独立画布复核，再按 `settings/spec/limits.md` 的说明排查。
-3. **共享核心的两处修正在代理交付之后**：`derive.reports` 排序改为按 `updatedAt`（原来按不存在的 `at`，等于不排序），索引 `s-report-file` 从桌游夜（已有举报）改为周五爵士小酒馆（无举报）；十套的 `coverage/` 证据是修正前抽的，修正后的覆盖以 `coverage-matrix.cjs` 的结果为准（见 §G）。
+3. **共享核心的两处修正在代理交付之后**：`derive.reports` 排序改为按 `updatedAt`（原来按不存在的 `at`，等于不排序），索引 `s-report-file` 从桌游夜（已有举报）改为周五爵士小酒馆（无举报）；十套的 `coverage/` 证据是修正前抽的，修正后在共享画布上重跑的矩阵十套均 49/49、0 错误（§G）。
 4. 两处主负责人观察到的小瑕疵未改：SC10 首页「我」牌上邮箱与「已验证」小标贴得近；SC05 词磁贴 lift 前 100ms 内容少。
 - 2026-10-17 19:2x UTC：九个构建代理（SC01–SC04、SC06–SC10）因会话用量限制（HTTP 429，重置 22:40 UTC）同时中止，已写到磁盘的内容保留；22:42 UTC 用户确认限额已重置，九个代理用 SendMessage 从中断处恢复，23:1x UTC 全部交付。若再次触发限制：等到错误里给出的重置时间后再逐个恢复（代理 transcript 已保存，不要新开代理）。
 
@@ -126,7 +126,7 @@ src/runtime/ · src/core/ju-fx.*          复用上一轮运行时与动效原�
 ## G. 验证与缺陷
 验证分级：已写代码 / 已运行 / 已检查静态视觉 / 已观看完整动效 / 已检查交互与状态 / 用户明确认可。
 - **共享构建与入口**（主负责人亲自）：**已运行**。`node settings/src/build.js` → 10 套、独立画布 2.65 MB（磁盘 3.0 MB）；`settings/tools/test/standalone.cjs` 冒烟：总览 10 卡 / 20 预览、方案页 phone 可见、索引 49 态、对比页 2 主机 49 态、附录 6609 字符，0 错误；`core-regress.cjs` 31 项通过；`motion-specs.cjs` 汇总十份规格。Design 画布版本 4 发布成功（服务端确认 12 个文件），画板渲染未目视核对（容器限制）。
-- **覆盖矩阵**（主负责人亲自）：`coverage-matrix.cjs` 在共享画布上对十套各跑 49 个索引状态，结果写入 `settings/spec/coverage.md` 与本文 §G 末尾（见「覆盖矩阵结果」）。
+- **覆盖矩阵结果**（主负责人亲自，2026-10-17 23:4x UTC，核心修正之后）：`coverage-matrix.cjs` 在共享画布上对十套各跑 49 个索引状态——**十套全部 49/49 可到达、0 运行时错误**（`settings/spec/coverage.md`；帧在 `settings/evidence/SCNN/coverage-matrix/*.jpg`）。抽查拼图 `.build/matrix-spot.jpg`：`s-report-file`（改为周五爵士小酒馆后）十套都打开空的举报表单（SC01 以 我的局 历史行内展开的形式）；`s-reports` 十套都按更新时间把「桌游夜 · 需补充」排在「K 歌 · 已受理」之前（排序修正生效）。
 - **接缝验证方法**（对所有代理方案统一）：`jumpTo` 会按索引重建数据，所以收藏一致性一律用方案自己的导航串联验证：入局右滑 菜狗羽毛球拼局（badminton）→ 设置首页计数 → 收藏页顺序 → 我的局 → 回入局计数 → 左滑拿出 → 设置计数；每套的接触表 `.build/scNN-seam/sheet.png`（不入库），动作串见各套条目。
 - 共享核心 `jus-data.js`：**已运行**（Node vm 转移测试，主负责人亲自）：收藏幂等与取消、已报名活动收藏后阶段与票根不变、资料校验（称呼 10 字 / 微信字符 / 免费邮箱）、未验证邮箱不可保存、验证码错 / 对、保存后快照不变、保存失败武装与重试、权限申请与预设回答（允许 / 拒绝）、城市切换不改活动城市、记录补充 / 异议（第二次拒绝）/ 申诉、举报补充（需补充 → 处理中；非需补充拒绝）、新举报状态为已提交、八个变体全部派生无错。
 - 管线 `SC00`：**已运行 + 已检查静态视觉**（主负责人看过 `.build/cap-sc00/sheet.png` 18 帧与 `cap-sc00b` 7 帧）。SC00 不是交付方案。
