@@ -16,7 +16,15 @@
       if (this.persist) { var saved = JUS.store.load(concept.code); if (saved && saved.schema === JUS.SCHEMA && saved.data) { this.state.data = saved.data; this.state.variant = saved.data.variant || 'default'; } }
     };
     p.persistNow = function (data) { if (this.persist) JUS.store.save(this.concept.code, { schema: JUS.SCHEMA, data: data, at: Date.now() }); };
-    p.componentWillUnmount = function () { this.clearTimers(); };
+    var ownUnmount = Object.prototype.hasOwnProperty.call(p, 'componentWillUnmount') ? p.componentWillUnmount : null;
+    p.componentWillUnmount = function () { this.clearTimers(); if (this._ro) { try { this._ro.disconnect(); } catch (e) {} this._ro = null; } if (ownUnmount) ownUnmount.call(this); };
+    /* fitWidth(base): opt-in width fitting for scenes laid out in fixed pixels at `base` (390) wide — sets --wk = phoneWidth / base on .ju-phone
+       (call from componentDidMount; CSS: .wall{width:390px;transform-origin:0 0;transform:scale(var(--wk,1))}); kept current with a ResizeObserver */
+    p.fitWidth = function (base) {
+      var self = this; var root = this.rootRef && this.rootRef.current; if (!root) return; var ph = (root.closest && root.closest('.ju-phone')) || root.querySelector('.ju-phone'); if (!ph) return;
+      var apply = function () { var w = ph.clientWidth || base; ph.style.setProperty('--wk', String(Math.round(w / (base || 390) * 1000) / 1000)); ph.style.setProperty('--wh', String(ph.clientHeight || 844) + 'px'); };
+      apply(); if (typeof ResizeObserver !== 'undefined') { this._ro = new ResizeObserver(apply); this._ro.observe(ph); }
+    };
     /* after(): an ANIMATION completion timer — scaled by speed, collapsed to 0 under reduced motion, paused with 暂停 / scrub, cleared on reset */
     p.after = function (ms, fn) {
       var self = this; var r = this.state.review || {}; var k = r.rm ? 0 : (r.speed === 0.5 ? 2 : 1);
