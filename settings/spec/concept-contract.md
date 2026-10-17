@@ -83,18 +83,18 @@ JUS.mixin(Component);
 | 区域 | 必须有的界面与状态 |
 |---|---|
 | 首页 | 分组、当前值（称呼 / 微信 / 邮箱验证 / 收藏数 / 城市 / 通知综合状态 / 外观 / 记录数与待核实 / 举报处理中与需补充 / 帮助 / 账户）；需要处理的项有可见提示；进入二级与返回原位置 |
-| 个人资料 | 查看页（称呼、微信、邮箱 + 已验证 / 未验证 / 未填写）；编辑页（输入、光标、选中、逐字段校验错误、禁用、保存中、失败重试、未保存返回确认）；保存后稳定画面；邮箱改动后「未验证」说明；快照说明（`COPY.snapshotNote`） |
+| 个人资料 | 查看页（称呼、微信、邮箱 + 已验证域名 / 未填写）；编辑页（输入、光标、选中、逐字段校验错误 `COPY.profileErrors`、禁用、保存中、失败重试、未保存返回确认）；邮箱改动 → 「发送验证码」→ 6 位码输入（59s 重发倒计时用 `hold`、错码 / 过期提示）→ 验证通过才能保存（`requestEmailCode / verifyEmailCode`；测试码显示在评审面板）；保存后稳定画面；快照说明（`COPY.snapshotNote`） |
 | 收藏 | 列表（可报名 / 已结束已取消归档区、跨城市标注、与报名关系标签）；详情（最新状态、联系方式按权限）；取消收藏（相邻让位）、最后一个移除 → 完整空态（`COPY.favEmpty`）、恢复 / 重新收藏；长标题 |
 | 城市 | 六城选择、当前值、搜索、无结果（`CITY_COPY`）、作用域说明（`COPY.cityScope`）、返回 |
 | 通知 | 六类开关 + 说明（`COPY.prefHint`）；系统权限五态各自画面（`COPY.permission[state]`）；申请流程（请求中 → 系统回答）；提醒服务连接状态；综合「能否送达」结论 |
 | 外观 | 三种背景预览（预览不写数据）、应用、取消预览恢复原值；减少动态开关；方案切换 ≠ 换肤 |
-| 我的记录 | 事实列表（出席 / 主动退出 / 安排变化）、状态（已记录 / 待核实 / 已补充 / 异议已提出 / 申诉已提出）、规则文字（`COPY.recordHelp`、`COPY.quotaRule`、`COPY.quotaNoCount`）、详情（活动、时间、事实、补充历史）、补充填写、出席异议填写（仅未出席）、信用申诉填写（仅主动退出）、空态 |
-| 我的举报 | 列表（处理中 / 已处理）、详情（原文、对象、材料、本地编号、时间线）、需要补充时的补充填写（文字 + 添加 / 移除材料）、保存结果、空态；`COPY.reportNote / reportInert` |
+| 我的记录（信用记录） | 页顶说明 `COPY.creditSettings`；事实列表（`row.label` + `row.statusLabel`，V27 文案逐字；分「出席记录 / 主动退出 / 安排变化」）；规则文字（`COPY.recordHelp`、`quotaRule`、`quotaNoCount`）；详情（活动、时间、事实、`quotaLabel`、已保存说明条数、补充历史）；「补充与申诉」：补充填写（任何记录）、出席异议（仅未出席记录，一次）、信用申诉（仅主动退出，一次）；保存结果「申诉说明已保存本机，尚未提交审核服务。」；空态 `COPY.creditEmpty` |
+| 我的举报 | 列表（活动名 + 状态字 `JUS.REPORT_LABELS`，处理中 / 已处理分区）、详情（状态、活动、举报对象 `whoName`、原文、截图、受理编号 `id`、更新时间、时间线、已提交补充）、仅「需补充」时「补充材料 / 提交补充」（文字 + 添加 / 移除材料）→ 变为「处理中」、失败保留、空态 `COPY.reportsEmpty`；`COPY.reportNote / reportMock` |
 | 帮助与反馈 | 帮助内容（从 `JUS.RULES` 组织的问答或章节）、产品反馈填写与提交结果、我的反馈列表；与举报分开 |
 | 隐私 | `derive.privacy`：一般规则 + 按活动派生的具体情形；无开关 |
 | 账户 | 本机演示说明、退出登录（本地演示）确认 → 执行 → 结果态 → 恢复；危险操作只作用隔离数据 |
 | 关于与规则 | 版本（`derive.about`）、规则全文长文阅读（三组）、返回 |
-| 接缝 | 入局 01：浏览城市列表、滑动收藏（右收藏 / 左取消 / 阈值 70px / 死区 6px / 回弹）、只看收藏、未报名详情（局主微信按权限）；我的局：参加 / 发起 / 历史行 + 收藏标记可切换、历史行的举报回执 → 设置举报详情 |
+| 接缝 | 入局 01：浏览城市列表（V27 feed 行）、滑动收藏（`JUS.FAV`：死区 6px、轴比 1.25、右滑 >82px 收进 / 左滑 <−82px 拿出、错误方向阻尼 0.26 + 灰洗层 + 「已经收着了 / 还没收藏」、夹 ±190px、回弹 `.5s cubic-bezier(.2,.9,.3,1.04)`、拖动旋转 0.012°/px）、「全部 / 收藏」pill、空态「还没收藏这个城市的局」、未报名详情（局主微信按权限）；我的局：参加 / 发起 / 历史行 + 收藏标记可切换、历史行「不对劲？举报」→ `fileReport`（≥4 字 + 对象 chips 含「（局主）」）→ 回执「可在“设置 → 帮助与反馈”查询进度」→ 设置举报详情 |
 | 边界 | 空、长文本、保存失败与重试、权限拒绝 / 不支持、减少动态；360 与 430 宽不崩（phone 容器固定 390，布局不要依赖绝对像素到溢出） |
 
 ## 4. 状态索引与 `applyJump`
@@ -109,7 +109,7 @@ JUS.mixin(Component);
 
 - 覆盖层 / 弹层根元素加类 `scNN-over`；列表行加 `data-rid="{{row.id}}"`；
 - 主要动作加 `data-act`：`back · close · open · edit · save · cancel · retry · confirm · discard · keep-editing · toggle · select · preview · apply · fav · unfav · supplement · dispute · appeal · report-supplement · add-material · remove-material · feedback · request-permission · copy · city · skin · reduce-motion · danger · restart · seam-feed · seam-mine · seam-settings`；
-- 文本输入加 `data-field="name|wx|email|text|search"`。
+- 文本输入加 `data-field="name|wx|email|code|text|search"`；`data-act` 另含 `send-code · verify-code`。
 
 ## 7. 动效族（简报 §12，每套都要覆盖本范围内出现的动作）
 

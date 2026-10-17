@@ -9,8 +9,8 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-17 18:1x UTC（容器时钟为 UTC；用户时区未知） |
-| 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮尚未提交 |
+| 最后更新 | 2026-10-17 19:3x UTC（容器时钟为 UTC；用户时区未知） |
+| 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮提交见 §F；已推送到 origin 同名分支 |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器临时，**只有已提交并推送的内容可迁移**） |
 | 设置工程子目录 | `settings/`（独立于上一轮：`settings/spec/`、`settings/concepts/{src,project}`、`settings/src/{core,shell,build.js}`、`settings/research/`、`settings/tools/`、`settings/evidence/`）；复用仓库根 `src/runtime/`（preact + dc-mini-runtime）与 `src/core/ju-fx.*`（几何 / 动效原语）|
 | 交付入口 1（规划中） | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6 — 本轮新建；当前只有入口画板（十套索引，标「画板制作中」），方案画板随实现逐套加入 |
@@ -23,25 +23,25 @@
 
 | 状态 | 事项 |
 |---|---|
-| 已完成（有材料） | 现场核对：三份输入附件与仓库上一轮成果（§B.2）；设置工程骨架与工具（`settings/src/build.js`、`jus-review.js`、`jus-panel.html/css`、shell、capture / coverage）；十套方向卡与差异矩阵初稿 `settings/spec/directions.md`；十套元数据 `settings/concepts/concepts.json`；Design 画布已创建并发布入口画板 |
-| 进行中（后台代理） | ① V27「入局」源码抽取 → `settings/spec/extracts/extract-v27-settings.md`；② R3「开局」源码抽取 → `extract-r3-settings.md`；③「我的局」接缝抽取 → `extract-myju-settings.md`；④ 研究补充：设置专项 UI 案例（目标 10–12 例）→ `settings/research/draft-ui-settings.md`；⑤ 设置相关动效案例（目标 6–8 例）→ `draft-motion-settings.md`；⑥ 编辑设计 / 设计师作品结构案例（目标 7–9 例）→ `draft-editorial-designer-settings.md`。证据写入 `research/evidence/<新 slug>/` |
+| 已完成（有材料） | 现场核对（§B.2）；三份源码抽取 `settings/spec/extracts/extract-{v27,r3,myju}-settings.md`（代理产出，主负责人通读并据此写契约）；功能归属表 `settings/spec/function-map.md`；跨模块状态契约 `settings/spec/state-contract.md`；共享设置核心 `settings/src/core/jus-data.js`（Node 转移测试通过，见 §G）；评审 mixin / 面板 / 外壳 / 构建 / 截图工具；管线测试画板 `SC00`（私有构建 + capture 0 错误）；研究：新增 29 例（UI 12、动效 8、编辑 4、设计师 5）合并为 `settings/research/ledger.md`（共 123 例）；参考映射 `settings/spec/concept-refs.md`（每套 6–11 例跨 ≥3 类）；十套方向卡 `settings/spec/directions.md`；实现契约 `settings/spec/concept-contract.md` + 代理简报 `settings/spec/builder-brief.md`；Design 画布入口画板（版本 2） |
+| 进行中 | 试点：SC02 面板（构建代理）与 SC05 冰箱门（主负责人亲自）——各做首页 + 信息较密二级页 + 完整编辑 / 保存 / 返回与收藏变化 |
 | 受阻 / 失败 | 无硬性阻塞。已知限制同上一轮：Design 画布无法在容器内渲染（只能用独立画布截图验证）；容器无 GPU；部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
-| 未开始 | 共同状态契约与功能归属表（等抽取结果）；共享设置核心 `settings/src/core/jus-data.js`；十套实现；证据；研究合并台账 `settings/research/ledger.md`；用户审阅 |
+| 未开始 | 其余八套实现；逐套证据；覆盖表 `settings/spec/coverage.md`；动效规格汇总 `settings/spec/motion-specs.md`；用户审阅 |
 
 ### A.2 当前具体位置
-- 第一步（确认现场、保存快照）完成；第二步（范围与契约）等待三份抽取；第三步（研究）后台进行中；第四步（方向）初稿已写，待研究结果校正与参考映射。
-- 未实现任何一套方案；没有任何截图或动效证据。
+- 第一步（现场与快照）、第二步（范围与契约）、第三步（研究 ≥50 例）完成；第四步（十套方向 + 内部试点）进行中：方向卡与参考映射已写，试点 SC02 / SC05 开始实现。
+- 尚无任何交付方案的截图或动效证据（只有 SC00 管线测试的抽帧 `.build/cap-sc00*/`，不计入证据）。
 
 ### A.3 当前最重要的问题
-1. 三模块收藏语义不一致（V27 源码为右滑收藏 / 左滑取消、以城市 + 标题为键；R3 为横向阈值切换、以活动 ID 为键；我的局无收藏集合）——需在契约里定稳定 ID 映射与手势规则（默认以 V27 语义为参考），等抽取确认阈值与方向。
-2. 记录 / 举报 / 申诉对象模型在我的局各套中不一致（部分只存固定句子）——契约需统一对象语义。
+1. 十套的视觉质量尚无实物可判断；试点要先证明构图、材质、动效在真实中文内容下成立。
+2. 抽取核实的三处源码事实改变了原设想：V27 设置首页只有「信用记录 / 帮助与反馈」两行（其余分组是本轮新增的账户级设计，已在功能归属表逐项标 ④）；V27 收藏键为 `city|title` 且无持久化、R3 键为 `城市:下标`（不可映射）——契约以 canonical id 为身份，入局接缝直接取 V27 feed 行（14 条）并记录 `JUS.IDMAP`；V27 举报创建即「已受理」（mock）——契约改为用户提交后只到「已提交」，受理 / 处理中 / 需补充 / 已处理只由演示数据产生。
 3. 视觉验收只能由用户做。
 
 ### A.4 下一个应执行的具体动作
-1. 读三份抽取，写 `settings/spec/function-map.md`（功能归属表）与 `settings/spec/state-contract.md`（跨模块状态契约，含稳定 ID 映射、作用域、保存模型、本地 / 真实能力）。
-2. 实现 `settings/src/core/jus-data.js`（演示数据、引擎、状态索引、变体、权限 / 服务模拟），并用 Node 跑转移测试。
-3. 合并研究台账，补参考映射 `settings/spec/concept-refs.md`；修正方向卡。
-4. 试点两套差异最大的方向（计划：SC02 面板 与 SC05 冰箱门），各做首页 + 一处信息较密二级页 + 一段完整编辑 / 保存 / 返回或收藏变化；用真实中文长内容截图检查后再展开其余八套。
+1. 完成试点 SC02 / SC05：构建 → `capture.cjs` 抽帧 → Read 看图 → 修构图 / 材质 / 动效 → `coverage.cjs` 全状态 0 错误 → 证据入 `settings/evidence/SCNN/`。
+2. 主负责人复看两套首屏、二级页、三个核心动作与收藏接缝；把发现的坑补进 `settings/spec/concept-contract.md` §10。
+3. 并行启动其余八套（代理），每套按 `settings/spec/builder-brief.md`；主负责人逐套复看、统一核验来源与状态契约。
+4. 生成 `settings/spec/coverage.md`、`settings/spec/motion-specs.md`；构建共享画布；发布十套画板到 Design 画布；更新本文；提交推送。
 
 ## B. 用户要求与方案地位
 
@@ -74,15 +74,20 @@
 - 收藏接缝默认以 V27 的方向性手势（右滑收藏 / 左滑取消）为参考语义；待抽取确认。
 
 ## C. 功能与状态契约
-- 待写：`settings/spec/function-map.md`、`settings/spec/state-contract.md`（等 §A.1 三份抽取）。
+- `settings/spec/function-map.md`：23 行功能归属（依据分级 ①–⑤、原始入口、归属、读取 / 修改位置、稳定 ID、不受影响状态、保存 / 失败 / 返回规则、代码位置）；明确不做的扩张项（钱包 / 支付 / 会员 / 积分 / 排行榜 / 黑名单 / 改密码 / 手机号登录）。
+- `settings/spec/state-contract.md`：原则、稳定 ID 与跨文件映射（V27 `city|pack|title` / 收藏键 `city|title`；R3 `城市:下标` 不可映射；我的局 canonical）、对象模型与作用域表、五条链路（收藏 / 资料 / 城市 / 通知 / 记录·举报·申诉·反馈）、统一保存 / 失败 / 返回 / 重复 / 刷新 / 隔离规则、收藏接缝验收表（13 场景）、源码冲突与处理决定（16 条）、评审面板模拟能力。
+- 实现：`settings/src/core/jus-data.js`（数据 / 派生 / 引擎 / 索引 49 条 / 变体 8 个 / 持久化适配器）。V27 逐字继承：收藏手势参数与文案（`JUS.FAV`）、通知五态文案（`JUS.COPY.permission`）、信用事实标签与状态字（`JUS.creditLabel / creditStatus`）、举报对象与状态字、资料校验文案与邮箱本机测试码流程、JuRules26 18 条标题与已引用正文、政策声明句。本轮新增设计（④）在文件注释与契约中注明。
 
 ## D. 研究台账与失败尝试
-- 继承：`research/ledger.md` / `ledger.json`（上一轮 94 例：ui 26、motion 21、editorial 18、designer 21、award 8；已看动效 30）。主负责人核对：其中与设置 / 偏好 / 个人资料直接相关的只有 REF14（Airbnb 2025 Profile）、REF87（Crouton 内容管理）两例 → 设置专项缺口由 §A.1 的三个研究代理补充。
-- 本轮新增草稿（代理产出，待主负责人核验证据后合并进 `settings/research/ledger.md`）：`settings/research/draft-ui-settings.md`、`draft-motion-settings.md`、`draft-editorial-designer-settings.md`。
+- 合并台账：`settings/research/ledger.md`（由 `settings/tools/build-ledger.py` 生成）：**123 例** = 继承 94（ui 26、motion 21、editorial 18、designer 21、award 8；已看动效 30）+ 本轮新增 29（ui 12：SU01–SU12；motion 8：SM01–SM08，全部已看动效，其中 5 例为真实手机界面录像；editorial 4：SE01–SE04；designer 5：SD01–SD05）。五类最低构成（16 / 12 / 8 / 10 / 4）与合计 ≥50 均满足；设置专项要求（UI ≥8 例与设置 / 偏好 / 资料 / 内容管理相关；动态 ≥6 例有移动端证据）满足。
+- 证据核对：主负责人用脚本核对 29 例新增案例在 `research/evidence/<slug>/` 的文件全部存在（ui 12 例 37 张、editorial / designer 9 例 32 张、motion 8 例各含 sheet.jpg + 关键帧）；并抽看了代理汇报中的观察文本。主负责人**没有**逐张重看全部图片，这一步按「代理自报 + 文件存在核对」记录。
+- 继承案例中与设置直接相关的只有 REF14、REF87 两例；本轮映射到具体方案的继承案例 28 例已在台账「对设置的转译」列写明方案编号；其余 66 例保留原转译并标「继承 · 本轮未映射」。
+- 失败 / 未立案：三份草稿各附「访问失败／未立案」清单（合计 55 条：Behance / Awwwards / Tympanus / SSENSE / Met 被拒；Bear、Signal support 403；App Store 429；Luma / Partiful 设置需登录；Apple HIG 多数页面无动效视频；animations.dev / uilabs 无演示；jenson.im / benjitaylor / codepen 不可达等），已并入 `settings/research/ledger.md` §三。
+- 淘汰的方向候选与理由：`settings/spec/directions.md` 末尾。
 
 ## E. 设置 SC01—SC10 的真实规格与进度
-- 方向卡：`settings/spec/directions.md`（初稿，六维 + 差异矩阵 + 淘汰方向）。
-- 实现状态：十套均**未开始**；没有代码值可记录。
+- 方向卡：`settings/spec/directions.md`（六维 + 差异矩阵 + 淘汰方向）；参考映射：`settings/spec/concept-refs.md`。
+- 实现状态：SC02 面板、SC05 冰箱门 试点进行中（未完成，无证据）；其余八套未开始；没有代码值可记录。
 
 ## F. 代码地图与可迁移性
 ```
@@ -106,11 +111,14 @@ src/runtime/ · src/core/ju-fx.*          复用上一轮运行时与动效原�
 - 真实能力边界：全部为本地原型与演示数据；没有真实账户、验证邮件、通知服务、审核服务或后端。
 
 ## G. 验证与缺陷
-- 尚无实现，无验证记录。验证分级定义沿用上一轮：已写代码 / 已运行 / 已检查静态视觉 / 已观看完整动效 / 已检查交互与状态 / 用户明确认可。
+验证分级：已写代码 / 已运行 / 已检查静态视觉 / 已观看完整动效 / 已检查交互与状态 / 用户明确认可。
+- 共享核心 `jus-data.js`：**已运行**（Node vm 转移测试，主负责人亲自）：收藏幂等与取消、已报名活动收藏后阶段与票根不变、资料校验（称呼 10 字 / 微信字符 / 免费邮箱）、未验证邮箱不可保存、验证码错 / 对、保存后快照不变、保存失败武装与重试、权限申请与预设回答（允许 / 拒绝）、城市切换不改活动城市、记录补充 / 异议（第二次拒绝）/ 申诉、举报补充（需补充 → 处理中；非需补充拒绝）、新举报状态为已提交、八个变体全部派生无错。
+- 管线 `SC00`：**已运行 + 已检查静态视觉**（主负责人看过 `.build/cap-sc00/sheet.png` 18 帧与 `cap-sc00b` 7 帧：拖拽收藏、toast、FLIP 详情、索引跳转、失败态、面板模拟；`log.json` errors 为空）。SC00 不是交付方案。
+- 缺陷：暂无登记（试点开始后记录）。
 
 ## H. 接手后的前三至五项动作
-1. 读 `settings/spec/extracts/*.md` 三份 → 写 `function-map.md` 与 `state-contract.md`（含稳定 ID 映射表、作用域、保存模型、本地 / 真实能力）。完成标准：收藏、资料、城市、通知、记录 / 举报 / 申诉五条链路每条有「读取位置 / 修改位置 / 不应受影响的状态 / 保存失败返回规则」。
-2. 写 `settings/src/core/jus-data.js` 并在 Node 跑转移测试（收藏加入 / 取消 / 重复、资料保存 / 失败 / 重试、通知三态、城市作用域、记录补充 / 申诉、举报补充、重置隔离）。
-3. 合并研究台账 → `settings/research/ledger.md`（≥50 有效例，五类配额，每例证据路径核对存在）；写 `settings/spec/concept-refs.md`（每套 5–8 例跨 ≥3 类）。
-4. 试点 SC02 与 SC05（见 A.4 第 4 条）；用 `settings/tools/capture.cjs` 截图复看后再展开。
+1. **完成或复核试点**（目标：SC02、SC05 各自通过契约 §9 完成定义）。读：`settings/spec/builder-brief.md`、`concept-contract.md`、`settings/concepts/src/SC02.dc.html` / `SC05.dc.html`、`settings/evidence/SC02|SC05/`。依赖：无。不可改：`settings/src/core/*` 的 API 形状（改了要对已建方案重跑 coverage）、原始附件、上一轮 `concepts/`。完成标准：coverage 全部状态 0 错误；7 类证据齐；三个核心动作帧序列可看；收藏接缝三处一致。
+2. **把试点经验写进契约 §10**，然后用 `builder-brief.md` 启动其余八套（SC01 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10）。完成标准：每套汇报含 10 条自检；主负责人逐套看 `home.png`、`dense.png`、三个 `motion-*/sheet.png`。
+3. **共享构建与画布**：`node settings/src/build.js` → 独立画布；`settings/concepts/project/*` → Design 画布（`canvas.json` + 十个画板，一次只发送新文件）。
+4. **覆盖与动效附录**：生成 `settings/spec/coverage.md`（10 × 49 状态）、`settings/spec/motion-specs.md`（汇总 `settings/spec/motion/SCNN.md`）；写 `settings/spec/limits.md`（环境限制：无 GPU、无真机、Design 画布容器内不可渲染）。
 5. 每个里程碑后更新本文并提交推送到 `claude/new-session-ix9g6p`。

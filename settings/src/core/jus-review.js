@@ -43,6 +43,8 @@
     p.armFail = function () { this.setState(function (s) { return { data: JUS.engine.setFailNext(s.data, { on: !(s.data.flags && s.data.flags.failNext) }).data }; }); };
     p.simPermission = function (v) { this.setState(function (s) { return { data: JUS.engine.simPermission(s.data, { value: v }).data }; }); };
     p.simService = function () { this.setState(function (s) { return { data: JUS.engine.simService(s.data, { on: !s.data.notify.serviceConnected }).data }; }); };
+    p.armCopyFail = function () { this.setState(function (s) { return { data: JUS.engine.setCopyFailNext(s.data, { on: !(s.data.flags && s.data.flags.copyFailNext) }).data }; }); };
+    p.setAnswer = function (v) { this.setState(function (s) { return { data: JUS.engine.setPermissionAnswer(s.data, { value: v }).data }; }); };
     p.motion = function (name, fn) { this.lastMotion = { name: name, fn: fn }; fn.call(this); };
     p.setReview = function (patch) { this.setState(function (s) { return { review: Object.assign({}, s.review, patch) }; }); };
     p.setSpeed = function (x) { this.setReview({ speed: x }); };
@@ -83,6 +85,10 @@
         toggleRM: function () { self.toggleRM(); }, togglePause: function () { self.togglePause(); },
         reset: function () { self.reset(); }, replay: function () { self.replay(); }, hasReplay: !!this.lastMotion,
         armFail: function () { self.armFail(); }, failArmed: !!(s.data && s.data.flags && s.data.flags.failNext) ? 'on' : '',
+        armCopyFail: function () { self.armCopyFail(); }, copyFailArmed: !!(s.data && s.data.flags && s.data.flags.copyFailNext) ? 'on' : '',
+        answerGranted: (s.data && s.data.flags && s.data.flags.permissionAnswer) !== 'denied' ? 'on' : '', answerDenied: (s.data && s.data.flags && s.data.flags.permissionAnswer) === 'denied' ? 'on' : '',
+        answerGrant: function () { self.setAnswer('granted'); }, answerDeny: function () { self.setAnswer('denied'); },
+        codeLine: s.data && s.data.you && s.data.you.emailPending ? '本机测试验证码：' + s.data.you.emailPending.code + '（发给 ' + s.data.you.emailPending.email + '）' : '邮箱验证码：发送后显示在这里（本机测试码，不发邮件）',
         scrub: r.scrub == null ? 0 : r.scrub, scrubbing: r.scrub != null,
         onScrub: function (ev) { self.scrubTo(ev.target.value); }, endScrub: function () { self.scrubTo(null); },
         k: k, frame: r.scrub == null ? 0 : r.scrub / 100,

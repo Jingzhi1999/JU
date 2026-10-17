@@ -14,10 +14,10 @@
 | 来源 | 该来源的「身份」 | 处理决定 |
 |---|---|---|
 | 我的局（`src/core/ju-data.js`） | `event.id`（无前缀：`brunch`…）；成员 `m-N`；草稿 `draft-*` | **采用为本契约的 canonical id**。② |
-| V27 入局 | 收藏键 `favKeyAt` = 城市 + 标题（`filteredFeed` 按此过滤）；账本 `JuLedger` 按 event id 存一条记录（`JU_V26_EVENTS_1`），feed 行来自 `FEED_ROWS`（每城若干行） | 以 V27 的 event id / feed 行对照到 canonical id（映射表见 `JUS.IDMAP.v27`，由 V27 抽取填写）；**标题不再作为键**。③→④ |
+| V27 入局 | 事件 id = `city|pack|title`（`buildFeed`）；收藏键 `favKeyAt` = `city|title`（无 pack，会话级内存，无持久化）；账本 `JuLedger` 按事件 id 存记录（`JU_V26_EVENTS_1`）；76 条 feed 行 | 入局接缝的活动直接取自 V27 FEED_ROWS（NYC 12 条 + BOS / LA 各 1 条），`JUS.IDMAP.v27[canonical] = city|pack|title`、`JUS.IDMAP.v27FavKey[canonical] = city|title`；**标题不再作为键**。②④ |
 | R3 开局 | `H.state.favorites` 键 = `城市:feedRow 下标`（如 `NYC:0`），取消写 `false` 而非删除；活动 id `draft-<base36>-<8 位>`、`demo-host-hotpot`、`demo-history-0..4` | 下标键无法稳定映射到活动；接缝不继承 R3 的键格式。R3 样例活动 `demo-host-hotpot`（深夜救急火锅局）与本契约 `hotpot`（冬至火锅）**不是同一活动**，不合并。③ |
 
-映射规则：不同文件的活动只有在 **id 明确对应**（V27 ledger id ↔ canonical id）时才视为同一活动；仅标题相似不合并（例：`vintage` 古着淘货 · 下东区三家店 与 `thrift` 古着淘货 · 布鲁克林三家店 是两个活动）。⑤ 的部分（V27 id 清单）等抽取。
+映射规则：不同文件的活动只有在 **id 明确对应** 时才视为同一活动；仅标题相似不合并（例：我的局 `vintage` 古着淘货 · 下东区三家店 与 V27 `NYC|invite|Vintage 淘货 Citywalk`（canonical `vintagewalk`）是两个活动）。我的局的 19 个事件在 V27 的 76 条 feed 中**没有同 id 对应**（它们来自 v3 画布的 `demo:mine27:*` fixture 层），因此 `JUS.IDMAP.myju` 只记 canonical id；R3 的 `demo-host-hotpot`（深夜救急火锅局）与 V27 `NYC|invite|深夜救急火锅局` 标题相同但 id 体系不同，本契约取 V27 的 feed 行为 `hotpot` 的来源，R3 不映射。
 
 ## 2. 对象模型与作用域
 
@@ -42,7 +42,7 @@
 ### 3.1 收藏
 - 读取：`JUS.derive.favorites(d)`（设置）、`derive.feed(d, 'all'|'fav')`（入局接缝）、`derive.mine(d)`（我的局接缝，每行 `fav`）。
 - 修改：`engine.favorite / unfavorite / toggleFavorite`（任一入口）。幂等；效果 `{favorited|unfavorited, eventId, count, first?, last?, already?}`。
-- 手势契约（接缝）：参照 V27（成熟度最高）：**右滑 = 收藏，左滑 = 取消**；阈值 70px（R3 实测值，V27 阈值待抽取核对）；死区 6px；未达阈值回弹；错误方向（已收藏再右滑）给「已经在收藏里」反馈且不改状态；拖动中卡片跟手。R3 的「任一方向切换」**不继承**（记录为差异，不改原文件）。③④
+- 手势契约（接缝）＝ V27 `favMove / favEnd` + `ju-paper-film` 逐字继承（`JUS.FAV`）：轴判定在移动 ≥6px 后，`|dx| > |dy|×1.25` 为横向；**右滑 > 82px 且未收藏 = 收进收藏（★），左滑 < −82px 且已收藏 = 拿出收藏（☆）**；未过阈值或取消（pointercancel / 失焦 / 离屏）回弹无变化，释放回弹 `.5s cubic-bezier(.2,.9,.3,1.04)`；正确方向位移夹到 ±190px；错误方向（右滑已收藏 / 左滑未收藏）位移阻尼 ×0.26 + 灰色洗层 + 文案「已经收着了 / 还没收藏」，释放无变化；拖动中卡片平移并旋转 `dx × 0.012°`；键盘 → / ← 同义。R3 的「任一方向 70px 切换」**不继承**（记录为差异，不改原文件）。②
 - 不受影响：报名 / 预留 / 候补 / 票根 / 历史 / 席位；取消收藏已报名活动不触发退出。
 - 活动改期 / 取消 / 结束：收藏保留，列表分「可报名」与「已结束 / 已取消」归档区；信息随 `events[id]` 最新状态显示。④
 - 返回 / 刷新：命名空间持久化（`store.save` 在每次成功写入后）；重置清空。
@@ -50,7 +50,9 @@
 
 ### 3.2 资料
 - 读取：`d.you`；接缝 `derive.mine` 每行 `snapshotLabel`（报名时填写的资料）。
-- 修改：`engine.saveProfile({name, wx, email})`：校验（称呼必填 ≤16 字；微信 6–20 位字母开头；邮箱格式）→ 不通过返回 `{type:'invalid', errors}` **不写入**；通过则写入，`emailChanged` 时 `emailVerified=false`。
+- 校验 = V27 `card3Ok / cardError26 / sendCode` 逐字：称呼必填、≤10 个字（grapheme 计数）「请填写称呼 / 称呼最多10个字」；微信号必填、`/^[A-Za-z0-9_-]+$/`「请填写微信号 / 微信号仅填写字母、数字、下划线或短横线」；邮箱可空，格式「邮箱格式不正确」，免费邮箱黑名单（gmail / qq / 163 / 126 / outlook / hotmail / yahoo / icloud / foxmail / me / live / sina）「请使用工作或学校邮箱」。
+- 邮箱验证 = V27 本机测试码流程：`requestEmailCode`（6 位码 = `String(246809 + generation).padStart(6,'0')`，59s 重发倒计时，5 分钟过期；测试码只显示在评审面板）→ `verifyEmailCode`（错「验证码不正确」/ 过期「验证码已过期，请重新发送」）→ 保存。**改了邮箱而未验证不能保存**（「请完成邮箱验证，或清空后跳过」），这是 V27 的规则；清空邮箱可直接保存。
+- 修改：`engine.saveProfile({name, wx, email})`：校验不通过返回 `{type:'invalid', errors}` **不写入**；通过则写入，邮箱改动时 `emailVerified = true`（已验证）并记录域名。
 - 取消 = 丢弃编辑态；未保存返回 → 确认（`COPY.unsaved`）；失败 → 保留输入 + 重试（`failNext`）。
 - 快照：`joined[].snapshot` 不变；资料页与接缝提示 `COPY.snapshotNote`。
 - 三件不同的事：自己的微信（`you.wx`，可编辑）/ 别人能否看见你的微信（隐私页按活动与角色派生，不可开关）/ 你能否看见局主微信（接缝详情按 `canSeeHostWx` = 撕开有效票且联系未关闭）。
@@ -62,16 +64,17 @@
 
 ### 3.4 通知
 - 三层分开呈现：偏好（`prefs`，可改）/ 系统权限（`permission`，只能申请一次）/ 服务连接（`serviceConnected`，只展示）。`derive.notify(d).deliverLabel` 给出综合结论（能否送达）。
-- 申请流程：`requestPermission`（→ `requesting`）→ 方案动画「系统弹窗」→ `resolvePermission({value})`：系统回答由评审面板预设（默认允许；面板可预设拒绝）。`denied` / `unsupported` 下开关可存但页面明确「不会显示提醒」。
+- 文案 = V27 `notificationLabel22 / notificationCopy22` 逐字（`JUS.COPY.permission`）：按钮「开启提醒 / 请求中 / 已允许通知 / 已拒绝 / 暂不支持」，说明「可允许系统通知；消息提醒暂未开通，请在“我的局”查看邀请。」等；V27 把它放在报名表第 5 步「别错过邀请」，设置是**本轮新增的账户级落点**（④）。
+- 申请流程：`requestPermission`（→ `requesting`）→ 方案动画「系统弹窗」→ `resolvePermission()`：系统回答来自评审面板预设 `flags.permissionAnswer`（默认允许，可预设拒绝）。`denied` / `unsupported` 下开关可存但页面明确「不会显示提醒」；`denied` 后产品内不能再申请（只能提示去浏览器设置），与 V27 一致。
 - 不可关闭类别：现有规则没有 → 全部可关（不自行添加）。①
 - 不编造已发送 / 已送达。
 
 ### 3.5 记录 · 举报 · 申诉 · 反馈
-- 记录：`derive.records` → 详情 `derive.record(id)` → `addSupplement`（任何记录）/ `fileDispute`（仅 `attendance=absent` 且未提出过）/ `fileAppeal`（仅 `exit` 且未申诉过）；输入 ≥4 字；失败保留；重试不重复（引擎拒绝第二次异议 / 申诉）。
-- 举报：`derive.reports` → 详情（原文、对象、材料、本地编号、时间线）→ `needs_more` 时 `supplementReport`；接缝的我的局历史行可 `fileReport`（对象：活动 + `who[]` 含「（局主）」）。
-- 反馈：`submitFeedback`，与举报分开。
-- 状态分级：本地已保存 / 已提交 / 已受理 / 需要补充 / 已处理（后三者只由演示数据产生）。
-- 多对象切换时草稿不串：方案内编辑态必须以 `recordId / reportId` 为键保存草稿文本。④
+- 记录对象 = V27 `creditEvents` 事实（`type ∈ active_withdrawal / reservation_released / reservation_expired / queue_left / host_reschedule_declined / host_cancelled / absence_reported` + 我的局的 `attended`；`status ∈ recorded / pending_review / corrected / dismissed / verified`；`penalty:null`；`eligible`）。标签与状态字逐字用 V27 `creditLabel / creditStatus`（`JUS.creditLabel / creditStatus`）：「主动告知退出 · 已记录」「未出席记录 · 待核实 · 未处罚」「已拒绝局主改期 · 已记录 · 不占主动退出机会」等。页顶说明 = `JuRules26.copy.creditRecord + creditBoundary`（`COPY.creditSettings`）。
+- 补充与申诉：`derive.records` → 详情 `derive.record(id)` → `addSupplement`（任何记录，追加 `supplements[]`）/ `fileDispute`（仅 `absence_reported`，一次，`appeals[].kind='dispute'`）/ `fileAppeal`（仅 `active_withdrawal`，一次，`kind='appeal'`）；三者都是 V27 的「补充与申诉 → 补充事实或申诉说明 → 保存说明」，结果状态只有 `pending_review`，成功文案「申诉说明已保存本机，尚未提交审核服务。」，失败「申诉未保存，内容已保留，请重试。」（V27 逐字）。输入 ≥4 字；重试不重复（引擎拒绝第二次异议 / 申诉）。
+- 举报对象 = V27 `report`（`id 'DEMO-<base36>-<n>'`、`text / who / whoName / shots[] / status / createdAt / updatedAt / timeline[] / supplements[]`），状态字 `JUS.REPORT_LABELS`（已受理 / 处理中 / 需补充 / 已处理 / 提交失败 + 本轮增加的「已提交」）。`derive.reports` → 详情（状态、活动、举报对象、原文、截图、受理编号、更新时间、时间线、已提交补充）→ 仅 `needs_info` 时「补充材料 / 提交补充」（`supplementReport` → `processing`，V27 规则）；失败「补充未提交，内容已保留，请重试。」。接缝的我的局历史行可 `fileReport`（≥4 字；必须选对象；新举报状态 `submitted`，**不自动变成已受理**，这是对 V27 mock 行为的有意修正 ④）。
+- 反馈：`submitFeedback`，与举报分开（V27 帮助与反馈页只有「我的举报」一行，反馈表单为本轮新增 ④）。
+- 多对象切换时草稿不串：方案内编辑态以 `[kind, eventId, key]`（V27 `objectKey26`）或 `recordId / reportId` 为键保存草稿文本；草稿保存失败文案「草稿未保存，当前内容仍保留，请重试。」。
 
 ## 4. 保存 / 失败 / 返回 / 重复 / 刷新 / 隔离（全方案统一）
 
@@ -107,12 +110,19 @@
 
 | 冲突 | 决定 | 依据 |
 |---|---|---|
-| 收藏键：V27 城市 + 标题 / R3 城市:下标 / 我的局无 | canonical `eventId`；映射表 `JUS.IDMAP` | ①② |
-| 手势：V27 方向性 / R3 任一方向切换 | 方向性（V27）；差异记录，不改原文件 | ①（简报指定） |
+| 收藏键：V27 `city|title` / R3 `城市:下标` / 我的局无 | canonical `eventId`；映射表 `JUS.IDMAP`（V27 可映射，R3 不可） | ①② |
+| 手势：V27 方向性 82px / R3 任一方向 70px 切换 | 方向性（V27 全部参数与文案逐字） | ①（简报指定） |
+| V27 收藏无持久化（会话级） | 设置提升为账户级持久化（命名空间键） | ④ |
+| V27 设置首页只有「信用记录 / 帮助与反馈」两行；无资料 / 通知 / 外观 / 关于 / 账户 | 两项职责逐字承接；其余为本轮新增的账户级设计（函数归属表注明 ④） | ②④ |
+| V27 资料按活动草稿存（`r.draft` / `submittedProfile`），无账户级 | 新建账户级 `you`；报名快照保留 | ③→④ |
+| V27 举报创建即 `accepted`（isolated mock） | 用户新举报为 `submitted`；受理 / 处理中 / 需补充 / 已处理只由演示数据产生 | ①（简报 §08A） |
+| V27 「撕券后 8 小时内联系」只是文案，`canContact` 只实现散场 24h 关闭 | 隐私页与接缝沿用 24h 实现；8h 只作提示文字，不加计时器 | ② |
+| V27 微信可见性方向：文案「仅局主可见你的微信」，实现是「成员撕券后看局主」 | 隐私页两条都写明：成员看局主（已实现条件）与局主看成员（规则文案） | ②⑤ |
+| V27 设置子屏无 URL / history，切 tab 不重置子屏 | 方案内自管返回栈；来自接缝时记录来源并原路返回 | ④ |
 | 取消收藏：R3 写 `false` | 删除条目 | ④ |
 | 皮肤真值双源（`ju-visual-motion-r1` vs `ju-background-skin-v1`） | 设置只写自己命名空间；记录双源问题，不迁移旧键 | ② |
 | 棉糖调色两套（R3 three.js vs v17 兜底） | 以 R3 `cotton-bg` 通道色为准（`JUS.SKINS[0].tokens.bg`） | ② |
-| 复制反馈：我的局十套假成功；R3 「正在复制…/已复制/复制失败 · 点击重试」；V27 失败「复制失败，请长按账号复制」；清单「未能复制，请长按微信号手动复制」 | 真实 clipboard 结果决定反馈；失败文案用清单句 + 可手动复制的内容；面板可模拟失败 | ②③ |
+| 复制反馈：我的局十套假成功；R3 「正在复制…/已复制/复制失败 · 点击重试」；V27 成功 toast「微信号已复制」、失败 toast「未能复制，请长按微信号手动复制」/ 行内「复制失败，请长按账号复制」 | 真实 clipboard 结果决定反馈（V27 文案逐字）；失败时给可手动复制的内容；面板「下一次复制失败」可模拟 | ②③ |
 | 举报对象：我的局各套只存句子 | 设置自有 `reports[]` 结构化对象；我的局接缝回执读同一对象 | ③→④ |
 | 浏览城市不持久化（R3） | 提升为账户级默认值 | ④ |
 | 减少动态只有系统媒体查询（R3） | 增加应用内偏好 | ①（简报要求考虑减少动态） |
@@ -120,4 +130,4 @@
 | 账户 / 登录能力 | 无依据 → 「退出登录（本地演示）」「本机演示数据」标明本地演示；不发明密码 / 绑定 | ①⑤ |
 
 ## 7. 评审面板的模拟能力（画面外）
-变体（标准 / 全空 / 较多 / 长文本 / 已拒绝 / 不支持 / 已连接 / 新用户）· 下一次保存失败 · 系统权限（未请求 / 请求中 / 已允许 / 已拒绝 / 不支持）· 提醒服务连接 · 速度 1× / 0.5× · 暂停 · 关键帧 · 减少动态（评审开关）· 重播 · 重置本套。
+变体（标准 / 全空 / 较多 / 长文本 / 已拒绝 / 不支持 / 已连接 / 新用户）· 下一次保存失败 · 下一次复制失败 · 系统权限（未请求 / 请求中 / 已允许 / 已拒绝 / 不支持）· 系统回答预设（允许 / 拒绝）· 提醒服务连接 · 本机测试验证码显示 · 速度 1× / 0.5× · 暂停 · 关键帧 · 减少动态（评审开关）· 重播 · 重置本套。
