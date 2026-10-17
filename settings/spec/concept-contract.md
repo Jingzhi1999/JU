@@ -156,3 +156,11 @@ JUS.mixin(Component);
 - **证据体积**：抽帧全部完成后运行 `python3 -I settings/tools/shrink-evidence.py SCNN`，把 `motion-*/`、`coverage/` 的 PNG 转成 JPEG（命名状态图保留 PNG）。
 - **第二个完整参考实现**：`settings/concepts/src/SC05.dc.html`（约 120 KB）：lift / carry、接缝手势（`feedDown/Move/Up`）、资料编辑与验证码、记录 / 举报表单与草稿保留、索引跳转 `applyJump` 的完整映射。逻辑结构可以借鉴，视觉与运动必须按你自己的方向卡重做。
 
+### §11 补充（十套交付后，来自各构建代理的教训）
+- 类名在**方案内部**也要唯一（SC07 的 `.e-fs` 曾与自己的接缝星标撞名）；建议统一前缀 `scNN-`。
+- 返回动画要用独立的 `@keyframes` 名：同名关键帧加 `animation-direction: reverse` 不会重启已完成的动画，页面会直接跳到起点（SC09）。
+- 用 keyframes 驱动几何（`top` / `translate`）时给该元素 `transition: none`，否则内联 `top` 的过渡会与关键帧叠加（SC03 曾出现袋子先下沉再上移）。
+- `derive.feed(d, filter)` 只认 `'fav'` / `'all'`；`JUS.FAV.copy.hintOn/hintOff` 是卡轮用语，列表式接缝可换成「右滑收进收藏 · 左滑拿出」。
+- `motion(name, fn)` 只记 fn；重播需要前置状态时把前态挂在 `this.lastMotion.pre`（SC04 做法）。
+- 固定像素场景用 `this.fitWidth(390)` + `.wall{width:390px;transform-origin:0 0;transform:scale(var(--wk,1))}`；流式页面用 `calc(100% - …)`。
+- 接缝一致性只能用导航串联验证（`jumpTo` 重建数据），见记录 §G「接缝验证方法」。

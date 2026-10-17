@@ -9,12 +9,12 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-17 19:2x UTC（容器时钟为 UTC；用户时区未知） |
+| 最后更新 | 2026-10-17 23:3x UTC（容器时钟为 UTC；用户时区未知） |
 | 当前有效版本 | git 分支 `claude/new-session-ix9g6p`（从 `claude/eager-brahmagupta-ct0owo` 的 HEAD `61cb4f0a` 起）；本轮提交见 §F；已推送到 origin 同名分支 |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器临时，**只有已提交并推送的内容可迁移**） |
 | 设置工程子目录 | `settings/`（独立于上一轮：`settings/spec/`、`settings/concepts/{src,project}`、`settings/src/{core,shell,build.js}`、`settings/research/`、`settings/tools/`、`settings/evidence/`）；复用仓库根 `src/runtime/`（preact + dc-mini-runtime）与 `src/core/ju-fx.*`（几何 / 动效原语）|
-| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6 — 入口画板 + 已完成方案的画板（当前：SC05 冰箱门；其余随完成加入） |
-| 交付入口 2 | 独立评审画布 `JU-Settings-Fablo51-10-Concepts.html`（仓库根；`JUS_ONLY=SC05 node settings/src/build.js` 生成；当前只含 SC05；全部完成后用 `node settings/src/build.js` 生成十套） |
+| 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6 — 版本 4：入口画板 `Main` + 十个方案画板 `SC01…SC10`（每板 780×884 = 手机 390×844 + 画面外评审面板）；私有链接，用户分享前他人打不开；容器内无法渲染官方画布运行时，画板渲染未经主负责人目视核对（见 `settings/spec/limits.md`） |
+| 交付入口 2 | 独立评审画布 `JU-Settings-Fablo51-10-Concepts.html`（仓库根，3.0 MB，`node settings/src/build.js` 生成；总览 / 方案 / 对比 / 附录四个页签；十套齐全；冒烟测试 `settings/tools/test/standalone.cjs` 0 错误） |
 | 预览 / 启动 | 直接用浏览器打开 `JU-Settings-Fablo51-10-Concepts.html`（总览 / 方案 / 对比 / 附录；`#concept/SC01` 直达）。字体来自 Google Fonts（容器内已验证可达，HTTP 200；离线退回系统字体）。无需安装；Node 22 + Playwright（`/opt/node-tools/node_modules/playwright`，Chromium 已预装）+ ffmpeg 仅用于构建与截图验证 |
 | 构建 | `node settings/src/build.js`（写 `settings/concepts/project/*.dc.html`、`canvas.json`、`Main.dc.html` 与独立画布）；私有构建 `JU_STANDALONE=/home/user/JU/.build/SCNN.html node settings/src/build.js`（并行开发用，不写共享文件） |
 | 验证工具 | `node settings/tools/capture.cjs <CODE> <outdir> '<actions json>'`（操作并抽帧，生成 sheet.png + log.json）；`node settings/tools/coverage.cjs <CODE> <outdir>`（跳转全部状态索引截图）；`node settings/tools/widths.cjs <CODE>`（360 / 390 / 430 三行对照 + 横向溢出列表）；三者支持 `JU_STANDALONE`。主负责人复核：`bash settings/tools/review-check.sh <CODE>`（私有构建 + coverage + 证据清单 + 禁用词）、`python3 -I settings/tools/review-sheet.py <CODE>`（命名截图拼图 → `.build/review-<CODE>.jpg`）。聚合：`node settings/tools/coverage-matrix.cjs`（→ `settings/spec/coverage.md`）、`node settings/tools/motion-specs.cjs`（→ `settings/spec/motion-specs.md`）、`node settings/tools/test/standalone.cjs`（独立画布冒烟）、`node settings/tools/test/core-regress.cjs`（引擎回归 31 项） |
@@ -23,26 +23,26 @@
 
 | 状态 | 事项 |
 |---|---|
-| 已完成（有材料） | 现场核对（§B.2）；三份源码抽取 `settings/spec/extracts/extract-{v27,r3,myju}-settings.md`（代理产出，主负责人通读并据此写契约）；功能归属表 `settings/spec/function-map.md`；跨模块状态契约 `settings/spec/state-contract.md`；共享设置核心 `settings/src/core/jus-data.js`（Node 转移测试通过，见 §G）；评审 mixin / 面板 / 外壳 / 构建 / 截图工具；管线测试画板 `SC00`（私有构建 + capture 0 错误）；研究：新增 29 例（UI 12、动效 8、编辑 4、设计师 5）合并为 `settings/research/ledger.md`（共 123 例）；参考映射 `settings/spec/concept-refs.md`（每套 6–11 例跨 ≥3 类）；十套方向卡 `settings/spec/directions.md`；实现契约 `settings/spec/concept-contract.md` + 代理简报 `settings/spec/builder-brief.md`；Design 画布入口画板（版本 2） |
-| 进行中 | 九套由构建代理并行实现（SC01 / SC02 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10，每套按 `settings/spec/builder-brief.md`，私有构建），主负责人逐套复看 |
-| 受阻 / 失败 | 无硬性阻塞。已知限制同上一轮：Design 画布无法在容器内渲染（只能用独立画布截图验证）；容器无 GPU；部分站点（awwwards、behance、tympanus、ssense、metmuseum）在本网络被拒 |
-| 未开始 | 其余八套实现；逐套证据；覆盖表 `settings/spec/coverage.md`；动效规格汇总 `settings/spec/motion-specs.md`；用户审阅 |
+| 已完成（有材料） | 现场核对（§B.2）；三份源码抽取 `settings/spec/extracts/extract-{v27,r3,myju}-settings.md`；功能归属表 `settings/spec/function-map.md`；跨模块状态契约 `settings/spec/state-contract.md`；共享设置核心 `settings/src/core/jus-data.js`（引擎回归 31 项通过）；评审 mixin `jus-review.js`；研究台账 123 例 `settings/research/ledger.md`；方向卡 `settings/spec/directions.md`；**十套方案全部实现并通过主负责人门槛**（SC05 主负责人亲自；其余九套由构建代理实现，主负责人逐套跑 `review-check.sh` / `widths.cjs` / `review-sheet.py`、读首屏与核心动效帧序列、用方案自己的导航验证收藏接缝，见 §G）；共享构建十套（独立画布 3.0 MB，冒烟 0 错误）；Design 画布版本 4（Main + SC01…SC10）；动效规格合集 `settings/spec/motion-specs.md`；全部提交并推送到 `claude/new-session-ix9g6p` |
+| 进行中 | 覆盖矩阵 `settings/spec/coverage.md`（`coverage-matrix.cjs` 在共享画布上对十套各跑 49 个索引状态；结果见本文 §G 末尾与该文件） |
+| 受阻 / 失败 | 无硬性阻塞。已知限制：Design 画布无法在容器内渲染（只能用独立画布截图验证）；容器无 GPU、无真机；无视频录制；部分研究站点在本网络被拒；19:2x–22:40 UTC 因会话用量限制停工一次（§A.3） |
+| 未开始 | 用户审阅（用户尚未看过任何一套）；按用户反馈的二轮修改；真机触控验证 |
 
 ### A.2 当前具体位置
-- 第一步（现场与快照）、第二步（范围与契约）、第三步（研究 ≥50 例）完成；第四步（十套方向 + 内部试点）进行中：方向卡与参考映射已写，试点 SC02 / SC05 开始实现。
-- 尚无任何交付方案的截图或动效证据（只有 SC00 管线测试的抽帧 `.build/cap-sc00*/`，不计入证据）。
+- 第一至四步完成（现场、契约、研究、十套实现与复核）；第五步（共享构建、画布发布、附录汇总、记录）基本完成，只剩覆盖矩阵落盘与最终提交。
+- 证据：每套 `settings/evidence/SCNN/`（7 类命名截图 + 三个核心动作帧序列 + `coverage/` 49 态 + 多数含 `motion-seam-swipe/`）；主负责人的接缝验证接触表在 `.build/scNN-seam/sheet.png`（`.build/` 不入库，可用 §G 记录的动作串重跑）。
 
 ### A.3 当前最重要的问题
-1. 十套的视觉质量尚无实物可判断；试点要先证明构图、材质、动效在真实中文内容下成立。
-2. 抽取核实的三处源码事实改变了原设想：V27 设置首页只有「信用记录 / 帮助与反馈」两行（其余分组是本轮新增的账户级设计，已在功能归属表逐项标 ④）；V27 收藏键为 `city|title` 且无持久化、R3 键为 `城市:下标`（不可映射）——契约以 canonical id 为身份，入局接缝直接取 V27 feed 行（14 条）并记录 `JUS.IDMAP`；V27 举报创建即「已受理」（mock）——契约改为用户提交后只到「已提交」，受理 / 处理中 / 需补充 / 已处理只由演示数据产生。
-3. 视觉验收只能由用户做。
+1. **视觉验收只能由用户做**：十套都只经过主负责人（模型）在无头浏览器截图上的复看；没有任何一套得到用户认可或否定。
+2. **Design 画布渲染未核对**：官方 `support.js` 运行时在容器内不可用；十个画板按 `.dc.html` 规范发布，逻辑类用了 `componentDidMount` / `componentDidUpdate` / `ResizeObserver` / `ref`，这些在独立画布的 `dc-mini-runtime` 上验证过，在官方画布上未验证。若画布上某板空白或报错，先用独立画布复核，再按 `settings/spec/limits.md` 的说明排查。
+3. **共享核心的两处修正在代理交付之后**：`derive.reports` 排序改为按 `updatedAt`（原来按不存在的 `at`，等于不排序），索引 `s-report-file` 从桌游夜（已有举报）改为周五爵士小酒馆（无举报）；十套的 `coverage/` 证据是修正前抽的，修正后的覆盖以 `coverage-matrix.cjs` 的结果为准（见 §G）。
+4. 两处主负责人观察到的小瑕疵未改：SC10 首页「我」牌上邮箱与「已验证」小标贴得近；SC05 词磁贴 lift 前 100ms 内容少。
+- 2026-10-17 19:2x UTC：九个构建代理（SC01–SC04、SC06–SC10）因会话用量限制（HTTP 429，重置 22:40 UTC）同时中止，已写到磁盘的内容保留；22:42 UTC 用户确认限额已重置，九个代理用 SendMessage 从中断处恢复，23:1x UTC 全部交付。若再次触发限制：等到错误里给出的重置时间后再逐个恢复（代理 transcript 已保存，不要新开代理）。
 
-- 2026-10-17 19:2x UTC：九个构建代理（SC01–SC04、SC06–SC10）因会话用量限制（HTTP 429，重置 22:40 UTC）同时中止，已写到磁盘的内容保留（源文件 SC01 / SC02 / SC03 / SC06 / SC07 / SC09 / SC10 部分或全部、SC02 规格与证据）；22:42 UTC 用户确认限额已重置，九个代理已用 SendMessage 从中断处恢复。若再次触发限制：等到错误里给出的重置时间后再逐个恢复（代理 transcript 已保存，不要新开代理）。
 ### A.4 下一个应执行的具体动作
-1. 完成试点 SC02 / SC05：构建 → `capture.cjs` 抽帧 → Read 看图 → 修构图 / 材质 / 动效 → `coverage.cjs` 全状态 0 错误 → 证据入 `settings/evidence/SCNN/`。
-2. 主负责人复看两套首屏、二级页、三个核心动作与收藏接缝；把发现的坑补进 `settings/spec/concept-contract.md` §10。
-3. 并行启动其余八套（代理），每套按 `settings/spec/builder-brief.md`；主负责人逐套复看、统一核验来源与状态契约。
-4. 生成 `settings/spec/coverage.md`、`settings/spec/motion-specs.md`；构建共享画布；发布十套画板到 Design 画布；更新本文；提交推送。
+1. 等用户在 Design 画布或独立画布上看过十套，拿到「保留 / 修改 / 淘汰」意见后再动任何视觉。
+2. 若用户要二轮：按 `settings/spec/builder-brief.md` 的流程修改对应 `settings/concepts/src/SCNN.dc.html`，私有构建 → `review-check.sh` → `widths.cjs` → 重抽受影响的证据 → `node settings/src/build.js` → 画布只重发改动的画板。
+3. 若要上真机：用 `JU-Settings-Fablo51-10-Concepts.html` 在手机浏览器打开（字体需联网），重点核 `touch-action`、滑动阈值与 0.5× 下看过的三个核心动作。
 
 ## B. 用户要求与方案地位
 
@@ -125,6 +125,9 @@ src/runtime/ · src/core/ju-fx.*          复用上一轮运行时与动效原�
 
 ## G. 验证与缺陷
 验证分级：已写代码 / 已运行 / 已检查静态视觉 / 已观看完整动效 / 已检查交互与状态 / 用户明确认可。
+- **共享构建与入口**（主负责人亲自）：**已运行**。`node settings/src/build.js` → 10 套、独立画布 2.65 MB（磁盘 3.0 MB）；`settings/tools/test/standalone.cjs` 冒烟：总览 10 卡 / 20 预览、方案页 phone 可见、索引 49 态、对比页 2 主机 49 态、附录 6609 字符，0 错误；`core-regress.cjs` 31 项通过；`motion-specs.cjs` 汇总十份规格。Design 画布版本 4 发布成功（服务端确认 12 个文件），画板渲染未目视核对（容器限制）。
+- **覆盖矩阵**（主负责人亲自）：`coverage-matrix.cjs` 在共享画布上对十套各跑 49 个索引状态，结果写入 `settings/spec/coverage.md` 与本文 §G 末尾（见「覆盖矩阵结果」）。
+- **接缝验证方法**（对所有代理方案统一）：`jumpTo` 会按索引重建数据，所以收藏一致性一律用方案自己的导航串联验证：入局右滑 菜狗羽毛球拼局（badminton）→ 设置首页计数 → 收藏页顺序 → 我的局 → 回入局计数 → 左滑拿出 → 设置计数；每套的接触表 `.build/scNN-seam/sheet.png`（不入库），动作串见各套条目。
 - 共享核心 `jus-data.js`：**已运行**（Node vm 转移测试，主负责人亲自）：收藏幂等与取消、已报名活动收藏后阶段与票根不变、资料校验（称呼 10 字 / 微信字符 / 免费邮箱）、未验证邮箱不可保存、验证码错 / 对、保存后快照不变、保存失败武装与重试、权限申请与预设回答（允许 / 拒绝）、城市切换不改活动城市、记录补充 / 异议（第二次拒绝）/ 申诉、举报补充（需补充 → 处理中；非需补充拒绝）、新举报状态为已提交、八个变体全部派生无错。
 - 管线 `SC00`：**已运行 + 已检查静态视觉**（主负责人看过 `.build/cap-sc00/sheet.png` 18 帧与 `cap-sc00b` 7 帧）。SC00 不是交付方案。
 - **SC02 面板**（代理构建，主负责人复核）：**已运行 · 已检查静态视觉 · 已观看核心动效抽帧 · 已检查接缝交互**。主负责人亲自跑过：`review-check.sh SC02`（私有构建通过、coverage 49/49 无错误、面板控件泄漏 0、禁用词 0）、`widths.cjs SC02`（overflow 空）、`review-sheet.py SC02`（27 张命名截图通读）、`motion-2` / `motion-3` 帧序列通读；接缝用方案自己的导航而非状态跳转验证（`.build/sc02-seam2`：入局右滑 菜狗羽毛球拼局 → 「收进收藏 · 共 4 个」→ 设置首页卡槽「4 个局 · 菜狗羽毛球拼局」→ 收藏页 4 张且新收藏在首位「刚刚收藏」→ 回入局「收藏 4」→ 左滑拿出 → 「拿出收藏 · 还有 3 个」）。注意：`jumpTo` 会按索引重建数据，所以接缝一致性必须用导航而不是 jump 串联验证（已写进复核方法）。未独立复核：代理声称的键盘操作、复制失败反馈、权限五态的逐一点击（coverage 截图里五态画面都在）。
@@ -140,8 +143,8 @@ src/runtime/ · src/core/ju-fx.*          复用上一轮运行时与动效原�
 - 工具缺陷：`capture.cjs` 的 drag 以前不滚动目标到视口内（已修，`scrollIntoView`）。
 
 ## H. 接手后的前三至五项动作
-1. **完成或复核试点**（目标：SC02、SC05 各自通过契约 §9 完成定义）。读：`settings/spec/builder-brief.md`、`concept-contract.md`、`settings/concepts/src/SC02.dc.html` / `SC05.dc.html`、`settings/evidence/SC02|SC05/`。依赖：无。不可改：`settings/src/core/*` 的 API 形状（改了要对已建方案重跑 coverage）、原始附件、上一轮 `concepts/`。完成标准：coverage 全部状态 0 错误；7 类证据齐；三个核心动作帧序列可看；收藏接缝三处一致。
-2. **把试点经验写进契约 §10**，然后用 `builder-brief.md` 启动其余八套（SC01 / SC03 / SC04 / SC06 / SC07 / SC08 / SC09 / SC10）。完成标准：每套汇报含 10 条自检；主负责人逐套看 `home.png`、`dense.png`、三个 `motion-*/sheet.png`。
-3. **共享构建与画布**：`node settings/src/build.js` → 独立画布；`settings/concepts/project/*` → Design 画布（`canvas.json` + 十个画板，一次只发送新文件）。
-4. **覆盖与动效附录**：生成 `settings/spec/coverage.md`（10 × 49 状态）、`settings/spec/motion-specs.md`（汇总 `settings/spec/motion/SCNN.md`）；写 `settings/spec/limits.md`（环境限制：无 GPU、无真机、Design 画布容器内不可渲染）。
-5. 每个里程碑后更新本文并提交推送到 `claude/new-session-ix9g6p`。
+1. **先看，不先改**：打开 Design 画布 https://claude.ai/artifact/GbRvZNXusNc5sLS1CWC8h6（或仓库根 `JU-Settings-Fablo51-10-Concepts.html`），按本文 §E 每套的「构图」段和 `settings/spec/directions.md` 的差异矩阵看十套；评审面板的「状态索引」可直达 49 个状态。记下用户的保留 / 修改 / 淘汰意见。依赖：用户。完成标准：每套有一句用户意见写进 §B.3 / §B.4。
+2. **二轮修改（若有）**：读 `settings/spec/builder-brief.md`、`concept-contract.md`（§10–§11 的坑）、目标 `settings/concepts/src/SCNN.dc.html`、`settings/spec/motion/SCNN.md`。流程：私有构建 `JU_STANDALONE=.build/SCNN.html JUS_ONLY=SCNN node settings/src/build.js` → `bash settings/tools/review-check.sh SCNN` → `node settings/tools/widths.cjs SCNN` → 重抽证据（`capture.cjs`，命名见 §E）→ `python3 -I settings/tools/shrink-evidence.py SCNN` → `node settings/src/build.js` → Design 画布只发送改动的画板（`Artifact` publish，`root=settings/concepts`，`file_path=project/canvas.json`，`files` 只列改动的 `project/SCNN.dc.html`；发布前要先 `read` 已发布的同名文件）。不可改：`settings/src/core/*` 的 API 形状（改了要重跑 `core-regress.cjs` 与 `coverage-matrix.cjs`）、原始附件、上一轮 `concepts/`。
+3. **若改共享核心**：改完跑 `node settings/tools/test/core-regress.cjs`，再 `node settings/tools/coverage-matrix.cjs`（约 8 分钟，写 `settings/spec/coverage.md`），对十套都要 0 错误；之后 `python3 -I settings/tools/shrink-evidence.py SCNN` 把矩阵帧压成 JPEG。
+4. **若要合并成一个「正式」方案**：先由用户选定方向；把该套的 `spec/motion/SCNN.md` 当作实现规格（时长 / 曲线 / 字号 / 色板都在里面，分「当前代码值 / 实际观察 / 建议值」三栏），接缝按 `settings/spec/state-contract.md`。
+5. 每个里程碑后更新本文（A 表、§E 对应套、§G 验证）并提交推送到 `claude/new-session-ix9g6p`；不部署、不开 PR、不推其他分支。

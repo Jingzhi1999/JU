@@ -8,3 +8,8 @@
 - **真实能力**：全部为本地演示——没有账户、登录、验证邮件（验证码是本机测试码）、通知服务、举报审核或后端；产品界面上对此的说明见各方案的账户页与关于页。
 - **研究**：Behance、Awwwards、Tympanus、SSENSE、Met Museum 在本网络被拒；Vogue Runway 只开放 3 看次 + 6 细节；App Store 页面会 429；具体失败项见 `settings/research/ledger.md` §三。
 - **代理产出**：各方案由构建代理实现并自报验证；主负责人逐套复看 `home / dense / motion-* / coverage` 并在 `JU-SETTINGS-PROJECT-RECORD.md` §G 记录复看结论；用户尚未审阅任何一套。
+- **状态索引与接缝验证**：`jumpTo(key)` 按索引条目重建演示数据（确定性），所以「先操作再跳转」看不到刚才的改动；跨模块一致性要用方案自己的导航串联验证（`capture.cjs` 的 `click` 动作），不能用 `jump` 串联。评审面板上这一点没有提示文案。
+- **抽帧密度**：无头截图约 100–150ms 一张，100ms 级的动作（软球开关、按扣）只能抽到 3–4 个中间帧；需要精确关键帧的方案用 `inst.scrubTo(n)` 定格采样（SC03 / SC04 / SC01 已用）。
+- **Design 画布运行时**：方案逻辑类使用 `componentDidMount` / `componentDidUpdate` / `ResizeObserver` / `ref="{{rootRef}}"`，在仓库的 `dc-mini-runtime` 上验证过，在官方 `support.js` 上未验证；画布上若有画板空白，先用独立画布复核。
+- **共享核心修正晚于代理交付**：`derive.reports` 排序与 `s-report-file` 的目标活动在十套交付后修正；各套 `settings/evidence/SCNN/coverage/` 是修正前抽的，修正后的覆盖以 `settings/spec/coverage.md`（`coverage-matrix.cjs`）为准。
+- **`verifyEmailCode` 的过期判断基于固定的演示时钟 `JUS.NOW`**，产品内到不了「验证码已过期」态（评审面板也没有模拟）；59s 重发倒计时是真实计时。
