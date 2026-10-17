@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>SC00 管线测试</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+.app{position:absolute;inset:0;background:#f4f1ea;font-family:"Noto Sans SC",sans-serif;padding:56px 18px 18px;--k:1;overflow:hidden;color:#1b1a17}
+.app h1{margin:0 0 10px;font-size:24px;font-weight:500}
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid rgba(0,0,0,.12);font-size:15px}
+.row .v{color:#6b665c;font-size:13px}
+.row button{font:inherit;border:1px solid #999;background:#fff;border-radius:8px;padding:6px 10px}
+.row button.on{background:#1b1a17;color:#fff}
+.feed{margin-top:14px}
+.card{position:relative;background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;touch-action:none;user-select:none;transition:transform calc(320ms * var(--k,1)) cubic-bezier(.22,1,.36,1);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.card.drag{transition:none}
+.card b{display:block;font-size:15px}
+.card span{font-size:12px;color:#6b665c}
+.card .star{position:absolute;right:12px;top:12px;font-size:12px;color:#b8322a}
+.hint{font-size:12px;color:#8a8478;margin:6px 0}
+.toast{position:absolute;left:18px;right:18px;bottom:24px;background:#1b1a17;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px}
+.app.rm *{transition-duration:1ms!important;animation-duration:1ms!important}
+.backdrop{position:absolute;inset:0;background:rgba(20,18,14,0);transition:background calc(380ms * var(--k,1)) ease}
+.backdrop.in{background:rgba(20,18,14,.35)}
+.detail{position:absolute;left:0;top:0;width:354px;height:70px;background:#fff;border-radius:12px;transform-origin:0 0;transition:transform calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),border-radius calc(420ms * var(--k,1));overflow:hidden;padding:16px}
+.detail.in{border-radius:0}
+.detail .back{margin-top:12px;padding:8px 14px;border:1px solid #999;border-radius:8px;background:#fff;font:inherit}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}">
+      <h1>设置 · {{sum.you.name}}</h1>
+      <div class="row"><span>微信 <span class="v">{{sum.wxLabel}}</span></span><button type="button" data-act="save" onClick="{{saveName}}">把称呼改成「阿禾二」</button></div>
+      <div class="row"><span>收藏的局 <span class="v">{{sum.favLabel}}</span></span><span class="v">{{sum.cityLabel}}</span></div>
+      <div class="row"><span>收到邀请提醒</span><button type="button" class="{{inviteOn}}" data-act="toggle" onClick="{{toggleInvite}}">{{inviteLabel}}</button></div>
+      <div class="row"><span>外观 <span class="v">{{sum.appearanceLabel}}</span></span><button type="button" data-act="skin" onClick="{{applySunset}}">应用落日</button></div>
+      <div class="feed">
+        <p class="hint">入局接缝 · 右滑收藏 / 左滑取消（阈值 70px）· 共 {{feed.count}} 个局 · 收藏 {{feed.favCount}}</p>
+        <sc-for list="{{feed.rows}}" as="e" hint-placeholder-count="3">
+          <div class="card {{e.cls}}" data-rid="{{e.id}}" style="transform:translateX({{e.dx}}px)" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.up}}" onClick="{{e.open}}"><b>{{e.title}}</b><span>{{e.when.zh}} · {{e.place.hood}} · {{e.host}}</span><sc-if value="{{e.fav}}" hint-placeholder-val="{{false}}"><i class="star">已收藏</i></sc-if></div>
+        </sc-for>
+      </div>
+      <sc-if value="{{detail.on}}" hint-placeholder-val="{{false}}">
+        <div class="backdrop {{detail.phase}}" onClick="{{detail.close}}"></div>
+        <div class="detail {{detail.phase}} sc00-over" style="{{detail.style}}"><b>{{detail.title}}</b><p class="hint">{{detail.rule}}</p><button type="button" class="back" data-act="back" onClick="{{detail.close}}">返回</button></div>
+      </sc-if>
+      <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div class="toast">{{toast}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["home","dense"],"default":"home"},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); }
+  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { drag: null, dx: {}, detail: null, toast: '' }); }
+  applyJump(e) { if (e.open.surface === 'seam-feed-detail' || e.open.surface === 'favorite-detail') this.setState({ detail: { id: e.open.id, phase: 'in', from: { x: 18, y: 300, w: 354, h: 70 } } }); }
+  say(msg) { this.setState({ toast: msg }); this.holdKey('toast', 2200, () => this.setState({ toast: '' })); }
+  renderVals() {
+    const s = this.state, d = s.data; const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const sum = JUS.derive.summary(d); const feed = JUS.derive.feed(d);
+    const root = this.rootRef.current; const W = root ? root.clientWidth : 390, Hh = root ? root.clientHeight : 844;
+    const det = s.detail; const full = 'transform:translate(0px,0px) scale(1,1);width:' + W + 'px;height:' + Hh + 'px';
+    const at = det ? 'transform:translate(' + det.from.x + 'px,' + det.from.y + 'px) scale(' + (det.from.w / W) + ',' + (det.from.h / Hh) + ');width:' + W + 'px;height:' + Hh + 'px' : '';
+    const detRow = det ? feed.rows.find(r => r.id === det.id) || JUS.derive.favorite(d, det.id) : null;
+    return {
+      panel, rootRef: this.rootRef, sum, toast: s.toast,
+      inviteOn: d.notify.prefs.invite ? 'on' : '', inviteLabel: d.notify.prefs.invite ? '开' : '关',
+      toggleInvite: () => { const r = this.act('setNotifyPref', { key: 'invite', on: !d.notify.prefs.invite }); if (r.effect.type === 'error') this.say(r.effect.message); },
+      saveName: () => { const r = this.act('saveProfile', { name: '阿禾二', wx: d.you.wx, email: d.you.email }); this.say(r.effect.type === 'error' ? r.effect.message : '已保存'); },
+      applySunset: () => this.motion('skin', () => { this.act('applySkin', { skin: 'sunset' }); }),
+      feed: { count: feed.count, favCount: feed.favCount, rows: feed.rows.map(r => ({ ...r, dx: s.dx[r.id] || 0, cls: s.drag && s.drag.id === r.id ? 'drag' : '',
+        down: (ev) => { ev.currentTarget.setPointerCapture && ev.currentTarget.setPointerCapture(ev.pointerId); this.setState({ drag: { id: r.id, x: ev.clientX, y: ev.clientY, moved: false } }); },
+        move: (ev) => { const g = this.state.drag; if (!g || g.id !== r.id) return; const dx = ev.clientX - g.x; if (Math.abs(dx) > 6) g.moved = true; this.setState(st => ({ dx: Object.assign({}, st.dx, { [r.id]: dx }) })); },
+        up: (ev) => { const g = this.state.drag; if (!g || g.id !== r.id) return; const dx = (this.state.dx[r.id] || 0); let msg = '';
+          if (dx > 70) { const res = this.act('favorite', { eventId: r.id }); msg = res.effect.type === 'error' ? res.effect.message : res.effect.already ? '已经在收藏里' : '已收藏 · 共 ' + res.effect.count + ' 个'; }
+          else if (dx < -70) { const res = this.act('unfavorite', { eventId: r.id }); msg = res.effect.type === 'error' ? res.effect.message : res.effect.already ? '本来就没收藏' : '已取消收藏' + (res.effect.last ? ' · 收藏夹空了' : ''); }
+          this.setState(st => ({ drag: null, dx: Object.assign({}, st.dx, { [r.id]: 0 }) })); if (msg) this.say(msg); },
+        open: (ev) => { if (this.state.drag && this.state.drag.moved) return; const rect = JUS.fx ? null : null; const root = this.rootRef.current; const rr = JU.fx.rectIn(ev.currentTarget, root); this.motion('open-detail', () => { this.setState({ detail: { id: r.id, phase: 'start', from: rr } }); this.after(16, () => this.setState(st => ({ detail: Object.assign({}, st.detail, { phase: 'in' }) }))); }); }
+      })) },
+      detail: det ? { on: true, phase: det.phase, style: det.phase === 'in' ? full : at, title: detRow ? detRow.title : det.id, rule: detRow && detRow.canSeeHostWx ? '局主微信可见：' + detRow.hostWx : JUS.COPY.contactRules.beforeFormed + ' · 未报名看不到局主微信', close: () => { this.setState(st => ({ detail: Object.assign({}, st.detail, { phase: 'out' }) })); this.after(430, () => this.setState({ detail: null })); } } : { on: false }
+    };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>

@@ -11,7 +11,11 @@
     p.reviewInit = function (concept) {
       this.concept = concept; this._timers = []; this.lastMotion = null; this.rootRef = { current: null };
       this.state = Object.assign({ review: { speed: 1, rm: false, paused: false, scrub: null, frame: 0 } }, this.initialState('default'));
+      /* persistence: one namespaced key per concept (jus:<CODE>:v1); previews / compare mounts pass persist:false */
+      this.persist = this.props.persist !== false && !!concept.code;
+      if (this.persist) { var saved = JUS.store.load(concept.code); if (saved && saved.schema === JUS.SCHEMA && saved.data) { this.state.data = saved.data; this.state.variant = saved.data.variant || 'default'; } }
     };
+    p.persistNow = function (data) { if (this.persist) JUS.store.save(this.concept.code, { schema: JUS.SCHEMA, data: data, at: Date.now() }); };
     p.componentWillUnmount = function () { this.clearTimers(); };
     /* after(): an ANIMATION completion timer — scaled by speed, collapsed to 0 under reduced motion, paused with 暂停 / scrub, cleared on reset */
     p.after = function (ms, fn) {
@@ -35,7 +39,7 @@
     p.pauseTimers = function () { if (this._paused) return; this._paused = true; (this._timers || []).forEach(function (e) { if (e.id) { clearTimeout(e.id); e.id = null; e.remaining = Math.max(0, e.due - Date.now()); } }); };
     p.resumeTimers = function () { if (!this._paused) return; this._paused = false; (this._timers || []).forEach(function (e) { if (!e.id) e.arm(); }); };
     /* engine helper: run an action, store the new data, return the result (concepts turn result.effect into motion) */
-    p.act = function (name, payload) { var res = JUS.engine[name](this.state.data, payload || {}); this.setState({ data: res.data }); return res; };
+    p.act = function (name, payload) { var res = JUS.engine[name](this.state.data, payload || {}); this.setState({ data: res.data }); if (res.effect && res.effect.type !== 'error' && res.effect.type !== 'invalid') this.persistNow(res.data); return res; };
     p.armFail = function () { this.setState(function (s) { return { data: JUS.engine.setFailNext(s.data, { on: !(s.data.flags && s.data.flags.failNext) }).data }; }); };
     p.simPermission = function (v) { this.setState(function (s) { return { data: JUS.engine.simPermission(s.data, { value: v }).data }; }); };
     p.simService = function () { this.setState(function (s) { return { data: JUS.engine.simService(s.data, { on: !s.data.notify.serviceConnected }).data }; }); };
@@ -45,7 +49,7 @@
     p.toggleRM = function () { this.setReview({ rm: !this.state.review.rm }); };
     p.togglePause = function () { var on = !this.state.review.paused; if (on) this.pauseTimers(); else if (this.state.review.scrub == null) this.resumeTimers(); this.setReview({ paused: on }); };
     p.scrubTo = function (v) { if (v == null) { this.resumeTimers(); } else { this.pauseTimers(); } this.setReview({ scrub: v == null ? null : +v, paused: v != null }); };
-    p.reset = function (variant) { this.clearTimers(); this._paused = false; var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false }); this.setState(st); };
+    p.reset = function (variant) { this.clearTimers(); this._paused = false; var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false }); st.jumpKey = null; if (this.persist) JUS.store.clear(this.concept.code); this.setState(st); };
     p.loadVariant = function (key) { this.reset(key); };
     p.replay = function () { if (!this.lastMotion) return; var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name); var self = this; this.after(60, function () { m.fn.call(self); }); };
     p.jumpTo = function (key) {

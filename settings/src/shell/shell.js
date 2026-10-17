@@ -29,7 +29,7 @@
         '<div class="ov-foot"><span>' + (c.motions || []).slice(0, 3).map(function (m) { return m.split('：')[0]; }).join(' · ') + '</span><button type="button" class="btn">进入操作</button></div>';
       card.addEventListener('click', function () { openConcept(c.code); });
       grid.appendChild(card);
-      card.querySelectorAll('.ph-host').forEach(function (h) { h.classList.add('preview'); mountConcept('preview', c.code, h, { preset: h.dataset.preset, idle: true, panel: false }); });
+      card.querySelectorAll('.ph-host').forEach(function (h) { h.classList.add('preview'); mountConcept('preview', c.code, h, { preset: h.dataset.preset, idle: true, panel: false, persist: false }); });
     });
   }
   var currentCode = META.length ? META[0].code : '';
@@ -53,7 +53,7 @@
     function render() {
       var codes = ['cmp-a', 'cmp-b', 'cmp-c'].map(function (id) { return $('#' + id).value; }).filter(Boolean);
       var wrap = $('#cmp-stages'); wrap.innerHTML = '';
-      codes.forEach(function (code) { var h = document.createElement('div'); h.className = 'cmp-host' + ($('#cmp-panels').checked ? '' : ' nopanel'); h.dataset.code = code; wrap.appendChild(h); var m = DCMini.mount(h, SRC[code], { panel: $('#cmp-panels').checked }); h.__m = m; });
+      codes.forEach(function (code) { var h = document.createElement('div'); h.className = 'cmp-host' + ($('#cmp-panels').checked ? '' : ' nopanel'); h.dataset.code = code; wrap.appendChild(h); var m = DCMini.mount(h, SRC[code], { panel: $('#cmp-panels').checked, persist: false }); h.__m = m; });
     }
     ['cmp-a', 'cmp-b', 'cmp-c', 'cmp-panels'].forEach(function (id) { $('#' + id).addEventListener('change', render); });
     $('#cmp-apply').addEventListener('click', function () { stages().forEach(function (h) { var i = h.__m && h.__m.instance; if (i && i.jumpTo) i.jumpTo(st.value); }); });
