@@ -681,7 +681,7 @@ button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
             <sc-if value="{{page.isSeamReport}}" hint-placeholder-val="{{false}}">
               <sc-if value="{{sr.done}}" hint-placeholder-val="{{false}}">
                 <div class="receipt"><b>JU · 举报回执</b>{{sr.doneTitle}}<br>受理编号 <span class="mono">{{sr.doneId}}</span> · {{sr.doneStatus}}<br><span class="inert">可在“设置 → 帮助与反馈”查询进度。</span><button type="button" class="stk sm" data-act="open" data-rid="report-detail" onClick="{{sr.viewProgress}}">查看进度</button></div>
-                <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="back" onClick="{{goBack}}">回到我的局</button></div>
+                <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="back" onClick="{{goBack}}">回到我的局</button><button type="button" class="stk wht" data-act="report" onClick="{{sr.another}}">再写一条</button></div>
               </sc-if>
               <sc-if value="{{sr.form}}" hint-placeholder-val="{{true}}">
                 <p class="lead" style="margin:4px 0 8px">{{sr.title}} · {{sr.when}} · 事实陈述，不评分、不自动处罚。</p>
@@ -828,7 +828,7 @@ class Component extends DCLogic {
     if (S === 'seam-feed') { this.setState({ tab: 'find', pull: null, paper: null, pstack: [], feedFilter: o.state === 'fav' ? 'favs' : 'all' }); return; }
     if (S === 'seam-feed-detail') { this.setState({ tab: 'find', feedFilter: 'all', pull: null, paper: { name: 'seam-detail', id: o.id, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '' }); return; }
     if (S === 'seam-mine') { this.setState({ tab: 'mine', pull: null, paper: null, pstack: [] }); return; }
-    if (S === 'seam-report') { this.setState({ tab: 'mine', pull: null, paper: { name: 'seam-report', id: o.id, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: this.newSr(o.id) }); return; }
+    if (S === 'seam-report') { this.setState({ tab: 'mine', pull: null, paper: { name: 'seam-report', id: o.id, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: Object.assign(this.newSr(o.id), { done: null }) }); return; }
   }
   beforeReplay(name) {
     if (name === 'pull') { const s = this.state; if (s.pull) this.setState({ pull: null, tabDrag: null }); }
@@ -1078,7 +1078,7 @@ class Component extends DCLogic {
     out.mine = { sub: mine.current.length + ' 个进行中 · ' + mine.hosted.length + ' 个我发起 · ' + mine.history.length + ' 个历史', currentCount: mine.current.length, hostedCount: mine.hosted.length, historyCount: mine.history.length, current: mine.current.map(r => mrow(r, false)), hosted: mine.hosted.map(r => mrow(r, false)), history: mine.history.map(r => mrow(r, true)) };
     const sr = s.sr; const srE = sr ? d.events[sr.eventId] : null;
     if (sr && srE) { const doneRep = sr.done ? d.reports.filter(x => x.id === sr.done)[0] : null; const hostN = JUS.derive.hostName(d, srE);
-      out.sr = { done: !!doneRep, form: !doneRep, doneTitle: doneRep ? srE.title + ' · ' + JUS.fmt.dateTime(doneRep.createdAt) : '', doneId: doneRep ? doneRep.id : '', doneStatus: doneRep ? JUS.REPORT_LABELS[doneRep.status] : '', viewProgress: () => { this.setState({ tab: 'settings', pull: { key: 'records', phase: 'pulled' }, paper: { name: 'report-detail', id: sr.done, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: null }); },
+      out.sr = { done: !!doneRep, form: !doneRep, another: () => this.setState(st => ({ sr: Object.assign({}, st.sr, { done: null }) })), doneTitle: doneRep ? srE.title + ' · ' + JUS.fmt.dateTime(doneRep.createdAt) : '', doneId: doneRep ? doneRep.id : '', doneStatus: doneRep ? JUS.REPORT_LABELS[doneRep.status] : '', viewProgress: () => { this.setState({ tab: 'settings', pull: { key: 'records', phase: 'pulled' }, paper: { name: 'report-detail', id: sr.done, phase: 'in', from: null, rot: '0deg' }, pstack: [], dir: '', sr: null }); },
         title: srE.title, when: JUS.fmt.when(srE.iso).zh, who: [{ key: 'host', name: hostN + '（局主）' }].map(w => ({ name: w.name, on: sr.who[w.key] ? 'on' : '', toggle: () => this.setState(st => ({ sr: Object.assign({}, st.sr, { who: Object.assign({}, st.sr.who, { [w.key]: !st.sr.who[w.key] }), whoErr: '' }) })) })), whoErr: sr.whoErr, text: sr.text, err: sr.err, errCls: sr.err ? 'err' : '', fail: !!sr.fail, failMsg: sr.fail || '', saving: sr.saving, cta: sr.saving ? '提交中…' : '提交举报', mats: sr.mats.map((m, i) => ({ name: m.name, remove: () => this.setState(st => ({ sr: Object.assign({}, st.sr, { mats: st.sr.mats.filter((x, j) => j !== i) }) })) })), addMat: () => { if (sr.mats.length >= 6) { this.say('最多6张'); return; } this.setState(st => ({ sr: Object.assign({}, st.sr, { mats: st.sr.mats.concat([{ name: '截图 ' + (st.sr.mats.length + 1) + '.jpg', size: 0 }]) }) })); }, setText: (ev) => this.setState(st => ({ sr: Object.assign({}, st.sr, { text: ev.target.value, err: '' }) })), submit: () => this.submitSr() };
     } else out.sr = { form: false, done: false, who: [], mats: [] };
     return out;
