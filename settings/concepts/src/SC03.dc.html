@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>SC03 文件袋</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ============ SC03 文件袋 · frosted PP folders, matte index tabs, papers, snaps ============ */
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#1f1d1b;--k:1;
+  --ink:#1f1d1b;--mute:#6b665d;--line:rgba(31,29,27,.14);--ppr:#fffdf7;--red:#c8362c;--ok:#3f7f4f;--acc:#4b63c0;--sh:40,30,18;-webkit-font-smoothing:antialiased}
+.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.wall{position:absolute;left:0;top:0;width:390px;height:844px;transform-origin:0 0;transform:scale(var(--wk,1));overflow:hidden}
+.grainsvg{position:absolute;width:0;height:0}
+/* desk under the stack: the three R3 backgrounds seen through plastic */
+.desk{position:absolute;inset:0;background:#f1efe9}
+.sk{position:absolute;inset:0;opacity:0;transition:opacity calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.sk.on{opacity:1}
+.sk.cotton{background:radial-gradient(80% 55% at 15% 12%,#f9d7e5 0%,rgba(251,225,236,0) 60%),radial-gradient(70% 55% at 95% 45%,#c9e9f1 0%,rgba(211,237,243,0) 62%),radial-gradient(70% 50% at 45% 100%,#e2dff2 0%,rgba(236,236,244,0) 60%),#f4f3f8}
+.sk.halo{background:radial-gradient(55% 40% at 78% 14%,rgba(255,80,5,.62) 0%,rgba(255,80,5,0) 62%),radial-gradient(60% 45% at 18% 92%,#d0bce1 0%,rgba(208,188,225,0) 60%),radial-gradient(50% 40% at 60% 60%,#e8d7bf 0%,rgba(219,186,149,0) 60%),#fff9ef}
+.sk.sunset{background:linear-gradient(180deg,#ff8a4a 0%,#ffbf5a 42%,#ffd98a 58%,#62b4ff 100%)}
+.hd{position:absolute;left:20px;right:20px;top:30px;height:30px;display:flex;align-items:center;justify-content:space-between;font-size:11.5px;color:var(--mute);letter-spacing:.02em;z-index:0}
+.hd b{font-weight:500;color:var(--ink);font-size:13px}
+/* ---- folders ---- */
+.stack{position:absolute;inset:0}
+.fold{position:absolute;left:20px;width:310px;border-radius:7px;transform-origin:0 100%;
+  transition:top calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),transform calc(220ms * var(--k,1)) cubic-bezier(.2,.7,.2,1),height calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.fold.receded{transform:scale(.97);transform-origin:50% 0;transition:top calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),transform calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),height calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.fold.drag{transition:none}
+.fback{position:absolute;inset:0;border-radius:inherit;background:rgba(255,255,255,.4);backdrop-filter:blur(14px) saturate(1.12);-webkit-backdrop-filter:blur(14px) saturate(1.12);
+  box-shadow:0 0 0 1px rgba(255,255,255,.6) inset,0 0 0 1px rgba(40,30,18,.09),0 12px 24px -16px rgba(var(--sh),.5);transition:box-shadow calc(420ms * var(--k,1)) ease}
+.fold.pulled .fback,.fold.pulling .fback{box-shadow:0 0 0 1px rgba(255,255,255,.7) inset,0 0 0 1px rgba(40,30,18,.1),0 26px 40px -20px rgba(var(--sh),.6)}
+.fback::before{content:"";position:absolute;left:0;right:0;top:0;height:12px;border-radius:7px 7px 0 0;background:linear-gradient(180deg,rgba(40,30,18,.08),rgba(40,30,18,0));pointer-events:none}
+.fbody{position:absolute;inset:0;overflow:hidden;border-radius:inherit;padding-bottom:16px;box-sizing:border-box;filter:blur(0);transition:filter calc(420ms * var(--k,1)) ease}
+.fold.pulled .fbody{overflow-y:auto;overscroll-behavior:contain}
+.fold.receded .fbody{filter:blur(1.3px);pointer-events:none}
+.ffront{position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:.34;transition:opacity calc(420ms * var(--k,1)) ease;
+  background:linear-gradient(165deg,rgba(255,255,255,.6),rgba(255,255,255,.28) 42%,rgba(255,255,255,.42));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 1px 0 0 rgba(255,255,255,.5)}
+.ffront::after{content:"";position:absolute;inset:0;border-radius:inherit;filter:url(#sc03-grain);opacity:.5;mix-blend-mode:multiply}
+.fold.receded .ffront{opacity:.62}
+.fold.pulled .ffront{opacity:.12}
+.app.paperon .fold.pulled .ffront{opacity:.3}
+.app.paperon .fold.pulled .fbody{filter:blur(.6px)}
+/* pull: fan 6° from the bottom-left pivot, then slide to the front; z jumps once the fan is out */
+@keyframes sc03-pull{0%{transform:translateY(var(--dy0)) rotate(0);height:var(--h0);z-index:var(--z0)}26%{transform:translateY(var(--dy0)) translateX(10px) rotate(-6deg);height:var(--h0);z-index:var(--z0)}30%{z-index:9}100%{transform:translate(0,0) rotate(0);height:var(--h1);z-index:9}}
+@keyframes sc03-pull-fast{0%{transform:translateY(var(--dy0)) translate(var(--dxd,10px),var(--dyd,-24px)) rotate(var(--rot,-6deg));height:var(--h0);z-index:9}100%{transform:translate(0,0) rotate(0);height:var(--h1);z-index:9}}
+@keyframes sc03-focus{0%{filter:blur(1.4px)}45%{filter:blur(1.4px)}100%{filter:blur(0)}}
+@keyframes sc03-clear{0%{opacity:.34}45%{opacity:.34}100%{opacity:.12}}
+.fold.pulling{animation:sc03-pull calc(560ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.fold.pulling.fast{animation-name:sc03-pull-fast;animation-duration:calc(200ms * var(--k,1))}
+.fold.pulling .fbody{animation:sc03-focus calc(560ms * var(--k,1)) ease both}
+.fold.pulling.fast .fbody{animation-duration:calc(200ms * var(--k,1))}
+.fold.pulling .ffront{animation:sc03-clear calc(560ms * var(--k,1)) ease both}
+.fold.pulling.fast .ffront{animation-duration:calc(200ms * var(--k,1))}
+@keyframes sc03-insert{0%{transform:none;height:var(--h1);z-index:9}68%{z-index:9}72%{z-index:var(--z0)}100%{transform:translateY(var(--dy0)) rotate(0);height:var(--h0);z-index:var(--z0)}}
+.fold.out{animation:sc03-insert calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.fold.out .fbody{filter:blur(0)}
+.fold.out .ffront{opacity:.34}
+.scrub .fold.pulling,.scrub .fold.pulling .fbody,.scrub .fold.pulling .ffront{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 560ms * var(--k,1))!important}
+.scrub .fold.pulling.fast,.scrub .fold.pulling.fast .fbody,.scrub .fold.pulling.fast .ffront{animation-delay:calc(-1 * var(--frame,0) * 200ms * var(--k,1))!important}
+.scrub .fold.out{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
+/* the mouth preview while a tab is being dragged (SM02): the first paper rises out of the opening */
+.peek{position:absolute;left:18px;right:18px;top:-30px;height:40px;border-radius:3px 3px 0 0;background:var(--ppr);box-shadow:0 -1px 1px rgba(0,0,0,.05),0 -6px 10px -8px rgba(var(--sh),.4);padding:8px 12px;box-sizing:border-box;font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  opacity:var(--p,0);transform:translateY(calc((1 - var(--p,0)) * 30px));transition:opacity calc(200ms * var(--k,1)) ease,transform calc(200ms * var(--k,1)) ease;pointer-events:none}
+.fold.drag .peek{transition:none}
+/* index tabs = matte stickers wrapped over the right edge */
+.tabx{position:absolute;right:-40px;top:6px;width:46px;height:48px;border:0;padding:0;border-radius:0 7px 7px 0;cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;
+  background:linear-gradient(90deg,rgba(0,0,0,.1),rgba(0,0,0,0) 9px),linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%),var(--tc,#ccc);
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 1px 1px rgba(0,0,0,.08),0 5px 9px -5px rgba(var(--sh),.45);display:flex;align-items:center;justify-content:center;color:#17150f}
+.tabx .tl{writing-mode:vertical-rl;text-orientation:mixed;font:500 12px/1 "Noto Sans SC",sans-serif;letter-spacing:.14em;padding-left:4px}
+.tabx .dot{position:absolute;right:5px;top:5px;width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 1.5px rgba(255,255,255,.85)}
+.tabx:active{filter:brightness(.96)}
+.fold.pulled .tabx,.fold.pulling .tabx{box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 1px 1px rgba(0,0,0,.1),0 10px 14px -7px rgba(var(--sh),.55)}
+/* the band at the top of every folder: group label + current values */
+.strip{position:relative;min-height:60px;padding:11px 16px 0 16px;box-sizing:border-box;display:flex;align-items:flex-start;gap:10px;cursor:pointer}
+.fold.pulled .strip{cursor:default;padding-top:12px}
+.strip .bk{display:none;appearance:none;border:0;font:inherit;font-size:12.5px;font-weight:500;color:var(--ink);background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);height:30px;padding:0 10px 0 8px;border-radius:6px;cursor:pointer;flex:0 0 auto;margin-top:1px}
+.fold.pulled .strip .bk,.fold.pulling .strip .bk{display:inline-flex;align-items:center}
+.strip .stxt{flex:1 1 auto;min-width:0}
+.strip .gl{font-size:12px;font-weight:500;letter-spacing:.08em;color:var(--ink)}
+.strip .sm{font-size:12.5px;color:var(--ink);opacity:.86;line-height:1.4;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.strip .sm.warn,.warn{color:var(--red)}
+.strip .cnt{flex:0 0 auto;font:500 28px/1 "DM Mono",ui-monospace,monospace;color:var(--ink);padding-top:3px;letter-spacing:-.02em}
+.strip .cnt small{font:400 11px/1 "Noto Sans SC",sans-serif;margin-left:3px;color:var(--mute)}
+/* papers inside folders */
+.ppr{position:relative;display:block;width:calc(100% - 28px);margin:0 14px 10px;padding:12px 14px;box-sizing:border-box;background:var(--ppr);border:0;border-radius:2px;color:inherit;font:inherit;text-align:left;
+  box-shadow:0 1px 1px rgba(0,0,0,.05),0 8px 12px -10px rgba(var(--sh),.5);transform:rotate(var(--r,0deg))}
+.ppr::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,0) 30%,rgba(0,0,0,0) 86%,rgba(0,0,0,.03))}
+button.ppr{cursor:pointer}
+button.ppr:active{transform:rotate(var(--r,0deg)) translateY(1px)}
+.ppr .who{font-size:28px;font-weight:700;line-height:1.2;letter-spacing:.01em;color:var(--ink);max-width:100%;overflow-wrap:anywhere}
+.ppr .who.long{font-size:21px;line-height:1.25}
+.ppr .kv{display:flex;align-items:baseline;gap:8px;font-size:12.5px;color:var(--mute);margin-top:7px;min-width:0}
+.ppr .kv b{font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.mono{font-family:"DM Mono",ui-monospace,monospace;font-weight:500}
+.tag{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;background:rgba(75,99,192,.12);color:var(--acc);vertical-align:1px;white-space:nowrap}
+.tag.off{background:rgba(0,0,0,.06);color:var(--mute)}
+.tag.warn{background:rgba(200,54,44,.12);color:#a7301f}
+.tag.ok{background:rgba(63,127,79,.14);color:#2e6a3d}
+.ppr .foot{font-size:11px;color:var(--mute);margin-top:10px;padding-top:7px;border-top:1px dashed var(--line);line-height:1.5}
+.ppr .ph{font-size:13.5px;font-weight:600;letter-spacing:.01em}
+.ppr .pl{font-size:12px;color:var(--mute);margin-top:3px;line-height:1.5}
+.ppr .pl b{color:var(--ink);font-weight:500}
+.ppr.sm{padding:10px 14px}
+.lead{font-size:12.5px;color:var(--mute);line-height:1.55;margin:0 16px 10px}
+.note{font-size:11.5px;color:var(--mute);line-height:1.55;margin:8px 0 0}
+.gh{font-size:11.5px;font-weight:500;letter-spacing:.08em;color:var(--mute);margin:12px 16px 7px}
+.gh b{color:var(--ink);font-weight:500;letter-spacing:0}
+/* slips = small papers in a list (favorites, records, reports) */
+.slip{position:relative;display:block;width:calc(100% - 28px);margin:0 14px 8px;box-sizing:border-box;background:var(--ppr);border-radius:2px;box-shadow:0 1px 1px rgba(0,0,0,.05),0 6px 10px -8px rgba(var(--sh),.45);transform:rotate(var(--r,0deg));max-height:240px;overflow:hidden;
+  transition:transform calc(360ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(280ms * var(--k,1)) ease,max-height calc(360ms * var(--k,1)) ease,margin calc(360ms * var(--k,1)) ease}
+.slip.leaving{transform:translateY(-54px) rotate(-3deg);opacity:0;max-height:0;margin-top:0;margin-bottom:0}
+.slip .sbtn{appearance:none;border:0;background:transparent;font:inherit;color:inherit;text-align:left;display:block;width:100%;padding:10px 12px;box-sizing:border-box;cursor:pointer}
+.slip .sbtn:active{background:rgba(0,0,0,.03)}
+.slip .t{font-size:14px;font-weight:600;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;padding-right:44px}
+.slip .m{font-size:12px;color:var(--mute);margin-top:4px;line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slip .st{display:inline-block;font-size:11.5px;font-weight:500;margin-top:5px;margin-right:8px}
+.slip .st.open{color:var(--ok)}.slip .st.closed{color:var(--mute)}.slip .st.bad{color:var(--red)}.slip .st.pend{color:#a7301f}
+.slip .rel{display:inline-block;font-size:10.5px;padding:1px 6px;border-radius:4px;background:rgba(75,99,192,.12);color:var(--acc);vertical-align:1px}
+.slip .rmv{position:absolute;right:8px;top:8px;appearance:none;border:0;font:inherit;font-size:11px;color:var(--ink);background:rgba(240,136,104,.28);box-shadow:inset 0 0 0 1px rgba(0,0,0,.08);height:24px;padding:0 8px;border-radius:5px;cursor:pointer}
+.slip .rmv:active{transform:translateY(1px)}
+.slip .k{font-size:10.5px;color:var(--mute);letter-spacing:.06em;margin-bottom:3px}
+.slip.arch{opacity:.88}
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:28px 16px;text-align:center;color:var(--mute);font-size:12.5px;line-height:1.5}
+.empty b{font-size:16px;color:var(--ink);font-weight:500}
+.empty .stk{margin-top:8px}
+/* stickers = action buttons (same family as tabs) */
+.stk{appearance:none;border:0;font:inherit;font-size:13px;font-weight:500;height:36px;padding:0 14px;border-radius:7px;background:var(--ink);color:#fff;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;letter-spacing:.02em;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 1px 1px rgba(0,0,0,.1),0 4px 8px -5px rgba(var(--sh),.5);white-space:nowrap}
+.stk.wht{background:rgba(255,255,255,.78);color:var(--ink);box-shadow:inset 0 0 0 1px rgba(0,0,0,.14),0 1px 1px rgba(0,0,0,.06)}
+.stk.red{background:var(--red)}
+.stk.col{background:var(--tc,#e8c158);color:#17150f}
+.stk.sm{height:30px;font-size:12px;padding:0 10px;border-radius:6px}
+.stk:disabled{opacity:.45;cursor:default}
+.stk:active:not(:disabled){transform:translateY(1px)}
+.row2{display:flex;gap:10px;margin:12px 16px 0;flex-wrap:wrap}
+.row2 .stk{flex:1 1 auto}
+.ppr .row2{margin:12px 0 0}
+/* snaps = the one closure: on = fastened (dome pressed, ring coloured), off = popped */
+.snap{appearance:none;border:0;padding:0;width:34px;height:34px;border-radius:50%;position:relative;background:transparent;cursor:pointer;flex:0 0 auto}
+.snap .ring{position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 44%,#faf8f2 0 36%,#d6d0c5 38% 100%);box-shadow:0 1px 0 rgba(255,255,255,.9) inset,0 1px 2px rgba(0,0,0,.2),0 0 0 1px rgba(0,0,0,.07);transition:background calc(160ms * var(--k,1)) ease,box-shadow calc(160ms * var(--k,1)) ease}
+.snap .dome{position:absolute;left:9px;top:9px;width:16px;height:16px;border-radius:50%;background:radial-gradient(circle at 40% 32%,#fff,#d2ccbf 72%);box-shadow:0 2px 2px rgba(0,0,0,.22),0 0 0 1px rgba(0,0,0,.08);transform:translateY(-2px);
+  transition:transform calc(180ms * var(--k,1)) cubic-bezier(.2,.9,.3,1.25),background calc(160ms * var(--k,1)) ease,box-shadow calc(180ms * var(--k,1)) ease}
+.snap.on .ring{background:radial-gradient(circle at 50% 44%,var(--sc,#4b63c0) 0 36%,color-mix(in srgb,var(--sc,#4b63c0) 70%,#000) 38% 100%);box-shadow:0 1px 0 rgba(255,255,255,.35) inset,0 1px 2px rgba(0,0,0,.25),0 0 0 1px rgba(0,0,0,.1)}
+.snap.on .dome{transform:translateY(1px) scale(.84);background:radial-gradient(circle at 50% 60%,color-mix(in srgb,var(--sc,#4b63c0) 55%,#000),color-mix(in srgb,var(--sc,#4b63c0) 80%,#000) 80%);box-shadow:inset 0 2px 3px rgba(0,0,0,.45),0 0 0 1px rgba(0,0,0,.15)}
+@keyframes sc03-press{0%{transform:scale(1)}38%{transform:scale(1.1,.86)}68%{transform:scale(.95,1.04)}100%{transform:scale(1)}}
+.snap.press{animation:sc03-press calc(260ms * var(--k,1)) ease both}
+.snap:disabled{opacity:.45;cursor:default}
+.scrub .snap.press{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 260ms * var(--k,1))!important}
+.trow{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px dashed var(--line)}
+.trow:last-of-type{border-bottom:0}
+.trow .tx{flex:1 1 auto;min-width:0}
+.trow .tx b{display:block;font-size:14px;font-weight:500}
+.trow .tx span{display:block;font-size:11.5px;color:var(--mute);line-height:1.45;margin-top:2px}
+.trow .sw{font:500 11px/1 "DM Mono",ui-monospace,monospace;color:var(--mute);width:16px;text-align:center}
+.trow .sw.on{color:var(--acc)}
+.sumline{font-size:12px;color:var(--ink);line-height:1.5;margin:6px 0 4px;padding:6px 8px;background:rgba(75,99,192,.07);border-radius:4px;transition:background calc(200ms * var(--k,1))}
+.sumline b{font-weight:500}
+.stat{display:flex;align-items:flex-start;gap:8px;font-size:13px;font-weight:500;line-height:1.45}
+.stat .led{flex:0 0 auto;width:9px;height:9px;border-radius:50%;background:#c9c3b6;margin-top:6px;box-shadow:inset 0 1px 1px rgba(0,0,0,.2)}
+.stat .led.on{background:var(--ok);box-shadow:0 0 0 3px rgba(63,127,79,.16)}
+.stat .led.bad{background:var(--red);box-shadow:0 0 0 3px rgba(200,54,44,.16)}
+.stat .led.wait{background:#e2b12e;box-shadow:0 0 0 3px rgba(226,177,46,.2)}
+.stat p{margin:3px 0 0;font-size:12px;font-weight:400;color:var(--mute);line-height:1.55}
+.blk{padding:10px 0;border-bottom:1px dashed var(--line)}
+.blk:last-child{border-bottom:0}
+/* city radio grid */
+.cities{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 6px;margin-top:8px}
+.cityb{appearance:none;border:0;background:rgba(0,0,0,.025);border-radius:6px;padding:8px 6px 7px;font:inherit;color:var(--ink);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:5px}
+.cityb.on{background:rgba(75,99,192,.1)}
+.cityb b{font-size:13.5px;font-weight:500}
+.cityb small{font:400 10.5px/1 "DM Mono",ui-monospace,monospace;color:var(--mute);letter-spacing:.06em}
+.cityb .snap{pointer-events:none}
+.search{display:flex;gap:8px;align-items:center;margin:4px 0 2px}
+.search input{flex:1 1 auto;min-width:0;font:inherit;font-size:14px;padding:8px 10px;border:0;border-radius:6px;background:rgba(0,0,0,.04);outline:0;box-shadow:inset 0 -1.5px 0 rgba(31,29,27,.25);color:var(--ink)}
+.search input:focus{box-shadow:inset 0 -2px 0 var(--acc);background:rgba(255,255,255,.7)}
+/* appearance windows */
+.sws{display:flex;gap:10px;margin-top:8px}
+.sw{appearance:none;border:0;font:inherit;flex:1 1 0;padding:0 0 6px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--ink);border-radius:8px}
+.sw.on{background:rgba(75,99,192,.08)}
+.sw .win{width:100%;height:60px;border-radius:6px;position:relative;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 0 0 1px rgba(40,30,18,.1)}
+.sw .win::after{content:"";position:absolute;inset:0;background:linear-gradient(165deg,rgba(255,255,255,.55),rgba(255,255,255,.3));backdrop-filter:blur(3px)}
+.sw.cotton .win{background:linear-gradient(160deg,#fbe1ec,#ececf4 55%,#d3edf3)}
+.sw.halo .win{background:radial-gradient(80% 60% at 70% 20%,rgba(255,80,5,.7),transparent 60%),linear-gradient(160deg,#fff9ef,#dbba95)}
+.sw.sunset .win{background:linear-gradient(180deg,#ff7a33,#ffc53d 50%,#33a0ff)}
+.sw b{font-size:13px;font-weight:600}
+.sw small{font-size:10.5px;color:var(--mute);text-align:center;line-height:1.3;padding:0 4px}
+.sw .snap{pointer-events:none;width:30px;height:30px}
+.sw .snap .dome{left:7px;top:7px}
+/* q&a */
+.qa{display:block;width:100%;appearance:none;border:0;background:transparent;font:inherit;color:inherit;text-align:left;padding:9px 0;border-bottom:1px dashed var(--line);cursor:pointer}
+.qa .q{font-size:14px;font-weight:500;display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.qa .q i{font-style:normal;font-size:11px;color:var(--mute);flex:0 0 auto;letter-spacing:.06em}
+.qa .a{font-size:13px;color:#3a3530;line-height:1.7;margin-top:6px;display:none}
+.qa.open .a{display:block}
+.fbrow{padding:9px 0;border-bottom:1px dashed var(--line);font-size:13px;line-height:1.5}
+.fbrow small{display:block;color:var(--mute);font-size:11.5px;margin-top:3px}
+.fbrow:last-child{border-bottom:0}
+.kvl{display:grid;grid-template-columns:auto 1fr;gap:5px 12px;font-size:12.5px;color:var(--mute);margin-top:8px}
+.kvl b{color:var(--ink);font-weight:500;overflow-wrap:anywhere}
+/* ---- the pulled-out paper (level 2) ---- */
+.pback{position:absolute;inset:0;z-index:11;background:rgba(30,22,12,0);transition:background calc(400ms * var(--k,1)) ease}
+.pback.in{background:rgba(30,22,12,.2)}
+.pbig{position:absolute;left:12px;top:40px;width:366px;height:736px;z-index:12;background:var(--ppr);border-radius:3px;box-shadow:0 1px 1px rgba(0,0,0,.08),0 26px 44px -22px rgba(var(--sh),.65);display:flex;flex-direction:column;overflow:hidden;box-sizing:border-box}
+.pbig::after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.35),rgba(255,255,255,0) 18%,rgba(0,0,0,0) 90%,rgba(0,0,0,.035))}
+@keyframes sc03-lift{0%{left:var(--x0);top:var(--y0);width:var(--w0);height:var(--h0);transform:rotate(var(--r0,0deg));box-shadow:0 1px 1px rgba(0,0,0,.06),0 6px 10px -8px rgba(40,30,18,.4)}100%{left:12px;top:40px;width:366px;height:736px;transform:none;box-shadow:0 1px 1px rgba(0,0,0,.08),0 26px 44px -22px rgba(40,30,18,.65)}}
+@keyframes sc03-drop{0%{left:12px;top:40px;width:366px;height:736px;transform:none;box-shadow:0 1px 1px rgba(0,0,0,.08),0 26px 44px -22px rgba(40,30,18,.65)}100%{left:var(--x0);top:var(--y0);width:var(--w0);height:var(--h0);transform:rotate(var(--r0,0deg));box-shadow:0 1px 1px rgba(0,0,0,.06),0 6px 10px -8px rgba(40,30,18,.4)}}
+.pbig.lifting{animation:sc03-lift calc(440ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.pbig.dropping{animation:sc03-drop calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.scrub .pbig.lifting{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 440ms * var(--k,1))!important}
+.scrub .pbig.dropping{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
+.carry{position:absolute;left:0;top:0;right:0;padding:12px 14px;opacity:1;transition:opacity calc(160ms * var(--k,1)) ease;pointer-events:none;z-index:3;overflow:hidden;max-height:100%}
+.pbig.in .carry{opacity:0;transition-delay:calc(60ms * var(--k,1))}
+.carry .ct{font-size:14px;font-weight:600;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.carry .ct.big{font-size:28px;font-weight:700;line-height:1.2}
+.carry .cl{font-size:12px;color:var(--mute);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.phead{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:10px 14px 8px;gap:8px;flex:0 0 auto;opacity:0;transition:opacity calc(240ms * var(--k,1)) ease calc(200ms * var(--k,1))}
+.pbig.in .phead{opacity:1}
+.phead .l{justify-self:start}.phead .r{justify-self:end}
+.phead h2{margin:0;font-size:15px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.phead .stk.sm{height:30px}
+.pbody{flex:1 1 auto;min-height:0;overflow:auto;padding:8px 18px 26px;box-sizing:border-box;opacity:0;transition:opacity calc(260ms * var(--k,1)) ease calc(240ms * var(--k,1))}
+.pbig.in .pbody{opacity:1}
+.pg{animation:sc03-pushin calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.pg.pop{animation-name:sc03-popin}
+@keyframes sc03-pushin{from{transform:translateX(42px);opacity:0}to{transform:translateX(0);opacity:1}}
+@keyframes sc03-popin{from{transform:translateX(-30px);opacity:0}to{transform:translateX(0);opacity:1}}
+.rule{height:1px;background:var(--line);margin:12px 0}
+.pbody .who{font-size:28px;font-weight:700;line-height:1.2;letter-spacing:.01em;overflow-wrap:anywhere;margin-top:4px}
+.pbody .who.long{font-size:22px;line-height:1.3}
+.field{display:flex;flex-direction:column;gap:4px;padding:10px 0;border-bottom:1px dashed var(--line)}
+.field .l{font-size:11.5px;color:var(--mute);letter-spacing:.04em}
+.field .v{font-size:16px;font-weight:500;line-height:1.4;overflow-wrap:anywhere}
+.field .v.sm{font-size:14.5px}
+.field .v .stk{margin-left:8px;vertical-align:middle}
+.foot2{font-size:11.5px;color:var(--mute);line-height:1.55;margin:10px 0 0;padding-top:8px;border-top:1px dashed var(--line)}
+.fld{display:flex;flex-direction:column;gap:4px;padding:8px 0 8px}
+.fld label{font-size:11.5px;color:var(--mute);letter-spacing:.04em}
+.fld input,.fld textarea{appearance:none;font:inherit;font-size:16px;padding:8px 2px;border:0;border-bottom:1.5px solid rgba(31,29,27,.32);background:transparent;color:var(--ink);outline:0;border-radius:0;width:100%;box-sizing:border-box}
+.fld input:focus,.fld textarea:focus{border-bottom:2px solid var(--acc);padding-bottom:7.5px}
+.fld.err input,.fld.err textarea{border-bottom-color:var(--red)}
+.fld .e{font-size:12px;color:var(--red);min-height:14px}
+.fld .h{font-size:12px;color:var(--mute);line-height:1.5}
+.fld textarea{min-height:112px;resize:none;line-height:28px;padding:0 2px;background:repeating-linear-gradient(180deg,transparent 0 27px,rgba(31,29,27,.13) 27px 28px)}
+.fld .cnt{font-size:11px;color:var(--mute);text-align:right;font-family:"DM Mono",ui-monospace,monospace}
+.code{display:flex;gap:8px;align-items:center}
+.code input{letter-spacing:.32em;font-family:"DM Mono",ui-monospace,monospace;font-weight:500;font-size:20px;text-align:center}
+.alert{background:#fbece9;color:#8f3a26;border-left:3px solid var(--red);padding:9px 12px;border-radius:0 6px 6px 0;font-size:13px;margin:10px 0;display:flex;align-items:center;gap:10px;animation:sc03-shake calc(360ms * var(--k,1)) ease}
+@keyframes sc03-shake{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}50%{transform:translateX(5px)}80%{transform:translateX(-3px)}}
+.ok{background:rgba(63,127,79,.12);color:#2e6a3d;border-left:3px solid var(--ok);padding:9px 12px;border-radius:0 6px 6px 0;font-size:13px;margin:10px 0}
+.busy{display:inline-block;width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;animation:sc03-spin calc(700ms * var(--k,1)) linear infinite}
+@keyframes sc03-spin{to{transform:rotate(360deg)}}
+.saved{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#2e6a3d;background:rgba(63,127,79,.12);padding:3px 8px;border-radius:4px;margin-top:8px}
+.notice{border:1px solid var(--line);border-radius:6px;padding:10px 12px;margin:10px 0;background:rgba(255,255,255,.5)}
+.notice .stk{margin-top:8px}
+.notice p{margin:4px 0 0;font-size:12.5px;color:var(--mute);line-height:1.55}
+.rdet .k{font-size:10.5px;color:var(--mute);letter-spacing:.08em}
+.rdet h3{margin:4px 0 6px;font-size:19px;font-weight:600;line-height:1.3}
+.supp{margin:10px 0 0}
+.supp .sl{position:relative;background:#fbf7ec;border-radius:2px;padding:9px 12px 9px 14px;margin:0 0 8px 10px;font-size:13px;line-height:1.55;box-shadow:0 1px 1px rgba(0,0,0,.06),0 6px 10px -8px rgba(var(--sh),.4);transform:rotate(-.6deg)}
+.supp .sl::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#e8c158;border-radius:2px 0 0 2px}
+.supp .sl small{display:block;color:var(--mute);font-size:11px;margin-top:3px}
+.supp .sl .kd{font-size:11px;font-weight:500;letter-spacing:.06em;color:var(--mute);display:block;margin-bottom:2px}
+.timeline{list-style:none;margin:10px 0 0;padding:0 0 0 14px;border-left:2px solid var(--line)}
+.timeline li{position:relative;padding:0 0 12px 12px;font-size:13px}
+.timeline li::before{content:"";position:absolute;left:-19px;top:5px;width:8px;height:8px;border-radius:50%;background:#b9b2a5}
+.timeline li.now::before{background:var(--red);box-shadow:0 0 0 3px rgba(200,54,44,.16)}
+.timeline li b{font-weight:500}
+.timeline li small{display:block;color:var(--mute);font-size:11.5px;margin-top:2px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 10px}
+.chip{appearance:none;border:0;font:inherit;font-size:13px;padding:6px 10px 6px 6px;border-radius:999px;background:rgba(0,0,0,.04);box-shadow:inset 0 0 0 1px rgba(0,0,0,.1);cursor:pointer;color:var(--ink);display:inline-flex;align-items:center;gap:6px}
+.chip .snap{width:26px;height:26px;pointer-events:none}.chip .snap .dome{left:6px;top:6px;width:14px;height:14px}
+.chip.on{background:rgba(75,99,192,.1)}
+.mats{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px;align-items:center}
+.mat{display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.7);border:1px solid var(--line);border-radius:6px;padding:4px 6px 4px 8px;font-size:12px}
+.mat button{appearance:none;border:0;background:rgba(0,0,0,.06);width:22px;height:22px;border-radius:50%;font:inherit;cursor:pointer;color:var(--mute)}
+.rulesec{margin:0 0 18px}
+.rulesec h4{margin:0 0 3px;font-size:16px;font-weight:600}
+.rulesec .ln{font-size:12px;color:var(--mute);margin-bottom:8px}
+.rulesec ol{margin:0;padding-left:0;list-style:none}
+.rulesec li{margin:0 0 10px;font-size:13.5px;line-height:1.7;padding-left:34px;position:relative}
+.rulesec li b{font-weight:600;display:block}
+.rulesec li .n{position:absolute;left:0;top:1px;font:500 12px/1.7 "DM Mono",ui-monospace,monospace;color:var(--mute)}
+.rulesec li.na b{color:var(--mute);font-weight:500}
+/* sealing sticker over the red button */
+.sealwrap{position:relative;margin-top:14px;min-height:44px}
+.seal{position:absolute;left:-6px;right:-6px;top:-8px;bottom:-8px;z-index:2;appearance:none;border:0;font:inherit;font-size:12.5px;font-weight:500;color:#17150f;cursor:pointer;border-radius:6px;
+  background:linear-gradient(90deg,rgba(0,0,0,.06),rgba(0,0,0,0) 12px),repeating-linear-gradient(135deg,rgba(255,255,255,.18) 0 6px,rgba(255,255,255,0) 6px 14px),#e8c158;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 2px 3px rgba(0,0,0,.12),0 8px 12px -8px rgba(var(--sh),.5);
+  transform-origin:100% 0;transition:transform calc(420ms * var(--k,1)) cubic-bezier(.4,0,.8,.4),opacity calc(360ms * var(--k,1)) ease calc(120ms * var(--k,1))}
+.seal.peeling{transform:translate(32px,-18px) rotate(14deg) scale(1.02);opacity:0;pointer-events:none}
+.seal.off{display:none}
+.seal i{font-style:normal;opacity:.7;font-size:11px;margin-left:6px}
+.sealwrap .stk{width:100%}
+/* overlays */
+.over{position:absolute;inset:0;z-index:20;background:rgba(30,22,12,.3)}
+.cslip{position:absolute;left:34px;right:34px;top:300px;z-index:21;background:var(--ppr);border-radius:3px;padding:16px 16px 14px;box-shadow:0 2px 2px rgba(0,0,0,.08),0 24px 40px -18px rgba(var(--sh),.7);transform:rotate(-.8deg);animation:sc03-up calc(300ms * var(--k,1)) ease both}
+.cslip .ct{font-size:16px;font-weight:600;margin-bottom:6px}
+.cslip .cb{font-size:13px;color:#3a3530;line-height:1.6}
+.cslip .row2{margin:14px 0 0}
+.sys{position:absolute;left:44px;right:44px;top:290px;z-index:21;background:rgba(246,246,248,.98);border-radius:14px;padding:18px 16px 14px;box-shadow:0 20px 40px -16px rgba(0,0,0,.5);text-align:center;font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;animation:sc03-up calc(220ms * var(--k,1)) ease both}
+.sys b{display:block;font-size:16px;font-weight:600;color:#111}
+.sys p{margin:6px 0 0;font-size:12.5px;color:#555;line-height:1.5}
+.sys .btns{display:flex;border-top:1px solid rgba(0,0,0,.12);margin:14px -16px -14px;height:42px}
+.sys .btns span{flex:1 1 0;display:flex;align-items:center;justify-content:center;font-size:15px;color:#2b6fd6;border-right:1px solid rgba(0,0,0,.12)}
+.sys .btns span:last-child{border-right:0}
+@keyframes sc03-up{from{transform:translateY(16px) rotate(-.8deg);opacity:0}to{transform:translateY(0) rotate(-.8deg);opacity:1}}
+.undo{position:absolute;left:16px;right:16px;bottom:76px;background:var(--ppr);color:var(--ink);border-radius:4px;padding:10px 12px 10px 14px;display:flex;align-items:center;gap:10px;font-size:13px;z-index:30;box-shadow:0 2px 2px rgba(0,0,0,.08),0 12px 20px -10px rgba(var(--sh),.6);animation:sc03-up2 calc(300ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.undo button{margin-left:auto;appearance:none;border:0;background:var(--ink);color:#fff;font:inherit;font-size:12.5px;font-weight:500;padding:6px 10px;border-radius:6px;cursor:pointer}
+@keyframes sc03-up2{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
+.tst{position:absolute;left:16px;right:16px;bottom:76px;background:rgba(31,29,27,.94);color:#fff;border-radius:7px;padding:10px 14px;font-size:13px;z-index:40;box-shadow:0 10px 24px -8px rgba(0,0,0,.6);animation:sc03-up2 calc(300ms * var(--k,1)) ease both;display:flex;gap:10px;align-items:center;line-height:1.45}
+.tst .sel{font-family:"DM Mono",ui-monospace,monospace;user-select:all;background:rgba(255,255,255,.14);padding:2px 8px;border-radius:5px}
+/* bottom tray = desk edge with four stickers */
+.tray{position:absolute;left:0;right:0;bottom:0;height:64px;background:linear-gradient(180deg,rgba(40,30,18,.08),rgba(40,30,18,.14));box-shadow:0 -1px 0 rgba(255,255,255,.5);display:flex;align-items:center;justify-content:space-around;padding:0 10px 6px;box-sizing:border-box;z-index:8}
+.tray button{appearance:none;border:0;background:transparent;font:inherit;font-size:12.5px;color:#4a443b;padding:7px 12px;border-radius:7px;min-width:64px;cursor:pointer;letter-spacing:.02em}
+.tray button.on{background:var(--ink);color:#fff;font-weight:500;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1),0 2px 4px -2px rgba(0,0,0,.4)}
+.tray button.inert{opacity:.6}
+.tray button:active{transform:translateY(1px)}
+/* ---- seams: loose papers in a tray ---- */
+.surf{position:absolute;inset:0;overflow:hidden;z-index:6;background:rgba(241,239,233,.72)}
+.stop{position:absolute;left:0;right:0;top:0;padding:46px 20px 10px;z-index:3;background:linear-gradient(180deg,rgba(241,239,233,.95) 70%,rgba(241,239,233,0))}
+.stop h2{margin:0;font-size:21px;font-weight:600}
+.stop .sub{font-size:12px;color:var(--mute);margin-top:3px}
+.pills{display:flex;gap:8px;margin-top:10px}
+.pill{appearance:none;border:0;font:inherit;font-size:12.5px;padding:6px 12px;border-radius:999px;background:rgba(255,255,255,.75);box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);cursor:pointer;color:var(--ink)}
+.pill.on{background:var(--ink);color:#fff;box-shadow:none}
+.feed{position:absolute;left:0;right:0;top:142px;bottom:64px;overflow:auto;padding:8px 20px 20px;box-sizing:border-box}
+.fcard{position:relative;margin:0 0 12px;touch-action:pan-y;user-select:none;-webkit-user-select:none}
+.fcard .ev{position:relative;width:100%;margin:0;transform:translateX(var(--fx,0px)) rotate(var(--fr,0deg));transition:transform var(--ft,calc(500ms * var(--k,1)) cubic-bezier(.2,.9,.3,1.04));cursor:pointer;padding:13px 16px 12px;box-sizing:border-box}
+.fcard.drag .ev{transition:none}
+.fcard .ev .t{font-size:16px;font-weight:600;line-height:1.35;padding-right:36px}
+.fcard .ev .m{font-size:12px;color:var(--mute);margin-top:5px;line-height:1.5}
+.fcard .wash{position:absolute;inset:0;border-radius:2px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:4px;pointer-events:none;opacity:var(--wo,0);background:var(--wb);color:#fff;font-family:"DM Mono",ui-monospace,monospace;font-weight:500;letter-spacing:.12em;font-size:12px}
+.fcard .wash .ic{font-size:40px;line-height:1;transform:rotate(var(--wr,0deg))}
+.fcard .wash.ready{text-shadow:0 0 1.5px #fff}
+.fcard .favtab{position:absolute;right:10px;top:10px;width:26px;height:26px;border-radius:50%;background:var(--tc,#f08868);color:#17150f;display:flex;align-items:center;justify-content:center;font-size:13px;transform:scale(.35);opacity:0;transition:transform calc(520ms * var(--k,1)) cubic-bezier(.18,1.5,.36,1),opacity calc(260ms * var(--k,1)) ease;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 2px 4px rgba(0,0,0,.2)}
+.fcard .favtab.on{opacity:1;transform:scale(1)}
+.hint{font-size:11.5px;color:var(--mute);text-align:center;padding:4px 0 10px;letter-spacing:.04em}
+.mrow{display:flex;align-items:center;gap:10px;background:var(--ppr);border-radius:2px;padding:10px 10px 10px 14px;margin:0 0 8px;box-shadow:0 1px 1px rgba(0,0,0,.05),0 6px 10px -8px rgba(var(--sh),.4);transform:rotate(var(--r,0deg))}
+.mrow .tx{flex:1 1 auto;min-width:0}
+.mrow .tx b{display:block;font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .tx span{display:block;font-size:11.5px;color:var(--mute);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mrow .tx .snp{font-size:11px;color:#8a8276}
+.mrow .rep{appearance:none;border:0;background:rgba(0,0,0,.05);font:inherit;font-size:12px;padding:6px 9px;border-radius:6px;cursor:pointer;color:var(--ink);white-space:nowrap}
+.mhead{font-size:11.5px;color:var(--mute);letter-spacing:.08em;margin:12px 0 8px}
+.receipt{background:var(--ppr);border-radius:3px;padding:14px 16px;margin:10px 0;box-shadow:0 1px 1px rgba(0,0,0,.06),0 8px 12px -8px rgba(0,0,0,.4);font-size:13px;line-height:1.6;border-top:4px solid var(--ok)}
+.receipt b{display:block;font-size:15px;margin-bottom:4px}
+.receipt .inert{color:var(--mute);font-size:12px}
+.receipt .stk{margin-top:8px}
+.e{font-size:12px;color:var(--red)}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone">
+    <div class="app{{panel.rootCls}}{{userRm}}{{appCls}}" data-skin="{{skin}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}">
+    <div class="wall">
+      <svg class="grainsvg" aria-hidden="true"><filter id="sc03-grain" x="0" y="0" width="100%" height="100%"><feturbulence type="fractalNoise" basefrequency=".85" numoctaves="2" stitchtiles="stitch"></feturbulence><fecolormatrix type="saturate" values="0"></fecolormatrix><fecomponenttransfer><fefunca type="table" tablevalues="0 .55"></fefunca></fecomponenttransfer></filter></svg>
+      <div class="desk"><div class="sk cotton {{skCotton}}"></div><div class="sk halo {{skHalo}}"></div><div class="sk sunset {{skSunset}}"></div></div>
+
+      <sc-if value="{{tabSettings}}" hint-placeholder-val="{{true}}">
+      <div class="hd"><b>设置</b><span>{{sessionLabel}}</span></div>
+      <div class="stack">
+        <sc-for list="{{folds}}" as="f" hint-placeholder-count="5">
+          <div class="fold {{f.cls}}" style="{{f.style}}" data-rid="{{f.key}}">
+            <div class="peek" style="--p:{{f.peekP}}">{{f.peekTitle}}</div>
+            <div class="fback"></div>
+            <div class="fbody">
+              <div class="strip" onClick="{{f.pullStrip}}">
+                <button type="button" class="bk" data-act="back" onClick="{{f.insert}}" aria-label="放回">‹ 放回</button>
+                <div class="stxt"><div class="gl">{{f.label2}}</div><div class="sm {{f.sum1Cls}}">{{f.sum1}}</div><sc-if value="{{f.sum2}}" hint-placeholder-val="{{false}}"><div class="sm {{f.sum2Cls}}">{{f.sum2}}</div></sc-if></div>
+                <sc-if value="{{f.isFav}}" hint-placeholder-val="{{false}}"><div class="cnt">{{fav.count}}<small>个局</small></div></sc-if>
+              </div>
+
+              <sc-if value="{{f.isProfile}}" hint-placeholder-val="{{false}}">
+                <button type="button" class="ppr" style="--r:-.4deg" data-act="open" data-rid="profile" onClick="{{prof.open}}" aria-label="个人资料 · 抽出这张纸">
+                  <div class="who {{prof.whoCls}}">{{prof.name}}</div>
+                  <div class="kv"><span>微信</span><b class="mono">{{prof.wx}}</b></div>
+                  <div class="kv"><span>邮箱</span><b>{{prof.emailShort}}</b><i class="tag {{prof.emailTagCls}}">{{prof.emailTag}}</i></div>
+                  <div class="foot">{{prof.footer}}</div>
+                </button>
+                <button type="button" class="ppr sm" style="--r:.3deg" data-act="open" data-rid="privacy" onClick="{{prof.openPrivacy}}"><div class="ph">隐私与可见性</div><div class="pl">{{priv.line}}</div></button>
+                <button type="button" class="ppr sm" style="--r:-.2deg" data-act="open" data-rid="account" onClick="{{prof.openAccount}}"><div class="ph">账户与本机数据</div><div class="pl">{{acc.line}}</div></button>
+              </sc-if>
+
+              <sc-if value="{{f.isFav}}" hint-placeholder-val="{{false}}">
+                <p class="lead">{{fav.lead}}</p>
+                <sc-if value="{{fav.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{fav.emptyTitle}}</b><span>{{fav.emptyBody}}</span><button type="button" class="stk" data-act="seam-feed" onClick="{{fav.goFind}}">{{fav.emptyCta}}</button></div></sc-if>
+                <sc-for list="{{fav.active}}" as="r" hint-placeholder-count="3">
+                  <div class="slip {{r.cls}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
+                    <button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="t">{{r.title}}</div><div class="m">{{r.when}} · {{r.place}} · {{r.host}}</div><div><span class="st {{r.stCls}}">{{r.st}}</span><sc-if value="{{r.rel}}" hint-placeholder-val="{{false}}"><span class="rel">{{r.rel}}</span></sc-if><sc-if value="{{r.cityLine}}" hint-placeholder-val="{{false}}"><span class="rel">{{r.cityLine}}</span></sc-if></div></button>
+                    <button type="button" class="rmv" data-act="unfav" onClick="{{r.remove}}" aria-label="拿出收藏">拿出</button>
+                  </div>
+                </sc-for>
+                <sc-if value="{{fav.hasArchived}}" hint-placeholder-val="{{false}}">
+                  <div class="gh">已结束 · 已取消 <b>{{fav.archivedCount}}</b></div>
+                  <sc-for list="{{fav.archived}}" as="r" hint-placeholder-count="2">
+                    <div class="slip arch {{r.cls}}" data-rid="{{r.id}}" style="--r:{{r.rot}}deg">
+                      <button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="t">{{r.title}}</div><div class="m">{{r.when}} · {{r.place}}</div><div><span class="st closed">{{r.st}}</span></div></button>
+                      <button type="button" class="rmv" data-act="unfav" onClick="{{r.remove}}" aria-label="拿出收藏">拿出</button>
+                    </div>
+                  </sc-for>
+                </sc-if>
+                <sc-if value="{{fav.hasAny}}" hint-placeholder-val="{{false}}"><div class="row2"><button type="button" class="stk wht" data-act="seam-feed" onClick="{{fav.goFind}}">去找局 · 入局</button></div></sc-if>
+              </sc-if>
+
+              <sc-if value="{{f.isPrefs}}" hint-placeholder-val="{{false}}">
+                <div class="ppr" style="--r:-.3deg" data-sec="notify">
+                  <div class="ph">通知与提醒</div>
+                  <div class="blk"><div class="stat"><span class="led {{ntf.deliverLed}}"></span><span>{{ntf.deliverLabel}}</span></div></div>
+                  <div class="blk"><div class="stat"><span class="led {{ntf.permLed}}"></span><div><span>系统权限 · {{ntf.permTitle}}</span><p>{{ntf.permBody}}</p></div></div>
+                    <sc-if value="{{ntf.canRequest}}" hint-placeholder-val="{{false}}"><div class="row2" style="margin:10px 0 0"><button type="button" class="stk sm" data-act="request-permission" onClick="{{ntf.request}}">{{ntf.buttonLabel}}</button></div></sc-if>
+                    <sc-if value="{{ntf.requesting}}" hint-placeholder-val="{{false}}"><p class="note">{{ntf.buttonLabel}} · 请在系统弹出的窗口里选择。</p></sc-if>
+                    <sc-if value="{{ntf.showDisabled}}" hint-placeholder-val="{{false}}"><div class="row2" style="margin:10px 0 0"><button type="button" class="stk sm wht" disabled="{{true}}">{{ntf.buttonLabel}}</button></div></sc-if>
+                  </div>
+                  <div class="blk"><div class="stat"><span class="led {{ntf.serviceLed}}"></span><div><span>提醒服务</span><p>{{ntf.serviceCopy}}</p></div></div></div>
+                  <div class="blk" style="border-bottom:0">
+                    <div class="ph" style="font-size:12.5px;font-weight:500;color:var(--mute);letter-spacing:.06em">我想收到的提醒</div>
+                    <div class="sumline">{{ntf.sumLine}}</div>
+                    <sc-for list="{{ntf.cats}}" as="c" hint-placeholder-count="6">
+                      <div class="trow"><div class="tx"><b>{{c.label}}</b><span>{{c.sub}}</span></div><span class="sw {{c.on}}">{{c.word}}</span><button type="button" class="snap {{c.on}} {{c.press}}" data-act="toggle" data-rid="{{c.key}}" onClick="{{c.toggle}}" aria-label="{{c.aria}}"><span class="ring"></span><span class="dome"></span></button></div>
+                    </sc-for>
+                    <p class="note">{{ntf.prefHint}}</p>
+                  </div>
+                  <div class="foot">{{ntf.footer}}</div>
+                </div>
+                <div class="ppr" style="--r:.25deg" data-sec="city">
+                  <div class="ph">默认浏览城市 · <span class="mono">{{city.current}}</span></div>
+                  <div class="search"><input type="search" data-field="search" value="{{city.q}}" onInput="{{city.setQ}}" placeholder="搜索城市，比如「波士顿」或 BOS" aria-label="搜索城市"></div>
+                  <sc-if value="{{city.noResult}}" hint-placeholder-val="{{false}}"><div class="empty" style="padding:18px 8px"><b>{{city.noResultTitle}}</b><span>{{city.customNote}}</span><button type="button" class="stk wht sm" data-act="retry" onClick="{{city.clearQ}}">{{city.retry}}</button></div></sc-if>
+                  <div class="cities">
+                    <sc-for list="{{city.rows}}" as="c" hint-placeholder-count="6"><button type="button" class="cityb {{c.on}}" data-act="city" data-rid="{{c.key}}" onClick="{{c.pick}}" aria-label="{{c.name}}"><span class="snap {{c.on}} {{c.press}}" style="--sc:#4b63c0"><span class="ring"></span><span class="dome"></span></span><b>{{c.name}}</b><small>{{c.key}} · {{c.tzLabel}}</small></button></sc-for>
+                  </div>
+                  <p class="note">{{city.scope}}</p>
+                </div>
+                <div class="ppr" style="--r:-.2deg" data-sec="look">
+                  <div class="ph">外观与动态</div>
+                  <p class="note" style="margin-top:3px">点一扇小窗，整叠袋子下面的桌面立刻换色；满意再扣上。</p>
+                  <div class="sws">
+                    <sc-for list="{{look.skins}}" as="s" hint-placeholder-count="3"><button type="button" class="sw {{s.key}} {{s.on}}" data-act="skin" data-rid="{{s.key}}" onClick="{{s.pick}}"><span class="win"></span><b>{{s.name}}</b><small>{{s.line}}</small><span class="snap {{s.on}} {{s.press}}" style="--sc:#4b63c0"><span class="ring"></span><span class="dome"></span></span></button></sc-for>
+                  </div>
+                  <sc-if value="{{look.changed}}" hint-placeholder-val="{{false}}"><div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{look.cancel}}">取消预览</button><button type="button" class="stk" data-act="apply" onClick="{{look.apply}}">扣上 · {{look.previewName}}</button></div></sc-if>
+                  <sc-if value="{{look.applied}}" hint-placeholder-val="{{false}}"><div class="ok">已扣上 · {{look.currentName}}</div></sc-if>
+                  <div class="trow" style="margin-top:8px;border-top:1px dashed var(--line);padding-top:12px"><div class="tx"><b>减少动态</b><span>开启后所有运动直接呈现结果；状态与反馈仍完整。</span></div><span class="sw {{look.rmOn}}">{{look.rmWord}}</span><button type="button" class="snap {{look.rmOn}} {{look.rmPress}}" data-act="reduce-motion" onClick="{{look.toggleRm}}" aria-label="减少动态"><span class="ring"></span><span class="dome"></span></button></div>
+                  <p class="note">这是产品里的背景选择；评审面板里的「减少动态」是评审开关，两者独立。方案本身不是皮肤。</p>
+                </div>
+              </sc-if>
+
+              <sc-if value="{{f.isRecords}}" hint-placeholder-val="{{false}}">
+                <p class="lead" data-sec="records">{{rec.lead}}</p>
+                <p class="lead" style="margin-top:-4px">{{rec.exitLine}} · {{rec.quotaNoCount}}</p>
+                <sc-if value="{{rec.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{rec.emptyTitle}}</b><span>散场后的出席记录、主动退出与安排变化会出现在这里。</span></div></sc-if>
+                <sc-for list="{{rec.groups}}" as="g" hint-placeholder-count="3">
+                  <div class="gh">{{g.title}} <b>{{g.count}}</b></div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                    <div class="slip" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.kindLabel}} · {{r.atText}}</div><div class="t">{{r.label}}</div><div class="m">{{r.title}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
+                  </sc-for>
+                </sc-for>
+                <p class="lead" style="margin-top:4px">{{rec.help}}</p>
+                <div class="gh" data-sec="reports" style="margin-top:18px">我的举报 <b>{{rep.count}}</b></div>
+                <p class="lead">{{rep.lead}}</p>
+                <sc-if value="{{rep.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{rep.emptyTitle}}</b><span>在局内散场页点「举报」后，会出现在这里。</span></div></sc-if>
+                <sc-for list="{{rep.groups}}" as="g" hint-placeholder-count="2">
+                  <div class="gh">{{g.title}} <b>{{g.count}}</b></div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                    <div class="slip" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><button type="button" class="sbtn" data-act="open" onClick="{{r.open}}"><div class="k">{{r.id}} · {{r.updatedText}}</div><div class="t">{{r.title}}</div><div class="m">{{r.text}}</div><div><span class="st {{r.sCls}}">{{r.statusLabel}}</span></div></button></div>
+                  </sc-for>
+                </sc-for>
+                <p class="lead">{{rep.mock}}</p>
+              </sc-if>
+
+              <sc-if value="{{f.isHelp}}" hint-placeholder-val="{{false}}">
+                <div class="ppr" style="--r:-.3deg">
+                  <div class="ph">常见问题</div>
+                  <p class="note" style="margin-top:2px">按「参加约定」整理；遇到具体活动的问题去「我的举报」，对产品的意见写反馈。</p>
+                  <sc-for list="{{help.qas}}" as="q" hint-placeholder-count="5"><button type="button" class="qa {{q.cls}}" onClick="{{q.toggle}}"><div class="q"><span>{{q.q}}</span><i>{{q.mark}}</i></div><div class="a">{{q.a}}</div></button></sc-for>
+                </div>
+                <div class="row2"><button type="button" class="stk" data-act="feedback" onClick="{{help.openFeedback}}">写反馈</button><button type="button" class="stk wht" data-act="open" data-rid="rules" onClick="{{help.openRules}}">规则全文</button><button type="button" class="stk wht" data-act="open" data-rid="reports" onClick="{{help.openReports}}">我的举报</button></div>
+                <sc-if value="{{help.hasFeedback}}" hint-placeholder-val="{{false}}"><div class="ppr" style="--r:.25deg;margin-top:10px"><div class="ph">我的反馈 · {{help.feedbackCount}}</div><sc-for list="{{help.feedback}}" as="x" hint-placeholder-count="1"><div class="fbrow">{{x.text}}<small>{{x.localNo}} · {{x.atText}} · {{x.statusLabel}}</small></div></sc-for></div></sc-if>
+                <div class="ppr" style="--r:-.2deg" data-sec="about">
+                  <div class="ph">关于 JU</div>
+                  <div class="kvl"><span>版本</span><b>{{about.version}}</b><span>约定版本</span><b class="mono">{{about.rulesVersion}}</b><span>构建</span><b class="mono">{{about.built}}</b><span>城市</span><b>{{about.cities}} 座 · 纽约 · 波士顿 · 洛杉矶 · 旧金山 · 西雅图 · 芝加哥</b></div>
+                  <p class="note">{{about.policyNote}}</p>
+                  <p class="note">{{about.demo}} · 没有正式服务条款，这里不伪造。</p>
+                  <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht sm" data-act="open" data-rid="rules" onClick="{{help.openRules}}">参加约定 · 18 条</button></div>
+                </div>
+              </sc-if>
+            </div>
+            <div class="ffront"></div>
+            <button type="button" class="tabx" style="--tc:{{f.color}}" data-act="open" data-rid="{{f.key}}" onClick="{{f.tabClick}}" onPointerDown="{{f.tabDown}}" onPointerMove="{{f.tabMove}}" onPointerUp="{{f.tabUp}}" onPointerCancel="{{f.tabCancel}}" aria-label="{{f.aria}}"><span class="tl">{{f.label}}</span><sc-if value="{{f.dot}}" hint-placeholder-val="{{false}}"><i class="dot"></i></sc-if></button>
+          </div>
+        </sc-for>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{tabFind}}" hint-placeholder-val="{{false}}">
+      <div class="surf">
+        <div class="stop"><h2>找局 · {{feed.city}}</h2><div class="sub">{{feed.sub}}</div>
+          <div class="pills"><button type="button" class="pill {{feed.allOn}}" data-act="select" onClick="{{feed.showAll}}">{{feed.pillAll}}</button><button type="button" class="pill {{feed.favOn}}" data-act="select" onClick="{{feed.showFav}}">☆ {{feed.pillFavs}} {{feed.favCount}}</button></div>
+        </div>
+        <div class="feed">
+          <p class="hint">{{feed.hint}}</p>
+          <sc-if value="{{feed.empty}}" hint-placeholder-val="{{false}}"><div class="empty"><b>{{feed.emptyTitle}}</b><span>遇到想去的，右滑收进收藏。</span></div></sc-if>
+          <sc-for list="{{feed.rows}}" as="e" hint-placeholder-count="4">
+            <div class="fcard {{e.dragCls}}" data-rid="{{e.id}}" style="--fx:{{e.fx}}px;--fr:{{e.fr}}deg;--wo:{{e.wo}};--wb:{{e.wb}};--wr:{{e.wr}}deg;--ft:{{e.ft}}" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.cancel}}">
+              <div class="ppr ev" onClick="{{e.open}}"><div class="t">{{e.title}}</div><div class="m">{{e.when}} · {{e.place}} · {{e.host}} · {{e.capLine}}</div><div class="favtab {{e.tabOn}}">★</div>
+                <div class="wash {{e.washReady}}"><span class="ic">{{e.washIcon}}</span><span>{{e.washText}}</span></div>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{tabMine}}" hint-placeholder-val="{{false}}">
+      <div class="surf">
+        <div class="stop"><h2>我的局</h2><div class="sub">{{mine.sub}}</div></div>
+        <div class="feed" style="top:104px">
+          <div class="mhead">我参加的 · {{mine.currentCount}}</div>
+          <sc-for list="{{mine.current}}" as="r" hint-placeholder-count="3">
+            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span><span class="snp">{{r.snap}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+          </sc-for>
+          <div class="mhead">我发起的 · {{mine.hostedCount}}</div>
+          <sc-for list="{{mine.hosted}}" as="r" hint-placeholder-count="2">
+            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.place}} · {{r.label}}</span></div><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+          </sc-for>
+          <div class="mhead">历史 · {{mine.historyCount}}</div>
+          <sc-for list="{{mine.history}}" as="r" hint-placeholder-count="3">
+            <div class="mrow" data-rid="{{r.id}}" style="--r:{{r.rot}}deg"><div class="tx"><b>{{r.title}}</b><span>{{r.when}} · {{r.label}}</span><span class="snp">{{r.reportLine}}</span></div><button type="button" class="rep" data-act="report" onClick="{{r.report}}">{{r.reportCta}}</button><button type="button" class="snap {{r.favOn}} {{r.press}}" style="--sc:#f08868" data-act="{{r.favAct}}" onClick="{{r.toggle}}" aria-label="{{r.favAria}}"><span class="ring"></span><span class="dome"></span></button></div>
+          </sc-for>
+          <p class="hint">按扣扣上 = 收藏 · 局内的继续编辑、再开一局、报名等完整流程不在本范围演示。</p>
+        </div>
+      </div>
+      </sc-if>
+
+      <sc-if value="{{tabCreate}}" hint-placeholder-val="{{false}}">
+      <div class="surf"><div class="stop"><h2>开局</h2></div><div class="empty" style="padding-top:220px"><b>开局流程不在本范围演示</b><span>这里只是导航占位。</span></div></div>
+      </sc-if>
+
+      <sc-if value="{{paper.on}}" hint-placeholder-val="{{false}}">
+        <div class="pback {{paper.backCls}}" onClick="{{goBack}}"></div>
+        <div class="pbig sc03-over {{paper.cls}}" style="{{paper.style}}">
+          <div class="carry"><div class="ct {{carry.cls}}">{{carry.title}}</div><sc-if value="{{carry.line}}" hint-placeholder-val="{{false}}"><div class="cl">{{carry.line}}</div></sc-if></div>
+          <div class="phead"><button type="button" class="stk wht sm l" data-act="{{page.leftAct}}" onClick="{{page.leftFn}}">{{page.leftLabel}}</button><h2>{{page.title}}</h2><sc-if value="{{page.right}}" hint-placeholder-val="{{false}}"><button type="button" class="stk sm r" data-act="{{page.rightAct}}" onClick="{{page.rightFn}}" disabled="{{page.rightDisabled}}"><sc-if value="{{page.rightBusy}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>{{page.right}}</button></sc-if></div>
+          <div class="pbody"><div class="pg {{page.dir}}">
+
+            <sc-if value="{{page.isProfileView}}" hint-placeholder-val="{{false}}">
+              <div class="who {{prof.whoCls}}">{{prof.name}}</div>
+              <sc-if value="{{prof.savedLine}}" hint-placeholder-val="{{false}}"><div class="saved">✓ {{prof.savedLine}}</div></sc-if>
+              <div class="field" style="margin-top:6px"><span class="l">微信号 · 仅成局后局主可见</span><span class="v sm"><span class="mono">{{prof.wx}}</span><button type="button" class="stk wht sm" data-act="copy" onClick="{{prof.copy}}">复制</button></span></div>
+              <div class="field"><span class="l">工作／学校邮箱 · 只显示验证标记</span><span class="v sm">{{prof.email}} <i class="tag {{prof.emailTagCls}}">{{prof.emailTag}}</i></span></div>
+              <div class="field" style="border-bottom:0"><span class="l">怎么称呼 · 局主与同局成员可见</span><span class="v sm">{{prof.name}}</span></div>
+              <div class="row2" style="margin:14px 0 0"><button type="button" class="stk" data-act="edit" onClick="{{prof.edit}}">编辑资料</button></div>
+              <p class="foot2">{{prof.snapshotNote}}</p>
+              <p class="note">{{prof.wxPolicy}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isProfileEdit}}" hint-placeholder-val="{{false}}">
+              <div class="fld {{edit.nameErrCls}}"><label for="sc03-name">怎么称呼（必填，最多 10 个字）</label><input id="sc03-name" data-field="name" type="text" value="{{edit.name}}" onInput="{{edit.setName}}" placeholder="比如「阿禾」" autocomplete="off"><span class="e">{{edit.nameErr}}</span></div>
+              <div class="fld {{edit.wxErrCls}}"><label for="sc03-wx">微信号（必填）</label><input id="sc03-wx" class="mono" data-field="wx" type="text" value="{{edit.wx}}" onInput="{{edit.setWx}}" placeholder="填写微信号，不是昵称" autocomplete="off"><span class="e">{{edit.wxErr}}</span></div>
+              <div class="fld {{edit.emailErrCls}}"><label for="sc03-mail">工作／学校邮箱（选填）</label><input id="sc03-mail" data-field="email" type="email" value="{{edit.email}}" onInput="{{edit.setEmail}}" placeholder="例如 you@nyu.edu" autocomplete="off"><span class="e">{{edit.emailErr}}</span><span class="h">{{edit.emailHint}}</span></div>
+              <sc-if value="{{edit.needCode}}" hint-placeholder-val="{{false}}">
+                <div class="notice">
+                  <div class="stat"><span class="led {{edit.codeLed}}"></span><span>{{edit.codeTitle}}</span></div>
+                  <sc-if value="{{edit.codeSent}}" hint-placeholder-val="{{false}}">
+                    <div class="fld {{edit.codeErrCls}}" style="padding-bottom:4px"><label for="sc03-code">6 位验证码</label><div class="code"><input id="sc03-code" data-field="code" type="text" inputmode="numeric" maxlength="6" value="{{edit.code}}" onInput="{{edit.setCode}}" placeholder="······"><button type="button" class="stk sm" data-act="verify-code" onClick="{{edit.verify}}">验证</button></div><span class="e">{{edit.codeErr}}</span></div>
+                    <p>{{edit.resendText}}</p>
+                  </sc-if>
+                  <sc-if value="{{edit.canSend}}" hint-placeholder-val="{{false}}"><button type="button" class="stk wht sm" data-act="send-code" onClick="{{edit.send}}">{{edit.sendLabel}}</button></sc-if>
+                </div>
+              </sc-if>
+              <sc-if value="{{edit.verifiedNow}}" hint-placeholder-val="{{false}}"><div class="ok">邮箱已验证 · {{edit.verifiedDomain}}</div></sc-if>
+              <sc-if value="{{edit.fail}}" hint-placeholder-val="{{false}}"><div class="alert">{{edit.failMsg}}<button type="button" class="stk sm" style="margin-left:auto" data-act="retry" onClick="{{edit.save}}">重试</button></div></sc-if>
+              <div class="row2" style="margin:14px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{edit.cancel}}">取消</button><button type="button" class="stk" data-act="save" onClick="{{edit.save}}" disabled="{{edit.saving}}"><sc-if value="{{edit.saving}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>{{edit.saveLabel}}</button></div>
+              <p class="foot2">称呼对局主与同局成员可见 · 微信仅成局后局主可见 · 邮箱只显示验证标记</p>
+              <p class="note">{{edit.snapshotNote}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isPrivacy}}" hint-placeholder-val="{{false}}">
+              <p class="lead" style="margin:4px 0 10px">{{priv.lead}}</p>
+              <div class="gh" style="margin:10px 0 6px">规则</div><sc-for list="{{priv.general}}" as="g" hint-placeholder-count="4"><div class="fbrow">{{g}}</div></sc-for>
+              <div class="gh" style="margin:16px 0 6px">你现在的局</div><sc-for list="{{priv.facts}}" as="x" hint-placeholder-count="4"><div class="fbrow"><b style="font-weight:500">{{x.title}}</b> · {{x.role}}<small>{{x.rule}}</small></div></sc-for>
+              <p class="foot2">{{priv.noToggles}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isAccount}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{acc.live}}" hint-placeholder-val="{{true}}">
+                <div class="notice"><div class="stat"><span class="led on"></span><div><span>{{acc.sessionLabel}}</span><p>{{acc.sessionBody}}</p></div></div></div>
+                <div class="fbrow"><b style="font-weight:500">本机数据</b><small>这套方案的收藏、资料、偏好与记录保存在本机浏览器的一个命名空间里（<span class="mono">{{acc.storageKey}}</span>）。重置演示数据在评审面板，不在产品里。</small></div>
+                <div class="fbrow"><b style="font-weight:500">没有的能力</b><small>真实工程里没有登录、绑定、改密码或注销；这里不发明它们。下面的「退出登录」只结束本机的演示会话。</small></div>
+                <div class="sealwrap">
+                  <button type="button" class="seal {{acc.sealCls}}" data-act="peel" onClick="{{acc.peel}}" aria-label="撕开封口贴">封口贴 · 撕开后才能按<i>点一下撕开</i></button>
+                  <button type="button" class="stk red" data-act="danger" onClick="{{acc.askEnd}}" disabled="{{acc.sealed}}">退出登录（本地演示）</button>
+                </div>
+                <p class="note">退出只结束本机演示会话；已提交的记录、举报与资料都保留。</p>
+              </sc-if>
+              <sc-if value="{{acc.ended}}" hint-placeholder-val="{{false}}">
+                <div class="empty" style="padding-top:60px"><b>演示会话已结束</b><span>已提交的记录、举报与资料都还在本机；重新开始会回到这叠袋子。</span><button type="button" class="stk" data-act="restart" onClick="{{acc.restart}}">重新开始</button></div>
+              </sc-if>
+            </sc-if>
+
+            <sc-if value="{{page.isDetail}}" hint-placeholder-val="{{false}}">
+              <div class="rdet"><span class="k">{{det.cityLine}}</span><h3>{{det.title}}</h3>
+                <div class="kvl"><span>时间</span><b>{{det.when}}</b><span>地点</span><b>{{det.placeFull}}</b><span>局主</span><b>{{det.host}}</b><span>人数</span><b>{{det.cap}}</b><span>加入</span><b>{{det.joinMode}}</b></div>
+                <div style="margin-top:10px"><span class="tag {{det.stTag}}">{{det.st}}</span> <sc-if value="{{det.rel}}" hint-placeholder-val="{{false}}"><span class="tag">{{det.rel}}</span></sc-if></div>
+              </div>
+              <div class="notice"><div class="stat"><span class="led {{det.contactLed}}"></span><div><span>联系方式</span><p>{{det.contactLine}}</p></div></div></div>
+              <div class="row2" style="margin:12px 0 0"><button type="button" class="stk wht" data-act="{{det.favAct}}" onClick="{{det.toggleFav}}">{{det.favLabel}}</button><button type="button" class="stk" disabled="{{true}}" title="报名在入局模块 · 不在本范围演示">{{det.applyLabel}}</button></div>
+              <p class="note">报名、候补与票根在「入局」里完成 · 不在本范围演示。</p>
+            </sc-if>
+
+            <sc-if value="{{page.isRecordDetail}}" hint-placeholder-val="{{false}}">
+              <div class="rdet"><span class="k">{{rd.kindLabel}} · {{rd.statusLabel}}</span><h3>{{rd.label}}</h3>
+                <div class="kvl"><span>活动</span><b>{{rd.title}}</b><span>时间</span><b>{{rd.when}} · {{rd.place}}</b><span>局主</span><b>{{rd.host}}</b><span>记录于</span><b>{{rd.atText}}</b><sc-if value="{{rd.quotaLabel}}" hint-placeholder-val="{{false}}"><span>机会</span><b>{{rd.quotaLabel}}</b></sc-if></div>
+                <sc-if value="{{rd.appealLine}}" hint-placeholder-val="{{false}}"><p class="note">{{rd.appealLine}}</p></sc-if>
+              </div>
+              <sc-if value="{{rd.hasNotes}}" hint-placeholder-val="{{false}}"><div class="gh" style="margin:14px 0 6px">补充历史 <b>{{rd.noteCount}}</b></div><div class="supp"><sc-for list="{{rd.notes}}" as="n" hint-placeholder-count="2"><div class="sl"><span class="kd">{{n.kind}}</span>{{n.text}}<small>{{n.atText}} · {{n.status}}</small></div></sc-for></div></sc-if>
+              <div class="row2" style="margin:14px 0 0">
+                <button type="button" class="stk wht" data-act="supplement" onClick="{{rd.supplement}}">补充说明</button>
+                <sc-if value="{{rd.canDispute}}" hint-placeholder-val="{{false}}"><button type="button" class="stk" data-act="dispute" onClick="{{rd.dispute}}">提出出席异议</button></sc-if>
+                <sc-if value="{{rd.canAppeal}}" hint-placeholder-val="{{false}}"><button type="button" class="stk" data-act="appeal" onClick="{{rd.appeal}}">申诉</button></sc-if>
+              </div>
+              <p class="foot2">{{rd.help}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isRecordForm}}" hint-placeholder-val="{{false}}">
+              <div class="rdet"><span class="k">{{rf.kindLabel}}</span><h3 style="font-size:15px">{{rf.label}} · {{rf.title}}</h3></div>
+              <div class="fld {{rf.errCls}}"><label for="sc03-rf">{{rf.formLabel}}</label><textarea id="sc03-rf" data-field="text" value="{{rf.text}}" onInput="{{rf.setText}}" placeholder="{{rf.placeholder}}"></textarea><span class="e">{{rf.err}}</span><span class="cnt">{{rf.count}}/500</span></div>
+              <sc-if value="{{rf.fail}}" hint-placeholder-val="{{false}}"><div class="alert">{{rf.failMsg}}</div></sc-if>
+              <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{rf.cancel}}">取消</button><button type="button" class="stk" data-act="save" onClick="{{rf.save}}" disabled="{{rf.saving}}"><sc-if value="{{rf.saving}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>{{rf.cta}}</button></div>
+              <p class="foot2">{{rf.note}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isReportDetail}}" hint-placeholder-val="{{false}}">
+              <div class="notice"><div class="stat"><span class="led {{rpd.led}}"></span><div><span>{{rpd.statusLabel}}</span><sc-if value="{{rpd.needsText}}" hint-placeholder-val="{{false}}"><p>{{rpd.needsText}}</p></sc-if></div></div></div>
+              <div class="rdet"><span class="k mono">{{rpd.id}} · 本地编号</span><h3>{{rpd.title}}</h3>
+                <div class="kvl"><span>举报对象</span><b>{{rpd.whoName}}</b><span>活动</span><b>{{rpd.when}} · {{rpd.host}}</b><span>更新时间</span><b>{{rpd.updatedText}}</b></div>
+                <p style="margin:12px 0 0;font-size:14px;line-height:1.7">{{rpd.text}}</p>
+                <sc-if value="{{rpd.hasShots}}" hint-placeholder-val="{{false}}"><div class="mats"><sc-for list="{{rpd.shots}}" as="m" hint-placeholder-count="1"><span class="mat">▣ {{m.name}}</span></sc-for></div></sc-if>
+              </div>
+              <div class="gh" style="margin:14px 0 4px">进度</div><ol class="timeline"><sc-for list="{{rpd.timeline}}" as="t" hint-placeholder-count="3"><li class="{{t.cls}}"><b>{{t.label}}</b><small>{{t.atText}} {{t.text}}</small></li></sc-for></ol>
+              <sc-if value="{{rpd.hasSupp}}" hint-placeholder-val="{{false}}"><div class="gh" style="margin:6px 0 6px">已提交的补充</div><div class="supp"><sc-for list="{{rpd.supps}}" as="n" hint-placeholder-count="1"><div class="sl">{{n.text}}<small>{{n.atText}}</small></div></sc-for></div></sc-if>
+              <sc-if value="{{rpd.needsMore}}" hint-placeholder-val="{{false}}"><div class="row2" style="margin:12px 0 0"><button type="button" class="stk" data-act="report-supplement" onClick="{{rpd.supplement}}">补充材料</button></div></sc-if>
+              <p class="foot2">{{rpd.mock}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isReportSupp}}" hint-placeholder-val="{{false}}">
+              <div class="notice"><div class="stat"><span class="led wait"></span><span>{{rs.needsText}}</span></div></div>
+              <div class="fld {{rs.errCls}}"><label for="sc03-rs">{{rs.label}}</label><textarea id="sc03-rs" data-field="text" value="{{rs.text}}" onInput="{{rs.setText}}" placeholder="{{rs.placeholder}}"></textarea><span class="e">{{rs.err}}</span></div>
+              <div class="mats"><sc-for list="{{rs.mats}}" as="m" hint-placeholder-count="1"><span class="mat">▣ {{m.name}}<button type="button" data-act="remove-material" onClick="{{m.remove}}" aria-label="移除附件">×</button></span></sc-for><button type="button" class="chip" data-act="add-material" onClick="{{rs.addMat}}">＋ 加截图</button></div>
+              <p class="note">截图 ≤6 张 · 本范围不演示上传，只记录文件名。</p>
+              <sc-if value="{{rs.fail}}" hint-placeholder-val="{{false}}"><div class="alert">{{rs.failMsg}}</div></sc-if>
+              <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{rs.cancel}}">取消</button><button type="button" class="stk" data-act="save" onClick="{{rs.submit}}" disabled="{{rs.saving}}"><sc-if value="{{rs.saving}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>{{rs.cta}}</button></div>
+            </sc-if>
+
+            <sc-if value="{{page.isFeedback}}" hint-placeholder-val="{{false}}">
+              <p class="lead" style="margin:4px 0 8px">对产品的建议或问题。针对某个局或某个人的事，请在局内「举报」，不在这里。</p>
+              <div class="fld {{fb.errCls}}"><label for="sc03-fb">反馈内容</label><textarea id="sc03-fb" data-field="text" value="{{fb.text}}" onInput="{{fb.setText}}" placeholder="比如：希望「找局」可以按周末筛选。"></textarea><span class="e">{{fb.err}}</span></div>
+              <sc-if value="{{fb.fail}}" hint-placeholder-val="{{false}}"><div class="alert">{{fb.failMsg}}<button type="button" class="stk sm" style="margin-left:auto" data-act="retry" onClick="{{fb.submit}}">重试</button></div></sc-if>
+              <sc-if value="{{fb.done}}" hint-placeholder-val="{{false}}"><div class="ok">已提交 · <span class="mono">{{fb.doneNo}}</span> · 本地保存</div></sc-if>
+              <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{fb.cancel}}">{{fb.cancelLabel}}</button><button type="button" class="stk" data-act="save" onClick="{{fb.submit}}" disabled="{{fb.saving}}"><sc-if value="{{fb.busy}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>提交反馈</button></div>
+            </sc-if>
+
+            <sc-if value="{{page.isRules}}" hint-placeholder-val="{{false}}">
+              <p class="lead" style="margin:4px 0 14px">参加约定 <span class="mono">{{about.rulesVersion}}</span> · 三类十八条。只有源码里逐字给出的条目有正文，其余只列标题。</p>
+              <sc-for list="{{rules.groups}}" as="g" hint-placeholder-count="3">
+                <div class="rulesec"><h4>{{g.name}}</h4><div class="ln">{{g.line}}</div><ol><sc-for list="{{g.items}}" as="r" hint-placeholder-count="6"><li class="{{r.cls}}"><span class="n">{{r.n}}</span><b>{{r.title}}</b>{{r.body}}</li></sc-for></ol></div>
+              </sc-for>
+              <p class="foot2">{{about.policyNote}}</p>
+            </sc-if>
+
+            <sc-if value="{{page.isSeamReport}}" hint-placeholder-val="{{false}}">
+              <sc-if value="{{sr.done}}" hint-placeholder-val="{{false}}">
+                <div class="receipt"><b>JU · 举报回执</b>{{sr.doneTitle}}<br>受理编号 <span class="mono">{{sr.doneId}}</span> · {{sr.doneStatus}}<br><span class="inert">可在“设置 → 帮助与反馈”查询进度。</span><button type="button" class="stk sm" data-act="open" data-rid="report-detail" onClick="{{sr.viewProgress}}">查看进度</button></div>
+                <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="back" onClick="{{goBack}}">回到我的局</button></div>
+              </sc-if>
+              <sc-if value="{{sr.form}}" hint-placeholder-val="{{true}}">
+                <p class="lead" style="margin:4px 0 8px">{{sr.title}} · {{sr.when}} · 事实陈述，不评分、不自动处罚。</p>
+                <div class="gh" style="margin:8px 0 4px">谁</div><div class="chips"><sc-for list="{{sr.who}}" as="w" hint-placeholder-count="2"><button type="button" class="chip {{w.on}}" onClick="{{w.toggle}}"><span class="snap {{w.on}}" style="--sc:#f08868"><span class="ring"></span><span class="dome"></span></span>{{w.name}}</button></sc-for></div><span class="e">{{sr.whoErr}}</span>
+                <div class="fld {{sr.errCls}}"><label for="sc03-sr">说说发生了什么（至少 4 字）</label><textarea id="sc03-sr" data-field="text" value="{{sr.text}}" onInput="{{sr.setText}}" placeholder="说说时间、地点和发生的事"></textarea><span class="e">{{sr.err}}</span></div>
+                <div class="mats"><sc-for list="{{sr.mats}}" as="m" hint-placeholder-count="1"><span class="mat">▣ {{m.name}}<button type="button" data-act="remove-material" onClick="{{m.remove}}" aria-label="移除附件">×</button></span></sc-for><button type="button" class="chip" data-act="add-material" onClick="{{sr.addMat}}">＋ 加截图</button><span class="note" style="margin:0">可不加</span></div>
+                <sc-if value="{{sr.fail}}" hint-placeholder-val="{{false}}"><div class="alert">{{sr.failMsg}}</div></sc-if>
+                <div class="row2" style="margin:10px 0 0"><button type="button" class="stk wht" data-act="cancel" onClick="{{goBack}}">取消</button><button type="button" class="stk" data-act="save" onClick="{{sr.submit}}" disabled="{{sr.saving}}"><sc-if value="{{sr.saving}}" hint-placeholder-val="{{false}}"><span class="busy"></span></sc-if>{{sr.cta}}</button></div>
+              </sc-if>
+            </sc-if>
+
+          </div></div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{sys.on}}" hint-placeholder-val="{{false}}"><div class="over sc03-over"></div><div class="sys sc03-over"><b>“JU”想给你发送通知</b><p>通知可能包括邀请、预留到期前提醒和活动变化。等待系统回答…（本地演示：回答来自评审面板预设）</p><div class="btns"><span>不允许</span><span>允许</span></div></div></sc-if>
+      <sc-if value="{{confirm.on}}" hint-placeholder-val="{{false}}">
+        <div class="over sc03-over" onClick="{{confirm.keep}}"></div>
+        <div class="cslip sc03-over"><div class="ct">{{confirm.title}}</div><div class="cb">{{confirm.body}}</div>
+          <div class="row2"><button type="button" class="stk wht" data-act="keep-editing" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button><button type="button" class="stk {{confirm.dangerCls}}" data-act="{{confirm.discardAct}}" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button></div>
+        </div>
+      </sc-if>
+
+      <div class="tray">
+        <button type="button" class="{{nav.findOn}}" data-act="seam-feed" onClick="{{nav.find}}">找局</button>
+        <button type="button" class="inert" data-act="nav-create" onClick="{{nav.create}}" title="开局流程不在本离线演示中">开局</button>
+        <button type="button" class="{{nav.mineOn}}" data-act="seam-mine" onClick="{{nav.mine}}">我的局</button>
+        <button type="button" class="{{nav.settingsOn}}" data-act="seam-settings" onClick="{{nav.settings}}">设置</button>
+      </div>
+      <sc-if value="{{undo.on}}" hint-placeholder-val="{{false}}"><div class="undo sc03-over">{{undo.text}}<button type="button" data-act="undo" onClick="{{undo.restore}}">放回</button></div></sc-if>
+      <sc-if value="{{toast.on}}" hint-placeholder-val="{{false}}"><div class="tst">{{toast.text}}<sc-if value="{{toast.sel}}" hint-placeholder-val="{{false}}"><span class="sel">{{toast.sel}}</span></sc-if></div></sc-if>
+    </div>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
