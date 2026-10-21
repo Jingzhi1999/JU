@@ -9,8 +9,9 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-12 04:43 UTC（容器时钟为 UTC；用户时区未知） |
-| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `6013a1e`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
+| **新阶段（2026-10-21 起）** | 用户追加任务：JU「设置」模块十套全新方案（R2）。该阶段的唯一主记录是 `JU-SETTINGS-R2-PROJECT-RECORD.md`（仓库根）；本文件只记录「我的局」十套（C01–C10，保持原状、等待用户审阅）。两者互不覆盖。 |
+| 最后更新 | 2026-10-21 23:56 UTC（容器时钟为 UTC；用户时区未知） |
+| 当前有效版本 | git 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `b0766d7`（远端 origin 同名分支；见 §6 的提交列表与未提交项） |
 | 工程目录 | `/home/user/JU`（云容器内的仓库克隆；容器是临时的，**只有已 push 的内容可迁移**） |
 | 交付入口 1 | Design 画布（claude.ai Artifact）：https://claude.ai/artifact/D36UTTJnXUnfpN5praq1Av — **版本 7（2026-10-12 03:xx UTC）**：入口画板 + 十套画板，内容 = 提交 `6013a1e` 之后的源文件（修复轮 + 定向收尾 + 主负责人定时器修复，含 C08 复制修复）。版本 6 标签「After fix round and final verification」，版本 7 标签「C08 repeat-copy fix」 |
 | 交付入口 2 | 独立评审画布 `JU-My-Ju-Fable51-10-Concepts.html`（仓库根；由 `node src/build.js` 生成；当前只含已完成的方案源文件：C00.dc.html、C01.dc.html、C02.dc.html、C03.dc.html、C04.dc.html、C05.dc.html、C06.dc.html、C07.dc.html、C08.dc.html、C09.dc.html、C10.dc.html） |
@@ -335,8 +336,12 @@ tools/capture.cjs | coverage.cjs | workflow-build-concepts.js | test/ | record/
 ```
 
 ### 5.2 分支、提交与未提交
-- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `6013a1e`。最近提交：
+- 分支 `claude/eager-brahmagupta-ct0owo`，HEAD `b0766d7`。最近提交：
 ```
+b0766d7 2026-10-21 23:54:53 +0000 Settings R2: function-state map, rules check, limits, verification skeleton, lead sheet tool
+14b9b8e 2026-10-21 23:51:15 +0000 Settings R2: ten art-direction propositions with six-dimension matrix, builder brief (two-stage), concept metadata
+5fc95d0 2026-10-21 23:45:59 +0000 Settings R2: baseline observations of the rejected ten (real screenshots + same-state sheets), R2 core (advancing clock, system reduced-motion, size presets, keyboard sim), tools, shell with anonymised/grayscale compare, contract, pipeline sample
+61cb4f0 2026-10-12 04:43:31 +0000 C08 repeat-copy fix; copy regression test; canvas v7; final record state (all workflows done, awaiting user review)
 6013a1e 2026-10-12 04:40:02 +0000 Keyed real-time timers (holdKey/cancelKey) fix re-delete undo and repeat-copy across seven concepts; regression tests; final coverage matrix 10×50/50; motion-spec appendix regenerated
 e7839a3 2026-10-12 04:27:53 +0000 Final targeted pass: real-time windows on hold() across all ten, C04 print flash and C06 title truncation fixed (final.md / final-verify.md)
 ca0ccdd 2026-10-12 02:06:49 +0000 Checkpoint: in-progress final targeted pass (sources and evidence so far)
@@ -353,53 +358,10 @@ f7f9518 2026-10-11 20:04:24 +0000 Review rounds 1–2 for all ten concepts with 
 ad9a5b7 2026-10-11 05:32:26 +0000 WIP: partial C01 fix (roll head-first, sticky tabs, dead countdown), ten-concept coverage matrix, sheet tiling fix
 0ad3cae 2026-10-11 05:20:11 +0000 Evidence in progress: reviewer captures and coverage matrix snapshots
 03a7a14 2026-10-11 05:19:51 +0000 Generic standalone smoke test (ten concepts, compare, appendix)
-eba174d 2026-10-11 05:18:20 +0000 Ten-concept standalone build, canvas publish v4, lead first-screen observations, motion-spec appendix
-f9305e0 2026-10-11 05:14:29 +0000 Concepts C02 C03 C05–C10 from the build workflow, reference mapping, motion specs, C01/C04 round-1 reviews
-e92e5e8 2026-10-11 00:34:00 +0000 Record: pilots published to canvas; lead observations of print/attendance/draft flows
-bc6985f 2026-10-11 00:33:11 +0000 Record lead observations of pilot tear/cancel sequences; add limits appendix and appendix generators
 ```
 - 生成本文时的工作区状态（`git status --short`）：
 ```
-M JU-My-Ju-Fable51-10-Concepts.html
- M concepts/project/C08.dc.html
- M concepts/src/C08.dc.html
- M evidence/C08/coverage-matrix/b-drafts.png
- M evidence/C08/coverage-matrix/b-empty-h.png
- M evidence/C08/coverage-matrix/b-empty.png
- M evidence/C08/coverage-matrix/b-long-h.png
- M evidence/C08/coverage-matrix/b-long.png
- M evidence/C08/coverage-matrix/b-single-h.png
- M evidence/C08/coverage-matrix/b-single.png
- M evidence/C08/coverage-matrix/h-draft.png
- M evidence/C08/coverage-matrix/h-drafts-many.png
- M evidence/C08/coverage-matrix/h-drafts.png
- M evidence/C08/coverage-matrix/h-history-many.png
- M evidence/C08/coverage-matrix/h-history.png
- M evidence/C08/coverage-matrix/h-home.png
- M evidence/C08/coverage-matrix/h-m-attendance.png
- M evidence/C08/coverage-matrix/h-m-cancel.png
- M evidence/C08/coverage-matrix/h-m-cancelled.png
- M evidence/C08/coverage-matrix/h-m-card.png
- M evidence/C08/coverage-matrix/h-m-contact.png
- M evidence/C08/coverage-matrix/h-m-end.png
- M evidence/C08/coverage-matrix/h-m-leaves.png
- M evidence/C08/coverage-matrix/h-m-members.png
- M evidence/C08/coverage-matrix/h-m-replies.png
- M evidence/C08/coverage-matrix/h-m-reschedule.png
- M evidence/C08/coverage-matrix/h-m-review.png
- M evidence/C08/coverage-matrix/h-m-waitlist.png
- M evidence/C08/coverage-matrix/h-pending.png
- M evidence/C08/coverage-matrix/j-d-absent.png
- M evidence/C08/coverage-matrix/j-d-cancelled.png
- M evidence/C08/coverage-matrix/j-d-contact.png
- M evidence/C08/coverage-matrix/j-d-declined.png
- M evidence/C08/coverage-matrix/j-d-ended.png
- M evidence/C08/coverage-matrix/j-d-exited.png
- M evidence/C08/coverage-matrix/j-d-expired.png
- M evidence/C08/coverage-matrix/j-d-gathering.png
- M evidence/C08/coverage-matrix/j-d-going.png
- M evidence/C08/coverage-matrix/j-d-invited.png
- M evidence/C08/coverage-matrix/j-d-invitedq.png
+M tools/record/body.md
 ```
 - 备份：除 origin 远端外无其他备份；容器临时目录（`/tmp/claude-0/.../scratchpad`）中的研究原图、私有构建、工作流日志不可迁移。
 - 证据入库策略（2026-10-11 19:4x UTC 起）：评审 / 修复 / 验证目录中的原始逐帧 `fNN.png` 不入库（`.gitignore`），只入库拼图 `sheet.png`、各状态截图、`log.json` 与报告；新入库的 PNG 经 `tools/shrink-sheets.py` 压成 256 色调色板（宽 ≤1400px），文件名不变。原始逐帧仍在容器 `evidence/` 下，容器回收后丢失。私有构建 `.build/` 不入库（可用 `JU_STANDALONE=… node src/build.js` 重建）。
