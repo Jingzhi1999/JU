@@ -122,7 +122,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     // (j) drafts: delete → undo (original slot)
     await click(p, '[data-surface="manage"] [data-act="back"]'); await settled(p); await click(p, '[data-section-tab="drafts"]'); await settled(p);
     const d0 = await inst(p, `return inst.ctlVals().hosted.drafts.map(function(x){return x.id}).join(',')`);
-    await click(p, '[data-act="delete"]'); await p.waitForTimeout(80); ok('deleted → ghost collapsing + undo bar', (await inst(p, `var h = inst.ctlVals().hosted; return h.undo.on && h.drafts[0] && h.drafts[0].ghost && inst.state.data.drafts.length === 0`)) === true);
+    await click(p, '[data-act="delete"]', { after: 20 }); ok('deleted → ghost collapsing + undo bar', (await inst(p, `var h = inst.ctlVals().hosted; return h.undo.on && h.drafts[0] && h.drafts[0].ghost && inst.state.data.drafts.length === 0`)) === true);
     await p.waitForTimeout(400); ok('ghost gone, empty state while undo is open', (await inst(p, `var h = inst.ctlVals().hosted; return h.drafts.length === 0 && h.empty.on && h.undo.on`)) === true);
     await click(p, '[data-act="undo"]'); await p.waitForTimeout(80); ok('undo restores the draft in its slot', (await inst(p, `return inst.ctlVals().hosted.drafts.map(function(x){return x.id}).join(',')`)) === d0 && (await inst(p, `return inst.ctlVals().hosted.undo.on`)) === false);
   });

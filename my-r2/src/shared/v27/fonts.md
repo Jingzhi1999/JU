@@ -21,7 +21,7 @@ body{font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased;text-r
 | 非吸顶标题（结果页、表单页） | var(--ju-font-ui) | 30px / 500 / 1.18 / .02em / #14161F | screenTitleStyle L2527；`.ju-result-title` L245；`.ju-root-sheet h1` L248 |
 | 辅助行（时间·地点） | var(--ju-font-ui) | 14px / 400 / 1.5 / 0 / #535b70 | meta21() L4215；s03b/s09 内联 L845/L1417 |
 | 进度说明行 | var(--ju-font-ui) | 14px / 1.5；左侧 #4A5AD6，右侧 rgba(20,22,31,.72) | L586、L1028、L1157 |
-| 主要 CTA 文案 | 继承 var(--ju-font-ui) | 14.5px / 500 / .06em / #FFFFFF（button 版 15px） | ctaTextStyle L2518；L4317 |
+| 主要 CTA 文案 | var(--ju-font-ui) | 实测 15px / 500 / 字距 normal / #FFFFFF（V27:4317 的 ctaTextStyle 覆盖 V27:2518 的 14.5px/.06em） | L4317（覆盖 L2518） |
 | 弱动作（去不了了 / 撤回） | var(--ju-font-ui) | 14px / 500 / #535969 | weak L4314 |
 | 危险动作（确认退出） | var(--ju-font-ui) | 13.5px / 500 / .04em / #C0392B | q5QuitStyle L3366-3369 |
 | 名单行姓名 | var(--ju-font-ui) | 15px / 500 / .02em / #14161F | L628、L1074 |

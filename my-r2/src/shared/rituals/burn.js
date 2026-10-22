@@ -437,7 +437,7 @@
     if (ash) { const t = ash.querySelector('[data-slot="ashTitle"]'), s = ash.querySelector('[data-slot="ashSub"]'), c = ash.querySelector('[data-slot="ashSec"]'); if (t && data.ashTitle) t.textContent = data.ashTitle; if (s && data.ashSub) s.textContent = data.ashSub; if (c && data.ashSec) c.textContent = data.ashSec; delete ash.dataset.shown; }
     // 撕票 rig 先停（startBurn 第 3802 行）
     const rigHost = m.paper.querySelector('[data-tear]'); if (rigHost && rigHost.__jurig) rigHost.__jurig.setEnabled(false);
-    // 已撕的票：空副券宿主按 s10 规则收成 0 再点火（否则引擎的内联 clip-path 会盖掉影子外壳的 inset 让位，露出 84px 空白纸影）
+    // 已撕的票：空副券宿主保持收起（V27 torn 态 rig height 0；这里再保险一次，避免引擎的内联 clip-path 让影子外壳露出空白纸影）
     if (rigHost && stage.dataset.state === 'torn') { rigHost.__juBurnHidden = rigHost.style.display; rigHost.style.display = 'none'; }
     // burnMount（第 3777-3780 行）
     Array.prototype.slice.call(m.host.querySelectorAll('canvas')).forEach(c => c.remove());

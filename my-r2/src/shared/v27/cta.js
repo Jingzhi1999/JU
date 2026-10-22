@@ -3,7 +3,7 @@
  * 主要 CTA（冷蓝光感药丸）的真实构造：V27 里它是 JS 生成的内联样式对象 blueCta(on)，没有 class、没有伪元素、没有 SVG、没有 filter。
  * 结构（HTML）：<div role="button" style="{{blueCtaOn}}" style-active="transform:scale(.958)">
  *                 <span style="{{ctaGlossStyle}}"></span><span style="{{ctaTextStyle}}">文案</span></div>
- *   —— 第一个 span 是高光层（ctaGlossStyle），第二个 span 是文字层（ctaTextStyle）。button 版本见 L809 / L1410（.ju-result-cta27 / .ju-action-native21）。
+ *   —— 第一个 span 是高光层（ctaGlossStyle），第二个 span 是文字层（ctaTextStyle；注意 V27:2518 的 14.5px/.06em 在 renderVals 合并时被 V27:4317 的 {fontFamily:var(--ju-font-ui),fontSize:15,fontWeight:500} 覆盖，实测 15px）。button 版本见 L809 / L1410（.ju-result-cta27 / .ju-action-native21）。
  * 按压：style-active 由 support.js 编译成 .scpN:active{transform:scale(.958)!important}（support.js collectProps L428-L430、createPseudoSheet L1568-L1589），
  *   配合 blueCta 的 transition: transform .48s cubic-bezier(.18,1.5,.36,1) —— 回弹过冲曲线。
  * 禁用：blueCta(false) 返回灰色扁平态（并设 cursor:not-allowed），aria-disabled 由各屏的 busy 值决定（如 s05Busy）。

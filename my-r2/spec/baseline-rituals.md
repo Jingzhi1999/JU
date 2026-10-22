@@ -36,7 +36,7 @@
 | 部件 | 尺寸 / 位置 | 来源 |
 |---|---|---|
 | 手机内容区 | padding `66px 22px 128px`；吸顶头部 145 px + margin-bottom 13 px → 舞台顶 y = 231（相对手机），纸顶 y = 315 | 第 1248–1258 行、`measurePaper21` |
-| 舞台 `[data-print-stage]` | 332 × `--ju-paper-height`：未撕 493 = 84(top) + 351(纸) + 58；已撕（主线 s07）455 = 84 + 351 + 20；s10 改期票 top 24、已撕 312 = 24 + 268 + 20 | 第 3602 行 |
+| 舞台 `[data-print-stage]` | 332 × `--ju-paper-height`：未撕 493 = 84(top) + 351(纸) + 58；已撕 371 = 84 + 267(副券宿主收 0、margin −1) + 20（V27 实测）；s10 改期票 top 24、已撕 311 = 24 + 267 + 20 | 第 3602 行 |
 | 纸 `[data-paper]` | 258 宽，`left:50%; margin-left:-129px; top:84px`（s10 24px；手机高 < 720 时 24px）；起点 `translateY(-452px)` 透明 | 第 3448 行 |
 | 主票 `.ju-ticket-face` | 258 × **268**：padding 18；品牌 `700 13px/1.4 Space Mono` 字距 .12em（18.19 高）；局名 `600 20px/1.35 Noto Sans SC`（27 高，margin 12 0 16）；时间行 `700 28px/1.1 Archivo` 字距 −.02em，padding-bottom 14（44.8 高）；地点 / 集合 / 局主 三行 grid `40px 1fr`，border-top 1px #cdd1de，padding-top 8，margin-top 8（各 30 高，间距 38）；底色 #edeff7；圆角 14 14 0 0 | 第 261–263 行 |
 | 「原定」行 `.ju-ticket-previous` | 14px #555e73 line-through，margin 0 0 10（改期票专有） | 第 263 行 |
@@ -47,7 +47,7 @@
 | s12 取消票章 `p12Stamp` | top 118 right −14，边 rgba(26,29,42,.5)，11px .16em，`juStamp .55s ease .4s both` | 第 4003 行 |
 | 燃烧宿主 `[data-burn]` | 258 × 0，left 0 top 0，z 9 | 第 3948 行 |
 
-**三态：** 未撕 ready（纸 + 副券 + 抓手圆点）→ 已撕 torn（副券画布 display:none；主线保留 84 px 空宿主，s10 收成 0）→ 作废 void（纸被 clip-path 吃完、`opacity:0` / body display:none；终态文案落定）。复用件：`ticket.css`（`data-state="idle|printing|ready|torn|burning|void"`）、`ticket.html`（四张静态样张）。
+**三态：** 未撕 ready（纸 + 副券 + 抓手圆点）→ 已撕 torn（副券画布 display:none，宿主收成 0 并 visibility hidden，影子不再让位）→ 作废 void（纸被 clip-path 吃完、`opacity:0` / body display:none；终态文案落定）。复用件：`ticket.css`（`data-state="idle|printing|ready|torn|burning|void"`）、`ticket.html`（四张静态样张）。
 
 **文字槽位**（V27 模板变量 → `data-slot`）：`eventTitle→title`、`eventTime→time`、`eventMd→md`（V27 只放 **MM.DD**，不含星期；星期在页头 eventLine 和「原定 FRI 12.18 19:30」里）、`eventLoc→loc`、`eventMeeting→meeting`（空时「待局主确认」；改期票为「19:50 门口」）、`eventHost→host`、`oldDate18 oldTime18→previous`、章文案 `mark`。
 
@@ -72,7 +72,7 @@
 - **键盘：** grab 可聚焦（启用时 tabindex 0，`aria-disabled` 同步），Enter / Space → `auto=true, rate=2.8` /s（≈357 ms 撕完）。**原件已有键盘等价物**；复用件再加 `JURitual.tear.trigger()`，走同一 auto 路径，不改视觉。
 - **断开与坠落：** `detach` 时先回调 `onDetach()`（**写入点**，见 §10），返回 false 则 `reset()` + 重新启用；成功则 `done`，末节带角动量下坠；坠落 **1080 ms**：0–620 ms 不透明，620→1000 ms 线性淡出，1080 ms 画布 `display:none` → `onDone()`。
 - **抓手：** 21 px 白色圆点（径向 #FDFDFF→#D7DBE8，影 0 1.5px 5px rgba(18,22,48,.22)），落在撕裂前沿；提示 `juKnobHint 3.4s linear infinite`（0→104 px 右移渐隐）；随 p 淡出 `max(0, 1 − 1.05p)`，拖动中隐藏。
-- **撕后：** 舞台高过渡 `height .5s cubic-bezier(.2,.9,.3,1)`：主线 493 → 455（保留 84 px 空宿主，见 `v27-tear-4-settled`），s10 → 312（宿主收 0、`visibility:hidden`）；影子 clip 同步。
+- **撕后：** 舞台高过渡 `height .5s cubic-bezier(.2,.9,.3,1)`：493 → 371（宿主收 0、`visibility:hidden`，`--ju-shadow-stub25` 0；`v27-tear-4-settled` 里主票下方的空隙是尚未显示、但已占位的联系层）；s10：311。
 - **减少动态：** 自动撕直接 `detach`（无过程），回位直接 p=0，坠落按 1081 ms 终态立即隐藏，圆点提示动画停止。
 - **错误态：** 写入失败 → `.ju-tear-error24`「未能保存，请重新撕下副券」（改期票：「新时间未保存，请重新撕下副券」），副券回位、可再撕。
 - **证据：** `v27-tear-1…4`（鼠标拖到 p≈.28 再过半松手）、`demo-tear-1…4`、`demo-reduced-2-tear-endstate`。
@@ -89,9 +89,9 @@
 
 - **引擎：** `JUNativeBurn`（version `25.0-shadow-handoff`）。真实 DOM 票面从不被采样或替换：每帧改 `surface.style.clipPath = path(evenodd, 外框 + 到达时间场的等时线)`，影子外壳同步同一 clip；画布（四周 **pad 74 px**，即 406 × (H+148)）只画炭化带、热边、卷曲碎片、落灰。章 `[data-raster=stamp]` 的外轮廓并入纸的蒙版，一起被烧。
 - **三种到达场：** A 右下角起燃（end 7.2 s / 场时长 9.3 s / curls 58 / ash 78 / fold 8.5 / char 1；V27 页面未用）；**B 多点烧穿**（点 .32,.31 / .78,.65 / .13,.92；end 8.2 / 10.6 / 118 / 136 / 17 / 1.5）= **改期拒绝「去不了了」**（s11，`startBurn`）；**C 左侧横向推进**（end 9.3 / 12.6 / 72 / 126 / 10 / 1.05）= **局主取消**（s12，进屏即点火）与 **主动退出**（s06 `exitConfirmed22`）。
-- **时长：** V27 传 `duration: 6.6`，`playbackDuration = min(6.6, 7.6) = 6.6 s`，`rate = 场时长 / 6.6`；主体烧尽且无大碎片后 .45 s 内画布 `destination-out` 整体淡出 → `onDone`（实测 C 约 5.3 s 收尾，B 约 5.6 s；6.6 s 为上限）。炭化带 5 层描边 25c/17c/9c/4c/1.7c（ignite = smooth(.06,.72,t)），热边 #d43b0d 5.5 px + #ff5419 1.45 px（shadowBlur 5）+ 逐纤维 #ffb451 / #ff7726；卷曲碎片 `curlScale .48`；落灰重力 150（C 119）、落点 H + 14 + 18r。
+- **时长：** V27 传 `duration: 6.6`，`playbackDuration = min(6.6, 7.6) = 6.6 s`，`rate = 场时长 / 6.6`；主体烧尽且无大碎片后 .45 s 内画布 `destination-out` 整体淡出 → `onDone`。伪时钟实测（258 × 351 票面，duration 6.6）：B 主体烧尽 4.27 s、结束 4.74 s；C 4.40 s / 4.86 s（与 V27 s12 原页 metrics 一致：mainGone 4.40、resultReady 4.864）；A 4.70 s / 5.17 s；6.6 s 是上限不是实际长度。炭化带 5 层描边 25c/17c/9c/4c/1.7c（ignite = smooth(.06,.72,t)），热边 #d43b0d 5.5 px + #ff5419 1.45 px（shadowBlur 5）+ 逐纤维 #ffb451 / #ff7726；卷曲碎片 `curlScale .48`；落灰重力 150（C 119）、落点 H + 14 + 18r。
 - **终态（ash）：** 纸 `display:none` / `opacity:0`；`ashWrap`（left/right 22，top 36%）三段 `juSettle`（标题 26px 500 `.58s .06s`、说明 12.5px/1.95 300 max-width 250 `.58s .21s`、次级 `.55s .58s`）；文案 s11「已退出改期活动 / 改期后退出，不影响成局信用。/ 再找个局 / 知道了」，s12「局主取消了（页头「活动已取消」）/ 不计为未出席，也不影响成局信用。/ 再找一局」。
-- **已撕的票再烧（s06 主动退出）：** 原件保留 84 px 空副券宿主，而引擎的内联 clip-path 会盖掉影子外壳的 `inset` 让位，空宿主区会露出一块纸影；复用件 `burn.js` 在 torn 态先把空宿主按 s10 规则收成 0 再点火（引擎未改）。
+- **已撕的票再烧（s06 主动退出）：** torn 态副券宿主已收 0，纸面 = 主票 267 px；复用件 `burn.js` 点火前再确认宿主收起（引擎的内联 clip-path 会盖掉影子外壳的 `inset` 让位，若宿主未收会露出一块纸影）。
 - **可见性：** IntersectionObserver + visibilitychange + scroll / resize，不可见即暂停，回来接着烧，不重头；`prepareBurnLayout26` 在手机高 < 720 时先把票挪进安全区（320 ms，cubic-bezier(.16,1,.3,1)）再点火。
 - **减少动态：** **V27 源码未接系统设置**（任务书 §10 已指出），复用件补：`engine.seek(duration)` 直接到终态再落定文案（不改曲线）。
 - **证据：** `v27-burnB-0…4`（含「去不了了」确认 sheet）、`v27-burnC-1…4`、`demo-burnC-1…4`、`demo-burnB-1…4`、`demo-reduced-3-burn-endstate`；`burn.svg` 为原引擎 `seek(t)` 导出的火线等时线（B / C / A，0.5–6.6 s）。
@@ -104,8 +104,8 @@
 |---|---|---|
 | 引擎 | `ju-tickets2.js`（JuTickets） | `ju-tickets-host.js`（JuTicketsHost，“byte-identical V27 源 + 宿主适配”） |
 | 被盖的物件 | 本场 **局卡**（WebGL mesh 2.4 × 3.0 × .018，36×48 面片，圆角 .075；贴图 720×900 `JuFilm.paintCard`，invite 版式），**不是 DOM 票根** | 同一局卡 + 参加者姓名 / 票号叠印（`attendanceArt`，app.js 704 行） |
-| 画面尺寸 | 卡宽 `min(舞台宽×.66, 舞台高×.52, 250)`；08 屏舞台 372 宽（内容区 332 + 两侧 −20 margin）→ **245.5 px**，高 306.9（demo 实测 diag 相同）；盖章姿态 `rx −26°`（桌面俯视），归档后站回翻阅姿态（屏幕足迹约 248 × 311） | 桌面 `.attendance-desk` 350 px（手机高 ≤ 760 时 290）；quick 回退图宽 `min(w×.76, h×.70, 275)` |
-| 章印 | `stampAnchor('invite') = {x:.78, y:.82, r:.13}` → 直径 ≈ **64 px**（卡宽 26%），旋转 −11°，位于卡右下 | `{x:.78, y:.62, r:.11}` → 直径 ≈ 54 px，位置上移（给姓名条让位） |
+| 画面尺寸 | 卡宽 `min(舞台宽×.66, 舞台高×.52, 250)`；08 屏舞台 372 宽（内容区 332 + 两侧 −20 margin）→ **245.5 px**，高 306.9（V27 原页 diag framing 与 demo 相同）；盖章姿态 `rx −26°`（桌面俯视），归档后站回翻阅姿态（屏幕足迹约 248 × 311） | 桌面 `.attendance-desk` 390 × 350 px（手机高 ≤ 760 时 290）→ 卡 **245.0 × 306.25**（R9 原页 diag）；quick 回退图宽 `min(w×.76, h×.70, 275)` |
+| 章印 | `stampAnchor('invite') = {x:.78, y:.82, r:.13}` → 局部 MARK {x:.672, y:−.96, r:.312} → 直径 ≈ **64 px**（卡宽 26%），旋转 −11°，位于卡右下 | `{x:.78, y:.62, r:.11}` → MARK {x:.672, y:−.36, r:.264}（R9 diag）→ 直径 ≈ 54 px，位置上移到卡中下（给姓名条让位） |
 | 章体 | 程序几何：橡胶垫（r = 章半径 + .02）+ 木块（.05→.22）+ 车木把手（到 1.25），完全不透明，落下时真实遮住票面；接触软影 | 同 |
 | 时间线 | enter .18→1.05 s · press →1.34 · ink **1.40→1.52**（墨迹 alpha）· lift →2.20 · exit →2.85 · end **2.95 s**；随后 settle 0–.45 + 历史显现（INTRO **1.9 s**）→ browse（1.1 s 后一次 .9 s 的掀角提示） | quick：enter 0→.12 · press →.21 · ink .218→.26 · lift →.40 · exit →.54 · end **.56 s**，退出时章淡出；无 intro；完成 `onComplete` 后由页面做人与人的交接 |
 | 墨色 / 文字 | present 深绿 rgb(45,106,75)「出席」，absent 印泥红 rgb(178,58,44)「未出席」；环文 `JU / NYC` · `WE WERE HERE` · 年份；`JuStamp.make` 600×600 噪点印泥 | 同（R9 `ju-stamp.js` 逐字节相同） |
@@ -142,7 +142,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 
 | 仪式 | 需要的空间 |
 |---|---|
-| 票根本体 | 宽 258，左右各留 ≥ 44（内容区 346 内居中）；章右溢 20 px；纸顶 84 px（出纸口）；纸底 58 px（未撕）/ 20 px（已撕） |
+| 票根本体 | 宽 258，左右各留 ≥ 44（内容区 346 内居中）；章右溢 20 px；纸顶 84 px（出纸口）；纸底 58 px（未撕）/ 20 px（已撕，宿主已收 0） |
 | 打印 | 舞台两侧各 42 px（网格纹理 pad）；舞台内上方 452 px 行程被 `overflow:hidden` 裁掉，但舞台不能被压矮到纸高以下 |
 | 撕 | 副券两侧各 88 px、下方 220 px 的垂落空间（画布可被滚动容器横向裁切，但纵向 220 px 内不能有遮挡的文字 / 按钮，否则副券落在文字上）；抓手层上伸 18 px |
 | 联系层 | 舞台下 14 px 起，行高 ≥ 84；主按钮在页脚（48 × min(100%,280)） |
@@ -189,7 +189,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 ## 13 · 证据与捕获方法
 
 - 原页：Playwright 1.56 + 本机 Chromium（SwiftShader WebGL2），`page.clock.install()` 伪时钟让 rAF / performance.now 按虚拟时间逐帧推进（页面在无 GPU 环境只有 1–2 fps，墙钟截图会漂移）；V27 走评审视图、`data-review-size=390x844`（整机 1:1）、`JU_APP.resetScreen19(屏)` 建 fixture，其余屏 `display:none`（否则 15 台手机的 WebGL 上下文把 08 散场挤成平面回退）；R9 用 `JUHost.fixture('ended-six')` + `JU_CREATE.go('s09a')`。CSS 过渡 / Web Animations 不受伪时钟控制，截图里它们按真实时间走（已在文件名标注虚拟时间）。
-- 复用件：`demo.html` 同法逐帧截取（`demo-*`），每个仪式 ≥ 4 帧（开始 / 过程 / 落点 / 稳定）+ 减少动态终态 4 帧；`ticket-states-static.png` 为 `ticket.html` 四张静态样张（258 宽；未撕 351 高 / 已撕 267 / 改期 374）。
+- 复用件：`demo.html` 同法逐帧截取（`demo-*`），每个仪式 ≥ 4 帧（开始 / 过程 / 落点 / 稳定）+ 减少动态终态 4 帧；`ticket-states-static.png` 为 `ticket.html` 四张静态样张（258 宽；未撕 351 高 / 已撕 267 / 改期 374）。原页 `v27-capture-notes.json` 记录了撕票松手时 p = .558、torn 态舞台 371 / rig 0、复制成功文案等。
 - 对照：同名仪式的 `v27-*` 与 `demo-*` 并列；票根 258 宽、主票 268 高、副券 84 高、散场局卡 245.5 宽、章 64 px 等数值一致即未缩小、未走样。
 
 ## 14 · 限制 / 待办
