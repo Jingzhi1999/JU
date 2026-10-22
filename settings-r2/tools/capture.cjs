@@ -3,7 +3,7 @@
 // env JU_STANDALONE=<path> targets a private build (see src/build.js). Tips: screenshots cost ~150ms each, so use {"speed":0.5} rather than tiny "every";
 // clip-path'd drag targets only receive pointer events inside their polygon → use "at":[dx,dy] from the element centre; prefer overlay-scoped
 // selectors (e.g. ".c03-over .c03-btn") because querySelector returns the FIRST match, which may be a dimmed list element under an overlay.
-// actions: [{"click":"css inside shadow root"},{"wait":400},{"shots":5,"every":250},{"jump":"state-key"},{"drag":{"from":"css","to":[dx,dy],"steps":8,"shots":true}},{"eval":"js using root, inst"},{"speed":0.5},{"shot":true},{"fontwait":true}]
+// actions: [{"click":"css inside shadow root"} (real pointer click at the element; add "js":true for a synthetic click),{"wait":400},{"shots":5,"every":250},{"jump":"state-key"},{"drag":{"from":"css","to":[dx,dy],"steps":8,"shots":true}},{"eval":"js using root, inst"},{"speed":0.5},{"shot":true},{"fontwait":true}]
 const { chromium } = require('/opt/node-tools/node_modules/playwright');
 const { execSync } = require('child_process'); const fs = require('fs'); const path = require('path');
 const [code, outdir, actionsJson] = process.argv.slice(2);
@@ -23,7 +23,25 @@ const opt = (k, d) => { const i = process.argv.indexOf('--' + k); return i >= 0 
   const inst = () => p.evaluate(c => { const m = Object.values(window.JUShell.mounts.stage).find(m => m.parsed && m.root.closest && true); return !!m; }, code);
   await shot();
   for (const a of actions) {
-    if (a.click) { const el = await root(a.click); const ok = await el.evaluate(e => { if (!e) return false; e.scrollIntoView({ block: 'nearest' }); e.click(); return true; }); if (!ok) errors.push('click target missing: ' + a.click); await p.waitForTimeout(a.after || 60); if (a.shot !== false) await shot(); }
+    if (a.click) {
+      /* a real pointer click: the controller's reveal() scrolls only the owning [data-scroller] (never scrollIntoView, which also
+         shifts clipped ancestors), then the mouse clicks the element's centre (at most 48px below its top) and hit-testing decides
+         what receives it, as for a person. If something else covers that point, the click is still sent and the log says so.
+         {"click": "...", "js": true} keeps the old synthetic el.click() for targets a person cannot hit directly (hidden file inputs). */
+      const r = await p.evaluate(([c, s, js]) => {
+        const h = document.querySelector('.stage-host[data-code="' + c + '"]'); const sr = h.shadowRoot; const e = sr.querySelector(s); if (!e) return null;
+        const m = window.JUShell.mounts.stage['stage:' + c + ':']; const inst = m && m.instance; if (inst && inst.reveal) inst.reveal(e);
+        if (js) { e.click(); return { js: true }; }
+        const b = e.getBoundingClientRect(); if (!b.width || !b.height) return { hidden: true };
+        const x = b.left + b.width / 2, y = b.top + Math.min(b.height / 2, 48); const hit = sr.elementFromPoint(x, y);
+        const covered = !(hit && (hit === e || e.contains(hit) || hit.contains(e)));
+        return { x, y, covered, hit: hit ? hit.tagName.toLowerCase() + (typeof hit.className === 'string' && hit.className ? '.' + hit.className.trim().split(/\s+/).join('.') : '') : null };
+      }, [code, a.click, !!a.js]);
+      if (!r) errors.push('click target missing: ' + a.click);
+      else if (r.hidden) errors.push('click target has no box: ' + a.click);
+      else if (!r.js) { if (r.covered) errors.push('click target covered at its centre by ' + r.hit + ': ' + a.click + ' (pointer click sent anyway)'); await p.mouse.click(r.x, r.y); }
+      await p.waitForTimeout(a.after || 60); if (a.shot !== false) await shot();
+    }
     else if (a.wait) { await p.waitForTimeout(a.wait); if (a.shot) await shot(); }
     else if (a.shots) { for (let i = 0; i < a.shots; i++) { await p.waitForTimeout(a.every || 250); await shot(); } }
     else if (a.jump) { await p.evaluate(([c, k]) => { const m = window.JUShell.mounts.stage['stage:' + c + ':']; m.instance.jumpTo(k); }, [code, a.jump]); await p.waitForTimeout(a.after || 500); await shot(); }
