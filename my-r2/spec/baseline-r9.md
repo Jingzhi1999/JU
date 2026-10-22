@@ -167,7 +167,23 @@
 - 完成转场：`s09a-complete-arrival-early.png`（结果页出现后 ~150ms）与 `s09a-complete-arrival-settled.png` 已无差异，说明 0.42 s 的入场在截图前结束。
 
 ### D.3 逐帧（Playwright 假时钟推进 JS 计时器 / `performance.now` / rAF，Web Animations 仍走真实时间）
-【待补：motion2 帧清单】
+用 `page.clock` 按代码时序逐步推进后，`JU_LAST_STAMP.elapsedMs = 570`、handoff 在 +1136 ms 启动（= 576 + 560），与 D.1 的代码时序一致；这组帧表示的是**设计时序**而不是实机速度。`motion2.json` 保存了每帧的阶段、`stampT`、`ink`、按钮禁用状态与记录数。
+
+| 帧（假时钟） | 文件 | 画面 / 状态 |
+|---|---|---|
+| 触发前 | `s09a-stamp-seq-0000ms-ready.png` | `ready`；小面 第 01 位；`已记录 0 / 6`；按钮可用；`尚未记录` |
+| +16 ms | `s09a-stamp-seq-0016ms-stamping.png` | 点按同帧：记录已写入（recs 1）、`正在记录`、全部按钮禁用；章还在进入（`stampT` 10 ms） |
+| +150 ms | `s09a-stamp-seq-0150ms-stamping.png` | 章体压向票面（press 段，`ink 0`） |
+| +240 ms | `s09a-stamp-seq-0240ms-stamping.png` | 墨迹开始出现（`ink 0.38`，引擎阶段 `stamped`） |
+| +360 ms | `s09a-stamp-seq-0360ms-stamping.png` | 墨迹完整（`ink 1`），章体抬起 |
+| +470 ms | `s09a-stamp-seq-0470ms-stamping.png` | 章体退出 |
+| +580 ms | `s09a-stamp-seq-0580ms-hold.png` | `hold`：绿色 `出席` 章落定，按钮 `出席 · 已记录`，结果句 `已记录 · 出席`，计数 `1 / 6` |
+| +700 / +1000 ms | `s09a-stamp-seq-0700ms-hold.png`、`s09a-stamp-seq-1000ms-hold.png` | 停稳阅读期（560 ms），画面不变 |
+| +1150 ms | `s09a-stamp-seq-1150ms-handoff.png` | `handoff` 已触发；旧卡的飞出是 570 ms 的 Web Animation，走真实时间，在这张截图完成前已飞完（旧卡 opacity 0，新卡归位） |
+| +1270 ms | `s09a-stamp-seq-1270ms-ready.png` | `ready`：Momo 第 02 位，按钮恢复，`尚未记录` |
+| +1570 / +2170 / +3170 ms | `s09a-stamp-seq-1570ms-ready.png` 等 | 稳定态，无残影、无遗留动画 |
+
+飞出中间帧（第二次运行，小面 · 未出席）：在 handoff 触发的同一帧把桌面内的两条 570 ms Web Animation 暂停并定格——`s09a-stamp-seq-handoff-flight-120ms.png`（旧卡刚抬起、不透明）、`s09a-stamp-seq-handoff-flight-300ms.png`（旧卡右上飞出，opacity 0.76，带红章 `未出席`；下一张 Momo 的票卡已经落在桌面上）、`s09a-stamp-seq-handoff-flight-480ms.png`（旧卡 opacity 0.06，几乎离场）；恢复播放后 `s09a-stamp-seq-handoff-settled-next-ready.png`（Momo 就绪）。飞出期间标题下的身份块仍写着 `小面 · 第 01 位`、工具区显示 `未出席 · 已记录`，身份要到 `settle` 才换成下一位——也就是说"票卡先换、人名后换"。
 
 ### D.4 散场 / 归档序列
 - R9 没有燃烧、撕券、打印：`结束并归档本场` → 确认抽屉 → `H.archive()` → `go('s09b', true, {kind:'save'})`。归档墙在 `selectedEventId` 已设时 `skipIntro`，直接显示刚归档的票卡；只有本次会话第一次进入归档墙才播 1.9 s 的 V27 intro（`INTRO_DUR`）。取消后也没有票件作废动画，只是票面文字 `活动已取消`。
@@ -178,8 +194,8 @@
 按任务书 §03 诊断口径的六条逐一对照：① 物件世界挤占构图、JU 内容退成道具上的小内容；② 换材质 / 放大不等于成熟；③ 机关、编号、英文、盖印、厚边反复消耗资源；④ 仪式动作替代日常查看质感；⑤ 业务规则与旧表现决定混淆；⑥ 未实测不得写成已实测。R9 不是"未通过的十套"，但下列组织 / 布局决定同样没有获得认可：
 
 1. **总览首条大卡 + 其余压成列表**（`s00-host-multi.png`）：第一条被拆成两块表面（白卡 + 下移的日期块），其他局缩成文字行；"哪场要处理 / 哪次见面将至"的主次只靠排序位置（口径 ①②）。
-2. **吸顶 rail 与正文冲突**（`s00-host-multi-scrolled.png`、`s00-host-multi-bottom-past.png`、`s00-joined-injected-rows-bottom.png`）：滚动时大卡的 `3 份申请等你看 / 看看谁想来`、紧凑行 `摆烂咖啡两小时` 都画在 `我参加的 / 我发起的` rail 上面，正文没有被 rail 裁掉，外层标题又被裁成 `…的局`——这是实测看到的层级错误（口径 ⑥，已实测）。
-3. **标题收拢后的裁切留白**（`s06-manage-scrolled-header.png`）：短名单页滚动后标题进入工具行，正文顶部被 `clip-path` 裁掉但占位仍在，出现约 260px 空白（口径 ⑥，已实测）。
+2. **吸顶 rail 与正文冲突**（`s00-host-multi-scrolled.png`、`s00-host-multi-bottom-past.png`、`s00-joined-injected-rows-bottom.png`，并用滚轮真实滚动复核于 `s00-host-long-wheel-scrolled.png`：scrollTop 400 时 rail 位于 y 106–164，首条大卡的动作块位于 y 110–204，`elementFromPoint` 命中的是大卡按钮而不是 rail）：滚动时大卡的 `3 份申请等你看 / 看看谁想来`、紧凑行 `摆烂咖啡两小时` 都画在 `我参加的 / 我发起的` rail 上面，正文没有被 rail 裁掉，外层标题又被裁成 `…的局`——这是实测看到的层级错误（口径 ⑥，已实测）。
+3. **标题收拢后的裁切留白（存疑）**（`s06-manage-scrolled-header.png`）：这张是对短名单（`maxScroll = 0`）合成 scroll 事件得到的画面——标题收进工具行、正文顶部被 `clip-path` 裁掉但占位仍在，出现约 260px 空白。用滚轮在 12 人长名单上真实滚动（`s06-manage-long-wheel-scrolled.png`：scrollTop 400、clip 346px）时收拢与裁切正常。短页面的空白能否被真实手势触发未确认，只记录不下结论（口径 ⑥）。
 4. **"我的局"没有当前 / 历史 / 草稿分区，历史拆在三处**（s00 `之前的安排`、s09b `局主归档`、s06 `本场记录`），草稿根本不出现；参加者侧只有空态（口径 ⑤：这是 R9 的组织决定，不是业务事实）。
 5. **空态依赖范围外按钮**（`开一局` / `看看有什么局`），与 §09.D "空态和单项态仍有完整构图，不依靠范围外入口成立"相反。
 6. **返回键把"我的局"送回发现页**（`s00-back-lands-on-s01-discovery.png`）。
@@ -194,4 +210,135 @@
 15. **参加者侧是只读桩**：没有票根、撕票、联系层、候补、退出；本轮"我参加的"全部状态与动作没有 R9 前例可继承，只能继承 V27 / R3 的票根实现。
 
 ## 附录 · 截图清单（`/home/user/JU/my-r2/evidence/baseline/r9/`）
-【待补：最终清单】
+说明：`my-r2/evidence/.gitignore` 把 `baseline/**/*.png` 列为不入库，本目录为本机证据。
+
+| 文件 | 内容 |
+|---|---|
+| `s00-back-lands-on-s01-discovery.png` | 在 s00 按返回（栈空）→ 落到 s01 看见局（发现页，范围外） |
+| `s00-host-default.png` | 我的局 · 我发起的（默认样本 ended-six：已结束 · 待记录出席） |
+| `s00-host-empty-product.png` | 产品视图 · 我发起的空态（无任何活动） |
+| `s00-host-long-wheel-scrolled.png` | 我的局 · 长列表用滚轮真实滚动后（rail 与正文关系复核） |
+| `s00-host-multi-bottom-past.png` | 同上滚到底：`之前的安排`（已取消）与页底 找局 / 开一局 |
+| `s00-host-multi-scrolled.png` | 同上滚动 420px：标题收进工具行，大卡动作块压在角色 rail 上 |
+| `s00-host-multi.png` | 我的局 · 我发起的，多场并存（首条大卡 + 紧凑行） |
+| `s00-joined-empty-product.png` | 产品视图 `?view=product` · 我参加的空态 |
+| `s00-joined-empty.png` | 我的局 · 我参加的（R9 原样：永远空态） |
+| `s00-joined-injected-rows-bottom.png` | 同上滚到底：紧凑行与标题压在 rail 上；`之前的安排` |
+| `s00-joined-injected-rows.png` | 注入 7 条参加记录后的 我参加的（非 R9 自带数据） |
+| `s00-role-switch-mid.png` | 角色切换中间帧（lightSwitch 220ms） |
+| `s01-settings-background-sheet.png` | s01 主导航 `设置` → 背景选择抽屉（R9 的"设置"仅此） |
+| `s02-draft-form-blank.png` | s02 想开局 · 空白草稿 |
+| `s02-draft-form-limits-sample.png` | s02 想开局（R9 专项样本：合规上限草稿，范围外编辑器） |
+| `s05-published-cancelled.png` | s05 · 这局取消了（票面"活动已取消"，分享仍可用） |
+| `s05-published-ended.png` | s05 · 这局，留住了（已归档） |
+| `s05-published-open-future.png` | s05 · 未成局样本（3 份申请，等你看） |
+| `s05-published-share.png` | s05 发出去（导出与分享落点）· 这局，约好了 |
+| `s06-event-detail-sheet-fee.png` | 活动详情抽屉 · 费用 tab |
+| `s06-event-detail-sheet-join.png` | 活动详情抽屉 · 参与 tab（计划人数 含你共 N 人） |
+| `s06-event-detail-sheet-meet.png` | 活动详情抽屉 · 见面 tab（R9 的"完整局卡"） |
+| `s06-handled-sheet-open.png` | 已处理的申请 · 展开一条（已谢绝） |
+| `s06-handled-sheet.png` | 已处理的申请 抽屉 |
+| `s06-invite-name-flight-mid.png` | 点邀请后 250ms（抽屉已关，计数已更新） |
+| `s06-manage-cancelled.png` | 管理 · 这场已取消 · 原确认 6 |
+| `s06-manage-confirmed-after-response.png` | 侧栏 模拟下一位确认 后：已确认 7 |
+| `s06-manage-confirmed.png` | 管理 · 已确认 6 |
+| `s06-manage-ended-readonly.png` | 管理 · 本场记录（已归档只读） |
+| `s06-manage-ended-unrecorded-tools.png` | 同上 `安排 ˅` 展开 |
+| `s06-manage-ended-unrecorded.png` | 管理 · 已过原定时间 + 有结束证据但未记录（ended-six 默认） |
+| `s06-manage-invited-empty.png` | 管理 · 待确认 tab 空态 |
+| `s06-manage-invited.png` | 待确认 tab · 已留位，等本人确认 · 留位至 10/22 15:40 |
+| `s06-manage-long-wheel-back-top.png` | 同上滚回顶部 |
+| `s06-manage-long-wheel-scrolled.png` | 管理 · 12 人名单用滚轮真实滚动后（标题收拢复核） |
+| `s06-manage-no-applicants-confirmed.png` | 同上 · 已确认 tab 空态 `还在等本人点头` |
+| `s06-manage-no-applicants-invited.png` | 同上 · 待确认 tab 空态 |
+| `s06-manage-no-applicants.png` | 管理 · 无申请空态 `这场，等你邀约`（主 CTA 导出与分享） |
+| `s06-manage-pending-after-decline.png` | 谢绝一位后：待处理 1，页尾出现 已处理的申请 1 |
+| `s06-manage-pending-after-invite.png` | 邀请后：待处理 2 / 待确认 1，容量句更新 |
+| `s06-manage-pending-long-intro.png` | 长自述样本 · 待处理（58 字截断） |
+| `s06-manage-pending.png` | 管理 · 谁想来 · 待处理 3（future 样本） |
+| `s06-manage-reconfirm-after-one-accept.png` | 模拟一位接受后：待确认 6 / 已确认 1 |
+| `s06-manage-reconfirm-pending.png` | 改期后 · 待确认 7 · 共同的新安排（改期答复·局主视角） |
+| `s06-manage-recording-twelve.png` | 管理 · 这场见面（recording）· 名册已固定 · 12 位应到 |
+| `s06-manage-scrolled-header.png` | 管理页滚动：标题收拢后正文顶部被裁出空白 |
+| `s06-person-confirmed-after-end-sheet.png` | 人员详情 · 结束超过 24 小时：联系方式已关闭 |
+| `s06-person-confirmed-sheet.png` | 人员详情 · 本人已确认（微信号 + 复制微信号） |
+| `s06-person-ended-sheet.png` | 人员详情 · 本场记录 · 已归档 |
+| `s06-person-invited-sheet.png` | 人员详情 · 已留位（留位至 … · 纽约当地时间） |
+| `s06-person-long-intro-sheet-scrolled.png` | 同上滚到底 |
+| `s06-person-long-intro-sheet.png` | 人员详情 · 长自述（整段气泡） |
+| `s06-person-pending-sheet.png` | 人员详情 · 新申请（谢绝这位 / 邀请这位） |
+| `s06-person-reconfirm-sheet.png` | 人员详情 · 新时间待回复（确认新安排后，再交换联系方式） |
+| `s06-r9-reconfirm-sample-bottom.png` | 同上滚到底 |
+| `s06-r9-reconfirm-sample.png` | R9 专项样本 reconfirm：6 位待重新确认 |
+| `s06-tools-menu-open.png` | `安排 ˅` 下拉：记录出席 / 计划有变 / 历史归档 |
+| `s07-back-lands-joined-list.png` | 从赴约安排返回 → 我的局 · 我参加的 |
+| `s07-joined-cancelled.png` | 赴约安排 · 约定已取消 |
+| `s07-joined-confirmed.png` | 赴约安排 · 你已确认参加（无票根 / 联系层） |
+| `s07-joined-ended.png` | 赴约安排 · 这次见面已结束 |
+| `s07-joined-invited.png` | 赴约安排 · 已收到邀请（边界块：邀请回应尚未接入） |
+| `s07-joined-nav-fallback.png` | 侧栏点 07 赴约安排：无参加记录时直接回落为 我的局 |
+| `s07-joined-pending.png` | 赴约安排 · 申请已递交 |
+| `s07-joined-reschedule-pending.png` | 赴约安排 · 时间有变化（只显示新时间；重新确认尚未接入） |
+| `s08-cancel-confirm-sheet.png` | 取消这次约定 · 取消以后，不能撤销。· 取消额度 1 次 |
+| `s08-plan-active.png` | 计划有变 · 可改期可取消（cancel-independent 样本） |
+| `s08-plan-after-reschedule-saved-note.png` | 确认后即时帧：新约定已保存 提示 |
+| `s08-plan-after-reschedule.png` | 改期后的计划有变（额度剩 1） |
+| `s08-plan-cancelled-locked.png` | 取消后锁定：本场已经取消 |
+| `s08-plan-ended-locked.png` | 已归档锁定：已归档，保留这份约定 |
+| `s08-plan-ended-unrecorded-locked.png` | 有结束证据未记录时锁定：这场已经结束 |
+| `s08-plan-future.png` | 计划有变 · future 样本（额度 2 次） |
+| `s08-plan-history-open.png` | 之前改过的时间 展开 |
+| `s08-plan-quota-exhausted.png` | 额度用完：本年度额度已用完，超额处理暂不可用 |
+| `s08-plan-r9-reconfirm-sample.png` | reconfirm 样本的计划有变（之前改过的时间 1 次 · 第 2 版） |
+| `s08-reschedule-confirm-disabled-no-quota.png` | 额度为 0 时确认抽屉 CTA 禁用 |
+| `s08-reschedule-confirm-sheet-last-quota.png` | 第二次改期确认（最后 1 次额度） |
+| `s08-reschedule-confirm-sheet.png` | 把约定改到这里 · 原来 → 新 · 7 位需要重新确认 |
+| `s08-time-editor-date.png` | 约在什么时候 · 日期 tab |
+| `s08-time-editor-duration.png` | 约在什么时候 · 时长 tab |
+| `s08-time-editor-time.png` | 约在什么时候 · 开始 tab |
+| `s09a-archive-confirm-sheet.png` | 结束这场见面 · 归档后变为只读，不能再修正 |
+| `s09a-archive-empty-confirm-sheet.png` | 归档这场空名册 抽屉 |
+| `s09a-archived-readonly.png` | 归档后的出席页：这一场，已归档 |
+| `s09a-complete-arrival-early.png` | 最后一位记录后 ~150ms 的结果页 |
+| `s09a-complete-arrival-settled.png` | 结果页稳定态 |
+| `s09a-complete-result-after-correction.png` | 更正后回到结果页 |
+| `s09a-complete-result.png` | 出席记录齐了（结果页） |
+| `s09a-complete-twelve-long-names.png` | 结果页 · 12 位长姓名两列 |
+| `s09a-correction-edit.png` | 更正 · 调整这位的记录（保存修改 / 保留原记录） |
+| `s09a-correction-saved.png` | 更正保存后（章面直接替换） |
+| `s09a-correction-view.png` | 更正 · 查看记录（已盖章票卡 + 修改记录） |
+| `s09a-empty-future-not-ended.png` | 出席 · 门控：还没有确认参加的人 |
+| `s09a-empty-roster.png` | 空名册：这场没有应到者 |
+| `s09a-gate-not-ended.png` | 出席 · 门控：还有邀请，等本人确认（未结束） |
+| `s09a-interrupt-navigated-away-mid-stamp.png` | 盖章中途从手机外导航离开（落到 s00） |
+| `s09a-interrupt-returned-next-person.png` | 回到出席页：记录已保存，直接到第 04 位 |
+| `s09a-record-ready-person1.png` | 出席 · 第 01 位就绪（票卡 + 这位是否到场？） |
+| `s09a-record-ready-twelve-first.png` | 出席 · 12 位样本第 01 位（长姓名） |
+| `s09a-reduced-motion-after-record.png` | 减少动态下记录一位之后 |
+| `s09a-roster-sheet-complete.png` | 本场名册抽屉（6 位应到 / 6 位已记录） |
+| `s09a-roster-sheet-twelve.png` | 本场名册抽屉 · 12 位 |
+| `s09a-stamp-seq-0000ms-ready.png` | 盖章序列帧（假时钟 +0 ms，阶段 ready） |
+| `s09a-stamp-seq-0016ms-stamping.png` | 盖章序列帧（假时钟 +16 ms，阶段 stamping） |
+| `s09a-stamp-seq-0150ms-stamping.png` | 盖章序列帧（假时钟 +150 ms，阶段 stamping） |
+| `s09a-stamp-seq-0240ms-stamping.png` | 盖章序列帧（假时钟 +240 ms，阶段 stamping） |
+| `s09a-stamp-seq-0360ms-stamping.png` | 盖章序列帧（假时钟 +360 ms，阶段 stamping） |
+| `s09a-stamp-seq-0470ms-stamping.png` | 盖章序列帧（假时钟 +470 ms，阶段 stamping） |
+| `s09a-stamp-seq-0580ms-hold.png` | 盖章序列帧（假时钟 +580 ms，阶段 hold） |
+| `s09a-stamp-seq-0700ms-hold.png` | 盖章序列帧（假时钟 +700 ms，阶段 hold） |
+| `s09a-stamp-seq-1000ms-hold.png` | 盖章序列帧（假时钟 +1000 ms，阶段 hold） |
+| `s09a-stamp-seq-1150ms-handoff.png` | 盖章序列帧（假时钟 +1150 ms，阶段 handoff） |
+| `s09a-stamp-seq-1270ms-ready.png` | 盖章序列帧（假时钟 +1270 ms，阶段 ready） |
+| `s09a-stamp-seq-1570ms-ready.png` | 盖章序列帧（假时钟 +1570 ms，阶段 ready） |
+| `s09a-stamp-seq-2170ms-ready.png` | 盖章序列帧（假时钟 +2170 ms，阶段 ready） |
+| `s09a-stamp-seq-3170ms-ready.png` | 盖章序列帧（假时钟 +3170 ms，阶段 ready） |
+| `s09a-stamp-seq-handoff-flight-120ms.png` | 交接飞出中间帧（Web Animation 暂停在 120 ms / 570 ms） |
+| `s09a-stamp-seq-handoff-flight-300ms.png` | 交接飞出中间帧（Web Animation 暂停在 300 ms / 570 ms） |
+| `s09a-stamp-seq-handoff-flight-480ms.png` | 交接飞出中间帧（Web Animation 暂停在 480 ms / 570 ms） |
+| `s09a-stamp-seq-handoff-settled-next-ready.png` | 交接完成：下一位就绪（motion3） |
+| `s09b-archive-empty-product.png` | 产品视图 · 归档墙空态 |
+| `s09b-archive-people-sheet.png` | 本场出席记录 只读 抽屉 |
+| `s09b-archive-wall-after-archive.png` | 归档墙 · 刚归档（跳过 intro） |
+| `s09b-archive-wall-intro-settled.png` | 归档墙 · 进入 3.5 s 后 |
+| `s09b-archive-wall-next.png` | 归档墙 · 切到下一张 |
+
+共 126 张。

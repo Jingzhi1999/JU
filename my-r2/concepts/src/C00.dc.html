@@ -1,0 +1,571 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C00 接线参考（非交付）</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* C00 = WIRING REFERENCE ONLY. The visuals are deliberately plain: copy the bindings (c.* names, data-* selectors, phases, --hc, rituals, .rm/.paused/.scrub), never the look. */
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;background:#f4f4f6;font-size:calc(15px * var(--tz,1));line-height:1.45}
+.app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.c00-env{position:absolute;inset:0;opacity:.9}
+.app[data-skin="cotton"] .c00-env{background:linear-gradient(160deg,#fbe1ec,#ececf4 50%,#d3edf3)}
+.app[data-skin="halo"] .c00-env{background:radial-gradient(80% 60% at 80% 0,#ff8a3d 0,#dbba95 45%,#d0bce1 100%)}
+.app[data-skin="sunset"] .c00-env{background:linear-gradient(180deg,#ff7a33,#ffc53d 50%,#33a0ff)}
+/* one absolutely positioned page per surface; classes from c.nav.cls.<surface> = is-top|is-under|is-leaving + ph-enter|ph-in|ph-idle|ph-exit + dir-fwd|dir-back|dir-swap|dir-role */
+.c00-pg{position:absolute;left:0;right:0;top:0;bottom:calc(56px + var(--sab,0px));display:flex;flex-direction:column;background:rgba(255,255,255,.88);transition:transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
+.c00-pg.is-top.ph-enter.dir-fwd{transform:translateX(100%)}
+.c00-pg.is-top.ph-exit{transform:translateX(100%)}
+.c00-pg.is-under{transform:translateX(-24%);opacity:.6}
+.c00-pg.is-under.ph-exit{transform:none;opacity:1}
+.c00-pg.is-under.ph-idle{visibility:hidden}
+.c00-pg.is-top.ph-enter.dir-swap{opacity:0}
+.c00-pg.is-leaving{opacity:0}
+/* home: role / section switches are phases on the same page (dir-role / dir-swap); the pane fades while entering */
+.c00-pane{transition:opacity calc(280ms * var(--k)) ease}
+.c00-pg.ph-enter.dir-role .c00-pane,.c00-pg.ph-enter.dir-swap .c00-pane{opacity:0}
+/* header: --hc (0..1) is written by c.nav.onScroll on the scroller, its [data-surface] and [data-header]; title 30 → 18 continuously */
+.c00-hd{flex:0 0 auto;padding:calc(12px + var(--sat,0px)) 20px 8px;display:flex;flex-direction:column;gap:4px;min-height:48px}
+.c00-hd .t{font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.25;transition:none;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.c00-hd .m{font-size:calc(14px * var(--tz,1));color:#535b70;opacity:calc(1 - var(--hc,0));max-height:calc(40px * (1 - var(--hc,0)));overflow:hidden}
+.c00-hd .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.c00-sc{flex:1 1 auto;overflow:auto;padding:0 20px calc(24px + var(--kb,0px));-webkit-overflow-scrolling:touch}
+.c00-tabs{display:flex;gap:6px;padding:4px 0 8px}
+.c00-tab{font:inherit;font-size:calc(14px * var(--tz,1));border:1px solid rgba(20,22,31,.18);background:#fff;border-radius:999px;padding:6px 12px;color:#535b70}
+.c00-tab.on{background:#14161F;color:#fff;border-color:#14161F}
+.c00-badge{display:inline-block;min-width:18px;padding:0 5px;border-radius:9px;background:#DA3A52;color:#fff;font-size:11px;line-height:18px;text-align:center;margin-left:4px}
+.c00-grp{margin:14px 0 6px;font-size:calc(12px * var(--tz,1));color:#535b70;letter-spacing:.02em}
+.c00-row{display:block;width:100%;text-align:left;background:#fff;border:1px solid rgba(20,22,31,.1);border-radius:12px;padding:12px 14px;margin:0 0 8px;font:inherit;color:inherit;touch-action:pan-y;transition:box-shadow calc(300ms * var(--k)) ease,transform calc(260ms * var(--k)) ease,opacity calc(260ms * var(--k)) ease}
+.c00-row.is-landing{box-shadow:0 0 0 2px #4A5AD6}
+.c00-row.is-lead{border-color:#4553BE}
+.c00-row.is-deleting{opacity:0;transform:translateX(24px)}
+.c00-row.is-restored{animation:c00-restore calc(260ms * var(--k)) ease}
+@keyframes c00-restore{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.c00-row b{display:block;font-size:calc(16px * var(--tz,1));font-weight:500}
+.c00-row .s{display:block;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c00-row .st{display:block;font-size:calc(13px * var(--tz,1));color:#252b3a;margin-top:2px}
+.c00-row .st.act{color:#4553BE}.c00-row .st.void{color:#8a8a90}.c00-row .st.red{color:#DA3A52}
+.c00-bar{height:4px;border-radius:2px;background:rgba(20,22,31,.1);margin:6px 0;overflow:hidden}
+.c00-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:#0E9B76;transition:width 900ms linear}
+.c00-bar.amber i{background:#d98b1f}.c00-bar.red i{background:#DA3A52}
+.c00-seats{display:flex;gap:3px;margin:6px 0}
+.c00-seat{flex:1;height:8px;border-radius:2px;background:rgba(20,22,31,.12);transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.9,.3,1.1),background calc(300ms * var(--k))}
+.c00-seat.host,.c00-seat.ok{background:#4553BE}.c00-seat.res{background:#d98b1f}.c00-seat.att-present{background:#0E9B76}.c00-seat.att-absent{background:#8a8a90}
+.c00-btn{font:inherit;font-size:calc(14px * var(--tz,1));border:1px solid rgba(20,22,31,.2);background:#fff;border-radius:10px;padding:8px 12px;color:#14161F;min-height:40px}
+.c00-btn.danger{border-color:#DA3A52;color:#DA3A52}
+.c00-btn.inert{opacity:.45;cursor:default}
+.c00-btn:disabled{opacity:.45}
+.c00-cta{display:block;width:min(100%,280px);height:48px;margin:14px auto 0;border:0;border-radius:24px;font:500 calc(15px * var(--tz,1)) "Noto Sans SC";color:#fff;background:#4553BE;transition:transform calc(120ms * var(--k))}
+.c00-cta:active{transform:scale(.958)}
+.c00-cta:disabled{background:#9aa0c2}
+.c00-cta.danger{background:#C2364C}
+.c00-link{font:inherit;font-size:calc(14px * var(--tz,1));color:#4553BE;background:none;border:0;padding:6px 0;text-decoration:underline}
+.c00-link.inert{color:#8a8a90;text-decoration:none}
+.c00-err{color:#DA3A52;font-size:calc(13px * var(--tz,1));min-height:18px}
+.c00-ok{color:#0E9B76;font-size:calc(13px * var(--tz,1))}
+.c00-help{font-size:calc(13px * var(--tz,1));color:#535b70;margin:6px 0}
+.c00-in{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:10px;margin:6px 0;background:#fff}
+.c00-empty{padding:40px 10px;text-align:center}
+.c00-empty b{display:block;font-size:calc(18px * var(--tz,1));font-weight:500;margin-bottom:6px}
+.c00-empty p{margin:0 0 12px;color:#535b70;font-size:calc(14px * var(--tz,1))}
+.c00-mem{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid rgba(20,22,31,.08);font-size:calc(14px * var(--tz,1))}
+.c00-mem .r{color:#535b70;text-align:right}
+.c00-mem.you{font-weight:500}
+.c00-nav{position:absolute;left:0;right:0;bottom:0;height:calc(56px + var(--sab,0px));padding-bottom:var(--sab,0px);display:flex;background:#fff;border-top:1px solid rgba(20,22,31,.1);box-sizing:border-box}
+.c00-nav button{flex:1;border:0;background:none;font:inherit;font-size:calc(12px * var(--tz,1));color:#535b70}
+.c00-nav button.on{color:#14161F;font-weight:700}
+.c00-nav button.off{opacity:.45}
+.c00-toast{position:absolute;left:20px;right:20px;bottom:calc(72px + var(--kb,0px) + var(--sab,0px));background:rgba(16,18,30,.92);color:#F8F9FF;padding:12px 16px;border-radius:12px;font-size:calc(14px * var(--tz,1));z-index:40;animation:c00-toast calc(220ms * var(--k)) ease}
+.c00-toast.k-error{background:#8b1f30}
+@keyframes c00-toast{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+/* overlays: every sheet / layer root carries .c00-over (the review scripts look for it) */
+.c00-over{position:absolute;inset:0;background:rgba(12,14,26,.3);display:flex;align-items:flex-end;z-index:50;animation:c00-fade calc(320ms * var(--k)) ease}
+.c00-over .b{background:#fff;width:100%;box-sizing:border-box;padding:20px 20px calc(24px + var(--kb,0px) + var(--sab,0px));border-radius:20px 20px 0 0;max-height:calc(100% - 40px);overflow:auto;animation:c00-up calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+@keyframes c00-fade{0%{background:rgba(12,14,26,0)}100%{background:rgba(12,14,26,.3)}}
+@keyframes c00-up{0%{transform:translateY(40%)}100%{transform:none}}
+.c00-over .b h3{margin:0 0 6px;font-size:calc(18px * var(--tz,1));font-weight:500}
+.c00-over .b p{margin:0 0 10px;font-size:calc(14px * var(--tz,1));color:#252b3a}
+.c00-id{font-size:calc(13px * var(--tz,1));color:#535b70;border-left:3px solid #4553BE;padding-left:8px;margin:0 0 10px}
+.c00-acts{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.c00-irrev{background:#fbe9ec;color:#8b1f30;padding:8px 10px;border-radius:8px;font-size:calc(13px * var(--tz,1));margin:8px 0}
+/* ticket: slot + paper. Printing = .fx-print-paper (shared primitive, ju-fx.css) OR JU.ritual.print when the shared ritual module exists */
+.c00-slot{height:6px;border-radius:3px;background:linear-gradient(#5a554d,#2b2824);margin:10px 0 0}
+.c00-printer{position:relative;overflow:hidden;height:240px}
+.c00-paper{position:absolute;left:10px;right:10px;top:0;height:230px;background:#fbf7ee;border-radius:6px;box-shadow:0 1px 0 rgba(0,0,0,.12),0 6px 14px -8px rgba(0,0,0,.35);display:flex;flex-direction:column;justify-content:space-between;--fx-dur:2300ms}
+.c00-paper.fresh{transform:translateY(-102%)}
+.c00-paper .f{padding:14px 16px;display:flex;flex-direction:column;gap:3px;font-size:calc(13px * var(--tz,1))}
+.c00-paper .f b{font-size:calc(17px * var(--tz,1));font-weight:500}
+.c00-paper .f .big{font:500 calc(30px * var(--tz,1)) "DM Mono",ui-monospace,monospace}
+.c00-paper .f .code{font-family:"DM Mono",monospace;color:#666;font-size:12px}
+.c00-stamp{position:absolute;right:14px;top:12px;border:2px solid #DA3A52;color:#DA3A52;border-radius:6px;padding:2px 6px;font-size:12px;transform:rotate(-10deg)}
+.c00-stub{height:54px;border-top:1px dashed #b9b1a3;display:flex;align-items:center;justify-content:space-between;padding:0 16px;color:#7a7268;font-size:calc(13px * var(--tz,1));touch-action:none;user-select:none;cursor:grab;transform-origin:100% 0;transform:translate(calc(var(--tear,0) * -30px),calc(var(--tear,0) * 20px)) rotate(calc(var(--tear,0) * -12deg));transition:transform calc(220ms * var(--k)) ease,opacity calc(300ms * var(--k)) ease;outline-offset:2px}
+.c00-stub.is-drag{transition:none}
+.c00-stub.is-torn{transform:translate(-36px,140px) rotate(-28deg);opacity:0;pointer-events:none;transition:transform calc(700ms * var(--k)) cubic-bezier(.4,0,.8,.4),opacity calc(500ms * var(--k)) ease-in calc(250ms * var(--k))}
+.c00-paper.torn{height:176px;border-bottom:1px dashed #b9b1a3}
+/* burn placeholder (shared JU.ritual.burn replaces it): the paper is eaten by a clip-path over --fx-dur, then only ashes remain */
+.c00-burn.burning{animation:c00-burn calc(var(--fx-dur,2600ms) * var(--k)) cubic-bezier(.3,.05,.55,1) forwards;--fx-dur:2600ms}
+@keyframes c00-burn{0%{clip-path:inset(0 0 0 0);filter:none}60%{filter:sepia(.6) brightness(.8)}100%{clip-path:inset(0 0 100% 0);filter:sepia(1) brightness(.4)}}
+.c00-ash{height:46px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.7}
+.app.scrub .c00-burn.burning{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur,2600ms) * var(--k))!important}
+.app.scrub .c00-paper.fx-print-paper{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k))!important}
+/* contact layer */
+.c00-contact{border:1px solid rgba(20,22,31,.12);border-radius:12px;padding:12px 14px;background:#fff;margin-top:10px;animation:c00-up calc(300ms * var(--k)) ease}
+.c00-wx{font:500 18px "DM Mono",ui-monospace,monospace;user-select:all}
+/* manage */
+.c00-secs{display:flex;flex-direction:column}
+.c00-sec{order:var(--o,9);margin:10px 0 0;border:1px solid rgba(20,22,31,.1);border-radius:12px;background:#fff;padding:10px 14px}
+.c00-sec.is-focus{border-color:#4A5AD6}
+.c00-sec h4{margin:0;font-size:calc(15px * var(--tz,1));font-weight:500;display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.c00-sec h4 small{font-weight:400;color:#535b70;font-size:calc(12px * var(--tz,1))}
+.c00-sec.is-closed .body{display:none}
+.c00-app{border-top:1px solid rgba(20,22,31,.08);padding:10px 0}
+.c00-app .n{font-weight:500}
+.c00-app .q{color:#535b70;font-size:calc(13px * var(--tz,1))}
+.c00-app .res{color:#0E9B76;font-size:calc(13px * var(--tz,1));animation:c00-settle calc(420ms * var(--k)) ease}
+@keyframes c00-settle{0%{opacity:.25;transform:translateY(5px)}100%{opacity:1;transform:none}}
+.c00-att{border-top:1px solid rgba(20,22,31,.08);padding:10px 0}
+.c00-att.is-next{background:#f3f4fb}
+.c00-seg{display:flex;gap:6px;margin:6px 0}
+.c00-seg button{flex:1}
+.c00-seg button[aria-pressed="true"]{background:#14161F;color:#fff}
+.c00-chop{display:inline-block;border:2px solid #14161F;border-radius:6px;padding:2px 8px;font-weight:700;transform:rotate(-8deg)}
+.c00-chop.absent{border-color:#8a8a90;color:#8a8a90}.c00-chop.pending{border-style:dashed}
+.c00-chop.fx-stamp{--fx-dur:550ms}
+.c00-trail{font-size:calc(12px * var(--tz,1));color:#8a8a90;margin:4px 0 0}
+.c00-card{background:#fff;border-radius:14px;border:1px solid rgba(20,22,31,.12);padding:16px;margin:8px 0}
+.c00-card .en{font:500 11px "DM Mono",monospace;letter-spacing:.14em;color:#8a8a90}
+.c00-card b{display:block;font-size:calc(20px * var(--tz,1));font-weight:500;margin:4px 0}
+.c00-rules h5{margin:12px 0 4px;font-size:calc(14px * var(--tz,1))}
+.c00-rules p{margin:0 0 8px;font-size:calc(14px * var(--tz,1));color:#252b3a}
+.c00-endmark{text-align:center;color:#8a8a90;font-size:calc(12px * var(--tz,1));padding:24px 0 8px}
+.c00-result{text-align:center;padding:30px 10px}
+.c00-result b{display:block;font-size:calc(20px * var(--tz,1));font-weight:500}
+.c00-result p{color:#535b70;font-size:calc(14px * var(--tz,1))}
+.c00-dim{color:#8a8a90}
+.c00-copyfail{font-size:calc(13px * var(--tz,1));color:#DA3A52}
+.c00-receipt{border:1px dashed rgba(20,22,31,.3);border-radius:10px;padding:12px 14px;margin:8px 0;background:#fffdf7}
+.c00-receipt b{display:block;font-size:calc(17px * var(--tz,1));font-weight:500}
+.c00-vis{opacity:.001}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c00{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <div class="c00-env"></div>
+
+      <!-- ===== HOME: role × section live in state (never on the stack). data-role-tab / data-section-tab are the review selectors. ===== -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c00-pg {{c.nav.cls.home}}" data-surface="home">
+          <header class="c00-hd" data-header>
+            <div class="t">我的局</div>
+            <div class="m">{{c.clock.demoNote}}</div>
+            <div class="tools">
+              <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c00-tab {{t.cls}}" data-role-tab="{{t.k}}" aria-pressed="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="c00-badge">{{t.badge}}</span></sc-if></button></sc-for>
+            </div>
+            <div class="tools">
+              <sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c00-tab {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}} {{t.countText}}</button></sc-for>
+            </div>
+          </header>
+          <div class="c00-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+            <div class="c00-pane">
+            <!-- 我参加的 · 当前: three intents act / soon / wait (c.joined.sections, empty groups are absent). Each row: data-rid + data-origin (FLIP start rect) -->
+            <sc-if value="{{home.joinedCurrent}}">
+              <sc-if value="{{c.joined.empty.on}}"><div class="c00-empty"><b>{{c.joined.empty.title}}</b><p>{{c.joined.empty.body}}</p><button type="button" class="c00-btn inert" aria-disabled="true" onClick="{{c.joined.empty.action.go}}">{{c.joined.empty.action.label}}</button></div></sc-if>
+              <sc-for list="{{c.joined.sections}}" as="g" hint-placeholder-count="3">
+                <div class="c00-grp">{{g.title}} {{g.count}} · {{g.note}}</div>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                  <div class="c00-row {{r.landingCls}} {{r.leadCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                    <b>{{r.title}}</b><span class="s">{{r.whenText}} · {{r.placeText}}</span>
+                    <sc-if value="{{r.oldWhen}}"><span class="s">改为 {{r.newWhen.zh}}（原定 {{r.oldWhen.zh}}）</span></sc-if>
+                    <span class="st {{r.tone}}">{{r.label}}<sc-if value="{{r.left.on}}"> · {{r.left.text}}</sc-if></span>
+                    <sc-if value="{{r.left.on}}"><div class="c00-bar {{r.left.tone}}" style="--ratio:{{r.left.ratio}}"><i></i></div></sc-if>
+                    <span class="s">{{r.need}} · {{r.seatText}}</span>
+                    <sc-if value="{{r.isLead}}">
+                      <sc-if value="{{r.cta}}"><button type="button" class="c00-cta" data-act="cta" onClick="{{r.act}}">{{r.cta}}</button></sc-if>
+                      <sc-if value="{{r.secondary}}"><button type="button" class="c00-link" data-act="{{r.secondaryKey}}" onClick="{{r.secondary}}">{{r.secondaryLabel}}</button></sc-if>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </sc-for>
+            </sc-if>
+            <!-- 我参加的 · 历史: kept (散场, by month) / closed (未成行, eight facts each with its own label + need) -->
+            <sc-if value="{{home.joinedHistory}}">
+              <sc-if value="{{c.joined.empty.on}}"><div class="c00-empty"><b>{{c.joined.empty.title}}</b><p>{{c.joined.empty.body}}</p><button type="button" class="c00-btn" onClick="{{c.joined.empty.action.go}}">{{c.joined.empty.action.label}}</button></div></sc-if>
+              <sc-for list="{{c.joined.sectionsHistory}}" as="g" hint-placeholder-count="2">
+                <div class="c00-grp">{{g.title}} {{g.count}} · {{g.note}}</div>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                  <div class="c00-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}"><b>{{r.title}}</b><span class="s">{{r.whenText}} · {{r.placeText}} · {{r.monthTitle}}</span><span class="st {{r.tone}}">{{r.label}}</span><span class="s">{{r.attendanceText}}{{r.need}}</span></div>
+                </sc-for>
+              </sc-for>
+              <p class="c00-help">{{c.COPY.historyFooter.lead}} · <span class="c00-dim">账户级记录页不在本次范围</span></p>
+            </sc-if>
+            <!-- 我发起的 · 当前: todo / resched / recruit / formed -->
+            <sc-if value="{{home.hostedCurrent}}">
+              <sc-if value="{{c.hosted.empty.on}}"><div class="c00-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c00-btn {{home.hostedEmptyCls}}" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+              <sc-for list="{{c.hosted.sections}}" as="g" hint-placeholder-count="4">
+                <div class="c00-grp">{{g.title}} {{g.count}} · {{g.note}}</div>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                  <div class="c00-row {{r.landingCls}} {{r.leadCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                    <b>{{r.title}}</b><span class="s">{{r.whenText}} · {{r.placeText}} · {{r.life}}</span>
+                    <span class="st">{{r.label}}</span>
+                    <div class="c00-seats"><sc-for list="{{r.seats}}" as="s" hint-placeholder-count="4"><i class="c00-seat {{s.kind}}"></i></sc-for></div>
+                    <span class="s">{{r.seatText}} 含你<sc-if value="{{r.seatMore}}"> · {{r.seatMore}}</sc-if></span>
+                    <sc-if value="{{r.isLead}}"><sc-if value="{{r.cta}}"><button type="button" class="c00-cta" data-act="cta" onClick="{{r.act}}">{{r.cta}}</button></sc-if></sc-if>
+                  </div>
+                </sc-for>
+              </sc-for>
+            </sc-if>
+            <!-- 草稿: summary rows (继续编辑 is INERT), delete → row collapses in place (is-deleting ghost) → undo bar 10s → restored in the same slot -->
+            <sc-if value="{{home.hostedDrafts}}">
+              <sc-if value="{{c.hosted.empty.on}}"><div class="c00-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c00-btn inert" aria-disabled="true" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+              <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
+                <div class="c00-row {{r.cls}} {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                  <b>{{r.title}}</b><span class="s">{{r.whenText}} · {{r.placeText}} · {{r.agoText}}</span><span class="st {{r.readyCls}}">{{r.missingText}}</span><sc-if value="{{r.sourceText}}"><span class="s">{{r.sourceText}}</span></sc-if>
+                  <div class="c00-acts"><button type="button" class="c00-link inert" aria-disabled="true" onClick="{{c.inert}}">{{r.continueLabel}} ›</button><button type="button" class="c00-btn" data-act="delete" onClick="{{r.del}}">删除</button></div>
+                </div>
+              </sc-for>
+              <sc-if value="{{c.hosted.undo.on}}"><div class="c00-row" role="status">{{c.hosted.undo.text}} <button type="button" class="c00-btn" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}}（{{c.hosted.undo.left}}s）</button></div></sc-if>
+            </sc-if>
+            <!-- 我发起的 · 历史: ended (n/N 到场) / cancelled; 再开一局 INERT -->
+            <sc-if value="{{home.hostedHistory}}">
+              <sc-if value="{{c.hosted.empty.on}}"><div class="c00-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c00-btn" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+              <sc-for list="{{c.hosted.sectionsHistory}}" as="g" hint-placeholder-count="2">
+                <div class="c00-grp">{{g.title}} {{g.count}} · {{g.note}}</div>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                  <div class="c00-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}"><b>{{r.title}}</b><span class="s">{{r.whenText}} · {{r.placeText}}</span><span class="st void">{{r.life}} · {{r.label}}</span><span class="s c00-dim">再开一局 · 只带入活动内容，成员与记录不复制（本轮不可点）</span></div>
+                </sc-for>
+              </sc-for>
+            </sc-if>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== DETAIL (participant, members view): style=c.nav.fromStyle carries --fx-x/y/w/h of the origin row for a FLIP entry ===== -->
+      <sc-if value="{{c.nav.on.detail}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.detail}}" data-surface="detail" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.detail.back}}">返回</button></div><div class="t">{{c.detail.title}}</div><div class="m">{{c.detail.label}} · {{c.detail.need}}</div></header>
+          <div class="c00-sc" data-scroller="detail" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.detail.on}}">
+              <div class="c00-card"><span class="en">{{c.detail.event.en}}</span><b>{{c.detail.event.title}}</b><span>{{c.detail.when.zh}} · {{c.detail.place.full}} · 局主 {{c.detail.host.name}}</span></div>
+              <sc-if value="{{c.detail.countdown.on}}"><p>预留剩余 <b>{{c.detail.countdown.text}}</b> · {{c.detail.row.deadlineText}}</p><div class="c00-bar {{c.detail.countdown.tone}}" style="--ratio:{{c.detail.countdown.ratio}}"><i></i></div></sc-if>
+              <sc-if value="{{c.detail.receipt}}"><div class="c00-receipt"><span class="c00-dim">JU. / 候补回执</span><b>{{c.detail.receipt.title}}</b><span>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</span><p class="c00-help">{{c.detail.receipt.note}}</p></div></sc-if>
+              <sc-if value="{{c.detail.result}}"><div class="c00-result"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
+              <div class="c00-grp">成员 · {{c.detail.seatText}}</div>
+              <div class="c00-seats"><sc-for list="{{c.detail.seats}}" as="s" hint-placeholder-count="4"><i class="c00-seat {{s.kind}}"></i></sc-for></div>
+              <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><div class="c00-mem {{m.youCls}}"><span>{{m.name}}</span><span class="r">{{m.statusText}}</span></div></sc-for>
+              <div class="c00-grp">参加约定 ›</div>
+              <div class="c00-rules"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div>
+              <p class="c00-help c00-dim">查看我的记录 · 账户级页面，本轮不可点</p>
+              <sc-if value="{{c.detail.error}}"><p class="c00-err">{{c.detail.error}}</p></sc-if>
+              <button type="button" class="c00-cta" data-act="{{c.detail.primary.key}}" disabled="{{c.detail.primary.disabled}}" onClick="{{c.detail.primary.act}}">{{c.detail.primary.label}}</button>
+              <sc-if value="{{c.detail.secondary}}"><p style="text-align:center"><button type="button" class="c00-link" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></p></sc-if>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== READ (阅读并确认, above detail): the scroller is data-scroller="read" and its onScroll is c.read.onScroll (writes --hc AND the reading progress) ===== -->
+      <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.read}}" data-surface="read">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.read.back}}">返回</button></div><div class="t">{{c.read.title}}</div><div class="m"><sc-if value="{{c.read.countdown.on}}">剩余 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</div></header>
+          <div class="c00-sc" data-scroller="read" onScroll="{{c.read.onScroll}}">
+            <sc-if value="{{c.read.result}}"><div class="c00-result"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
+            <sc-if value="{{c.read.expired}}"><div class="c00-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
+            <div class="c00-rules"><sc-for list="{{c.read.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div>
+            <div class="c00-endmark">— {{c.read.endMark}} —</div>
+            <p class="c00-help">阅读进度 {{read.progressPct}}% · {{c.read.hint}}</p>
+            <sc-if value="{{c.read.error}}"><p class="c00-err">{{c.read.error}}</p></sc-if>
+            <button type="button" class="c00-cta" data-act="{{c.read.primary.key}}" disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}">{{c.read.primary.label}}</button>
+            <sc-if value="{{c.read.secondary}}"><p style="text-align:center"><button type="button" class="c00-link" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></p></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== WAITLIST (门口 + 回执): queue shows X** for others, 你 for me; leave-queue opens the confirm sheet ===== -->
+      <sc-if value="{{c.nav.on.waitlist}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.waitlist}}" data-surface="waitlist" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.waitlist.back}}">返回</button></div><div class="t">{{c.waitlist.title}}</div><div class="m">{{c.waitlist.seatLine}}</div></header>
+          <div class="c00-sc" data-scroller="waitlist" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.waitlist.on}}">
+              <div class="c00-receipt"><span class="c00-dim">JU. / 候补回执</span><b>{{c.waitlist.receipt.title}}</b><span>{{c.waitlist.receipt.field}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></span><sc-if value="{{c.waitlist.receipt.note}}"><p class="c00-help">{{c.waitlist.receipt.note}}</p></sc-if></div>
+              <sc-if value="{{c.waitlist.countdown.on}}"><div class="c00-bar {{c.waitlist.countdown.tone}}" style="--ratio:{{c.waitlist.countdown.ratio}}"><i></i></div><p class="c00-help">剩余 {{c.waitlist.countdown.text}}</p></sc-if>
+              <div class="c00-grp">已进</div>
+              <sc-for list="{{c.waitlist.entered}}" as="m" hint-placeholder-count="3"><div class="c00-mem {{m.youCls}}"><span>{{m.name}}</span><span class="r">{{m.statusText}}</span></div></sc-for>
+              <div class="c00-grp">候补 · {{c.waitlist.total}}</div>
+              <sc-for list="{{c.waitlist.queue}}" as="q" hint-placeholder-count="2"><div class="c00-mem {{q.youCls}}"><span>№{{q.pos}} {{q.name}}</span></div></sc-for>
+              <p class="c00-help">{{c.waitlist.hint}}</p>
+              <button type="button" class="c00-cta" data-act="ok" onClick="{{c.waitlist.primary.act}}">{{c.waitlist.primary.label}}</button>
+              <sc-if value="{{c.waitlist.secondary}}"><p style="text-align:center"><button type="button" class="c00-link" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></p></sc-if>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== TICKET / REPLY (one template, c.ticket.isReply): print (ritual or .fx-print-paper fallback) → tear (gesture on the stub, Enter/Space, or the button) → contact layer → copy → 已加微信 ===== -->
+      <sc-if value="{{ticketOn}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.ticket}}{{c.nav.cls.reply}}" data-surface="{{ticketSurface}}" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.ticket.back}}">返回</button><sc-if value="{{c.ticket.canExit}}"><button type="button" class="c00-link" data-act="{{ticketExitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if></div><div class="t">{{c.ticket.title}}</div><div class="m">{{c.ticket.row.label}} · {{c.ticket.row.need}}</div></header>
+          <div class="c00-sc" data-scroller="ticket" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.ticket.on}}">
+              <sc-if value="{{c.ticket.unavailable}}"><div class="c00-result"><b>{{c.ticket.title}}</b><p>{{c.ticket.unavailable.text}}</p><button type="button" class="c00-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}">{{c.ticket.unavailable.label}}</button></div></sc-if>
+              <sc-if value="{{c.ticket.result}}">
+                <div class="c00-result"><sc-if value="{{c.ticket.result.burning}}"><p class="c00-help">票根正在作废…</p></sc-if><sc-if value="{{c.ticket.result.burn}}"><div class="c00-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p><button type="button" class="c00-cta" data-act="ok" onClick="{{c.ticket.result.act}}">{{c.ticket.result.label}}</button></div>
+              </sc-if>
+              <sc-if value="{{ticket.showPaper}}">
+                <div class="c00-slot"></div>
+                <div class="c00-printer fx-printer">
+                  <!-- paper: .fresh before printing; .fx-print-paper while printing (shared primitive; onAnimationEnd → c.ticket.printed; the controller also arms printMs); .torn after -->
+                  <div class="c00-paper c00-burn {{ticket.paperCls}}" onAnimationEnd="{{ticket.onPaperEnd}}">
+                    <div class="f">
+                      <sc-if value="{{c.ticket.face.stamp}}"><span class="c00-stamp">{{c.ticket.face.stamp}}</span></sc-if>
+                      <span class="code">JU. / 票根 · {{c.ticket.face.versionText}} · {{c.ticket.face.seat}}</span>
+                      <b>{{c.ticket.face.title}}</b>
+                      <span class="big">{{c.ticket.face.time}}</span>
+                      <span>{{c.ticket.face.wdZh}} {{c.ticket.face.md}} · {{c.ticket.face.place.full}}</span>
+                      <sc-if value="{{c.ticket.reply}}"><span class="c00-dim"><s>{{c.ticket.reply.oldText}}</s> · {{c.ticket.reply.newText}}</span></sc-if>
+                      <span>集合 {{c.ticket.face.meeting}} · 局主 {{c.ticket.face.host}}</span>
+                    </div>
+                    <!-- the stub (副券): pointer gesture (progress → --tear), Enter / Space = tearNow(); data-act="tear" is the gesture + keyboard entry -->
+                    <sc-if value="{{ticket.showStub}}">
+                      <div class="c00-stub {{c.ticket.tear.cls}}" style="{{c.ticket.tear.style}}" role="button" tabindex="0" aria-label="{{c.ticket.tear.label}}（拖动或按 Enter）" data-act="tear" onPointerDown="{{c.ticket.tear.onDown}}" onPointerMove="{{c.ticket.tear.onMove}}" onPointerUp="{{c.ticket.tear.onUp}}" onPointerCancel="{{c.ticket.tear.onCancel}}" onKeyDown="{{c.ticket.tear.onKey}}"><span>{{c.ticket.tear.label}}</span><span>⋮⋮</span></div>
+                    </sc-if>
+                  </div>
+                </div>
+                <sc-if value="{{c.ticket.tear.error}}"><p class="c00-err">{{c.ticket.tear.error}} <button type="button" class="c00-btn" data-act="retry" onClick="{{c.ticket.tear.tearNow}}">重试</button></p></sc-if>
+                <sc-if value="{{c.ticket.printing}}"><p class="c00-help">出票中…</p></sc-if>
+                <!-- the BUTTON equivalent of the gesture (data-act="tear-now"); for the reply surface it reads 接受新时间 (data-act="accept") -->
+                <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="c00-cta" data-act="{{ticket.tearAct}}" onClick="{{c.ticket.tear.tearNow}}">{{ticket.tearLabel}}</button><p class="c00-help">{{c.ticket.tear.hint}}</p></sc-if>
+                <sc-if value="{{c.ticket.reply}}"><sc-if value="{{c.ticket.tear.canTear}}"><p style="text-align:center"><button type="button" class="c00-link" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></p></sc-if></sc-if>
+                <!-- contact layer: open after tearing (controller opens it 300ms after the write); data-act="contact" reopens it -->
+                <sc-if value="{{ticket.showContactBtn}}"><button type="button" class="c00-cta" data-act="contact" onClick="{{c.ticket.contact.open}}">联系局主</button></sc-if>
+                <sc-if value="{{c.ticket.contact.on}}">
+                  <div class="c00-contact" role="region" aria-label="联系信息">
+                    <p><b>{{c.ticket.contact.hostLabel}}</b></p>
+                    <sc-if value="{{c.ticket.contact.wx}}"><p><span class="c00-wx">{{c.ticket.contact.wx}}</span> <button type="button" class="c00-btn" data-act="copy" onClick="{{c.ticket.contact.copy}}">{{c.ticket.contact.copyLabel}}</button></p></sc-if>
+                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c00-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c00-btn" data-act="retry" onClick="{{c.ticket.contact.retryCopy}}">重试</button></p></sc-if>
+                    <sc-if value="{{c.ticket.contact.closed}}"><p class="c00-err">{{c.ticket.contact.closedText}}</p></sc-if>
+                    <p class="c00-help">{{c.ticket.contact.note}}</p>
+                    <sc-if value="{{c.ticket.contact.error}}"><p class="c00-err">{{c.ticket.contact.error}}</p></sc-if>
+                    <button type="button" class="c00-cta" data-act="contacted" disabled="{{c.ticket.contact.ctaDisabled}}" onClick="{{c.ticket.contact.markContacted}}">{{c.ticket.contact.ctaLabel}}</button>
+                    <p style="text-align:center"><button type="button" class="c00-link" data-act="close" onClick="{{c.ticket.contact.close}}">收起</button></p>
+                  </div>
+                </sc-if>
+              </sc-if>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== HISTORY (expanded ticket-wall card / spine summary): burn once on first open (ritual or placeholder), records, 局内记录 via the record sheet ===== -->
+      <sc-if value="{{c.nav.on.history}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.history}}" data-surface="history" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.history.back}}">返回</button></div><div class="t">{{c.history.title}}</div><div class="m">{{c.history.label}} · {{c.history.when.zh}}</div></header>
+          <div class="c00-sc" data-scroller="history" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.history.on}}">
+              <div class="c00-card"><span class="en">{{c.history.event.en}}</span><b>{{c.history.event.title}}</b><span>{{c.history.when.zh}} · {{c.history.place.full}} · 局主 {{c.history.host.name}}</span>
+                <sc-if value="{{c.history.stampText}}"><p><span class="c00-chop {{c.history.stamp}}">{{c.history.stampText}}</span></p></sc-if>
+                <sc-if value="{{c.history.attendanceText}}"><p class="c00-help">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if>
+              </div>
+              <sc-if value="{{c.history.oldWhen}}"><p class="c00-help">原定 {{c.history.oldWhen.zh}}</p></sc-if>
+              <p>{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="c00-help">{{c.history.closedNote}}</p></sc-if>
+              <sc-if value="{{c.history.ticket}}">
+                <sc-if value="{{c.history.burn.play}}"><div class="c00-paper c00-burn burning" style="position:relative;height:120px" onAnimationEnd="{{c.history.burn.burnDone}}"><div class="f"><b>{{c.history.event.title}}</b><span>票根快照 · 第 {{c.history.ticket.version}} 版</span></div></div></sc-if>
+                <sc-if value="{{c.history.ashes}}"><div class="c00-ash" aria-label="票根灰烬"></div><p class="c00-help">票根已作废（灰烬）</p></sc-if>
+                <sc-if value="{{history.snapshotOnly}}"><div class="c00-paper torn" style="position:relative"><div class="f"><b>{{c.history.event.title}}</b><span>票根已归档 · 已撕</span></div></div></sc-if>
+              </sc-if>
+              <sc-if value="{{c.history.contactOpen}}"><p>局主微信 <span class="c00-wx">{{c.history.hostWx}}</span> <button type="button" class="c00-btn" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></p><sc-if value="{{c.history.copyFail}}"><p class="c00-copyfail">未能复制，长按手动复制 <button type="button" class="c00-btn" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
+              <sc-if value="{{c.history.contactClosedText}}"><p class="c00-help">{{c.history.contactClosedText}}</p></sc-if>
+              <div class="c00-grp">本场相关记录 · {{history.recordCount}}</div>
+              <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c00-mem"><span>{{x.kindLabel}} · {{x.text}}</span><span class="r">{{x.atText}}</span></div></sc-for>
+              <p><button type="button" class="c00-link" data-act="report" onClick="{{c.history.report.open}}">{{c.history.report.label}}</button></p>
+              <p class="c00-help">{{c.history.footer.lead}} · <span class="c00-dim">我的举报 / 记录页为账户级，本轮不可点</span></p>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== MANAGE (H1, twelve surfaces in one page): sections ordered by intent via --o (c.manage.<sec>.order); data-section is the review selector ===== -->
+      <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.manage}}" data-surface="manage" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.manage.back}}">{{c.manage.backLabel}}</button></div><div class="t">{{c.manage.head.title}}</div><div class="m">{{c.manage.head.meta}}</div></header>
+          <div class="c00-sc" data-scroller="manage" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.manage.missing}}"><div class="c00-empty"><b>{{c.manage.title}}</b><p>{{c.manage.body}}</p></div></sc-if>
+            <sc-if value="{{manage.ready}}">
+              <!-- head: progress row (hidden when cancelled; attendance bar after 散场), card strip → data-act="card" -->
+              <sc-if value="{{manage.progressOn}}">
+                <sc-if value="{{c.manage.head.progress.attendance}}"><p>{{c.manage.head.progress.attendance.text}} · {{c.manage.head.progress.attendance.sub}}</p></sc-if>
+                <sc-if value="{{manage.seatsOn}}"><p>{{c.manage.head.progress.text}}<sc-if value="{{c.manage.head.progress.more}}"> · {{c.manage.head.progress.more}}</sc-if></p><div class="c00-seats"><sc-for list="{{c.manage.head.progress.seats}}" as="s" hint-placeholder-count="4"><i class="c00-seat {{s.kind}} att-{{s.attendance}}"></i></sc-for></div></sc-if>
+              </sc-if>
+              <div class="c00-card"><span class="en">{{c.manage.event.en}}</span><b>{{c.manage.head.title}}</b><span>{{c.manage.head.when.zh}} · {{c.manage.head.place.full}}</span><p class="c00-help">{{c.manage.head.formedLine}}</p><button type="button" class="c00-link" data-act="card" onClick="{{c.manage.card.open}}">{{c.manage.card.label}}</button></div>
+              <div class="c00-secs">
+                <!-- C2 申请审核 -->
+                <sc-if value="{{c.manage.apps.on}}"><div class="c00-sec {{c.manage.apps.cls}}" data-section="apps" style="--o:{{c.manage.apps.order}}"><h4><span>{{c.manage.apps.title}}</span><small>{{c.manage.apps.sub}}</small></h4><div class="body">
+                  <sc-for list="{{c.manage.apps.rows}}" as="a" hint-placeholder-count="2"><div class="c00-app" data-rid="{{a.id}}"><div class="n">{{a.nickText}} <small class="q">{{a.verifiedLabel}} · {{a.agoText}}</small></div><sc-if value="{{a.note}}"><div class="q">“{{a.note}}”</div></sc-if>
+                    <sc-if value="{{a.result}}"><div class="res">{{a.resultText}}</div></sc-if>
+                    <sc-if value="{{a.busy}}"><div class="q">处理中…</div></sc-if>
+                    <sc-if value="{{a.error}}"><div class="c00-err">{{a.error}} <button type="button" class="c00-btn" data-act="retry" onClick="{{a.retry}}">知道了</button></div></sc-if>
+                    <sc-if value="{{a.pendingOpen}}"><div class="c00-acts"><button type="button" class="c00-btn" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c00-btn" style="background:#4553BE;color:#fff;border-color:#4553BE" data-act="approve" onClick="{{a.approve}}">发出邀请</button></div></sc-if>
+                  </div></sc-for>
+                  <p class="c00-help">{{c.manage.apps.help}}</p></div></div></sc-if>
+                <!-- C8 改期答复 -->
+                <sc-if value="{{c.manage.replies.on}}"><div class="c00-sec {{c.manage.replies.cls}}" data-section="replies" style="--o:{{c.manage.replies.order}}"><h4><span>{{c.manage.replies.title}}</span><small>{{c.manage.replies.sub}}</small></h4><div class="body">
+                  <p class="c00-help">原定 <s>{{c.manage.replies.oldWhen.zh}}</s> → 改为 {{c.manage.replies.newWhen.zh}}</p>
+                  <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c00-mem" data-rid="{{r.id}}"><span>{{r.name}}</span><span class="r">{{r.answerText}} · {{r.ticketLine}}</span></div></sc-for>
+                  <p class="c00-help">{{c.manage.replies.help}}</p></div></div></sc-if>
+                <!-- C3 成员与席位 + C5 联系信息 (copy per row, only when showWx) -->
+                <sc-if value="{{c.manage.roster.on}}"><div class="c00-sec {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}"><h4><span>{{c.manage.roster.title}}</span><small>{{c.manage.roster.line}}</small></h4><div class="body">
+                  <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c00-mem" data-rid="{{m.id}}"><span>{{m.name}}<sc-if value="{{m.wxText}}"><br><small>{{m.wxText}} <button type="button" class="c00-btn" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></small></sc-if><sc-if value="{{m.copyFail}}"><br><small class="c00-copyfail">未能复制，长按手动复制 <button type="button" class="c00-btn" data-act="retry" onClick="{{m.retryCopy}}">重试</button></small></sc-if></span><span class="r">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"><br>{{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"><br>{{m.contactText}}</sc-if></span></div></sc-for>
+                  <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><div class="c00-mem c00-dim"><span>{{o.text}}</span></div></sc-for>
+                  <sc-if value="{{c.manage.roster.openText}}"><p class="c00-help">{{c.manage.roster.openText}}</p></sc-if></div></div></sc-if>
+                <!-- C4 候补 (never drawn as confirmed) -->
+                <sc-if value="{{c.manage.queue.on}}"><div class="c00-sec {{c.manage.queue.cls}}" data-section="queue" style="--o:{{c.manage.queue.order}}"><h4><span>{{c.manage.queue.title}}</span><small>{{c.manage.queue.sub}}</small></h4><div class="body">
+                  <sc-for list="{{c.manage.queue.rows}}" as="q" hint-placeholder-count="2"><div class="c00-mem"><span>{{q.no}} {{q.nick}}</span><span class="r">{{q.agoText}}</span></div></sc-for>
+                  <p class="c00-help">{{c.manage.queue.help}}</p></div></div></sc-if>
+                <!-- C6 离开记录 (collapsed by default; neutral facts) -->
+                <sc-if value="{{c.manage.leaves.on}}"><div class="c00-sec {{c.manage.leaves.cls}}" data-section="leaves" style="--o:{{c.manage.leaves.order}}"><h4><button type="button" class="c00-link" aria-expanded="{{c.manage.leaves.open}}" onClick="{{c.manage.leaves.toggle}}">{{c.manage.leaves.title}} {{manage.leavesArrow}}</button></h4><div class="body">
+                  <sc-for list="{{c.manage.leaves.rows}}" as="l" hint-placeholder-count="2"><div class="c00-mem"><span>{{l.nick}}</span><span class="r">{{l.text}} · {{l.atText}}</span></div></sc-for></div></div></sc-if>
+                <!-- C11 出席 (after 散场): choosing = three segments (none selected until chosen); recorded = label + chop (+ .fx-stamp while fresh) + 更正; trail -->
+                <sc-if value="{{c.manage.attendance.on}}"><div class="c00-sec {{c.manage.attendance.cls}}" data-section="attendance" style="--o:{{c.manage.attendance.order}}"><h4><span>{{c.manage.attendance.title}}</span><small>{{c.manage.attendance.sub}}</small></h4><div class="body">
+                  <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c00-att {{a.nextCls}}" data-rid="{{a.id}}">
+                    <div><b>{{a.name}}</b> <span class="c00-dim">{{a.label}}</span><sc-if value="{{a.recorded}}"> <span class="c00-chop {{a.stamp}} {{a.stampCls}}">{{a.chopText}}</span></sc-if></div>
+                    <sc-if value="{{a.choosing}}"><div class="c00-seg"><button type="button" class="c00-btn" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" class="c00-btn" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" class="c00-btn" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></div></sc-if>
+                    <sc-if value="{{a.canCorrect}}"><button type="button" class="c00-link" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
+                    <sc-if value="{{a.error}}"><div class="c00-err">{{a.error}}</div></sc-if>
+                    <sc-if value="{{a.showTrail}}"><div class="c00-trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
+                    <sc-if value="{{a.wxText}}"><div class="c00-help">{{a.wxText}} <button type="button" class="c00-btn" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button><sc-if value="{{a.copyFail}}"> <span class="c00-copyfail">未能复制，长按手动复制</span> <button type="button" class="c00-btn" data-act="retry" onClick="{{a.retryCopy}}">重试</button></sc-if></div></sc-if>
+                  </div></sc-for>
+                  <sc-if value="{{c.manage.attendance.doneText}}"><p class="c00-ok">{{c.manage.attendance.doneText}}</p></sc-if>
+                  <p class="c00-help">{{c.manage.attendance.help}}</p><p class="c00-help">{{c.manage.attendance.contactLine}}</p></div></div></sc-if>
+                <!-- 这局的安排 (always last): C7 改时间 / C10 记为散场 / C9 取消这局 / 再开一局 (inert) -->
+                <div class="c00-sec {{c.manage.arrange.cls}}" data-section="arrange" style="--o:{{c.manage.arrange.order}}"><h4><span>{{c.manage.arrange.title}}</span></h4><div class="body">
+                  <sc-if value="{{c.manage.arrange.canReschedule}}"><p><button type="button" class="c00-btn" data-act="propose" onClick="{{c.manage.arrange.reschedule}}">{{c.manage.arrange.rescheduleLabel}}</button> <small class="c00-dim">{{c.manage.arrange.rescheduleNote}}</small></p></sc-if>
+                  <sc-if value="{{c.manage.arrange.unansweredHint}}"><p class="c00-help">{{c.manage.arrange.unansweredHint}}</p></sc-if>
+                  <sc-if value="{{c.manage.arrange.canEnd}}"><p><button type="button" class="c00-btn" data-act="end" onClick="{{c.manage.arrange.end}}">{{c.manage.arrange.endLabel}}</button> <small class="c00-dim">{{c.manage.arrange.endNote}}</small></p></sc-if>
+                  <sc-if value="{{c.manage.arrange.endHint}}"><p class="c00-help">{{c.manage.arrange.endHint}}</p></sc-if>
+                  <sc-if value="{{c.manage.arrange.canCancel}}"><p><button type="button" class="c00-btn danger" data-act="cancel" onClick="{{c.manage.arrange.cancel}}">{{c.manage.arrange.cancelLabel}}</button> <small class="c00-dim">{{c.manage.arrange.cancelNote}}</small></p></sc-if>
+                  <sc-if value="{{c.manage.arrange.showReopen}}"><p><button type="button" class="c00-link inert" aria-disabled="true" onClick="{{c.manage.arrange.reopen}}">{{c.manage.arrange.reopenLabel}}</button> <small class="c00-dim">{{c.manage.arrange.reopenNote}}</small></p></sc-if>
+                </div></div>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== DRAFT summary surface ===== -->
+      <sc-if value="{{c.nav.on.draft}}" hint-placeholder-val="{{false}}">
+        <section class="c00-pg {{c.nav.cls.draft}}" data-surface="draft" style="{{c.nav.fromStyle}}">
+          <header class="c00-hd" data-header><div class="tools"><button type="button" class="c00-btn" data-act="back" onClick="{{c.draft.back}}">返回</button></div><div class="t">{{c.draft.title}}</div><div class="m">草稿 · {{c.draft.missingText}}</div></header>
+          <div class="c00-sc" data-scroller="draft" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.draft.on}}"><sc-if value="{{c.draft.row}}">
+              <div class="c00-card"><span class="en">草稿</span><b>{{c.draft.title}}</b><span>{{c.draft.whenText}} · {{c.draft.placeText}} · {{c.draft.capacity}} 人（含你）</span><p class="c00-help">{{c.draft.agoText}}<sc-if value="{{c.draft.sourceText}}"> · {{c.draft.sourceText}}</sc-if></p></div>
+              <p><button type="button" class="c00-btn inert" aria-disabled="true" onClick="{{c.inert}}">继续编辑（开局模块，本轮不可点）</button></p>
+              <p><button type="button" class="c00-btn danger" data-act="delete" onClick="{{c.draft.del}}">删除草稿</button></p>
+            </sc-if></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <nav class="c00-nav" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}">{{t.label}}</button></sc-for></nav>
+
+      <!-- ===== SHEET (one overlay for every kind): root .c00-over + onKeyDown=c.sheet.onKeyDown; dialog ref=c.sheet.focusRef (focus enters the first control, Esc / close returns it to the trigger) ===== -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="c00-over c00-sheet {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="b" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}">
+            <h3>{{c.sheet.title}}</h3>
+            <sc-if value="{{c.sheet.identity}}"><p class="c00-id">{{c.sheet.identity.title}} · {{c.sheet.identity.when}} · {{c.sheet.identity.place}}</p></sc-if>
+            <sc-if value="{{c.sheet.body}}"><p>{{c.sheet.body}}</p></sc-if>
+            <!-- reschedule: date / time inputs (data-field), same-time hint, consequence line; ok disabled until valid and different -->
+            <sc-if value="{{c.sheet.fields}}">
+              <p class="c00-help">原定 <s>{{c.sheet.fields.oldWhen.zh}}</s> → 改为 · {{c.sheet.fields.tz}} <b>{{sheet.newOrPlaceholder}}</b></p>
+              <label>新日期<input class="c00-in" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}"></label>
+              <label>新时间<input class="c00-in" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}"></label>
+              <sc-if value="{{c.sheet.fields.sameHint}}"><p class="c00-err">{{c.sheet.fields.sameHint}}</p></sc-if>
+              <p class="c00-help">{{c.sheet.fields.consequence}}</p>
+            </sc-if>
+            <!-- cancel: affected people (zero rows omitted), irreversible band -->
+            <sc-if value="{{sheet.hasAffected}}"><p><b>{{c.sheet.affectedTitle}}</b></p><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><div class="c00-mem"><span>{{x.label}}</span><span class="r">{{x.n}}</span></div></sc-for></sc-if>
+            <sc-if value="{{c.sheet.irreversible}}"><div class="c00-irrev">{{c.sheet.irreversible}}</div></sc-if>
+            <sc-if value="{{c.sheet.hint}}"><p class="c00-help">{{c.sheet.hint}}</p></sc-if>
+            <!-- card: the full ju-card (shared module when present) -->
+            <sc-if value="{{c.sheet.card}}"><div class="c00-card"><span class="en">{{c.sheet.card.en}} · {{c.sheet.card.statusLabel}}</span><b>{{c.sheet.card.title}}</b><span>{{c.sheet.card.when.zh}} · {{c.sheet.card.place.full}} · 局主 {{c.sheet.card.host}}</span><p class="c00-help">{{c.sheet.card.caption}}</p><sc-if value="{{c.sheet.card.note}}"><p>{{c.sheet.card.note}}</p></sc-if></div></sc-if>
+            <!-- record (局内记录): textarea data-field=text, min 4 / max 120; done → 已受理 -->
+            <sc-if value="{{sheet.isRecord}}">
+              <sc-if value="{{c.sheet.done}}"><div class="c00-result"><b>{{c.sheet.doneTitle}}</b><p>{{c.sheet.doneBody}}</p><p class="c00-dim">查看进度 · 不在本次范围</p></div></sc-if>
+              <sc-if value="{{sheet.recordOpen}}"><label>发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c00-in" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label><p class="c00-help">谁：局主 / 同局成员 / 其他 · 截图 ≤ 6（本机不上传）</p></sc-if>
+            </sc-if>
+            <sc-if value="{{c.sheet.error}}"><p class="c00-err">{{c.sheet.error}}</p></sc-if>
+            <div class="c00-acts">
+              <button type="button" class="c00-btn" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+              <sc-if value="{{sheet.showOk}}"><button type="button" class="c00-btn {{sheet.okCls}}" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="c00-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"$preview":{"width":780,"height":884}}'>
+/* @core */
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 360, back: 300, swap: 280, role: 300 };   /* ms at 1×; the controller multiplies by speed / collapses under reduced motion */
+    this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 2600 /* the placeholder burn; the shared ritual (≈6.6s) reports its own end */; this.deleteMs = 260;
+    this.tearSpec = { dist: 160, kx: -1, ky: 1.2 };                     /* drag → progress: (dx·kx + dy·ky) / dist, clamped 0..1 */
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  /* effects arrive AFTER the data was written. Rituals: the shared modules (JU.ritual.*) when present, otherwise the plain placeholders in this file. */
+  onEffect(fx) {
+    const root = this.rootRef.current; if (!root) return;
+    if (fx.type === 'torn') { const stub = root.querySelector('.c00-stub'); if (JU.ritual && JU.ritual.tear && stub) JU.ritual.tear(stub, { progress: 1, done: true }); /* else: .is-torn CSS */ }
+    if (fx.type === 'exited' || fx.type === 'reschedule-declined' || fx.type === 'cancelled') { const paper = root.querySelector('.c00-paper'); if (paper && fx.burn) { if (JU.ritual && JU.ritual.burn) JU.ritual.burn(paper, { onDone: () => this.burnDone(fx.eventId) }); else { paper.classList.add('burning'); } } }
+    if (fx.type === 'attended') { const chop = root.querySelector('[data-rid="' + fx.memberId + '"] .c00-chop'); if (chop && JU.ritual && JU.ritual.stamp) JU.ritual.stamp(chop, {}); /* else: .fx-stamp while stampFresh */ }
+  }
+  componentDidUpdate(pp, ps) {
+    /* printing starts: hand the paper to the shared print ritual (its onDone = c.ticket.printed); without it the .fx-print-paper keyframes run and onAnimationEnd reports the end */
+    const tk = this.state.ui.ticket, prev = ps.ui && ps.ui.ticket;
+    if (tk.printing && (!prev || prev.printing !== tk.printing)) { const paper = this.rootRef.current && this.rootRef.current.querySelector('.c00-paper'); if (paper && JU.ritual && JU.ritual.print) JU.ritual.print(paper, { onDone: () => this.ticketPrinted(tk.printing) }); }
+    const b = this.state.ui.burn, pb = ps.ui && ps.ui.burn;
+    if (b && b.playing && (!pb || pb.eventId !== b.eventId)) { const paper = this.rootRef.current && this.rootRef.current.querySelector('.c00-paper.c00-burn'); if (paper && JU.ritual && JU.ritual.burn) JU.ritual.burn(paper, { onDone: () => this.burnDone(b.eventId) }); }
+  }
+  renderVals() {
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals(); const s = this.state;
+    /* small template helpers (keep them in renderVals: the template language has no expressions) */
+    const rowCls = (r) => Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', leadCls: r.isLead ? 'is-lead' : '', readyCls: r.ready ? 'ok' : '' });
+    [c.joined.sections, c.joined.sectionsHistory, c.hosted.sections, c.hosted.sectionsHistory].forEach(ss => ss.forEach(g => g.rows.forEach(rowCls))); c.hosted.drafts.forEach(rowCls);
+    const youCls = (m) => Object.assign(m, { youCls: m.you ? 'you' : '' });
+    if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(youCls); }
+    const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
+    const paperCls = tk.state === 'fresh' ? 'fresh' : tk.state === 'printing' ? 'fx-print-paper' : tk.state === 'torn' ? 'torn' : '';
+    if (c.manage.on && !c.manage.missing) { c.manage.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; }); c.manage.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fx-stamp' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; }); }
+    return {
+      panel, rootRef: this.rootRef, c,
+      home: { joinedCurrent: c.role === 'joined' && c.section === 'current', joinedHistory: c.role === 'joined' && c.section === 'history', hostedCurrent: c.role === 'hosted' && c.section === 'current', hostedDrafts: c.role === 'hosted' && c.section === 'drafts', hostedHistory: c.role === 'hosted' && c.section === 'history', hostedEmptyCls: c.hosted.empty.action && c.hosted.empty.action.inert ? 'inert' : '' },
+      read: { progressPct: Math.round((c.read.progress || 0) * 100) },
+      ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
+      ticket: { showPaper: tk.on && !tk.unavailable && !tk.result, paperCls, showStub: tk.state !== 'torn' && tk.state !== 'void', onPaperEnd: () => { if (this.state.ui.ticket.printing) this.ticketPrinted(this.state.ui.ticket.printing); }, tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', showContactBtn: tk.state === 'torn' && !tk.contact.on },
+      history: { recordCount: c.history.on ? c.history.records.length : 0, snapshotOnly: c.history.on && c.history.ticket && !c.history.burnOnce },
+      manage: { ready: c.manage.on && !c.manage.missing, progressOn: c.manage.on && !c.manage.missing && !c.manage.head.progress.hidden, seatsOn: c.manage.on && !c.manage.missing && !c.manage.head.ended, leavesArrow: c.manage.on && c.manage.leaves && c.manage.leaves.open ? '▾' : '▸' },
+      sheet: { hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okCls: c.sheet.danger ? 'danger' : '', okDisabled: !c.sheet.canOk }
+    };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>

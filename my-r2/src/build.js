@@ -55,8 +55,11 @@ const meta = metaAll.filter(c => {
 });
 const optional = (p, what) => { if (exists(p)) return read(p); warn('missing ' + (what || '') + ' ' + p + ' (skipped)'); return ''; };
 const guardScript = (s, name) => { if (/<\/script/i.test(s)) { warn(name + ' contains "</script" — escaped so the artboard parses'); return s.replace(/<\/script/gi, '<\\/script'); } return s; };
+/* a script that does not parse on its own (e.g. a method-excerpt file such as my-r2/src/shared/v27/header.js, kept for reference)
+   must never be injected: it would break every concept bundle. Such files are skipped with a warning naming the first bad line. */
+const parses = (s, name) => { try { new (require('vm').Script)(s, { filename: name }); return true; } catch (e) { const m = /:(\d+)\n/.exec(e.stack || ''); warn('not injectable (syntax error' + (m ? ' near line ' + m[1] : '') + ': ' + e.message + '): ' + name + ' — a method excerpt rather than a module? skipped'); return false; } };
 const coreFiles = ['src/core/ju-fx.js', path.join(CORE_DIR, 'ju-data.js'), path.join(CORE_DIR, 'ju-ctl.js'), path.join(CORE_DIR, 'ju-review.js')];
-const core = coreFiles.map(f => { const s = optional(f, 'core'); return s ? '/* ---- ' + f + ' ---- */\n' + guardScript(s, f) : ''; }).filter(Boolean).join('\n');
+const core = coreFiles.map(f => { const s = optional(f, 'core'); return s && parses(s, f) ? '/* ---- ' + f + ' ---- */\n' + guardScript(s, f) : ''; }).filter(Boolean).join('\n');
 const panelHtml = optional(path.join(CORE_DIR, 'ju-panel.html'), 'panel');
 const panelCss = optional(path.join(CORE_DIR, 'ju-panel.css'), 'panel');
 const fxCss = optional('src/core/ju-fx.css', 'fx');
@@ -75,7 +78,7 @@ function sharedFiles(ext) {
   dirs.forEach(d => files.push.apply(files, walk(path.join(SHARED_DIR, d))));
   return files.filter(f => f.endsWith(ext));
 }
-const sharedCssFiles = sharedFiles('.css'), sharedJsFiles = sharedFiles('.js'), sharedSvgFiles = sharedFiles('.svg');
+const sharedCssFiles = sharedFiles('.css'), sharedJsFiles = sharedFiles('.js').filter(f => parses(read(f), f)), sharedSvgFiles = sharedFiles('.svg');
 [].concat(sharedCssFiles, sharedJsFiles, sharedSvgFiles).forEach(f => { const kb = fs.statSync(abs(f)).size / 1024; if (kb > 120) warn('shared module is large (' + kb.toFixed(0) + ' KB, injected into every concept): ' + f); });
 const sharedCss = sharedCssFiles.map(f => '/* ---- ' + f + ' ---- */\n' + read(f)).join('\n');
 const sharedJs = sharedJsFiles.map(f => '/* ---- ' + f + ' ---- */\n' + guardScript(read(f), f)).join('\n');
