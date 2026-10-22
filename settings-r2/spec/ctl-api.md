@@ -58,3 +58,8 @@ JUS.mixin(Component);   // 同时安装评审 mixin 与控制器；applyJump 默
 
 ## 你仍然要自己做的
 构图、排版、表面、每个 surface 的版式、转场（用 `cls` / `fromStyle` / `--hc` / `phase` 驱动）、核心动作的编排（`this.motion(name, fn)` 登记以便重播）、长内容与空态的版式、三个环境的大面积呈现、键盘下的布局（`var(--kb)`）、减少动态下的等价状态。
+
+## 评审工具约定（阶段 2 期间补充）
+- `onNav(type, surface, params)` 在新栈状态生效**之前**调用（`go` / `back` 里先 setState 再回调，但回调时 `this.state.nav` 仍是旧值）；有的方案靠这一点区分「栏展开」与「列到达」，此顺序保持不变。
+- 关键帧：开始拖动时，共享核心把**被各套 `.scrub` 规则（设 animation-delay 或 animation 的规则）命中的动画**的 currentTime 归零、释放时还原；没有动作在进行时会先重播最近一次 `this.motion()` 登记的核心动作。若一套有多个核心动作，`.scrub` 规则要限定到最近播放的那个动作（例如动作期间在根上加 `.sNN-m-<动作名>`），否则会把别的动作一起倒回去。一次性动画结束后撤掉动画类或用 `backwards` 填充，不要让已结束的动画一直挂着。
+- `capture.cjs` 的 `click` 是真实指针点击（先 `reveal()` 只滚动所属 `[data-scroller]`，再点元素中心，最多在顶部以下 48px）；被遮挡会记入日志。屏幕外的目标请先用滑动 / 滚动把它带进来。
