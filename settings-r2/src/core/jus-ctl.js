@@ -219,6 +219,7 @@
     p._pfSet = function (patch) { this.setState(function (s) { return s.pf ? { pf: assign(s.pf, patch) } : null; }); };
     /* functional update: several inputs can fire in the same tick (autofill, IME commit) — never build on a stale this.state.pf */
     p.pfInput = function (field, v) {
+      this._lastField = field;
       var self = this;
       this.setState(function (s) {
         var f = s.pf; if (!f) return null; var patch = {}; patch[field] = v; patch.errors = assign(f.errors); patch.errors[field] = ''; patch.failed = false; patch.saved = false;
@@ -273,7 +274,8 @@
       });
     };
     p.pfCancel = function () { var f = this.state.pf; if (f && !f.saved && this._pfDirty(f)) { this.setState({ sheet: { kind: 'unsaved' } }); return; } this.back(true); };
-    p.sheetKeep = function () { this.setState({ sheet: null }); };
+    /* 继续编辑 returns focus to the field the person was in (text forms: their text area) */
+    p.sheetKeep = function () { var sh = this.state.sheet; this.setState({ sheet: null }); if (sh && sh.kind === 'unsaved') this._focusField = sh.form ? 'text' : (this._lastField || 'name'); };
     /* drafts are dropped only after the leaving page has gone, so its text does not blank out mid-exit; a navigation in between
        (seq changes) leaves them alone, and entering profile-edit always starts from a fresh pf anyway */
     p._dropDraftAfterExit = function (formKey) {

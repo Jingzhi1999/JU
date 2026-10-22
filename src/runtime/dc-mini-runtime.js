@@ -49,6 +49,8 @@
     }
     return out;
   }
+  /* valueless boolean attributes (<input type="file" multiple>) mean true; as props an empty string would switch them off */
+  var BOOL_ATTR = { multiple: 1, disabled: 1, checked: 1, readonly: 1, required: 1, autofocus: 1, hidden: 1, selected: 1, open: 1, novalidate: 1, playsinline: 1, muted: 1, autoplay: 1, loop: 1, controls: 1, inert: 1 };
   function str(v) { return v == null ? '' : (typeof v === 'object' ? JSON.stringify(v) : String(v)); }
   function renderNodes(nodes, scope, keyp, out) {
     for (var i = 0; i < nodes.length; i++) {
@@ -64,7 +66,7 @@
       var props = { key: keyp + '.' + n.id };
       for (var a = 0; a < n.attrs.length; a++) {
         var at = n.attrs[a]; var v;
-        if (at.s != null) v = at.s; else if (at.h != null) v = lookup(scope, at.h); else { v = ''; for (var q = 0; q < at.parts.length; q++) { var pp = at.parts[q]; v += pp.s != null ? pp.s : str(lookup(scope, pp.p)); } }
+        if (at.s != null) v = (at.s === '' && BOOL_ATTR[at.n]) ? true : at.s; else if (at.h != null) v = lookup(scope, at.h); else { v = ''; for (var q = 0; q < at.parts.length; q++) { var pp = at.parts[q]; v += pp.s != null ? pp.s : str(lookup(scope, pp.p)); } }
         if (v === undefined || v === null || v === false) { if (at.h != null) continue; }
         props[at.n] = v;
       }
