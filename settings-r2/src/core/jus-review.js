@@ -69,7 +69,7 @@
       if (v == null) { this._scrubRestore(); this.resumeTimers(); this.setReview({ scrub: null, paused: false }); return; }
       if (!this._scrubS) {
         var s = this._scrubS = { seen: [], zeroed: [], replay: false };
-        if (!this._finiteAnims().length && this.lastMotion && !this.isRM()) {
+        if (!this._movingAnims().length && this.lastMotion && !this.isRM()) {
           /* nothing is moving (the last motion has settled and its animations are gone): replay the last core motion with its own
              timers running, and freeze it the moment it is under way — the root already carries .paused, so its keyframes sit at 0 */
           s.replay = true; this.resumeTimers();
@@ -84,6 +84,11 @@
       var app = this.rootRef && this.rootRef.current; if (!app || !app.getAnimations) return [];
       return app.getAnimations({ subtree: true }).filter(function (a) { try { var t = a.effect.getComputedTiming(); return isFinite(t.endTime) && t.endTime > 0; } catch (e) { return false; } });
     };
+    /* still under way = running or paused before its end; a finished animation that only lingers through fill: both/forwards
+       does not count (otherwise a concept with filled keyframes would never get the auto-replay) */
+    p._movingAnims = function () {
+      return this._finiteAnims().filter(function (a) { try { var t = a.effect.getComputedTiming(); return (a.playState === 'running' || a.playState === 'paused') && a.currentTime != null && a.currentTime < t.endTime - 1; } catch (e) { return false; } });
+    };
     /* the replayed motion is "under way" when navigation reaches its moving phase, or when keyframes exist and no timer of the
        motion is about to fire (a save, for instance, shows its toast first and starts the real travel 220ms later) */
     p._scrubWait = function (s, t0) {
@@ -92,7 +97,7 @@
         if (self._scrubS !== s) return;
         var nav = self.state.nav, moving = !!(nav && (nav.phase === 'in' || nav.phase === 'exit'));
         var now = Date.now(), soon = (self._timers || []).some(function (e) { return e.id && e.due - now < 260; });
-        if (moving || (self._finiteAnims().length && !soon) || now - t0 > 1600) { s.replay = false; self.pauseTimers(); self._scrubZero(0); return; }
+        if (moving || (self._movingAnims().length && !soon) || now - t0 > 1600) { s.replay = false; self.pauseTimers(); self._scrubZero(0); return; }
         requestAnimationFrame(step);
       };
       requestAnimationFrame(step);
