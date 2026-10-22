@@ -18,7 +18,7 @@ body{margin:0}
    page, the others compress into 24px edges piled at the bottom; back reverses. The environment is the sky above / below the stack and
    the colour of every sheet (each sheet = one solid colour sliced from the environment). */
 .app.s10{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;-webkit-font-smoothing:antialiased;background:#eceaf2;
-  --ink:#14161F;--body:#252b3a;--sub:#3a4152;--sec:#535b70;--blue:#4553BE;--link:#4352bb;--focus:#4A5AD6;--err:#DA3A52;--err-ink:#B02238;--ok:#0E9B76;
+  --ink:#14161F;--body:#252b3a;--sub:#3a4152;--sec:#535b70;--blue:#4553BE;--link:#4352bb;--focus:#4A5AD6;--err:#DA3A52;--err-ink:#8E1A2C;--ok-ink:#045541;--ok:#0E9B76;
   --ease:cubic-bezier(.22,.8,.24,1);--lift:calc(320ms * var(--k,1));--env:calc(650ms * var(--k,1));--sheet-shadow:0 -10px 30px rgba(20,22,31,.10);
   --top:44px;--pile:120px;--pileb:max(var(--pile),var(--kb,0px));--navh:64px}
 .app.s10 *{box-sizing:border-box}
@@ -86,6 +86,10 @@ body{margin:0}
 .st-lift .s10-st,.st-lift .s10-more,.st-drop .s10-st,.st-drop .s10-more{opacity:0;pointer-events:none}
 .s10-anim .s10-st,.s10-anim .s10-pl,.s10-anim .s10-more{transition:opacity calc(110ms * var(--k,1)) ease,transform var(--lift) var(--ease)}
 .s10-anim .st-pile .s10-pl{transition:opacity calc(160ms * var(--k,1)) ease calc(150ms * var(--k,1))}
+/* drop: the 24px labels leave first, the strip names return after them; the home header returns after the page header has gone */
+.s10-drop.s10-anim .st-home .s10-pl{transition:opacity calc(80ms * var(--k,1)) ease}
+.s10-drop.s10-anim .st-home .s10-st,.s10-drop.s10-anim .st-home .s10-more,.s10-drop.s10-anim .st-home .s10-face{transition:opacity calc(160ms * var(--k,1)) ease calc(110ms * var(--k,1)),transform var(--lift) var(--ease)}
+.s10-drop .s10-hd{transition:opacity calc(200ms * var(--k,1)) ease calc(110ms * var(--k,1))}
 .s10-anim .st-drop .s10-st,.s10-anim .st-drop .s10-more{opacity:1;transition:opacity calc(160ms * var(--k,1)) ease calc(160ms * var(--k,1))}
 .s10-L5 .s10-more{position:absolute;left:24px;right:24px;top:66px;display:flex;flex-wrap:wrap;gap:0 20px}
 .s10-more button{height:40px;font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center}
@@ -110,7 +114,7 @@ body{margin:0}
 .st-lift .s10-face,.st-drop .s10-face{pointer-events:none}
 /* ---- a lifted sheet becomes the page: header (30/500 + 14, collapsing to 18 in the tool row) + its own scroller ---- */
 .s10-pg{position:absolute;inset:0}
-.s10-ph{position:absolute;left:0;right:0;top:0;height:calc(116px - 68px * var(--hc,0));z-index:3;overflow:hidden;background-color:var(--lc);transition:opacity calc(200ms * var(--k,1)) ease,background-color var(--env)}
+.s10-ph{position:absolute;left:0;right:0;top:0;height:calc(116px - 68px * var(--hc,0));z-index:3;overflow:hidden;background-color:var(--lc);transition:opacity calc(200ms * var(--k,1)) ease,transform var(--lift) var(--ease),background-color var(--env)}
 .s10-bk{position:absolute;left:10px;top:4px;height:44px;padding:0 10px 0 4px;display:flex;align-items:center;gap:2px;font-size:15px;font-weight:500;color:var(--ink)}
 .s10-bk svg{width:22px;height:22px;display:block}
 .s10-bk:active{opacity:.55}
@@ -122,15 +126,19 @@ body{margin:0}
 /* page phases (controller classes): the page arrives with the sheet; its name starts exactly where the strip's name was */
 .s10-pgc{transition:transform var(--lift) var(--ease),opacity calc(200ms * var(--k,1)) ease}
 .s10-pgr{transition:opacity calc(220ms * var(--k,1)) ease calc(110ms * var(--k,1))}
-.s10-pg.is-top.ph-enter .s10-ph{opacity:0;transition:none}
-.s10-lifted.s10-anim .s10-pg.is-top .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(150ms * var(--k,1))}
+/* the page header travels with the page (same offset, same curve) and only shows once the name has passed it */
+.s10-pg.is-top.ph-enter .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px));transition:none}
+.s10-lifted.s10-anim .s10-pg.is-top .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(150ms * var(--k,1)),transform var(--lift) var(--ease),background-color var(--env)}
 .s10-pg.is-top.ph-enter .s10-pgc{transform:translateY(var(--pg-off,0px));transition:none}
 .s10-pg.is-top.ph-enter .s10-pgr{opacity:0;transition:none}
-.s10-pg.is-top.ph-exit .s10-ph{opacity:0;transition-duration:calc(120ms * var(--k,1))}
+.s10-pg.is-top.ph-exit .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px));transition:opacity calc(90ms * var(--k,1)) ease,transform var(--lift) var(--ease),background-color var(--env)}
 .s10-pg.is-top.ph-exit .s10-pgc{transform:translateY(calc(var(--pg-off,0px) + var(--psc,0px)))}
 .s10-pg.is-top.ph-exit .s10-pgr{opacity:0;transition:opacity calc(120ms * var(--k,1)) ease}
 .s10-pgp{--pg-off:-102px}
-.s10-pgp.is-under .s10-ph{opacity:0}
+.s10-pgp.is-under .s10-ph{opacity:0;transition:opacity calc(90ms * var(--k,1)) ease}
+.s10-pgp.is-under.ph-exit .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(110ms * var(--k,1))}
+.s10-pge.is-top.ph-in .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(110ms * var(--k,1))}
+
 .s10-pgp.is-under .s10-pgc{opacity:0}
 .s10-pgp.is-under.ph-exit .s10-ph{opacity:1}
 .s10-pgp.is-under.ph-exit .s10-pgc{opacity:1}
@@ -142,9 +150,8 @@ body{margin:0}
 .s10-pgp .s10-sc2{padding-bottom:0}
 .s10-rv{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 14px;min-height:40px;padding-top:6px}
 .s10-rv .v{font-size:20px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere;min-width:0}
-.s10-rv .ok{font-size:15px;font-weight:500;color:#07705A}
+.s10-rv .ok{font-size:15px;font-weight:500;color:var(--ok-ink)}
 .s10-rv .no{font-size:15px;font-weight:500;color:var(--sub)}
-.s10-ra{align-items:flex-start}
 .s10-ra .s10-snap{margin-top:0}
 .s10-link{height:32px;font-size:15px;font-weight:500;color:var(--link)}
 .s10-link:active{opacity:.55}
@@ -166,7 +173,7 @@ body{margin:0}
 .ju-phone.kb .s10-fa{position:sticky;bottom:0;flex:0 0 auto}
 .s10-fl{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;line-height:20px;color:var(--sub)}
 .s10-fl label{color:var(--sub)}
-.s10-cnt{font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums}
+.s10-cnt{font-size:13px;color:var(--sub)}
 .s10-cnt.over{color:var(--err-ink);font-weight:600}
 .s10-in{display:block;width:100%;height:40px;margin-top:2px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);border-radius:0;background:transparent;padding:0;font-size:20px;font-weight:600;line-height:1.3;color:var(--ink);transition:border-color 160ms ease}
 .s10-in::placeholder{color:rgba(58,65,82,.55);font-weight:500}
@@ -175,16 +182,17 @@ body{margin:0}
 .is-bad .s10-fl label{color:var(--err-ink)}
 .s10-fe{min-height:18px;margin-top:6px;font-size:13px;line-height:18px;color:var(--err-ink)}
 .s10-fe:empty{min-height:8px}
-.s10-okl{margin-top:8px;font-size:15px;font-weight:500;line-height:1.4;color:#07705A}
+.s10-okl{margin-top:8px;font-size:15px;font-weight:500;line-height:1.4;color:var(--ok-ink)}
 .s10-er{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;margin-top:12px}
 .s10-pill{height:38px;padding:0 16px;border-radius:19px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.34);background-color:rgba(255,255,255,.42);font-size:15px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;transition:transform 120ms ease}
 .s10-pill:active{transform:scale(.96)}
 .s10-pill[disabled]{opacity:.55;cursor:default}
-.s10-code{width:7em;height:40px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);background:transparent;padding:0;font-size:20px;font-weight:600;letter-spacing:.22em;color:var(--ink);font-variant-numeric:tabular-nums}
+.s10-code{width:7em;height:40px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);background:transparent;padding:0;font-size:20px;font-weight:600;letter-spacing:.22em;color:var(--ink)}
 .s10-code:focus{border-bottom:2px solid var(--focus)}
 .s10-rs{margin-top:4px}
 .s10-rs .s10-link{height:32px;font-size:14px}
 .s10-rs .s10-link[disabled]{color:var(--sub);cursor:default}
+.s10-fs3 .s10-link:not([disabled]){color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .s10-fh{margin-top:8px;font-size:13px;line-height:1.55;color:var(--sub)}
 .s10-fail{align-self:stretch;margin-bottom:12px;font-size:14px;line-height:1.5;color:var(--err-ink);text-align:center}
 .s10-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border-radius:24px;background-color:var(--blue);background-image:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 52%,rgba(8,12,40,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 10px 22px -12px rgba(69,83,190,.85);color:#fff;font-size:16px;font-weight:600;letter-spacing:.04em;text-align:center;transition:transform 120ms ease,opacity 160ms ease}
@@ -233,7 +241,7 @@ body{margin:0}
             <!-- L0 identity: white, 230px; lifted it becomes 个人资料, and 编辑资料 rises inside it -->
             <div class="s10-layer s10-L0 {{x.L0.cls}}" style="{{x.L0.style}}" data-layer="id" data-origin="profile">
               <div class="s10-face" role="button" tabindex="0" aria-label="个人资料" onClick="{{x.L0.tap}}">
-                <p class="s10-name" style="font-size:{{x.nameSize}}px">{{c.you.name}}</p>
+                <p class="s10-name" style="font-size:{{x.nameSize}}px">{{c.you.name}}<sc-if value="{{x.freshName}}"><span class="s10-fresh">刚更新</span></sc-if></p>
                 <div class="s10-rest">
                   <p class="s10-acct">{{c.you.wxLabel}}<sc-if value="{{c.you.email}}"> · {{x.mailShort}} <span class="{{x.mailCls}}">{{c.you.emailLabel}}</span></sc-if></p>
                   <div class="s10-fx">
