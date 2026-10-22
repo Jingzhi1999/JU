@@ -199,7 +199,7 @@
   const tearOpts = () => ({ onDetach: () => { say('撕裂到右端 → 先写入“已撕”（V27 onDetach → JuLedger.torn），写入成功后副券坠落'); return true; }, onDone: () => { say('副券落定 → data-state=torn → 300ms 后联系层、850ms 后主按钮'); contact().reveal(); } });
 
   async function doPrint(data, label) {
-    current = data; $('contactWrap').dataset.revealed = 'false'; $('contactCta').dataset.shown = 'false'; $('ash').dataset.shown = 'false';
+    current = data; contact().hide(); $('ash').dataset.shown = 'false';
     if (burnHandle) { window.JURitual.burn.reset(stage); burnHandle = null; }
     $('hTitle').textContent = data.reissued ? '时间挪了一下' : '票根'; $('hSub').textContent = data.reissued ? 'SAT 12.19 · 20:00 · 法拉盛 · 原定 FRI 12.18' : 'FRI 12.18 · 19:30 · 法拉盛';
     if (data.reissued) stage.style.setProperty('--ju-ticket-top', '24px'); else stage.style.removeProperty('--ju-ticket-top');
@@ -221,6 +221,7 @@
   $('burn').onclick = () => {
     if (stage.dataset.state !== 'ready' && stage.dataset.state !== 'torn') return say('先出票（燃烧作用于原票件）');
     const v = $('variant').value; const data = Object.assign({ reason: v === 'A' ? 'cancelled' : v }, ASH[v]);
+    contact().hide();   // V27 第 311 行：燃烧中联系层 / 动作按钮 display:none
     say('写入作废事实（V27：先 JuLedger.cancel / choose(false)，成功才点火）→ 燃烧 variant ' + (v === 'A' ? 'A' : v === 'cancelled' ? 'C' : 'B') + '，6.6s');
     burnHandle = window.JURitual.burn(stage, data, { variant: v === 'A' ? 'A' : undefined, onDone: () => say('燃尽 → data-state=void，作废文案落定') });
   };

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JU 三环境皮肤演示 · cotton / halo / sunset</title>
+<!-- 独立演示页：三台 390×844 并排。默认按 skins.js 的规则只有 cotton 是 live（WebGL 原件），halo / sunset 用静态 CSS 回退；
+     ?live=all&exclusive=0 可让三台都 live（诊断 / 采样用）；?live=none 全静态；?fg=0 隐藏前景（采样背景用）。
+     前景元素是 V27 的原件角色：30px/500 标题（header.css [data-screen-title]）、14px 辅助行（.ju-v27-meta）、14px 正文（#454b5e，V27.code.html L1627）、主要 CTA（cta.css .ju-v27-cta）。 -->
+<link rel="stylesheet" href="header.css">
+<link rel="stylesheet" href="cta.css">
+<style>
+  html, body { margin: 0; background: #0A0502; }
+  body { font-family: var(--ju-font-ui); padding: 24px; display: flex; gap: 24px; align-items: flex-start; width: max-content; }
+  .phone { position: relative; width: 390px; height: 844px; overflow: hidden; background: #f3f2f8; flex: none; }
+  .fg { position: absolute; inset: 0; z-index: 2; padding: 24px 22px 0; box-sizing: border-box; display: flex; flex-direction: column; }
+  body.no-fg .fg { visibility: hidden; }
+  .ju-v27-tool { height: 44px; display: flex; align-items: center; gap: 10px; }
+  .ju-v27-back-pill span { font-size: 15px; line-height: 1; color: rgba(20,22,31,.78); margin-top: -1px; }
+  .title { margin-top: 9px; }
+  .meta { margin-top: 9px; }
+  .body { margin: 24px 0 0; font-size: 14px; line-height: 1.5; color: #454b5e; max-width: 346px; }
+  .tag { margin-top: auto; margin-bottom: 14px; font-family: 'Space Mono', monospace; font-size: 9.5px; letter-spacing: .3em; color: rgba(20,22,31,.66); }
+  .footer { position: absolute; left: 0; right: 0; bottom: 0; z-index: 3; padding: 0 22px 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+  .ju-v27-cta { width: min(100%, 280px); }
+  .caption { position: absolute; left: 0; right: 0; top: -22px; color: #AEB8F0; font: 11px 'Space Mono', monospace; letter-spacing: .2em; }
+  .wrap { position: relative; }
+</style>
+</head>
+<body>
+  <div class="wrap"><div class="caption" data-caption="cotton">COTTON CANDY</div><div class="phone" id="phone-cotton" data-skin="cotton"></div></div>
+  <div class="wrap"><div class="caption" data-caption="halo">HALO</div><div class="phone" id="phone-halo" data-skin="halo"></div></div>
+  <div class="wrap"><div class="caption" data-caption="sunset">SUNSET</div><div class="phone" id="phone-sunset" data-skin="sunset"></div></div>
+
+  <template id="fg-tpl">
+    <div class="fg">
+      <div class="ju-v27-tool"><div class="ju-v27-back-pill" role="button" aria-label="返回"><span class="ju-v27-back-glyph">←</span><span class="ju-v27-back-gloss"></span></div></div>
+      <span class="title" data-screen-title="true">深夜救急火锅局</span>
+      <span class="meta ju-v27-meta">FRI 12.18 · 19:30 · 法拉盛 · 4 人局</span>
+      <p class="body">不计为未出席，也不影响成局信用。六小时内阅读并确认；超时释放预留，想再参加可以重新申请。</p>
+      <div class="tag">JU · SHARED SKIN · <span data-state></span></div>
+    </div>
+    <div class="footer"><div class="ju-v27-cta" role="button" tabindex="0" aria-label="留个位置"><span class="gloss"></span><span class="label">留个位置</span></div></div>
+  </template>
+
+  <script src="vendor-three.js"></script>
+  <script src="backgrounds.js"></script>
+  <script src="skins-r9.js"></script>
+  <script src="skins.js"></script>
+  <script>
+    (function () {
+      const q = new URLSearchParams(location.search);
+      const live = q.get('live') || 'cotton';          // cotton | halo | sunset | all | none
+      const exclusive = q.get('exclusive') !== '0';
+      if (q.get('fg') === '0') document.body.classList.add('no-fg');
+      const tpl = document.getElementById('fg-tpl');
+      const skins = window.JU.shared.skins;
+      const names = ['cotton', 'halo', 'sunset'];
+      // mount order: non-live first so the live one (cotton by default) keeps live under the exclusive rule
+      const order = names.slice().sort((a, b) => (a === live ? 1 : 0) - (b === live ? 1 : 0));
+      for (const name of order) {
+        const host = document.getElementById('phone-' + name);
+        host.append(tpl.content.cloneNode(true));
+        const st = skins.mount(host, name, { live: live === 'all' || live === name, exclusive });
+        host.querySelector('[data-state]').textContent = (st.live ? 'LIVE ' + st.engine : 'STATIC');
+      }
+      window.JU_DEMO = { skins, names, state: () => Object.fromEntries(names.map(n => [n, skins.state(document.getElementById('phone-' + n))])) };
+    })();
+  </script>
+</body>
+</html>

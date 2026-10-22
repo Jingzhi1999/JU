@@ -419,7 +419,7 @@
     if (m.host) Array.prototype.slice.call(m.host.querySelectorAll('canvas')).forEach(c => c.remove());
     if (m.surface) { m.surface.style.clipPath = ''; m.surface.style.webkitClipPath = ''; }
     if (m.shadow) { m.shadow.style.filter = ''; const f = m.shadow.firstElementChild; if (f) { f.style.clipPath = ''; f.style.webkitClipPath = ''; } }
-    if (m.paper) { m.paper.style.filter = ''; delete m.paper.parentElement.dataset.burnPose24; }
+    if (m.paper) { m.paper.style.filter = ''; delete m.paper.parentElement.dataset.burnPose24; const rig = m.paper.querySelector('[data-tear]'); if (rig && rig.__juBurnHidden !== undefined) { rig.style.display = rig.__juBurnHidden; delete rig.__juBurnHidden; } }
     stage.__juBurn = null;
   }
 
@@ -437,6 +437,8 @@
     if (ash) { const t = ash.querySelector('[data-slot="ashTitle"]'), s = ash.querySelector('[data-slot="ashSub"]'), c = ash.querySelector('[data-slot="ashSec"]'); if (t && data.ashTitle) t.textContent = data.ashTitle; if (s && data.ashSub) s.textContent = data.ashSub; if (c && data.ashSec) c.textContent = data.ashSec; delete ash.dataset.shown; }
     // 撕票 rig 先停（startBurn 第 3802 行）
     const rigHost = m.paper.querySelector('[data-tear]'); if (rigHost && rigHost.__jurig) rigHost.__jurig.setEnabled(false);
+    // 已撕的票：空副券宿主按 s10 规则收成 0 再点火（否则引擎的内联 clip-path 会盖掉影子外壳的 inset 让位，露出 84px 空白纸影）
+    if (rigHost && stage.dataset.state === 'torn') { rigHost.__juBurnHidden = rigHost.style.display; rigHost.style.display = 'none'; }
     // burnMount（第 3777-3780 行）
     Array.prototype.slice.call(m.host.querySelectorAll('canvas')).forEach(c => c.remove());
     m.paper.style.opacity = '1'; m.paper.style.transform = 'none'; m.paper.parentElement.dataset.burnPose24 = 'true';

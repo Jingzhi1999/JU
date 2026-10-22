@@ -15,6 +15,7 @@ body{margin:0}
 /* @shared-css */
 /* C00 = WIRING REFERENCE ONLY. The visuals are deliberately plain: copy the bindings (c.* names, data-* selectors, phases, --hc, rituals, .rm/.paused/.scrub), never the look. */
 .app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;background:#f4f4f6;font-size:calc(15px * var(--tz,1));line-height:1.45}
+.app *,.app *::before,.app *::after{box-sizing:border-box}
 .app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 .c00-env{position:absolute;inset:0;opacity:.9}
 .app[data-skin="cotton"] .c00-env{background:linear-gradient(160deg,#fbe1ec,#ececf4 50%,#d3edf3)}
@@ -33,9 +34,12 @@ body{margin:0}
 .c00-pane{transition:opacity calc(280ms * var(--k)) ease}
 .c00-pg.ph-enter.dir-role .c00-pane,.c00-pg.ph-enter.dir-swap .c00-pane{opacity:0}
 /* header: --hc (0..1) is written by c.nav.onScroll on the scroller, its [data-surface] and [data-header]; title 30 → 18 continuously */
+/* PITFALL: a collapsing header must NOT change the scroller's height (header shrinks → scroller grows → scrollTop re-clamps at the bottom
+   → --hc changes → header shrinks…: a visible oscillation). Keep the header box constant (the title keeps its 30px line box while the
+   font shrinks, the meta line only fades) or overlay the header on the scroller (position:absolute + scroller padding-top). */
 .c00-hd{flex:0 0 auto;padding:calc(12px + var(--sat,0px)) 20px 8px;display:flex;flex-direction:column;gap:4px;min-height:48px}
-.c00-hd .t{font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.25;transition:none;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
-.c00-hd .m{font-size:calc(14px * var(--tz,1));color:#535b70;opacity:calc(1 - var(--hc,0));max-height:calc(40px * (1 - var(--hc,0)));overflow:hidden}
+.c00-hd .t{font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.25;min-height:calc(38px * var(--tz,1));display:flex;align-items:center;transition:none;overflow:hidden}
+.c00-hd .m{font-size:calc(14px * var(--tz,1));color:#535b70;opacity:calc(1 - var(--hc,0));min-height:calc(20px * var(--tz,1));overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
 .c00-hd .tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .c00-sc{flex:1 1 auto;overflow:auto;padding:0 20px calc(24px + var(--kb,0px));-webkit-overflow-scrolling:touch}
 .c00-tabs{display:flex;gap:6px;padding:4px 0 8px}
@@ -101,6 +105,9 @@ body{margin:0}
 .c00-printer{position:relative;overflow:hidden;height:240px}
 .c00-paper{position:absolute;left:10px;right:10px;top:0;height:230px;background:#fbf7ee;border-radius:6px;box-shadow:0 1px 0 rgba(0,0,0,.12),0 6px 14px -8px rgba(0,0,0,.35);display:flex;flex-direction:column;justify-content:space-between;--fx-dur:2300ms}
 .c00-paper.fresh{transform:translateY(-102%)}
+.c00-paper.printing{animation:c00-print calc(var(--fx-dur) * var(--k)) linear forwards;-webkit-mask:linear-gradient(transparent calc(100% - var(--c00-ink)),#000 calc(100% - var(--c00-ink) + 6%));mask:linear-gradient(transparent calc(100% - var(--c00-ink)),#000 calc(100% - var(--c00-ink) + 6%))}
+@property --c00-ink{syntax:'<percentage>';inherits:false;initial-value:0%}
+@keyframes c00-print{0%{transform:translateY(-102%);--c00-ink:0%}14%{transform:translateY(-86%);--c00-ink:14%}22%{transform:translateY(-84%);--c00-ink:18%}48%{transform:translateY(-50%);--c00-ink:52%}70%{transform:translateY(-12%);--c00-ink:90%}92%{transform:translateY(1.5%);--c00-ink:106%}100%{transform:translateY(0);--c00-ink:110%}}
 .c00-paper .f{padding:14px 16px;display:flex;flex-direction:column;gap:3px;font-size:calc(13px * var(--tz,1))}
 .c00-paper .f b{font-size:calc(17px * var(--tz,1));font-weight:500}
 .c00-paper .f .big{font:500 calc(30px * var(--tz,1)) "DM Mono",ui-monospace,monospace}
@@ -115,7 +122,7 @@ body{margin:0}
 @keyframes c00-burn{0%{clip-path:inset(0 0 0 0);filter:none}60%{filter:sepia(.6) brightness(.8)}100%{clip-path:inset(0 0 100% 0);filter:sepia(1) brightness(.4)}}
 .c00-ash{height:46px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.7}
 .app.scrub .c00-burn.burning{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur,2600ms) * var(--k))!important}
-.app.scrub .c00-paper.fx-print-paper{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k))!important}
+.app.scrub .c00-paper.printing{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * var(--fx-dur) * var(--k))!important}
 /* contact layer */
 .c00-contact{border:1px solid rgba(20,22,31,.12);border-radius:12px;padding:12px 14px;background:#fff;margin-top:10px;animation:c00-up calc(300ms * var(--k)) ease}
 .c00-wx{font:500 18px "DM Mono",ui-monospace,monospace;user-select:all}
@@ -323,7 +330,7 @@ body{margin:0}
               <sc-if value="{{ticket.showPaper}}">
                 <div class="c00-slot"></div>
                 <div class="c00-printer fx-printer">
-                  <!-- paper: .fresh before printing; .fx-print-paper while printing (shared primitive; onAnimationEnd → c.ticket.printed; the controller also arms printMs); .torn after -->
+                  <!-- paper: .fresh before printing; .printing while printing (placeholder keyframes; onAnimationEnd → c.ticket.printed; the controller also arms printMs); .torn after -->
                   <div class="c00-paper c00-burn {{ticket.paperCls}}" onAnimationEnd="{{ticket.onPaperEnd}}">
                     <div class="f">
                       <sc-if value="{{c.ticket.face.stamp}}"><span class="c00-stamp">{{c.ticket.face.stamp}}</span></sc-if>
@@ -551,7 +558,7 @@ class Component extends DCLogic {
     const youCls = (m) => Object.assign(m, { youCls: m.you ? 'you' : '' });
     if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(youCls); }
     const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
-    const paperCls = tk.state === 'fresh' ? 'fresh' : tk.state === 'printing' ? 'fx-print-paper' : tk.state === 'torn' ? 'torn' : '';
+    const paperCls = tk.state === 'fresh' ? 'fresh' : tk.state === 'printing' ? 'printing' : tk.state === 'torn' ? 'torn' : '';
     if (c.manage.on && !c.manage.missing) { c.manage.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; }); c.manage.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fx-stamp' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; }); }
     return {
       panel, rootRef: this.rootRef, c,

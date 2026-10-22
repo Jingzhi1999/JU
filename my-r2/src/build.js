@@ -248,8 +248,10 @@ function parseCoverage(text) {
   }
   return out.order.length ? out : null;
 }
-const COVERAGE = exists('my-r2/spec/coverage.md') ? parseCoverage(read('my-r2/spec/coverage.md')) : null;
-if (exists('my-r2/spec/coverage.md') && !COVERAGE) warn('my-r2/spec/coverage.md has no five-column per-concept tables (### CNN + 入口存在…仍需用户验收) — the shell shows the markdown only');
+const COVERAGE_MD = process.env.JU_COVERAGE_MD || 'my-r2/spec/coverage.md';   /* JU_COVERAGE_MD=<md> overrides (tests) */
+if (process.env.JU_COVERAGE_MD && exists(COVERAGE_MD)) docs.coverage = { file: COVERAGE_MD, present: true, html: md(read(COVERAGE_MD)) };
+const COVERAGE = exists(COVERAGE_MD) ? parseCoverage(read(COVERAGE_MD)) : null;
+if (exists(COVERAGE_MD) && !COVERAGE) warn(COVERAGE_MD + ' has no five-column per-concept tables (### CNN + 入口存在…仍需用户验收) — the shell shows the markdown only');
 
 /* ---- evidence gallery: my-r2/evidence/index.json → thumbnails inlined as data URIs ---- */
 const EVIDENCE = (() => {

@@ -1,6 +1,6 @@
 // Runs tools/coverage.cjs for every concept that has a source file and writes my-r2/spec/coverage.md with FIVE SEPARATE columns.
-// node my-r2/tools/coverage-matrix.cjs [C01 C02 ...] [--out my-r2/spec/coverage.md] [--manual my-r2/spec/coverage-manual.json] [--no-run]
-//   file under test: JU_STANDALONE=<path> or the deliverable (build first). Screenshots → my-r2/evidence/CNN/coverage-matrix/<key>.png
+// node my-r2/tools/coverage-matrix.cjs [C01 C02 ...] [--out my-r2/spec/coverage.md] [--manual my-r2/spec/coverage-manual.json] [--evidence my-r2/evidence] [--no-run]
+//   file under test: JU_STANDALONE=<path> or the deliverable (build first). Screenshots → <evidence>/CNN/coverage-matrix/<key>.png
 //   Column 1 「入口存在」 is automatic (the jump reached the state and a screenshot exists). Columns 2–5 「真实操作成功 / 静态视觉已看 /
 //   正常速度动效已看 / 仍需用户验收」 are read from the hand-kept manual file so a re-run never erases them:
 //     { "C01": { "j-home": { "op": "✓ capture flow-enter 10-22", "static": "✓ lead 10-22", "motion": "✓ flow-compare 10-22", "pending": "首屏层级" }, "*": { "pending": "全部视觉" } } }
@@ -15,14 +15,16 @@ const manualFile = path.resolve(opt('manual', path.join(ROOT, 'my-r2/spec/covera
 const manual = fs.existsSync(manualFile) ? JSON.parse(fs.readFileSync(manualFile, 'utf8')) : {};
 const metaFile = process.env.JU_CONCEPTS || path.join(ROOT, 'my-r2/concepts/concepts.json'); const srcDir = process.env.JU_CONCEPTS_DIR || path.join(ROOT, 'my-r2/concepts/src');
 const meta = fs.existsSync(metaFile) ? JSON.parse(fs.readFileSync(metaFile, 'utf8')) : [];
-const concepts = meta.filter(c => !c.internal && fs.existsSync(path.join(srcDir, c.file)) && (!only.length || only.includes(c.code)));
+/* internal concepts (C00) take part only when named on the command line, as with the build's JU_ONLY */
+const concepts = meta.filter(c => (only.length ? only.includes(c.code) : !c.internal) && fs.existsSync(path.join(srcDir, c.file)));
 const vm = require('vm'); const ctx = { window: {}, console }; ctx.window.window = ctx.window; vm.createContext(ctx);
 const dataFile = path.join(process.env.JU_CORE_DIR ? path.resolve(process.env.JU_CORE_DIR) : path.join(ROOT, 'my-r2/src/core'), 'ju-data.js');
 try { vm.runInContext(fs.readFileSync(path.join(ROOT, 'src/core/ju-fx.js'), 'utf8'), ctx); } catch (e) { }
 vm.runInContext(fs.readFileSync(dataFile, 'utf8'), ctx); const INDEX = ctx.window.JU.INDEX;
+const evidenceRoot = path.resolve(opt('evidence', path.join(ROOT, 'my-r2/evidence')));
 const results = {};
 for (const c of concepts) {
-  const code = c.code; const dir = path.join(ROOT, 'my-r2/evidence', code, 'coverage-matrix');
+  const code = c.code; const dir = path.join(evidenceRoot, code, 'coverage-matrix');
   if (!flag('no-run')) { try { execSync(`node my-r2/tools/coverage.cjs ${code} ${dir}`, { cwd: ROOT, stdio: 'pipe', timeout: 900000 }); } catch (e) { } }
   let log = { states: 0, errors: ['coverage run failed'] };
   try { log = JSON.parse(fs.readFileSync(path.join(dir, 'log.json'), 'utf8')); } catch (e) { }

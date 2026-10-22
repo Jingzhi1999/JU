@@ -193,10 +193,12 @@
   /* syncClick(): the same real click (pointerdown → pointerup → click at the element's centre) on every stage's shadow root.
      Input is a data-act value (tear → [data-act="tear"]) or any selector. Among several matches the one inside an overlay
      (.cNN-over) wins, otherwise the first element with a box. */
+  function splitAlts(sel) { var alts = [], cur = '', d = 0, q = ''; for (var i = 0; i < sel.length; i++) { var ch = sel[i]; if (q) { if (ch === q) q = ''; cur += ch; continue; } if (ch === '"' || ch === "'") { q = ch; cur += ch; continue; } if (ch === '[' || ch === '(') d++; if (ch === ']' || ch === ')') d--; if (ch === ',' && d === 0) { alts.push(cur.trim()); cur = ''; continue; } cur += ch; } if (cur.trim()) alts.push(cur.trim()); return alts; }
   function pickTarget(sr, sel) {
-    var list; try { list = Array.prototype.slice.call(sr.querySelectorAll(sel)); } catch (e) { return { bad: true }; }
-    var vis = list.filter(function (el) { var b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0; });
-    if (!vis.length) return { el: null, total: list.length };
+    /* "sel1, sel2" = alternatives in priority order (same rule as tools/_lib.cjs): the first one with a visible match wins */
+    var total = 0, vis = [];
+    try { var alts = splitAlts(sel); for (var k = 0; k < alts.length && !vis.length; k++) { var list = Array.prototype.slice.call(sr.querySelectorAll(alts[k])); total += list.length; vis = list.filter(function (el) { var b = el.getBoundingClientRect(); return b.width > 0 && b.height > 0; }); } } catch (e) { return { bad: true }; }
+    if (!vis.length) return { el: null, total: total };
     var over = vis.filter(function (el) { return !!el.closest('[class*="-over"]'); });
     return { el: over.length ? over[over.length - 1] : vis[0], total: list.length };
   }
