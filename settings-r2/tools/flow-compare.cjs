@@ -21,7 +21,8 @@ const outdir = process.argv[2]; const opt = (k, d) => { const i = process.argv.i
     await E("inst.reset(); if (a.skin) inst.act('applySkin', { skin: a.skin }); inst.setSpeed(a.speed);", { skin, speed }); await p.waitForTimeout(500);
     const box = await p.evaluate(c => { const h = document.querySelector('.stage-host[data-code="' + c + '"]'); const r = h.shadowRoot.querySelector('.ju-phone').getBoundingClientRect(); return { x: r.left, y: r.top, width: r.width, height: r.height }; }, code);
     const frames = []; const how = [];
-    const shot = async (label) => { const f = path.join(outdir, `${code}-${String(frames.length).padStart(2, '0')}.png`); await p.screenshot({ path: f, clip: box }); frames.push({ f, label }); };
+    /* JPEG frames: PNG encoding of a full-screen colour field takes ~500ms and made the timed frames land late (S02) */
+    const shot = async (label) => { const f = path.join(outdir, `${code}-${String(frames.length).padStart(2, '0')}.jpg`); await p.screenshot({ path: f, clip: box, type: 'jpeg', quality: 82 }); frames.push({ f, label }); };
     /* a real pointer click at the marked element's centre (hit-testing decides which child receives it, as for a person) */
     const clickOr = async (sel, fallback, label) => {
       const pt = await E("const el = root.querySelector(a); if (!el) return null; const r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; return { x: r.left + r.width / 2, y: r.top + Math.min(r.height / 2, 48) };", sel);
