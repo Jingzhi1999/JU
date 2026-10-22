@@ -344,7 +344,7 @@
     p.notifyAnswer = function (value) {
       this.setState(function (s) { return { ui: assign(s.ui, { sys: false }) }; });
       var r = this.act('resolvePermission', { value: value }); var e = r.effect; if (e.type === 'error') { this.say(JUS.COPY.permissionError, 'error'); return; }
-      this.say(value === 'granted' ? '系统已允许通知 · 消息提醒暂未开通' : '你拒绝了系统通知 · 可在浏览器设置里重新打开', value === 'granted' ? 'ok' : 'info');
+      this.say(value === 'granted' ? (this.state.data.notify.serviceConnected ? '系统已允许通知 · 提醒已连接' : '系统已允许通知 · 消息提醒暂未开通') : '你拒绝了系统通知 · 可在浏览器设置里重新打开', value === 'granted' ? 'ok' : 'info');
     };
     p.favRemove = function (id) {
       var d = this.state.data; var f = d.favorites.filter(function (x) { return x.eventId === id; })[0]; if (!f) return;
@@ -462,7 +462,7 @@
           onKeyCode: function (ev) { if (ev.key === 'Enter') self.pfVerify(); },
           sendCode: function () { self.pfSendCode(); }, verify: function () { self.pfVerify(); }, resend: function () { self.pfSendCode(); }, save: function () { self.pfSave(); }, retry: function () { self.pfSave(); }, cancel: function () { self.pfCancel(); },
           saveLabel: f.saving ? '保存中…' : f.failed ? '重试保存' : '保存', failText: f.failed ? JUS.COPY.saveFail + '，输入已保留' : '',
-          emailHint: JUS.COPY.emailHint, snapshotNote: JUS.COPY.snapshotNote, codeNote: '本机演示 · 验证码不发邮件，显示在画面外的评审面板', verifiedText: '已验证 ' + (emailT.split('@')[1] || '') };
+          emailHint: JUS.COPY.emailHint, snapshotNote: JUS.COPY.snapshotNote, codeNote: '本机演示 · 不会真的发邮件，验证码只在本机生成', verifiedText: '已验证 ' + (emailT.split('@')[1] || '') };
       } else out.pf = { on: false };
       /* text form for the current surface */
       var fk = SURFACE_FORM[top.s];
@@ -530,7 +530,7 @@
       out.privacy = JUS.derive.privacy(d);
       out.about = assign(JUS.derive.about(d), { goRules: function (ev) { self.go('rules', {}, ev); } });
       out.acct = { session: d.session, demo: d.session.kind === 'demo', ended: d.session.kind === 'ended', startedText: d.session.startedAt ? JUS.fmt.dateTime(d.session.startedAt) : '', endedText: d.session.endedAt ? JUS.fmt.dateTime(d.session.endedAt) : '', device: d.session.device,
-        end: function () { self.acctEnd(); }, restart: function () { self.acctRestart(); }, storageNote: '本套方案的演示数据只存在这台设备的浏览器里（' + JUS.store.key(this.concept.code) + '）；重置只清这一套。', noAccount: '没有真实账户：没有登录、绑定、改密码或注销能力，这里也不会伪装它们。' };
+        end: function () { self.acctEnd(); }, restart: function () { self.acctRestart(); }, storageNote: '演示数据只存在这台设备的浏览器里；重新开始只清这里的数据。', storageKey: JUS.store.key(this.concept.code) /* for review notes outside the phone only */, noAccount: '没有真实账户：没有登录、绑定、改密码或注销能力，这里也不会伪装它们。' };
       /* seams */
       var feed = JUS.derive.feed(d, ui.feedFilter || 'all');
       out.feed = { count: feed.count, favCount: JUS.derive.feed(d, 'all').favCount, city: feed.city, filter: ui.feedFilter || 'all', isAll: (ui.feedFilter || 'all') === 'all', isFav: ui.feedFilter === 'fav',

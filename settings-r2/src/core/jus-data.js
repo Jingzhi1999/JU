@@ -401,6 +401,8 @@
     notify: function (d) {
       var n = d.notify; var p = JUS.COPY.permission[n.permission];
       var canDeliver = n.permission === 'granted' && n.serviceConnected;
+      /* granted + connected must not still say 「消息提醒暂未开通」 */
+      if (n.permission === 'granted' && n.serviceConnected) p = Object.assign({}, p, { title: '系统已允许通知', body: '已允许系统通知，提醒服务已连接，可以送达。' });
       return { permission: n.permission, permissionLabel: p.label, permCopy: p, buttonLabel: p.label, buttonDisabled: n.permission !== 'default', serviceConnected: n.serviceConnected, serviceCopy: n.serviceConnected ? JUS.COPY.service.on : JUS.COPY.service.off, canDeliver: canDeliver, deliverLabel: canDeliver ? '提醒可以送达' : n.permission === 'granted' ? '系统已允许，但消息提醒暂未开通，目前不会发出提醒' : n.permission === 'denied' ? '通知权限已关闭，不会显示任何提醒' : n.permission === 'unsupported' ? '当前环境不支持系统通知，不会有提醒' : '还未申请系统权限，不会有提醒', canRequest: n.permission === 'default', cats: JUS.NOTIFY_CATS.map(function (c) { return Object.assign({}, c, { on: !!n.prefs[c.key] }); }), onCount: Object.keys(n.prefs).filter(function (k) { return n.prefs[k]; }).length };
     },
     /* privacy: who can see your profile, derived from your actual events and the product rules */
