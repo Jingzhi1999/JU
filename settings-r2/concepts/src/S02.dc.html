@@ -806,40 +806,7 @@ var S02 = (function () {
       canSeeHostWx: F.canSeeHostWx, hostWx: F.hostWx, copyHostWx: F.copyHostWx, note: F.note, favAgo: F.favAgo ? '收藏于 ' + F.favAgo : '还没收藏',
       favAct: F.fav ? 'unfav' : 'fav', toggleFav: F.toggleFav, favLabel: F.favLabel, applyNote: F.applyNote, city: (F.city ? F.city.name : '') + (F.crossCity ? ' · 不是默认城市' : '') };
   }
-  /* the three colour fields as bitmaps: drawn once per phone size with the same geometry as the CSS gradients (--g-*) and
-     handed back to CSS as images, so a repaint is a bitmap copy instead of five full-screen radial gradients */
-  var ENV = {
-    cotton: [['lin', 172, [[0, '#f6c8dc'], [.46, '#e1dbf4'], [1, '#bfe3ef']]],
-      ['rad', 1, 1.04, 1.04, .5, 'rgba(108,192,222,.98)', 'rgba(108,192,222,0)'], ['rad', -.04, .68, .78, .34, 'rgba(242,170,206,.78)', 'rgba(242,170,206,0)'],
-      ['rad', 1.04, .34, .72, .38, 'rgba(180,160,240,.95)', 'rgba(180,160,240,0)'], ['rad', 0, 0, .84, .44, 'rgba(236,140,186,.92)', 'rgba(236,140,186,0)']],
-    halo: [['lin', 180, [[0, '#fff9f2'], [1, '#fdf0e4']]],
-      ['rad', 1, .86, .9, .4, 'rgba(255,170,110,.42)', 'rgba(255,170,110,0)'], ['rad', 0, 1, 1.2, .58, 'rgba(208,188,225,.72)', 'rgba(208,188,225,0)'],
-      ['ring', .86, .11, 380, [[0, 'rgba(255,80,5,0)'], [70, 'rgba(255,80,5,0)'], [118, 'rgba(255,80,5,.9)'], [160, 'rgba(255,138,64,.72)'], [214, 'rgba(219,186,149,.7)'], [276, 'rgba(208,188,225,.74)'], [380, 'rgba(208,188,225,0)']]]],
-    sunset: [['lin', 180, [[0, '#3f8df2'], [.16, '#6d9ff0'], [.32, '#a99ce2'], [.48, '#ef91a0'], [.62, '#ff8250'], [.78, '#ff9a3f'], [1, '#ffc53d']]],
-      ['rad', 1, .58, .6, .26, 'rgba(255,110,40,.5)', 'rgba(255,110,40,0)'], ['rad', .5, 1.04, 1.2, .34, 'rgba(255,214,96,.95)', 'rgba(255,214,96,0)']]
-  };
-  function envBitmap(kind, W, H, dpr, done) {
-    var cv = document.createElement('canvas'); cv.width = Math.max(1, Math.round(W * dpr)); cv.height = Math.max(1, Math.round(H * dpr));
-    var x = cv.getContext && cv.getContext('2d'); if (!x || !cv.toBlob) { done(null); return; }
-    x.scale(dpr, dpr);
-    ENV[kind].forEach(function (L) {
-      var g;
-      if (L[0] === 'lin') {
-        var a = L[1] * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a), len = Math.abs(W * dx) + Math.abs(H * dy);
-        g = x.createLinearGradient(W / 2 - dx * len / 2, H / 2 - dy * len / 2, W / 2 + dx * len / 2, H / 2 + dy * len / 2);
-        L[2].forEach(function (s) { g.addColorStop(s[0], s[1]); }); x.fillStyle = g; x.fillRect(0, 0, W, H);
-      } else if (L[0] === 'rad') {
-        var cx = L[1] * W, cy = L[2] * H, rx = L[3] * W, ry = L[4] * H;
-        x.save(); x.translate(cx, cy); x.scale(rx, ry); g = x.createRadialGradient(0, 0, 0, 0, 0, 1); g.addColorStop(0, L[5]); g.addColorStop(1, L[6]);
-        x.fillStyle = g; x.fillRect(-cx / rx, -cy / ry, W / rx, H / ry); x.restore();
-      } else {
-        var r = L[3]; g = x.createRadialGradient(L[1] * W, L[2] * H, 0, L[1] * W, L[2] * H, r);
-        L[4].forEach(function (s) { g.addColorStop(s[0] / r, s[1]); }); x.fillStyle = g; x.fillRect(0, 0, W, H);
-      }
-    });
-    cv.toBlob(function (b) { done(b ? URL.createObjectURL(b) : null); }, 'image/png');
-  }
-  return { IX: IX, Y: Y, CS: CS, GROUP: GROUP, SEAM: SEAM, M: M, WORD: WORD, short: short, mmss: mmss, split2: split2, favLine: favLine, glen: glen, tt: tt, det: det, envBitmap: envBitmap };
+  return { IX: IX, Y: Y, CS: CS, GROUP: GROUP, SEAM: SEAM, M: M, WORD: WORD, short: short, mmss: mmss, split2: split2, favLine: favLine, glen: glen, tt: tt, det: det };
 })();
 
 class Component extends DCLogic {
@@ -851,20 +818,6 @@ class Component extends DCLogic {
   initialState(v) { return Object.assign(JUS.baseState(v), { s02i: false, s02v: 0, s02vk: '', s02vf: [], s02vAt: 0 }); }
   componentDidMount() { this._s02st(); }
   componentDidUpdate() { this._s02st(); }
-  componentWillUnmount() { (this._envUrls || []).forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) { } }); }
-  _s02env(W, H) {
-    var self = this, seq = (this._envSeq = (this._envSeq || 0) + 1), dpr = Math.min(2, (typeof window !== 'undefined' && window.devicePixelRatio) || 1), got = {}, n = 0;
-    ['cotton', 'halo', 'sunset'].forEach(function (k) {
-      S02.envBitmap(k, W, H, dpr, function (u) {
-        got[k] = u; if (++n < 3) return;
-        if (seq !== self._envSeq || !got.cotton || !got.halo || !got.sunset) { ['cotton', 'halo', 'sunset'].forEach(function (q) { if (got[q]) URL.revokeObjectURL(got[q]); }); return; }
-        var old = self._envUrls || []; self._envUrls = [got.cotton, got.halo, got.sunset];
-        self._envCss = { cotton: 'url(' + got.cotton + ')', halo: 'url(' + got.halo + ')', sunset: 'url(' + got.sunset + ')' };
-        self._s02st(); setTimeout(function () { old.forEach(function (u) { try { URL.revokeObjectURL(u); } catch (e) { } }); }, 1500);
-      });
-    });
-  }
-  /* the rail glyphs are the index's first characters; --st (home scrollTop) keeps them on their unscrolled slots */
   _s02st() {
     var r = this.rootRef.current; if (!r) return; var sc = r.querySelector('[data-scroller="home"]'); if (sc) sc.style.setProperty('--st', sc.scrollTop + 'px');
     /* decision layer: the panel steps down exactly below the choice; focus starts on the first (safe) word */
@@ -874,10 +827,6 @@ class Component extends DCLogic {
       Array.prototype.forEach.call(r.querySelectorAll('.s02-panel,.s02-seams'), function (el) { if (el.style.getPropertyValue('--dqy') !== y) el.style.setProperty('--dqy', y); });
       if (!this._s02dqF) { this._s02dqF = true; var f = b.querySelector('.s02-dqc'); if (f) { try { f.focus({ preventScroll: true }); } catch (e) { } } }
     } else this._s02dqF = false;
-    /* colour fields: (re)draw the bitmaps when the phone size changes; hand them to the env layers and the two slice replicas */
-    var W = r.clientWidth, H = r.clientHeight;
-    if (W && H && (W !== this._envW || H !== this._envH)) { this._envW = W; this._envH = H; this._s02env(W, H); }
-    if (this._envCss) Array.prototype.forEach.call(r.querySelectorAll('.s02-env,.s02-hdbg,.s02-rootbg'), function (el) { if (el.style.getPropertyValue('--g-cotton') !== this._envCss.cotton) { el.style.setProperty('--g-cotton', this._envCss.cotton); el.style.setProperty('--g-halo', this._envCss.halo); el.style.setProperty('--g-sunset', this._envCss.sunset); } }, this);
     var dm = this._s02dq, self = this;
     if (dm && dm.vm && dm.out && !this._s02dqT) this._s02dqT = setTimeout(function () { self._s02dqT = null; self.setState({ s02dqt: Date.now() }); }, 340 * (dm.k || 1));
   }
@@ -1092,19 +1041,23 @@ class Component extends DCLogic {
 }
 JUS.mixin(Component);
 /* review keyframe scrub: absolute positions for the whole choreography. 暂停 = the panel's .paused class (CSS play-state);
-   关键帧 = seek every running animation to frame × its own duration, after the re-render. No play()/pause() (that would detach them from CSS). */
+   关键帧 = seek every running animation to frame × its own duration, after the re-render. No play()/pause() (that would detach them
+   from CSS). When the shared mixin has to replay the last core motion first (nothing was moving), wait until it is under way. */
 (function (p) {
   var base = p.scrubTo;
   p.scrubTo = function (v) {
     base.call(this, v);
     if (v == null) return;
-    var self = this;
-    setTimeout(function () {
-      var r = self.rootRef && self.rootRef.current; if (!r || !r.getAnimations) return;
+    var self = this, tries = 0;
+    var seek = function () {
+      var s = self._scrubS; if (!s) return;
+      if (s.replay && tries++ < 120) { requestAnimationFrame(seek); return; }
+      var r = self.rootRef && self.rootRef.current, f = self.state.review && self.state.review.scrub; if (!r || !r.getAnimations || f == null) return;
       r.getAnimations({ subtree: true }).forEach(function (a) {
-        try { var d = a.effect && a.effect.getTiming ? a.effect.getTiming().duration : 0; if (typeof d === 'number' && d > 0) a.currentTime = (+v / 100) * d; } catch (e) { }
+        try { var d = a.effect && a.effect.getTiming ? a.effect.getTiming().duration : 0; if (typeof d === 'number' && d > 0) a.currentTime = (+f / 100) * d; } catch (e) { }
       });
-    }, 0);
+    };
+    setTimeout(seek, 0);
   };
 })(Component.prototype);
 </script>
