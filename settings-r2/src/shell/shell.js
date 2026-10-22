@@ -25,7 +25,7 @@
     META.forEach(function (c) {
       var card = document.createElement('div'); card.className = 'ov-card';
       card.innerHTML = '<div class="ov-head"><span class="ov-code">' + c.code + '</span><span class="ov-name">' + c.name + '</span></div><p class="ov-line">' + c.line + '</p>' +
-        '<div class="ov-phones">' + [['s-home', '设置首页'], ['s-profile-edit', '资料编辑'], ['s-fav', '收藏列表'], ['s-record-absent', '记录详情'], ['s-fail', '保存失败']].map(function (st) { return '<div class="ov-ph"><div class="ph-host" data-jump="' + st[0] + '"></div><span class="ph-label">' + st[1] + '</span></div>'; }).join('') + '</div>' +
+        '<div class="ov-phones">' + [['s-home', '设置首页'], ['s-profile-edit', '资料编辑'], ['s-fav', '收藏列表'], ['s-record-absent', '记录详情'], ['s-fail', '保存失败']].map(function (st) { return '<div class="ov-shot"><div class="ov-ph"><div class="ph-host" data-jump="' + st[0] + '"></div></div><span class="ph-label">' + st[1] + '</span></div>'; }).join('') + '</div>' +
         '<div class="ov-foot"><span>' + (c.motions || []).slice(0, 3).map(function (m) { return m.split('：')[0]; }).join(' · ') + '</span><button type="button" class="btn">进入操作</button></div>';
       card.addEventListener('click', function () { openConcept(c.code); });
       grid.appendChild(card);
@@ -68,7 +68,13 @@
   var currentDoc = 'matrix';
   function showDoc(k) { currentDoc = k; document.querySelectorAll('.apx-tab').forEach(function (t) { t.classList.toggle('on', t.dataset.doc === k); }); $('#apx-doc').innerHTML = DOCS[k] || ''; }
   document.querySelectorAll('.apx-tab').forEach(function (t) { t.addEventListener('click', function () { showDoc(t.dataset.doc); }); });
-  var hash = (location.hash || '').slice(1).split('/');
-  if (hash[0] === 'concept' && SRC[hash[1]]) openConcept(hash[1]); else if (hash[0] && views[hash[0]]) show(hash[0]); else show('overview');
+  function route(first) {
+    var hash = (location.hash || '').slice(1).split('/');
+    if (hash[0] === 'concept' && SRC[hash[1]]) { if (first || !(views.concept.classList.contains('on') && currentCode === hash[1])) openConcept(hash[1]); }
+    else if (hash[0] && views[hash[0]] && hash[0] !== 'concept') { if (first || !views[hash[0]].classList.contains('on')) show(hash[0]); }
+    else show('overview');
+  }
+  window.addEventListener('hashchange', function () { route(false); }); /* typed URLs and back / forward switch views without a reload */
+  route(true);
   window.JUShell = { openConcept: openConcept, show: show, mounts: mounts };
 })();
