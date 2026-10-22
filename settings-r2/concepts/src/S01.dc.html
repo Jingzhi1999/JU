@@ -29,7 +29,7 @@ body{margin:0}
 .app.paused *{animation-play-state:paused!important}
 .app.s01.scrub *{animation-play-state:paused!important;animation-delay:calc((var(--s01-dl,0ms) - var(--frame,0) * 420ms) * var(--k,1))!important}
 /* reduced motion (panel, system, user): no keyframes at all — the result is shown directly (a 1ms keyframe can still paint its first frame) */
-.app.rm *,.app.rm-user *{transition-duration:1ms!important;transition-delay:0ms!important;animation:none!important}
+.app.rm *,.app.rm-user *,.app:is(.rm,.rm-user) *::before,.app:is(.rm,.rm-user) *::after{transition-duration:1ms!important;transition-delay:0ms!important;animation:none!important}
 
 /* ---------- the environment field: a fixed sky, and a paper veil that rises / falls over it (transform only — compositor-cheap).
    The veil's top edge = where the field fades into paper (--v = field height − 200px); JS animates --v0 → --v1 per page. ---------- */
@@ -68,17 +68,20 @@ body{margin:0}
   radial-gradient(80% 22% at 96% 70%,rgba(242,190,150,.55),rgba(242,190,150,0) 72%),
   radial-gradient(70% 20% at 30% 86%,rgba(200,180,230,.55),rgba(200,180,230,0) 72%),
   linear-gradient(180deg,#fde6d3 0%,#f8dfd2 40%,#efdbe6 70%,#f8e3d6 100%)}
-.k-halo::before,.k-halo::after{content:"";position:absolute;inset:-400px;transform:translate(var(--hx,0px),var(--hy,0px)) scale(var(--hs,1));transform-origin:calc(74% - 192px) calc(20% + 240px);transition:transform calc(380ms * var(--k,1)) var(--e4)}
+.k-halo::before,.k-halo::after{content:"";position:absolute;inset:-400px;transform:translate(var(--hx1,0px),var(--hy1,0px)) scale(var(--hs1,1));transform-origin:calc(74% - 192px) calc(20% + 240px)}
 .k-halo::before{background:conic-gradient(from 220deg at calc(74% - 192px) calc(20% + 240px),#f7884a,#f39a68 16%,#e598a8 34%,#c697d8 52%,#a995e6 68%,#bd93d2 84%,#f7884a);opacity:.92;
   -webkit-mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px);
   mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px)}
 .k-halo::after{background:conic-gradient(from 140deg at calc(74% - 192px) calc(20% + 240px),#f6a36f,#ebab9e 28%,#cfaee0 58%,#e7b49a 84%,#f6a36f);opacity:.66;
   -webkit-mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px);
   mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px)}
-.app:is(.at-profile,.at-profile-edit,.at-record-supplement,.at-record-dispute,.at-record-appeal,.at-report-supplement,.at-feedback,.at-seam-report){--hx:-96px;--hy:96px;--hs:1.45}
-.app.at-appearance{--hx:-60px;--hy:44px;--hs:1.3}
-.app:is(.at-favorites,.at-reports,.at-account,.at-about){--hx:-34px;--hy:40px;--hs:1.12}
-.app:is(.at-favorite-detail,.at-seam-feed-detail,.at-record-detail,.at-report-detail){--hx:-20px;--hy:24px;--hs:1.06}
+/* the ring sits behind each page's protagonist (values per page in S01_HALO, written on .s01-sky by s01Sky) and travels on the
+   navigation clock like the veil: @keyframes from where it is (--hx0…) to the destination (--hx1…), so 暂停 / 关键帧 hold it */
+@keyframes s01-hA{from{transform:translate(var(--hx0,0px),var(--hy0,0px)) scale(var(--hs0,1))}to{transform:translate(var(--hx1,0px),var(--hy1,0px)) scale(var(--hs1,1))}}
+@keyframes s01-hB{from{transform:translate(var(--hx0,0px),var(--hy0,0px)) scale(var(--hs0,1))}to{transform:translate(var(--hx1,0px),var(--hy1,0px)) scale(var(--hs1,1))}}
+.app[data-skin="halo"]:is(.nav-enter,.nav-in,.nav-exit) .k-halo::before,.app[data-skin="halo"]:is(.nav-enter,.nav-in,.nav-exit) .k-halo::after{animation:s01-hA calc(var(--fd,380ms) * var(--k,1)) var(--e4) calc(-24ms * var(--k,1)) both}
+.app[data-skin="halo"]:is(.nav-enter,.nav-in,.nav-exit) .s01-sky[data-fa="b"] .k-halo::before,.app[data-skin="halo"]:is(.nav-enter,.nav-in,.nav-exit) .s01-sky[data-fa="b"] .k-halo::after{animation-name:s01-hB}
+.app.s01.scrub .k-halo::before,.app.s01.scrub .k-halo::after{animation-delay:calc(var(--frame,0) * var(--fd,380ms) * var(--k,1) * -1)!important}
 /* 落日：橙、蓝、黄的黄昏天色 */
 .k-sunset{background:
   radial-gradient(90% 20% at 100% 3%,rgba(31,124,240,.9),rgba(31,124,240,0) 72%),
@@ -497,7 +500,7 @@ textarea.s01-in{min-height:1lh}
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
     <div class="app s01{{panel.rootCls}}{{v.appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <div class="s01-sky" aria-hidden="true"><i class="s01-env k-cotton"></i><i class="s01-env k-halo"></i><i class="s01-env k-sunset"></i></div><div class="s01-veil" aria-hidden="true" data-fa="a"></div>
+      <div class="s01-sky" aria-hidden="true" data-fa="a"><i class="s01-env k-cotton"></i><i class="s01-env k-halo"></i><i class="s01-env k-sunset"></i></div><div class="s01-veil" aria-hidden="true" data-fa="a"></div>
       <div class="s01-warm" aria-hidden="true"><span>{{v.warm}}</span><span class="w5">{{v.warm}}</span><span class="w-serif">{{v.warmSerif}}</span><span class="w-num">{{v.warmNum}}</span></div>
 
       <!-- HOME · the values are the page -->
@@ -982,6 +985,8 @@ textarea.s01-in{min-height:1lh}
    moves between pages (measured FLIP, @keyframes, scrub-able). The sky height per page lives in S01_FH and is animated in JS. */
 var S01_FH = { 'home': .5, 'profile': 1.05, 'profile-edit': 1.05, 'favorites': function (d) { return d.favorites.length < 4 ? .66 : .44; }, 'favorite-detail': .58, 'city': .48, 'notify': .52, 'appearance': 1.1, 'records': .44, 'record-detail': .56, 'record-supplement': 1.05, 'record-dispute': 1.05, 'record-appeal': 1.05, 'reports': function (d) { return d.reports.length < 4 ? .66 : .44; }, 'report-detail': .56, 'report-supplement': 1.05, 'help': .44, 'feedback': 1.05, 'privacy': .48, 'account': .62, 'about': .6, 'rules': .34, 'seam-feed': .4, 'seam-feed-detail': .58, 'seam-mine': .4, 'seam-report': 1.05 };
 var S01_SHORT = { 'home': '设置', 'profile': '资料', 'favorites': '收藏', 'records': '记录', 'record-detail': '记录', 'reports': '举报', 'report-detail': '举报', 'help': '帮助', 'about': '关于', 'seam-feed': '找局', 'seam-mine': '我的局' };
+var S01_H0 = [0, 0, 1], S01_HP = [-96, 96, 1.45], S01_HL = [-34, 40, 1.12], S01_HD = [-20, 24, 1.06];
+var S01_HALO = { 'profile': S01_HP, 'profile-edit': S01_HP, 'record-supplement': S01_HP, 'record-dispute': S01_HP, 'record-appeal': S01_HP, 'report-supplement': S01_HP, 'feedback': S01_HP, 'seam-report': S01_HP, 'appearance': [-60, 44, 1.3], 'favorites': S01_HL, 'reports': S01_HL, 'account': S01_HL, 'about': S01_HL, 'favorite-detail': S01_HD, 'seam-feed-detail': S01_HD, 'record-detail': S01_HD, 'report-detail': S01_HD };
 var S01_FORMS = { 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'report-supplement': 1, 'feedback': 1, 'seam-report': 1 };
 function s01Pg(s) { return s === 'profile-edit' ? 'profile' : (s === 'favorite-detail' || s === 'seam-feed-detail') ? 'detail' : S01_FORMS[s] ? 'form' : s; }
 /* long handles / emails break only after @ . _ - (zero-width opportunities), never in the middle of a word */
@@ -1106,9 +1111,26 @@ class Component extends DCLogic {
       var tf = getComputedStyle(veil).transform; var cur = tf && tf !== 'none' ? new DOMMatrixReadOnly(tf).f : v1;
       veil.style.setProperty('--v0', cur.toFixed(1) + 'px'); veil.style.setProperty('--v1', v1 + 'px'); veil.style.setProperty('--fd', this.navMs(nav.dir) + 'ms');
       veil.setAttribute('data-fa', veil.getAttribute('data-fa') === 'a' ? 'b' : 'a');
-    } else if (nav.phase === 'idle' && veil.style.getPropertyValue('--v1') !== v1 + 'px') {
+    }
+    this.s01Ring(root, dest, start, nav);
+    if (!start && nav.phase === 'idle' && veil.style.getPropertyValue('--v1') !== v1 + 'px') {
       if (this._s01Ease) { this._s01Ease = false; veil.classList.add('is-ease'); clearTimeout(this._s01EaseT); this._s01EaseT = setTimeout(function () { veil.classList.remove('is-ease'); }, 480); }
       veil.style.setProperty('--v0', v1 + 'px'); veil.style.setProperty('--v1', v1 + 'px');
+    }
+  }
+  /* the 光晕 ring: from where it is now (mid-flight when a navigation interrupts another) to the destination page's place */
+  s01Ring(root, dest, start, nav) {
+    var sky = root.querySelector('.s01-sky'); if (!sky) return;
+    var hv = S01_HALO[dest] || S01_H0, set = function (k, a) { sky.style.setProperty('--hx' + k, a[0] + 'px'); sky.style.setProperty('--hy' + k, a[1] + 'px'); sky.style.setProperty('--hs' + k, String(a[2])); };
+    if (start) {
+      var h0 = this._s01HaloAt || hv, hp = this._s01HaloMid && root.querySelector('.k-halo');
+      if (hp) { var tf = getComputedStyle(hp, '::before').transform; if (tf && tf !== 'none') { var m = new DOMMatrixReadOnly(tf); h0 = [+m.e.toFixed(1), +m.f.toFixed(1), +m.a.toFixed(3)]; } }
+      set('0', h0); set('1', hv); sky.style.setProperty('--fd', this.navMs(nav.dir) + 'ms');
+      sky.setAttribute('data-fa', sky.getAttribute('data-fa') === 'a' ? 'b' : 'a');
+      this._s01HaloMid = true; this._s01HaloAt = hv;
+    } else if (nav.phase === 'idle') {
+      this._s01HaloMid = false;
+      if (this._s01HaloAt !== hv) { set('0', hv); set('1', hv); this._s01HaloAt = hv; }
     }
   }
   /* measured FLIP between the two pages of a push / pop: every [data-m] of the top page that has a twin below starts (in) / ends (out)
