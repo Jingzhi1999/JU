@@ -95,21 +95,35 @@
 | 2 渐变（8 层 backgroundImage，上到下按声明顺序叠） | ① radial 58%×44% @31% 99%：底边左青白高光 rgba(211,246,253,.97)→0 ② radial 50%×42% @55% 102%：底边中 rgba(183,236,253,.86) ③ radial 54%×44% @85% 100%：底边右 rgba(166,213,252,.88) ④ radial 50%×62% @20% 4%：顶边左 rgba(163,195,253,.92) ⑤ radial 52%×58% @55% 2%：顶边中 rgba(150,188,251,.9) ⑥ radial 54%×66% @87% 4%：顶边右钴蓝 rgba(129,172,252,.96) ⑦ radial 46%×70% @6% 54%：左侧补光 rgba(158,198,248,.6) ⑧ linear 178deg：rgba(150,186,252) 0% → (126,166,240) 30% → (122,166,232) 56% → (176,226,250) 86% → (181,238,253) 100%（主体：上钴蓝、下青白） | V27:1867 |
 | 3 边缘与内外明暗（6 层 box-shadow） | inset 0 0 18px 9px rgba(58,104,178,.2)（内晕，压暗四周）；inset 0 0 0 1px rgba(255,255,255,.62)（1px 白描边）；inset 0 1px 0 rgba(240,248,255,.72)（顶 1px 高光）；inset 0 −6px 12px −8px rgba(209,246,255,.8)（底部青白内光）；0 0 0 1px rgba(172,204,252,.62)（外 1px 淡蓝描边）；0 8px 20px −12px rgba(146,186,238,.4)（外投影） | V27:1868 |
 | 4 高光条 `<span>` | absolute left/right 14 top 3 高 13 圆角 999，180deg 白 .62→0，pointer-events none | ctaGlossStyle V27:2519 |
-| 5 文字 `<span>` | 14.5px / 500 / letter-spacing .06em / nowrap（s09 button 版 15px，V27:4317） | ctaTextStyle V27:2518 |
+| 5 文字 `<span>` | **实测 15px / 500 / letter-spacing normal**：基础 ctaTextStyle 为 14.5px/.06em（V27:2518），但 vals18 的 ctaTextStyle（V27:4317 `{position:relative,fontFamily:var(--ju-font-ui),fontSize:15,fontWeight:500}`）在 renderVals 合并时覆盖它 | V27:2518 / V27:4317 |
 | 6 按压 | HTML `style-active="transform:scale(.958)"` → support.js 生成 `.scpN:active{transform:scale(.958)!important}`（collectProps L428-430 / createPseudoSheet L1568-1589）；回弹由 `transition: transform .48s cubic-bezier(.18,1.5,.36,1), box-shadow .48s …` 提供（过冲 1.5 的 spring 近似） | V27:1869 + L660 |
 | 7 禁用 | `blueCta(false)`：同尺寸，cursor not-allowed，color #626777，background rgba(20,22,31,.055)，box-shadow inset 0 0 0 1px rgba(20,22,31,.1)，`transition: all .4s ease`；aria-disabled 由业务值给（如 s05Busy V27:4342） | V27:1864 |
 | 不存在的层 | 无 ::before/::after、无 SVG、无 filter、无 border、无 blur；"光感"全部由 ②③ 的 radial 渐变 + ③ 的 inset 阴影构成 | 全文检索 |
 
 页脚（CTA 的容器）：`[data-footer22]` absolute 底栏（L657）→ `barFadeStyle` 20px 透明垫 + `barPadStyle` padding `0 22px var(--ju-bottom-pad,46px)`（product 视图 --ju-bottom-pad:20px，L173）gap 10 居中（V27:2515-2516）；页脚有可见按钮时加 `.ju-footer-active22` 的 #f2f4fb 渐变底（L284，sync22 V27:4484）。
 
-### 2.2 三状态实测 [CS/BR]（s05「阅读细则」CTA；截图 cta-default / cta-pressed / cta-disabled）
+### 2.2 三状态实测 [CS/BR]（s05「阅读细则」CTA；截图 cta-default / cta-pressed / cta-disabled；在 prefers-reduced-motion 下截取——材质为静态渐变不受影响，按压过渡被 CSS 压到 80ms 但终态 scale(.958) 相同）
 
-**本轮未取得 CTA 的 computed 三态数据**：Playwright 运行在 bg 阶段后被停止（swiftshader 下每张截图约 1 分钟）。可用的真实画面：`screen-s05.png`（默认态「阅读细则」，页脚）、`screen-s12-after-burn.png` / `screen-s12.png`（「再找个局」）、`s02-door-after-tear.png`（「留个位置」）、`screen-s08.png`（「再找一局」）。按压 / 禁用特写可用 `node scratchpad/v27/shoot.cjs cta` 复跑（脚本已写好：page.mouse.down 保持 650ms 截 clip、readRules18() 后截禁用态、s06g 等待确认禁用态、退出表危险键）。
-从截图读到的默认态 [BR 估算@2x]：药丸宽 ≈280px（x 55–335）、高 48px、底边距离屏幕底 20px（--ju-bottom-pad），文字 14.5px 白、顶部有 13px 高光条，边缘为淡蓝 1px 描边 + 蓝色外投影，与 2.1 的源码一致。
-- 默认：未取得（None）
-- 按压保持（page.mouse.down 650ms 后）：未取得（None）
-- 禁用（进入阅读、未读到末尾）：未取得（None）
+- **默认**：文案「阅读细则」aria-disabled=false；rect x=55 y=776 w=280 h=48 [BR]；width 280px height 48px radius 999px color rgb(255, 255, 255) cursor pointer [CS]；background-color rgb(141, 177, 242)；box-shadow `rgba(58, 104, 178, 0.2) 0px 0px 18px 9px inset, rgba(255, 255, 255, 0.62) 0px 0px 0px 1px inset, rgba(240, 248, 255, 0.72) 0px 1px 0px 0px inset, rgba(209, 246, 255, 0.8) 0px -6px 12px -8px inset, rgba(172, 204, 252, 0.62) 0px 0px 0px 1px, rgba(146, 186, 238, 0.4) 0px 8px 20px -12px`；transform `none`；transition `transform 0.08s cubic-bezier(0.18, 1.5, 0.36, 1), box-shadow 0.08s cubic-bezier(0.18, 1.5, 0.36, 1)`
+  - 高光条 rect(相对按钮) {'x': 14, 'y': 3, 'w': 252, 'h': 13}，background `linear-gradient(rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0))`
+  - 文字 15px / 500 / normal / rgb(255, 255, 255)，rect {'x': 109.98, 'y': 12.75, 'w': 60.02, 'h': 22.5}
+  - 生成的 :active 规则：`.scp8:active { transform: scale(0.958) !important; }`
+  - 页脚 rect {'x': 0, 'y': 756, 'w': 390, 'h': 88}，pad padding `0px 22px 20px`，--ju-bottom-pad `20px`
+  - background-image（computed 前 300 字）：`radial-gradient(58% 44% at 31% 99%, rgba(211, 246, 253, 0.97) 0%, rgba(196, 238, 252, 0.58) 36%, rgba(178, 224, 250, 0) 66%), radial-gradient(50% 42% at 55% 102%, rgba(183, 236, 253, 0.86) 0%, rgba(178, 226, 251, 0.4) 42%, rgba(176, 228, 251, 0) 70%), radial-gradient(54% 44% at 85% 100%, rgba(166, 2…`（共 8 层）
+- **按压保持（page.mouse.down 650ms 后）**：文案「阅读细则」aria-disabled=false；rect x=60.88 y=777.01 w=268.24 h=45.98 [BR]；width 280px height 48px radius 999px color rgb(255, 255, 255) cursor pointer [CS]；background-color rgb(141, 177, 242)；box-shadow `rgba(58, 104, 178, 0.2) 0px 0px 18px 9px inset, rgba(255, 255, 255, 0.62) 0px 0px 0px 1px inset, rgba(240, 248, 255, 0.72) 0px 1px 0px 0px inset, rgba(209, 246, 255, 0.8) 0px -6px 12px -8px inset, rgba(172, 204, 252, 0.62) 0px 0px 0px 1px, rgba(146, 186, 238, 0.4) 0px 8px 20px -12px`；transform `matrix(0.958, 0, 0, 0.958, 0, 0)`；transition `transform 0.08s cubic-bezier(0.18, 1.5, 0.36, 1), box-shadow 0.08s cubic-bezier(0.18, 1.5, 0.36, 1)`
+  - 高光条 rect(相对按钮) {'x': 13.41, 'y': 2.87, 'w': 241.42, 'h': 12.45}，background `linear-gradient(rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0))`
+  - 文字 15px / 500 / normal / rgb(255, 255, 255)，rect {'x': 105.37, 'y': 12.21, 'w': 57.49, 'h': 21.56}
+  - 生成的 :active 规则：`.scp8:active { transform: scale(0.958) !important; }`
+  - 页脚 rect {'x': 0, 'y': 756, 'w': 390, 'h': 88}，pad padding `0px 22px 20px`，--ju-bottom-pad `20px`
+  - background-image（computed 前 300 字）：`radial-gradient(58% 44% at 31% 99%, rgba(211, 246, 253, 0.97) 0%, rgba(196, 238, 252, 0.58) 36%, rgba(178, 224, 250, 0) 66%), radial-gradient(50% 42% at 55% 102%, rgba(183, 236, 253, 0.86) 0%, rgba(178, 226, 251, 0.4) 42%, rgba(176, 228, 251, 0) 70%), radial-gradient(54% 44% at 85% 100%, rgba(166, 2…`（共 8 层）
+- **禁用（进入阅读、未读到末尾）**：文案「确认入局」aria-disabled=true；rect x=55 y=776 w=280 h=48 [BR]；width 280px height 48px radius 999px color rgb(98, 103, 119) cursor not-allowed [CS]；background-color rgba(20, 22, 31, 0.055)；box-shadow `rgba(20, 22, 31, 0.1) 0px 0px 0px 1px inset`；transform `none`；transition `0.08s`
+  - 高光条 rect(相对按钮) {'x': 14, 'y': 3, 'w': 252, 'h': 13}，background `linear-gradient(rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0))`
+  - 文字 15px / 500 / normal / rgb(98, 103, 119)，rect {'x': 109.98, 'y': 12.75, 'w': 60.02, 'h': 22.5}
+  - 生成的 :active 规则：`.scp8:active { transform: scale(0.958) !important; }`
+  - 页脚 rect {'x': 0, 'y': 717, 'w': 390, 'h': 127}，pad padding `0px 22px 20px`，--ju-bottom-pad `20px`
+  - background-image（computed 前 300 字）：`none…`（共 0 层）
 - 禁用（s06g 等待确认）：未取得（None）
+- 按压过程 transform 采样 [CS]（mouse.down 后 ms→matrix）：[{'t': 60, 'transform': 'matrix(0.955937, 0, 0, 0.955937, 0, 0)'}, {'t': 200, 'transform': 'matrix(0.958, 0, 0, 0.958, 0, 0)'}, {'t': 500, 'transform': 'matrix(0.958, 0, 0, 0.958, 0, 0)'}]；松开 700ms 后 transform `none`。
 
 ## 3. 背景环境
 
@@ -136,8 +150,65 @@
 | 0.5,0.8 | 390,1350 | (214, 227, 233) | #d6e3e9 | 13.8:1 | 5.2:1 | 1.31:1 |
 | 0.9,0.8 | 702,1350 | (210, 227, 233) | #d2e3e9 | 13.7:1 | 5.1:1 | 1.32:1 |
 
-- 相对亮度（Rec.709 加权 0–255，8px 网格）：min 222.3 / max 226.3 / mean 224.0 —— 背景整体处于 L≈222–226 的浅色带，对比度见上表（标题 #14161F ≥ 12:1，辅助 #535b70 ≥ 5:1）。
+- 相对亮度（Rec.709 加权 0–255，8px 网格）：min 222.3 / max 226.3 / mean 224 —— 背景整体处于 L≈222–226 的浅色带，对比度见上表（标题 #14161F ≥ 12:1，辅助 #535b70 ≥ 5:1）。
 - 前景在三背景上的对比处理：V27 只有一套浅色背景，**没有按背景切换前景色板**；对比靠 (a) 深色文字固定值（#14161f / #535b70 / 状态蓝 #4A5AD6）；(b) 吸顶区 `[data-header23]::before`：高度 --ju-head-visible 的 blur(5px) 毛玻璃，随 p 显现，再用 mask 渐隐（V27:299，V27:304 覆盖为无底色纯遮罩）；(c) 页脚显露时 #f2f4fb 渐变底（L284）；(d) 玻璃控件（返回键 .34 白 + blur16、表单纸 .965→.935 白 + blur26、成员抽屉 .95 白 + blur30）；(e) s01 底部 92px 渐变（L539）。
+
+### 3.3 Halo / Sunset（来源 R9，提取为 src/shared/v27/skins-r9.js）[SRC]
+
+R9.code.html 的 `<script data-bundled-source="vendor/v17-skins.js">`（L81919-L83440）定义了三个自定义元素：`ju-cotton-skin`（R9 自己用 fbm 噪声重做的棉花糖近似版，L81940-L82116，未收入）、`ju-halo-skin`（L82119-L82749）、`ju-sunset-skin`（L82752-L83313），以及壳元素 `ju-legacy-background`（L83316-L83440，按 `html[data-ju-skin]` 在三者间换子元素）。R9 页面层用 `setSkin()`（L87293-L87302）切换：写 `html[data-skin]`、`#background` 里换成 `<cotton-bg seed="1">` 或 `<ju-halo-skin>/<ju-sunset-skin>`，650ms opacity .25→1 + blur 12→0 交叉淡入，并持久化到 `H.state.skin`。V27 不含其中任何一个。
+
+| 项 | Halo（ju-halo-skin） | Sunset（ju-sunset-skin） |
+|---|---|---|
+| 渲染 | 裸 WebGL1，共享离屏画布 MASTER 376×830（alpha:false, antialias:false, depth, preserveDrawingBuffer, high-performance）；两道 pass：噪声置换平面 → framebuffer 纹理 → 半调（halftone）后处理全屏三角形 | 裸 WebGL1，共享离屏画布 376×830（antialias:true）；单 pass：球面网格 + 周期 pnoise 顶点置换，片元按到中心距离混色 |
+| 颜色 uniform（0-255） | uColor1 (255,80,5) 橙 · uColor2 (219,186,149) 驼 · uColor3 (208,188,225) 淡紫；brightness 1.2 | uColor1 (255,122,51) 橙 · uColor2 (51,160,255) 天蓝 · uColor3 (255,197,61) 黄；brightness 1.5 |
+| 速度 / 起点 | HALO_SPEED .025（官方 preset .4 的 1/16；"一次大构图变化约 40–50 秒"），elapsed 起点 340 s（可用 ?haloTime= 覆盖），每帧 += min(dt,.1) | SUNSET_SPEED .1，起点 0 s（?sunsetTime= / ?haloTime=），?sunsetPaused=1 可冻结 |
+| 是否动态 | 是：rAF 连续渲染；document.hidden / prefers-reduced-motion / 无实例时停（只保留 renderAndMirror 的一帧） | 同左 |
+| 每实例成本 | 每帧 render 一次 master，再 drawImage(copy) 到每个实例 shadow DOM 的 2D canvas（376×830，CSS 100%） | 同左 |
+| 失败回退 | WebGL 不可用 / context lost：paintFallback() 画 2D 线性渐变 135°：#ff5005 → #dbba95 58% → #d0bce1；canvas 底色 #ff5005 | 竖向 #fea669 → #f99674 32% → #cb9ca3 58% → #9ca2d1 80% → #85a2e8；底色 #ff7a33 |
+| 依赖 / 资源 | 无（不用 three.js，无图片）；R9 L86865 的 skin-previews.js 仅是设置弹窗的静态预览 PNG | 同左 |
+| 前景适配（R9 自己的） | `html[data-skin=halo],html[data-skin=sunset]{--r4-muted:#34424f;--r4-accent:#25385f;…}` 等（skins-r9.css，R9 L798/L1210-1212/L1269/L1467-1471/L1477-1478）：R9 在这两套皮肤下把正文容器加了 #edf4f6d9 一类的浅底 | 同左 |
+
+- halo live 首帧实测（skins-demo-halo-live.png；引擎画布 376×830 getImageData，7 点 21×21 均值）：(0.12,0.08) #d4ad89，(0.88,0.08) #ccafbb，(0.5,0.5) #e58934，(0.12,0.92) #b1e1ff，(0.88,0.92) #f16406，(0.5,0.25) #da9f6d，(0.5,0.75) #e6813a；亮度 min/max/mean 117.7/222/163.5。
+- sunset live 首帧实测（skins-demo-sunset-live.png；引擎画布 376×830 getImageData，7 点 21×21 均值）：(0.12,0.08) #ffa168，(0.88,0.08) #ff9b6b，(0.5,0.5) #cea0a1，(0.12,0.92) #94aadb，(0.88,0.92) #9caed3，(0.5,0.25) #faa976，(0.5,0.75) #aea8c1；亮度 min/max/mean 165.9/187.3/174.3。
+- cotton live 首帧实测（skins-demo-cotton-live.png；引擎画布 390×844 getImageData，7 点 21×21 均值）：(0.12,0.08) #e4dce5，(0.88,0.08) #d7e0e7，(0.5,0.5) #dfdfe7，(0.12,0.92) #dbe3ea，(0.88,0.92) #dde3ea，(0.5,0.25) #d6e0e8，(0.5,0.75) #e0e1e9；亮度 min/max/mean 221.9/226.5/224.1。
+- cotton 时钟：t0 clock 1.0499750000000003 → +9589ms 后 1.4458000000000002（swiftshader 下帧数少，推进慢；真机每秒 +.25）。截图 skins-demo-cotton-t0 / t2s。
+- skins.js API 烟测（halo live）：pause → state {"name": "halo", "live": true, "paused": true, "engine": "ju-halo-skin", "isLiveHost": false}，快照层出现 True；resume → {"name": "halo", "live": true, "paused": false, "engine": "ju-halo-skin", "isLiveHost": false}。
+
+### 3.4 统一外壳 skins.js 与三环境对比度实测
+
+接口（src/shared/v27/skins.js）：`JU.shared.skins.mount(host, name, {live, exclusive})` / `unmount` / `pause` / `resume` / `setSkin` / `setLive` / `state`。live 引擎：cotton → `<cotton-bg>`（V27 原件 backgrounds.js + vendor-three.js）；halo / sunset → `<ju-halo-skin>` / `<ju-sunset-skin>`（R9 原件 skins-r9.js）。规则：同一页面只允许一个 live（最后一次 live 的 mount / setLive 得到 live，其余转为"当前帧快照 + 静态渐变"），live=false / 无 WebGL / prefers-reduced-motion 一律静态 CSS；pause 把当前帧快照到 2D canvas 后摘下引擎元素（三种引擎的共享渲染器在实例集合为空时都会停 rAF），resume 挂回；setSkin 按 R9 的 650ms opacity+blur 交叉淡入。演示页 src/shared/v27/skins-demo.html（三台 390×844：cotton live / halo 静态 / sunset 静态；`?live=all&exclusive=0` 可三台全 live 用于采样；`?fg=0` 隐藏前景）。
+
+静态回退色板（由 live 首帧 3×5 网格行均值 + 四角采样生成；skins-samples.json / skins-palettes.json）：
+
+| 环境 | 5 行均值（上→下） | 四角 tl / tr / bl / br | live 首帧亮度 mean | 静态回退亮度 mean（bg-only 实测） |
+|---|---|---|---|---|
+| cotton | #dfdee6 → #d6e0e8 → #dfdfe7 → #e3e1e9 → #dbe3ea | #e4dce5 / #d7e0e7 / #dbe3ea / #dde3ea | 224.1 | 222.1（cotton-bg） |
+| halo | #cfaea9 → #db9c66 → #e48b3c → #e48543 → #d59c83 | #d4ad89 / #ccafbb / #b1e1ff / #f16406 | 163.5 | 162.2（static） |
+| sunset | #ff9f6b → #f7ac7a → #cfa1a0 → #b2a5bc → #9bacd4 | #ffa168 / #ff9b6b / #94aadb / #9caed3 | 174.3 | 174.2（static） |
+
+对比度实测（skins-demo-all.png 的前景隐藏版，dpr2，文字外接矩形下的平均底色；WCAG 比值；cotton 列为 live 原件，halo / sunset 列为静态回退）：
+
+| 环境 | 模式 | 角色 | 前景色 | 字号/字重 | 底色均值 | 对比度(均值) | 最亮处 | 最暗处 |
+|---|---|---|---|---|---|---|---|---|
+| cotton | live | title | #14161f | 30px/500 | #dfdde6 | **13.42:1** | 13.54:1 | 13.4:1 |
+| cotton | live | meta | #535b70 | 14px/400 | #e1dde6 | **5.06:1** | 5.09:1 | 5.04:1 |
+| cotton | live | body | #454b5e | 14px/400 | #e1dde6 | **6.48:1** | 6.52:1 | 6.46:1 |
+| cotton | live | cta-label-on-pill | #ffffff | 15px/500 | #9abfef | **1.9:1** | 1.0:1 | 2.74:1 |
+| halo | static | title | #14161f | 30px/500 | #d2a993 | **8.45:1** | 8.71:1 | 8.12:1 |
+| halo | static | meta | #535b70 | 14px/400 | #d5a78b | **3.14:1** | 3.22:1 | 3.04:1 |
+| halo | static | body | #454b5e | 14px/400 | #d8a279 | **3.87:1** | 4.02:1 | 3.7:1 |
+| halo | static | cta-label-on-pill | #ffffff | 15px/500 | #9abdec | **1.93:1** | 1.0:1 | 3.14:1 |
+| sunset | static | title | #14161f | 30px/500 | #fca16d | **8.98:1** | 9.24:1 | 8.77:1 |
+| sunset | static | meta | #535b70 | 14px/400 | #fca470 | **3.45:1** | 3.54:1 | 3.38:1 |
+| sunset | static | body | #454b5e | 14px/400 | #faa875 | **4.51:1** | 4.61:1 | 4.4:1 |
+| sunset | static | cta-label-on-pill | #ffffff | 15px/500 | #99bdee | **1.93:1** | 1.0:1 | 2.74:1 |
+
+同一组文字角色落在 live 原件首帧的上部（标题/辅助/正文所在的上 40%）：
+- cotton：顶带均色 #dadfe7，标题 #14161f 13.48:1，辅助 #535b70 5.06:1，正文 #454b5e 6.48:1，顶带最差格 5.05:1。
+- halo：顶带均色 #d5a588，标题 #14161f 8.22:1，辅助 #535b70 3.09:1，正文 #454b5e 3.95:1，顶带最差格 2.86:1。
+- sunset：顶带均色 #fba673，标题 #14161f 9.28:1，辅助 #535b70 3.49:1，正文 #454b5e 4.46:1，顶带最差格 3.3:1。
+
+读数要点：V27 的深色文字角色在 Cotton Candy 上远超 7:1；在 Halo（R9 默认 340 s 起点的橙色构图）上，14px 辅助行 #535b70 只有 ≈3:1，正文 #454b5e ≈4:1，低于 4.5:1；Sunset 上辅助行 ≈3.5:1。R9 自己也因此给这两套皮肤加了浅色容器底（skins-r9.css）。若新方案要在三环境上共用 V27 的文字色，Halo / Sunset 下需要前景退让层（毛玻璃 / 浅底）或更深的辅助色。
 
 ## 4. 局卡模板与翻面
 
@@ -197,7 +268,7 @@
 | UI 字体栈 | `--ju-font-ui: Noto Sans SC, Microsoft YaHei, PingFang SC, sans-serif` | 可变字体切片（101 片 ×5 字重共用文件，4.52 MB） | V27:49 |
 | 外层标题 | Noto Sans SC | 30px / 500 / 1.25（收拢时 1.05，30→18） | title20 V27:4214 |
 | 辅助行 | Noto Sans SC | 14px / 400 / 1.5 / #535b70 | meta21 V27:4215 |
-| CTA 文案 | 继承 | 14.5px / 500 / .06em / #fff | V27:2518 |
+| CTA 文案 | var(--ju-font-ui) | 15px / 500 / 字距 normal / #fff（V27:4317 覆盖 V27:2518 的 14.5/.06em） | V27:4317 |
 | 数字（票根时间、倒计时、候补序号） | Archivo 500/700 | 28 / 92 / 60px | L262、L281、L390 |
 | 眉行 / 编号 / 吐司 | Space Mono 400/700 | 8–13px，字距 .04–.42em | 132 处 |
 | JU. 字标 | Libre Caslon Text 400 | 28px（s01）/ 52px（卡背） | L519 / L607 |
@@ -217,12 +288,12 @@
 
 ## 8. 与任务书描述不符 / 需要注意之处
 
-1. **三背景只有一套**：V27 没有 Halo / Sunset，也没有任何背景切换；`seed` 属性无效。任务书"三套既定背景环境"若指 V27，则不成立；名称来自 R9（见 3.1）。
+1. **三背景只有一套**：V27 没有 Halo / Sunset，也没有任何背景切换；`seed` 属性无效。任务书"三套既定背景环境"若指 V27，则不成立；名称来自 R9（见 3.1）。Halo / Sunset 已从 R9 原样提取（3.3），并连同 V27 的 Cotton Candy 封装为统一外壳（3.4）。
 2. **「收至约 18px 并进入工具行中部」在源码上成立，但 390×844 的实际画面走不完**：收拢需要 scrollTop ≥ 88px，而默认 fixture 下 s05 仅 64px、s06g 38px、s06 48px、s03b 44px、s02 door 50px（双行标题 81px）可滚动，没有一个屏到 p=1；终点态只在更矮视口或更长内容下出现。
 2b. **多行标题的换行是 overflow-wrap:anywhere 的硬换行，没有 text-wrap:balance**：12 字标题在 30px/346px 下断成「周五深夜法拉盛救急火锅 / 局」，第二行只剩一个字（截图 header-s02-longtitle-p000-clip）；收拢到 p≈0.4（字号 ≈25px）后又回到单行，期间 header 高度按双行 th=63 固定，不随回到单行而缩短。
 3. **标题 line-height 有两套**：静态 1.25（title20），一旦 syncHeader23 接管即改为 1.05（含 p=0），所以吸顶页的标题行高实测恒为 31.5px，而非 37.5px。
 4. **stickyShell / titleShrink / subCollapse 只是名字**：V27 中它们不计算收拢（V27:4120-4122），真正的函数是 syncHeader23；任务书点名的 stickyShell 已退化。
-5. **CTA 文案 14.5px，不是 15px**（div 版）；button 版（s09 回执、s03 查看进度）为 15px。宽度 `min(100%,280px)`、高 48 与任务书一致。
+5. **CTA 文案实测 15px/500、无字距**：源码里有两套 ctaTextStyle（V27:2518 的 14.5px/.06em 与 V27:4317 的 15px），后者在合并时胜出；若按 2518 抄 14.5px 会与实际画面不符。宽度 `min(100%,280px)`、高 48 与任务书一致。
 6. **CTA 的"边缘"没有 border**：全部由 inset/outset box-shadow 构成；按压只有 scale(.958) + .48s 过冲回弹，没有颜色/阴影变化（禁用态才换材质）。
 7. **局卡"翻面"只在 s05**（flip05 锁定 1020ms 过冲曲线）；其他屏的卡只自转；"左右翻卡"是 s03 表单卡栈的手势（±84px 阈值、62° 甩出），不是局卡。
 8. **flipBox/face/stack 是 v17 票根翻面的遗留**（V27:4015-4023、4105-4112），V27 的 HTML 已不引用（全文 0 处），不要当作现行翻面实现。
@@ -232,6 +303,6 @@
 
 ## 9. 产出文件
 
-- 截图与数据：`my-r2/evidence/baseline/v27/`：bg-cotton-s05-t0.png、bg-cotton-s05-t2s.png、bg-cotton-s05-t4s.png、header-s02-door-p000-clip.png、header-s02-door-p000-scroll0.png、header-s02-door-p050-clip.png、header-s02-door-p050-scroll46.png、header-s02-door-p100-clip.png、header-s02-door-p100-scroll50.png、header-s02-door-p100b-clip.png、header-s02-door-p100b-scroll50.png、header-s02-longtitle-p000-clip.png、header-s02-longtitle-p000-scroll0.png、header-s02-longtitle-p050-clip.png、header-s02-longtitle-p050-scroll46.png、header-s02-longtitle-p100-clip.png、header-s02-longtitle-p100-scroll81.png、header-s02-longtitle-p100b-clip.png、header-s02-longtitle-p100b-scroll81.png、header-s02-longtitle-sealed.png、header-s05-p000-clip.png、header-s05-p000-scroll0.png、header-s05-p050-clip.png、header-s05-p050-scroll46.png、header-s05-p100-clip.png、header-s05-p100-scroll64.png、header-s06g-p000-clip.png、header-s06g-p000-scroll0.png、header-s06g-p050-clip.png、header-s06g-p050-scroll38.png、header-s06g-p100-clip.png、header-s06g-p100-scroll38.png、measurements.json、s02-door-after-tear.png、screen-s01.png、screen-s02.png、screen-s03.png、screen-s03b.png、screen-s04.png、screen-s05.png、screen-s06.png、screen-s06g.png、screen-s08.png、screen-s09.png、screen-s11.png、screen-s12-after-burn.png、screen-s12.png
-- 提取代码：`my-r2/src/shared/v27/`：header.css、header.js、cta.css、cta.js、backgrounds.js、backgrounds.css、ju-card.html、ju-card.css、ju-card.js、ju-member.html、card-stack.css、card-stack.js、fonts.md（每个文件头部注明来源 class / 行号；JS 方法体与模块均为原样切片，不改语义）。
+- 截图与数据：`my-r2/evidence/baseline/v27/`：bg-cotton-s05-t0.png、bg-cotton-s05-t2s.png、bg-cotton-s05-t4s.png、cta-default.png、cta-disabled.png、cta-pressed.png、header-s02-door-p000-clip.png、header-s02-door-p000-scroll0.png、header-s02-door-p050-clip.png、header-s02-door-p050-scroll46.png、header-s02-door-p100-clip.png、header-s02-door-p100-scroll50.png、header-s02-door-p100b-clip.png、header-s02-door-p100b-scroll50.png、header-s02-longtitle-p000-clip.png、header-s02-longtitle-p000-scroll0.png、header-s02-longtitle-p050-clip.png、header-s02-longtitle-p050-scroll46.png、header-s02-longtitle-p100-clip.png、header-s02-longtitle-p100-scroll81.png、header-s02-longtitle-p100b-clip.png、header-s02-longtitle-p100b-scroll81.png、header-s02-longtitle-sealed.png、header-s05-p000-clip.png、header-s05-p000-scroll0.png、header-s05-p050-clip.png、header-s05-p050-scroll46.png、header-s05-p100-clip.png、header-s05-p100-scroll64.png、header-s06g-p000-clip.png、header-s06g-p000-scroll0.png、header-s06g-p050-clip.png、header-s06g-p050-scroll38.png、header-s06g-p100-clip.png、header-s06g-p100-scroll38.png、measurements.json、s02-door-after-tear.png、screen-s01.png、screen-s02.png、screen-s03.png、screen-s03b.png、screen-s04.png、screen-s05.png、screen-s06.png、screen-s06g.png、screen-s08.png、screen-s09.png、screen-s11.png、screen-s12-after-burn.png、screen-s12.png、skins-contrast.json、skins-demo-all.png、skins-demo-cotton-live.png、skins-demo-cotton-t0.png、skins-demo-cotton-t2s.png、skins-demo-cotton.png、skins-demo-halo-live.png、skins-demo-halo.png、skins-demo-sunset-live.png、skins-demo-sunset.png、skins-samples.json
+- 提取代码：`my-r2/src/shared/v27/`：header.css、header.js、cta.css、cta.js、backgrounds.js、backgrounds.css、ju-card.html、ju-card.css、ju-card.js、ju-member.html、card-stack.css、card-stack.js、fonts.md（每个文件头部注明来源 class / 行号；JS 方法体与模块均为原样切片，不改语义）；追加：skins-r9.js / skins-r9.css（R9 Halo / Sunset 原件）、vendor-three.js（V27 的 three r185，MIT）、skins.js（统一外壳）、skins-demo.html（三环境演示页）。
 - 临时脚本（不入库）：scratchpad/v27/decode_modules.py（解码 V27.html 全部内联模块）、shoot.cjs（Playwright 驱动）、extract_src.py（按行号切片生成提取文件）、build_spec.py（生成本文）。

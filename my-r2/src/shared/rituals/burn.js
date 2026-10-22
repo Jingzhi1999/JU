@@ -22,7 +22,8 @@
    · 第 3792-3799 行 startBurn12()（s12 局主取消 → variant C，进屏即点火）；第 4404-4410 行 exitConfirmed22()（s06 主动退出 → variant C）
    · 第 4258 行   declineTime18()：**先** JuLedger.choose(EVENT,false) 写入 → 成功才 requestAnimationFrame(startBurn)；cancel18 / withdrawConfirmed 同理
    · 第 3723-3775 行 prepareBurnLayout26：手机高 <720 时的布局预飞（把票挪进安全区再点火，320ms cubic-bezier(.16,1,.3,1)）——本文件不含
-   数据与动画：**数据先写、动画后放**；燃烧只作用于原票件，终态 = 纸被 clip-path 吃完 + 画布淡出 + 作废文案落定（juSettle）。
+   数据与动画：**数据先写、动画后放**；燃烧只作用于原票件，终态 = 纸被 clip-path 吃完 + 画布淡出 + 页头文案改写（s11「已退出这局」/ s12「活动已取消 · 原定… · 不计为未出席，也不影响成局信用。」）+ 页脚 CTA「再找个局」（s11 exit10On 在燃烧中即显示，s12 常显）。
+   vals11 的 ashWrap / ashTitleStyle / ashSubStyle（居中三段 juSettle 文案）未被 V27 模板引用；s12 的 ash12Wrap 只渲染空 span —— 均为遗留，本文件只把它作为可选的 [data-ash] 钩子保留（opts.ash）。
    prefers-reduced-motion：V27 源码未给燃烧接系统设置（brief §10 指出）；本文件补上：减少动态时 seek 到终态并直接落定，不改任何曲线。
    键盘 / 按钮等价物：原件由「去不了了 → 确认退出」按钮 / 进屏自动触发；本文件 JURitual.burn(host,data,opts) 即按钮入口。
    ─────────────────────────────────────────────────────────────────────────────── */
@@ -424,7 +425,7 @@
   }
 
   /* data.reason: 'reschedule-declined'(B) | 'cancelled'(C) | 'withdrawn'(C)；或 opts.variant 'A'|'B'|'C'
-     data.ashTitle / data.ashSub / data.ashSec 填入舞台内 [data-ash] 终态块（可无）。
+     终态文案（页头 / CTA）由调用方在 onDone 里改写；data.ashTitle / ashSub / ashSec 只在提供 opts.ash（遗留居中块）时使用。
      返回 {engine, promise, pause, resume, seek, destroy}；promise → {ok, variant, metrics} */
   NS.burn = function (host, data, opts) {
     opts = opts || {}; data = data || {};
@@ -433,7 +434,7 @@
     const m = parts(stage);
     if (!m.paper || !m.host || !m.surface || !window.JUNativeBurn) return { engine: null, promise: Promise.resolve({ ok: false, reason: 'no-parts' }) };
     if (stage.__juBurn) unmount(stage, stage.__juBurn);
-    const ash = stage.querySelector('[data-ash]') || (stage.parentElement && stage.parentElement.querySelector('[data-ash]'));
+    const ash = opts.ash || stage.querySelector('[data-ash]') || null;   // 可选的遗留钩子（V27 页面实际不渲染居中作废文案）
     if (ash) { const t = ash.querySelector('[data-slot="ashTitle"]'), s = ash.querySelector('[data-slot="ashSub"]'), c = ash.querySelector('[data-slot="ashSec"]'); if (t && data.ashTitle) t.textContent = data.ashTitle; if (s && data.ashSub) s.textContent = data.ashSub; if (c && data.ashSec) c.textContent = data.ashSec; delete ash.dataset.shown; }
     // 撕票 rig 先停（startBurn 第 3802 行）
     const rigHost = m.paper.querySelector('[data-tear]'); if (rigHost && rigHost.__jurig) rigHost.__jurig.setEnabled(false);
@@ -475,7 +476,7 @@
   };
   NS.burn.reset = function (host) {
     const stage = stageOf(host); unmount(stage, stage.__juBurn);
-    const ash = stage.querySelector('[data-ash]') || (stage.parentElement && stage.parentElement.querySelector('[data-ash]')); if (ash) delete ash.dataset.shown;
+    const ash = stage.querySelector('[data-ash]'); if (ash) delete ash.dataset.shown;
     if (stage.dataset.state === 'void' || stage.dataset.state === 'burning') stage.dataset.state = 'ready';
   };
   NS.burn.DURATION = 6.6; NS.burn.VARIANTS = { B: '改期拒绝（多点烧穿·卷边炭化）', C: '局主取消 / 主动退出（侧向推进·落灰收尾）', A: '右下角起燃（V27 页面未使用）' };

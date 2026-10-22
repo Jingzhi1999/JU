@@ -21,7 +21,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const stage = (p, id) => inst(p, 'return inst.state.data.joined.filter(function(x){return x.eventId===arg})[0].stage', id);
   const text = (p) => phone(p).evaluate(el => el.textContent);
   const settled = (p, ms) => p.waitForTimeout(ms || 450);
-  const banned = /扣分|信用分|处罚|等级|剩余次数/;
+  const banned = /扣分|信用分|信用等级|剩余次数|(?<!不会自动|不自动|不)处罚/;  /* 「不会自动处罚」是 V27 原文的否定句，允许 */
 
   /* ---------------- 1. index: 50 jumps, renderVals, surfaces, console, banned words ---------------- */
   let errs = await run({}, async (p) => {
@@ -146,7 +146,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     ok('到最近到期: Leon expires → my turn → invited_queue (候补轮到 · 已预留)', q3.stage === 'invited_queue' && q3.label === '候补轮到 · 已预留', q3);
     await click(p, '[data-role-tab="hosted"]'); await settled(p); await click(p, '[data-rid="cards"]'); await settled(p);
     const q4 = await inst(p, `var v = inst.ctlVals().manage; return { leaves: v.leaves.rows.map(function(l){return l.nick+':'+l.text}), queue: v.queue.on, roster: v.roster.rows.map(function(r){return r.nick+':'+r.stateText}) }`);
-    ok('host side settled: Leon 预留到期 in 离开记录, queue invited in order', q4.leaves.some(x => x === 'Leon:预留到期') && !q4.queue && q4.roster.some(x => x === '西西:已预留'), q4);
+    ok('host side settled: Leon 预留到期 in 离开记录, one freed seat → 西西 invited in order, 小满 still queued (cards capacity 3)', q4.leaves.some(x => x === 'Leon:预留到期') && q4.queue && q4.roster.some(x => x === '西西:已预留'), q4);
     await inst(p, `JU.resetClock()`);
   });
   ok('no console / page errors during the clock checks', errs.length === 0, errs.slice(0, 4));

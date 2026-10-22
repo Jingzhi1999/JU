@@ -105,7 +105,7 @@
     bbq: ev({ id: 'bbq', title: '阳台烧烤 · 自带肉', en: 'ROOF BBQ', pack: 'street', cat: 'food', iso: '2026-12-21T16:00', loc: 'Queens-长岛市', host: YOU, capacity: 4, hosted: true, version: 2, establishedAt: NOW - 30 * H, proposal: { oldIso: '2026-12-20T17:00', at: NOW - 6 * H }, note: '我出炭和炉子，肉各带各的。' }),
     museum: ev({ id: 'museum', title: '看展搭子 · 现代馆', en: 'MoMA WALK', pack: 'acid', cat: 'culture', iso: '2026-12-16T13:00', loc: 'Manhattan-中城', host: YOU, capacity: 4, hosted: true, status: 'ended', endedAt: NOW - 20 * H, establishedAt: NOW - 60 * H }),
     wine: ev({ id: 'wine', title: '自然酒小试 · 六款', en: 'NATURAL WINE', pack: 'mono', cat: 'food', iso: '2026-12-23T19:30', loc: 'Brooklyn-威廉斯堡', host: YOU, capacity: 5, hosted: true, establishedAt: NOW - 10 * H, note: '六款酒，每人出 20 刀。' }),
-    cards: ev({ id: 'cards', title: '德州扑克新手桌', en: 'POKER 101', pack: 'grain', cat: 'game', iso: '2026-12-28T20:00', loc: 'Queens-阿斯托利亚', host: YOU, capacity: 6, hosted: true, joinMode: 'direct' }),
+    cards: ev({ id: 'cards', title: '德州扑克新手桌', en: 'POKER 101', pack: 'grain', cat: 'game', iso: '2026-12-28T20:00', loc: 'Queens-阿斯托利亚', host: YOU, capacity: 3, hosted: true, joinMode: 'direct' }),
     hostwine2: ev({ id: 'hostwine2', title: '自然酒小试 · 四款', en: 'NATURAL WINE I', pack: 'mono', cat: 'food', iso: '2026-12-04T19:30', loc: 'Brooklyn-威廉斯堡', host: YOU, capacity: 5, hosted: true, status: 'ended', endedAt: t('2026-12-04T23:00'), establishedAt: t('2026-12-01T10:00') }),
     hostcards2: ev({ id: 'hostcards2', title: '德州扑克新手桌 · 第一期', en: 'POKER 101', pack: 'grain', cat: 'game', iso: '2026-11-20T20:00', loc: 'Queens-阿斯托利亚', host: YOU, capacity: 6, hosted: true, status: 'ended', endedAt: t('2026-11-21T00:00'), establishedAt: t('2026-11-18T10:00') }),
     hostpicnic: ev({ id: 'hostpicnic', title: '河边野餐 · 下雨取消', en: 'RIVER PICNIC', pack: 'invite', cat: 'food', iso: '2026-11-15T12:00', loc: 'Brooklyn-多米诺公园', host: YOU, capacity: 6, hosted: true, status: 'cancelled', cancelledAt: t('2026-11-14T20:00') })
@@ -395,7 +395,7 @@
     approveHelp: '发出邀请后对方有 6 小时阅读约定并确认，确认前不占定、不出票；申请人的微信成局后才可见。',
     repliesHelp: '接受的人换新版票并保留已加微信；拒绝的人释放席位，不计主动退出。',
     queueHelp: '有人放弃或预留到期时，按顺位自动发出 6 小时预留。',
-    attendanceHelp: '未出席是待核实的事实，不等于故意缺席，也不会自动带来任何后果；可随时更正，更正会留下记录。',
+    attendanceHelp: '未出席是待核实的事实，不等于故意缺席，也不会自动处罚；可随时更正，更正会留下记录。',
     contactNote: '撕券后 8 小时内联系局主。此处为示例微信。',
     contactedNote: '已加微信 · 等这次见面。',
     emptyJoinedFirst: { title: '还没有加入任何局', body: '找到想去的局，申请或留位后会出现在这里。' },

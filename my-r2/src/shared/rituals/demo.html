@@ -68,6 +68,7 @@
           <div class="back" role="button" tabindex="0" aria-label="返回">←</div>
           <span class="title" id="hTitle">票根</span>
           <span class="sub" id="hSub">FRI 12.18 · 19:30 · 法拉盛</span>
+          <span class="sub" id="hNote" style="font-size:14px;color:#454b5e;line-height:1.5;margin-top:4px"></span>
         </div>
         <div data-ticket-content24="">
           <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
@@ -105,13 +106,9 @@
           <button class="ju-rule-entry23" type="button" aria-label="参加约定"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-3-6 3V3zM9 7h6M9 11h6"/></svg><span>参加约定</span><span aria-hidden="true">›</span></button>
         </div>
       </div>
-      <div class="ju-ash-wrap" data-ash id="ash">
-        <div class="ju-ash-title" data-slot="ashTitle">局主取消了</div>
-        <div class="ju-ash-sub" data-slot="ashSub">不计为未出席，也不影响成局信用。</div>
-        <button class="ju-ash-sec" data-slot="ashSec" type="button">知道了</button>
-      </div>
       <div class="footer">
         <div class="cta ju-contact-action" data-contact-action role="button" tabindex="0" aria-disabled="true" id="contactCta"><span class="gloss"></span><span class="cta-text" data-slot="actionLabel">已加微信</span></div>
+        <div class="cta" role="button" tabindex="0" aria-label="再找个局" id="ashCta" hidden><span class="gloss"></span><span class="cta-text">再找个局</span></div>
       </div>
     </div>
     <!-- 散场屏（V27 s08 的结构） -->
@@ -184,7 +181,6 @@
   const EVENT = { id: 'NYC|invite|深夜救急火锅局', city: 'NYC', pack: 'invite', title: '深夜救急火锅局', en: 'HOTPOT RESCUE', wd: 'FRI', date: '12.18', dateNum: '12-18-2026', time: '19:30', loc: '法拉盛', host: '老杨', capacity: 4, seats: 1, joinMode: 'application' };
   const TICKET = { key: 'v1', title: EVENT.title, time: '19:30', md: '12.18', loc: '法拉盛', meeting: '待局主确认', host: '老杨', previous: '', mark: '' };
   const REISSUED = { key: 'v2', title: EVENT.title, time: '20:00', md: '12.19', loc: '法拉盛', meeting: '19:50 门口', host: '老杨', previous: 'FRI 12.18 19:30', mark: '时间已改', reissued: true };
-  const ASH = { cancelled: { ashTitle: '局主取消了', ashSub: '不计为未出席，也不影响成局信用。', ashSec: '知道了' }, 'reschedule-declined': { ashTitle: '已退出改期活动', ashSub: '改期后退出，不影响成局信用。', ashSec: '知道了' }, A: { ashTitle: '票已作废', ashSub: '（variant A · V27 未使用）', ashSec: '知道了' } };
   const HISTORY = [
     { id: 'NYC|invite|漂亮饭，只拍不吃派', event: { id: 'NYC|invite|漂亮饭，只拍不吃派', city: 'NYC', pack: 'invite', title: '漂亮饭，只拍不吃派', en: 'PRETTY PLATES', wd: 'SAT', date: '11.28', dateNum: '11-28-2026', time: '12:30', loc: '东村', host: '小面', capacity: 4, seats: 0, version: 1 }, attendance: 'present', endedAt: Date.now() - 20 * 864e5 },
     { id: 'NYC|invite|川菜辣度分级评审团', event: { id: 'NYC|invite|川菜辣度分级评审团', city: 'NYC', pack: 'invite', title: '川菜辣度分级评审团', en: 'SPICE PANEL', wd: 'SAT', date: '11.14', dateNum: '11-14-2026', time: '18:30', loc: '八大道', host: '麻酱', capacity: 5, seats: 0, version: 1 }, attendance: 'absent', endedAt: Date.now() - 34 * 864e5 },
@@ -199,7 +195,7 @@
   const tearOpts = () => ({ onDetach: () => { say('撕裂到右端 → 先写入“已撕”（V27 onDetach → JuLedger.torn），写入成功后副券坠落'); return true; }, onDone: () => { say('副券落定 → data-state=torn → 300ms 后联系层、850ms 后主按钮'); contact().reveal(); } });
 
   async function doPrint(data, label) {
-    current = data; contact().hide(); $('ash').dataset.shown = 'false';
+    current = data; contact().hide(); $('ashCta').hidden = true; $('hNote').textContent = '';
     if (burnHandle) { window.JURitual.burn.reset(stage); burnHandle = null; }
     $('hTitle').textContent = data.reissued ? '时间挪了一下' : '票根'; $('hSub').textContent = data.reissued ? 'SAT 12.19 · 20:00 · 法拉盛 · 原定 FRI 12.18' : 'FRI 12.18 · 19:30 · 法拉盛';
     if (data.reissued) stage.style.setProperty('--ju-ticket-top', '24px'); else stage.style.removeProperty('--ju-ticket-top');
@@ -220,10 +216,16 @@
   $('contactHide').onclick = () => contact().hide();
   $('burn').onclick = () => {
     if (stage.dataset.state !== 'ready' && stage.dataset.state !== 'torn') return say('先出票（燃烧作用于原票件）');
-    const v = $('variant').value; const data = Object.assign({ reason: v === 'A' ? 'cancelled' : v }, ASH[v]);
+    const v = $('variant').value; const data = { reason: v === 'A' ? 'cancelled' : v };
     contact().hide();   // V27 第 311 行：燃烧中联系层 / 动作按钮 display:none
+    $('ashCta').hidden = false;   // V27 s11 exit10On：燃烧中即显示「再找个局」；s12 常显
     say('写入作废事实（V27：先 JuLedger.cancel / choose(false)，成功才点火）→ 燃烧 variant ' + (v === 'A' ? 'A' : v === 'cancelled' ? 'C' : 'B') + '，6.6s');
-    burnHandle = window.JURitual.burn(stage, data, { variant: v === 'A' ? 'A' : undefined, onDone: () => say('燃尽 → data-state=void，作废文案落定') });
+    burnHandle = window.JURitual.burn(stage, data, { variant: v === 'A' ? 'A' : undefined, onDone: () => {
+      // V27 终态：纸烧尽 + 页头文案改写（s11Title「已退出这局」/ s12「活动已取消」+ 原定 + 说明）+ 页脚 CTA
+      if (v === 'reschedule-declined') { $('hTitle').textContent = '已退出这局'; $('hSub').textContent = ''; }
+      else { $('hTitle').textContent = '活动已取消'; $('hSub').textContent = '深夜救急火锅局 · 原定 12.18 · 19:30'; $('hNote').textContent = '不计为未出席，也不影响成局信用。'; }
+      say('燃尽 → data-state=void；页头改写，页脚「再找个局」');
+    } });
   };
   $('burnReplay').onclick = async () => { window.JURitual.burn.reset(stage); burnHandle = null; await doPrint(current, '重新出票'); $('burn').click(); };
   async function mountStamp(mode) {
@@ -244,7 +246,7 @@
   $('accept').onclick = () => { if (!tearHandle || !current.reissued) return say('先打印新票'); say('接受新时间 = 撕下副券（V27 s10 onDetach → JuLedger.choose(true)）'); tearHandle.trigger(); };
   $('decline').onclick = () => { if (!current.reissued || stage.dataset.state !== 'ready') return say('先打印新票（且未撕）'); $('variant').value = 'reschedule-declined'; $('burn').click(); };
   $('restoreOriginal').onclick = () => doPrint(TICKET, '恢复原票');
-  $('resetAll').onclick = () => { window.JURitual.burn.reset(stage); burnHandle = null; if (tearHandle) { tearHandle.destroy(); tearHandle = null; } window.JURitual.print.reset(stage); contact().hide(); $('ash').dataset.shown = 'false'; $('ticketScreen').hidden = false; $('afterScreen').hidden = true; current = TICKET; window.JURitual.fillTicket(stage, TICKET); stage.style.removeProperty('--ju-ticket-top'); $('hTitle').textContent = '票根'; $('hSub').textContent = 'FRI 12.18 · 19:30 · 法拉盛'; say('已重置（idle）'); };
+  $('resetAll').onclick = () => { window.JURitual.burn.reset(stage); burnHandle = null; if (tearHandle) { tearHandle.destroy(); tearHandle = null; } window.JURitual.print.reset(stage); contact().hide(); $('ashCta').hidden = true; $('hNote').textContent = ''; $('ticketScreen').hidden = false; $('afterScreen').hidden = true; current = TICKET; window.JURitual.fillTicket(stage, TICKET); stage.style.removeProperty('--ju-ticket-top'); $('hTitle').textContent = '票根'; $('hSub').textContent = 'FRI 12.18 · 19:30 · 法拉盛'; say('已重置（idle）'); };
   $('reduced').onchange = e => { window.__juForceReduced(e.target.checked); say('减少动态：' + (e.target.checked ? '开（出纸 1ms · 撕票直接落定 · 燃烧 seek 终态 · 盖章跳过动作）' : '关')); };
   $('geoBtn').onclick = () => {
     const q = s => stage.querySelector(s), r = e => { if (!e) return '—'; const b = e.getBoundingClientRect(), p = $('ticketScreen').getBoundingClientRect(); return [Math.round(b.left - p.left), Math.round(b.top - p.top), Math.round(b.width * 100) / 100, Math.round(b.height * 100) / 100].join(' / '); };

@@ -47,7 +47,7 @@
 | s12 取消票章 `p12Stamp` | top 118 right −14，边 rgba(26,29,42,.5)，11px .16em，`juStamp .55s ease .4s both` | 第 4003 行 |
 | 燃烧宿主 `[data-burn]` | 258 × 0，left 0 top 0，z 9 | 第 3948 行 |
 
-**三态：** 未撕 ready（纸 + 副券 + 抓手圆点）→ 已撕 torn（副券画布 display:none，宿主收成 0 并 visibility hidden，影子不再让位）→ 作废 void（纸被 clip-path 吃完、`opacity:0` / body display:none；终态文案落定）。复用件：`ticket.css`（`data-state="idle|printing|ready|torn|burning|void"`）、`ticket.html`（四张静态样张）。
+**三态：** 未撕 ready（纸 + 副券 + 抓手圆点）→ 已撕 torn（副券画布 display:none，宿主收成 0 并 visibility hidden，影子不再让位）→ 作废 void（纸被 clip-path 吃完、`opacity:0` / body display:none；舞台留空，终态由页头文案 + 页脚 CTA 表达）。复用件：`ticket.css`（`data-state="idle|printing|ready|torn|burning|void"`）、`ticket.html`（四张静态样张）。
 
 **文字槽位**（V27 模板变量 → `data-slot`）：`eventTitle→title`、`eventTime→time`、`eventMd→md`（V27 只放 **MM.DD**，不含星期；星期在页头 eventLine 和「原定 FRI 12.18 19:30」里）、`eventLoc→loc`、`eventMeeting→meeting`（空时「待局主确认」；改期票为「19:50 门口」）、`eventHost→host`、`oldDate18 oldTime18→previous`、章文案 `mark`。
 
@@ -90,7 +90,7 @@
 - **引擎：** `JUNativeBurn`（version `25.0-shadow-handoff`）。真实 DOM 票面从不被采样或替换：每帧改 `surface.style.clipPath = path(evenodd, 外框 + 到达时间场的等时线)`，影子外壳同步同一 clip；画布（四周 **pad 74 px**，即 406 × (H+148)）只画炭化带、热边、卷曲碎片、落灰。章 `[data-raster=stamp]` 的外轮廓并入纸的蒙版，一起被烧。
 - **三种到达场：** A 右下角起燃（end 7.2 s / 场时长 9.3 s / curls 58 / ash 78 / fold 8.5 / char 1；V27 页面未用）；**B 多点烧穿**（点 .32,.31 / .78,.65 / .13,.92；end 8.2 / 10.6 / 118 / 136 / 17 / 1.5）= **改期拒绝「去不了了」**（s11，`startBurn`）；**C 左侧横向推进**（end 9.3 / 12.6 / 72 / 126 / 10 / 1.05）= **局主取消**（s12，进屏即点火）与 **主动退出**（s06 `exitConfirmed22`）。
 - **时长：** V27 传 `duration: 6.6`，`playbackDuration = min(6.6, 7.6) = 6.6 s`，`rate = 场时长 / 6.6`；主体烧尽且无大碎片后 .45 s 内画布 `destination-out` 整体淡出 → `onDone`。伪时钟实测（258 × 351 票面，duration 6.6）：B 主体烧尽 4.27 s、结束 4.74 s；C 4.40 s / 4.86 s（与 V27 s12 原页 metrics 一致：mainGone 4.40、resultReady 4.864）；A 4.70 s / 5.17 s；6.6 s 是上限不是实际长度。炭化带 5 层描边 25c/17c/9c/4c/1.7c（ignite = smooth(.06,.72,t)），热边 #d43b0d 5.5 px + #ff5419 1.45 px（shadowBlur 5）+ 逐纤维 #ffb451 / #ff7726；卷曲碎片 `curlScale .48`；落灰重力 150（C 119）、落点 H + 14 + 18r。
-- **终态（ash）：** 纸 `display:none` / `opacity:0`；`ashWrap`（left/right 22，top 36%）三段 `juSettle`（标题 26px 500 `.58s .06s`、说明 12.5px/1.95 300 max-width 250 `.58s .21s`、次级 `.55s .58s`）；文案 s11「已退出改期活动 / 改期后退出，不影响成局信用。/ 再找个局 / 知道了」，s12「局主取消了（页头「活动已取消」）/ 不计为未出席，也不影响成局信用。/ 再找一局」。
+- **终态（ash）：** 纸 `display:none` / `opacity:0`（画布已淡出）；**页面实际渲染的终态只有页头文案改写 + 页脚 CTA**：s11 `s11Title`「已退出这局」（sub 清空）+ `ashCta`「再找个局」（`exit10On` 在燃烧中即显示），随后 `finishBurnRoute27('s06g')`；s12 页头「活动已取消 / {局名} · 原定 12.18 · 19:30 / 不计为未出席，也不影响成局信用。」+ 常显 CTA「再找个局」；s06 主动退出后 CTA「查看退出结果」。vals11 里的 `ashWrap / ashTitleStyle / ashSubStyle`（居中三段 `juSettle` 文案「已退出改期活动…」）**未被模板引用**，s12 的 `ash12Wrap` 只渲染两个空 span（第 1656-1663 行）——均为遗留，复用件按源码收录在 `burn.css` 但 demo 不用。
 - **已撕的票再烧（s06 主动退出）：** torn 态副券宿主已收 0，纸面 = 主票 267 px；复用件 `burn.js` 点火前再确认宿主收起（引擎的内联 clip-path 会盖掉影子外壳的 `inset` 让位，若宿主未收会露出一块纸影）。
 - **可见性：** IntersectionObserver + visibilitychange + scroll / resize，不可见即暂停，回来接着烧，不重头；`prepareBurnLayout26` 在手机高 < 720 时先把票挪进安全区（320 ms，cubic-bezier(.16,1,.3,1)）再点火。
 - **减少动态：** **V27 源码未接系统设置**（任务书 §10 已指出），复用件补：`engine.seek(duration)` 直接到终态再落定文案（不改曲线）。
@@ -133,7 +133,7 @@
 | 打印 | 引擎 duration 1 ms | 纸在位、ready |
 | 撕 | auto 直接 detach；回位直接 p=0；坠落跳到 1081 ms | torn + 联系层 0 ms 出现 |
 | 联系 | 300 / 850 ms → 0 / 0 | 可见、可复制 |
-| 燃烧 | **原件未接**；复用件 `seek(终点)` | void + 文案落定 |
+| 燃烧 | **原件未接**；复用件 `seek(终点)` | void（纸没了）+ 页头文案 / CTA |
 | 出席章 | 不播放盖章；ink=1 → 归档 → browse | 已盖章的卡、可翻阅 |
 
 demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS 同时生效（只在 demo 里）。
@@ -172,7 +172,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 | `JURitual.print(host, data, opts)` | `opts:{final:'ready'|'torn', stub:true, tear:{onDetach,onDone}, enableTear:true, onState(s)}` | `Promise<{ok,state,webgl,reason?,message?}>` | 出票；内部先挂副券 rig；`JURitual.print.reset(host)` 重播 |
 | `JURitual.tear(host, data, opts)` / `.tear.mount` | `data:{reissued?,key?}`，`opts:{onDetach():boolean,onDone()}` | `{rig, promise, enable(on), trigger(), reset(), destroy(), p, done}` | `trigger()` = 键盘路径；`promise → {ok,detachedAt,doneAt}` |
 | `JURitual.contact(host, data, opts)` | `data:{host,account,added}`，`opts:{onCopy(ok),onAdd()}` | `{reveal():Promise, hide(), copy():Promise<boolean>, add(), destroy()}` | 300 / 850 ms；真实剪贴板判定 |
-| `JURitual.burn(host, data, opts)` | `data:{reason:'reschedule-declined'|'cancelled'|'withdrawn', ashTitle, ashSub, ashSec}`，`opts:{variant?,duration:6.6,onDone,onState,reduced}` | `{engine, promise, pause(), resume(), seek(s), destroy(), variant}` | 先写数据再调用；`JURitual.burn.reset(host)` |
+| `JURitual.burn(host, data, opts)` | `data:{reason:'reschedule-declined'|'cancelled'|'withdrawn'}`，`opts:{variant?,duration:6.6,onDone,onState,reduced,ash?}` | `{engine, promise, pause(), resume(), seek(s), destroy(), variant}` | 先写数据再调用；终态的页头文案 / CTA 由调用方在 `onDone` 改写；`JURitual.burn.reset(host)` |
 | `JURitual.stamp(host, data, opts)` | `data:{event, mode:'pending'|'present'|'absent', history[]}`，`opts:{adapter:'v27'|'r9', profile, active(), onPhase, onIndex, onComplete}` | `Promise<{engine, replay(), setMode(m), diag(), destroy(), done}>` | 先写出席再 `setMode`；`done` 在 phase=browse 时兑现 |
 
 常量：`JURitual.print.duration=2300`、`tear.SNAP=.5 / KEY_RATE=2.8 / FALL_MS=1080 / PAD{88,18,220} / SIZE{258,84}`、`burn.DURATION=6.6 / VARIANTS`、`stamp.TIMELINE / TIMELINE_R9_QUICK / INK / ANCHOR_V27`。
@@ -180,6 +180,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 ## 12 · 原件里不应继承的东西
 
 - V27 的评审外壳：手机黑边框、状态栏「9:41」、底部进度条、Cotton Candy 三维背景（`cotton-bg` / three.js / mist rig），以及 `ju-scale.js` 的整机缩放。
+- 作废终态的居中文案：vals11 `ashWrap / ashTitleStyle / ashSubStyle / ashSecStyle`（未被模板引用）与 s12 `ash12Wrap`（空 span）、`ashDust / ash12Dust`（空数组）；V27 真正的终态是页头文案 + 页脚 CTA。
 - 旧方案主题装饰：隐藏的「REISSUED」卡（第 1565–1580 行，Noto Sans SC 900 标题、条码、打孔；`display:none` 的遗留）、`print10()` 的百分比打印进度条（`prt10`，第 3665 行，旧 DOM 版打印）、`startStub10` 的拖 120 px 撕票（旧 DOM 版，第 3813 行）、`pr7HintPill`「往右撕副券」胶囊、`juCueTear / juCueX` 提示、`juB1–B8 / juEmber / juCharGrow` DOM 粒子（`ashDust` 为空数组，未用）、`ju-burn.js` 火焰版燃烧（未被页面调用）。
 - `JuStamp` 的 v1 影片合成（`Compositor / retexture / VID_QUAD`）。
 - 第 217 行把散场提示整行 `display:none` 的权宜、第 311 行用 `:has()` 按屏号隐藏联系层的选择器（新方案应按状态驱动）。
