@@ -8,8 +8,8 @@ base = os.path.join(root, code)
 n = 0
 for dp, dn, fn in os.walk(base):
     rel = os.path.relpath(dp, base)
-    if rel == '.' or rel.split(os.sep)[0] == 'stage1':
-        continue  # stage-1 evidence is kept as it was reviewed
+    if rel == '.' or rel.split(os.sep)[0] in ('stage1', 'verify'):
+        continue  # stage-1 evidence is kept as it was reviewed; reviewers' verify/ folders belong to shrink-verify.py
     for f in fn:
         if f.endswith('.png'):
             src = os.path.join(dp, f); dst = src[:-4] + '.jpg'
