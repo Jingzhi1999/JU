@@ -85,7 +85,7 @@ body{margin:0}
 .s02-tab{position:relative;z-index:1;flex:1 1 0;border:0;background:none;padding:0;font:500 15px/1 var(--sans);color:var(--sub-env);cursor:pointer}
 .s02-tab.on{color:var(--ink);font-weight:600}
 .s02-tab.on::after{content:"";position:absolute;left:50%;bottom:13px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--ink)}
-.s02-tab.off{opacity:.55}
+.s02-tab.off span{opacity:.55}
 
 /* ---- rail: the white tongue (under the glyphs) + hit targets (above everything) ---- */
 .s02-tl{position:absolute;left:0;top:0;bottom:0;width:calc(var(--rail) + 4px);z-index:1;pointer-events:none}
@@ -201,8 +201,8 @@ body{margin:0}
 @keyframes s02-c2-out{0%,36%{opacity:0;transform:translate(-52px,var(--st,0px)) scale(.5)}100%{opacity:1;transform:none}}
 @keyframes s02-fo{0%{opacity:1;transform:none}22%,100%{opacity:0;transform:translateX(-16px)}}
 @keyframes s02-vo{0%{opacity:1;transform:none}20%,100%{opacity:0;transform:translateX(-24px)}}
-@keyframes s02-fi{0%,48%{opacity:0;transform:translateX(-16px)}100%{opacity:1;transform:none}}
-@keyframes s02-vi{0%,56%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:none}}
+@keyframes s02-fi{0%,40%{opacity:0;transform:translateX(-16px)}100%{opacity:1;transform:none}}
+@keyframes s02-vi{0%,44%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:none}}
 @keyframes s02-dot-in{from{transform:none}to{transform:translate(-66px,calc(var(--st,0px) + 4px)) scale(.75)}}
 @keyframes s02-dot-out{from{transform:translate(-66px,calc(var(--st,0px) + 4px)) scale(.75)}to{transform:none}}
 @keyframes s02-tg-in{0%,50%{opacity:0;transform:translateY(calc(var(--g,0) * 60px)) scaleX(.15)}100%{opacity:1;transform:translateY(calc(var(--g,0) * 60px)) scaleX(1)}}
@@ -437,7 +437,7 @@ body{margin:0}
 
       <nav class="s02-root" aria-label="JU">
         <div class="s02-rootbg" aria-hidden="true"><i class="s02-r s02-r-cotton"></i><i class="s02-r s02-r-halo"></i><i class="s02-r s02-r-sunset"></i></div>
-        <sc-for list="{{rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s02-tab {{t.cls}}" aria-current="{{t.cur}}" aria-disabled="{{t.dis}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
+        <sc-for list="{{rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s02-tab {{t.cls}}" aria-current="{{t.cur}}" aria-disabled="{{t.dis}}" onClick="{{t.go}}"><span>{{t.label}}</span></button></sc-for>
       </nav>
       <div class="s02-ju">JU</div>
 
@@ -613,15 +613,15 @@ JUS.mixin(Component);
 (function (p) {
   var base = p.scrubTo;
   p.scrubTo = function (v) {
-    base.call(this, v);
-    var r = this.rootRef && this.rootRef.current; if (!r || !r.getAnimations) return;
-    r.getAnimations({ subtree: true }).forEach(function (a) {
-      try {
-        if (v == null) { a.play(); return; }
-        var d = a.effect && a.effect.getTiming ? a.effect.getTiming().duration : 0;
-        a.pause(); if (typeof d === 'number' && d > 0) a.currentTime = (+v / 100) * d;
-      } catch (e) { }
-    });
+    base.call(this, v);                       /* sets review.paused → the panel's .paused class holds every CSS animation */
+    if (v == null) return;                    /* release: removing .paused resumes them; nothing is handed to script control */
+    var self = this;
+    setTimeout(function () {                  /* after the re-render, seek only (no play()/pause(), which would detach them from CSS) */
+      var r = self.rootRef && self.rootRef.current; if (!r || !r.getAnimations) return;
+      r.getAnimations({ subtree: true }).forEach(function (a) {
+        try { var d = a.effect && a.effect.getTiming ? a.effect.getTiming().duration : 0; if (typeof d === 'number' && d > 0) a.currentTime = (+v / 100) * d; } catch (e) { }
+      });
+    }, 0);
   };
 })(Component.prototype);
 </script>
