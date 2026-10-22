@@ -9,7 +9,7 @@
 | 系统减少动态 | `rm-check.cjs` 在 `reducedMotion:'reduce'` 下 S00 `rmSys:true`，无 >1ms 动画 | mixin 监听 matchMedia；面板 css `@media` 兜底 | 真机系统设置 |
 | 尺寸真实回流 | S00：面板 430 预设后 `.ju-phone` 宽 430；`widths.cjs` 字号在三个宽度不变、`.app` 无 transform | 无 fitWidth；契约禁止 scale() | — |
 | 键盘模拟 | S00：`.ju-phone.kb` 与 `--kb:300px` 生效；`kb-check.cjs` 无 findings | — | 真实软键盘 |
-| 离线导出 | S00 私有构建：无相对 `.dc.html` 链接；shell 内部切换 | — | 最终文件在用户机器上双击打开 |
+| 离线导出 | S00 私有构建：无相对 `.dc.html` 链接；shell 内部切换。**06:4x 全量私有构建（十套 + 外壳 + 内嵌字体，4.8 MB）在阻断全部网络请求的浏览器里打开**：0 个外部请求、0 个页面错误；`document.fonts` 显示 Noto Sans SC 400/500/600/700/900、Archivo 可变（500–800，宽度 62–125%，S04 的 `font-stretch:88%` 生效）、DM Mono 均从内嵌数据加载；S04 / S01 截图字形正确 | `embed-fonts.py` 按十套源码 + 共享数据 + 外壳文字取子集（1042 个字符，11 个字面，1.2 MB woff2）；附录长文不进子集，缺字时回落系统字体 | 最终文件在用户机器上双击打开；用户在画面里新输入的、子集外的字会回落到系统字体 |
 
 ## 2. 十套（阶段 1 / 阶段 2）
 ### 2.1 阶段 1 主负责人复看（实际观察：看了各套 `settings-r2/evidence/SNN/stage1/` 的首页 ×3 环境、资料、编辑、编辑校验失败六张图与签名转场接触表；构建代理自报的检查结果另列为「代理自报」）
