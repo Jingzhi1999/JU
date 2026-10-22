@@ -1062,7 +1062,6 @@ class Component extends DCLogic {
     const att = c.att.slice(0, 3).map((a) => ({ key: a.key, rid: a.key.replace(/^re[cp]-/, ''), label: a.label, title: S03.nb(a.title), tone: a.kind === 'record' ? 's03-t1' : 's03-t3', open: (ev) => this.open(a.kind === 'record' ? 'record-detail' : 'report-detail', { id: a.key.replace(/^re[cp]-/, '') }, ev) }));
     const src = c.fav.active.length ? c.fav.active : c.fav.rows;
     const favs = src.slice(0, 8).map((r, i) => ({ id: r.id, origin: 'fav-' + r.id, title: S03.wrap2(r.title), date: r.when.wdZh + ' ' + r.when.md, tone: S03.TONES[i % 3], open: (ev) => this.open('favorite-detail', { id: r.id }, ev) }));
-    const openReps = reps.rows.filter((r) => r.status !== 'resolved').length, need = reps.rows.filter((r) => r.needsMore).length;
     const go = (k) => (ev) => this.open(k, {}, ev);
     return {
       meta: (c.attCount ? c.attCount + ' 项需要处理 · ' : '') + sum.cityLabel,
@@ -1074,7 +1073,7 @@ class Component extends DCLogic {
       city: sum.cityLabel, cityTz: c.city.cur.tzLabel, goCity: go('city'),
       skins: c.skin.list.map((k) => ({ key: k.key, name: k.name, cls: k.on ? ' s03-cur' : '', go: (ev) => this.openSkin(k.key, ev) })), skinName: c.skin.curName + (this.state.data.appearance.reduceMotion ? ' · 减少动态' : ''),
       rec: recs.count ? { n: recs.count, k: '条事实', t: sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '我的记录' } : { n: '', k: recs.emptyText, t: '我的记录' }, goRecords: go('records'),
-      rep: reps.count ? (openReps ? { n: openReps, k: '条举报处理中', t: need ? need + ' 条需补充' : '我的举报' } : { n: reps.count, k: '条举报 · 均已处理', t: '我的举报' }) : { n: '', k: reps.emptyText, t: '我的举报' }, goReports: go('reports'),
+      rep: reps.count ? { n: reps.count, k: '条举报', t: sum.reportLabel } : { n: '', k: reps.emptyText, t: '我的举报' }, goReports: go('reports'),
       index: [['help', '帮助与反馈'], ['privacy', '隐私与资料可见性'], ['account', '账户与本机数据'], ['about', '关于与规则']].map((r) => ({ key: r[0], label: r[1], go: go(r[0]) })),
       goProfile: go('profile')
     };
@@ -1187,7 +1186,7 @@ class Component extends DCLogic {
         const open = v.rows.filter((r) => r.status !== 'resolved').length, need = v.rows.filter((r) => r.needsMore);
         const blocks = need.map((r) => LIT({ k: r.statusLabel + ' · ' + r.title, t: r.needsText || '', rid: r.id, origin: 'rep-' + r.id, go: toRep(r) }));
         blocks.push(H('全部举报 · ' + v.count), { isLedger: true, rows: v.rows.map((r) => ({ md: r.when.md, wd: r.when.wdZh, title: S03.nb(r.title), sub: S03.nb(r.statusLabel + ' · 更新于 ' + r.updatedText), lit: r.needsMore ? ' s03-on' : '', rid: r.id, origin: 'rep-' + r.id, go: toRep(r) })) }, NOTE(v.note, 's03-note-top'), NOTE(v.mock));
-        return { st: open ? { n: open, u: '条处理中', s: need.length ? need.length + ' 条需补充' : v.note } : { q: '均已处理', s: v.note }, blocks: blocks.filter(Boolean) };
+        return { st: open ? { n: v.count, u: '条举报', s: c.sum.reportLabel } : { q: '均已处理', s: v.note }, blocks: blocks.filter(Boolean) };
       }
       case 'report-detail': {
         const r = c.rep; if (!r) return {};
