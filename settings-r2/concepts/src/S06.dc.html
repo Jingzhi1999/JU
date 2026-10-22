@@ -85,7 +85,7 @@ body{margin:0}
 .app.s06-fv .s06-b.is-dn .s06-v.s06-att{background-color:rgba(69,83,190,calc(.09 * (1 - var(--s06-p))))}
 .app.s06-fv .s06-b.is-dn .s06-ix span.on{background-size:100% calc(2px * (1 - var(--s06-p)))}
 .s06-nb{white-space:nowrap}
-.s06-ka{word-break:keep-all}
+.s06-ka{word-break:keep-all;overflow-wrap:anywhere}
 .s06-end{font-style:normal;margin-right:.32em}
 .s06-v{font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer;outline:none;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;padding:0 .1em 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px;transition:background-color calc(120ms * var(--k)) ease}
 .s06-v.s06-long{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
@@ -343,7 +343,7 @@ body{margin:0}
                 </div></sc-if>
                 <!-- 收藏 · 活动详情 -->
                 <sc-if value="{{v.band.favDetail}}"><div class="s06-bx {{v.bxDir}}">
-                  <p class="s06-say s06-big"><b>{{v.ev.title}}</b>，<span class="s06-nb">{{v.ev.when}}</span>，在 {{v.ev.place}}。</p>
+                  <p class="s06-say s06-big"><b>{{v.ev.title}}</b>，<span class="s06-nb">{{v.ev.when}}</span>，<span class="{{v.ev.placeCls}}">{{v.ev.place}}</span>。</p>
                   <p class="s06-said">局主 <b>{{v.ev.host}}</b>{{v.ev.cap}}。{{v.ev.cross}}</p>
                   <sc-if value="{{v.ev.note}}"><p class="s06-quote">{{v.ev.note}}</p></sc-if>
                   <p class="s06-said">这个局 <b>{{v.ev.status}}</b>；我 <b>{{v.ev.joinedLabel}}</b></p>
@@ -405,7 +405,7 @@ body{margin:0}
                 </div></sc-if>
                 <!-- 举报详情 -->
                 <sc-if value="{{v.band.repDetail}}"><div class="s06-bx {{v.bxDir}}">
-                  <p class="s06-say s06-big">我举报了 <b>{{c.rep.whoName}}</b>，现在 <span class="{{v.rq.stCls}}">{{c.rep.statusLabel}}</span>。</p>
+                  <p class="s06-say s06-big">我举报了 <b>{{c.rep.whoName}}</b>，<span class="s06-nb">现在 <span class="{{v.rq.stCls}}">{{c.rep.statusLabel}}</span>。</span></p>
                   <p class="s06-said">{{c.rep.title}}。<sc-if value="{{c.rep.needsMore}}"><span class="s06-blue">{{v.rq.needs}}</span></sc-if></p>
                   <p class="s06-quote">{{c.rep.text}}<span>{{v.rq.meta}}</span></p>
                   <p class="s06-said">{{v.rq.timeline}}</p>
@@ -700,7 +700,7 @@ class Component extends DCLogic {
   /* an event written as two sentences (used by the favourite detail band and the 找局 detail page) */
   s06Event(det) {
     if (!det) return {};
-    return { title: det.title, when: det.when.zh.replace(' · ', ' '), place: det.place.full, host: det.host, cap: '，' + det.cap, cross: det.crossCity ? '这个局在' + det.city.name + '，时间按当地时间。' : '', note: det.note, status: det.status.label,
+    return { title: det.title, when: det.when.zh.replace(' · ', ' '), place: '在\u00a0' + det.place.full.replace(/ · /g, '\u00a0· '), placeCls: Array.from(det.place.full).length <= 14 ? 's06-nb' : '', host: det.host, cap: '，' + det.cap, cross: det.crossCity ? '这个局在' + det.city.name + '，时间按当地时间。' : '', note: det.note, status: det.status.label,
       joinedLabel: det.joined ? det.joinedLabel + '。' : '还没报名。', hostWxLine: det.canSeeHostWx ? det.hostWx + '。' + det.hostWxRule + '。' : det.hostWxRule + '。', canSee: det.canSeeHostWx, copy: det.copyHostWx,
       favOn: det.fav ? 'true' : 'false', favAct: det.fav ? 'unfav' : 'fav', favVerb: det.fav ? '拿出收藏' : '收进收藏', favCls: '', toggle: det.toggleFav, applyNote: det.applyNote + '。', favAgo: det.fav && det.favAgo ? '收藏于 ' + det.favAgo + '；收藏不等于报名。' : '' };
   }
@@ -911,7 +911,7 @@ class Component extends DCLogic {
     } else v.fm = {};
     /* reports: one report per line */
     v.rp = { items: c.reps.rows.map(function (r) { return { id: r.id, title: r.title, open: r.open, attCls: r.needsMore ? ' s06-att' : '', rest: '，举报 ' + r.whoName + '，' + r.statusLabel + '，' + r.updatedText + ' 更新。' }; }) };
-    v.rq = rep ? { stCls: rep.needsMore ? 's06-blue s06-nb' : 's06-nb', needs: rep.needsText || '需要补充材料', meta: rep.atText + ' 提交 · 本地编号 ' + rep.id + ((rep.shotRows || []).length ? ' · 材料 ' + rep.shotRows.map(function (x) { return x.name + (x.sizeText ? '（' + x.sizeText + '）' : ''); }).join('、') : ''),
+    v.rq = rep ? { stCls: rep.needsMore ? 's06-blue' : '', needs: rep.needsText || '需要补充材料', meta: rep.atText + ' 提交 · 本地编号 ' + rep.id + ((rep.shotRows || []).length ? ' · 材料 ' + rep.shotRows.map(function (x) { return x.name + (x.sizeText ? '（' + x.sizeText + '）' : ''); }).join('、') : ''),
       timeline: '进度：' + (rep.timelineRows || []).map(function (t) { return t.atText + ' ' + t.label; }).join(' → ') + '。' } : {};
     v.hp = { lead: '参加约定 ' + JUS.RULES.length + ' 条，分三组：' + c.help.groups.map(function (g) { return g.name; }).join('、') + '。', fb: c.help.feedback.length > 0 };
     v.pv = { any: (c.privacy.facts || []).length > 0 };
