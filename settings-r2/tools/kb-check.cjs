@@ -10,7 +10,10 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright'); const p
   await p.waitForTimeout(900); await p.evaluate(() => document.fonts.ready);
   const findings = []; let n = 0;
   for (const st of states) {
-    await p.evaluate(([c, k]) => { const m = window.JUShell.mounts.stage['stage:' + c + ':']; m.instance.jumpTo(k); if (!m.instance.state.review.kb) m.instance.toggleKb(); }, [code, st]); await p.waitForTimeout(700);
+    /* jump first and let it settle: jumpTo lowers the keyboard in its own render (and s-kb raises it again), so reading
+       review.kb in the same tick saw the previous state's value and skipped raising it */
+    await p.evaluate(([c, k]) => { const m = window.JUShell.mounts.stage['stage:' + c + ':']; m.instance.jumpTo(k); }, [code, st]); await p.waitForTimeout(450);
+    await p.evaluate(([c]) => { const m = window.JUShell.mounts.stage['stage:' + c + ':']; if (!m.instance.state.review.kb) m.instance.toggleKb(); }, [code]); await p.waitForTimeout(700);
     const r = await p.evaluate(c => { const host = document.querySelector('.stage-host[data-code="' + c + '"]'); const ph = host.shadowRoot.querySelector('.ju-phone'); const pr = ph.getBoundingClientRect(); const kbTop = pr.bottom - 300;
       const inputs = [...ph.querySelectorAll('input:not([type=hidden]):not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),textarea')].filter(el => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0; });
       const inst = window.JUShell.mounts.stage['stage:' + c + ':'].instance; const out = []; inputs.forEach(el => { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } if (inst.reveal) inst.reveal(el); else el.scrollIntoView({ block: 'nearest' }); const b = el.getBoundingClientRect(); out.push({ name: el.name || el.getAttribute('data-field') || el.placeholder || el.tagName, bottom: Math.round(b.bottom - pr.top), kbTop: Math.round(kbTop - pr.top), hidden: b.bottom > kbTop || b.top < pr.top }); });

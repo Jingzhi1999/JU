@@ -272,11 +272,21 @@
     };
     p.pfCancel = function () { var f = this.state.pf; if (f && !f.saved && this._pfDirty(f)) { this.setState({ sheet: { kind: 'unsaved' } }); return; } this.back(true); };
     p.sheetKeep = function () { this.setState({ sheet: null }); };
+    /* drafts are dropped only after the leaving page has gone, so its text does not blank out mid-exit; a navigation in between
+       (seq changes) leaves them alone, and entering profile-edit always starts from a fresh pf anyway */
+    p._dropDraftAfterExit = function (formKey) {
+      var self = this, seq0 = this.state.nav.seq;
+      this.afterKey('drop-draft', this.navMs('back') + 40, function () {
+        if (self.state.nav.seq !== seq0) return;
+        if (formKey) self.setState(function (st) { var tf = assign(st.tf); delete tf[formKey]; return { tf: tf }; });
+        else if (self._top().s !== 'profile-edit') self.setState({ pf: null });
+      });
+    };
     p.sheetDiscard = function () {
       var sh = this.state.sheet; this.setState({ sheet: null });
-      if (sh && sh.form) { var tf = assign(this.state.tf); delete tf[sh.form]; this.setState({ tf: tf }); }
-      else { this.cancelKey('resend'); this.setState({ pf: null }); }
+      if (!(sh && sh.form)) this.cancelKey('resend');
       this.back(true);
+      this._dropDraftAfterExit(sh && sh.form ? sh.form : null);
     };
 
     /* ---------------- text forms ---------------- */
@@ -303,7 +313,7 @@
         self._tfSet(kind, id, { saving: false, failed: false, done: e });
         var ok = spec.ok || (kind === 'appeal' ? JUS.COPY.appealSaved : '已保存');
         if (self.onFormDone) self.onFormDone(kind, id, e);
-        else { self.say(ok, 'ok'); self.afterKey('tf-back', 240, function () { self.setState(function (s) { var tf = assign(s.tf); delete tf[kind + ':' + id]; return { tf: tf }; }); self.back(true); }); }
+        else { self.say(ok, 'ok'); self.afterKey('tf-back', 240, function () { self.back(true); self._dropDraftAfterExit(kind + ':' + id); }); }
       });
     };
     p._whoOptions = function (eventId) {
