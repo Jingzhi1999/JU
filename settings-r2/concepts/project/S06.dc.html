@@ -50,6 +50,13 @@ body{margin:0}
 @media (prefers-reduced-motion: reduce){.ju-phone *,.ju-phone *::before,.ju-phone *::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important;transition-delay:0ms!important}}
 /* R2: 暂停 freezes every CSS animation in the phone (concepts may pause more precisely; this guarantees nothing keeps moving) */
 .ju-phone .app.paused,.ju-phone .app.paused *,.ju-phone .app.paused *::before,.ju-phone .app.paused *::after{animation-play-state:paused!important}
+/* R2 compare view: stages are sized by their content (no clipping at 430), panels get a fixed column; anonymised compare hides
+   every line that names or describes the concept */
+:host(.nopanel) .ju-stage{width:auto;min-width:0;padding:20px}
+:host(.cmp-host:not(.nopanel)) .ju-stage{width:100%;min-width:0}
+:host(.anon) .ju-panel-name,:host(.anon) .ju-panel-line,:host(.anon) .ju-panel-notes.ju-motion-notes,:host(.anon) .ju-motions{visibility:hidden}
+:host(.anon) .ju-panel-code{visibility:hidden}
+
 
 /* ju-fx.css — shared effect primitives. Concepts override colours, edges, durations and composition.
    All durations multiply by --k (1 = normal, 2 = 0.5× speed); .scrub holds animations at --frame (0..1). */
@@ -636,6 +643,7 @@ body{margin:0}
     <button type="button" class="ju-btn {{panel.w375}}" onClick="{{panel.setW375}}">375×812</button>
     <button type="button" class="ju-btn {{panel.w390}}" onClick="{{panel.setW390}}">390×844</button>
     <button type="button" class="ju-btn {{panel.w430}}" onClick="{{panel.setW430}}">430×932</button>
+    <button type="button" class="ju-btn {{panel.wFit}}" onClick="{{panel.setFit}}" title="手机高度跟随浏览器窗口（真实重排，不缩放），用于较矮的屏幕">适应窗口高度{{panel.fitLabel}}</button>
     <button type="button" class="ju-btn {{panel.kbOn}}" onClick="{{panel.toggleKb}}">键盘（模拟 300px）</button>
   </div>
   <p class="ju-panel-notes">{{panel.rmSysLine}}</p>
@@ -673,7 +681,7 @@ body{margin:0}
   </div>
   <div class="ju-panel-sec">三个核心动作</div>
   <ol class="ju-motions"><sc-for list="{{panel.motions}}" as="m" hint-placeholder-count="3"><li>{{m}}</li></sc-for></ol>
-  <p class="ju-panel-notes">{{panel.notes}}</p>
+  <p class="ju-panel-notes ju-motion-notes">{{panel.notes}}</p>
 </aside>
 
 </sc-if>
@@ -1913,7 +1921,10 @@ body{margin:0}
     p.setSpeed = function (x) { this.setReview({ speed: x }); };
     p.toggleRM = function () { this.setReview({ rm: !this.state.review.rm }); };
     p.isRM = function () { var r = this.state.review || {}; var d = this.state.data; return !!(r.rm || r.rmSys || (d && d.appearance && d.appearance.reduceMotion)); };
-    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h }); };
+    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h, fit: false }); };
+    /* 适应窗口高度: the phone keeps its width and takes the browser window's height (667–932), a real reflow for short laptop
+       screens — nothing is scaled */
+    p.fitPhone = function () { var vh = (global.innerHeight || 844) - 96; var h = Math.max(667, Math.min(932, Math.round(vh))); this.setReview({ ph: h, fit: true }); };
     p.toggleKb = function () { this.setReview({ kb: !this.state.review.kb }); };
     p.advanceClock = function (ms) { JUS.advance(ms || 5 * 60000); this.setReview({ clockTick: (this.state.review.clockTick || 0) + 1 }); };
     p.expireCode = function () { var self = this; this.setState(function (s) { return { data: JUS.engine.expireEmailCode(s.data, {}).data }; }); };
@@ -2048,8 +2059,9 @@ body{margin:0}
         k: k, frame: r.scrub == null ? 0 : r.scrub / 100,
         rootCls: ((r.rm || r.rmSys) ? ' rm' : '') + (r.rmSys ? ' rm-sys' : '') + (r.paused ? ' paused' : '') + (r.scrub != null ? ' scrub' : ''),
         phoneStyle: '--pw:' + r.pw + 'px;--ph:' + r.ph + 'px;--kb:' + (r.kb ? '300px' : '0px'), phoneCls: r.kb ? ' kb' : '',
-        w375: r.pw === 375 ? 'on' : '', w390: r.pw === 390 ? 'on' : '', w430: r.pw === 430 ? 'on' : '',
+        w375: !r.fit && r.pw === 375 ? 'on' : '', w390: !r.fit && r.pw === 390 ? 'on' : '', w430: !r.fit && r.pw === 430 ? 'on' : '',
         setW375: function () { self.setPhoneSize(375, 812); }, setW390: function () { self.setPhoneSize(390, 844); }, setW430: function () { self.setPhoneSize(430, 932); },
+        wFit: r.fit ? 'on' : '', setFit: function () { self.fitPhone(); }, fitLabel: r.fit ? '（' + r.pw + '×' + r.ph + '）' : '',
         kbOn: r.kb ? 'on' : '', toggleKb: function () { self.toggleKb(); },
         rmSysLine: r.rmSys ? '系统 prefers-reduced-motion：开（已生效）' : '系统 prefers-reduced-motion：关',
         clockLine: '演示时钟：' + (clockMin >= 0 ? '+' : '') + clockMin + ' 分钟（真实走时 + 面板偏移）', advance5: function () { self.advanceClock(5 * 60000); }, expireCode: function () { self.expireCode(); }
@@ -2097,6 +2109,27 @@ class Component extends DCLogic {
   /* replay of 聚焦 starts again from the closed paragraph */
   beforeReplay(name) { if (name === '聚焦') { this.cancelKey('nav'); this.home(); } }
   s06Root() { return this.rootRef && this.rootRef.current; }
+  /* 关键帧: the mixin seeks the core keyframes through the .scrub rules; everything else that moves in the same moment (the band
+     text sliding in, the band height, the header title, a receipt rising) is put at the same point in time here, so frame 0 is the
+     first frame and frame 100 is exactly the settled end state. */
+  s06ScrubSync() {
+    var root = this.s06Root(), rv = this.state.review || {}; if (!root || rv.scrub == null || !root.getAnimations) return;
+    var f = Math.max(0, Math.min(1, (+rv.scrub || 0) / 100)), s = this._scrubS, core = 0;
+    var zeroed = s ? s.zeroed.map(function (z) { try { core = Math.max(core, z.a.effect.getComputedTiming().activeDuration || 0); } catch (e) { } return z.a; }) : [];
+    if (!core) { var k = parseFloat(getComputedStyle(root).getPropertyValue('--k')) || 1; core = ({ '聚焦': 320, '写回': 420, '换光': 650 }[this.lastMotion && this.lastMotion.name] || 320) * k; }
+    /* only what is part of this moment: an animation still under way when the drag first meets it (one that ended earlier and only
+       lingers through its fill — the band text of a page opened before — keeps its end state) */
+    if (!this._s06sm || this._s06sm.s !== s) this._s06sm = { s: s, m: new WeakMap() };
+    var mine = this._s06sm.m;
+    try { root.getAnimations({ subtree: true }).forEach(function (a) {
+      if (zeroed.indexOf(a) >= 0 || !a.effect) return;
+      var T; try { T = a.effect.getComputedTiming().endTime; } catch (e) { return; } if (!isFinite(T) || !(T > 0)) return;
+      if (!mine.has(a)) mine.set(a, a.currentTime == null || a.currentTime < T - 0.5);
+      if (!mine.get(a)) return;
+      if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition && a.playState !== 'paused') a.pause();
+      try { a.currentTime = Math.min(T, f * Math.max(core, T)); } catch (e) { }
+    }); } catch (e) { }
+  }
   s06Caret(el) { try { var rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); var rn = el.getRootNode(); var sel = rn.getSelection ? rn.getSelection() : window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e) { } }
   s06After() {
     var root = this.s06Root(); if (!root) return;
@@ -2124,6 +2157,7 @@ class Component extends DCLogic {
     /* 暂停 also holds CSS transitions (the band height when a deeper page swaps in) */
     var pz = !!(this.state.review && (this.state.review.paused || this.state.review.scrub != null));
     if (pz !== this._s06pz) { this._s06pz = pz; try { root.getAnimations({ subtree: true }).forEach(function (a) { if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition) { if (pz) a.pause(); else a.play(); } }); } catch (e) { } }
+    if (this.state.review && this.state.review.scrub != null) this.s06ScrubSync();
     /* a question written into the band is brought into view where it was asked */
     var ak = this.state.sheet ? this.state.sheet.kind : '';
     if (ak !== this._s06ak) { this._s06ak = ak; if (ak) { var q = root.querySelector('.s06-ask'); if (q) this.reveal(q); } }
@@ -2175,7 +2209,7 @@ class Component extends DCLogic {
     var inner = para.querySelector('.s06-band-in'); var gap = inner ? Math.ceil(inner.offsetHeight) : 0;
     if (gap !== st.gap) {
       if (!st.open) { para.classList.add('s06-nogap'); para.style.setProperty('--s06-gap', gap + 'px'); void para.offsetHeight; para.classList.remove('s06-nogap'); }
-      else para.style.setProperty('--s06-gap', gap + 'px');
+      else { para.style.setProperty('--s06-gap', gap + 'px'); if (this.state.review && this.state.review.scrub != null) this.s06ScrubSync(); }
       st.gap = gap;
     }
     st.open = true;
@@ -2479,6 +2513,13 @@ class Component extends DCLogic {
 JUS.mixin(Component);
 /* index jumps, resets and variants rebuild the data: those are not user changes, so they do not write back or change the light */
 (function () { var P = Component.prototype; ['jumpTo', 'reset'].forEach(function (k) { var f = P[k]; P[k] = function () { this._s06quietUntil = Date.now() + 600; this._s06top = true; this._s06.lifted = false; return f.apply(this, arguments); }; }); })();
+/* 释放 carries on from the frame on screen: the mixin puts each seeked keyframe back to the time stored for it, set here to the
+   frame's own time (otherwise a motion dragged to 100 would jump back to where the drag began and play again) */
+(function () { var P = Component.prototype, f0 = P.scrubTo; P.scrubTo = function (v) {
+  var s = this._scrubS, rv = this.state.review || {};
+  if (v == null && s && rv.scrub != null) { var f = Math.max(0, Math.min(1, (+rv.scrub || 0) / 100)); s.zeroed.forEach(function (z) { try { z.ct = f * (z.a.effect.getComputedTiming().activeDuration || 0); } catch (e) { } }); }
+  return f0.apply(this, arguments);
+}; })();
 </script>
 </body>
 </html>

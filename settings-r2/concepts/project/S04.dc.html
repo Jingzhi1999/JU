@@ -50,6 +50,13 @@ body{margin:0}
 @media (prefers-reduced-motion: reduce){.ju-phone *,.ju-phone *::before,.ju-phone *::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important;transition-delay:0ms!important}}
 /* R2: 暂停 freezes every CSS animation in the phone (concepts may pause more precisely; this guarantees nothing keeps moving) */
 .ju-phone .app.paused,.ju-phone .app.paused *,.ju-phone .app.paused *::before,.ju-phone .app.paused *::after{animation-play-state:paused!important}
+/* R2 compare view: stages are sized by their content (no clipping at 430), panels get a fixed column; anonymised compare hides
+   every line that names or describes the concept */
+:host(.nopanel) .ju-stage{width:auto;min-width:0;padding:20px}
+:host(.cmp-host:not(.nopanel)) .ju-stage{width:100%;min-width:0}
+:host(.anon) .ju-panel-name,:host(.anon) .ju-panel-line,:host(.anon) .ju-panel-notes.ju-motion-notes,:host(.anon) .ju-motions{visibility:hidden}
+:host(.anon) .ju-panel-code{visibility:hidden}
+
 
 /* ju-fx.css — shared effect primitives. Concepts override colours, edges, durations and composition.
    All durations multiply by --k (1 = normal, 2 = 0.5× speed); .scrub holds animations at --frame (0..1). */
@@ -497,14 +504,21 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
 .s04-sysr button{height:44px;font-size:17px;color:#0a64d6;text-align:center}
 .s04-sysr button + button{border-left:1px solid rgba(60,60,67,.29);font-weight:600}
 /* toast = an ink block under the tool row: over the page band, never over the action blocks below; taps go through it */
-.s04-toast{position:absolute;left:0;right:0;top:var(--tr);z-index:50;display:flex;align-items:center;gap:12px;min-height:56px;padding:12px 20px;background:var(--ink);color:#fff;font-size:17px;font-weight:600;line-height:1.4;box-shadow:0 var(--seam) 0 var(--paper),0 calc(-1 * var(--seam)) 0 var(--paper);pointer-events:none;animation:s04-tdn calc(120ms*var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-@keyframes s04-tdn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0px)}}
-.s04-undo{position:absolute;left:0;right:0;bottom:0;z-index:50;display:flex;align-items:center;gap:12px;min-height:64px;padding:14px 20px;background:var(--ink);color:#fff;font-size:17px;font-weight:600;line-height:1.4;animation:s04-up calc(120ms*var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+/* toast / undo = an ink block that briefly joins the mosaic in its own band right above the root nav (or above a form's bar):
+   the page's scroller ends above that band while it shows, so the block covers no title, no line of text and no action */
+.s04-toast,.s04-undo{position:absolute;left:0;right:0;bottom:var(--navH);z-index:50;display:flex;align-items:center;gap:12px;height:calc(56px + var(--seam));padding:0 20px;border-top:var(--seam) solid var(--paper);background:var(--ink);color:#fff;font-size:17px;font-weight:600;line-height:1.3;animation:s04-tup calc(120ms*var(--k,1)) var(--eg) both}
+@keyframes s04-tup{from{clip-path:inset(100% 0 0 0)}to{clip-path:inset(0 0 0 0)}}
+.s04-toast{pointer-events:none}
+.s04-toast.is-long{font-size:15px}
 .s04-toast::before{content:"";flex:0 0 14px;height:14px;background:var(--s04-c1)}
 .s04-toast.k-ok::before{background:var(--ok)}
 .s04-toast.k-error::before{background:var(--err)}
-.s04-undo{justify-content:space-between;padding:10px 12px 10px 20px}
+.s04-undo{bottom:0;justify-content:space-between;padding:0 12px 0 20px}
 .s04-undo span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.app.s04.s04-toasting .s04-pg .s04-sc,.app.s04.s04-undoing [data-surface="favorites"] .s04-sc{bottom:calc(56px + var(--seam));transition:bottom calc(120ms*var(--k,1)) var(--eg)}
+.app.s04.s04-toasting :is(.s04-ed,.s04-fm) .s04-sc{bottom:calc(var(--barH) + var(--kb,0px) + 56px + var(--seam))}
+.app.s04:is(.at-profile-edit,.at-record-supplement,.at-record-dispute,.at-record-appeal,.at-report-supplement,.at-feedback,.at-seam-report):not(.nav-exit) .s04-toast{bottom:calc(var(--barH) + var(--kb,0px))}
+.app.s04.s04-undoing.at-favorites .s04-toast{display:none}
 
 
 /* ---------- motion: block → page (grow), page → block (shrink), the rest of the mosaic pushed out / back ----------
@@ -584,7 +598,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s04{{panel.rootCls}}{{c.nav.rootCls}}{{v.rmUser}}{{v.skinAnim}}{{v.landCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};{{v.skinVars}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+    <div class="app s04{{panel.rootCls}}{{c.nav.rootCls}}{{v.rmUser}}{{v.skinAnim}}{{v.landCls}}{{v.bandCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};{{v.skinVars}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
 
       <nav class="s04-nav" aria-label="JU">
         <sc-for list="{{v.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s04-nv {{t.cls}}" aria-current="{{t.cur}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
@@ -1359,7 +1373,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
         </div>
       </sc-if>
       <sc-if value="{{v.backHit}}"><button type="button" class="s04-backhit" aria-hidden="true" tabindex="-1" onClick="{{c.nav.back}}"></button></sc-if>
-      <sc-if value="{{c.toast.on}}"><div class="s04-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s04-toast {{c.toast.cls}}{{v.toastLong}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <filter id="fx-rough" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.045" numOctaves="3" seed="4" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9" xChannelSelector="R" yChannelSelector="G"/></filter>
@@ -1387,6 +1401,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
     <button type="button" class="ju-btn {{panel.w375}}" onClick="{{panel.setW375}}">375×812</button>
     <button type="button" class="ju-btn {{panel.w390}}" onClick="{{panel.setW390}}">390×844</button>
     <button type="button" class="ju-btn {{panel.w430}}" onClick="{{panel.setW430}}">430×932</button>
+    <button type="button" class="ju-btn {{panel.wFit}}" onClick="{{panel.setFit}}" title="手机高度跟随浏览器窗口（真实重排，不缩放），用于较矮的屏幕">适应窗口高度{{panel.fitLabel}}</button>
     <button type="button" class="ju-btn {{panel.kbOn}}" onClick="{{panel.toggleKb}}">键盘（模拟 300px）</button>
   </div>
   <p class="ju-panel-notes">{{panel.rmSysLine}}</p>
@@ -1424,7 +1439,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
   </div>
   <div class="ju-panel-sec">三个核心动作</div>
   <ol class="ju-motions"><sc-for list="{{panel.motions}}" as="m" hint-placeholder-count="3"><li>{{m}}</li></sc-for></ol>
-  <p class="ju-panel-notes">{{panel.notes}}</p>
+  <p class="ju-panel-notes ju-motion-notes">{{panel.notes}}</p>
 </aside>
 
 </sc-if>
@@ -2664,7 +2679,10 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
     p.setSpeed = function (x) { this.setReview({ speed: x }); };
     p.toggleRM = function () { this.setReview({ rm: !this.state.review.rm }); };
     p.isRM = function () { var r = this.state.review || {}; var d = this.state.data; return !!(r.rm || r.rmSys || (d && d.appearance && d.appearance.reduceMotion)); };
-    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h }); };
+    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h, fit: false }); };
+    /* 适应窗口高度: the phone keeps its width and takes the browser window's height (667–932), a real reflow for short laptop
+       screens — nothing is scaled */
+    p.fitPhone = function () { var vh = (global.innerHeight || 844) - 96; var h = Math.max(667, Math.min(932, Math.round(vh))); this.setReview({ ph: h, fit: true }); };
     p.toggleKb = function () { this.setReview({ kb: !this.state.review.kb }); };
     p.advanceClock = function (ms) { JUS.advance(ms || 5 * 60000); this.setReview({ clockTick: (this.state.review.clockTick || 0) + 1 }); };
     p.expireCode = function () { var self = this; this.setState(function (s) { return { data: JUS.engine.expireEmailCode(s.data, {}).data }; }); };
@@ -2799,8 +2817,9 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
         k: k, frame: r.scrub == null ? 0 : r.scrub / 100,
         rootCls: ((r.rm || r.rmSys) ? ' rm' : '') + (r.rmSys ? ' rm-sys' : '') + (r.paused ? ' paused' : '') + (r.scrub != null ? ' scrub' : ''),
         phoneStyle: '--pw:' + r.pw + 'px;--ph:' + r.ph + 'px;--kb:' + (r.kb ? '300px' : '0px'), phoneCls: r.kb ? ' kb' : '',
-        w375: r.pw === 375 ? 'on' : '', w390: r.pw === 390 ? 'on' : '', w430: r.pw === 430 ? 'on' : '',
+        w375: !r.fit && r.pw === 375 ? 'on' : '', w390: !r.fit && r.pw === 390 ? 'on' : '', w430: !r.fit && r.pw === 430 ? 'on' : '',
         setW375: function () { self.setPhoneSize(375, 812); }, setW390: function () { self.setPhoneSize(390, 844); }, setW430: function () { self.setPhoneSize(430, 932); },
+        wFit: r.fit ? 'on' : '', setFit: function () { self.fitPhone(); }, fitLabel: r.fit ? '（' + r.pw + '×' + r.ph + '）' : '',
         kbOn: r.kb ? 'on' : '', toggleKb: function () { self.toggleKb(); },
         rmSysLine: r.rmSys ? '系统 prefers-reduced-motion：开（已生效）' : '系统 prefers-reduced-motion：关',
         clockLine: '演示时钟：' + (clockMin >= 0 ? '+' : '') + clockMin + ' 分钟（真实走时 + 面板偏移）', advance5: function () { self.advanceClock(5 * 60000); }, expireCode: function () { self.expireCode(); }
@@ -3100,7 +3119,7 @@ class Component extends DCLogic {
       permState: permLab, permMk: N.isGranted ? ' ok' : N.isDefault || N.isRequesting ? '' : ' no', svcState: N.serviceConnected ? '已连接' : '未连接', svcMk: N.serviceConnected ? ' ok' : ' no', cats: cats,
       /* appearance */
       envs: envs, shownEn: skin.en, shownLine: skin.line, rmTone: c.skin.rmOn ? 'c1' : 'off', rmState: c.skin.rmOn ? (c.skin.rmSys ? '开 · 跟随系统' : '开') : '关', rmSysLine: c.skin.rmSys ? '' : '跟随系统：系统现在没有开启「减少动态」；开启后 JU 自动跟随',
-      apPad: c.skin.previewing ? 'padding-bottom:84px' : '', landCls: g.land ? ' s04-landing' : '', backHit: st.length > 1 && nav.dir === 'fwd' && (nav.phase === 'enter' || nav.phase === 'in'),
+      apPad: c.skin.previewing ? 'padding-bottom:84px' : '', landCls: g.land ? ' s04-landing' : '', bandCls: (c.toast.on ? ' s04-toasting' : '') + (c.fav.undo.on ? ' s04-undoing' : ''), toastLong: c.toast.on && Array.from(c.toast.text || '').length > 15 ? ' is-long' : '', backHit: st.length > 1 && nav.dir === 'fwd' && (nav.phase === 'enter' || nav.phase === 'in'),
       /* records */
       recG: recG, recTitle: s04t(c.rec && c.rec.title), repTitle: s04t(c.rep && c.rep.title), aboutVer: s04t(c.about.version), recHas: c.recs.count > 0, recHeroL: c.recs.empty ? c.recs.emptyText : (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '没有待核实的'),
       recSuppHas: !!(c.rec && c.rec.supplementRows && c.rec.supplementRows.length), recSuppN: c.rec && c.rec.supplementRows ? c.rec.supplementRows.length : 0, recApHas: !!(c.rec && c.rec.appealRows && c.rec.appealRows.length),
