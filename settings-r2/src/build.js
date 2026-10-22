@@ -119,7 +119,13 @@ for (const [k, f] of Object.entries({ matrix: 'settings-r2/spec/directions.md', 
 
 /* ---- standalone ---- */
 const shellHtml = read('settings-r2/src/shell/shell.html');
-const standalone = shellHtml
+/* offline fonts: JU_FONTS_CSS=<file> (made by settings-r2/tools/embed-fonts.py) inlines subset WOFF2 @font-face rules into the page head
+   and strips the Google Fonts <link>s from the shell and every embedded concept, so the delivered file renders the same offline. */
+const FONTS_CSS = process.env.JU_FONTS_CSS && fs.existsSync(process.env.JU_FONTS_CSS) ? fs.readFileSync(process.env.JU_FONTS_CSS, 'utf8') : '';
+const stripFontLinks = (s) => s.replace(/<link[^>]+href="https:\/\/fonts\.googleapis\.com[^"]*"[^>]*>\s*/g, '');
+if (FONTS_CSS) { for (const k of Object.keys(built)) built[k] = stripFontLinks(built[k]); }
+const standalone = (FONTS_CSS ? stripFontLinks(shellHtml) : shellHtml)
+  .replace('/*@fonts*/', () => FONTS_CSS)
   .replace('/*@shell-css*/', () => read('settings-r2/src/shell/shell.css'))
   .replace('/*@preact*/', () => read('src/runtime/preact.min.js'))
   .replace('/*@runtime*/', () => read('src/runtime/dc-mini-runtime.js'))
