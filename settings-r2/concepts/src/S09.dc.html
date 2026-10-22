@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S09 夜灯</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ---------- S09 夜灯：墨底 + 三团径向光（最底层）+ 居中单列；光跟着你看的地方聚拢 ---------- */
+.app.s09{position:absolute;inset:0;overflow:hidden;background:#0f1117;color:#fff;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;--k:1;
+  --s09-w92:rgba(255,255,255,.92);--s09-w72:rgba(255,255,255,.72);--s09-w50:rgba(255,255,255,.5);--s09-rule:rgba(255,255,255,.08);--s09-err:#ff8a9c;--s09-ok:#5fd3b0}
+.app.s09[data-skin=cotton]{--s09-l1:255 150 196;--s09-l2:171 160 255;--s09-l3:104 216 240;--s09-val:#ffbfd9}
+.app.s09[data-skin=halo]{--s09-l1:255 90 18;--s09-l2:242 180 101;--s09-l3:183 155 224;--s09-val:#f6c78a}
+.app.s09[data-skin=sunset]{--s09-l1:255 122 51;--s09-l2:51 160 255;--s09-l3:255 197 61;--s09-val:#ffc53d}
+.app.s09 *{box-sizing:border-box}
+.app.s09 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+.s09-root{position:absolute;inset:0;--sp:clamp(0,calc(var(--s09-sy,0) / 56),1)}
+/* 光：径向渐变，不用滤镜；滚动视差 0.3×；点一行时最近的一团 400ms 移到其后并增亮 */
+.s09-lights{position:absolute;left:0;right:0;top:-200px;bottom:-200px;z-index:0;pointer-events:none;isolation:isolate;transform:translate3d(0,calc(var(--s09-sy,0) * -.3px),0)}
+.s09-light{position:absolute;left:0;top:200px;border-radius:50%;opacity:.86;mix-blend-mode:screen;transition:transform calc(400ms * var(--k,1)) cubic-bezier(.22,1,.36,1),opacity calc(400ms * var(--k,1)) ease;will-change:transform}
+.s09-light.bright{opacity:1}
+.s09-l0{background:radial-gradient(closest-side,rgb(var(--s09-l1) / .78) 0%,rgb(var(--s09-l1) / .56) 30%,rgb(var(--s09-l1) / .22) 66%,rgb(var(--s09-l1) / 0) 100%)}
+.s09-l1{background:radial-gradient(closest-side,rgb(var(--s09-l2) / .74) 0%,rgb(var(--s09-l2) / .5) 30%,rgb(var(--s09-l2) / .2) 66%,rgb(var(--s09-l2) / 0) 100%)}
+.s09-l2{background:radial-gradient(closest-side,rgb(var(--s09-l3) / .72) 0%,rgb(var(--s09-l3) / .48) 30%,rgb(var(--s09-l3) / .18) 66%,rgb(var(--s09-l3) / 0) 100%)}
+.s09-lights.fx{animation:s09-skin calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
+@keyframes s09-skin{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+/* 首页 */
+.s09-home{position:absolute;inset:0;z-index:1}
+.s09-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:200px 24px calc(104px + var(--kb,0px));transition:opacity calc(300ms * var(--k,1)) ease;overscroll-behavior:contain;scrollbar-width:none}
+.s09-scroll::-webkit-scrollbar{display:none}
+.ju-phone.kb .s09-scroll{bottom:var(--kb,0px)}
+.s09-home.under .s09-scroll{opacity:0;pointer-events:none}
+.s09-home.under .s09-hd{--sp:1}
+.s09-home.under .s09-title,.s09-home.under .s09-meta{transition:top calc(300ms * var(--k,1)) ease,left calc(300ms * var(--k,1)) ease,transform calc(300ms * var(--k,1)) ease,font-size calc(300ms * var(--k,1)) ease,opacity calc(200ms * var(--k,1)) ease}
+/* 页头：30 → 18 连续收拢进工具行中部（--sp 由滚动驱动） */
+.s09-hd{position:absolute;left:0;right:0;top:0;height:96px;z-index:3;--s09-t:52px}
+.s09-hd::before{content:"";position:absolute;inset:0;background:rgba(15,17,23,calc(.94 * var(--sp)))}
+.s09-tools{position:absolute;left:24px;right:24px;top:var(--s09-t);height:44px;display:flex;align-items:center;justify-content:space-between}
+.s09-ju{font-weight:700;font-size:16px;letter-spacing:.08em;line-height:1}
+.s09-title{position:absolute;margin:0;top:calc(var(--s09-t) + 52px - 41px * var(--sp));left:calc(24px + (50% - 24px) * var(--sp));transform:translateX(calc(-50% * var(--sp)));font-size:calc(30px - 12px * var(--sp));font-weight:500;line-height:1.25;white-space:nowrap;color:#fff;max-width:calc(100% - 48px);overflow:hidden;text-overflow:ellipsis}
+.s09-meta{position:absolute;margin:0;left:24px;right:24px;top:calc(var(--s09-t) + 94px);font-size:14px;line-height:1.5;color:var(--s09-w72);opacity:clamp(0,calc(1 - 2.2 * var(--sp)),1);transform:translateY(calc(-8px * var(--sp)));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s09-back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;background:none;border:0;color:#fff;cursor:pointer}
+.s09-back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.s09-tbtn{background:none;border:0;padding:0 4px;height:44px;color:var(--s09-val);font-size:15px;font-weight:500;cursor:pointer}
+.s09-tbtn[disabled]{color:var(--s09-w50);cursor:default}
+/* 身份与行 */
+.s09-id{display:block;width:100%;padding:0;background:none;border:0;color:#fff;text-align:left;cursor:pointer;transition:opacity 120ms}
+.s09-id:active{opacity:.7}
+.s09-name{margin:0;font-size:32px;font-weight:500;line-height:1.2;overflow-wrap:anywhere}
+.s09-idline{margin:10px 0 0;font-size:15px;line-height:1.5;color:rgba(255,255,255,.84);display:flex;flex-wrap:wrap;gap:2px 12px}
+.s09-chip{color:var(--s09-val);font-weight:500}
+.s09-group{margin-top:32px}
+.s09-gname{margin:0 0 4px;font-size:13px;font-weight:500;line-height:1.5;color:var(--s09-w50)}
+.s09-row{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:56px;padding:10px 0;background:none;border:0;border-top:1px solid var(--s09-rule);border-radius:0;color:var(--s09-w92);font-size:16px;font-weight:400;line-height:1.4;text-align:left;cursor:pointer;transition:background 120ms}
+.s09-row:first-of-type{border-top:0}
+.s09-row:active{background:rgba(255,255,255,.05)}
+.s09-rl{flex:0 1 auto}
+.s09-rv{flex:0 1 auto;max-width:66%;display:flex;align-items:center;justify-content:flex-end;gap:8px;text-align:right;font-weight:500;color:var(--s09-val)}
+.s09-rv i{font-style:normal;color:var(--s09-w50);font-size:20px;line-height:1;font-weight:400}
+.s09-rv.off{color:var(--s09-w72)}
+/* 根导航 */
+.s09-nav{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:3;display:flex;align-items:flex-start;padding:10px 8px 0;background:linear-gradient(to top,rgba(15,17,23,.97) 50%,rgba(15,17,23,0))}
+.s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:var(--s09-w50);font-size:12px;font-weight:500;line-height:1.2;padding:4px 0;cursor:pointer}
+.s09-tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.s09-tab.on{color:#fff}
+.s09-tab.on svg{color:var(--s09-val)}
+/* 详情面：从下升起 300ms，光团聚到面后（面是半透明墨，光从面后透出并在上缘溢出） */
+.s09-sheet{position:absolute;left:0;right:0;top:100px;bottom:0;z-index:5;background:rgba(19,22,31,.82);border-radius:28px 28px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.14),0 -24px 48px -24px rgba(0,0,0,.6);overflow:hidden;--sp:clamp(0,calc(var(--s09-ssy,0) / 56),1);transition:opacity calc(300ms * var(--k,1)) ease}
+.s09-sheet.in{animation:s09-rise calc(300ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.s09-sheet.out{animation:s09-fall calc(300ms * var(--k,1)) cubic-bezier(.4,0,.9,.5) both;pointer-events:none}
+.s09-sheet.under{opacity:.6;pointer-events:none}
+.s09-sheet.under .s09-sheet-scroll,.s09-sheet.under .s09-hd{opacity:0;transition:opacity calc(200ms * var(--k,1)) ease}
+.s09-sheet-scroll,.s09-sheet .s09-hd{transition:opacity calc(200ms * var(--k,1)) ease}
+.s09-d1{top:114px}.s09-d2{top:128px}.s09-d3{top:142px}
+@keyframes s09-rise{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes s09-fall{from{transform:translateY(0)}to{transform:translateY(100%)}}
+.scrub .s09-sheet.in{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
+.s09-sheet-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:150px 24px calc(140px + var(--kb,0px));scrollbar-width:none;overscroll-behavior:contain}
+.s09-sheet-scroll::-webkit-scrollbar{display:none}
+.ju-phone.kb .s09-sheet-scroll{bottom:var(--kb,0px)}
+.s09-hd-sheet{--s09-t:10px}
+.s09-hd-fixed{--sp:1!important}
+.s09-sheet-scroll.tight{padding-top:84px}
+.s09-hd-sheet::before{background:rgba(19,22,31,calc(.96 * var(--sp)))}
+.s09-hero{display:block;width:100%;background:none;border:0;color:#fff;text-align:left;padding:0;cursor:pointer;transition:opacity 120ms}
+.s09-hero:active{opacity:.7}
+.s09-bigname{margin:0 0 20px;font-size:32px;font-weight:500;line-height:1.2;overflow-wrap:anywhere}
+.s09-note{margin:20px 0 0;font-size:13px;line-height:1.6;color:var(--s09-w50)}
+.s09-pill{display:flex;align-items:center;justify-content:center;height:48px;padding:0 24px;border-radius:24px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.04);color:#fff;font-size:15px;font-weight:500;cursor:pointer;transition:transform 120ms cubic-bezier(.2,.8,.2,1),background 120ms}
+.s09-pill:active{transform:scale(.958);background:rgba(255,255,255,.1)}
+.s09-pill-main{width:min(100%,280px);margin:28px auto 0}
+.s09-pill-sm{height:40px;padding:0 18px;font-size:14px;display:inline-flex}
+.s09-pill[disabled]{opacity:.45;pointer-events:none}
+em.s09-saved{font-style:normal;font-size:13px;font-weight:500;color:var(--s09-ok);animation:s09-fade calc(200ms * var(--k,1)) ease both}
+@keyframes s09-fade{from{opacity:0}to{opacity:1}}
+/* 编辑面：同一行语法，值位变成输入；聚焦的字段把最近的光团叫到背后 */
+.s09-field{padding:14px 0;border-top:1px solid var(--s09-rule)}
+.s09-field:first-child{border-top:0;padding-top:4px}
+.s09-fl{display:block;font-size:13px;font-weight:500;line-height:1.5;color:var(--s09-w50)}
+.s09-in{display:block;width:100%;margin-top:2px;padding:6px 0 8px;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.16);border-radius:0;color:#fff;font-family:inherit;font-size:18px;font-weight:500;line-height:1.4;outline:0;caret-color:var(--s09-val);transition:border-color 160ms}
+.s09-in::placeholder{color:rgba(255,255,255,.28);font-weight:400}
+.s09-in:focus{border-bottom-color:var(--s09-val)}
+.s09-in.err{border-bottom-color:#DA3A52}
+.s09-ferr{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--s09-err)}
+.s09-fnote{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--s09-w50)}
+.s09-verify{margin-top:4px;padding:14px 0 0;border-top:1px solid var(--s09-rule)}
+.s09-vrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.s09-vrow .s09-in{flex:1 1 120px;width:auto;letter-spacing:.14em;margin:0}
+.s09-vline{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--s09-w50)}
+.s09-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:4;padding:14px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(to top,rgba(19,22,31,.98) 72%,rgba(19,22,31,0));transition:bottom 200ms ease}
+.s09-barmsg{margin:0;font-size:13px;line-height:1.5;color:var(--s09-err);text-align:center}
+.s09-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border:0;border-radius:24px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;background:linear-gradient(180deg,#5c6ad9 0%,#4553BE 56%,#3a47a6 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -2px 0 rgba(0,0,0,.24),0 0 30px rgba(84,100,224,.55),0 12px 26px -12px rgba(0,0,0,.8);transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 200ms ease,opacity 200ms}
+.s09-cta:active{transform:scale(.958)}
+.s09-cta[disabled]{opacity:.7;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:default}
+/* 确认层 / 提示 */
+.s09-dim{position:absolute;inset:0;z-index:20;background:rgba(8,9,13,.5);animation:s09-fade calc(200ms * var(--k,1)) ease both}
+.s09-confirm{position:absolute;left:16px;right:16px;bottom:calc(16px + var(--kb,0px));z-index:21;padding:22px 22px 14px;border-radius:24px;background:#1b1f2b;box-shadow:0 -1px 0 rgba(255,255,255,.12),0 24px 48px -24px rgba(0,0,0,.8);animation:s09-rise calc(260ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.s09-confirm h3{margin:0;font-size:18px;font-weight:500;line-height:1.3}
+.s09-confirm p{margin:6px 0 16px;font-size:14px;line-height:1.5;color:var(--s09-w72)}
+.s09-confirm-acts{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.s09-danger{color:var(--s09-err)}
+.s09-toast{position:absolute;left:24px;right:24px;bottom:calc(104px + var(--kb,0px));z-index:30;padding:12px 18px;border-radius:12px;background:rgba(28,32,46,.96);color:#F8F9FF;font-size:13px;line-height:1.5;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 20px 44px rgba(0,0,0,.6);animation:s09-toast calc(300ms * var(--k,1)) ease both}
+@keyframes s09-toast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s09{{panel.rootCls}}{{rmUser}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
+      <div class="s09-root" ref="{{wrapRef}}">
+        <div class="s09-lights{{lightsCls}}">
+          <sc-for list="{{lights}}" as="l" hint-placeholder-count="3"><div class="s09-light s09-l{{l.i}}{{l.cls}}" style="{{l.style}}"></div></sc-for>
+        </div>
+        <div class="s09-home{{homeCls}}" data-surface="home">
+          <div class="s09-scroll" onScroll="{{onHomeScroll}}">
+            <button type="button" class="s09-id" onClick="{{goProfile}}">
+              <h1 class="s09-name">{{sum.you.name}}</h1>
+              <p class="s09-idline"><span>{{idWx}}</span><span class="s09-chip">{{idMail}}</span></p>
+            </button>
+            <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
+              <section class="s09-group">
+                <h2 class="s09-gname">{{g.name}}</h2>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                  <button type="button" class="s09-row" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s09-rl">{{r.label}}</span><span class="s09-rv{{r.vcls}}"><span>{{r.value}}</span><i>›</i></span></button>
+                </sc-for>
+              </section>
+            </sc-for>
+          </div>
+          <header class="s09-hd">
+            <div class="s09-tools"><span class="s09-ju">JU</span></div>
+            <h1 class="s09-title">设置</h1>
+            <p class="s09-meta">{{homeMeta}}</p>
+          </header>
+          <nav class="s09-nav" aria-label="根导航">
+            <button type="button" class="s09-tab" onClick="{{nav.find}}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 5-5 2.2 2.2-5z"/></svg>找局</button>
+            <button type="button" class="s09-tab" onClick="{{nav.create}}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>开局</button>
+            <button type="button" class="s09-tab" onClick="{{nav.mine}}"><svg viewBox="0 0 24 24"><path d="M4 8.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V10a2 2 0 0 0 0 4v1.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V14a2 2 0 0 0 0-4z"/><path d="M14 6.5v11" stroke-dasharray="2 2"/></svg>我的局</button>
+            <button type="button" class="s09-tab on" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="#0f1117"/><circle cx="15" cy="12" r="2" fill="#0f1117"/><circle cx="8" cy="17" r="2" fill="#0f1117"/></svg>设置</button>
+          </nav>
+        </div>
+        <sc-for list="{{sheets}}" as="sh" hint-placeholder-count="1">
+          <section class="s09-sheet s09-over{{sh.cls}}" data-surface="{{sh.surface}}">
+            <div class="s09-sheet-scroll{{sh.scrollCls}}" onScroll="{{onSheetScroll}}">
+              <sc-if value="{{sh.isProfile}}">
+                <button type="button" class="s09-hero" onClick="{{sh.p.editName}}"><h2 class="s09-bigname">{{sh.p.name}}<sc-if value="{{sh.p.savedName}}"> <em class="s09-saved">已保存</em></sc-if></h2></button>
+                <div class="s09-rows">
+                  <button type="button" class="s09-row" onClick="{{sh.p.editWx}}"><span class="s09-rl">微信号</span><span class="s09-rv"><sc-if value="{{sh.p.savedWx}}"><em class="s09-saved">已保存</em></sc-if><span>{{sh.p.wx}}</span><i>›</i></span></button>
+                  <button type="button" class="s09-row" onClick="{{sh.p.editEmail}}"><span class="s09-rl">邮箱</span><span class="s09-rv"><sc-if value="{{sh.p.savedEmail}}"><em class="s09-saved">已保存</em></sc-if><span>{{sh.p.email}}</span><i>›</i></span></button>
+                  <div class="s09-row" role="status"><span class="s09-rl">邮箱验证</span><span class="s09-rv{{sh.p.verifyCls}}"><span>{{sh.p.verify}}</span></span></div>
+                </div>
+                <p class="s09-note">{{sh.p.note}}</p>
+                <button type="button" class="s09-pill s09-pill-main" data-act="edit" onClick="{{sh.p.edit}}">编辑资料</button>
+              </sc-if>
+              <sc-if value="{{sh.isEdit}}">
+                <div class="s09-fields">
+                  <sc-for list="{{sh.e.fields}}" as="f" hint-placeholder-count="3">
+                    <div class="s09-field">
+                      <label class="s09-fl" for="{{f.id}}">{{f.label}}</label>
+                      <input id="{{f.id}}" class="s09-in{{f.cls}}" data-field="{{f.key}}" type="{{f.type}}" value="{{f.value}}" placeholder="{{f.ph}}" autocomplete="off" onInput="{{f.onInput}}" onFocus="{{f.onFocus}}">
+                      <sc-if value="{{f.err}}"><p class="s09-ferr">{{f.err}}</p></sc-if>
+                      <sc-if value="{{f.note}}"><p class="s09-fnote">{{f.note}}</p></sc-if>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{sh.e.verify.on}}">
+                    <div class="s09-verify">
+                      <sc-if value="{{sh.e.verify.verified}}"><p class="s09-vline"><span class="s09-chip">{{sh.e.verify.email}} 已验证</span></p></sc-if>
+                      <sc-if value="{{sh.e.verify.idle}}"><div class="s09-vrow"><button type="button" class="s09-pill s09-pill-sm" data-act="request" onClick="{{sh.e.verify.request}}">发送验证码</button><span class="s09-vline" style="margin:0">{{sh.e.verify.demoLine}}</span></div></sc-if>
+                      <sc-if value="{{sh.e.verify.entering}}">
+                        <label class="s09-fl" for="s09-f-code">验证码</label>
+                        <div class="s09-vrow"><input id="s09-f-code" class="s09-in{{sh.e.verify.codeCls}}" data-field="code" type="text" inputmode="numeric" maxlength="6" value="{{sh.e.verify.code}}" placeholder="6 位数字" autocomplete="off" onInput="{{sh.e.verify.onCode}}" onFocus="{{sh.e.verify.onCodeFocus}}"><button type="button" class="s09-pill s09-pill-sm" data-act="verify" onClick="{{sh.e.verify.verify}}">验证</button></div>
+                        <sc-if value="{{sh.e.verify.codeErr}}"><p class="s09-ferr">{{sh.e.verify.codeErr}}</p></sc-if>
+                        <p class="s09-vline"><button type="button" class="s09-tbtn" style="height:auto;padding:0" data-act="resend" disabled="{{sh.e.verify.resendOff}}" onClick="{{sh.e.verify.request}}">{{sh.e.verify.resendLabel}}</button> · {{sh.e.verify.demoLine}}</p>
+                      </sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+                <p class="s09-note">{{sh.e.note}}</p>
+              </sc-if>
+              <sc-if value="{{sh.isGeneric}}"><p class="s09-note" style="margin-top:0">{{sh.g.line}}</p></sc-if>
+            </div>
+            <header class="s09-hd s09-hd-sheet{{sh.hdCls}}">
+              <div class="s09-tools"><button type="button" class="s09-back" data-act="back" aria-label="返回" onClick="{{sh.back}}"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><sc-if value="{{sh.right}}"><button type="button" class="s09-tbtn" data-act="{{sh.rightAct}}" onClick="{{sh.rightGo}}">{{sh.right}}</button></sc-if></div>
+              <h1 class="s09-title">{{sh.title}}</h1>
+              <p class="s09-meta">{{sh.meta}}</p>
+            </header>
+            <sc-if value="{{sh.isEdit}}">
+              <div class="s09-bar">
+                <sc-if value="{{sh.e.failMsg}}"><p class="s09-barmsg">{{sh.e.failMsg}}</p></sc-if>
+                <button type="button" class="s09-cta" data-act="{{sh.e.ctaAct}}" disabled="{{sh.e.busy}}" onClick="{{sh.e.save}}">{{sh.e.ctaLabel}}</button>
+              </div>
+            </sc-if>
+          </section>
+        </sc-for>
+        <sc-if value="{{confirm.on}}">
+          <div class="s09-dim s09-over" onClick="{{confirm.keep}}"></div>
+          <div class="s09-confirm s09-over" role="dialog">
+            <h3>{{confirm.title}}</h3><p>{{confirm.body}}</p>
+            <div class="s09-confirm-acts"><button type="button" class="s09-pill" data-act="cancel" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button><button type="button" class="s09-tbtn s09-danger" data-act="confirm" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button></div>
+          </div>
+        </sc-if>
+        <sc-if value="{{toast}}"><div class="s09-toast s09-over" role="status">{{toast}}</div></sc-if>
+      </div>
+      <!-- @fx-svg -->
+    </div>
+    <!-- @panel -->
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* S09 夜灯 — surfaces are sheets on a stack (state.stack); data only changes through this.act() → JUS.engine; views derive from JUS.derive. */
+var S09_TITLES = { favorites: '收藏的局', city: '默认浏览城市', notify: '通知与提醒', appearance: '外观与动态', records: '我的记录', reports: '我的举报', help: '帮助与反馈', feedback: '产品反馈', privacy: '隐私与资料可见性', account: '账户与本机数据', about: '关于与规则', rules: '规则全文', 'record-detail': '记录详情', 'record-dispute': '出席异议', 'record-appeal': '信用申诉', 'record-supplement': '补充记录', 'report-detail': '举报详情', 'report-supplement': '举报补充', 'seam-feed': '找局', 'seam-feed-detail': '活动详情', 'seam-mine': '我的局', 'seam-report': '举报' };
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.wrapRef = { current: null }; this._sy = 0; this._seq = 0; this._lastSkin = this.state.data.appearance.skin; }
+  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { stack: [], focus: null, edit: null, confirm: null, toast: '', saved: null, previewSkin: null, skinFx: false, tick: 0 }); }
+  componentDidUpdate() { var s = this.state; var skin = s.previewSkin || s.data.appearance.skin; if (skin !== this._lastSkin) { this._lastSkin = skin; if (!this.isRM()) { this.setState({ skinFx: true }); this.afterKey('skinfx', 720, () => this.setState({ skinFx: false })); } } }
+  beforeReplay() { this.cancelKey('saved'); this.setState({ stack: [], edit: null, confirm: null, focus: null, saved: null }); this.setScrollVar(0); }
+  /* ---------- geometry / lights ---------- */
+  dims() { var r = this.rootRef.current, rv = this.state.review || {}; return { W: r ? r.clientWidth : (rv.pw || 390), H: r ? r.clientHeight : (rv.ph || 844) }; }
+  topSheet() { var st = this.state.stack; for (var i = st.length - 1; i >= 0; i--) if (st[i].phase !== 'out') return st[i]; return null; }
+  viewKey() { var t = this.topSheet(); return t ? t.surface + ':' + t.key : 'home'; }
+  setScrollVar(y) { this._sy = y; var w = this.wrapRef.current; if (w) w.style.setProperty('--s09-sy', String(y)); }
+  /* rest positions of the three lights for the current view (app px; sheets compensate the 0.3× parallax offset) */
+  lightBase() {
+    var d = this.dims(), W = d.W, H = d.H, t = this.topSheet(), py = 0.3 * this._sy;
+    if (!t) return [{ x: .3 * W, y: .26 * H, d: 440 }, { x: .94 * W, y: .55 * H, d: 360 }, { x: .12 * W, y: .8 * H, d: 320 }];
+    var top = 100 + py;
+    if (t.surface === 'profile') return [{ x: .32 * W, y: top + 90, d: 440 }, { x: .94 * W, y: top + 300, d: 360 }, { x: .16 * W, y: top + 520, d: 320 }];
+    if (t.surface === 'profile-edit') return [{ x: .3 * W, y: top + 120, d: 420 }, { x: .92 * W, y: top + 290, d: 360 }, { x: .3 * W, y: top + 470, d: 320 }];
+    return [{ x: .32 * W, y: top + 100, d: 440 }, { x: .94 * W, y: top + 360, d: 360 }, { x: .14 * W, y: top + 580, d: 320 }];
+  }
+  lightsNow() { var base = this.lightBase(), f = this.state.focus; if (f && f.view === this.viewKey()) base[f.i] = Object.assign({}, base[f.i], { x: f.x, y: f.y, bright: true }); return base; }
+  /* the light nearest to an element moves behind it (400ms, CSS transition) and brightens */
+  lightTo(el) {
+    var root = this.rootRef.current; if (!root || !el) return;
+    var r = JU.fx.rectIn(el, root), cx = r.x + r.w / 2, cy = r.y + r.h / 2, py = 0.3 * this._sy;
+    var ls = this.lightsNow(), best = 0, bd = Infinity;
+    ls.forEach(function (l, i) { var dx = l.x - cx, dy = (l.y - py) - cy, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = i; } });
+    this.setState({ focus: { i: best, x: cx, y: cy + py, view: this.viewKey() } });
+  }
+  /* ---------- sheets ---------- */
+  openSheet(surface, extra) { var sh = Object.assign({ surface: surface, id: null, st: null, phase: 'in', key: ++this._seq }, extra || {}); this.setState(function (s) { return { stack: s.stack.filter(function (x) { return x.phase !== 'out'; }).concat([sh]) }; }); return sh; }
+  closeTop() {
+    var top = this.topSheet(); if (!top) return;
+    this.setState(function (s) { return { stack: s.stack.map(function (x) { return x.key === top.key ? Object.assign({}, x, { phase: 'out' }) : x; }), focus: null }; });
+    this.after(320, () => this.setState(function (s) { return { stack: s.stack.filter(function (x) { return x.key !== top.key; }) }; }));
+  }
+  goSurface(ev, surface, extra) { var el = ev && ev.currentTarget; this.motion('light-follow', () => { if (el) this.lightTo(el); this.after(120, () => this.openSheet(surface, extra)); }); }
+  say(msg) { this.setState({ toast: msg }); this.holdKey('toast', 2600, () => this.setState({ toast: '' })); }
+  /* ---------- profile edit ---------- */
+  setEdit(patch) { this.setState(function (s) { return { edit: Object.assign({}, s.edit, patch) }; }); }
+  openEdit(field) { var y = this.state.data.you; this.setState({ edit: { draft: { name: y.name, wx: y.wx, email: y.email }, errors: {}, status: 'idle', fail: '', code: '', codeErr: '' } }); this.openSheet('profile-edit'); if (field) this.after(340, () => this.focusField(field)); }
+  startEdit(ev, field) { var el = ev && ev.currentTarget; this.motion('sheet-rise', () => { if (el) this.lightTo(el); this.after(120, () => this.openEdit(field)); }); }
+  focusField(key) { var root = this.rootRef.current; if (!root) return; var all = root.querySelectorAll('.s09-sheet[data-surface="profile-edit"] [data-field="' + key + '"]'); var el = all[all.length - 1]; if (el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } } }
+  isDirty() { var e = this.state.edit, y = this.state.data.you; return !!e && (e.draft.name !== y.name || e.draft.wx !== y.wx || e.draft.email !== y.email); }
+  askUnsaved() { this.setState({ confirm: { kind: 'unsaved' } }); }
+  editBack() { if (!this.state.edit) { this.closeTop(); return; } if (this.isDirty()) this.askUnsaved(); else this.closeEdit(); }
+  closeEdit() { this.setState({ confirm: null }); this.cancelKey('resend'); if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.closeTop(); this.after(330, () => this.setState({ edit: null })); }
+  trySave() {
+    var e = this.state.edit; if (!e || e.status === 'saving') return;
+    var p = { name: e.draft.name, wx: e.draft.wx, email: e.draft.email };
+    var pre = JUS.engine.saveProfile(this.state.data, p);           /* validation only: invalid never writes */
+    if (pre.effect.type === 'invalid') { var errs = pre.effect.errors; this.setEdit({ errors: errs, status: 'idle', fail: '' }); var k = ['name', 'wx', 'email'].filter(function (x) { return errs[x]; })[0]; this.after(30, () => { var root = this.rootRef.current; var el = root && root.querySelector('.s09-sheet[data-surface="profile-edit"] [data-field="' + k + '"]'); if (el) this.lightTo(el); }); return; }
+    this.setEdit({ status: 'saving', errors: {}, fail: '' });
+    this.after(300, () => {                                           /* 处理中 ≥ 300ms 可见 */
+      var res = this.act('saveProfile', p);
+      if (res.effect.type === 'error') { this.setEdit({ status: 'failed', fail: res.effect.message }); return; }
+      if (res.effect.type === 'invalid') { this.setEdit({ status: 'idle', errors: res.effect.errors }); return; }
+      this.cancelKey('resend');
+      this.setState({ saved: { fields: res.effect.changed, key: Date.now() } }); this.holdKey('saved', 2600, () => this.setState({ saved: null }));
+      this.closeTop(); this.after(330, () => this.setState({ edit: null }));
+    });
+  }
+  requestCode() { var e = this.state.edit; if (!e) return; var res = this.act('requestEmailCode', { email: e.draft.email }); if (res.effect.type === 'invalid') { this.setEdit({ errors: Object.assign({}, e.errors, res.effect.errors) }); return; } if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.setEdit({ code: '', codeErr: '' }); this.startTick(); }
+  startTick() { var tick = () => { this.setState(function (s) { return { tick: s.tick + 1 }; }); var pnd = JUS.derive.emailPending(this.state.data); if (pnd && !pnd.verified && this.state.edit) this.holdKey('resend', 1000, tick); }; this.holdKey('resend', 1000, tick); }
+  verifyCode() { var e = this.state.edit; if (!e) return; var res = this.act('verifyEmailCode', { code: e.code }); if (res.effect.type === 'invalid') { this.setEdit({ codeErr: res.effect.errors.code }); return; } if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.cancelKey('resend'); this.setEdit({ codeErr: '', errors: Object.assign({}, e.errors, { email: '' }) }); }
+  /* ---------- review index → surfaces ---------- */
+  applyJump(e) {
+    var o = e.open || {}, sf = o.surface; this.setScrollVar(0); var root = this.rootRef.current; var sc = root && root.querySelector('.s09-scroll'); if (sc) sc.scrollTop = 0;
+    if (sf === 'home') return;
+    if (sf === 'profile') { this.openSheet('profile'); if (o.state === 'saved') { this.setState({ saved: { fields: ['name', 'wx'], key: Date.now() } }); this.holdKey('saved', 2600, () => this.setState({ saved: null })); } return; }
+    if (sf === 'profile-edit') {
+      this.openSheet('profile'); this.openEdit(null); var st = o.state, y = this.state.data.you;
+      if (st === 'invalid') this.after(60, () => { this.setEdit({ draft: { name: '', wx: 'ahe ju', email: y.email } }); this.after(40, () => this.trySave()); });
+      else if (st === 'code' || st === 'code-expired') this.after(60, () => { this.setEdit({ draft: { name: y.name, wx: y.wx, email: 'ahe.new@stern.nyu.edu' } }); this.after(40, () => { this.requestCode(); if (st === 'code-expired') this.after(40, () => this.expireCode()); }); });
+      else if (st === 'fail') this.after(60, () => { this.armFail(); this.setEdit({ draft: { name: '阿禾二', wx: y.wx, email: y.email } }); this.after(60, () => this.trySave()); });
+      else if (st === 'unsaved') this.after(60, () => { this.setEdit({ draft: { name: '阿禾二', wx: y.wx, email: y.email } }); this.after(40, () => this.askUnsaved()); });
+      else if (st === 'kb') { if (!this.state.review.kb) this.toggleKb(); this.after(380, () => this.focusField('name')); }
+      return;
+    }
+    this.openSheet(sf, { id: o.id, st: o.state });
+  }
+  /* ---------- render ---------- */
+  renderVals() {
+    var self = this, s = this.state, d = s.data; var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var sum = JUS.derive.summary(d), you = d.you; var skin = s.previewSkin || d.appearance.skin;
+    var liveTop = this.topSheet();
+    var lights = this.lightsNow().map(function (l, i) { return { i: i, cls: l.bright ? ' bright' : '', style: 'width:' + l.d + 'px;height:' + l.d + 'px;transform:translate(' + (l.x - l.d / 2).toFixed(1) + 'px,' + (l.y - l.d / 2).toFixed(1) + 'px)' }; });
+    var domain = you.email ? (you.emailDomain || you.email.split('@')[1] || '') : '';
+    var recPending = d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; })[0];
+    var repNeed = d.reports.filter(function (r) { return r.status === 'needs_info'; })[0];
+    var row = function (label, value, surface, extra, vcls) { return { label: label, value: value, rid: extra && extra.id || '', vcls: vcls || '', go: function (ev) { self.goSurface(ev, surface, extra); } }; };
+    var groups = [];
+    var att = [];
+    if (recPending) att.push(row('未出席记录 · 待核实', sum.pendingRecords + ' 条', 'record-detail', { id: recPending.id }));
+    if (repNeed) att.push(row('举报需补充', sum.needMore + ' 条', 'report-detail', { id: repNeed.id }));
+    if (att.length) groups.push({ name: '需要处理', rows: att });
+    groups.push({ name: '收藏与城市', rows: [row('收藏的局', sum.favLabel, 'favorites', null, sum.favCount ? '' : ' off'), row('默认浏览城市', sum.cityLabel, 'city')] });
+    groups.push({ name: '通知与外观', rows: [row('通知与提醒', sum.notifyLabel, 'notify'), row('外观与动态', sum.appearanceLabel, 'appearance')] });
+    groups.push({ name: '记录与举报', rows: [row('我的记录', sum.recordLabel, 'records', null, sum.recordCount ? '' : ' off'), row('我的举报', sum.reportLabel, 'reports', null, sum.reportCount ? '' : ' off')] });
+    groups.push({ name: '帮助与账户', rows: [row('帮助与反馈', sum.feedbackCount ? sum.feedbackCount + ' 条反馈' : '', 'help'), row('隐私与资料可见性', '', 'privacy'), row('账户与本机数据', d.session.kind === 'demo' ? '本地演示' : '演示已结束', 'account'), row('关于与规则', JUS.RULES.length + ' 条规则', 'about')] });
+    var sheets = []; var depth = 0;
+    s.stack.forEach(function (sh) {
+      var isTop = liveTop && sh.key === liveTop.key; var dIdx = sh.phase === 'out' ? depth : depth++;
+      var o = { key: sh.key, surface: sh.surface, scrollCls: sh.surface === 'profile' ? ' tight' : '', hdCls: sh.surface === 'profile' ? ' s09-hd-fixed' : '', cls: (sh.phase === 'out' ? ' out' : ' in') + (!isTop && sh.phase !== 'out' ? ' under' : '') + ' s09-d' + Math.min(dIdx, 3), isProfile: sh.surface === 'profile', isEdit: sh.surface === 'profile-edit', isGeneric: false, right: '', rightAct: '', rightGo: null, back: function () { self.closeTop(); } };
+      if (o.isProfile) {
+        var sv = s.saved || { fields: [] };
+        o.title = '资料'; o.meta = you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写';
+        o.p = { name: you.name, wx: you.wx || '未填写', email: you.email || '未填写', verify: you.email ? sum.emailLabel : '未填写', verifyCls: you.email && you.emailVerified ? '' : ' off', savedName: sv.fields.indexOf('name') >= 0, savedWx: sv.fields.indexOf('wx') >= 0, savedEmail: sv.fields.indexOf('email') >= 0, note: JUS.COPY.snapshotNote,
+          editName: function (ev) { self.startEdit(ev, 'name'); }, editWx: function (ev) { self.startEdit(ev, 'wx'); }, editEmail: function (ev) { self.startEdit(ev, 'email'); }, edit: function (ev) { self.startEdit(ev, null); } };
+      } else if (o.isEdit) {
+        var e = s.edit || { draft: { name: you.name, wx: you.wx, email: you.email }, errors: {}, status: 'idle', fail: '', code: '', codeErr: '' };
+        var emailDraft = (e.draft.email || '').trim(); var emailChanged = emailDraft !== you.email; var pnd = JUS.derive.emailPending(d);
+        var sent = !!(pnd && pnd.email === emailDraft); var verified = !!(sent && pnd.verified);
+        o.title = '编辑资料'; o.meta = you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写'; o.right = '取消'; o.rightAct = 'cancel'; o.rightGo = function () { self.editBack(); }; o.back = function () { self.editBack(); };
+        var field = function (key, label, ph, type, note) { return { key: key, id: 's09-f-' + key, label: label, ph: ph, type: type, value: e.draft[key] || '', err: e.errors[key] || '', cls: e.errors[key] ? ' err' : '', note: note || '',
+          onInput: function (ev) { var v = ev.currentTarget.value; self.setState(function (st) { var ed = st.edit; if (!ed) return null; var er = Object.assign({}, ed.errors); er[key] = ''; return { edit: Object.assign({}, ed, { draft: Object.assign({}, ed.draft, (function () { var oo = {}; oo[key] = v; return oo; })()), errors: er }) }; }); },
+          onFocus: function (ev) { self.lightTo(ev.currentTarget); } }; };
+        o.e = { fields: [field('name', '称呼', '称呼', 'text'), field('wx', '微信号', '微信号', 'text'), field('email', '邮箱', '工作或学校邮箱', 'email', emailChanged ? JUS.COPY.emailHint : '')],
+          verify: { on: emailChanged && !!emailDraft && !JUS.validate.email(emailDraft), email: emailDraft, verified: verified, idle: !sent, entering: sent && !verified, code: e.code, codeErr: e.codeErr || (sent && !verified && pnd.expired ? JUS.COPY.profileErrors.codeExpired : ''), codeCls: e.codeErr ? ' err' : '', resendOff: !!(pnd && pnd.resendLeftS > 0), resendLabel: pnd && pnd.resendLeftS > 0 ? JUS.COPY.profileErrors.codeResend + '（' + pnd.resendLeftS + 's）' : JUS.COPY.profileErrors.codeResend, demoLine: '本机演示 · 验证码不发邮件',
+            request: function () { self.requestCode(); }, verify: function () { self.verifyCode(); }, onCode: function (ev) { self.setEdit({ code: ev.currentTarget.value, codeErr: '' }); }, onCodeFocus: function (ev) { self.lightTo(ev.currentTarget); } },
+          note: JUS.COPY.snapshotNote, failMsg: e.status === 'failed' ? e.fail : '', busy: e.status === 'saving', ctaAct: e.status === 'failed' ? 'retry' : 'save', ctaLabel: e.status === 'saving' ? '保存中…' : e.status === 'failed' ? '重试' : '保存', save: function () { self.trySave(); } };
+      } else { o.isGeneric = true; o.title = S09_TITLES[sh.surface] || sh.surface; o.meta = sh.id ? String(sh.id) : ''; o.g = { line: '这一页在阶段 2 构建。' }; }
+      sheets.push(o);
+    });
+    var cf = s.confirm ? { on: true, title: JUS.COPY.unsaved.title, body: JUS.COPY.unsaved.body, keepLabel: JUS.COPY.unsaved.keep, discardLabel: JUS.COPY.unsaved.discard, keep: function () { self.setState({ confirm: null }); }, discard: function () { self.closeEdit(); } } : { on: false };
+    return {
+      panel: panel, rootRef: this.rootRef, wrapRef: this.wrapRef, skin: skin, rmUser: d.appearance.reduceMotion ? ' rm-user' : '',
+      lights: lights, lightsCls: s.skinFx ? ' fx' : '', homeCls: liveTop ? ' under' : '',
+      sum: sum, idWx: you.wx ? '微信 ' + you.wx : '微信号未填写', idMail: you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写',
+      homeMeta: sum.attention ? sum.attention + ' 项需要处理 · ' + sum.cityLabel : sum.cityLabel + ' · ' + JUS.COPY.demoOnly,
+      groups: groups, sheets: sheets, confirm: cf, toast: s.toast,
+      goProfile: function (ev) { self.goSurface(ev, 'profile'); },
+      onHomeScroll: function (ev) { self.setScrollVar(ev.currentTarget.scrollTop); },
+      onSheetScroll: function (ev) { var el = ev.currentTarget, sh = el.parentElement; if (sh) sh.style.setProperty('--s09-ssy', String(el.scrollTop)); },
+      nav: { find: function () { self.openSheet('seam-feed'); }, create: function () { self.say('开局不在本演示范围'); }, mine: function () { self.openSheet('seam-mine'); } }
+    };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>

@@ -1,0 +1,469 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S02 侧栏目录</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ============ S02 侧栏目录 · 桌面级「目录在左、内容在右」压进手机 ============
+   光源 / 表面逻辑：左栏是一块不受光的墨（#14161F）；右侧内容面是一张受环境色光照亮的纸——
+   光（棉糖 / 光晕 / 落日）铺满整张纸，纸上的字被光微微染色（取各环境自己的 ink / secondary），
+   行与行之间只有 1px 墨线，没有卡片、没有阴影；唯一的“面”是主确认 CTA 的 JU 蓝。 */
+.app{position:absolute;inset:0;display:flex;overflow:hidden;--k:1;--s02-top:44px;--s02-bar:72px;--s02-cw:calc(var(--pw,390px) - var(--s02-bar));
+  font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;color:var(--s02-ink);background:#14161F}
+.app[data-skin=cotton]{--s02-paper:#fbf7f8;--s02-ink:#263936;--s02-sec:#596851;--s02-rule:rgba(38,57,54,.17);--s02-a0:#fbe1ec;--s02-a2:#d3edf3;
+  --s02-env:radial-gradient(95% 58% at 100% 0%,#fbe1ec 0%,rgba(251,225,236,.75) 38%,rgba(251,225,236,0) 72%),radial-gradient(80% 52% at 0% 46%,#ececf4 0%,rgba(236,236,244,.8) 40%,rgba(236,236,244,0) 74%),radial-gradient(110% 60% at 68% 104%,#d3edf3 0%,rgba(211,237,243,.85) 42%,rgba(211,237,243,0) 76%),linear-gradient(#fbf7f8,#fbf7f8)}
+.app[data-skin=halo]{--s02-paper:#fff9ef;--s02-ink:#362e3c;--s02-sec:#655564;--s02-rule:rgba(54,46,60,.18);--s02-a0:#ff5005;--s02-a2:#d0bce1;
+  --s02-env:radial-gradient(128% 70% at 90% 12%,rgba(255,80,5,0) 15%,rgba(255,80,5,.62) 29%,rgba(219,186,149,.72) 44%,rgba(208,188,225,.78) 58%,rgba(208,188,225,0) 77%),linear-gradient(#fff9ef,#fff9ef)}
+.app[data-skin=sunset]{--s02-paper:#fffbf2;--s02-ink:#3b352d;--s02-sec:#6a5b4c;--s02-rule:rgba(59,53,45,.18);--s02-a0:#ff7a33;--s02-a2:#ffc53d;
+  --s02-env:linear-gradient(180deg,rgba(51,160,255,.58) 0%,rgba(51,160,255,.26) 30%,rgba(255,122,51,.52) 60%,rgba(255,197,61,.64) 100%),linear-gradient(#fffbf2,#fffbf2)}
+.app *{box-sizing:border-box}
+.app button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.app h1,.app p{margin:0}
+/* ---------- 目录栏（墨） ---------- */
+.s02-bar{flex:0 0 var(--s02-bar);width:var(--s02-bar);position:relative;background:#14161F;color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:var(--s02-top);user-select:none}
+.s02-ju{height:48px;display:flex;align-items:center;font-size:17px;font-weight:700;line-height:1;letter-spacing:.08em;color:#fff}
+.s02-me{width:40px;height:40px;margin-top:24px;border-radius:50%;border:0;padding:0;background:linear-gradient(160deg,var(--s02-a0),var(--s02-a2));color:#14161F;font-size:18px;font-weight:500;line-height:40px;text-align:center;transition:transform calc(120ms * var(--k,1)) ease}
+.s02-me:active{transform:scale(.94)}
+.s02-groups{margin-top:20px;display:flex;flex-direction:column}
+.s02-g{width:var(--s02-bar);height:56px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;color:rgba(255,255,255,.52);transition:color calc(160ms * var(--k,1)) ease}
+.s02-g span{writing-mode:vertical-rl;font-size:15px;font-weight:500;line-height:1;letter-spacing:.12em}
+.s02-g.on{color:#fff}
+.s02-ix{position:absolute;right:0;top:var(--s02-ixy,118px);width:4px;height:36px;border-radius:2px 0 0 2px;background:linear-gradient(180deg,var(--s02-a0),var(--s02-a2));transition:top calc(220ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.s02-root{margin-top:auto;padding-bottom:26px;display:flex;flex-direction:column;align-items:center;gap:10px}
+.s02-root::before{content:"";width:22px;height:1px;background:rgba(255,255,255,.2);margin-bottom:6px}
+.s02-r{background:none;border:0;padding:4px 0;color:rgba(255,255,255,.5)}
+.s02-r span{writing-mode:vertical-rl;font-size:13px;font-weight:400;line-height:1;letter-spacing:.12em}
+.s02-r.on{color:#fff}.s02-r.on span{font-weight:500}
+/* ---------- 内容面（受光的纸） ---------- */
+.s02-pane{flex:1 1 auto;min-width:0;position:relative;background:var(--s02-paper);overflow:hidden}
+.s02-env{position:absolute;inset:0;z-index:0;background-image:var(--s02-env);background-size:100% 100%;pointer-events:none}
+.s02-envm{position:absolute;inset:0;z-index:-1;background-color:var(--s02-paper);background-image:var(--s02-env);background-size:var(--s02-cw) var(--ph,844px);background-position:0 0;pointer-events:none}
+.s02-envm.b{background-position:0 calc(100% - var(--ph,844px) + var(--kb,0px))}
+.s02-ghost{position:absolute;inset:0;z-index:1;pointer-events:none}
+.s02-page{position:absolute;inset:0;z-index:2}
+.s02-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;--st:0px;--sp:0;padding-bottom:calc(48px + var(--kb,0px));scrollbar-width:none}
+.s02-scroll::-webkit-scrollbar{display:none}
+.s02-scroll.act{padding-bottom:calc(132px + var(--kb,0px))}
+.s02-tools{position:sticky;top:0;z-index:5;height:calc(var(--s02-top) + 48px);padding:var(--s02-top) 12px 0;display:flex;align-items:center;justify-content:space-between}
+.s02-tools::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--s02-rule);opacity:var(--sp)}
+.s02-tb{background:none;border:0;padding:8px 8px;min-width:44px;min-height:40px;font-size:15px;font-weight:400;line-height:1.2;color:var(--s02-ink);text-align:left;transition:opacity calc(120ms * var(--k,1)) ease}
+.s02-tb.r{text-align:right}
+.s02-tb:active{opacity:.5}
+.s02-head{padding:24px 20px 14px}
+.s02-headrow{height:38px}
+.s02-title{display:inline-flex;align-items:center;height:38px;max-width:100%;position:relative;z-index:6;font-weight:500;transform-origin:0 50%;
+  transform:translate(calc(var(--sp) * (var(--s02-cw) / 2 - 20px - 50%)),calc(max(0px,var(--st) - 56px) - 11px * var(--sp)))}
+.s02-title span{display:block;font-size:calc(30px - 12px * var(--sp));line-height:1.25;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(var(--s02-cw) - 40px)}
+.s02-status{margin-top:4px;font-size:14px;font-weight:400;line-height:1.5;color:var(--s02-sec);opacity:calc(1 - var(--sp) * 1.6);overflow-wrap:anywhere}
+.s02-status.ok{color:#0E9B76}
+/* 行：标签 16/500 左，值 15/400 右；1px 墨线分隔 */
+.s02-sec{padding:0 20px}
+.s02-lab{display:flex;align-items:center;gap:8px;padding:22px 0 6px;font-size:13px;font-weight:500;line-height:1.4;color:var(--s02-sec);letter-spacing:.02em}
+.s02-dot{width:7px;height:7px;border-radius:50%;background:#4553BE;flex:0 0 auto}
+.s02-row{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:9px 0;border:0;border-bottom:1px solid var(--s02-rule);background:none;text-align:left;color:inherit;font:inherit;transition:background-color calc(120ms * var(--k,1)) ease}
+button.s02-row:active{background-color:rgba(20,22,31,.06)}
+.s02-row.big{min-height:64px}
+.s02-k{flex:0 0 auto;font-size:16px;font-weight:500;line-height:1.3;color:var(--s02-ink)}
+.s02-row.big .s02-k{font-size:17px}
+.s02-v{flex:1 1 auto;min-width:0;text-align:right;font-size:15px;font-weight:400;line-height:1.45;color:var(--s02-ink);overflow-wrap:anywhere}
+.s02-v.sec{color:var(--s02-sec)}
+.s02-v .ok{color:#0E9B76;font-weight:400}
+.s02-v .warn{color:#DA3A52;font-weight:400}
+.s02-v.fresh{animation:s02-fresh calc(200ms * var(--k,1)) ease both}
+@keyframes s02-fresh{from{opacity:0}to{opacity:1}}
+.s02-ch{flex:0 0 auto;width:10px;font-size:16px;line-height:1;color:var(--s02-sec);opacity:.8}
+.s02-item{display:block;width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--s02-rule);background:none;text-align:left;color:inherit;font:inherit}
+.s02-item .t{font-size:16px;font-weight:500;line-height:1.4;color:var(--s02-ink)}
+.s02-item .m{font-size:13px;line-height:1.5;color:var(--s02-sec);margin-top:2px}
+.s02-note{padding:14px 0 0;font-size:13px;line-height:1.6;color:var(--s02-sec)}
+.s02-empty{padding:28px 0 0;font-size:16px;line-height:1.5;color:var(--s02-ink)}
+.s02-empty small{display:block;font-size:14px;color:var(--s02-sec);margin-top:4px}
+.s02-sw{flex:0 0 auto;width:44px;height:26px;border-radius:13px;border:0;padding:0;position:relative;background:rgba(20,22,31,.18);transition:background-color calc(160ms * var(--k,1)) ease}
+.s02-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform calc(160ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.s02-sw[aria-checked=true]{background:#14161F}.s02-sw[aria-checked=true]::after{transform:translateX(18px)}
+/* 编辑态：同一行结构，值位变成右对齐输入；聚焦 = 行底线变焦点色 */
+label.s02-row.ed{cursor:text}
+.s02-row.ed.focus{border-bottom-color:#4A5AD6;box-shadow:0 1px 0 #4A5AD6}
+.s02-row.ed.err{border-bottom-color:#DA3A52;box-shadow:0 1px 0 #DA3A52}
+.s02-in{flex:1 1 auto;min-width:0;width:100%;text-align:right;font-family:inherit;font-size:15px;font-weight:400;line-height:1.45;color:var(--s02-ink);background:none;border:0;outline:0;padding:0;margin:0;border-radius:0}
+.s02-in::placeholder{color:var(--s02-sec);opacity:.55}
+.s02-err{padding:6px 0 2px;font-size:13px;line-height:1.5;color:#DA3A52;text-align:right}
+.s02-mini{flex:0 0 auto;height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--s02-rule);background:none;color:var(--s02-ink);font-size:14px;font-weight:500}
+.s02-mini:active{background:rgba(20,22,31,.06)}
+.s02-sub{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px 14px;padding:8px 0 2px;font-size:13px;line-height:1.5;color:var(--s02-sec)}
+.s02-link{background:none;border:0;padding:0;font-size:13px;font-weight:500;color:#4553BE}
+/* 底部动作条：唯一的 JU 蓝面；键盘弹出时随 --kb 上移 */
+.s02-act{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:7;padding:10px 20px 22px;display:flex;flex-direction:column;align-items:center;gap:8px}
+.s02-act::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--s02-rule)}
+.s02-fail{font-size:13px;line-height:1.5;color:#DA3A52;text-align:center}
+.s02-cta{width:min(100%,280px);height:48px;border-radius:24px;border:0;color:#fff;font-size:16px;font-weight:500;line-height:48px;letter-spacing:.02em;
+  background:linear-gradient(180deg,#5765d2 0%,#4553BE 46%,#3b47a8 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -2px 0 rgba(0,0,0,.18),0 8px 16px -10px rgba(69,83,190,.65);transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1)) ease}
+.s02-cta:active{transform:scale(.958)}
+.s02-cta[disabled]{opacity:.7;cursor:default}
+.s02-confirm{width:100%;display:flex;flex-direction:column;gap:2px}
+.s02-confirm b{font-size:16px;font-weight:500;line-height:1.4;color:var(--s02-ink)}
+.s02-confirm p{font-size:13px;line-height:1.5;color:var(--s02-sec)}
+.s02-confirm .s02-cbtns{display:flex;gap:10px;margin-top:10px}
+.s02-cbtn{flex:1 1 0;height:44px;border-radius:22px;border:1px solid var(--s02-ink);background:none;color:var(--s02-ink);font-size:15px;font-weight:500}
+.s02-cbtn.warn{border-color:#DA3A52;color:#DA3A52}
+.s02-cbtn:active{background:rgba(20,22,31,.06)}
+/* ---------- 运动：主语 = 内容面 ---------- */
+.s02-page.in-push{animation:s02-pushin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-page.in-push.alt{animation-name:s02-pushin2}
+.s02-page.in-pop{animation:s02-popin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-page.in-pop.alt{animation-name:s02-popin2}
+.s02-page.in-switch{animation:s02-switchin calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-page.in-switch.alt{animation-name:s02-switchin2}
+@keyframes s02-pushin{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes s02-pushin2{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes s02-popin{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes s02-popin2{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes s02-switchin{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes s02-switchin2{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
+.s02-ghost .s02-page{animation:none;z-index:1}
+.s02-ghost .s02-page.go.push{animation:s02-pushout calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-ghost .s02-page.go.pop{animation:s02-popout calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-ghost .s02-page.go.switch{animation:s02-switchout calc(160ms * var(--k,1)) ease both}
+@keyframes s02-pushout{from{transform:translateY(0);opacity:1}to{transform:translateY(-40px);opacity:0}}
+@keyframes s02-popout{from{transform:translateY(0);opacity:1}to{transform:translateY(40px);opacity:0}}
+@keyframes s02-switchout{from{opacity:1}to{opacity:0}}
+/* 进入中的页：工具行镜像在收尾才出现（起点 scrollTop=0，没有东西经过工具行） */
+.s02-page.in-push .s02-tools .s02-envm,.s02-page.in-pop .s02-tools .s02-envm,.s02-page.in-switch .s02-tools .s02-envm{animation:s02-late calc(300ms * var(--k,1)) linear both}
+@keyframes s02-late{0%{opacity:0}85%{opacity:0}100%{opacity:1}}
+/* 环境切换 ≈ 650ms 透明度 + 模糊（只作用于光层，不碰文字） */
+.app.fx-a .s02-env,.app.fx-a .s02-envm{animation:s02-skin calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
+.app.fx-b .s02-env,.app.fx-b .s02-envm{animation:s02-skin2 calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
+@keyframes s02-skin{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+@keyframes s02-skin2{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+/* 评审：关键帧 / 暂停 / 减少动态（三源） */
+.app.scrub .s02-page[class*=in-],.app.scrub .s02-ghost .s02-page.go,.app.scrub .s02-env,.app.scrub .s02-envm{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
+.app.scrub .s02-ix{transition:none}
+.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s02{{panel.rootCls}}{{fxCls}}{{rmUser}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
+      <aside class="s02-bar" aria-label="设置目录">
+        <div class="s02-ju">JU</div>
+        <button type="button" class="s02-me" aria-label="设置目录（首页）" onClick="{{bar.goHome}}">{{bar.initial}}</button>
+        <div class="s02-groups">
+          <sc-for list="{{bar.groups}}" as="g" hint-placeholder-count="6"><button type="button" class="s02-g {{g.cls}}" aria-current="{{g.cur}}" onClick="{{g.go}}"><span>{{g.name}}</span></button></sc-for>
+        </div>
+        <i class="s02-ix" style="--s02-ixy:{{bar.ixy}}px"></i>
+        <nav class="s02-root" aria-label="根导航">
+          <sc-for list="{{bar.roots}}" as="r" hint-placeholder-count="4"><button type="button" class="s02-r {{r.cls}}" onClick="{{r.go}}"><span>{{r.name}}</span></button></sc-for>
+        </nav>
+      </aside>
+      <div class="s02-pane">
+        <div class="s02-env"></div>
+        <div class="s02-ghost"></div>
+        <div class="s02-page {{page.cls}}" data-surface="{{page.surface}}">
+          <div class="s02-scroll {{page.scrollCls}}" onScroll="{{page.onScroll}}">
+            <div class="s02-tools"><i class="s02-envm"></i>
+              <sc-if value="{{page.back}}"><button type="button" class="s02-tb" data-act="back" onClick="{{page.onBack}}">← {{page.back}}</button></sc-if>
+              <sc-if value="{{page.noBack}}"><span class="s02-tb"></span></sc-if>
+              <sc-if value="{{page.action}}"><button type="button" class="s02-tb r" data-act="{{page.actionAct}}" onClick="{{page.onAction}}">{{page.action}}</button></sc-if>
+              <sc-if value="{{page.noAction}}"><span class="s02-tb"></span></sc-if>
+            </div>
+            <div class="s02-head"><div class="s02-headrow"><h1 class="s02-title"><span>{{page.title}}</span></h1></div><p class="s02-status {{page.statusCls}}">{{page.status}}</p></div>
+            <sc-if value="{{home.on}}">
+              <section class="s02-sec">
+                <sc-if value="{{home.hasPending}}">
+                  <div class="s02-lab"><i class="s02-dot"></i>要你处理 · {{home.pendingCount}}</div>
+                  <sc-for list="{{home.pending}}" as="p" hint-placeholder-count="2"><button type="button" class="s02-item" data-rid="{{p.id}}" onClick="{{p.go}}"><div class="t">{{p.t}}</div><div class="m">{{p.m}}</div></button></sc-for>
+                </sc-if>
+                <div class="s02-lab">目录</div>
+                <sc-for list="{{home.entries}}" as="e" hint-placeholder-count="6"><button type="button" class="s02-row big" onClick="{{e.go}}"><span class="s02-k">{{e.k}}</span><span class="s02-v">{{e.v}}</span><span class="s02-ch">›</span></button></sc-for>
+                <p class="s02-note">{{home.note}}</p>
+              </section>
+            </sc-if>
+            <sc-if value="{{prof.on}}">
+              <section class="s02-sec">
+                <div class="s02-row"><span class="s02-k">称呼</span><span class="s02-v {{prof.nameCls}}">{{prof.name}}</span></div>
+                <div class="s02-row"><span class="s02-k">微信号</span><span class="s02-v {{prof.wxCls}}">{{prof.wx}}</span></div>
+                <div class="s02-row"><span class="s02-k">邮箱</span><span class="s02-v {{prof.emailCls}}">{{prof.email}} <b class="{{prof.emailTagCls}}">{{prof.emailLabel}}</b></span></div>
+                <button type="button" class="s02-row" onClick="{{prof.goPrivacy}}"><span class="s02-k">谁能看见你</span><span class="s02-v sec">{{prof.privacyLine}}</span><span class="s02-ch">›</span></button>
+                <p class="s02-note">{{prof.note}}</p>
+              </section>
+            </sc-if>
+            <sc-if value="{{ed.on}}">
+              <section class="s02-sec">
+                <label class="s02-row ed {{ed.nameCls}}"><span class="s02-k">称呼</span><input class="s02-in" data-field="name" value="{{ed.name}}" placeholder="最多 10 个字" autocomplete="off" onInput="{{ed.inName}}" onFocus="{{ed.focusName}}" onBlur="{{ed.blur}}"></label>
+                <sc-if value="{{ed.errName}}"><p class="s02-err">{{ed.errName}}</p></sc-if>
+                <label class="s02-row ed {{ed.wxCls}}"><span class="s02-k">微信号</span><input class="s02-in" data-field="wx" value="{{ed.wx}}" placeholder="字母、数字、下划线或短横线" autocomplete="off" onInput="{{ed.inWx}}" onFocus="{{ed.focusWx}}" onBlur="{{ed.blur}}"></label>
+                <sc-if value="{{ed.errWx}}"><p class="s02-err">{{ed.errWx}}</p></sc-if>
+                <label class="s02-row ed {{ed.emailCls}}"><span class="s02-k">邮箱</span><input class="s02-in" data-field="email" type="email" value="{{ed.email}}" placeholder="工作或学校邮箱，可留空" autocomplete="off" onInput="{{ed.inEmail}}" onFocus="{{ed.focusEmail}}" onBlur="{{ed.blur}}"></label>
+                <sc-if value="{{ed.errEmail}}"><p class="s02-err">{{ed.errEmail}}</p></sc-if>
+                <sc-if value="{{ed.codeOn}}">
+                  <div class="s02-row ed {{ed.codeCls}}"><span class="s02-k">验证码</span><input class="s02-in" data-field="code" inputmode="numeric" maxlength="6" value="{{ed.code}}" placeholder="6 位" autocomplete="off" onInput="{{ed.inCode}}" onFocus="{{ed.focusCode}}" onBlur="{{ed.blur}}"><button type="button" class="s02-mini" data-act="verify" onClick="{{ed.verify}}">验证</button></div>
+                  <sc-if value="{{ed.errCode}}"><p class="s02-err">{{ed.errCode}}</p></sc-if>
+                  <div class="s02-sub"><span>{{ed.codeLine}}</span><sc-if value="{{ed.canSend}}"><button type="button" class="s02-link" data-act="request" onClick="{{ed.send}}">发送验证码</button></sc-if><sc-if value="{{ed.waiting}}"><span>{{ed.resendIn}} 秒后可重发</span></sc-if><sc-if value="{{ed.canResend}}"><button type="button" class="s02-link" data-act="resend" onClick="{{ed.send}}">重新发送</button></sc-if></div>
+                </sc-if>
+                <sc-if value="{{ed.verified}}"><p class="s02-sub"><span class="ok">{{ed.verifiedLine}}</span></p></sc-if>
+                <p class="s02-note">{{ed.hint}}</p>
+                <p class="s02-note">{{ed.note}}</p>
+              </section>
+            </sc-if>
+            <sc-if value="{{grp.on}}">
+              <section class="s02-sec">
+                <sc-if value="{{grp.lab}}"><div class="s02-lab">{{grp.lab}}</div></sc-if>
+                <sc-for list="{{grp.rows}}" as="r" hint-placeholder-count="4">
+                  <sc-if value="{{r.isRow}}"><button type="button" class="s02-row" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s02-k">{{r.k}}</span><span class="s02-v {{r.vcls}}">{{r.v}}</span><span class="s02-ch">›</span></button></sc-if>
+                  <sc-if value="{{r.isSwitch}}"><div class="s02-row"><span class="s02-k">{{r.k}}</span><span class="s02-v sec">{{r.v}}</span><button type="button" class="s02-sw" role="switch" aria-checked="{{r.checked}}" data-act="toggle" aria-label="{{r.k}}" onClick="{{r.go}}"></button></div></sc-if>
+                  <sc-if value="{{r.isItem}}"><button type="button" class="s02-item" data-rid="{{r.rid}}" onClick="{{r.go}}"><div class="t">{{r.t}}</div><div class="m">{{r.m}}</div></button></sc-if>
+                </sc-for>
+                <sc-if value="{{grp.empty}}"><p class="s02-empty">{{grp.emptyTitle}}<small>{{grp.emptyBody}}</small></p></sc-if>
+                <sc-if value="{{grp.note}}"><p class="s02-note">{{grp.note}}</p></sc-if>
+              </section>
+            </sc-if>
+          </div>
+          <sc-if value="{{ed.on}}">
+            <div class="s02-act"><i class="s02-envm b"></i>
+              <sc-if value="{{ed.confirmOn}}"><div class="s02-confirm s02-over"><b>{{ed.confirmTitle}}</b><p>{{ed.confirmBody}}</p><div class="s02-cbtns"><button type="button" class="s02-cbtn" data-act="cancel" onClick="{{ed.keep}}">{{ed.confirmKeep}}</button><button type="button" class="s02-cbtn warn" data-act="confirm" onClick="{{ed.discard}}">{{ed.confirmDiscard}}</button></div></div></sc-if>
+              <sc-if value="{{ed.ctaOn}}"><sc-if value="{{ed.fail}}"><p class="s02-fail">{{ed.fail}}</p></sc-if><button type="button" class="s02-cta" data-act="{{ed.ctaAct}}" disabled="{{ed.saving}}" onClick="{{ed.save}}">{{ed.ctaLabel}}</button></sc-if>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* S02 侧栏目录 — 目录栏常驻，内容面只换内容：换组 = 沿 y 滑 24px 淡入；进入详情 / 编辑 = 面内 y 推换 40px；返回反向并恢复滚动位置。 */
+var S02_GROUPS = [{ key: 'profile', name: '资料' }, { key: 'fav', name: '收藏' }, { key: 'prefs', name: '偏好' }, { key: 'records', name: '记录' }, { key: 'help', name: '帮助' }, { key: 'account', name: '账户' }];
+var S02_ROOTS = [{ key: 'feed', name: '找局' }, { key: 'create', name: '开局' }, { key: 'mine', name: '我的局' }, { key: 'settings', name: '设置' }];
+/* 索引的 52 个 surface → 所属目录组（阶段 2 逐个补上各自的详情页；现在先落到组页，不报错） */
+var S02_SURFACE_GROUP = { profile: 'profile', 'profile-edit': 'profile', privacy: 'profile', favorites: 'fav', 'favorite-detail': 'fav', city: 'prefs', notify: 'prefs', appearance: 'prefs', records: 'records', 'record-detail': 'records', 'record-dispute': 'records', 'record-appeal': 'records', 'record-supplement': 'records', reports: 'records', 'report-detail': 'records', 'report-supplement': 'records', help: 'help', feedback: 'help', about: 'help', rules: 'help', account: 'account' };
+var S02_IX_HOME = 118, S02_IX_TOP = 186, S02_IX_STEP = 56;
+function s02First(s) { var a = Array.from(s || ''); return a.length ? a[0] : '?'; }
+function s02EmailLine(you) { return you.email ? (you.emailDomain || you.email.split('@')[1] || '') + (you.emailVerified ? ' 已验证' : ' 未验证') : '邮箱未填写'; }
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this._nav = null; }
+  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { view: { surface: 'home', group: null, id: null }, stack: [], form: null, enterN: 0, enterKind: '', fxN: 0, savedMark: false, tick: 0 }); }
+  /* ---------- navigation (the content pane is the subject; the TOC bar never moves) ---------- */
+  pageEl() { var r = this.rootRef.current; return r ? r.querySelector('.s02-pane > .s02-page') : null; }
+  scrollEl() { var p = this.pageEl(); return p ? p.querySelector('.s02-scroll') : null; }
+  syncScroll(sc) { if (!sc) return; var st = sc.scrollTop; sc.style.setProperty('--st', st + 'px'); sc.style.setProperty('--sp', String(Math.min(1, st / 56))); }
+  ghost(kind) {
+    var root = this.rootRef.current; var page = this.pageEl(); var wrap = root && root.querySelector('.s02-ghost'); if (!page || !wrap) return;
+    var g = page.cloneNode(true);
+    var a = page.querySelectorAll('input,textarea'), b = g.querySelectorAll('input,textarea'); for (var i = 0; i < a.length; i++) if (b[i]) b[i].value = a[i].value;
+    g.querySelectorAll('[data-act],[data-field],[data-rid],[data-surface],[role=switch]').forEach(function (el) { el.removeAttribute('data-act'); el.removeAttribute('data-field'); el.removeAttribute('data-rid'); el.removeAttribute('data-surface'); el.removeAttribute('role'); });
+    g.removeAttribute('data-surface'); g.className = 's02-page gh ' + kind;
+    wrap.innerHTML = ''; wrap.appendChild(g);
+    var sc = page.querySelector('.s02-scroll'), gs = g.querySelector('.s02-scroll'); if (sc && gs) gs.scrollTop = sc.scrollTop;
+    void g.offsetWidth; g.classList.add('go');
+    this.afterKey('ghost', 340, function () { wrap.innerHTML = ''; });
+  }
+  clearGhost() { var root = this.rootRef.current; var w = root && root.querySelector('.s02-ghost'); if (w) w.innerHTML = ''; this.cancelKey('ghost'); }
+  nav(view, kind, opts) {
+    opts = opts || {}; var sc = this.scrollEl(); var scroll = sc ? sc.scrollTop : 0;
+    if (kind !== 'none' && !this.isRM()) this.ghost(kind);
+    this._nav = { kind: kind, restore: opts.restore || 0 };
+    this.setState(function (s) {
+      var st = { view: view, enterN: s.enterN + 1, enterKind: kind === 'none' ? '' : kind, savedMark: !!opts.saved };
+      if (kind === 'push') st.stack = s.stack.concat([{ view: s.view, scroll: scroll, form: s.form }]);
+      else if (kind === 'pop') st.stack = s.stack.slice(0, -1);
+      else st.stack = opts.stack || [];
+      if ('form' in opts) st.form = opts.form;
+      return st;
+    });
+  }
+  goHome() { if (this.state.view.surface === 'home') return; var self = this; this.motion('switch-group', function () { self.nav({ surface: 'home', group: null, id: null }, 'switch', { form: null }); }); }
+  goGroup(key) { var v = this.state.view; if (v.surface === 'group' && v.group === key) return; var self = this; this.motion('switch-group', function () { self.nav({ surface: 'group', group: key, id: null }, 'switch', { form: null }); }); }
+  push(view, opts) { var self = this; this.motion('push-detail', function () { self.nav(view, 'push', opts || {}); }); }
+  pop(opts) {
+    var s = this.state; var top = s.stack[s.stack.length - 1];
+    if (!top) { if (s.view.surface === 'group') this.goHome(); return; }
+    this.nav(top.view, 'pop', Object.assign({ restore: top.scroll, form: top.form || null }, opts || {}));
+  }
+  beforeReplay(name) {
+    if (name === 'switch-group') this.nav({ surface: 'home', group: null, id: null }, 'none', { form: null });
+    if (name === 'push-detail') this.nav({ surface: 'group', group: 'profile', id: null }, 'none', { form: null });
+  }
+  componentDidUpdate(pp, ps) {
+    var s = this.state;
+    if (ps.view !== s.view || ps.enterN !== s.enterN) {
+      var nav = this._nav; this._nav = null;
+      if (!nav || nav.kind === 'none') this.clearGhost();
+      var sc = this.scrollEl(); if (sc) { sc.scrollTop = nav ? nav.restore : 0; this.syncScroll(sc); }
+    }
+  }
+  /* ---------- profile edit ---------- */
+  blankForm(d) { return { name: d.you.name, wx: d.you.wx, email: d.you.email, code: '', errors: {}, focus: '', saving: false, fail: '', confirm: false }; }
+  setForm(patch) { this.setState(function (s) { return { form: Object.assign({}, s.form, patch) }; }); }
+  openEdit(opts) { var d = this.state.data; this.push({ surface: 'profile-edit', group: 'profile', id: null }, { form: Object.assign(this.blankForm(d), opts || {}) }); }
+  formDirty() { var f = this.state.form, y = this.state.data.you; return !!f && (f.name !== y.name || f.wx !== y.wx || f.email !== y.email); }
+  leaveEdit() { if (this.formDirty()) { this.setForm({ confirm: true }); return; } this.pop(); }
+  saveProfile() {
+    var self = this; var f = this.state.form; if (!f || f.saving) return;
+    var errors = { name: JUS.validate.name(f.name), wx: JUS.validate.wx(f.wx), email: JUS.validate.email(f.email) };
+    var d = this.state.data; var email = (f.email || '').trim();
+    if (!errors.email && email && email !== d.you.email && !(d.you.emailPending && d.you.emailPending.verified && d.you.emailPending.email === email)) errors.email = JUS.COPY.profileErrors.mailUnverified;
+    if (errors.name || errors.wx || errors.email) { this.setForm({ errors: errors, fail: '' }); return; }
+    this.setForm({ errors: {}, fail: '', saving: true, confirm: false });
+    this.holdKey('save', 320, function () {          /* 处理中 ≥ 300ms 可见（真实时间窗） */
+      var res = self.act('saveProfile', { name: f.name, wx: f.wx, email: f.email });
+      if (res.effect.type === 'invalid') { self.setForm({ saving: false, errors: res.effect.errors }); return; }
+      if (res.effect.type === 'error') { self.setForm({ saving: false, fail: res.effect.message }); return; }   /* 失败：保留输入，CTA 变「重试」 */
+      self.pop({ saved: true, form: null });
+      self.holdKey('saved', 2600, function () { self.setState({ savedMark: false }); });
+    });
+  }
+  sendCode() {
+    var self = this; var f = this.state.form; var res = this.act('requestEmailCode', { email: f.email });
+    if (res.effect.type === 'invalid') { this.setForm({ errors: Object.assign({}, f.errors, res.effect.errors) }); return; }
+    if (res.effect.type === 'error') { this.setForm({ fail: res.effect.message }); return; }
+    this.setForm({ code: '', errors: Object.assign({}, f.errors, { email: '', code: '' }) });
+    var tickFn = function () { var p = JUS.derive.emailPending(self.state.data); self.setState({ tick: self.state.tick + 1 }); if (p && p.resendLeftS > 0 && !p.verified) self.holdKey('resend', 1000, tickFn); };
+    this.holdKey('resend', 1000, tickFn);
+  }
+  verifyCode() {
+    var f = this.state.form; var res = this.act('verifyEmailCode', { code: f.code });
+    if (res.effect.type === 'invalid') { this.setForm({ errors: Object.assign({}, f.errors, { code: res.effect.errors.code }) }); return; }
+    if (res.effect.type === 'error') { this.setForm({ fail: res.effect.message }); return; }
+    this.cancelKey('resend'); this.setForm({ errors: Object.assign({}, f.errors, { code: '', email: '' }) });
+  }
+  /* ---------- review index → surfaces (stage 1: home / profile / profile-edit; the rest land on their group page) ---------- */
+  applyJump(e) {
+    var o = e.open || {}; var st = o.state || ''; var d = this.state.data; var self = this;
+    var home = { surface: 'home', group: null, id: null }; var prof = { surface: 'group', group: 'profile', id: null };
+    if (o.surface === 'home') { this.nav(home, 'none', { form: null }); return; }
+    if (o.surface === 'profile') { this.nav(prof, 'none', { form: null, saved: st === 'saved' }); if (st === 'saved') this.holdKey('saved', 2600, function () { self.setState({ savedMark: false }); }); return; }
+    if (o.surface === 'profile-edit') {
+      var form = this.blankForm(d);
+      if (st === 'invalid') { form.name = ''; form.wx = '阿禾 ju'; form.errors = { name: JUS.validate.name(form.name), wx: JUS.validate.wx(form.wx), email: '' }; }
+      if (st === 'code' || st === 'code-expired') { form.email = 'ahe.zhang@columbia.edu'; }
+      if (st === 'fail') { form.name = d.you.name + '二'; form.fail = JUS.COPY.saveFail; }
+      if (st === 'unsaved') { form.name = d.you.name + '二'; form.confirm = true; }
+      this.nav({ surface: 'profile-edit', group: 'profile', id: null }, 'none', { form: form, stack: [{ view: prof, scroll: 0, form: null }] });
+      if (st === 'code' || st === 'code-expired') { this.after(40, function () { self.sendCode(); if (st === 'code-expired') self.after(40, function () { self.expireCode(); self.setForm({ code: '246810', errors: { code: JUS.COPY.profileErrors.codeExpired } }); }); }); }
+      if (st === 'kb' && !this.state.review.kb) this.toggleKb();
+      return;
+    }
+    var g = S02_SURFACE_GROUP[o.surface];
+    if (g) { this.nav({ surface: 'group', group: g, id: o.id || null }, 'none', { form: null }); return; }
+    this.nav(home, 'none', { form: null });
+  }
+  /* ---------- render ---------- */
+  renderVals() {
+    var self = this; var s = this.state, d = s.data, v = s.view, f = s.form;
+    var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var sum = JUS.derive.summary(d); var you = d.you;
+    var curGroup = v.surface === 'home' ? null : v.group;
+    var gi = curGroup ? S02_GROUPS.findIndex(function (g) { return g.key === curGroup; }) : -1;
+    var bar = {
+      initial: s02First(you.name), goHome: function () { self.goHome(); },
+      groups: S02_GROUPS.map(function (g) { return { name: g.name, cls: g.key === curGroup ? 'on' : '', cur: g.key === curGroup ? 'true' : null, go: function () { self.goGroup(g.key); } }; }),
+      ixy: gi < 0 ? S02_IX_HOME : S02_IX_TOP + gi * S02_IX_STEP,
+      roots: S02_ROOTS.map(function (r) { return { name: r.name, cls: r.key === 'settings' ? 'on' : '', go: function () { } }; })
+    };
+    var enter = s.enterKind ? 'in-' + s.enterKind + (s.enterN % 2 ? ' alt' : '') : '';
+    var page = { cls: enter, surface: v.surface === 'group' ? v.group : v.surface, scrollCls: '', back: '', noBack: true, action: '', noAction: true, actionAct: '', title: '', status: '', statusCls: '',
+      onScroll: function (ev) { self.syncScroll(ev.currentTarget); }, onBack: function () { }, onAction: function () { } };
+    var home = { on: false }, prof = { on: false }, ed = { on: false }, grp = { on: false };
+    var idLine = you.name + ' · ' + (you.wx ? you.wx : '微信号未填写') + ' · ' + s02EmailLine(you);
+    if (v.surface === 'home') {
+      page.title = '设置'; page.status = idLine;
+      var pending = [];
+      d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; }).forEach(function (r) { var row = JUS.derive.record(d, r.id); pending.push({ id: r.id, t: row.title, m: row.label + ' · ' + row.statusLabel + ' · 可补充说明或提出异议', go: function () { self.goGroup('records'); } }); });
+      d.reports.filter(function (r) { return r.status === 'needs_info'; }).forEach(function (r) { var row = JUS.derive.report(d, r.id); pending.push({ id: r.id, t: row.title, m: '举报 · ' + row.statusLabel + (r.needsText ? ' · ' + r.needsText : ''), go: function () { self.goGroup('records'); } }); });
+      var skin = sum.skin; var nt = JUS.derive.notify(d);
+      home = { on: true, hasPending: pending.length > 0, pendingCount: pending.length, pending: pending, note: JUS.COPY.demoOnly,
+        entries: [
+          { k: '资料', v: you.name + ' · ' + s02EmailLine(you) },
+          { k: '收藏', v: sum.favLabel },
+          { k: '偏好', v: sum.cityLabel + ' · ' + nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类提醒 · ' + skin.name + (sum.reduceMotion ? ' · 减少动态' : '') },
+          { k: '记录', v: (sum.recordCount ? sum.recordCount + ' 条事实' : JUS.COPY.creditEmpty) + ' · ' + (sum.reportCount ? sum.reportCount + ' 条举报' : JUS.COPY.reportsEmpty) },
+          { k: '帮助', v: JUS.RULES.length + ' 条规则 · ' + (sum.feedbackCount ? sum.feedbackCount + ' 条反馈' : '反馈') },
+          { k: '账户', v: d.session.kind === 'demo' ? d.session.device + ' · 演示中' : '演示会话已结束' }
+        ].map(function (e, i) { e.go = function () { self.goGroup(S02_GROUPS[i].key); }; return e; }) };
+    } else if (v.surface === 'group' && v.group === 'profile') {
+      page.title = '资料'; page.status = s.savedMark ? '已保存 · 之后的报名默认填入新资料' : (you.wx ? you.wx : '微信号未填写') + ' · ' + s02EmailLine(you); page.statusCls = s.savedMark ? 'ok' : '';
+      page.back = '设置'; page.noBack = false; page.onBack = function () { self.goHome(); };
+      page.action = '编辑'; page.noAction = false; page.actionAct = 'edit'; page.onAction = function () { self.openEdit(); };
+      var pv = JUS.derive.privacy(d); var fresh = s.savedMark ? 'fresh' : '';
+      prof = { on: true, name: you.name, nameCls: fresh, wx: you.wx || '未填写', wxCls: fresh + (you.wx ? '' : ' sec'), email: you.email || '未填写', emailCls: fresh + (you.email ? '' : ' sec'),
+        emailLabel: you.email ? (you.emailVerified ? '已验证' : '未验证') : '', emailTagCls: you.emailVerified ? 'ok' : 'warn',
+        privacyLine: pv.facts.length ? pv.facts.length + ' 个局里按成局与票根状态' : '按成局与票根状态', goPrivacy: function () { }, note: JUS.COPY.snapshotNote };
+    } else if (v.surface === 'profile-edit' && f) {
+      page.title = '编辑资料'; page.status = '称呼、微信号、邮箱 · 只用于之后的报名'; page.scrollCls = 'act';
+      page.back = '资料'; page.noBack = false; page.onBack = function () { self.leaveEdit(); };
+      page.action = '取消'; page.noAction = false; page.actionAct = 'cancel'; page.onAction = function () { self.leaveEdit(); };
+      var pend = JUS.derive.emailPending(d); var emailChanged = (f.email || '').trim() !== '' && (f.email || '').trim() !== you.email;
+      var verifiedHere = !!(pend && pend.verified && pend.email === (f.email || '').trim());
+      var codeOn = emailChanged && !verifiedHere; var sent = !!(pend && !pend.verified && pend.email === (f.email || '').trim());
+      var cls = function (k) { return (f.focus === k ? 'focus' : '') + (f.errors[k] ? ' err' : ''); };
+      var inp = function (k) { return function (ev) { var p = {}; p[k] = ev.currentTarget.value; var er = Object.assign({}, self.state.form.errors); er[k] = ''; p.errors = er; p.fail = ''; self.setForm(p); }; };
+      var foc = function (k) { return function () { self.setForm({ focus: k }); }; };
+      ed = { on: true, name: f.name, wx: f.wx, email: f.email, code: f.code, nameCls: cls('name'), wxCls: cls('wx'), emailCls: cls('email'), codeCls: cls('code'),
+        errName: f.errors.name || '', errWx: f.errors.wx || '', errEmail: f.errors.email || '', errCode: f.errors.code || '',
+        inName: inp('name'), inWx: inp('wx'), inEmail: inp('email'), inCode: inp('code'), focusName: foc('name'), focusWx: foc('wx'), focusEmail: foc('email'), focusCode: foc('code'), blur: function () { self.setForm({ focus: '' }); },
+        codeOn: codeOn, canSend: codeOn && !sent, waiting: sent && pend.resendLeftS > 0 && !pend.expired, resendIn: sent ? pend.resendLeftS : 0, canResend: sent && (pend.resendLeftS <= 0 || pend.expired),
+        codeLine: sent ? (pend.expired ? '验证码已过期' : '验证码已发到 ' + pend.email + '（本机演示 · 不发邮件）') : '改了邮箱要先验证', send: function () { self.sendCode(); }, verify: function () { self.verifyCode(); },
+        verified: verifiedHere, verifiedLine: verifiedHere ? pend.email + ' 已验证，保存后生效' : '',
+        hint: JUS.COPY.emailHint, note: JUS.COPY.snapshotNote,
+        confirmOn: f.confirm, confirmTitle: JUS.COPY.unsaved.title, confirmBody: JUS.COPY.unsaved.body, confirmKeep: JUS.COPY.unsaved.keep, confirmDiscard: JUS.COPY.unsaved.discard,
+        keep: function () { self.setForm({ confirm: false }); }, discard: function () { self.pop({ form: null }); },
+        ctaOn: !f.confirm, fail: f.fail, saving: f.saving, ctaAct: f.fail ? 'retry' : 'save', ctaLabel: f.saving ? '保存中…' : f.fail ? '重试' : '保存', save: function () { self.saveProfile(); } };
+    } else if (v.surface === 'group') {
+      var g = S02_GROUPS.filter(function (x) { return x.key === v.group; })[0] || S02_GROUPS[0];
+      page.title = g.name; page.back = '设置'; page.noBack = false; page.onBack = function () { self.goHome(); };
+      grp = this.groupVals(g.key, sum);
+      page.status = grp.status;
+    }
+    return { panel: panel, rootRef: this.rootRef, skin: d.appearance.skin, fxCls: s.fxN ? (s.fxN % 2 ? ' fx-a' : ' fx-b') : '', rmUser: d.appearance.reduceMotion ? ' rm-user' : '',
+      bar: bar, page: page, home: home, prof: prof, ed: ed, grp: grp };
+  }
+  /* group pages (stage 1: real current values and lists; details come in stage 2 through the same push()) */
+  groupVals(key, sum) {
+    var self = this; var d = this.state.data; var g = { on: true, status: '', lab: '', rows: [], empty: false, emptyTitle: '', emptyBody: '', note: '' };
+    var row = function (k, v, go, vcls, rid) { return { isRow: true, k: k, v: v, vcls: vcls || '', go: go || function () { }, rid: rid || null }; };
+    if (key === 'fav') {
+      var fv = JUS.derive.favorites(d);
+      g.status = fv.count ? fv.count + ' 个局' + (fv.archived.length ? ' · ' + fv.archived.length + ' 个已结束' : '') + ' · 收藏不等于报名' : JUS.COPY.favEmpty.title;
+      g.rows = fv.all.map(function (r) { return { isItem: true, rid: r.id, t: r.title, m: r.when.zh + ' · ' + r.place.hood + (r.crossCity ? ' · ' + r.city.name : '') + ' · ' + r.relation.label + (r.archived ? ' · ' + r.status.label : ''), go: function () { } }; });
+      g.empty = fv.empty; g.emptyTitle = JUS.COPY.favEmpty.title; g.emptyBody = JUS.COPY.favEmpty.body;
+    } else if (key === 'prefs') {
+      var nt = JUS.derive.notify(d); var city = JUS.derive.city(d);
+      g.status = city.name + ' · ' + nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类提醒 · ' + sum.skin.name;
+      g.rows = [row('默认浏览城市', city.name), row('通知与提醒', sum.notifyLabel), row('外观', sum.skin.name + ' · ' + sum.skin.line),
+        { isSwitch: true, k: '减少动态', v: d.appearance.reduceMotion ? '开' : '关', checked: d.appearance.reduceMotion ? 'true' : 'false', go: function () { self.act('setReduceMotion', { on: !self.state.data.appearance.reduceMotion }); } }];
+      g.note = JUS.COPY.cityScope;
+    } else if (key === 'records') {
+      g.status = sum.recordLabel + ' · ' + sum.reportLabel;
+      g.rows = [row('我的记录', sum.recordLabel), row('我的举报', sum.reportLabel)];
+      g.note = JUS.COPY.recordHelp;
+    } else if (key === 'help') {
+      var fb = JUS.derive.feedback(d);
+      g.status = JUS.RULES.length + ' 条规则 · ' + (fb.length ? fb.length + ' 条反馈' : '还没有反馈');
+      g.rows = [row('帮助与反馈', JUS.RULES.length + ' 条规则 · 常见问题'), row('我的反馈', fb.length ? fb.length + ' 条' : '还没有', null, fb.length ? '' : 'sec'), row('关于与规则', JUS.RULES_VERSION)];
+    } else if (key === 'account') {
+      var ab = JUS.derive.about(d);
+      g.status = (d.session.kind === 'demo' ? '演示中' : '演示会话已结束') + ' · ' + d.session.device;
+      g.rows = [row('本机演示数据', '只存在这台浏览器'), row('退出登录（本地演示）', '', null, 'sec')];
+      g.note = JUS.COPY.demoOnly + ' · ' + ab.version;
+    }
+    return g;
+  }
+}
+JUS.mixin(Component);
+/* 环境切换：数据改变后让光层做一次 650ms 的透明度 + 模糊过渡（applySkin 经 this.act 调用；预览态阶段 2 加） */
+var s02Act = Component.prototype.act;
+Component.prototype.act = function (name, payload) { var res = s02Act.call(this, name, payload); if (name === 'applySkin' && res.effect && res.effect.type === 'skin' && res.effect.skin !== res.effect.prev) this.setState(function (s) { return { fxN: s.fxN + 1 }; }); return res; };
+</script>
+</body>
+</html>

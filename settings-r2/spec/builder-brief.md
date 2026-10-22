@@ -3,16 +3,17 @@
 你要实现 JU「设置」R2 十套中的**一套**：一台真正可操作、你自己截图复看过的手机画面（375 / 390 / 430 三个宽度真实回流）。视觉是独立且必要的门槛：首屏有分量的构图与视觉中心、中文排版质量、三种环境的真实面积、一致的材质逻辑、有主语的动效；二级页、编辑态、列表、详情、确认层都由你的方向卡生成，不回到默认表单。功能不能漏：十套共用同一业务范围（契约 §4，索引 52 条）。
 
 ## 必读（按顺序）
+0. **`settings-r2/spec/art-direction-v2.md`（主负责人 v2：通用规则 + 你这一套的逐项配方；与方向卡冲突时以它为准）** 与 **`settings-r2/spec/ctl-api.md`（共享控制器：导航、页头、资料 / 验证码、文本表单、通知 / 外观 / 城市 / 收藏 / 记录 / 举报 / 帮助 / 隐私 / 账户、接缝、索引——行为全部现成，你只做构图、排版、表面与运动）**
 1. `settings-r2/spec/concept-contract.md`（质量门槛、共有语言规格、文件结构、共享核心、覆盖范围、选择器、验证、完成定义、坑）
 2. `settings-r2/spec/directions.md` 里你的那一节 + 总表与六维矩阵里你那一行（这是你的艺术指导；其他九行告诉你**不能像谁**）
 3. `settings-r2/spec/baseline-observations.md`（旧十套为什么被否决；§5 的二级页同构是你必须避免的）
 4. `settings-r2/spec/state-contract.md`（对象模型、作用域、保存模型、收藏手势参数、文案、冲突处理决定）
 5. `settings-r2/src/core/jus-data.js`（`JUS.derive.* / engine.* / COPY / RULES / SKINS / NOTIFY_CATS / FAV / INDEX`）与 `settings-r2/src/core/jus-review.js`（mixin：after / hold / holdKey / act / motion / jumpTo / applyJump / panelVals / setPhoneSize / toggleKb / isRM）
-6. `settings-r2/concepts/src/S00.dc.html`（管线样例：骨架、面板注入、索引映射、接缝手势的最小实现；**不要抄它的视觉**）
+6. `settings-r2/concepts/src/S00.dc.html`（**控制器接线参考**：26 个 surface 的全部绑定、表单、接缝、确认层、toast、根导航；视觉故意朴素——**只抄绑定，不抄样子**）
 7. 你的参考案例：`settings-r2/spec/directions.md` 末尾你那一行的候选 + `settings-r2/research/ledger.md`（若已存在）；证据图在 `research/evidence/<slug>/`（上一轮）或 `settings-r2/research/evidence/<slug>/`。用 Read 打开至少三张看一眼再动手。
 
 ## 两个阶段
-**阶段 1（先交付，等主负责人核对后再继续）**：首屏（`s-home`，default 变体）+ 一个代表性详情（资料详情 → 编辑）+ 一个正常速度的核心交互（你方向卡 §6 的主语动作），三种环境都能切（面板「外观」索引或引擎 `applySkin`）。产出 `settings-r2/evidence/SNN/stage1/`：`home-cotton.png / home-halo.png / home-sunset.png / detail.png / edit.png` + `flow-core/sheet.png`，以及 widths 检查结果。汇报 ≤ 20 行。主负责人会把十套首屏匿名并排、灰度、同流程比较；不成立的方向会被要求推翻重来，所以阶段 1 不要先铺功能。
+**阶段 1（先交付，等主负责人核对后再继续）**：首屏（`s-home`，default 变体）三种环境 + 资料页 + 编辑页（**接控制器**：真实校验、验证码、保存失败与重试、未保存确认）+ 你的签名转场（首页 → 资料 → 编辑 → 保存 → 回到原位，1× 抽帧），并用 `node settings-r2/tools/lead-sheet.cjs <dir> s-home --codes SNN` 与 `--gray` 自查缩略图（v2 通用规则第 1 条）。产出 `settings-r2/evidence/SNN/stage1/`：`home-cotton.png / home-halo.png / home-sunset.png / profile.png / edit.png / edit-invalid.png` + `flow-core/sheet.png`，以及 widths 检查结果。汇报 ≤ 20 行。主负责人会把十套首屏匿名并排、灰度、同流程比较；不成立的方向会被要求推翻重来，所以阶段 1 不要先铺功能。
 **阶段 2（收到继续指令后）**：贯穿全部 52 个索引状态、九个流程、三个检查（widths / kb / rm）、`spec/motion/SNN.md`、证据与汇报（契约 §6–§7）。
 
 ## 你写的文件

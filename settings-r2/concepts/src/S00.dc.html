@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>S00 管线测试（非交付）</title>
+<title>S00 管线与接线参考（非交付）</title>
 <script src="./support.js"></script>
 </head>
 <body>
@@ -12,85 +12,270 @@
 <style>
 body{margin:0}
 /* @panel-css */
-.app{position:absolute;inset:0;background:#f4f1ea;padding-bottom:calc(18px + var(--kb,0px));font-family:"Noto Sans SC",sans-serif;padding:56px 18px 18px;--k:1;overflow:hidden;color:#1b1a17}
-.app h1{margin:0 0 10px;font-size:24px;font-weight:500}
-.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid rgba(0,0,0,.12);font-size:15px}
-.row .v{color:#6b665c;font-size:13px}
-.row button{font:inherit;border:1px solid #999;background:#fff;border-radius:8px;padding:6px 10px}
-.row button.on{background:#1b1a17;color:#fff}
-.feed{margin-top:14px}
-.card{position:relative;background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:8px;touch-action:none;user-select:none;transition:transform calc(320ms * var(--k,1)) cubic-bezier(.22,1,.36,1);box-shadow:0 1px 2px rgba(0,0,0,.08)}
-.card.drag{transition:none}
-.card b{display:block;font-size:15px}
-.card span{font-size:12px;color:#6b665c}
-.card .star{position:absolute;right:12px;top:12px;font-size:12px;color:#b8322a}
-.hint{font-size:12px;color:#8a8478;margin:6px 0}
-.toast{position:absolute;left:18px;right:18px;bottom:24px;background:#1b1a17;color:#fff;padding:10px 14px;border-radius:10px;font-size:13px}
-.app.rm *{transition-duration:1ms!important;animation-duration:1ms!important}
-.backdrop{position:absolute;inset:0;background:rgba(20,18,14,0);transition:background calc(380ms * var(--k,1)) ease}
-.backdrop.in{background:rgba(20,18,14,.35)}
-.detail{position:absolute;left:0;top:0;width:354px;height:70px;background:#fff;border-radius:12px;transform-origin:0 0;transition:transform calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),border-radius calc(420ms * var(--k,1));overflow:hidden;padding:16px}
-.detail.in{border-radius:0}
-.detail .back{margin-top:12px;padding:8px 14px;border:1px solid #999;border-radius:8px;background:#fff;font:inherit}
+/* S00 = WIRING REFERENCE ONLY. The visuals here are deliberately plain; copy the bindings, never the look. */
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;background:#f4f4f6}
+.app.rm *,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.s00-env{position:absolute;inset:0;opacity:.9}
+.app[data-skin="cotton"] .s00-env{background:linear-gradient(160deg,#fbe1ec,#ececf4 50%,#d3edf3)}
+.app[data-skin="halo"] .s00-env{background:radial-gradient(80% 60% at 80% 0,#ff8a3d 0,#dbba95 45%,#d0bce1 100%)}
+.app[data-skin="sunset"] .s00-env{background:linear-gradient(180deg,#ff7a33,#ffc53d 50%,#33a0ff)}
+/* surfaces: one absolutely positioned page per surface; classes from c.nav.cls.<surface> = is-top|is-under|is-leaving + ph-enter|ph-in|ph-idle|ph-exit + dir-fwd|dir-back|dir-swap|dir-root */
+.s00-pg{position:absolute;left:0;right:0;top:0;bottom:64px;display:flex;flex-direction:column;background:rgba(255,255,255,.86);transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
+.s00-pg.is-top.ph-enter.dir-fwd{transform:translateX(100%)}
+.s00-pg.is-top.ph-exit{transform:translateX(100%)}
+.s00-pg.is-under{transform:translateX(-24%);opacity:.6}
+.s00-pg.is-under.ph-exit{transform:none;opacity:1}
+.s00-pg.is-under.ph-idle{visibility:hidden}
+.s00-pg.is-top.ph-enter.dir-root,.s00-pg.is-top.ph-enter.dir-swap{opacity:0}
+.s00-pg.is-leaving{opacity:0}
+/* header: --hc (0..1) is written by c.nav.onScroll on the scroller, its [data-surface] and [data-header]; interpolate 30 → 18 continuously */
+.s00-hd{flex:0 0 auto;padding:14px 20px 8px;display:grid;grid-template-columns:44px 1fr 44px;align-items:center;min-height:48px}
+.s00-hd .t{grid-column:1 / -1;font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;transform:translate(calc(var(--hc,0) * 0px),0);transition:none}
+.s00-hd .m{grid-column:1 / -1;font-size:14px;color:#535b70;opacity:calc(1 - var(--hc,0))}
+.s00-sc{flex:1 1 auto;overflow:auto;padding:0 20px calc(24px + var(--kb,0px))}
+.s00-row{display:flex;justify-content:space-between;gap:12px;padding:14px 0;border-top:1px solid rgba(20,22,31,.1);font-size:16px}
+.s00-row span:last-child{color:#535b70;font-size:15px;text-align:right}
+.s00-btn{font:inherit;font-size:15px;border:1px solid rgba(20,22,31,.2);background:#fff;border-radius:10px;padding:8px 12px}
+.s00-cta{display:block;width:min(100%,280px);height:48px;margin:18px auto 0;border:0;border-radius:24px;font:500 15px "Noto Sans SC";color:#fff;background:#4553BE}
+.s00-cta:active{transform:scale(.958)}
+.s00-in{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:10px;margin:6px 0}
+.s00-err{color:#DA3A52;font-size:13px;min-height:18px}
+.s00-nav{position:absolute;left:0;right:0;bottom:0;height:64px;display:flex;background:#fff;border-top:1px solid rgba(20,22,31,.1)}
+.s00-nav button{flex:1;border:0;background:none;font:inherit;font-size:13px;color:#535b70}
+.s00-nav button.on{color:#14161F;font-weight:700}
+.s00-nav button.off{opacity:.45}
+.s00-feed-row{position:relative;background:#fff;border-radius:12px;padding:12px 14px;margin:8px 0;touch-action:pan-y;user-select:none;transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.9,.3,1.04)}
+.s00-feed-row.is-drag{transition:none}
+.s00-feed-row.is-wrong{background:#eee}
+.s00-toast{position:absolute;left:20px;right:20px;bottom:calc(80px + var(--kb,0px));background:rgba(16,18,30,.92);color:#F8F9FF;padding:12px 16px;border-radius:12px;font-size:14px;z-index:40}
+.s00-sheet{position:absolute;inset:0;background:rgba(12,14,26,.3);display:flex;align-items:flex-end;z-index:50}
+.s00-sheet .b{background:#fff;width:100%;padding:20px 20px calc(24px + var(--kb,0px));border-radius:20px 20px 0 0}
+.s00-sys{position:absolute;inset:0;background:rgba(0,0,0,.25);display:flex;align-items:center;justify-content:center;z-index:60}
+.s00-sys .b{width:270px;background:rgba(245,245,247,.97);border-radius:14px;text-align:center;font-family:-apple-system,"PingFang SC",sans-serif}
+.s00-sys .b p{margin:0;padding:16px 16px 4px;font-size:15px;font-weight:600}
+.s00-sys .b small{display:block;padding:0 16px 14px;font-size:13px;color:#555}
+.s00-sys .b div{display:flex;border-top:1px solid rgba(0,0,0,.15)}
+.s00-sys .b button{flex:1;border:0;background:none;padding:11px;font-size:16px;color:#0a64d6}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s00{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <h1>设置 · {{sum.you.name}}</h1>
-      <div class="row"><span>微信 <span class="v">{{sum.wxLabel}}</span></span><button type="button" data-act="save" onClick="{{saveName}}">把称呼改成「阿禾二」</button></div>
-      <div class="row"><span>收藏的局 <span class="v">{{sum.favLabel}}</span></span><span class="v">{{sum.cityLabel}}</span></div>
-      <div class="row"><input data-field="name" placeholder="称呼" style="font:inherit;padding:6px 8px;border:1px solid #999;border-radius:6px"><span class="v">{{clock}}</span></div>
-      <div class="row"><span>收到邀请提醒</span><button type="button" class="{{inviteOn}}" data-act="toggle" onClick="{{toggleInvite}}">{{inviteLabel}}</button></div>
-      <div class="row"><span>外观 <span class="v">{{sum.appearanceLabel}}</span></span><button type="button" data-act="skin" onClick="{{applySunset}}">应用落日</button></div>
-      <div class="feed">
-        <p class="hint">入局接缝 · 右滑收藏 / 左滑取消（阈值 70px）· 共 {{feed.count}} 个局 · 收藏 {{feed.favCount}}</p>
-        <sc-for list="{{feed.rows}}" as="e" hint-placeholder-count="3">
-          <div class="card {{e.cls}}" data-rid="{{e.id}}" style="transform:translateX({{e.dx}}px)" onPointerDown="{{e.down}}" onPointerMove="{{e.move}}" onPointerUp="{{e.up}}" onPointerCancel="{{e.up}}" onClick="{{e.open}}"><b>{{e.title}}</b><span>{{e.when.zh}} · {{e.place.hood}} · {{e.host}}</span><sc-if value="{{e.fav}}" hint-placeholder-val="{{false}}"><i class="star">已收藏</i></sc-if></div>
-        </sc-for>
-      </div>
-      <sc-if value="{{detail.on}}" hint-placeholder-val="{{false}}">
-        <div class="backdrop {{detail.phase}}" onClick="{{detail.close}}"></div>
-        <div class="detail {{detail.phase}} s00-over" style="{{detail.style}}"><b>{{detail.title}}</b><p class="hint">{{detail.rule}}</p><button type="button" class="back" data-act="back" onClick="{{detail.close}}">返回</button></div>
+    <div class="app s00{{panel.rootCls}}{{c.nav.rootCls}}{{rmUserCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+      <div class="s00-env"></div>
+
+      <!-- HOME (settings root). Every surface: sc-if on c.nav.on.X, class c.nav.cls.X, data-surface, a data-scroller with c.nav.onScroll, a data-header -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="s00-pg {{c.nav.cls.home}}" data-surface="home">
+          <header class="s00-hd" data-header><div class="t">设置</div><div class="m">{{c.attCount}} 项需要处理 · {{c.sum.cityLabel}}</div></header>
+          <div class="s00-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+            <p style="font-size:30px;margin:8px 0 2px">{{c.you.name}}</p>
+            <p style="margin:0 0 12px;color:#535b70">{{c.you.wxLabel}} · {{c.you.email}} {{c.you.emailLabel}}</p>
+            <sc-for list="{{c.att}}" as="a" hint-placeholder-count="2"><div class="s00-row" data-origin="{{a.key}}" onClick="{{a.open}}"><span>{{a.label}} · {{a.title}}</span><span>{{a.status}}</span></div></sc-for>
+            <div class="s00-row" data-origin="profile" onClick="{{c.nav.go.profile}}"><span>个人资料</span><span>{{c.you.name}} · {{c.you.emailLabel}}</span></div>
+            <div class="s00-row" data-origin="favorites" onClick="{{c.nav.go.favorites}}"><span>收藏的局</span><span>{{c.sum.favLabel}}</span></div>
+            <div class="s00-row" data-origin="city" onClick="{{c.nav.go.city}}"><span>默认浏览城市</span><span>{{c.sum.cityLabel}}</span></div>
+            <div class="s00-row" data-origin="notify" onClick="{{c.nav.go.notify}}"><span>通知与提醒</span><span>{{c.sum.notifyLabel}}</span></div>
+            <div class="s00-row" data-origin="appearance" onClick="{{c.nav.go.appearance}}"><span>外观与动态</span><span>{{c.sum.appearanceLabel}}</span></div>
+            <div class="s00-row" data-origin="records" onClick="{{c.nav.go.records}}"><span>我的记录</span><span>{{c.sum.recordLabel}}</span></div>
+            <div class="s00-row" data-origin="reports" onClick="{{c.nav.go.reports}}"><span>我的举报</span><span>{{c.sum.reportLabel}}</span></div>
+            <div class="s00-row" data-origin="help" onClick="{{c.nav.go.help}}"><span>帮助与反馈</span><span>18 条约定</span></div>
+            <div class="s00-row" data-origin="privacy" onClick="{{c.nav.go.privacy}}"><span>隐私与资料可见性</span><span></span></div>
+            <div class="s00-row" data-origin="account" onClick="{{c.nav.go.account}}"><span>账户与本机数据</span><span>{{c.sum.sessionLabel}}</span></div>
+            <div class="s00-row" data-origin="about" onClick="{{c.nav.go.about}}"><span>关于与规则</span><span></span></div>
+          </div>
+        </section>
       </sc-if>
-      <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div class="toast">{{toast}}</div></sc-if>
+
+      <!-- PROFILE (read) -->
+      <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.profile}}" data-surface="profile">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">个人资料</div></header>
+          <div class="s00-sc" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+            <div class="s00-row"><span>称呼</span><span>{{c.you.name}}<sc-if value="{{c.you.savedName}}"> · 刚更新</sc-if></span></div>
+            <div class="s00-row"><span>微信号</span><span>{{c.you.wxLabel}} <button type="button" class="s00-btn" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></span></div>
+            <sc-if value="{{c.you.copyFail}}"><p class="s00-err">长按复制：{{c.you.copyFail}}</p></sc-if>
+            <div class="s00-row"><span>邮箱</span><span>{{c.you.email}} · {{c.you.emailLabel}}</span></div>
+            <p style="font-size:14px;color:#535b70">{{c.pf.snapshotNote}}</p>
+            <button type="button" class="s00-cta" data-act="edit" data-origin="edit" onClick="{{c.nav.go.profile-edit}}">编辑资料</button>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- PROFILE EDIT: c.pf.* (inputs data-field=name|wx|email|code; primary action data-act=save). Bottom actions sit above var(--kb). -->
+      <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="cancel" onClick="{{c.pf.cancel}}">取消</button><div class="t">编辑资料</div></header>
+          <div class="s00-sc" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+            <label>怎么称呼（{{c.pf.nameCount}}）<input class="s00-in" data-field="name" value="{{c.pf.name}}" onInput="{{c.pf.onName}}"></label><div class="s00-err">{{c.pf.err.name}}</div>
+            <label>微信号<input class="s00-in" data-field="wx" value="{{c.pf.wx}}" onInput="{{c.pf.onWx}}"></label><div class="s00-err">{{c.pf.err.wx}}</div>
+            <label>工作 / 学校邮箱（可空）<input class="s00-in" data-field="email" type="email" value="{{c.pf.email}}" onInput="{{c.pf.onEmail}}"></label><div class="s00-err">{{c.pf.err.email}}</div>
+            <sc-if value="{{c.pf.needCode}}">
+              <sc-if value="{{c.pf.codeNone}}"><button type="button" class="s00-btn" data-act="send" onClick="{{c.pf.sendCode}}">发送验证码</button></sc-if>
+              <sc-if value="{{c.pf.codeSent}}"><input class="s00-in" data-field="code" inputmode="numeric" value="{{c.pf.code}}" onInput="{{c.pf.onCode}}" onKeyDown="{{c.pf.onKeyCode}}"><button type="button" class="s00-btn" data-act="verify" onClick="{{c.pf.verify}}">验证</button> <button type="button" class="s00-btn" data-act="resend" onClick="{{c.pf.resend}}" disabled="{{c.pf.resendLeft}}">{{c.pf.resendLabel}}</button></sc-if>
+              <sc-if value="{{c.pf.codeExpired}}"><p class="s00-err">{{c.pf.err.code}}</p><button type="button" class="s00-btn" data-act="resend" onClick="{{c.pf.resend}}">重新发送</button></sc-if>
+              <div class="s00-err">{{c.pf.err.code}}</div>
+              <p style="font-size:13px;color:#535b70">{{c.pf.codeNote}}</p>
+            </sc-if>
+            <sc-if value="{{c.pf.codeVerified}}"><p style="font-size:14px;color:#0E9B76">{{c.pf.verifiedText}}</p></sc-if>
+            <sc-if value="{{c.pf.failed}}"><p class="s00-err">{{c.pf.failText}}</p></sc-if>
+            <button type="button" class="s00-cta" data-act="save" onClick="{{c.pf.save}}">{{c.pf.saveLabel}}</button>
+            <p style="font-size:13px;color:#535b70">{{c.pf.emailHint}}</p>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- FAVORITES / DETAIL -->
+      <sc-if value="{{c.nav.on.favorites}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.favorites}}" data-surface="favorites">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">收藏的局</div></header>
+          <div class="s00-sc" data-scroller="favorites" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.fav.empty}}"><p>{{c.fav.emptyCopy.title}} {{c.fav.emptyCopy.body}}</p><button type="button" class="s00-btn" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button></sc-if>
+            <sc-for list="{{c.fav.rows}}" as="r" hint-placeholder-count="3"><div class="s00-row" data-rid="{{r.id}}" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span>{{r.title}} · {{r.when.zh}} · {{r.relLabel}}</span><span><button type="button" class="s00-btn" data-act="unfav" onClick="{{r.remove}}">拿出</button></span></div></sc-for>
+            <sc-if value="{{c.fav.undo.on}}"><p>{{c.fav.undo.text}} <button type="button" class="s00-btn" data-act="undo" onClick="{{c.fav.undo.act}}">{{c.fav.undo.label}}</button></p></sc-if>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.favorite-detail}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.favorite-detail}}" data-surface="favorite-detail" style="{{c.nav.fromStyle}}">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">{{c.favDetail.title}}</div></header>
+          <div class="s00-sc" data-scroller="favorite-detail" onScroll="{{c.nav.onScroll}}"><p>{{c.favDetail.when.zh}} · {{c.favDetail.place.full}} · 局主 {{c.favDetail.host}}</p><p>{{c.favDetail.joinedLabel}} · {{c.favDetail.hostWxRule}}</p><button type="button" class="s00-btn" data-act="fav" onClick="{{c.favDetail.toggleFav}}">{{c.favDetail.favLabel}}</button></div>
+        </section>
+      </sc-if>
+
+      <!-- CITY / NOTIFY / APPEARANCE -->
+      <sc-if value="{{c.nav.on.city}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.city}}" data-surface="city">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">默认浏览城市</div></header>
+          <div class="s00-sc" data-scroller="city" onScroll="{{c.nav.onScroll}}"><input class="s00-in" data-field="search" placeholder="搜索城市" value="{{c.city.q}}" onInput="{{c.city.onQ}}">
+            <sc-if value="{{c.city.none}}"><p>{{c.city.noResult}} <button type="button" class="s00-btn" onClick="{{c.city.clearQ}}">{{c.city.retry}}</button></p></sc-if>
+            <sc-for list="{{c.city.list}}" as="x" hint-placeholder-count="3"><div class="s00-row {{x.cls}}" data-rid="{{x.key}}" onClick="{{x.pick}}"><span>{{x.name}}</span><span>{{x.tzLabel}}</span></div></sc-for>
+            <p style="font-size:13px;color:#535b70">{{c.city.scope}}</p></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.notify}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.notify}}" data-surface="notify">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">通知与提醒</div></header>
+          <div class="s00-sc" data-scroller="notify" onScroll="{{c.nav.onScroll}}">
+            <p><b>{{c.notify.deliverLabel}}</b></p><p>{{c.notify.permCopy.title}} — {{c.notify.permCopy.body}}</p>
+            <sc-if value="{{c.notify.isDefault}}"><button type="button" class="s00-cta" data-act="request" onClick="{{c.notify.request}}">开启提醒</button></sc-if>
+            <p>{{c.notify.serviceCopy}}</p>
+            <sc-for list="{{c.notify.cats}}" as="x" hint-placeholder-count="6"><div class="s00-row" role="switch" aria-checked="{{x.aria}}" data-act="toggle" data-rid="{{x.key}}" onClick="{{x.toggle}}"><span>{{x.label}}</span><span>{{x.on}}</span></div></sc-for>
+            <p style="font-size:13px;color:#535b70">{{c.notify.prefHint}}</p></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.appearance}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.appearance}}" data-surface="appearance">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">外观与动态</div></header>
+          <div class="s00-sc" data-scroller="appearance" onScroll="{{c.nav.onScroll}}">
+            <sc-for list="{{c.skin.list}}" as="x" hint-placeholder-count="3"><div class="s00-row {{x.cls}}" data-act="preview" data-rid="{{x.key}}" onClick="{{x.pick}}"><span>{{x.name}} {{x.en}}</span><span>{{x.line}}</span></div></sc-for>
+            <sc-if value="{{c.skin.previewing}}"><button type="button" class="s00-cta" data-act="apply" onClick="{{c.skin.apply}}">{{c.skin.applyLabel}}</button><button type="button" class="s00-btn" data-act="cancel" onClick="{{c.skin.cancel}}">取消预览</button></sc-if>
+            <div class="s00-row" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" onClick="{{c.skin.rmToggle}}"><span>减少动态</span><span>{{c.skin.rmLine}}</span></div></div>
+        </section>
+      </sc-if>
+
+      <!-- RECORDS / RECORD DETAIL / FORMS (record-supplement, record-dispute, record-appeal, report-supplement, feedback, seam-report all use c.form) -->
+      <sc-if value="{{c.nav.on.records}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.records}}" data-surface="records">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">我的记录</div></header>
+          <div class="s00-sc" data-scroller="records" onScroll="{{c.nav.onScroll}}"><p style="font-size:13px">{{c.recs.help}}</p>
+            <sc-if value="{{c.recs.empty}}"><p>{{c.recs.emptyText}}</p></sc-if>
+            <sc-for list="{{c.recs.rows}}" as="r" hint-placeholder-count="3"><div class="s00-row" data-rid="{{r.id}}" onClick="{{r.open}}"><span>{{r.label}} · {{r.title}}</span><span>{{r.statusLabel}}</span></div></sc-for></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.record-detail}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.record-detail}}" data-surface="record-detail">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">{{c.rec.label}}</div></header>
+          <div class="s00-sc" data-scroller="record-detail" onScroll="{{c.nav.onScroll}}"><p>{{c.rec.title}} · {{c.rec.when.zh}} · {{c.rec.statusLabel}} · {{c.rec.quotaLabel}}</p>
+            <sc-for list="{{c.rec.supplementRows}}" as="x" hint-placeholder-count="1"><p>补充：{{x.text}}（{{x.atText}}）{{x.materialsText}}</p></sc-for>
+            <sc-for list="{{c.rec.appealRows}}" as="x" hint-placeholder-count="1"><p>{{x.kindLabel}}：{{x.reason}} · {{x.statusLabel}}</p></sc-for>
+            <button type="button" class="s00-btn" data-act="supplement" onClick="{{c.rec.goSupplement}}">补充说明</button>
+            <sc-if value="{{c.rec.goDispute}}"><button type="button" class="s00-btn" data-act="dispute" onClick="{{c.rec.goDispute}}">提出出席异议</button></sc-if>
+            <sc-if value="{{c.rec.goAppeal}}"><button type="button" class="s00-btn" data-act="appeal" onClick="{{c.rec.goAppeal}}">补充与申诉</button></sc-if></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.form.on}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg is-top {{c.nav.cls.record-supplement}}{{c.nav.cls.record-dispute}}{{c.nav.cls.record-appeal}}{{c.nav.cls.report-supplement}}{{c.nav.cls.feedback}}{{c.nav.cls.seam-report}}" data-surface="form">
+          <header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="cancel" onClick="{{c.nav.back}}">取消</button><div class="t">{{c.form.title}}</div></header>
+          <div class="s00-sc" data-scroller="form" onScroll="{{c.nav.onScroll}}">
+            <sc-if value="{{c.form.needWho}}"><p>举报对象：<sc-for list="{{c.form.who}}" as="w" hint-placeholder-count="3"><button type="button" class="s00-btn" aria-pressed="{{w.on}}" onClick="{{w.toggle}}">{{w.label}}{{w.on}}</button></sc-for></p><div class="s00-err">{{c.form.err.who}}</div></sc-if>
+            <label>{{c.form.label}}<textarea class="s00-in" data-field="text" rows="5" placeholder="{{c.form.placeholder}}" onInput="{{c.form.onInput}}">{{c.form.text}}</textarea></label><div class="s00-err">{{c.form.err.text}}</div>
+            <sc-if value="{{c.form.canFiles}}"><input type="file" multiple onChange="{{c.form.onFiles}}"><sc-for list="{{c.form.files}}" as="x" hint-placeholder-count="1"><p>{{x.name}} · {{x.sizeText}} <button type="button" class="s00-btn" onClick="{{x.remove}}">移除</button></p></sc-for><p style="font-size:13px;color:#535b70">{{c.form.fileNote}}</p></sc-if>
+            <sc-if value="{{c.form.failed}}"><p class="s00-err">{{c.form.failText}}</p></sc-if>
+            <button type="button" class="s00-cta" data-act="submit" onClick="{{c.form.submit}}">{{c.form.submitLabel}}</button></div>
+        </section>
+      </sc-if>
+
+      <!-- REPORTS / DETAIL ; HELP ; PRIVACY ; ACCOUNT ; ABOUT ; RULES -->
+      <sc-if value="{{c.nav.on.reports}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.reports}}" data-surface="reports"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">我的举报</div></header>
+          <div class="s00-sc" data-scroller="reports" onScroll="{{c.nav.onScroll}}"><sc-if value="{{c.reps.empty}}"><p>{{c.reps.emptyText}}</p></sc-if><sc-for list="{{c.reps.rows}}" as="r" hint-placeholder-count="2"><div class="s00-row" data-rid="{{r.id}}" onClick="{{r.open}}"><span>{{r.title}}</span><span>{{r.statusLabel}}</span></div></sc-for><p style="font-size:13px">{{c.reps.note}} {{c.reps.mock}}</p></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.report-detail}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.report-detail}}" data-surface="report-detail"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">{{c.rep.statusLabel}}</div></header>
+          <div class="s00-sc" data-scroller="report-detail" onScroll="{{c.nav.onScroll}}"><p>{{c.rep.title}} · 对象 {{c.rep.whoName}} · 编号 {{c.rep.id}}</p><p>{{c.rep.text}}</p><sc-for list="{{c.rep.timelineRows}}" as="t" hint-placeholder-count="3"><p>{{t.label}} {{t.atText}} {{t.text}}</p></sc-for><sc-if value="{{c.rep.goSupplement}}"><button type="button" class="s00-btn" data-act="supplement" onClick="{{c.rep.goSupplement}}">补充材料</button></sc-if></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.help}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.help}}" data-surface="help"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">帮助与反馈</div></header>
+          <div class="s00-sc" data-scroller="help" onScroll="{{c.nav.onScroll}}"><sc-for list="{{c.help.faq}}" as="r" hint-placeholder-count="2"><p><b>{{r.title}}</b> {{r.body}}</p></sc-for><button type="button" class="s00-btn" onClick="{{c.help.goFeedback}}">写反馈</button> <button type="button" class="s00-btn" onClick="{{c.help.goReports}}">我的举报</button> <button type="button" class="s00-btn" onClick="{{c.help.goRules}}">全部约定</button><sc-for list="{{c.help.feedback}}" as="f" hint-placeholder-count="1"><p>{{f.text}} · {{f.statusLabel}} · {{f.localNo}}</p></sc-for></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.privacy}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.privacy}}" data-surface="privacy"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">隐私</div></header>
+          <div class="s00-sc" data-scroller="privacy" onScroll="{{c.nav.onScroll}}"><p>{{c.privacy.lead}}</p><sc-for list="{{c.privacy.general}}" as="g" hint-placeholder-count="3"><p>{{g}}</p></sc-for><sc-for list="{{c.privacy.facts}}" as="f" hint-placeholder-count="3"><p>{{f.title}} · {{f.role}} · {{f.rule}}</p></sc-for></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.account}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.account}}" data-surface="account"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">账户</div></header>
+          <div class="s00-sc" data-scroller="account" onScroll="{{c.nav.onScroll}}"><p>{{c.acct.device}} · 开始于 {{c.acct.startedText}}</p><p>{{c.acct.storageNote}}</p><p>{{c.acct.noAccount}}</p>
+            <sc-if value="{{c.acct.demo}}"><button type="button" class="s00-btn" data-act="end" onClick="{{c.acct.end}}">退出登录（本地演示）</button></sc-if>
+            <sc-if value="{{c.acct.ended}}"><p>已于 {{c.acct.endedText}} 结束本机演示会话</p><button type="button" class="s00-cta" data-act="restart" onClick="{{c.acct.restart}}">重新开始</button></sc-if></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.about}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.about}}" data-surface="about"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">关于</div></header>
+          <div class="s00-sc" data-scroller="about" onScroll="{{c.nav.onScroll}}"><p>{{c.about.version}} · {{c.about.rulesVersion}} · {{c.about.demo}}</p><p>{{c.about.policyNote}}</p><button type="button" class="s00-btn" onClick="{{c.about.goRules}}">参加约定全文</button></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.rules}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.rules}}" data-surface="rules"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">参加约定</div></header>
+          <div class="s00-sc" data-scroller="rules" onScroll="{{c.nav.onScroll}}"><sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3"><h3>{{g.name}} · {{g.line}}</h3><sc-for list="{{g.rules}}" as="r" hint-placeholder-count="3"><p><b>{{r.n}} {{r.title}}</b> {{r.body}}</p></sc-for></sc-for></div></section>
+      </sc-if>
+
+      <!-- SEAMS: 入局 01 feed (swipe), feed detail, 我的局 list -->
+      <sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.seam-feed}}" data-surface="seam-feed"><header class="s00-hd" data-header><div class="t">找局 · {{c.feed.city.name}}</div><div class="m">收藏 {{c.feed.favCount}} · {{c.feed.hintIdle}}</div></header>
+          <div class="s00-sc" data-scroller="seam-feed" onScroll="{{c.nav.onScroll}}"><button type="button" class="s00-btn" aria-pressed="{{c.feed.isAll}}" onClick="{{c.feed.setAll}}">全部</button> <button type="button" class="s00-btn" aria-pressed="{{c.feed.isFav}}" onClick="{{c.feed.setFav}}">只看收藏</button>
+            <sc-if value="{{c.feed.empty}}"><p>{{c.feed.emptyText}}</p></sc-if>
+            <sc-for list="{{c.feed.rows}}" as="r" hint-placeholder-count="3"><div class="s00-feed-row {{r.cls}}" data-rid="{{r.id}}" tabindex="0" style="{{r.style}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}"><b>{{r.star}} {{r.title}}</b><br><small>{{r.when.zh}} · {{r.place.hood}} · {{r.hint}}</small></div></sc-for></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.seam-feed-detail}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.seam-feed-detail}}" data-surface="seam-feed-detail"><header class="s00-hd" data-header><button type="button" class="s00-btn" data-act="back" onClick="{{c.nav.back}}">返回</button><div class="t">{{c.feedDetail.title}}</div></header>
+          <div class="s00-sc" data-scroller="seam-feed-detail" onScroll="{{c.nav.onScroll}}"><p>{{c.feedDetail.when.zh}} · {{c.feedDetail.hostWxRule}}</p><button type="button" class="s00-btn" data-act="fav" onClick="{{c.feedDetail.toggleFav}}">{{c.feedDetail.favLabel}}</button><p>{{c.feedDetail.applyNote}}</p></div></section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.seam-mine}}" hint-placeholder-val="{{false}}">
+        <section class="s00-pg {{c.nav.cls.seam-mine}}" data-surface="seam-mine"><header class="s00-hd" data-header><div class="t">我的局</div></header>
+          <div class="s00-sc" data-scroller="seam-mine" onScroll="{{c.nav.onScroll}}"><sc-for list="{{c.mine.current}}" as="r" hint-placeholder-count="3"><div class="s00-row" data-rid="{{r.id}}"><span>{{r.title}} · {{r.label}}</span><span><button type="button" class="s00-btn" data-act="fav" onClick="{{r.toggleFav}}">{{r.star}}</button></span></div></sc-for>
+            <sc-for list="{{c.mine.history}}" as="r" hint-placeholder-count="3"><div class="s00-row" data-rid="{{r.id}}"><span>{{r.title}} · {{r.label}} {{r.receipt}}</span><span><button type="button" class="s00-btn" data-act="report" onClick="{{r.report}}">举报</button></span></div></sc-for></div></section>
+      </sc-if>
+
+      <nav class="s00-nav" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for></nav>
+
+      <sc-if value="{{c.notify.sys.on}}"><div class="s00-sys s00-over"><div class="b"><p>{{c.notify.sys.title}}</p><small>{{c.notify.sys.body}}</small><div><button type="button" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button><button type="button" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button></div></div></div></sc-if>
+      <sc-if value="{{c.sheet.on}}"><div class="s00-sheet s00-over"><div class="b"><b>{{c.sheet.title}}</b><p>{{c.sheet.body}}</p>
+        <sc-if value="{{c.sheet.unsaved}}"><button type="button" class="s00-btn" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button> <button type="button" class="s00-btn" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></sc-if>
+        <sc-if value="{{c.sheet.accountEnd}}"><button type="button" class="s00-btn" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button> <button type="button" class="s00-btn" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></sc-if></div></div></sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s00-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
   <!-- @panel -->
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["home","dense"],"default":"home"},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); }
-  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { drag: null, dx: {}, detail: null, toast: '' }); }
-  applyJump(e) { if (e.open.surface === 'seam-feed-detail' || e.open.surface === 'favorite-detail') this.setState({ detail: { id: e.open.id, phase: 'in', from: { x: 18, y: 300, w: 354, h: 70 } } }); }
-  say(msg) { this.setState({ toast: msg }); this.holdKey('toast', 2200, () => this.setState({ toast: '' })); }
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 320, back: 280, root: 300, swap: 280 }; }
+  initialState(variant) { return JUS.baseState(variant); }
   renderVals() {
-    const s = this.state, d = s.data; const panel = this.panelVals(); panel.show = this.props.panel !== false;
-    const sum = JUS.derive.summary(d); const feed = JUS.derive.feed(d);
-    const root = this.rootRef.current; const W = root ? root.clientWidth : 390, Hh = root ? root.clientHeight : 844;
-    const det = s.detail; const full = 'transform:translate(0px,0px) scale(1,1);width:' + W + 'px;height:' + Hh + 'px';
-    const at = det ? 'transform:translate(' + det.from.x + 'px,' + det.from.y + 'px) scale(' + (det.from.w / W) + ',' + (det.from.h / Hh) + ');width:' + W + 'px;height:' + Hh + 'px' : '';
-    const detRow = det ? feed.rows.find(r => r.id === det.id) || JUS.derive.favorite(d, det.id) : null;
-    return {
-      panel, rootRef: this.rootRef, sum, toast: s.toast, skin: d.appearance.skin, clock: '时钟 +' + Math.round((JUS.now() - JUS.NOW) / 60000) + ' 分钟',
-      inviteOn: d.notify.prefs.invite ? 'on' : '', inviteLabel: d.notify.prefs.invite ? '开' : '关',
-      toggleInvite: () => { const r = this.act('setNotifyPref', { key: 'invite', on: !d.notify.prefs.invite }); if (r.effect.type === 'error') this.say(r.effect.message); },
-      saveName: () => { const r = this.act('saveProfile', { name: '阿禾二', wx: d.you.wx, email: d.you.email }); this.say(r.effect.type === 'error' ? r.effect.message : '已保存'); },
-      applySunset: () => this.motion('skin', () => { this.act('applySkin', { skin: 'sunset' }); }),
-      feed: { count: feed.count, favCount: feed.favCount, rows: feed.rows.map(r => ({ ...r, dx: s.dx[r.id] || 0, cls: s.drag && s.drag.id === r.id ? 'drag' : '',
-        down: (ev) => { ev.currentTarget.setPointerCapture && ev.currentTarget.setPointerCapture(ev.pointerId); this.setState({ drag: { id: r.id, x: ev.clientX, y: ev.clientY, moved: false } }); },
-        move: (ev) => { const g = this.state.drag; if (!g || g.id !== r.id) return; const dx = ev.clientX - g.x; if (Math.abs(dx) > 6) g.moved = true; this.setState(st => ({ dx: Object.assign({}, st.dx, { [r.id]: dx }) })); },
-        up: (ev) => { const g = this.state.drag; if (!g || g.id !== r.id) return; const dx = (this.state.dx[r.id] || 0); let msg = '';
-          if (dx > 70) { const res = this.act('favorite', { eventId: r.id }); msg = res.effect.type === 'error' ? res.effect.message : res.effect.already ? '已经在收藏里' : '已收藏 · 共 ' + res.effect.count + ' 个'; }
-          else if (dx < -70) { const res = this.act('unfavorite', { eventId: r.id }); msg = res.effect.type === 'error' ? res.effect.message : res.effect.already ? '本来就没收藏' : '已取消收藏' + (res.effect.last ? ' · 收藏夹空了' : ''); }
-          this.setState(st => ({ drag: null, dx: Object.assign({}, st.dx, { [r.id]: 0 }) })); if (msg) this.say(msg); },
-        open: (ev) => { if (this.state.drag && this.state.drag.moved) return; const rect = JUS.fx ? null : null; const root = this.rootRef.current; const rr = JU.fx.rectIn(ev.currentTarget, root); this.motion('open-detail', () => { this.setState({ detail: { id: r.id, phase: 'start', from: rr } }); this.after(16, () => this.setState(st => ({ detail: Object.assign({}, st.detail, { phase: 'in' }) }))); }); }
-      })) },
-      detail: det ? { on: true, phase: det.phase, style: det.phase === 'in' ? full : at, title: detRow ? detRow.title : det.id, rule: detRow && detRow.canSeeHostWx ? '局主微信可见：' + detRow.hostWx : JUS.COPY.contactRules.beforeFormed + ' · 未报名看不到局主微信', close: () => { this.setState(st => ({ detail: Object.assign({}, st.detail, { phase: 'out' }) })); this.after(430, () => this.setState({ detail: null })); } } : { on: false }
-    };
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals();
+    return { panel, rootRef: this.rootRef, c, rmUserCls: this.state.data.appearance.reduceMotion ? ' rm-user' : '' };
   }
 }
 JUS.mixin(Component);

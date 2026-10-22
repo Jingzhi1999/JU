@@ -11,6 +11,7 @@
   var JUS = global.JUS = global.JUS || {};
   JUS.mixin = function (C) {
     var p = C.prototype;
+    if (JUS.ctlInstall) JUS.ctlInstall(C);   /* shared behaviour controller (jus-ctl.js): navigation, forms, seams, index mapping */
     p.reviewInit = function (concept) {
       this.concept = concept; this._timers = []; this.lastMotion = null; this.rootRef = { current: null };
       var mq = (typeof global.matchMedia === 'function') ? global.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -76,7 +77,7 @@
       this.setState(st);
       var self = this; this.after(30, function () { self.applyJump(e); });
     };
-    if (!p.applyJump) p.applyJump = function (e) { if (this.openSurface) this.openSurface(e.open); };
+    if (!p.applyJump) p.applyJump = function (e) { if (this.ctlJump) this.ctlJump(e); else if (this.openSurface) this.openSurface(e.open); };
     p.panelVals = function () {
       var self = this, s = this.state, r = s.review;
       var groups = []; var byGroup = {};

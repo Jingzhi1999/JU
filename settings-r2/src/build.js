@@ -13,7 +13,7 @@ const js = (s) => JSON.stringify(s).split('<').join('\\u003c');
 const metaAll = JSON.parse(read(process.env.JUS_CONCEPTS || 'settings-r2/concepts/concepts.json'));
 const ONLY = (process.env.JUS_ONLY || '').split(',').filter(Boolean);   // JUS_ONLY=SC05,SC02 builds only finished concepts into the shared outputs
 const meta = metaAll.filter(c => { if (ONLY.length && ONLY.indexOf(c.code) < 0) return false; const ok = exists(`settings-r2/concepts/src/${c.file}`); if (!ok) console.warn('skip (no source yet):', c.file); return ok; });
-const core = ['src/core/ju-fx.js', 'settings-r2/src/core/jus-data.js', 'settings-r2/src/core/jus-review.js'].filter(exists).map(read).join('\n');
+const core = ['src/core/ju-fx.js', 'settings-r2/src/core/jus-data.js', 'settings-r2/src/core/jus-ctl.js', 'settings-r2/src/core/jus-review.js'].filter(exists).map(read).join('\n');
 const panelHtml = read('settings-r2/src/core/jus-panel.html');
 const panelCss = read('settings-r2/src/core/jus-panel.css');
 const fxCss = read('src/core/ju-fx.css');

@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S04 海报块</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ---------- S04 海报块：每个分组是一整幅通栏平涂色块；块既是入口也是页面。一个光源（无）、一种表面（平涂）、一种边（20px 圆角）。 ---------- */
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;background:var(--ground);--k:1;--ink:#14161F;--body:#252b3a;--sec:#535b70;--blue:#4553BE;--err:#DA3A52;--ok:#0E9B76;line-height:1.4;-webkit-font-smoothing:antialiased;font-synthesis:none;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.app *{box-sizing:border-box}
+.app button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:inherit}
+.app input{font:inherit;color:inherit}
+/* ---- scroll container + collapsing header (30 → 18 continuous, driven by --st / --sp set on scroll) ---- */
+.s04-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;--st:0px;--sp:0;--tx:0px;scrollbar-width:none;overscroll-behavior:contain}
+.s04-scroll::-webkit-scrollbar{display:none}
+.s04-tools{position:sticky;top:0;z-index:3;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--pbg);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s04-ju{font-weight:700;font-size:18px;letter-spacing:.04em}
+.s04-tb{font-size:15px;font-weight:500;height:36px;display:inline-flex;align-items:center;gap:4px;padding:0 4px;border-radius:10px}
+.s04-tb.r{padding:0 12px;background:rgba(20,22,31,.08)}
+.s04-page.white .s04-tb.r{background:rgba(255,255,255,.16)}
+.s04-ctitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:500;white-space:nowrap;max-width:54%;overflow:hidden;text-overflow:ellipsis;opacity:clamp(0,calc((var(--sp) - .72) / .28),1);pointer-events:none}
+.s04-page .s04-ctitle{font-weight:700}
+.s04-h1{position:relative;z-index:4;margin:4px 20px 0;font-size:30px;font-weight:500;line-height:1.25;transform-origin:0 0;transform:translate(calc(var(--sp) * var(--tx)),calc(var(--st) - var(--sp) * 39.25px)) scale(calc(1 - .4 * var(--sp)));opacity:clamp(0,calc(1 - (var(--sp) - .72) / .28),1);overflow-wrap:anywhere;pointer-events:none}
+.s04-page .s04-h1{font-weight:700;letter-spacing:-.005em}
+.s04-meta{margin:2px 20px 0;font-size:14px;line-height:1.5;color:var(--psec);opacity:clamp(0,calc(1 - var(--sp) * 1.8),1);overflow-wrap:anywhere}
+/* ---- home: poster blocks ---- */
+.s04-blocks{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:16px 12px calc(80px + var(--kb,0px))}
+.s04-block{grid-column:span 6;position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:18px 20px 18px;border-radius:20px;background:var(--bc);color:var(--fg);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1),transform calc(120ms * var(--k,1)) ease,filter calc(120ms * var(--k,1)) ease}
+.s04-block:active{transform:scale(.985);filter:brightness(.95)}
+.s04-block.hero{min-height:192px;padding-top:20px}
+.s04-block.small{grid-column:span 2;min-height:96px;padding:14px 16px 14px}
+.s04-bt{font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.005em;overflow-wrap:anywhere}
+.s04-block.hero .s04-bt{font-size:32px;line-height:1.2;padding-right:72px}
+.s04-block.small .s04-bt{font-size:22px}
+.s04-bl{position:absolute;right:20px;top:20px;font-size:13px;font-weight:500;color:var(--fg2)}
+.s04-bv{margin-top:16px;font-size:16px;font-weight:500;line-height:1.45;overflow-wrap:anywhere}
+.s04-block.small .s04-bv{font-size:13px;margin-top:8px;color:var(--fg2)}
+/* ---- root nav (bottom, flat) ---- */
+.s04-nav{position:absolute;left:0;right:0;bottom:0;z-index:4;height:64px;padding:6px 12px 18px;display:flex;gap:6px;background:var(--ground);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s04-nav button{flex:1 1 0;height:40px;border-radius:12px;font-size:14px;font-weight:500;color:var(--sec);display:flex;align-items:center;justify-content:center}
+.s04-nav button.on{background:var(--ink);color:#fff}
+/* ---- page = the block grown to full screen (shared element: clip-path inset from the block rect; text never scales non-uniformly) ---- */
+.s04-page{position:absolute;inset:0;z-index:10;background:var(--pc);color:var(--pfg);--pbg:var(--pc);--psec:var(--pfg2);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s04-page.flash{transition:background-color calc(160ms * var(--k,1)) ease}
+.s04-page.in{animation:s04-grow calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s04-page.out{animation:s04-shrink calc(260ms * var(--k,1)) cubic-bezier(.4,0,.7,1) both}
+.s04-page.out.nofx{animation:s04-fadeout calc(200ms * var(--k,1)) ease both}
+@keyframes s04-grow{from{clip-path:inset(var(--cy) var(--cr) var(--cb) var(--cl) round 20px)}to{clip-path:inset(0px 0px 0px 0px round 0px)}}
+@keyframes s04-shrink{from{clip-path:inset(0px 0px 0px 0px round 0px)}to{clip-path:inset(var(--cy) var(--cr) var(--cb) var(--cl) round 20px)}}
+.s04-page.in .s04-h1{animation:s04-tin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s04-page.out .s04-h1{animation:s04-tout calc(260ms * var(--k,1)) cubic-bezier(.4,0,.7,1) both}
+.s04-page.out.scrolled .s04-h1,.s04-page.out.nofx .s04-h1{animation:s04-fadeout calc(120ms * var(--k,1)) ease both}
+@keyframes s04-tin{from{transform:translate(var(--ttx),var(--tty)) scale(var(--tts))}to{transform:translate(0px,0px) scale(1)}}
+@keyframes s04-tout{from{transform:translate(0px,0px) scale(1)}to{transform:translate(var(--ttx),var(--tty)) scale(var(--tts))}}
+.s04-page.in .s04-tools,.s04-page.in .s04-meta,.s04-page.in .s04-body,.s04-page.in .s04-bar{animation:s04-fadein calc(200ms * var(--k,1)) ease calc(120ms * var(--k,1)) both}
+.s04-page.in .s04-ghost{animation:s04-fadeout calc(120ms * var(--k,1)) ease both}
+.s04-page.out .s04-tools,.s04-page.out .s04-meta,.s04-page.out .s04-body,.s04-page.out .s04-bar{animation:s04-fadeout calc(110ms * var(--k,1)) ease both}
+.s04-page.out .s04-ghost{animation:s04-fadein calc(140ms * var(--k,1)) ease calc(100ms * var(--k,1)) both}
+.s04-page.settled .s04-ghost{display:none}
+@keyframes s04-fadein{from{opacity:0}to{opacity:1}}
+@keyframes s04-fadeout{from{opacity:1}to{opacity:0}}
+.s04-ghost{position:absolute;left:var(--gx);top:var(--gy);width:var(--gw);height:var(--gh);padding:var(--gpt) var(--gpx) var(--gpb);display:flex;flex-direction:column;justify-content:flex-end;font-size:var(--gfs,16px);font-weight:500;line-height:1.45;color:var(--gc,var(--pfg));pointer-events:none;z-index:6;overflow-wrap:anywhere}
+.s04-ghost .s04-bl{top:var(--gpt);right:var(--gpx);color:var(--pfg2)}
+/* review scrub: hold the grow / shrink at --frame */
+.scrub .s04-page.in,.scrub .s04-page.in .s04-h1,.scrub .s04-page.in .s04-tools,.scrub .s04-page.in .s04-meta,.scrub .s04-page.in .s04-body,.scrub .s04-page.in .s04-bar{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
+/* ---- page body: paper sub-blocks on the block colour ---- */
+.s04-body{padding:18px 12px calc(40px + var(--kb,0px))}
+.s04-body.withbar{padding-bottom:calc(120px + var(--kb,0px))}
+.s04-sub{position:relative;background:var(--paper);color:var(--ink);border-radius:18px;padding:14px 18px 16px;margin-bottom:8px;transition:box-shadow calc(120ms * var(--k,1)) ease,background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s04-sub.tap{cursor:pointer}
+.s04-sl{font-size:13px;font-weight:500;color:var(--sec)}
+.s04-sv{font-size:20px;font-weight:500;line-height:1.35;margin-top:4px;overflow-wrap:anywhere;padding-right:4px}
+.s04-sv.fresh{animation:s04-fadein calc(200ms * var(--k,1)) ease both}
+.s04-sv.empty{color:var(--sec)}
+.s04-ss{font-size:13px;color:var(--sec);margin-top:4px;line-height:1.5}
+.s04-ss.ok{color:var(--ok);font-weight:500}
+.s04-in{display:block;width:100%;margin-top:4px;font-size:20px;font-weight:500;line-height:1.35;background:transparent;border:0;outline:0;padding:0;color:var(--ink);border-radius:0}
+.s04-in::placeholder{color:#9aa0b0}
+.s04-sub.editing:focus-within{box-shadow:inset 0 0 0 2px var(--ink)}
+.s04-sub.err{box-shadow:inset 0 0 0 2px var(--err)}
+.s04-sub.err:focus-within{box-shadow:inset 0 0 0 2px var(--err)}
+.s04-errline{font-size:13px;font-weight:500;color:var(--err);margin-top:6px}
+.s04-mini{position:absolute;right:12px;top:12px;font-size:13px;font-weight:500;height:32px;padding:0 12px;border-radius:10px;background:var(--ground);color:var(--ink)}
+.s04-pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;border-radius:12px;background:var(--ink);color:#fff;font-size:14px;font-weight:500;margin-top:10px;transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1))}
+.s04-pill:active{transform:scale(.97)}
+.s04-pill.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink);color:var(--ink)}
+.s04-pill[disabled]{opacity:.45;cursor:default}
+.s04-coderow{display:flex;gap:8px;align-items:flex-end;margin-top:2px}
+.s04-coderow .s04-in{letter-spacing:.12em;font-size:24px;line-height:1.3}
+.s04-coderow .s04-pill{margin-top:0;flex:0 0 auto}
+.s04-note{font-size:13px;color:var(--psec);margin:14px 8px 0;line-height:1.55}
+.s04-page.white .s04-note{color:var(--pfg2)}
+.s04-edit-btn{display:flex;align-items:center;justify-content:center;width:100%;height:48px;border-radius:16px;background:var(--ink);color:#fff;font-size:16px;font-weight:500;margin-top:8px;transition:transform calc(120ms * var(--k,1)) ease}
+.s04-edit-btn:active{transform:scale(.985)}
+.s04-failbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border-radius:18px;padding:12px 12px 12px 18px;margin-bottom:8px;box-shadow:inset 0 0 0 2px var(--err)}
+.s04-failbar span{font-size:14px;font-weight:500;color:var(--err)}
+.s04-failbar .s04-pill{margin-top:0;height:36px}
+/* ---- primary confirm CTA (JU blue, only for the main confirmation) ---- */
+.s04-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:5;padding:10px 20px 22px;background:var(--pc);display:flex;justify-content:center;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s04-cta{width:min(100%,280px);height:48px;border-radius:24px;background:var(--blue);color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -2px 0 rgba(0,0,0,.2);transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1)) ease}
+.s04-cta:active{transform:scale(.958)}
+.s04-cta[disabled]{opacity:.62;cursor:default}
+/* ---- appearance page rows (environment = the whole screen; rows are the three hue sets) ---- */
+.s04-env{display:flex;align-items:flex-end;justify-content:space-between;min-height:104px;border-radius:18px;padding:16px 18px;margin-bottom:8px;cursor:pointer;background:var(--ec);color:var(--efg);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1),transform calc(120ms * var(--k,1)) ease}
+.s04-env:active{transform:scale(.985)}
+.s04-env .n{font-size:22px;font-weight:700;line-height:1.2}
+.s04-env .l{font-size:13px;font-weight:500;margin-top:4px;opacity:.8}
+.s04-env .st{font-size:13px;font-weight:500;padding:5px 10px;border-radius:10px;background:rgba(20,22,31,.1)}
+.s04-env.white .st{background:rgba(255,255,255,.2)}
+.s04-env .bands{display:flex;gap:4px;margin-bottom:8px}
+.s04-env .bands i{display:block;width:18px;height:18px;border-radius:6px;background:var(--b)}
+.s04-switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.s04-sw{flex:0 0 auto;width:52px;height:32px;border-radius:16px;background:rgba(20,22,31,.18);position:relative;transition:background-color calc(120ms * var(--k,1)) ease}
+.s04-sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:#fff;transition:transform calc(120ms * var(--k,1)) ease}
+.s04-sw[aria-checked="true"]{background:var(--ink)}
+.s04-sw[aria-checked="true"]::after{transform:translateX(20px)}
+/* ---- confirm sheet (ink block rising from the bottom) + toast ---- */
+.s04-over{position:absolute;inset:0;z-index:20;background:rgba(20,22,31,.34);display:flex;align-items:flex-end;animation:s04-fadein calc(160ms * var(--k,1)) ease both}
+.s04-sheet{width:100%;background:var(--ink);color:#fff;border-radius:24px 24px 0 0;padding:22px 20px calc(26px + var(--kb,0px));animation:s04-up calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes s04-up{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
+.s04-sheet h2{margin:0;font-size:22px;font-weight:700;line-height:1.25}
+.s04-sheet p{margin:6px 0 18px;font-size:14px;color:rgba(255,255,255,.76)}
+.s04-sheet .row{display:flex;gap:8px}
+.s04-sheet .row button{flex:1 1 0;height:48px;border-radius:14px;font-size:16px;font-weight:500;display:flex;align-items:center;justify-content:center}
+.s04-sheet .keep{background:#fff;color:var(--ink)}
+.s04-sheet .discard{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
+.s04-toast{position:absolute;left:50%;bottom:calc(80px + var(--kb,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:#fff;font-size:14px;font-weight:500;padding:10px 16px;border-radius:14px;white-space:nowrap;max-width:calc(100% - 40px);overflow:hidden;text-overflow:ellipsis;animation:s04-up calc(200ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+/* ---- reduced motion (panel .rm / system .rm-sys / user .rm-user): everything settles instantly, results identical ---- */
+.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s04{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};{{palStyle}}" ref="{{rootRef}}" data-skin="{{skin}}">
+      <div class="s04-scroll s04-home" data-surface="home" onScroll="{{onScroll}}">
+        <div class="s04-tools"><span class="s04-ju">JU</span><span class="s04-ctitle">设置</span><span></span></div>
+        <h1 class="s04-h1"><span>设置</span></h1>
+        <p class="s04-meta">{{homeMeta}}</p>
+        <div class="s04-blocks">
+          <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5">
+            <div class="s04-block {{b.cls}}" style="{{b.style}}" data-block="{{b.key}}" role="button" tabindex="0" onClick="{{b.open}}">
+              <div class="s04-bt">{{b.title}}</div>
+              <sc-if value="{{b.label}}" hint-placeholder-val="{{false}}"><div class="s04-bl">{{b.label}}</div></sc-if>
+              <div class="s04-bv"><sc-for list="{{b.values}}" as="v" hint-placeholder-count="2"><div>{{v.t}}</div></sc-for></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <nav class="s04-nav" aria-label="根导航">
+        <button type="button">找局</button><button type="button">开局</button><button type="button">我的局</button><button type="button" class="on" aria-current="page">设置</button>
+      </nav>
+      <sc-if value="{{page.on}}" hint-placeholder-val="{{false}}">
+        <div class="s04-page {{page.cls}}" style="{{page.style}}" data-surface="{{page.surface}}">
+          <div class="s04-scroll" onScroll="{{onScroll}}">
+            <div class="s04-tools">
+              <button type="button" class="s04-tb" data-act="back" onClick="{{page.back}}">← 返回</button>
+              <span class="s04-ctitle">{{page.title}}</span>
+              <sc-if value="{{page.action}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-tb r" data-act="{{page.actionAct}}" onClick="{{page.onAction}}">{{page.action}}</button></sc-if>
+              <sc-if value="{{page.noAction}}" hint-placeholder-val="{{false}}"><span></span></sc-if>
+            </div>
+            <h1 class="s04-h1"><span>{{page.title}}</span></h1>
+            <p class="s04-meta">{{page.meta}}</p>
+            <div class="s04-body {{page.bodyCls}}">
+              <sc-if value="{{prof.on}}" hint-placeholder-val="{{false}}">
+                <sc-if value="{{prof.fail}}" hint-placeholder-val="{{false}}"><div class="s04-failbar"><span>{{prof.fail}}</span><button type="button" class="s04-pill" data-act="retry" onClick="{{prof.retry}}">重试</button></div></sc-if>
+                <sc-for list="{{prof.fields}}" as="f" hint-placeholder-count="3">
+                  <div class="s04-sub {{f.cls}}">
+                    <div class="s04-sl">{{f.label}}</div>
+                    <sc-if value="{{f.input}}" hint-placeholder-val="{{false}}"><input class="s04-in" type="text" data-field="{{f.key}}" value="{{f.value}}" placeholder="{{f.ph}}" inputmode="{{f.mode}}" autocomplete="off" autocapitalize="off" spellcheck="false" onInput="{{f.onInput}}" onFocus="{{onFocus}}"></sc-if>
+                    <sc-if value="{{f.text}}" hint-placeholder-val="{{false}}"><div class="s04-sv {{f.vcls}}">{{f.value}}</div></sc-if>
+                    <sc-if value="{{f.sub}}" hint-placeholder-val="{{false}}"><div class="s04-ss {{f.scls}}">{{f.sub}}</div></sc-if>
+                    <sc-if value="{{f.err}}" hint-placeholder-val="{{false}}"><div class="s04-errline">{{f.err}}</div></sc-if>
+                    <sc-if value="{{f.copy}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-mini" data-act="copy" onClick="{{f.onCopy}}">复制</button></sc-if>
+                  </div>
+                </sc-for>
+                <sc-if value="{{ver.on}}" hint-placeholder-val="{{false}}">
+                  <div class="s04-sub s04-ver {{ver.cls}}">
+                    <div class="s04-sl">邮箱验证</div>
+                    <sc-if value="{{ver.idle}}" hint-placeholder-val="{{false}}"><div class="s04-sv">{{ver.line}}</div><button type="button" class="s04-pill" data-act="request" onClick="{{ver.send}}">发送验证码</button></sc-if>
+                    <sc-if value="{{ver.sent}}" hint-placeholder-val="{{false}}">
+                      <div class="s04-ss">{{ver.line}}</div>
+                      <div class="s04-coderow"><input class="s04-in" type="text" data-field="code" value="{{ver.code}}" placeholder="6 位验证码" inputmode="numeric" maxlength="6" autocomplete="one-time-code" onInput="{{ver.onCode}}" onFocus="{{onFocus}}"><button type="button" class="s04-pill" data-act="verify" onClick="{{ver.verify}}">验证</button></div>
+                      <sc-if value="{{ver.err}}" hint-placeholder-val="{{false}}"><div class="s04-errline">{{ver.err}}</div></sc-if>
+                      <div class="s04-ss">{{ver.resendLine}}</div>
+                      <button type="button" class="s04-pill ghost" data-act="resend" disabled="{{ver.resendDisabled}}" onClick="{{ver.resend}}">重新发送</button>
+                    </sc-if>
+                    <sc-if value="{{ver.ok}}" hint-placeholder-val="{{false}}"><div class="s04-sv">{{ver.line}}</div><div class="s04-ss ok">已验证 · 保存后生效</div></sc-if>
+                    <div class="s04-ss">{{ver.hint}}</div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{prof.editBtn}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-edit-btn" data-act="edit" onClick="{{prof.startEdit}}">编辑资料</button></sc-if>
+                <p class="s04-note">{{prof.note}}</p>
+              </sc-if>
+              <sc-if value="{{appear.on}}" hint-placeholder-val="{{false}}">
+                <sc-for list="{{appear.envs}}" as="e" hint-placeholder-count="3">
+                  <div class="s04-env {{e.cls}}" style="{{e.style}}" data-act="preview" data-rid="{{e.key}}" role="button" onClick="{{e.pick}}">
+                    <div><div class="bands"><i style="{{e.b1}}"></i><i style="{{e.b2}}"></i><i style="{{e.b3}}"></i></div><div class="n">{{e.name}}</div><div class="l">{{e.line}}</div></div>
+                    <sc-if value="{{e.st}}" hint-placeholder-val="{{false}}"><span class="st">{{e.st}}</span></sc-if>
+                  </div>
+                </sc-for>
+                <div class="s04-sub s04-switch"><div><div class="s04-sv">减少动态</div><div class="s04-ss">{{appear.rmLine}}</div></div><button type="button" class="s04-sw" role="switch" aria-checked="{{appear.rmOn}}" data-act="toggle" onClick="{{appear.toggleRm}}" aria-label="减少动态"></button></div>
+                <p class="s04-note">{{appear.note}}</p>
+              </sc-if>
+              <sc-if value="{{generic.on}}" hint-placeholder-val="{{false}}">
+                <sc-for list="{{generic.rows}}" as="g" hint-placeholder-count="2"><div class="s04-sub"><div class="s04-sv">{{g.t}}</div></div></sc-for>
+              </sc-if>
+            </div>
+          </div>
+          <sc-if value="{{page.ghost}}" hint-placeholder-val="{{false}}"><div class="s04-ghost" style="{{page.ghostStyle}}"><sc-if value="{{page.ghostLabel}}" hint-placeholder-val="{{false}}"><div class="s04-bl">{{page.ghostLabel}}</div></sc-if><sc-for list="{{page.ghostRows}}" as="v" hint-placeholder-count="2"><div>{{v.t}}</div></sc-for></div></sc-if>
+          <sc-if value="{{bar.on}}" hint-placeholder-val="{{false}}"><div class="s04-bar"><button type="button" class="s04-cta" data-act="{{bar.act}}" disabled="{{bar.disabled}}" onClick="{{bar.go}}">{{bar.label}}</button></div></sc-if>
+        </div>
+      </sc-if>
+      <sc-if value="{{confirm.on}}" hint-placeholder-val="{{false}}">
+        <div class="s04-over" onClick="{{confirm.keep}}">
+          <div class="s04-sheet" onClick="{{confirm.stop}}">
+            <h2>{{confirm.title}}</h2><p>{{confirm.body}}</p>
+            <div class="row"><button type="button" class="keep" data-act="cancel" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button><button type="button" class="discard" data-act="confirm" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button></div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div class="s04-toast" role="status">{{toast}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["home","dense"],"default":"home"},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* ---------- S04 海报块 · 方案代码 ----------
+   结构：首页 = 海报块堆叠（home）；任何块 → 同一个 .s04-page 层（块的共享元素生长）；页内容按 page.surface 切换。
+   数据只经 this.act(name, p) → JUS.engine，派生只用 JUS.derive.*；编辑态、预览、确认层是视图态。 */
+var INK = '#14161F', SEC = '#535b70';
+/* 三种环境 → 整页配色（三个色相 + 纸白 + 底色）；平涂，无渐变 */
+var PAL = {
+  cotton: { h1: '#f3a9c6', h2: '#dedaf3', h3: '#a8d6e4', paper: '#fffdf7', ground: '#e9e7ee' },
+  halo:   { h1: '#ff5a14', h2: '#ecd3b1', h3: '#c9b3dd', paper: '#fff9ef', ground: '#efe6d9' },
+  sunset: { h1: '#66b3ff', h2: '#ff7a33', h3: '#ffc53d', paper: '#fffbf2', ground: '#f0e5d5' }
+};
+function lum(hex) { var c = hex.replace('#', ''); var f = function (i) { var v = parseInt(c.substr(i, 2), 16) / 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(0) + .7152 * f(2) + .0722 * f(4); }
+/* 块内文字按块色自动取墨或白（对比 ≥ 4.5） */
+function fgFor(hex) { var L = lum(hex); var cInk = (L + .05) / (lum(INK) + .05), cW = 1.05 / (L + .05); return cInk >= cW ? { fg: INK, fg2: SEC, white: false } : { fg: '#ffffff', fg2: 'rgba(255,255,255,.74)', white: true }; }
+function darken(hex, k) { var c = hex.replace('#', ''); var o = '#'; for (var i = 0; i < 6; i += 2) { var v = Math.round(parseInt(c.substr(i, 2), 16) * (1 - k)); o += (v < 16 ? '0' : '') + v.toString(16); } return o; }
+/* 索引 surface → 块与子页（阶段 2 逐个补内容；结构已定） */
+var SURF = {
+  profile: { block: 'profile' }, 'profile-edit': { block: 'profile', edit: true },
+  favorites: { block: 'fav' }, 'favorite-detail': { block: 'fav', sub: 'detail' }, city: { block: 'fav', sub: 'city' },
+  notify: { block: 'notify' }, appearance: { block: 'appearance' },
+  records: { block: 'records' }, 'record-detail': { block: 'records', sub: 'detail' }, 'record-dispute': { block: 'records', sub: 'dispute' }, 'record-appeal': { block: 'records', sub: 'appeal' }, 'record-supplement': { block: 'records', sub: 'supplement' },
+  reports: { block: 'records', sub: 'reports' }, 'report-detail': { block: 'records', sub: 'report' }, 'report-supplement': { block: 'records', sub: 'report-supplement' },
+  help: { block: 'help' }, feedback: { block: 'help', sub: 'feedback' }, privacy: { block: 'privacy' }, account: { block: 'account' }, about: { block: 'about' }, rules: { block: 'about', sub: 'rules' },
+  'seam-feed': { block: 'seam', sub: 'feed' }, 'seam-feed-detail': { block: 'seam', sub: 'feed-detail' }, 'seam-mine': { block: 'seam', sub: 'mine' }, 'seam-report': { block: 'seam', sub: 'report' }
+};
+var BLOCK_SURF = { profile: 'profile', fav: 'favorites', notify: 'notify', appearance: 'appearance', records: 'records', help: 'help', privacy: 'privacy', account: 'account', about: 'about' };
+var HEAD_Y = 52, TOOLS_H = 48;
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.onScroll = this.onScroll.bind(this); this.onFocus = this.onFocus.bind(this); }
+  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { page: null, edit: null, preview: null, confirm: null, toast: '', savedAt: 0, flash: false, tick: 0 }); }
+  componentDidMount() { this.measure(); }
+  componentDidUpdate() { this.measure(); }
+  /* collapsed title must land in the middle of the tool row: measure each title's width once per render */
+  measure() { var root = this.rootRef.current; if (!root) return; var W = root.clientWidth || 390; var scs = root.querySelectorAll('.s04-scroll'); for (var i = 0; i < scs.length; i++) { var sp = scs[i].querySelector('.s04-h1 > span'); if (!sp) continue; var tw = sp.offsetWidth; scs[i].style.setProperty('--tx', (((W - .6 * tw) / 2) - 20).toFixed(1) + 'px'); } }
+  onScroll(ev) { var el = ev.currentTarget; var st = el.scrollTop; el.style.setProperty('--st', st + 'px'); el.style.setProperty('--sp', String(Math.max(0, Math.min(1, st / 56)))); }
+  /* keyboard: keep the focused field above the simulated keyboard (--kb on .ju-phone) */
+  onFocus(ev) { var el = ev.currentTarget; var self = this; setTimeout(function () { var root = self.rootRef.current; if (!root || !el.isConnected) return; var phone = root.parentElement; var kb = phone ? parseFloat(getComputedStyle(phone).getPropertyValue('--kb')) || 0 : 0; var sc = el.closest('.s04-scroll'); if (!sc) return; var H = root.clientHeight; var r = el.getBoundingClientRect(), pr = root.getBoundingClientRect(); var bottom = r.bottom - pr.top; var limit = H - kb - 96; if (bottom > limit) sc.scrollTop += (bottom - limit); }, 20); }
+  say(msg) { var self = this; this.setState({ toast: msg }); this.holdKey('toast', 2600, function () { self.setState({ toast: '' }); }); }
+  skinNow() { return this.state.preview || this.state.data.appearance.skin; }
+  /* ---- index jumps (review panel): every surface opens settled, no animation ---- */
+  applyJump(e) {
+    var o = e.open || {}; var surf = o.surface || 'home'; var self = this;
+    if (surf === 'home') { this.setState({ page: null, edit: null, preview: null, confirm: null }); return; }
+    var m = SURF[surf]; if (!m) return;
+    var st = { page: { surface: surf, block: m.block, sub: m.sub || null, id: o.id || null, phase: 'settled', rect: null }, edit: null, preview: null, confirm: null };
+    if (m.edit) st.edit = this.freshEdit();
+    if (surf === 'appearance' && o.state === 'preview') st.preview = o.id || 'sunset';
+    if (surf === 'profile' && o.state === 'saved') { st.savedAt = Date.now(); this.holdKey('saved', 2600, function () { self.setState({ savedAt: 0 }); }); }
+    this.setState(st);
+    if (m.edit && o.state) this.after(20, function () { self.editState(o.state); });
+  }
+  editState(state) {
+    var self = this; var e = this.state.edit || this.freshEdit();
+    if (state === 'invalid') { e = Object.assign({}, e, { name: '', wx: '阿禾 ju', touched: true }); e.errors = this.errsFor(e); this.setState({ edit: e }); }
+    else if (state === 'code' || state === 'code-expired') { e = Object.assign({}, e, { email: 'ahe.zhang@stern.nyu.edu' }); this.setState({ edit: e }); this.after(10, function () { self.sendCode(); if (state === 'code-expired') self.after(10, function () { self.expireCode(); }); }); }
+    else if (state === 'fail') { e = Object.assign({}, e, { name: e.name === '阿禾二' ? '阿禾三' : '阿禾二' }); this.setState({ edit: e }); this.armFail(); this.after(10, function () { self.save(); }); }
+    else if (state === 'unsaved') { e = Object.assign({}, e, { name: '阿禾二' }); this.setState({ edit: e, confirm: 'unsaved' }); }
+    else if (state === 'kb') { this.setReview({ kb: true }); this.after(10, function () { var i = self.rootRef.current.querySelector('[data-field=name]'); if (i) i.focus(); }); }
+  }
+  /* ---- block → page (core motion: the block grows into the page; title travels to the header; content fades in after 120ms) ---- */
+  openBlock(key, ev) {
+    var self = this; var root = this.rootRef.current; var el = (ev && ev.currentTarget) || root.querySelector('[data-block="' + key + '"]');
+    var rect = el ? JU.fx.rectIn(el, root) : null; var surf = BLOCK_SURF[key];
+    this.motion('grow', function () {
+      self.setState({ page: { surface: surf, block: key, sub: null, id: null, phase: rect ? 'in' : 'settled', rect: rect }, edit: null, preview: null, confirm: null });
+      if (rect) self.after(300, function () { self.setState(function (s) { return s.page && s.page.phase === 'in' ? { page: Object.assign({}, s.page, { phase: 'settled' }) } : null; }); });
+    });
+  }
+  beforeReplay(name) { if (name === 'grow') this.setState({ page: null, edit: null, preview: null, confirm: null }); }
+  closePage() {
+    var s = this.state, self = this; if (!s.page) return;
+    if (s.edit && this.editDirty()) { this.setState({ confirm: 'unsaved' }); return; }
+    var root = this.rootRef.current; var el = root.querySelector('[data-block="' + s.page.block + '"]');
+    var rect = el ? JU.fx.rectIn(el, root) : null; var sc = root.querySelector('.s04-page .s04-scroll'); var scrolled = !!(sc && sc.scrollTop > 4);
+    if (s.edit && s.data.you.emailPending) this.act('clearEmailPending', {});
+    this.setState({ page: Object.assign({}, s.page, { phase: 'out', rect: rect, scrolled: scrolled }), edit: null, preview: null, confirm: null });
+    this.after(rect ? 260 : 200, function () { self.setState({ page: null }); });
+  }
+  /* ---- profile edit (explicit save model) ---- */
+  freshEdit() { var y = this.state.data.you; return { name: y.name, wx: y.wx, email: y.email, errors: {}, touched: false, code: '', codeErr: '', saving: false, fail: '' }; }
+  startEdit(focusKey) { var self = this; this.setState({ edit: this.freshEdit(), savedAt: 0 }); if (focusKey) this.after(30, function () { var i = self.rootRef.current.querySelector('[data-field=' + focusKey + ']'); if (i) i.focus(); }); }
+  editDirty() { var e = this.state.edit, y = this.state.data.you; return !!e && (e.name.trim() !== y.name || e.wx.trim() !== y.wx || e.email.trim() !== y.email); }
+  errsFor(e) { return { name: JUS.validate.name(e.name), wx: JUS.validate.wx(e.wx), email: JUS.validate.email(e.email) }; }
+  setEdit(patch) { var self = this; this.setState(function (s) { if (!s.edit) return null; var e = Object.assign({}, s.edit, patch); if (e.touched) { var x = self.errsFor(e); var o = Object.assign({}, e.errors); Object.keys(patch).forEach(function (k) { if (k in x) o[k] = x[k]; }); e.errors = o; } return { edit: e }; }); }
+  cancelEdit() { if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.setState({ edit: null, confirm: null }); }
+  discardAndBack() { if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.setState({ edit: null, confirm: null }); var self = this; this.after(10, function () { self.closePage(); }); }
+  save() {
+    var e = this.state.edit, self = this; if (!e || e.saving) return;
+    var errors = this.errsFor(e); var email = e.email.trim(); var pnd = this.state.data.you.emailPending;
+    if (!errors.email && email && email !== this.state.data.you.email && !(pnd && pnd.verified && pnd.email === email)) errors.email = JUS.COPY.profileErrors.mailUnverified;
+    if (errors.name || errors.wx || errors.email) { this.setState({ edit: Object.assign({}, e, { errors: errors, touched: true }) }); return; }
+    this.setState({ edit: Object.assign({}, e, { saving: true, fail: '', errors: {} }) });
+    this.hold(320, function () {
+      var cur = self.state.edit; if (!cur) return;
+      var res = self.act('saveProfile', { name: cur.name, wx: cur.wx, email: cur.email });
+      if (res.effect.type === 'invalid') { self.setState({ edit: Object.assign({}, cur, { saving: false, errors: res.effect.errors, touched: true }) }); return; }
+      if (res.effect.type === 'error') { self.setState({ edit: Object.assign({}, cur, { saving: false, fail: res.effect.message }) }); return; }
+      self.motion('save', function () {
+        self.cancelKey('resend');
+        self.setState({ edit: null, savedAt: Date.now(), flash: true, confirm: null });
+        self.after(160, function () { self.setState({ flash: false }); });
+        self.holdKey('saved', 2600, function () { self.setState({ savedAt: 0 }); });
+      });
+    });
+  }
+  /* email code: local 6-digit test code (shown only in the review panel); 59s resend window and 5-minute expiry run on the real clock */
+  sendCode() { var e = this.state.edit; if (!e) return; var res = this.act('requestEmailCode', { email: e.email.trim() }); if (res.effect.type === 'invalid') { this.setEdit({ errors: Object.assign({}, e.errors, res.effect.errors), touched: true }); return; } this.setEdit({ code: '', codeErr: '' }); this.startTick(); }
+  startTick() { var self = this; this.holdKey('resend', 1000, function () { var p = JUS.derive.emailPending(self.state.data); self.setState({ tick: Date.now() }); if (p && !p.verified && (p.resendLeftS > 0 || !p.expired)) self.startTick(); }); }
+  verifyCode() { var e = this.state.edit; if (!e) return; var res = this.act('verifyEmailCode', { code: e.code }); if (res.effect.type === 'invalid') { this.setEdit({ codeErr: res.effect.errors.code }); return; } if (res.effect.type === 'error') { this.setEdit({ codeErr: res.effect.message }); return; } this.cancelKey('resend'); this.setEdit({ codeErr: '' }); }
+  copyWx() { var self = this; var v = this.state.data.you.wx; var done = function (ok) { var res = self.act('copyResult', { ok: ok, value: v }); self.say(res.effect.message); }; try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { done(true); }, function () { done(false); }); else done(false); } catch (err) { done(false); } }
+  /* ---- render ---- */
+  renderVals() {
+    var s = this.state, d = s.data, self = this; var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    if (d.appearance.reduceMotion) panel.rootCls += ' rm-user';
+    var skin = this.skinNow(); var P = PAL[skin] || PAL.cotton; var sum = JUS.derive.summary(d); var y = d.you;
+    var palStyle = '--h1:' + P.h1 + ';--h2:' + P.h2 + ';--h3:' + P.h3 + ';--paper:' + P.paper + ';--ground:' + P.ground + ';--pbg:' + P.ground + ';--psec:' + SEC;
+    var root = this.rootRef.current; var W = root ? root.clientWidth : 390, H = root ? root.clientHeight : 844;
+    /* home blocks: seven rows, three hues + paper + ink */
+    var wxLine = y.wx ? y.wx : '微信号未填写'; var emailLine = y.email ? y.email + ' · ' + sum.emailLabel : '邮箱未填写';
+    var privacyFacts = JUS.derive.privacy(d).facts.length;
+    var defs = [
+      { key: 'profile', bg: P.h1, cls: 'hero', title: y.name, label: '个人资料', values: [wxLine, emailLine], titlePx: 32 },
+      { key: 'fav', bg: P.h2, title: '收藏', values: [sum.favLabel, '找局默认 · ' + sum.cityLabel] },
+      { key: 'notify', bg: P.paper, title: '提醒', values: [sum.notifyLabel] },
+      { key: 'appearance', bg: P.h3, title: '外观', values: [sum.appearanceLabel] },
+      { key: 'records', bg: INK, title: '记录与举报', label: sum.attention ? sum.attention + ' 件待处理' : '', values: [sum.recordLabel, sum.reportLabel] },
+      { key: 'help', bg: P.paper, cls: 'small', title: '帮助', values: [JUS.RULES.length + ' 条规则'] },
+      { key: 'privacy', bg: P.paper, cls: 'small', title: '隐私', values: [privacyFacts ? privacyFacts + ' 个局可见' : '按活动决定'] },
+      { key: 'account', bg: P.paper, cls: 'small', title: '账户', values: [d.session.kind === 'demo' ? '本地演示' : '已退出'] },
+      { key: 'about', bg: P.paper, title: '关于', values: ['JU 原型 · 规则 ' + JUS.RULES_VERSION] }
+    ];
+    var byKey = {};
+    var blocks = defs.map(function (b) { var c = fgFor(b.bg); byKey[b.key] = Object.assign({}, b, c); return { key: b.key, cls: b.cls || '', title: b.title, label: b.label || '', values: b.values.map(function (t) { return { t: t }; }), style: '--bc:' + b.bg + ';--fg:' + c.fg + ';--fg2:' + c.fg2, open: function (ev) { self.openBlock(b.key, ev); } }; });
+    var homeMeta = sum.attention ? sum.attention + ' 件待处理 · 本地演示' : JUS.COPY.demoOnly;
+    /* page */
+    var page = { on: false }, prof = { on: false }, ver = { on: false }, appear = { on: false }, generic = { on: false }, bar = { on: false };
+    if (s.page) {
+      var pg = s.page; var bd = byKey[pg.block] || { bg: P.ground, fg: INK, fg2: SEC, title: '', values: [], label: '' };
+      var pc = s.flash ? darken(bd.bg, .1) : bd.bg; var fgc = fgFor(bd.bg);
+      var style = '--pc:' + pc + ';--pfg:' + fgc.fg + ';--pfg2:' + fgc.fg2;
+      var r = pg.rect; var cls = pg.phase + (fgc.white ? ' white' : '') + (s.flash ? ' flash' : '') + (pg.scrolled ? ' scrolled' : '') + (!r && pg.phase === 'out' ? ' nofx' : '');
+      if (r) { var pad = bd.cls === 'small' ? 16 : 20; style += ';--cy:' + r.y.toFixed(1) + 'px;--cr:' + (W - r.x - r.w).toFixed(1) + 'px;--cb:' + (H - r.y - r.h).toFixed(1) + 'px;--cl:' + r.x.toFixed(1) + 'px;--ttx:' + (r.x + pad - 20).toFixed(1) + 'px;--tty:' + (r.y + (bd.cls === 'hero' ? 20 : bd.cls === 'small' ? 14 : 18) - HEAD_Y).toFixed(1) + 'px;--tts:' + ((bd.titlePx || (bd.cls === 'small' ? 22 : 26)) / 30).toFixed(4); }
+      var editing = !!s.edit;
+      page = { on: true, surface: editing ? 'profile-edit' : pg.surface, cls: cls, style: style, title: bd.title, meta: '', back: function () { self.closePage(); }, action: '', actionAct: '', noAction: true, onAction: null, bodyCls: '', ghost: false };
+      if (r && pg.phase !== 'settled') { var small = bd.cls === 'small'; page.ghost = true; page.ghostRows = (bd.values || []).map(function (t) { return { t: t }; }); page.ghostLabel = bd.label || ''; page.ghostStyle = '--gx:' + r.x.toFixed(1) + 'px;--gy:' + r.y.toFixed(1) + 'px;--gw:' + r.w.toFixed(1) + 'px;--gh:' + r.h.toFixed(1) + 'px;--gpt:' + (small ? 14 : bd.cls === 'hero' ? 20 : 18) + 'px;--gpx:' + (small ? 16 : 20) + 'px;--gpb:' + (small ? 14 : 18) + 'px' + (small ? ';--gfs:13px;--gc:var(--pfg2)' : ''); }
+      if (pg.block === 'profile') {
+        var e = s.edit;
+        page.meta = editing ? '编辑资料' + (e.saving ? ' · 保存中…' : '') : '个人资料' + (s.savedAt ? ' · 已保存' : '');
+        if (editing) { page.action = '取消'; page.actionAct = 'cancel'; page.noAction = false; page.onAction = function () { self.cancelEdit(); }; page.bodyCls = 'withbar'; }
+        var kind = y.emailKind === 'school' ? '学校邮箱' : y.emailKind === 'work' ? '工作邮箱' : '';
+        var fresh = s.savedAt ? 'fresh' : '';
+        if (!editing) {
+          prof = { on: true, fail: '', editBtn: true, startEdit: function () { self.startEdit('name'); }, note: JUS.COPY.snapshotNote, fields: [
+            { key: 'name', label: '称呼', text: true, value: y.name, vcls: fresh, cls: '' },
+            { key: 'wx', label: '微信号', text: true, value: y.wx || '未填写', vcls: (y.wx ? '' : 'empty ') + fresh, copy: !!y.wx, onCopy: function () { self.copyWx(); }, cls: '' },
+            { key: 'email', label: '邮箱', text: true, value: y.email || '未填写', vcls: (y.email ? '' : 'empty ') + fresh, sub: y.email ? (y.emailVerified ? '已验证' + (kind ? ' · ' + kind + ' ' + y.emailDomain : '') : '未验证') : '', scls: y.email && y.emailVerified ? 'ok' : '', cls: '' } ] };
+        } else {
+          var er = e.touched ? e.errors : {};
+          prof = { on: true, fail: e.fail, retry: function () { self.save(); }, editBtn: false, note: JUS.COPY.emailHint, fields: [
+            { key: 'name', label: '称呼（最多 10 个字）', input: true, value: e.name, ph: '怎么称呼你', mode: 'text', err: er.name || '', cls: 'editing' + (er.name ? ' err' : ''), onInput: function (ev) { self.setEdit({ name: ev.target.value }); } },
+            { key: 'wx', label: '微信号', input: true, value: e.wx, ph: '字母、数字、下划线或短横线', mode: 'text', err: er.wx || '', cls: 'editing' + (er.wx ? ' err' : ''), onInput: function (ev) { self.setEdit({ wx: ev.target.value }); } },
+            { key: 'email', label: '邮箱（工作或学校邮箱，可留空）', input: true, value: e.email, ph: 'name@school.edu', mode: 'email', err: er.email || '', cls: 'editing' + (er.email ? ' err' : ''), sub: e.email.trim() === y.email && y.email ? (y.emailVerified ? '已验证 · ' + y.emailDomain : '未验证') : '', scls: e.email.trim() === y.email && y.emailVerified ? 'ok' : '', onInput: function (ev) { self.setEdit({ email: ev.target.value, codeErr: '' }); } } ] };
+          var em = e.email.trim(); var pnd = JUS.derive.emailPending(d);
+          if (em && em !== y.email && !JUS.validate.email(em)) {
+            var mine = pnd && pnd.email === em ? pnd : null;
+            ver = { on: true, cls: 'editing', hint: '本机演示 · 验证码不发邮件', code: e.code, onCode: function (ev) { self.setEdit({ code: ev.target.value.replace(/\D/g, '').slice(0, 6), codeErr: '' }); }, send: function () { self.sendCode(); }, verify: function () { self.verifyCode(); }, resend: function () { self.sendCode(); } };
+            if (!mine) { ver.idle = true; ver.line = '改了邮箱，保存前先验证 ' + em; }
+            else if (mine.verified) { ver.ok = true; ver.line = em; }
+            else { ver.sent = true; ver.line = '验证码已发到 ' + em; ver.err = mine.expired ? JUS.COPY.profileErrors.codeExpired : e.codeErr; ver.resendDisabled = mine.resendLeftS > 0; ver.resendLine = mine.expired ? '这个验证码已失效' : mine.resendLeftS > 0 ? mine.resendLeftS + ' 秒后可以重新发送' : '可以重新发送'; }
+          }
+          bar = { on: true, act: 'save', label: e.saving ? '保存中…' : '保存', disabled: e.saving, go: function () { self.save(); } };
+        }
+      } else if (pg.block === 'appearance') {
+        page.meta = s.preview && s.preview !== d.appearance.skin ? '预览中 · 未应用' : '当前 ' + sum.appearanceLabel;
+        appear = { on: true, rmOn: d.appearance.reduceMotion ? 'true' : 'false', rmLine: d.appearance.reduceMotion ? '已开启 · 动效瞬切到结果' : (s.review.rmSys ? '系统已要求减少动态 · 已跟随' : '跟随系统 · 当前关闭'), toggleRm: function () { var res = self.act('setReduceMotion', { on: !d.appearance.reduceMotion }); if (res.effect.type === 'error') self.say(res.effect.message); }, note: '预览只改变这块屏幕；点「应用」才保存。',
+          envs: JUS.SKINS.map(function (sk) { var Q = PAL[sk.key]; var c = fgFor(Q.h1); var cur = d.appearance.skin === sk.key, pv = skin === sk.key; return { key: sk.key, name: sk.name, line: sk.line, cls: c.white ? 'white' : '', style: '--ec:' + Q.h1 + ';--efg:' + c.fg, b1: '--b:' + Q.h1, b2: '--b:' + Q.h2, b3: '--b:' + Q.h3, st: cur && pv ? '当前' : pv ? '预览中' : cur ? '已保存' : '', pick: function () { self.setState({ preview: sk.key }); } }; }) };
+        if (s.preview && s.preview !== d.appearance.skin) { page.action = '取消预览'; page.actionAct = 'cancel'; page.noAction = false; page.onAction = function () { self.setState({ preview: null }); }; page.bodyCls = 'withbar'; bar = { on: true, act: 'apply', label: '应用' + (JUS.SKINS.filter(function (k) { return k.key === s.preview; })[0] || {}).name, disabled: false, go: function () { var k = s.preview; self.motion('skin', function () { var res = self.act('applySkin', { skin: k }); if (res.effect.type === 'error') { self.say(res.effect.message); return; } self.setState({ preview: null }); }); } }; }
+      } else {
+        page.meta = (bd.values || []).join(' · ');
+        generic = { on: true, rows: (bd.values || []).map(function (t) { return { t: t }; }) };
+      }
+    }
+    var confirm = { on: false };
+    if (s.confirm === 'unsaved') { var U = JUS.COPY.unsaved; confirm = { on: true, title: U.title, body: U.body, keepLabel: U.keep, discardLabel: U.discard, keep: function () { self.setState({ confirm: null }); }, discard: function () { self.discardAndBack(); }, stop: function (ev) { ev.stopPropagation(); } }; }
+    return { panel: panel, rootRef: this.rootRef, skin: skin, palStyle: palStyle, homeMeta: homeMeta, blocks: blocks, page: page, prof: prof, ver: ver, appear: appear, generic: generic, bar: bar, confirm: confirm, toast: s.toast, onScroll: this.onScroll, onFocus: this.onFocus };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>

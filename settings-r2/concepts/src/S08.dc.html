@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S08 横向分栏</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ---------- S08 横向分栏 · 分组是并排的整高纵栏，横向翻阅；栏名在顶轨上对位 ----------
+   light / depth logic: one environment light field (6 columns wide) lies behind the columns; each column is a cut-out
+   of that field (the field pans with the columns), the neighbour column is dimmed to 60%, the paper (header, nav, gaps)
+   is the only opaque material. No shadows, no blur on text; the only emphasis is the 6px band = the column's own colour. */
+@property --s08-x{syntax:'<number>';inherits:true;initial-value:0}
+.app.s08{position:absolute;inset:0;overflow:hidden;--ink:#14161F;--body:#252b3a;--sec:#535b70;--rule:rgba(20,22,31,.11);--paper:#fffdf5;--err:#DA3A52;--ok:#0E9B76;--blue:#4553BE;
+  background:var(--paper);color:var(--ink);font-family:"Noto Sans SC",-apple-system,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","WenQuanYi Zen Hei",sans-serif;-webkit-font-smoothing:antialiased;line-height:1.4}
+.app.s08[data-skin=halo]{--paper:#fff9ef;--sec:#4f4652}
+.app.s08[data-skin=sunset]{--paper:#fffbf2;--sec:#4b4338}
+.app.s08 *{box-sizing:border-box}
+.app.s08 button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.s08-page{position:absolute;inset:0;--s08-sp:0}
+.s08-page.exp{--s08-x:1}
+.s08-page.x-in{animation:s08-x-in calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) forwards}
+.s08-page.x-out{animation:s08-x-out calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes s08-x-in{from{--s08-x:0}to{--s08-x:1}}
+@keyframes s08-x-out{from{--s08-x:1}to{--s08-x:0}}
+/* ---------- header: JU · 设置 30px → 18px into the tool row on scroll (--s08-sp), folds completely when a column expands (--s08-x) ---------- */
+.s08-hd{position:absolute;left:0;right:0;top:0;z-index:6;background:var(--paper);padding-top:48px}
+.s08-tool{position:relative;height:40px;display:flex;align-items:center;padding:0 20px}
+.s08-back{position:absolute;left:12px;top:0;height:40px;padding:0 8px;border:0;background:none;font:500 15px/40px inherit;font-family:inherit;color:var(--ink);opacity:var(--s08-x);pointer-events:none;white-space:nowrap}
+.s08-back b{font-weight:500;font-size:18px;margin-right:2px;position:relative;top:1px}
+.s08-page.detail .s08-back{pointer-events:auto}
+.s08-tt{position:absolute;left:50%;top:0;max-width:56%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:600 18px/40px inherit;font-family:inherit;color:var(--ink);transform:translate(-50%,calc(6px * (1 - var(--s08-sp))));opacity:calc((var(--s08-sp) * 2 - 1) * var(--s08-x));pointer-events:none}
+.s08-ju{margin-left:auto;font:700 16px/1 inherit;font-family:inherit;letter-spacing:.08em;color:var(--ink)}
+.s08-trow{position:relative;height:calc(42px * (1 - max(var(--s08-sp), var(--s08-x))))}
+.s08-title{position:absolute;margin:0;left:calc(20px + var(--s08-sp) * (50% - 20px));top:calc(var(--s08-sp) * -31px);transform:translateX(calc(-50% * var(--s08-sp)));font-size:calc(30px - 12px * var(--s08-sp));font-weight:500;line-height:1.25;white-space:nowrap;color:var(--ink);opacity:calc(1 - var(--s08-x) * 2)}
+.s08-meta{position:absolute;right:20px;top:13px;margin:0;border:0;background:none;padding:0;font:400 14px/1.4 inherit;font-family:inherit;color:var(--sec);opacity:calc(1 - max(var(--s08-sp), var(--s08-x)) * 1.6);white-space:nowrap}
+.s08-meta.att{color:var(--ink)}
+.s08-meta.att::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--band);margin:0 6px 1px 0}
+/* ---------- rail: the six column names, always visible; the marker (= the column band colour) slides with the columns ---------- */
+.s08-rail{position:relative;height:calc(46px * (1 - var(--s08-x)));opacity:calc(1 - var(--s08-x) * 1.6);overflow:hidden;display:flex;align-items:flex-end;gap:8px;padding:0 20px 10px}
+.s08-rn{position:relative;flex:0 0 46px;width:46px;height:30px;border:0;background:none;padding:0;text-align:left;font:400 15px/30px inherit;font-family:inherit;color:var(--sec);white-space:nowrap;transition:font-size calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),color calc(300ms * var(--k,1))}
+.s08-rn.cur{font-size:18px;font-weight:600;color:var(--ink)}
+.s08-rn-n{font:500 13px/1 inherit;font-family:inherit;color:var(--band);margin-left:3px;position:relative;top:-6px}
+.s08-mk{position:absolute;left:20px;bottom:4px;width:36px;height:4px;border-radius:2px;background:var(--band);transform:translateX(calc((var(--s08-col) + var(--s08-rp,0)) * 54px));transition:transform calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),background calc(650ms * var(--k,1))}
+/* ---------- the columns ---------- */
+.s08-track{position:absolute;left:0;right:0;bottom:0;top:calc(184px - 42px * max(var(--s08-sp), var(--s08-x)) - 54px * var(--s08-x));display:flex;align-items:stretch;touch-action:pan-y;user-select:none;-webkit-user-select:none;
+  transform:translateX(calc(var(--s08-col) * (-100% + 28px - 40px * var(--s08-x)) + var(--s08-dx,0px)))}
+.s08-track.snap{animation:s08-snap calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes s08-snap{from{transform:translateX(var(--s08-from))}to{transform:translateX(var(--s08-to))}}
+.s08-col{position:relative;flex:0 0 calc(100% - 40px + 40px * var(--s08-x));margin-right:12px;overflow:hidden;opacity:.6;transition:opacity calc(300ms * var(--k,1))}
+.s08-col.cur{opacity:1}
+.s08-env{position:absolute;top:0;bottom:0;left:calc(var(--i) * (-100% - 12px));width:calc(600% + 60px);pointer-events:none}
+.s08-env-in{animation:s08-skin-in calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
+@keyframes s08-skin-in{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+.s08-env[data-skin=cotton]{background:
+  radial-gradient(38% 60% at 10% 14%,rgba(255,255,255,.55),rgba(255,255,255,0) 70%),
+  radial-gradient(28% 50% at 52% 92%,rgba(255,255,255,.5),rgba(255,255,255,0) 70%),
+  radial-gradient(30% 55% at 84% 20%,rgba(255,255,255,.4),rgba(255,255,255,0) 70%),
+  linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,0) 30%,rgba(255,255,255,0) 72%,rgba(255,255,255,.2)),
+  linear-gradient(90deg,#fbe1ec 0%,#f5e0ee 20%,#ececf4 46%,#e2ecf4 68%,#d3edf3 100%)}
+.s08-env[data-skin=halo]{background:
+  radial-gradient(circle 760px at 24% 64%,rgba(255,249,239,0) 0 330px,rgba(255,80,5,.5) 430px,rgba(219,186,149,.78) 520px,rgba(208,188,225,.88) 610px,rgba(255,249,239,0) 720px),
+  radial-gradient(circle 560px at 86% 20%,rgba(208,188,225,.6) 0 180px,rgba(219,186,149,.35) 300px,rgba(255,249,239,0) 420px),
+  linear-gradient(90deg,#ffe6cf 0%,#fff6e8 28%,#fff9ef 60%,#f4ecf4 100%)}
+.s08-env[data-skin=sunset]{background:
+  linear-gradient(90deg,rgba(255,122,51,.5) 0%,rgba(255,197,61,.3) 26%,rgba(51,160,255,0) 50%,rgba(51,160,255,.42) 82%,rgba(51,160,255,.55) 100%),
+  radial-gradient(34% 44% at 70% 86%,rgba(255,197,61,.6),rgba(255,197,61,0) 70%),
+  linear-gradient(180deg,#78bbff 0%,#a9d1fb 24%,#ffd977 50%,#ffb25c 74%,#ff7a33 100%)}
+.s08-band{position:absolute;left:0;top:0;bottom:0;width:6px;background:var(--band);transition:background calc(650ms * var(--k,1))}
+.s08-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none;padding:calc(18px + 42px * var(--s08-sp) * (1 - var(--s08-x))) 20px calc(84px * (1 - var(--s08-x)) + 28px + var(--kb,0px)) 26px}
+.s08-scroll::-webkit-scrollbar{display:none}
+.s08-page.editing .s08-col.cur .s08-scroll{padding-bottom:calc(132px + var(--kb,0px))}
+.s08-pane{animation:s08-fade calc(220ms * var(--k,1)) both}
+@keyframes s08-fade{from{opacity:0}to{opacity:1}}
+/* column head: 30px title + 14px status, the visual centre together with the band */
+.s08-ct{display:block;width:100%;text-align:left;border:0;background:none;padding:6px 0 16px;color:inherit}
+.s08-h{margin:0;font:500 30px/1.25 inherit;font-family:inherit;color:var(--ink);overflow-wrap:anywhere}
+.s08-h.ph{color:var(--sec)}
+.s08-st{margin:7px 0 0;font:400 14px/1.45 inherit;font-family:inherit;color:var(--sec);overflow-wrap:anywhere}
+.s08-lead{margin:-6px 0 12px;font:400 13px/1.5 inherit;font-family:inherit;color:var(--sec)}
+/* rows 17/500 + value 17/400, 56px; description 13 */
+.s08-rows{margin-top:2px}
+.s08-row{display:flex;align-items:center;gap:12px;min-height:56px;padding:9px 0;border-top:1px solid var(--rule);cursor:pointer;touch-action:pan-y;transition:background calc(120ms * var(--k,1))}
+.s08-row:active{background:rgba(20,22,31,.05)}
+.s08-rl{flex:0 0 auto;max-width:56%;font:500 17px/1.4 inherit;font-family:inherit;color:var(--ink)}
+.s08-rv{flex:1 1 auto;min-width:0;text-align:right;font:400 17px/1.4 inherit;font-family:inherit;color:var(--ink);overflow-wrap:anywhere}
+.s08-rs{display:block;font:400 13px/1.45 inherit;font-family:inherit;color:var(--sec)}
+.s08-chev{flex:0 0 auto;font:400 17px/1 inherit;font-family:inherit;color:var(--sec);opacity:.8;margin-right:-2px}
+.s08-row.danger .s08-rl{color:var(--err)}
+.s08-row.att .s08-rv{color:var(--ink);font-weight:500}
+.s08-row.att .s08-rv::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--band);margin:0 8px 1px 0}
+.s08-sw{cursor:default}.s08-sw:active{background:none}
+.s08-item{display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-top:1px solid var(--rule);cursor:pointer;touch-action:pan-y}
+.s08-item:active{background:rgba(20,22,31,.05)}
+.s08-it{flex:1 1 auto;min-width:0}
+.s08-il{display:block;font:500 17px/1.4 inherit;font-family:inherit;color:var(--ink);overflow-wrap:anywhere}
+.s08-is{display:block;margin-top:2px;font:400 13px/1.45 inherit;font-family:inherit;color:var(--sec)}
+.s08-tag{flex:0 0 auto;margin-top:2px;font:500 13px/22px inherit;font-family:inherit;padding:0 9px;border-radius:11px;background:rgba(20,22,31,.09);color:var(--ink);white-space:nowrap}
+.s08-tag.on{background:var(--ink);color:#fff}
+.s08-tag.warn{background:rgba(218,58,82,.13);color:#b22a40}
+.s08-tag.dim{opacity:.65}
+.s08-note{margin:16px 0 0;font:400 13px/1.55 inherit;font-family:inherit;color:var(--sec)}
+.s08-empty{padding:18px 0 10px;border-top:1px solid var(--rule)}
+.s08-empty b{display:block;font:500 17px/1.4 inherit;font-family:inherit;color:var(--ink)}
+.s08-empty span{display:block;margin-top:4px;font:400 14px/1.45 inherit;font-family:inherit;color:var(--sec)}
+.s08-switch{flex:0 0 auto;width:46px;height:28px;border-radius:14px;border:0;padding:0;background:rgba(20,22,31,.16);position:relative;transition:background calc(160ms * var(--k,1))}
+.s08-switch[aria-checked=true]{background:var(--ink)}
+.s08-knob{position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform calc(160ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.s08-switch[aria-checked=true] .s08-knob{transform:translateX(18px)}
+/* ---------- detail (the expanded column is the page): 13px label over 20px value ---------- */
+.s08-flds{margin-top:4px}
+.s08-fld{display:block;padding:14px 0 12px;border-top:1px solid var(--rule)}
+.s08-fl{display:flex;justify-content:space-between;gap:10px;font:500 13px/1.4 inherit;font-family:inherit;color:var(--sec)}
+.s08-fl .ok{color:var(--ok)}
+.s08-fv{display:block;margin-top:4px;font:400 20px/1.4 inherit;font-family:inherit;color:var(--ink);overflow-wrap:anywhere;min-height:28px}
+.s08-fv.ph{color:var(--sec)}
+.s08-in{display:block;width:100%;margin-top:4px;border:0;border-bottom:2px solid rgba(20,22,31,.16);border-radius:0;background:transparent;padding:0 0 4px;font:400 20px/1.4 inherit;font-family:inherit;color:var(--ink);outline:0;user-select:text;-webkit-user-select:text;transition:border-color calc(160ms * var(--k,1))}
+.s08-in::placeholder{color:rgba(83,91,112,.6)}
+.s08-in:focus{border-bottom-color:var(--band)}
+.s08-fld.err .s08-in{border-bottom-color:var(--err)}
+.s08-err{display:block;margin-top:6px;font:400 13px/1.4 inherit;font-family:inherit;color:var(--err)}
+.s08-saved{display:inline-block;margin-left:10px;font:500 13px/20px inherit;font-family:inherit;color:var(--ok);animation:s08-fade calc(200ms * var(--k,1)) both}
+.s08-btn{display:inline-flex;align-items:center;height:44px;padding:0 22px;margin-top:20px;border:1.5px solid var(--ink);border-radius:22px;background:transparent;font:500 15px/1 inherit;font-family:inherit;color:var(--ink);transition:transform calc(120ms * var(--k,1))}
+.s08-btn:active{transform:scale(.96)}
+.s08-vf{padding:12px 0 2px}
+.s08-vrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.s08-code{width:9ch;margin:0;font-size:22px;letter-spacing:.18em;font-variant-numeric:tabular-nums}
+.s08-lnk{border:0;background:none;padding:0;font:500 15px/1.4 inherit;font-family:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.s08-lnk:disabled{color:var(--sec);text-decoration:none;cursor:default}
+.s08-ok{display:block;margin-top:8px;font:500 13px/1.4 inherit;font-family:inherit;color:var(--ok)}
+/* ---------- primary confirm: the only JU-blue surface ---------- */
+.s08-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:7;padding:12px 20px 28px;background:var(--paper);border-top:1px solid var(--rule);animation:s08-up calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.ju-phone.kb .s08-bar{padding-bottom:12px}
+@keyframes s08-up{from{transform:translateY(16px);opacity:0}to{transform:none;opacity:1}}
+.s08-cta{display:block;width:min(100%,280px);height:48px;margin:0 auto;border:0;border-radius:24px;background:linear-gradient(180deg,#5664d2 0%,#4553BE 52%,#3b48ab 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.28),inset 0 -1px 0 rgba(0,0,0,.22);color:#fff;font:500 17px/48px inherit;font-family:inherit;transition:transform calc(120ms * var(--k,1)) ease,opacity calc(160ms * var(--k,1))}
+.s08-cta:active{transform:scale(.958)}
+.s08-cta:disabled{opacity:.72;cursor:default}
+/* ---------- toast / confirm ---------- */
+.s08-toast{position:absolute;left:20px;right:20px;bottom:calc(var(--kb,0px) + 104px);z-index:8;display:flex;align-items:center;gap:14px;padding:12px 16px;border-radius:14px;background:var(--ink);color:#fff;font:400 14px/1.4 inherit;font-family:inherit;animation:s08-up calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s08-toast span{flex:1 1 auto}
+.s08-toast button{flex:0 0 auto;border:0;background:none;padding:0;font:500 15px/1.4 inherit;font-family:inherit;color:#fff;text-decoration:underline;text-underline-offset:3px}
+.s08-over{position:absolute;inset:0;z-index:9}
+.s08-dim{position:absolute;inset:0;background:rgba(20,22,31,.3);animation:s08-fade calc(240ms * var(--k,1)) both}
+.s08-sheet{position:absolute;left:12px;right:12px;bottom:calc(var(--kb,0px) + 12px);background:var(--paper);border-radius:22px;padding:22px 20px 18px;animation:s08-up calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s08-sheet h3{margin:0;font:600 17px/1.4 inherit;font-family:inherit;color:var(--ink)}
+.s08-sheet p{margin:6px 0 16px;font:400 14px/1.5 inherit;font-family:inherit;color:var(--sec)}
+.s08-sheet .s08-btn{margin:0}
+.s08-sheet-row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.s08-txt{border:0;background:none;padding:10px 4px;font:500 15px/1 inherit;font-family:inherit;color:var(--err)}
+/* ---------- root navigation ---------- */
+.s08-nav{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:6;background:var(--paper);border-top:1px solid var(--rule);display:flex;padding:0 12px 20px;transform:translateY(calc(var(--s08-x) * 100%))}
+.s08-nv{flex:1 1 0;border:0;background:none;padding:0;position:relative;font:400 15px/1 inherit;font-family:inherit;color:var(--sec)}
+.s08-nv.cur{color:var(--ink);font-weight:600}
+.s08-nv.cur::after{content:'';position:absolute;left:50%;bottom:12px;width:16px;height:3px;margin-left:-8px;border-radius:2px;background:var(--ink)}
+/* ---------- review states ---------- */
+.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.scrub .s08-page.x-in,.scrub .s08-page.x-out{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.scrub .s08-track.snap{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
+.scrub .s08-env-in{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s08{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
+      <div class="s08-page {{pageCls}}" style="--s08-col:{{col}}" data-surface="{{surface}}" ref="{{pageRef}}">
+        <div class="s08-track {{trackCls}}" ref="{{trackRef}}" onPointerDown="{{drag.down}}" onPointerMove="{{drag.move}}" onPointerUp="{{drag.up}}" onPointerCancel="{{drag.cancel}}">
+          <sc-for list="{{cols}}" as="c" hint-placeholder-count="6">
+            <div class="s08-col {{c.cls}}" style="--i:{{c.i}};--band:{{c.band}}" data-col="{{c.key}}">
+              <sc-if value="{{c.prevSkin}}" hint-placeholder-val="{{false}}"><div class="s08-env" data-skin="{{c.prevSkin}}"></div></sc-if>
+              <sc-if value="{{c.envA}}" hint-placeholder-val="{{true}}"><div class="s08-env s08-env-in" data-skin="{{c.skin}}"></div></sc-if>
+              <sc-if value="{{c.envB}}" hint-placeholder-val="{{false}}"><div class="s08-env s08-env-in" data-skin="{{c.skin}}"></div></sc-if>
+              <div class="s08-band"></div>
+              <div class="s08-scroll" ref="{{c.ref}}" onScroll="{{c.onScroll}}">
+                <sc-if value="{{c.home}}" hint-placeholder-val="{{true}}">
+                  <div class="s08-pane">
+                    <button type="button" class="s08-ct" onClick="{{c.goTitle}}">
+                      <h2 class="s08-h">{{c.title}}</h2>
+                      <p class="s08-st">{{c.status}}</p>
+                    </button>
+                    <sc-if value="{{c.lead}}" hint-placeholder-val="{{false}}"><p class="s08-lead">{{c.lead}}</p></sc-if>
+                    <div class="s08-rows">
+                      <sc-for list="{{c.rows}}" as="r" hint-placeholder-count="4">
+                        <sc-if value="{{r.isRow}}" hint-placeholder-val="{{true}}">
+                          <div class="s08-row {{r.cls}}" role="button" tabindex="0" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s08-rl">{{r.label}}</span><span class="s08-rv">{{r.value}}<sc-if value="{{r.sub}}" hint-placeholder-val="{{false}}"><span class="s08-rs">{{r.sub}}</span></sc-if></span><span class="s08-chev">›</span></div>
+                        </sc-if>
+                        <sc-if value="{{r.isItem}}" hint-placeholder-val="{{false}}">
+                          <div class="s08-item" role="button" tabindex="0" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s08-it"><span class="s08-il">{{r.label}}</span><span class="s08-is">{{r.sub}}</span></span><sc-if value="{{r.tag}}" hint-placeholder-val="{{false}}"><span class="s08-tag {{r.tagCls}}">{{r.tag}}</span></sc-if></div>
+                        </sc-if>
+                        <sc-if value="{{r.isSwitch}}" hint-placeholder-val="{{false}}">
+                          <div class="s08-row s08-sw"><span class="s08-rl">{{r.label}}</span><span class="s08-rv"></span><button type="button" class="s08-switch" role="switch" aria-checked="{{r.on}}" data-act="toggle" data-key="{{r.key}}" onClick="{{r.go}}"><span class="s08-knob"></span></button></div>
+                        </sc-if>
+                        <sc-if value="{{r.isNote}}" hint-placeholder-val="{{false}}"><p class="s08-note">{{r.label}}</p></sc-if>
+                        <sc-if value="{{r.isEmpty}}" hint-placeholder-val="{{false}}"><div class="s08-empty"><b>{{r.label}}</b><span>{{r.sub}}</span></div></sc-if>
+                      </sc-for>
+                    </div>
+                  </div>
+                </sc-if>
+                <sc-if value="{{c.profile}}" hint-placeholder-val="{{false}}">
+                  <div class="s08-pane">
+                    <div class="s08-ct">
+                      <h2 class="s08-h">{{pf.name}}</h2>
+                      <p class="s08-st">{{pf.status}}<sc-if value="{{pf.saved}}" hint-placeholder-val="{{false}}"><span class="s08-saved">已保存</span></sc-if></p>
+                    </div>
+                    <div class="s08-flds">
+                      <div class="s08-fld"><span class="s08-fl">称呼</span><span class="s08-fv">{{pf.name}}</span></div>
+                      <div class="s08-fld"><span class="s08-fl">微信号</span><span class="s08-fv {{pf.wxCls}}">{{pf.wx}}</span></div>
+                      <div class="s08-fld"><span class="s08-fl">邮箱<span class="{{pf.emailCls}}">{{pf.emailLabel}}</span></span><span class="s08-fv {{pf.emailPh}}">{{pf.email}}</span></div>
+                    </div>
+                    <button type="button" class="s08-btn" data-act="edit" onClick="{{pf.edit}}">编辑资料</button>
+                    <p class="s08-note">{{pf.note}}</p>
+                    <div class="s08-rows" style="margin-top:14px">
+                      <div class="s08-row" role="button" tabindex="0" onClick="{{pf.privacy}}"><span class="s08-rl">隐私与资料可见性</span><span class="s08-rv">{{pf.privacyValue}}</span><span class="s08-chev">›</span></div>
+                    </div>
+                    <p class="s08-note">{{pf.policy}}</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{c.edit}}" hint-placeholder-val="{{false}}">
+                  <div class="s08-pane">
+                    <div class="s08-ct">
+                      <h2 class="s08-h {{ed.titleCls}}">{{ed.title}}</h2>
+                      <p class="s08-st">编辑资料 · {{ed.status}}</p>
+                    </div>
+                    <div class="s08-flds">
+                      <label class="s08-fld {{ed.nameCls}}"><span class="s08-fl">称呼</span><input class="s08-in" data-field="name" value="{{ed.name}}" onInput="{{ed.onName}}" placeholder="称呼" maxlength="24" autocomplete="off"><sc-if value="{{ed.eName}}" hint-placeholder-val="{{false}}"><span class="s08-err">{{ed.eName}}</span></sc-if></label>
+                      <label class="s08-fld {{ed.wxCls}}"><span class="s08-fl">微信号</span><input class="s08-in" data-field="wx" value="{{ed.wx}}" onInput="{{ed.onWx}}" placeholder="微信号" autocomplete="off" autocapitalize="off"><sc-if value="{{ed.eWx}}" hint-placeholder-val="{{false}}"><span class="s08-err">{{ed.eWx}}</span></sc-if></label>
+                      <label class="s08-fld {{ed.emailCls}}"><span class="s08-fl">邮箱<span class="{{ed.emailTagCls}}">{{ed.emailTag}}</span></span><input class="s08-in" data-field="email" type="email" value="{{ed.email}}" onInput="{{ed.onEmail}}" placeholder="工作或学校邮箱，可留空" autocomplete="off" autocapitalize="off"><sc-if value="{{ed.eEmail}}" hint-placeholder-val="{{false}}"><span class="s08-err">{{ed.eEmail}}</span></sc-if></label>
+                      <sc-if value="{{ed.vf.show}}" hint-placeholder-val="{{false}}">
+                        <div class="s08-vf">
+                          <sc-if value="{{ed.vf.request}}" hint-placeholder-val="{{false}}"><div class="s08-vrow"><button type="button" class="s08-btn" style="margin:0" data-act="request" onClick="{{ed.vf.send}}">发送验证码</button><span class="s08-fl">改了邮箱，保存前要先验证</span></div></sc-if>
+                          <sc-if value="{{ed.vf.input}}" hint-placeholder-val="{{false}}">
+                            <span class="s08-fl">验证码 · 已发到 {{ed.vf.email}}</span>
+                            <div class="s08-vrow"><input class="s08-in s08-code" data-field="code" inputmode="numeric" maxlength="6" value="{{ed.code}}" onInput="{{ed.onCode}}" placeholder="6 位数字"><button type="button" class="s08-lnk" data-act="verify" onClick="{{ed.vf.verify}}">验证</button><button type="button" class="s08-lnk" data-act="resend" disabled="{{ed.vf.resendDisabled}}" onClick="{{ed.vf.resend}}">{{ed.vf.resendLabel}}</button></div>
+                            <sc-if value="{{ed.eCode}}" hint-placeholder-val="{{false}}"><span class="s08-err">{{ed.eCode}}</span></sc-if>
+                          </sc-if>
+                          <sc-if value="{{ed.vf.verified}}" hint-placeholder-val="{{false}}"><span class="s08-ok">{{ed.vf.email}} 已验证 · 保存后生效</span></sc-if>
+                          <p class="s08-note" style="margin-top:10px">{{ed.hint}}</p>
+                        </div>
+                      </sc-if>
+                    </div>
+                    <p class="s08-note">{{ed.note}}</p>
+                  </div>
+                </sc-if>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+        <header class="s08-hd">
+          <div class="s08-tool">
+            <button type="button" class="s08-back" data-act="{{hd.backAct}}" onClick="{{hd.back}}"><sc-if value="{{hd.chev}}" hint-placeholder-val="{{true}}"><b>‹</b></sc-if>{{hd.backLabel}}</button>
+            <span class="s08-tt">{{hd.toolTitle}}</span>
+            <span class="s08-ju">JU</span>
+          </div>
+          <div class="s08-trow"><h1 class="s08-title">设置</h1><button type="button" class="s08-meta {{hd.metaCls}}" style="--band:{{hd.attBand}}" onClick="{{hd.goAttention}}">{{hd.meta}}</button></div>
+          <nav class="s08-rail" aria-label="分组" style="--band:{{hd.band}}">
+            <sc-for list="{{rail}}" as="n" hint-placeholder-count="6"><button type="button" class="s08-rn {{n.cls}}" style="--band:{{n.band}}" onClick="{{n.go}}">{{n.name}}<sc-if value="{{n.count}}" hint-placeholder-val="{{false}}"><span class="s08-rn-n">{{n.count}}</span></sc-if></button></sc-for>
+            <span class="s08-mk" ref="{{mkRef}}"></span>
+          </nav>
+        </header>
+        <nav class="s08-nav" aria-label="根导航"><sc-for list="{{nav}}" as="n" hint-placeholder-count="4"><button type="button" class="s08-nv {{n.cls}}" onClick="{{n.go}}">{{n.label}}</button></sc-for></nav>
+        <sc-if value="{{ed.on}}" hint-placeholder-val="{{false}}"><div class="s08-bar"><button type="button" class="s08-cta" data-act="save" disabled="{{ed.saving}}" onClick="{{ed.save}}">{{ed.saveLabel}}</button></div></sc-if>
+        <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div class="s08-toast" role="status"><span>{{toast.msg}}</span><sc-if value="{{toast.retry}}" hint-placeholder-val="{{false}}"><button type="button" data-act="retry" onClick="{{toast.onRetry}}">重试</button></sc-if></div></sc-if>
+        <sc-if value="{{confirm}}" hint-placeholder-val="{{false}}">
+          <div class="s08-over">
+            <div class="s08-dim" onClick="{{confirm.keep}}"></div>
+            <div class="s08-sheet" role="dialog"><h3>{{confirm.title}}</h3><p>{{confirm.body}}</p><div class="s08-sheet-row"><button type="button" class="s08-txt" data-act="confirm" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button><button type="button" class="s08-btn" data-act="cancel" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button></div></div>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* S08 横向分栏 — six full-height columns (资料 · 收藏 · 偏好 · 记录 · 帮助 · 账户) browsed sideways; the current column expands into the page for details. */
+const S08_COLS = [{ key: 'profile', name: '资料' }, { key: 'fav', name: '收藏' }, { key: 'prefs', name: '偏好' }, { key: 'records', name: '记录' }, { key: 'help', name: '帮助' }, { key: 'account', name: '账户' }];
+/* the column's own colour, taken from the environment it sits in (the field runs pink→lavender→cyan / orange→beige→lavender / orange→yellow→blue left to right) */
+const S08_BANDS = {
+  cotton: ['#e46d9a', '#cf7bb6', '#a98bd2', '#7f9fd8', '#5fb4cf', '#4bbcbd'],
+  halo: ['#ff5005', '#ea7a3c', '#cf9668', '#b4998f', '#a08cbe', '#8f7fcb'],
+  sunset: ['#ff7a33', '#ff9a3d', '#f0b83b', '#8fb0d6', '#33a0ff', '#2d7fd9']
+};
+/* every index surface lives in one column; DETAIL surfaces are rendered inside the expanded column (stage 2 extends this map) */
+const S08_COL_OF = { home: 0, profile: 0, 'profile-edit': 0, privacy: 0, favorites: 1, 'favorite-detail': 1, city: 1, 'seam-feed': 1, 'seam-feed-detail': 1, 'seam-mine': 1, 'seam-report': 1, notify: 2, appearance: 2, records: 3, 'record-detail': 3, 'record-dispute': 3, 'record-appeal': 3, 'record-supplement': 3, reports: 3, 'report-detail': 3, 'report-supplement': 3, help: 4, feedback: 4, about: 4, rules: 4, account: 5 };
+const S08_DETAIL = { profile: 1, 'profile-edit': 1 };
+class Component extends DCLogic {
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.pageRef = { current: null }; this.trackRef = { current: null }; this.mkRef = { current: null }; this.colRefs = S08_COLS.map(() => ({ current: null })); this._homeScroll = {}; this._sp = 0; this._drag = null; this._dragged = false; }
+  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { col: 0, exp: 'off', surface: 'home', did: null, draft: null, errors: {}, saving: false, saved: false, toast: null, confirm: null, snap: false, skinGen: 0, prevSkin: null, shownSkin: null, W: (this.state && this.state.W) || 390 }); }
+  componentDidMount() {
+    const root = this.rootRef.current; if (!root) return;
+    const sync = () => { const W = root.clientWidth || 390; if (W !== this.state.W) this.setState({ W }); };
+    sync(); if (typeof ResizeObserver !== 'undefined') { this._ro = new ResizeObserver(sync); this._ro.observe(root); }
+    this.applySp();
+  }
+  componentWillUnmount() { if (this._ro) this._ro.disconnect(); }
+  componentDidUpdate(pp, ps) {
+    const s = this.state;
+    if (ps.col !== s.col) { const el = this.colRefs[s.col].current; this.setSp(el ? el.scrollTop : 0); }
+    if (ps.surface !== s.surface) { const el = this.colRefs[s.col].current; if (el) { if (s.surface === 'home') { el.scrollTop = this._homeScroll[s.col] || 0; } else if (ps.surface === 'home') { el.scrollTop = 0; } this.setSp(el.scrollTop); } }
+    const shown = this.shownSkin(); if (ps.data && this.shownSkinOf(ps) !== shown) { this.setState({ skinGen: s.skinGen + 1, prevSkin: this.shownSkinOf(ps) }); this.afterKey('skin', 650, () => this.setState({ prevSkin: null })); }
+    this.applySp();
+  }
+  shownSkinOf(s) { return s.preview || s.data.appearance.skin; }
+  shownSkin() { return this.shownSkinOf(this.state); }
+  /* --s08-sp (0..1) = the current column's scroll progress through the first 42px: drives the 30 → 18 header collapse */
+  setSp(top) { this._sp = Math.max(0, Math.min(1, (top || 0) / 42)); this.applySp(); }
+  applySp() { const pg = this.pageRef.current; if (pg) pg.style.setProperty('--s08-sp', String(this._sp)); }
+  W() { return this.state.W || 390; }
+  pitch() { return this.W() - 28; }
+  /* ---------- 翻栏: the column is the subject; snap 300ms, marker and dimming follow ---------- */
+  snapTo(target, fromPx) {
+    const tr = this.trackRef.current, mk = this.mkRef.current; const pitch = this.pitch();
+    if (fromPx == null) fromPx = -this.state.col * pitch; const toPx = -target * pitch;
+    if (tr) { tr.classList.remove('drag'); tr.style.setProperty('--s08-from', fromPx + 'px'); tr.style.setProperty('--s08-to', toPx + 'px'); tr.style.setProperty('--s08-dx', '0px'); }
+    if (mk) mk.style.setProperty('--s08-rp', '0');
+    this.setState({ col: target, snap: true }); this.afterKey('snap', 300, () => this.setState({ snap: false }));
+  }
+  goCol(i) { if (this.state.exp !== 'off' || i === this.state.col) return; this._flipFrom = this.state.col; const from = -this.state.col * this.pitch(); this.motion('flip', () => this.snapTo(i, from)); }
+  dragDown(ev) {
+    if (this.state.exp !== 'off' || this.state.confirm) return; if (ev.target.closest('[role=switch],input,textarea,.s08-switch')) return;
+    this._dragged = false; this._drag = { x: ev.clientX, y: ev.clientY, h: null, dx: 0, id: ev.pointerId, lastX: ev.clientX, lastT: Date.now(), v: 0 };
+  }
+  dragMove(ev) {
+    const g = this._drag; if (!g) return; const dx = ev.clientX - g.x, dy = ev.clientY - g.y; const tr = ev.currentTarget;
+    if (g.h === null) { if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; g.h = Math.abs(dx) > Math.abs(dy) * 1.25; if (!g.h) { this._drag = null; return; } try { tr.setPointerCapture(g.id); } catch (e) { } tr.classList.add('drag'); this._dragged = true; }
+    const col = this.state.col, last = S08_COLS.length - 1; let d = dx; if ((col === 0 && d > 0) || (col === last && d < 0)) d *= 0.3; g.dx = d;
+    const now = Date.now(); if (now > g.lastT) { g.v = (ev.clientX - g.lastX) / (now - g.lastT); g.lastX = ev.clientX; g.lastT = now; }
+    tr.style.setProperty('--s08-dx', d + 'px'); const mk = this.mkRef.current; if (mk) mk.style.setProperty('--s08-rp', String(Math.max(-1, Math.min(1, -d / this.pitch()))));
+  }
+  dragUp(ev) {
+    const g = this._drag; if (!g) return; this._drag = null; if (!g.h) return;
+    const col = this.state.col, last = S08_COLS.length - 1, pitch = this.pitch(); let target = col;
+    if (g.dx < -pitch * 0.22 || g.v < -0.45) target = Math.min(last, col + 1); else if (g.dx > pitch * 0.22 || g.v > 0.45) target = Math.max(0, col - 1);
+    this._flipFrom = col; const from = -col * pitch + g.dx; this.motion('flip', () => this.snapTo(target, from));
+  }
+  dragCancel(ev) { const g = this._drag; if (!g) return; this._drag = null; if (!g.h) return; this.snapTo(this.state.col, -this.state.col * this.pitch() + g.dx); }
+  /* ---------- 栏展开: the current column fills the page (320ms), the header folds to the tool row; return folds back ---------- */
+  expand(surface, extra) {
+    const col = S08_COL_OF[surface] || 0; const el = this.colRefs[col].current; if (el && this.state.surface === 'home') this._homeScroll[col] = el.scrollTop;
+    this.setState(Object.assign({ col, exp: 'in', surface }, extra || {})); this.afterKey('exp', 320, () => this.setState({ exp: 'on' }));
+  }
+  collapse() {
+    if (this.state.exp === 'in' || this.state.exp === 'out') return; this.cancelKey('resend');
+    this.setState({ exp: 'out', surface: 'home', draft: null, errors: {}, confirm: null, toast: null, saved: false }); this.afterKey('exp', 320, () => this.setState({ exp: 'off' }));
+  }
+  open(surface, id) {
+    if (this._dragged) return;
+    if (S08_DETAIL[surface]) { if (surface === 'profile-edit') { this.expand('profile'); this.after(0, () => this.startEdit()); return; } this.motion('expand', () => this.expand(surface, { did: id || null })); return; }
+    const c = S08_COL_OF[surface]; if (c != null && c !== this.state.col) this.goCol(c);   /* stage 2: every other surface opens inside its column */
+  }
+  beforeReplay(name) { if (name === 'expand') this.setState({ exp: 'off', surface: 'home', draft: null, errors: {}, confirm: null }); if (name === 'flip' && this._flipFrom != null) this.setState({ col: this._flipFrom, snap: false }); if (name === 'skin' && this._skinPrev) this.setState({ data: JUS.engine.applySkin(this.state.data, { skin: this._skinPrev }).data }); }
+  /* ---------- profile: detail → edit in the same expanded column; explicit save; code verification inline ---------- */
+  startEdit() { const y = this.state.data.you; this.setState({ surface: 'profile-edit', draft: { name: y.name, wx: y.wx, email: y.email, code: '' }, errors: {}, saved: false }); }
+  isDirty() { const dr = this.state.draft, y = this.state.data.you; return !!dr && (dr.name !== y.name || dr.wx !== y.wx || dr.email !== y.email); }
+  cancelEdit(force) {
+    if (!force && this.isDirty()) { this.setState({ confirm: 'unsaved' }); return; }
+    this.cancelKey('resend'); const d = this.state.data; const nd = d.you.emailPending ? JUS.engine.clearEmailPending(d, {}).data : d;
+    this.setState({ surface: 'profile', draft: null, errors: {}, confirm: null, data: nd, toast: null });
+  }
+  setDraft(k, v) { const dr = Object.assign({}, this.state.draft, { [k]: v }); const er = Object.assign({}, this.state.errors); er[k] = ''; if (k === 'email') er.code = ''; this.setState({ draft: dr, errors: er }); }
+  save() {
+    const s = this.state; if (s.saving || !s.draft) return; const dr = s.draft;
+    const res = this.act('saveProfile', { name: dr.name, wx: dr.wx, email: dr.email });
+    if (res.effect.type === 'invalid') { this.setState({ errors: res.effect.errors }); return; }
+    this.setState({ saving: true, toast: null });
+    this.hold(300, () => {   /* processing stays visible ≥ 300ms (real time) */
+      if (res.effect.type === 'error') { this.setState({ saving: false }); this.say(res.effect.message, true); return; }
+      this.cancelKey('resend'); this.setState({ saving: false, surface: 'profile', draft: null, errors: {}, saved: true }); this.holdKey('saved', 2600, () => this.setState({ saved: false }));
+    });
+  }
+  requestCode() {
+    const dr = this.state.draft; const res = this.act('requestEmailCode', { email: dr.email });
+    if (res.effect.type === 'invalid') { this.setState({ errors: Object.assign({}, this.state.errors, res.effect.errors) }); return; }
+    if (res.effect.type === 'error') { this.say(res.effect.message); return; }
+    this.setState({ errors: Object.assign({}, this.state.errors, { email: '', code: '' }), draft: Object.assign({}, dr, { code: '' }) }); this.tick();
+  }
+  tick() { this.holdKey('resend', 1000, () => { const p = JUS.derive.emailPending(this.state.data); if (p && !p.verified && this.state.surface === 'profile-edit') { this.forceUpdate(); this.tick(); } }); }
+  verifyCode() {
+    const dr = this.state.draft; const res = this.act('verifyEmailCode', { code: dr.code });
+    if (res.effect.type === 'invalid') { this.setState({ errors: Object.assign({}, this.state.errors, res.effect.errors) }); return; }
+    if (res.effect.type === 'error') { this.say(res.effect.message); return; }
+    this.cancelKey('resend'); this.setState({ errors: Object.assign({}, this.state.errors, { code: '', email: '' }) });
+  }
+  say(msg, retry) { this.setState({ toast: { msg, retry: !!retry } }); this.holdKey('toast', retry ? 6000 : 2600, () => this.setState({ toast: null })); }
+  togglePref(key, on) { const r = this.act('setNotifyPref', { key, on }); if (r.effect.type === 'error') this.say(r.effect.message); }
+  toggleRm(on) { const r = this.act('setReduceMotion', { on }); if (r.effect.type === 'error') this.say(r.effect.message); }
+  applySkinNow(skin) { this._skinPrev = this.state.data.appearance.skin; this.motion('skin', () => { const r = this.act('applySkin', { skin }); if (r.effect.type === 'error') this.say(r.effect.message); }); }
+  /* ---------- review index → this concept's surfaces (stage 1: home in every column, profile, profile-edit + its states) ---------- */
+  applyJump(e) {
+    const o = e.open || {}; const col = S08_COL_OF[o.surface] != null ? S08_COL_OF[o.surface] : 0; let d = this.state.data;
+    this.colRefs.forEach(r => { if (r.current) r.current.scrollTop = 0; }); this._homeScroll = {}; this._sp = 0; this.cancelKey('resend');
+    const st = { col, exp: 'off', surface: 'home', did: o.id || null, draft: null, errors: {}, confirm: null, toast: null, saved: false, saving: false, snap: false };
+    if (o.surface === 'profile' || o.surface === 'profile-edit') { st.exp = 'on'; st.surface = o.surface; }
+    if (o.surface === 'profile-edit') {
+      st.draft = { name: d.you.name, wx: d.you.wx, email: d.you.email, code: '' };
+      if (o.state === 'invalid') { st.draft = { name: '', wx: 'ahe ju', email: 'ahe@gmail.com', code: '' }; st.errors = { name: JUS.validate.name(''), wx: JUS.validate.wx('ahe ju'), email: JUS.validate.email('ahe@gmail.com') }; }
+      if (o.state === 'code' || o.state === 'code-expired') { st.draft.email = 'ahe.zhang@columbia.edu'; d = JUS.engine.requestEmailCode(d, { email: st.draft.email }).data; if (o.state === 'code-expired') d = JUS.engine.expireEmailCode(d, {}).data; st.data = d; this.tick(); }
+      if (o.state === 'fail') { st.draft.name = '阿禾二'; st.toast = { msg: JUS.COPY.saveFail, retry: true }; }
+      if (o.state === 'unsaved') { st.draft.name = '阿禾二'; st.confirm = 'unsaved'; }
+      if (o.state === 'kb') { if (!this.state.review.kb) this.setReview({ kb: true }); this.after(80, () => { const i = this.rootRef.current && this.rootRef.current.querySelector('[data-field=name]'); if (i) i.focus(); }); }
+    }
+    if (o.surface === 'profile' && o.state === 'saved') { st.saved = true; this.holdKey('saved', 2600, () => this.setState({ saved: false })); }
+    this.setState(st);
+  }
+  /* ---------- view models ---------- */
+  colModels(d, s, sum, skin) {
+    const self = this; const bands = S08_BANDS[skin] || S08_BANDS.cotton; const you = d.you;
+    const fav = JUS.derive.favorites(d), nt = JUS.derive.notify(d), rec = JUS.derive.records(d), rep = JUS.derive.reports(d), priv = JUS.derive.privacy(d), city = JUS.derive.city(d), fb = JUS.derive.feedback(d), feed = JUS.derive.feed(d);
+    const row = (o) => Object.assign({ isRow: true, cls: '' }, o), item = (o) => Object.assign({ isItem: true, tagCls: '' }, o), sw = (o) => Object.assign({ isSwitch: true, on: o.checked ? 'true' : 'false' }, o), note = (t) => ({ isNote: true, label: t });
+    const nav = (surface, id) => () => self.open(surface, id);
+    const split = (t) => { const i = t.indexOf(' · '); return i < 0 ? [t, ''] : [t.slice(0, i), t.slice(i + 3)]; };
+    const rl = split(sum.recordLabel), pl = split(sum.reportLabel);
+    const status0 = (you.wx ? you.wx : '微信号未填写') + ' · ' + (you.email ? (you.emailDomain || you.email.split('@')[1] || '') + ' ' + sum.emailLabel : '邮箱未填写');
+    const defs = [
+      { title: you.name || '称呼', status: status0, goTitle: nav('profile'), rows: [
+        row({ label: '微信号', value: sum.wxLabel, go: nav('profile') }),
+        row({ label: '邮箱', value: you.email || '未填写', sub: you.email ? sum.emailLabel + (you.emailKind === 'school' ? ' · 学校邮箱' : you.emailKind === 'work' ? ' · 工作邮箱' : '') : '', go: nav('profile') }),
+        row({ label: '隐私与资料可见性', value: priv.facts.length + ' 种情形', go: nav('privacy') })
+      ].concat(sum.attention ? [row({ label: '需要处理', value: sum.attention + ' 项', cls: 'att', go: () => self.goCol(3) })] : []).concat([note(JUS.COPY.snapshotNote)]) },
+      { title: '收藏', status: (fav.count ? fav.count + ' 个局' : JUS.COPY.favEmpty.title) + ' · 默认浏览 ' + city.name, goTitle: nav('favorites'), rows: (fav.empty ? [{ isEmpty: true, label: JUS.COPY.favEmpty.title, sub: JUS.COPY.favEmpty.body }] : fav.all.map(f => item({ rid: f.id, label: f.title, sub: f.when.zh + ' · ' + f.place.hood + ' · ' + f.host + (f.crossCity ? ' · ' + f.city.name : ''), tag: f.relation.kind === 'joined' ? '已报名' : f.relation.kind === 'hosted' ? '我发起' : f.status.label, tagCls: f.relation.kind === 'joined' ? 'on' : f.archived ? 'dim' : '', go: nav('favorite-detail', f.id) }))).concat([
+        row({ label: '默认浏览城市', value: city.name, go: nav('city') }),
+        row({ label: JUS.COPY.favEmpty.cta, value: feed.count + ' 个可报名', go: nav('seam-feed') })
+      ]) },
+      { title: '偏好', status: nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类提醒 · ' + sum.skin.name + (sum.reduceMotion ? ' · 减少动态' : ''), goTitle: nav('notify'), rows: [
+        row({ label: '通知与提醒', value: nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类开启', sub: nt.deliverLabel, go: nav('notify') })
+      ].concat(nt.cats.map(c => sw({ key: c.key, label: c.label, checked: c.on, go: () => self.togglePref(c.key, !c.on) }))).concat([
+        row({ label: '外观', value: sum.skin.name, sub: sum.skin.line, go: nav('appearance') }),
+        sw({ key: 'reduceMotion', label: '减少动态', checked: sum.reduceMotion, go: () => self.toggleRm(!sum.reduceMotion) })
+      ]) },
+      { title: '记录', status: rec.count + ' 条事实 · ' + rep.count + ' 条举报', lead: JUS.COPY.reportNote, goTitle: nav('records'), rows: [
+        row({ label: '我的记录', value: rl[0], sub: rl[1], go: nav('records') }),
+        row({ label: '我的举报', value: pl[0], sub: pl[1], go: nav('reports') })
+      ].concat(rep.needMore.map(r => item({ rid: r.id, label: r.title, sub: r.needsText || r.statusLabel, tag: r.statusLabel, tagCls: 'warn', go: nav('report-detail', r.id) })))
+       .concat(rec.rows.filter(r => r.pendingReview && !r.appeals.length).map(r => item({ rid: r.id, label: r.label + ' · ' + r.title, sub: r.statusLabel + ' · ' + r.atText, tag: split(r.statusLabel)[0], tagCls: 'warn', go: nav('record-detail', r.id) }))) },
+      { title: '帮助', status: JUS.RULES.length + ' 条规则 · ' + fb.length + ' 条反馈', goTitle: nav('help'), rows: [
+        row({ label: '帮助与反馈', value: '常见问题', go: nav('help') }),
+        row({ label: '产品反馈', value: fb.length + ' 条', go: nav('feedback') }),
+        row({ label: '隐私与资料可见性', value: priv.facts.length + ' 种情形', go: nav('privacy') }),
+        row({ label: '关于与规则', value: JUS.RULES_VERSION, go: nav('about') }),
+        row({ label: '规则全文', value: JUS.RULES.length + ' 条', go: nav('rules') })
+      ] },
+      { title: '账户', status: JUS.COPY.demoOnly, goTitle: nav('account'), rows: [
+        row({ label: '本机数据', value: d.session.device, go: nav('account') }),
+        row({ label: '演示会话', value: d.session.kind === 'demo' ? JUS.fmt.date(d.session.startedAt) + ' 开始' : '已结束', go: nav('account') }),
+        row({ label: '退出登录（本地演示）', value: '', cls: 'danger', go: nav('account', 'confirm') })
+      ] }
+    ];
+    const cur = s.col, detail = s.exp !== 'off' && S08_DETAIL[s.surface];
+    return defs.map((c, i) => Object.assign(c, S08_COLS[i], { i, band: bands[i], cls: i === cur ? 'cur' : '', ref: this.colRefs[i], skin, prevSkin: s.prevSkin, envA: s.skinGen % 2 === 0, envB: s.skinGen % 2 === 1,
+      home: !(detail && i === cur), profile: !!(detail && i === cur && s.surface === 'profile'), edit: !!(detail && i === cur && s.surface === 'profile-edit'), lead: c.lead || '',
+      onScroll: (ev) => { if (i === self.state.col) self.setSp(ev.currentTarget.scrollTop); } }));
+  }
+  renderVals() {
+    const s = this.state, d = s.data; const panel = this.panelVals(); panel.show = this.props.panel !== false; panel.rootCls += (d.appearance.reduceMotion ? ' rm-user' : '');
+    const skin = this.shownSkin(); const sum = JUS.derive.summary(d); const cols = this.colModels(d, s, sum, skin); const bands = S08_BANDS[skin] || S08_BANDS.cotton;
+    const exp = s.exp, detail = exp !== 'off'; const editing = s.surface === 'profile-edit';
+    const pageCls = (exp === 'in' ? 'x-in' : exp === 'on' ? 'exp' : exp === 'out' ? 'x-out' : '') + (detail ? ' detail' : '') + (editing ? ' editing' : '');
+    const you = d.you; const dr = s.draft || {}; const er = s.errors || {}; const pnd = JUS.derive.emailPending(d);
+    const emailStatus = you.email ? (you.emailVerified ? '已验证 · ' + (you.emailKind === 'school' ? '学校邮箱' : '工作邮箱') : '未验证') : '未填写';
+    const pf = { name: you.name, wx: you.wx || '未填写', wxCls: you.wx ? '' : 'ph', email: you.email || '未填写', emailPh: you.email ? '' : 'ph', emailLabel: emailStatus, emailCls: you.emailVerified && you.email ? 'ok' : '', status: cols[0].status, saved: !!s.saved, note: JUS.COPY.snapshotNote, policy: JUS.COPY.wxPolicy, privacyValue: JUS.derive.privacy(d).facts.length + ' 种情形', edit: () => this.startEdit(), privacy: () => this.open('privacy') };
+    const emailDirty = editing && (dr.email || '').trim() !== you.email, emailOk = editing && !!(dr.email || '').trim() && !JUS.validate.email(dr.email);
+    const pm = pnd && pnd.email === (dr.email || '').trim() ? pnd : null;
+    const vf = { show: emailDirty && emailOk, request: emailDirty && emailOk && !pm, input: !!(pm && !pm.verified), verified: !!(pm && pm.verified), email: (dr.email || '').trim(), resendDisabled: !!(pm && !pm.expired && pm.resendLeftS > 0), resendLabel: pm && !pm.expired && pm.resendLeftS > 0 ? JUS.COPY.profileErrors.codeResend + '（' + pm.resendLeftS + 's）' : JUS.COPY.profileErrors.codeResend, send: () => this.requestCode(), resend: () => this.requestCode(), verify: () => this.verifyCode() };
+    const codeErr = pm && pm.expired && !pm.verified ? JUS.COPY.profileErrors.codeExpired : (er.code || '');
+    const ed = { on: editing, title: (dr.name || '').trim() || '称呼', titleCls: (dr.name || '').trim() ? '' : 'ph', status: this.isDirty() ? '有改动，还没保存' : '还没有改动', name: dr.name || '', wx: dr.wx || '', email: dr.email || '', code: dr.code || '', eName: er.name || '', eWx: er.wx || '', eEmail: er.email || '', eCode: codeErr, nameCls: er.name ? 'err' : '', wxCls: er.wx ? 'err' : '', emailCls: er.email ? 'err' : '',
+      emailTag: emailDirty ? (vf.verified ? '已验证' : (dr.email || '').trim() ? '改了，保存前要验证' : '留空则跳过验证') : emailStatus, emailTagCls: (emailDirty ? vf.verified : you.emailVerified && you.email) ? 'ok' : '',
+      onName: (ev) => this.setDraft('name', ev.target.value), onWx: (ev) => this.setDraft('wx', ev.target.value), onEmail: (ev) => this.setDraft('email', ev.target.value), onCode: (ev) => { this.setDraft('code', ev.target.value.replace(/\D/g, '').slice(0, 6)); },
+      vf, hint: JUS.COPY.emailHint, note: JUS.COPY.snapshotNote, saving: !!s.saving, saveLabel: s.saving ? '保存中…' : '保存', save: () => this.save() };
+    const hd = { backAct: editing ? 'cancel' : 'back', backLabel: editing ? '取消' : '设置', chev: !editing, back: () => { if (!detail) return; if (editing) this.cancelEdit(false); else this.collapse(); },
+      toolTitle: editing ? '编辑资料' : (cols[s.col] ? cols[s.col].title : ''), meta: sum.attention ? sum.attention + ' 项需要处理' : JUS.COPY.demoOnly, metaCls: sum.attention ? 'att' : '', attBand: bands[3], band: bands[s.col], goAttention: () => { if (sum.attention) this.goCol(3); } };
+    const rail = cols.map((c, i) => ({ name: c.name, band: c.band, cls: i === s.col ? 'cur' : '', count: i === 3 && sum.attention ? sum.attention : 0, go: () => this.goCol(i) }));
+    const nav = [{ key: 'find', label: '找局', go: () => this.open('seam-feed') }, { key: 'create', label: '开局', go: () => {} }, { key: 'mine', label: '我的局', go: () => this.open('seam-mine') }, { key: 'settings', label: '设置', cls: 'cur', go: () => { if (detail) this.collapse(); } }];
+    const toast = s.toast ? { msg: s.toast.msg, retry: s.toast.retry, onRetry: () => { this.setState({ toast: null }); this.cancelKey('toast'); this.save(); } } : null;
+    const confirm = s.confirm === 'unsaved' ? { title: JUS.COPY.unsaved.title, body: JUS.COPY.unsaved.body, keepLabel: JUS.COPY.unsaved.keep, discardLabel: JUS.COPY.unsaved.discard, keep: () => this.setState({ confirm: null }), discard: () => this.cancelEdit(true) } : null;
+    return { panel, rootRef: this.rootRef, pageRef: this.pageRef, trackRef: this.trackRef, mkRef: this.mkRef, skin, col: s.col, surface: s.surface, pageCls, trackCls: s.snap ? 'snap' : '', cols, pf, ed, hd, rail, nav, toast, confirm,
+      drag: { down: (ev) => this.dragDown(ev), move: (ev) => this.dragMove(ev), up: (ev) => this.dragUp(ev), cancel: (ev) => this.dragCancel(ev) } };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>
