@@ -212,11 +212,15 @@
     };
     p._pfDirty = function (f) { return f.name !== f.base.name || f.wx !== f.base.wx || f.email !== f.base.email; };
     p._pfSet = function (patch) { this.setState(function (s) { return s.pf ? { pf: assign(s.pf, patch) } : null; }); };
+    /* functional update: several inputs can fire in the same tick (autofill, IME commit) — never build on a stale this.state.pf */
     p.pfInput = function (field, v) {
-      var f = this.state.pf; if (!f) return; var patch = {}; patch[field] = v; patch.errors = assign(f.errors); patch.errors[field] = ''; patch.failed = false; patch.saved = false;
-      if (field === 'email') { var t = (v || '').trim(); if (f.codeState !== 'none' && t !== f.codeFor) { patch.codeState = 'none'; patch.code = ''; this.cancelKey('resend'); } patch.errors.code = ''; }
-      if (field === 'code') patch.errors.code = '';
-      this._pfSet(patch);
+      var self = this;
+      this.setState(function (s) {
+        var f = s.pf; if (!f) return null; var patch = {}; patch[field] = v; patch.errors = assign(f.errors); patch.errors[field] = ''; patch.failed = false; patch.saved = false;
+        if (field === 'email') { var t = (v || '').trim(); if (f.codeState !== 'none' && t !== f.codeFor) { patch.codeState = 'none'; patch.code = ''; self.cancelKey('resend'); } patch.errors.code = ''; }
+        if (field === 'code') patch.errors.code = '';
+        return { pf: assign(f, patch) };
+      });
     };
     p.pfSendCode = function () {
       var f = this.state.pf; if (!f) return; var email = (f.email || '').trim();
@@ -273,6 +277,7 @@
     /* ---------------- text forms ---------------- */
     p._formId = function (kind, params) { var k = FORM[kind].idKey; return k ? (params.id || '') : 'new'; };
     p._tf = function (kind, id) { return (this.state.tf || {})[kind + ':' + id] || { text: '', files: [], who: [], errors: {}, saving: false, failed: false, done: null }; };
+    p._tfUpdate = function (kind, id, fn) { var k = kind + ':' + id; this.setState(function (s) { var tf = assign(s.tf); var cur = tf[k] || { text: '', files: [], who: [], errors: {} }; tf[k] = assign(cur, fn(cur)); return { tf: tf }; }); };
     p._tfSet = function (kind, id, patch) { var k = kind + ':' + id; this.setState(function (s) { var tf = assign(s.tf); tf[k] = assign(tf[k] || { text: '', files: [], who: [], errors: {} }, patch); return { tf: tf }; }); };
     p.formSubmit = function (kind, id) {
       var spec = FORM[kind]; var f = this._tf(kind, id); if (f.saving) return; var self = this; var text = (f.text || '').trim();
@@ -445,12 +450,12 @@
       var fk = SURFACE_FORM[top.s];
       if (fk) {
         var fid = this._formId(fk, top.p); var tf = this._tf(fk, fid); var spec = FORM[fk];
-        var who = fk === 'report' ? this._whoOptions(fid).map(function (o) { return assign(o, { on: (tf.who || []).indexOf(o.k) >= 0, toggle: function () { var w = (self._tf(fk, fid).who || []).slice(); var i = w.indexOf(o.k); if (i >= 0) w.splice(i, 1); else w.push(o.k); self._tfSet(fk, fid, { who: w, errors: assign(self._tf(fk, fid).errors, { who: '' }) }); } }); }) : [];
+        var who = fk === 'report' ? this._whoOptions(fid).map(function (o) { return assign(o, { on: (tf.who || []).indexOf(o.k) >= 0, toggle: function () { self._tfUpdate(fk, fid, function (t) { var w = (t.who || []).slice(); var i = w.indexOf(o.k); if (i >= 0) w.splice(i, 1); else w.push(o.k); return { who: w, errors: assign(t.errors, { who: '' }) }; }); } }); }) : [];
         out.form = { on: true, kind: fk, id: fid, title: spec.title, label: spec.label, placeholder: spec.placeholder, submitLabel: tf.saving ? '提交中…' : tf.failed ? '重试' : spec.submit,
           text: tf.text || '', count: (tf.text || '').trim().length, min: spec.min, err: tf.errors || {}, saving: !!tf.saving, failed: !!tf.failed, failText: tf.failed ? (tf.failMsg || JUS.COPY.saveFail) : '', done: !!tf.done, shake: tf.shake || 0,
           onInput: function (ev) { self._tfSet(fk, fid, { text: ev.target.value, errors: {}, failed: false }); },
-          canFiles: spec.files, files: (tf.files || []).map(function (x, i) { return assign(x, { sizeText: x.size > 1048576 ? (x.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(x.size / 1024)) + ' KB', remove: function () { var fl = (self._tf(fk, fid).files || []).slice(); fl.splice(i, 1); self._tfSet(fk, fid, { files: fl }); } }); }),
-          onFiles: function (ev) { var list = Array.prototype.slice.call(ev.target.files || []).map(function (x) { return { name: x.name, size: x.size }; }); var fl = (self._tf(fk, fid).files || []).concat(list).slice(0, 3); self._tfSet(fk, fid, { files: fl }); try { ev.target.value = ''; } catch (e) { } },
+          canFiles: spec.files, files: (tf.files || []).map(function (x, i) { return assign(x, { sizeText: x.size > 1048576 ? (x.size / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(x.size / 1024)) + ' KB', remove: function () { self._tfUpdate(fk, fid, function (t) { var fl = (t.files || []).slice(); fl.splice(i, 1); return { files: fl }; }); } }); }),
+          onFiles: function (ev) { var list = Array.prototype.slice.call(ev.target.files || []).map(function (x) { return { name: x.name, size: x.size }; }); self._tfUpdate(fk, fid, function (t) { return { files: (t.files || []).concat(list).slice(0, 3) }; }); try { ev.target.value = ''; } catch (e) { } },
           fileNote: '本机演示 · 只记录文件名与大小，不会上传', who: who, needWho: fk === 'report',
           submit: function () { self.formSubmit(fk, fid); }, cancel: function () { self.back(); } };
       } else out.form = { on: false };

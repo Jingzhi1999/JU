@@ -17,6 +17,7 @@ const path_ = () => c.state.nav.stack.map(x => x.s).join('>');
   c.go('profile'); await tick(420); ok('go profile', path_() === 'home>profile' && c.state.nav.phase === 'idle');
   c.go('profile-edit'); await tick(420); ok('pf open', c.state.pf && c.state.pf.name === '阿禾');
   c.pfInput('name', ''); c.pfInput('wx', 'a b'); c.pfSave(); ok('invalid errors', c.state.pf.errors.name && c.state.pf.errors.wx);
+  { const realSet = c.setState; const q = []; c.setState = function (p) { q.push(p); }; c.pfInput('name', '阿禾二'); c.pfInput('wx', 'ahe_ju'); c.setState = realSet; q.forEach(p => c.setState(p)); ok('same-tick inputs do not resurrect cleared errors', !c.state.pf.errors.name && !c.state.pf.errors.wx && c.state.pf.name === '阿禾二' && c.state.pf.wx === 'ahe_ju'); }
   c.pfInput('name', '阿禾二'); c.pfInput('wx', 'ahe_ju'); c.pfInput('email', 'he.a@stern.nyu.edu'); c.pfSave(); ok('unverified email blocked', c.state.pf.errors.email === J.COPY.profileErrors.mailUnverified);
   c.pfSendCode(); ok('code sent', c.state.pf.codeState === 'sent' && /^\d{6}$/.test(c.state.data.you.emailPending.code));
   c.pfInput('code', '000000'); c.pfVerify(); ok('wrong code', c.state.pf.errors.code === J.COPY.profileErrors.codeWrong);
