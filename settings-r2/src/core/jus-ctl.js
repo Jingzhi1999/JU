@@ -173,7 +173,21 @@
         if (memo) Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el) el.scrollTop = memo[k]; });
       }
       root.querySelectorAll('[data-scroller]').forEach(function (el) { self._applyHc(el); });
-      if (this._focusField) { var f = root.querySelector('[data-field="' + this._focusField + '"]'); this._focusField = null; if (f && f.focus) { try { f.focus({ preventScroll: false }); f.scrollIntoView({ block: 'center' }); } catch (e) { } } }
+      if (this._focusField) { var f = root.querySelector('[data-field="' + this._focusField + '"]'); this._focusField = null; if (f && f.focus) { try { f.focus({ preventScroll: true }); } catch (e) { try { f.focus(); } catch (e2) { } } this.reveal(f); } }
+    };
+    /* reveal(el): bring a field into view inside its own [data-scroller] only (above the keyboard inset --kb), never via
+       scrollIntoView — that also scrolls clipped ancestors (.app / .ju-phone) and shifts the whole screen. */
+    p.reveal = function (el) {
+      var root = this.rootRef && this.rootRef.current; if (!el || !root) return;
+      var sc = el.closest && el.closest('[data-scroller]');
+      var ph = root.closest ? (root.closest('.ju-phone') || root) : root; var pr = ph.getBoundingClientRect();
+      var kb = parseFloat((global.getComputedStyle ? getComputedStyle(root).getPropertyValue('--kb') : '') || '0') || 0;
+      if (sc) {
+        var s = sc.getBoundingClientRect(), r = el.getBoundingClientRect(); var top = Math.max(s.top, pr.top), bottom = Math.min(s.bottom, pr.bottom - kb);
+        if (r.top < top + 12 || r.bottom > bottom - 12) sc.scrollTop += (r.top + r.height / 2) - (top + bottom) / 2;
+        this._applyHc(sc);
+      }
+      if (root.scrollTop) root.scrollTop = 0; if (ph !== root && ph.scrollTop) ph.scrollTop = 0;
     };
     p._applyHc = function (el) {
       var rng = this.headerRange || 96; var hc = clamp(el.scrollTop / rng, 0, 1).toFixed(3);

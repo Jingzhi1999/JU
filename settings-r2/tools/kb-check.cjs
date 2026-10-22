@@ -13,11 +13,12 @@ const { chromium } = require('/opt/node-tools/node_modules/playwright'); const p
     await p.evaluate(([c, k]) => { const m = window.JUShell.mounts.stage['stage:' + c + ':']; m.instance.jumpTo(k); if (!m.instance.state.review.kb) m.instance.toggleKb(); }, [code, st]); await p.waitForTimeout(700);
     const r = await p.evaluate(c => { const host = document.querySelector('.stage-host[data-code="' + c + '"]'); const ph = host.shadowRoot.querySelector('.ju-phone'); const pr = ph.getBoundingClientRect(); const kbTop = pr.bottom - 300;
       const inputs = [...ph.querySelectorAll('input:not([type=hidden]):not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),textarea')].filter(el => { const cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0; });
-      const out = []; inputs.forEach(el => { el.focus(); el.scrollIntoView({ block: 'nearest' }); const b = el.getBoundingClientRect(); out.push({ name: el.name || el.getAttribute('data-field') || el.placeholder || el.tagName, bottom: Math.round(b.bottom - pr.top), kbTop: Math.round(kbTop - pr.top), hidden: b.bottom > kbTop || b.top < pr.top }); });
-      const act = ph.querySelector('[data-act="save"],[data-act="submit"],button[type=submit]'); const ab = act ? act.getBoundingClientRect() : null;
-      return { x: pr.left, y: pr.top, w: pr.width, h: pr.height, inputs: out, action: ab ? { bottom: Math.round(ab.bottom - pr.top), hidden: ab.bottom > kbTop } : null }; }, code);
+      const inst = window.JUShell.mounts.stage['stage:' + c + ':'].instance; const out = []; inputs.forEach(el => { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } if (inst.reveal) inst.reveal(el); else el.scrollIntoView({ block: 'nearest' }); const b = el.getBoundingClientRect(); out.push({ name: el.name || el.getAttribute('data-field') || el.placeholder || el.tagName, bottom: Math.round(b.bottom - pr.top), kbTop: Math.round(kbTop - pr.top), hidden: b.bottom > kbTop || b.top < pr.top }); });
+      const app = ph.querySelector('.app'); const shifted = (app && app.scrollTop) || ph.scrollTop || 0; if (inst.reveal && act0()) inst.reveal(act0()); function act0() { return ph.querySelector('[data-act="save"],[data-act="submit"],button[type=submit]'); } const act = act0(); const ab = act ? act.getBoundingClientRect() : null;
+      return { x: pr.left, y: pr.top, w: pr.width, h: pr.height, inputs: out, shifted: shifted, action: ab ? { bottom: Math.round(ab.bottom - pr.top), hidden: ab.bottom > kbTop } : null }; }, code);
     r.inputs.filter(i => i.hidden).forEach(i => findings.push(`${st}: input ${i.name} bottom ${i.bottom} > keyboard top ${i.kbTop}`));
     if (r.action && r.action.hidden) findings.push(`${st}: primary action under keyboard (bottom ${r.action.bottom})`);
+    if (r.shifted) findings.push(`${st}: the app itself was scrolled by ${r.shifted}px (a clipped ancestor moved)`);
     await p.screenshot({ path: `${outdir}/f${String(n++).padStart(2, '0')}-${st}.png`, clip: { x: r.x, y: r.y, width: r.w, height: r.h } });
   }
   await b.close();
