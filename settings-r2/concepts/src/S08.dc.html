@@ -13,48 +13,53 @@
 body{margin:0}
 /* @panel-css */
 /* ===================== S08 横向分栏 =====================
-   One light, thin paper. The environment is ONE landscape that runs behind every column (it slides at half the columns' speed);
-   the columns are backlit paper (82%) standing in front of it, so each column takes the colour of the light behind it.
-   Headers and rails live on the light; content lives on paper. No cast shadows, no blur on text, no glass.
-   Depth also runs sideways: a column expands into its page (L1); deeper pages arrive as new columns from the right (L2)
-   while the page you came from folds into a 28px strip on the left (the mirror of the home's 28px peek).
-   One progress variable per layer drives every geometry: --s08-pos (columns), --s08-q (home under a page),
-   --s08-p (a page arriving / leaving), --s08-u (a page under a deeper column), --s08-f (edit field panes). */
+   One light, thin paper. The environment is ONE landscape behind every column (it slides at half the columns' speed);
+   columns are backlit paper standing in front of it, so each takes the colour of the light behind it. Headers and
+   column names live on the light; content lives on paper. No cast shadows, no blur on text, no glass.
+   Everything is a column: the home is a row of columns (the next peeks 64px, the previous 16px); a column expands into
+   its page (L1); deeper pages arrive as columns from the right (L2) while the page underneath folds into a 28px strip;
+   inside a page, groups are sub-columns under a name rail (field panes, kinds, skins, rule groups).
+   Progress numbers drive all geometry: --s08-pos (columns), --s08-q (home under a page), --s08-p (a page arriving),
+   --s08-u (a page under a deeper column), --s08-f (sub-columns). */
 @property --s08-pos{syntax:'<number>';inherits:true;initial-value:0}
 @property --s08-p{syntax:'<number>';inherits:true;initial-value:1}
 @property --s08-q{syntax:'<number>';inherits:true;initial-value:0}
 @property --s08-u{syntax:'<number>';inherits:true;initial-value:0}
 @property --s08-f{syntax:'<number>';inherits:true;initial-value:0}
-.app.s08{position:absolute;inset:0;overflow:hidden;container-type:inline-size;background:var(--base);color:var(--ink);
+.ju-phone{overflow:clip}
+.app.s08{position:absolute;inset:0;overflow:clip;container-type:inline-size;background:var(--base);color:var(--ink);
   font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased;font-synthesis:none;
   --ink:#14161F;--body:#252b3a;--sec:#535b70;--ink2:#2e3346;--rule:rgba(20,22,31,.12);--err:#DA3A52;--ok:#0E9B76;--focus:#4A5AD6;--errt:#bf2a43;--okt:#0a7559;
-  --paper:rgba(255,253,250,.78);--card:#fffdf9;--ease:cubic-bezier(.2,.8,.2,1);--grow:cubic-bezier(.3,.7,.22,1);--pitch:calc(100cqw - 36px);--num:"Archivo","Noto Sans SC",sans-serif;
+  --paper:rgba(255,253,250,.78);--card:#fffdf9;--ease:cubic-bezier(.2,.8,.2,1);--grow:cubic-bezier(.3,.7,.22,1);
+  --colw:calc(100cqw - 96px);--pitch:calc(100cqw - 88px);--num:"Archivo","Noto Sans SC",sans-serif;--accl:color-mix(in srgb,var(--acc) 30%,#fffaf6);
   transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
 .app.s08[data-skin=cotton]{--acc:#ec6fa6;--base:#f2c9df}
 .app.s08[data-skin=halo]{--acc:#ff6a24;--base:#fff1e2}
 .app.s08[data-skin=sunset]{--acc:#ff7a33;--base:#ffc98a}
 .app.s08 *{box-sizing:border-box}
 :where(.app.s08) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:inherit;-webkit-tap-highlight-color:transparent}
-:where(.app.s08) input{font:inherit;color:inherit}
-:where(.app.s08) :is(p,h1,h2){margin:0}
+:where(.app.s08) :is(input,textarea){font:inherit;color:inherit}
+:where(.app.s08) :is(p,h1,h2,h3){margin:0}
 .app.s08.rm *,.app.s08.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 .app.s08.paused *{animation-play-state:paused!important}
 .s08-press{transition:transform calc(140ms * var(--k,1)) var(--ease)}
 .s08-press:active{transform:scale(.985)}
 .s08-ph{color:var(--sec)}
 
-/* ---------- the landscape: one continuous light behind all seven columns (parallax .5) ---------- */
+/* ---------- the landscape ---------- */
 .s08-home{position:absolute;inset:0;z-index:1}
 .s08-pan{position:absolute;inset:0}
 .s08-pan.s08-snap-a{animation:s08-snap-a calc(300ms * var(--k,1)) var(--ease) both}
 .s08-pan.s08-snap-b{animation:s08-snap-b calc(300ms * var(--k,1)) var(--ease) both}
 @keyframes s08-snap-a{from{--s08-pos:var(--s08-from)}to{--s08-pos:var(--s08-to)}}
 @keyframes s08-snap-b{from{--s08-pos:var(--s08-from)}to{--s08-pos:var(--s08-to)}}
-.s08-land{position:absolute;left:0;top:0;bottom:0;width:calc(100cqw + 3 * var(--pitch));transform:translateX(calc(var(--s08-pos) * var(--pitch) * -.5));pointer-events:none;overflow:hidden}
-.s08-sky{position:absolute;inset:0;opacity:0;transition:opacity calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s08-land{position:absolute;left:0;top:0;bottom:0;width:calc(100cqw + 3 * var(--pitch));transform:translateX(calc(var(--s08-pos) * var(--pitch) * -.5));pointer-events:none;overflow:clip}
+.s08-sky{position:absolute;inset:0;opacity:0}
 .s08-sky.s08-on{opacity:1;animation:s08-sky calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
+.s08-sky.s08-was{animation:s08-sky-out calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
 @keyframes s08-sky{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
-.s08-sky.s08-k-cotton{background:
+@keyframes s08-sky-out{from{opacity:1}to{opacity:0}}
+.s08-k-cotton.s08-sky{background:
   radial-gradient(20% 30% at 7% 9%,rgba(255,255,255,.75),rgba(255,255,255,0) 70%),
   radial-gradient(24% 44% at 15% 70%,rgba(240,126,178,.8),rgba(240,126,178,0) 70%),
   radial-gradient(20% 36% at 33% 24%,rgba(236,160,214,.62),rgba(236,160,214,0) 70%),
@@ -62,44 +67,43 @@ body{margin:0}
   radial-gradient(22% 36% at 66% 16%,rgba(255,255,255,.55),rgba(255,255,255,0) 70%),
   radial-gradient(26% 50% at 86% 64%,rgba(104,198,228,.78),rgba(104,198,228,0) 70%),
   linear-gradient(90deg,#f6bdd7 0%,#f2bfdd 18%,#e1c3ef 40%,#cec8f3 58%,#bcdbf1 78%,#a9def0 100%)}
-.s08-sky.s08-k-halo{background:
+.s08-k-halo.s08-sky{background:
   radial-gradient(circle at 13% 56%,rgba(255,248,238,0) 0 236px,rgba(255,96,24,.95) 276px,rgba(255,140,64,.9) 306px,rgba(224,184,146,.9) 352px,rgba(206,186,228,.92) 404px,rgba(206,186,228,0) 486px),
   radial-gradient(circle at 74% 30%,rgba(255,248,238,0) 0 150px,rgba(255,104,30,.8) 184px,rgba(224,184,146,.8) 222px,rgba(206,186,228,.85) 262px,rgba(206,186,228,0) 330px),
   radial-gradient(34% 40% at 46% 92%,rgba(206,186,228,.75),rgba(206,186,228,0) 70%),
   linear-gradient(180deg,#fff8ef 0%,#fff2e4 62%,#f8e8e6 100%)}
-.s08-sky.s08-k-sunset{background:
+.s08-k-sunset.s08-sky{background:
   radial-gradient(26% 32% at 11% 90%,rgba(255,216,96,.98),rgba(255,197,61,0) 72%),
   radial-gradient(30% 40% at 30% 72%,rgba(255,132,58,.55),rgba(255,132,58,0) 70%),
   radial-gradient(36% 44% at 88% 8%,rgba(34,132,246,.8),rgba(51,160,255,0) 70%),
   radial-gradient(30% 36% at 62% 26%,rgba(86,170,250,.5),rgba(86,170,250,0) 70%),
   linear-gradient(180deg,#66aef3 0%,#9ccbf2 19%,#ffd88a 50%,#ffaa5e 75%,#ff7a36 100%)}
 
-/* ---------- home header (on the light): meta + JU in the tool row, 设置 30 → 18 into the tool row ---------- */
+/* ---------- home header (on the light) ---------- */
 .s08-hd{position:absolute;left:0;right:0;top:0;height:96px;pointer-events:none;opacity:calc(1 - var(--s08-q) * 2.2)}
-.s08-meta{position:absolute;left:28px;top:24px;font-size:14px;line-height:20px;color:var(--ink2);white-space:nowrap;opacity:calc(1 - var(--hc,0) * 1.8)}
-.s08-ttl,.s08-ptl{position:absolute;left:calc(28px + (50% - 28px) * var(--hc,0));top:calc(54px - 31px * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;color:var(--ink)}
-.s08-ju{position:absolute;right:28px;top:24px;z-index:30;font-family:var(--num);font-size:16px;font-weight:700;line-height:20px;letter-spacing:.06em;color:var(--ink);pointer-events:none}
+.s08-meta{position:absolute;left:24px;top:24px;font-size:14px;line-height:20px;color:var(--ink2);white-space:nowrap;opacity:calc(1 - var(--hc,0) * 1.8)}
+.s08-ttl,.s08-ptl{position:absolute;left:calc(24px + (50% - 24px) * var(--hc,0));top:calc(54px - 31px * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;color:var(--ink)}
+.s08-dots{position:absolute;left:50%;top:33px;display:flex;gap:4px;transform:translateX(-50%);opacity:calc(1 - var(--hc,0) * 2)}
+.s08-dots i{width:7px;height:3px;border-radius:2px;background:rgba(20,22,31,.24);transition:width calc(240ms * var(--k,1)) var(--ease),background-color calc(240ms * var(--k,1))}
+.s08-dots i.s08-cur{width:18px;background:var(--ink)}
+.s08-ju{position:absolute;right:24px;top:24px;z-index:30;font-family:var(--num);font-size:16px;font-weight:700;line-height:20px;letter-spacing:.06em;color:var(--ink);pointer-events:none}
 
-/* ---------- rail: column names in fixed slots (n × 17px); the marker stays at the column edge and the names slide under it ---------- */
-.s08-rail{position:absolute;left:0;right:0;top:calc(98px - 40px * var(--hc,0));height:42px;overflow:hidden;opacity:calc(1 - var(--s08-q) * 2);transform:translateY(calc(var(--s08-q) * -10px));
-  -webkit-mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 18px,#000 calc(100% - 18px),transparent 100%)}
-.s08-rail-in{position:absolute;left:0;top:0;bottom:0;display:flex;gap:22px;
-  --c0:clamp(0,var(--s08-pos),1);--c1:clamp(0,calc(var(--s08-pos) - 1),1);--c2:clamp(0,calc(var(--s08-pos) - 2),1);--c3:clamp(0,calc(var(--s08-pos) - 3),1);--c4:clamp(0,calc(var(--s08-pos) - 4),1);--c5:clamp(0,calc(var(--s08-pos) - 5),1);
-  --rx:calc(var(--c0) * 39px + var(--c1) * 56px + var(--c2) * 56px + var(--c3) * 56px + var(--c4) * 107px + var(--c5) * 56px);
-  transform:translateX(calc(28px - var(--rx)))}
-.s08-rn{position:relative;flex:0 0 auto;height:42px;font-size:15px;line-height:42px;color:var(--ink2);white-space:nowrap;transition:font-size calc(240ms * var(--k,1)) var(--ease)}
-.s08-rn.s08-cur{font-size:17px;font-weight:600;color:var(--ink)}
-.s08-home.is-under .s08-rn.s08-cur,.s08-home.s08-away .s08-rn.s08-cur{visibility:hidden}
-.s08-mk{position:absolute;left:0;bottom:5px;height:3px;border-radius:2px;background:var(--acc);width:calc(17px + var(--c0) * 17px + var(--c3) * 51px - var(--c4) * 51px + var(--c5) * 51px);transform:translateX(var(--rx));transition:background-color calc(650ms * var(--k,1))}
+/* ---------- column names: each name rides above its own column's left edge (a little ahead of its paper) ---------- */
+.s08-names{position:absolute;left:0;right:0;top:calc(98px - 40px * var(--hc,0));height:42px;pointer-events:none;opacity:calc(1 - var(--s08-q) * 2);transform:translateY(calc(var(--s08-q) * -10px))}
+.s08-nm{position:absolute;left:24px;top:0;height:42px;line-height:42px;white-space:nowrap;pointer-events:auto;font-weight:500;
+  --d:min(1,max(calc(var(--i) - var(--s08-pos)),calc(var(--s08-pos) - var(--i))));
+  transform:translateX(calc((var(--i) - var(--s08-pos)) * (var(--pitch) + 18px) + var(--side) * var(--s08-q) * 84px));
+  font-size:calc(20px - 5px * var(--d));color:color-mix(in srgb,var(--ink2) calc(var(--d) * 100%),var(--ink))}
+.s08-nm::after{content:'';position:absolute;left:0;right:0;bottom:5px;height:3px;border-radius:2px;background:var(--acc);opacity:calc(1 - var(--d) * 2)}
+.s08-home.is-under .s08-nm.s08-cur,.s08-home.s08-away .s08-nm.s08-cur{visibility:hidden}
 
-/* ---------- the columns: full-height backlit paper, width 100% − 44px, the next one peeking 28px ---------- */
+/* ---------- the columns ---------- */
 .s08-track{position:absolute;left:0;right:0;top:calc(148px - 40px * var(--hc,0));bottom:72px;touch-action:pan-y;-webkit-user-select:none;user-select:none}
-.s08-col{position:absolute;left:8px;top:0;bottom:0;width:calc(100% - 44px);transform:translateX(calc((var(--i) - var(--s08-pos)) * var(--pitch) + var(--side) * var(--s08-q) * 84px))}
+.s08-col{position:absolute;left:24px;top:0;bottom:0;width:var(--colw);transform:translateX(calc((var(--i) - var(--s08-pos)) * var(--pitch) + var(--side) * var(--s08-q) * 84px))}
 .s08-col-bg{position:absolute;inset:0;border-radius:24px;background:var(--paper)}
-.s08-col-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;border-radius:24px;padding:24px 20px 28px;scrollbar-width:none;touch-action:pan-y;overscroll-behavior:contain;
-  opacity:clamp(.3,calc(1.5 - max(calc(var(--i) - var(--s08-pos)),calc(var(--s08-pos) - var(--i))) * .9),1)}
-.s08-col-sc::-webkit-scrollbar,.s08-sc::-webkit-scrollbar,.s08-pane-sc::-webkit-scrollbar{display:none}
-.s08-col.s08-cur .s08-col-bg{left:calc(-8px * var(--s08-q));right:calc(-36px * var(--s08-q));top:calc((40px * var(--hc,0) - 48px - 40px * var(--s08-hc1,0)) * var(--s08-q))}
+.s08-col.s08-cur .s08-col-bg{left:calc(-24px * var(--s08-q));right:calc(-72px * var(--s08-q));top:calc((40px * var(--hc,0) - 48px - 40px * var(--s08-hc1,0)) * var(--s08-q))}
+.s08-col-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;border-radius:24px;padding:22px 20px 28px;scrollbar-width:none;touch-action:pan-y;overscroll-behavior:contain}
+:is(.s08-col-sc,.s08-sc,.s08-pane-sc)::-webkit-scrollbar{display:none}
 .s08-home.s08-away .s08-col.s08-cur .s08-col-bg,.s08-home.is-under .s08-col.s08-cur .s08-id,.s08-home.s08-away .s08-col.s08-cur .s08-id{visibility:hidden}
 .s08-col.s08-cur .s08-rest{opacity:calc(1 - min(1, var(--s08-q) * 3))}
 .s08-home.is-under .s08-track,.s08-home.s08-away .s08-track{pointer-events:none}
@@ -108,42 +112,44 @@ body{margin:0}
 .s08-home.is-under.ph-in{animation:s08-q-in calc(340ms * var(--k,1)) var(--grow) both}
 .s08-home.is-under.ph-idle{--s08-q:1}
 .s08-home.is-under.ph-exit{animation:s08-q-out calc(300ms * var(--k,1)) var(--grow) both}
+.s08-home.is-leaving :is(.s08-hd,.s08-names,.s08-track){opacity:0;transition:opacity calc(240ms * var(--k,1))}
+.s08-home.is-top.dir-root.ph-in :is(.s08-hd,.s08-names,.s08-track){animation:s08-rise calc(320ms * var(--k,1)) var(--ease) both}
 @keyframes s08-q-in{from{--s08-q:0}to{--s08-q:1}}
 @keyframes s08-q-out{from{--s08-q:1}to{--s08-q:0}}
+@keyframes s08-rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 
-/* 你 */
+/* column type */
 .s08-first{display:flex;flex-direction:column;min-height:calc(100% - 46px)}
-.s08-id{display:block;width:100%;text-align:left}
+.s08-id{display:block;width:100%;max-width:calc(100cqw - 136px);text-align:left}
 .s08-name{display:block;font-size:48px;font-weight:600;line-height:1.15;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
 .s08-name.s08-long{font-size:40px}
-.s08-id{max-width:calc(100cqw - 84px)}
-.s08-kv{position:relative;display:block;margin-top:18px}
+.s08-kv{position:relative;display:block;margin-top:16px}
 .s08-k{display:block;font-size:13px;line-height:18px;color:var(--sec)}
 .s08-v{display:block;margin-top:2px;padding-right:64px;font-family:var(--num);font-size:26px;font-weight:500;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
-.s08-v.s08-ph{color:var(--sec);font-family:inherit;font-size:20px}
+.s08-v.s08-ph{font-family:inherit;font-size:20px}
 .s08-st{display:block;margin-top:2px;font-size:13px;line-height:1.5;color:var(--sec)}
 .s08-st.s08-ok{color:var(--okt)}
 .s08-copy{position:absolute;right:0;top:20px}
-.s08-chip{display:inline-block;margin-left:10px;padding:0 8px;border-radius:11px;font-size:13px;line-height:22px;font-weight:600;font-style:normal;letter-spacing:0;vertical-align:middle;background:var(--acc);color:var(--ink);transition:background-color calc(650ms * var(--k,1))}
-.s08-gap{flex:1 1 auto;min-height:32px}
-.s08-att{margin:0 -20px;padding:16px 20px 4px;background:var(--acc);color:var(--ink);transition:background-color calc(650ms * var(--k,1))}
-.s08-att-h{font-size:15px;font-weight:600;line-height:20px;padding-bottom:12px;border-bottom:1px solid rgba(20,22,31,.24)}
-.s08-ai{display:block;width:100%;padding:12px 0 14px;text-align:left;border-bottom:1px solid rgba(20,22,31,.18)}
+.s08-chip{display:inline-block;margin-left:10px;padding:0 8px;border-radius:11px;font-size:13px;line-height:22px;font-weight:600;font-style:normal;letter-spacing:0;vertical-align:middle;background:var(--accl);color:var(--ink)}
+.s08-gap{flex:1 1 auto;min-height:28px}
+.s08-att{margin:0 -20px;padding:14px 20px 2px;background:var(--accl);color:var(--ink);transition:background-color calc(650ms * var(--k,1))}
+.s08-att-h{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;line-height:20px;padding-bottom:10px;border-bottom:1px solid rgba(20,22,31,.14)}
+.s08-att-h::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--acc)}
+.s08-ai{display:block;width:100%;padding:11px 0 12px;text-align:left;border-bottom:1px solid rgba(20,22,31,.1)}
 .s08-ai:last-child{border-bottom:0}
-.s08-ai-k{display:block;font-size:13px;line-height:18px}
-.s08-ai-t{display:block;margin-top:3px;font-size:17px;font-weight:600;line-height:1.4}
-.s08-ai-l{display:block;margin-top:3px;font-size:13px;line-height:1.5}
+.s08-ai-k{display:block;font-size:13px;line-height:18px;color:var(--ink2)}
+.s08-ai-t{display:block;margin-top:2px;font-size:17px;font-weight:600;line-height:1.4}
+.s08-ai-l{display:block;margin-top:2px;font-size:13px;line-height:1.5;color:var(--ink2)}
 .s08-calm{font-size:15px;line-height:1.6;color:var(--ink2);padding-top:14px;border-top:1px solid var(--rule)}
-.s08-more{padding-top:14px}
+.s08-more{padding-top:12px}
 .s08-pv{margin-top:8px;font-size:15px;line-height:1.6;color:var(--body)}
-.s08-pv1{margin-top:26px;padding-top:16px;border-top:1px solid var(--rule)}
-
-/* shared column type */
-.s08-ch{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.s08-pv1{margin-top:24px;padding-top:16px;border-top:1px solid var(--rule)}
+.s08-ch{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
 .s08-h{font-size:15px;font-weight:600;line-height:20px;color:var(--ink)}
-.s08-sub{font-size:13px;line-height:18px;color:var(--sec);text-align:right}
+.s08-sub{font-size:13px;line-height:18px;color:var(--sec)}
 .s08-lab{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-size:13px;line-height:18px;color:var(--sec)}
 .s08-hint{margin-top:10px;font-size:13px;line-height:1.6;color:var(--sec)}
+.s08-lead{margin-top:10px;font-size:15px;line-height:1.65;color:var(--body)}
 .s08-link{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:15px;color:var(--ink)}
 .s08-link span{color:var(--sec)}
 .s08-row{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;padding:8px 0;border-top:1px solid var(--rule);font-size:17px;line-height:1.35;text-align:left}
@@ -153,68 +159,68 @@ body{margin:0}
 .s08-tag{display:inline-block;flex:0 0 auto;padding:0 8px;border-radius:10px;font-size:13px;line-height:20px;font-style:normal;font-weight:500;background:rgba(20,22,31,.07);color:var(--ink);white-space:nowrap}
 .s08-tag.s08-on{background:var(--ink);color:#fff}
 .s08-tag.s08-off{background:transparent;box-shadow:inset 0 0 0 1px rgba(20,22,31,.3)}
+.s08-tag.s08-hot{background:var(--accl)}
 .s08-num{display:block;font-family:var(--num);font-size:64px;font-weight:600;line-height:1;letter-spacing:-.02em;color:var(--ink)}
 .s08-num small{font-size:64px;color:var(--sec)}
 .s08-numb{display:block;width:100%;text-align:left}
 .s08-numl{display:block;margin-top:8px;font-size:15px;line-height:1.45;color:var(--ink2)}
+.s08-hero{font-size:30px;font-weight:600;line-height:1.3;color:var(--ink);overflow-wrap:anywhere}
+.s08-big{display:block;margin-top:4px;font-size:30px;font-weight:600;line-height:1.3;color:var(--ink)}
+.s08-big2{font-size:30px;font-weight:600;line-height:1.25}
+.s08-gapline{margin-top:18px}
 .s08-btn{display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 20px;border-radius:22px;box-shadow:inset 0 0 0 1.5px var(--ink);font-size:15px;font-weight:500;color:var(--ink);white-space:nowrap;transition:transform calc(120ms * var(--k,1)) var(--ease)}
 .s08-btn:active{transform:scale(.96)}
 .s08-btn:disabled{opacity:.5}
-
-/* 收藏: three saved 局 stacked as a deck (局名 20px), then the browse city */
+.s08-btn-s{height:34px;padding:0 14px;font-family:"Noto Sans SC",sans-serif;font-size:14px}
+.s08-btn-red{box-shadow:inset 0 0 0 1.5px var(--errt);color:var(--errt)}
+.s08-acts{display:flex;align-items:center;flex-wrap:wrap;gap:10px 18px;margin-top:22px}
+.s08-note{margin-top:18px;font-size:15px;line-height:1.6;color:var(--body)}
+/* 收藏 deck */
 .s08-deck{position:relative;margin-top:16px;height:calc(var(--n,2) * 70px + 158px)}
 .s08-card{position:absolute;left:0;right:0;top:calc(var(--k) * 70px);display:flex;flex-direction:column;justify-content:flex-start;height:158px;padding:14px 16px;border-radius:18px;background:var(--card);box-shadow:0 0 0 1px rgba(20,22,31,.07);text-align:left;overflow:hidden}
 .s08-card-w{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;line-height:20px;color:var(--sec)}
 .s08-card-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:1;overflow:hidden;margin-top:6px;font-size:20px;font-weight:600;line-height:1.35;color:var(--ink)}
 .s08-card.s08-front .s08-card-t{-webkit-line-clamp:2}
 .s08-card-s{display:block;margin-top:8px;font-size:14px;line-height:1.45;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s08-empty{padding:18px 0 4px}
-.s08-empty b{display:block;font-size:20px;font-weight:600;line-height:1.35}
-.s08-empty span{display:block;margin:6px 0 16px;font-size:15px;color:var(--ink2)}
-.s08-city{display:block;width:100%;margin-top:22px;padding-top:16px;border-top:1px solid var(--rule);text-align:left}
-.s08-big{display:block;margin-top:4px;font-size:30px;font-weight:600;line-height:1.3;color:var(--ink)}
-
-/* 提醒 */
+.s08-city{display:block;width:100%;margin-top:22px;padding-top:14px;border-top:1px solid var(--rule);text-align:left}
+/* switches */
 .s08-say{display:flex;align-items:baseline;gap:8px;width:100%;margin:16px 0 8px;text-align:left;font-size:15px;line-height:1.5;color:var(--ink)}
 .s08-say i{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:var(--acc);transform:translateY(-1px)}
 .s08-say b{margin-left:auto;font-weight:400;color:var(--sec)}
 .s08-swr{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;border-top:1px solid var(--rule);font-size:17px;line-height:1.35;text-align:left}
 .s08-sw{position:relative;flex:0 0 auto;width:46px;height:28px;border-radius:14px;background:rgba(20,22,31,.18);transition:background-color calc(160ms * var(--k,1))}
 .s08-sw i{position:absolute;left:3px;top:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:transform calc(160ms * var(--k,1)) var(--ease)}
-.s08-swr[aria-checked=true] .s08-sw{background:var(--ink)}
-.s08-swr[aria-checked=true] .s08-sw i{transform:translateX(18px)}
-
-/* 外观: three full-width environment swatches (120px) */
+.s08-swr[aria-checked=true] .s08-sw,.s08-swr[aria-pressed=true] .s08-sw{background:var(--ink)}
+.s08-swr[aria-checked=true] .s08-sw i,.s08-swr[aria-pressed=true] .s08-sw i{transform:translateX(18px)}
+/* swatches (mini landscapes) */
 .s08-swatch{position:relative;display:flex;flex-direction:column;justify-content:flex-start;width:100%;height:120px;margin-bottom:10px;padding:14px 16px;border-radius:16px;text-align:left;overflow:hidden;color:var(--ink)}
-.s08-swatch.s08-k-cotton{background:radial-gradient(60% 90% at 16% 18%,rgba(255,255,255,.6),rgba(255,255,255,0) 70%),linear-gradient(105deg,#f6b4d1 0%,#dcc7f2 52%,#a5dbea 100%)}
-.s08-swatch.s08-k-halo{background:radial-gradient(circle at 82% 125%,rgba(255,249,239,0) 0 64px,#ff5a12 88px,#ff9a50 104px,#dcb994 126px,#d0bce1 150px,rgba(208,188,225,0) 178px),linear-gradient(180deg,#fff8ee,#fff0e0)}
-.s08-swatch.s08-k-sunset{background:radial-gradient(60% 80% at 14% 104%,rgba(255,206,72,.98),rgba(255,197,61,0) 70%),linear-gradient(180deg,#5ba8f4 0%,#a3cff3 30%,#ffd27f 64%,#ff8846 100%)}
+.s08-k-cotton:not(.s08-sky){background:radial-gradient(60% 90% at 16% 18%,rgba(255,255,255,.6),rgba(255,255,255,0) 70%),linear-gradient(105deg,#f6b4d1 0%,#dcc7f2 52%,#a5dbea 100%)}
+.s08-k-halo:not(.s08-sky){background:radial-gradient(circle at 82% 125%,rgba(255,249,239,0) 0 64px,#ff5a12 88px,#ff9a50 104px,#dcb994 126px,#d0bce1 150px,rgba(208,188,225,0) 178px),linear-gradient(180deg,#fff8ee,#fff0e0)}
+.s08-k-sunset:not(.s08-sky){background:radial-gradient(60% 80% at 14% 104%,rgba(255,206,72,.98),rgba(255,197,61,0) 70%),linear-gradient(180deg,#5ba8f4 0%,#a3cff3 30%,#ffd27f 64%,#ff8846 100%)}
 .s08-swatch.s08-cur{box-shadow:inset 0 0 0 2px var(--ink)}
 .s08-sw-n{display:block;font-size:20px;font-weight:600;line-height:1.3}
 .s08-sw-n small{margin-left:8px;font-family:var(--num);font-size:13px;font-weight:500}
 .s08-sw-l{position:absolute;left:16px;bottom:12px;font-size:13px;line-height:1.4}
 .s08-swatch .s08-tag{position:absolute;right:12px;top:14px}
-
-/* 记录与举报 / 帮助 / 账户与关于 */
 .s08-pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .s08-stat{display:block;text-align:left;padding:2px 0 6px}
 .s08-stat-l{display:block;margin-top:4px;font-size:13px;line-height:1.5;color:var(--sec)}
 .s08-stat-l.s08-hot{color:var(--ink);font-weight:600}
-.s08-grp{display:block;width:100%;padding:14px 0;border-top:1px solid var(--rule);text-align:left}
 .s08-grps{margin-top:18px}
+.s08-grp{display:block;width:100%;padding:14px 0;border-top:1px solid var(--rule);text-align:left}
 .s08-grp b{display:block;font-size:30px;font-weight:600;line-height:1.25}
 .s08-grp span{display:block;margin-top:2px;font-size:15px;line-height:1.5;color:var(--ink2)}
-.s08-big2{font-size:30px;font-weight:600;line-height:1.25}
-.s08-gapline{margin-top:18px}
 
-/* ---------- pages. L1 = the current column expanded (header on the light, a full-width sheet of the same paper);
-   L2 = a new column arriving from the right, the page underneath folding into a 28px strip on the left ---------- */
+/* ---------- pages: L0 root page, L1 = the current column expanded, L2 = a column arriving from the right ---------- */
 .s08-pg{position:absolute;inset:0;z-index:10;pointer-events:none}
 .s08-pg.s08-l2{z-index:12}
 .s08-pg.is-top.ph-enter{--s08-p:0}
 .s08-pg.is-top.ph-in{animation:s08-p-in calc(340ms * var(--k,1)) var(--grow) both}
 .s08-pg.is-top.ph-idle{--s08-p:1}
 .s08-pg.is-top.ph-exit{animation:s08-p-out calc(300ms * var(--k,1)) var(--grow) both}
+.s08-pg.is-top.dir-root{--s08-p:1}
+.s08-pg.is-top.dir-root.ph-enter{opacity:0}
+.s08-pg.is-top.dir-root.ph-in{animation:s08-rise calc(320ms * var(--k,1)) var(--ease) both}
 .s08-pg.is-under{--s08-p:1}
 .s08-pg.is-under.ph-enter{--s08-u:0}
 .s08-pg.is-under.ph-in{animation:s08-u-in calc(340ms * var(--k,1)) var(--grow) both}
@@ -226,79 +232,166 @@ body{margin:0}
 @keyframes s08-p-out{from{--s08-p:1}to{--s08-p:0}}
 @keyframes s08-u-in{from{--s08-u:0}to{--s08-u:1}}
 @keyframes s08-u-out{from{--s08-u:1}to{--s08-u:0}}
-/* keyframe review: the panel's scrub shows the column expansion at --frame */
-.app.scrub .s08-pg.s08-l1.is-top,.app.scrub .s08-pg.s08-l2.is-top{animation:s08-p-in 1s linear both paused;animation-delay:calc(var(--frame,0) * -1s)}
-.app.scrub .s08-home.is-under,.app.scrub .s08-pg.is-under{animation:s08-q-in 1s linear both paused;animation-delay:calc(var(--frame,0) * -1s)}
-.app.scrub .s08-pg.is-under{animation-name:s08-u-in}
+/* keyframe review (panel 暂停 / 关键帧): the three core motions are keyframed and follow --frame */
+.app.scrub .s08-pg:is(.s08-l1,.s08-l2).is-top:not(.dir-root){animation:s08-p-in calc(340ms * var(--k,1)) linear both!important;animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
+.app.scrub .s08-home.is-under{animation:s08-q-in calc(340ms * var(--k,1)) linear both!important;animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
+.app.scrub .s08-pg.is-under{animation:s08-u-in calc(340ms * var(--k,1)) linear both!important;animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
+.app.scrub .s08-pan:is(.s08-snap-a,.s08-snap-b){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
+.app.scrub .s08-sky:is(.s08-on,.s08-was){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
 .s08-phd{position:absolute;left:0;right:0;top:0;height:100px;pointer-events:none}
-.s08-back{position:absolute;left:14px;top:14px;height:40px;padding:0 12px;font-size:15px;line-height:40px;color:var(--ink);white-space:nowrap;pointer-events:auto;opacity:var(--s08-p)}
-.s08-ptl{opacity:clamp(0,calc((var(--s08-p) - .4) * 2.5),1)}
-.s08-pmeta{position:absolute;right:28px;top:66px;font-size:14px;line-height:20px;color:var(--ink2);white-space:nowrap;opacity:calc(min(var(--s08-p), 1 - var(--hc,0) * 1.8))}
-.s08-fly{position:absolute;left:28px;top:0;font-size:17px;font-weight:600;line-height:42px;color:var(--ink);white-space:nowrap;transform-origin:0 50%;
-  transform:translateY(calc((98px - 40px * var(--s08-hc0,0)) * (1 - var(--s08-p)) + 52px * var(--s08-p))) scale(calc(1 + .7647 * var(--s08-p)));opacity:calc(1 - clamp(0,calc((var(--s08-p) - .3) * 2.5),1))}
-.s08-l1{transform:translateX(calc(var(--s08-u) * (28px - 100cqw)))}
-.s08-sheet{position:absolute;inset:0;pointer-events:auto;background:var(--paper);
-  clip-path:inset(calc(var(--s08-fy,148px) * (1 - var(--s08-p)) + (100px - 40px * var(--hc,0)) * var(--s08-p)) calc((100% - var(--s08-fx,8px) - var(--s08-fw,calc(100% - 44px))) * (1 - var(--s08-p))) calc((100% - var(--s08-fy,148px) - var(--s08-fh,calc(100% - 220px))) * (1 - var(--s08-p)) + 72px * var(--s08-p)) calc(var(--s08-fx,8px) * (1 - var(--s08-p))) round 24px)}
-.s08-sc{position:absolute;left:0;right:0;top:calc(100px - 40px * var(--hc,0));bottom:72px;overflow-x:hidden;overflow-y:auto;padding:24px 28px calc(40px + var(--kb,0px));scrollbar-width:none;overscroll-behavior:contain}
-.s08-flow{transform:translate(calc((var(--s08-fx,8px) - 8px) * (1 - var(--s08-p))),calc((var(--s08-fy,148px) - var(--s08-sy,0px) - 100px + 40px * var(--hc,0) + var(--s08-st1,0px)) * (1 - var(--s08-p))))}
-.s08-l1 .s08-rest{opacity:clamp(0,calc((var(--s08-p) - .35) * 2),1)}
-.s08-l1.is-top .s08-sheet{background:transparent}
-.s08-l1 .s08-c2,.s08-l2 .s08-sheet,.s08-l2 .s08-fly{display:none}
-/* L2 */
-.s08-l2 .s08-phd,.s08-l2 .s08-c2{transform:translateX(calc((1 - var(--s08-p)) * (100cqw - 28px)))}
+.s08-back{position:absolute;left:12px;top:14px;height:40px;padding:0 12px;font-size:15px;line-height:40px;color:var(--ink);white-space:nowrap;pointer-events:auto;opacity:var(--s08-p)}
+.s08-ptl{max-width:calc(100% - 40px);overflow:hidden;text-overflow:ellipsis;opacity:clamp(0,calc((var(--s08-p) - .4) * 2.5),1)}
+.s08-pmeta{position:absolute;left:24px;top:24px;max-width:calc(100% - 100px);overflow:hidden;text-overflow:ellipsis;font-size:14px;line-height:20px;color:var(--ink2);white-space:nowrap;opacity:calc(min(var(--s08-p), 1 - var(--hc,0) * 1.8))}
+.s08-l1 .s08-pmeta,.s08-l2 .s08-pmeta{left:auto;right:24px;top:66px;max-width:46%}
+.s08-fly{position:absolute;left:24px;top:0;font-size:20px;font-weight:500;line-height:42px;color:var(--ink);white-space:nowrap;transform-origin:0 50%;
+  transform:translateY(calc((98px - 40px * var(--s08-hc0,0)) * (1 - var(--s08-p)) + 52px * var(--s08-p))) scale(calc(1 + .5 * var(--s08-p)));opacity:calc(1 - clamp(0,calc((var(--s08-p) - .3) * 2.5),1))}
+.s08-body{position:absolute;display:flex;flex-direction:column;pointer-events:auto;background:var(--paper)}
+.s08-l0 .s08-body,.s08-l1 .s08-body{inset:0;padding:calc(100px - 40px * var(--hc,0)) 0 72px}
+.s08-l0 .s08-body{clip-path:inset(calc(100px - 40px * var(--hc,0)) 0 72px 0 round 24px)}
+.s08-l1 .s08-body{clip-path:inset(calc(var(--s08-fy,148px) * (1 - var(--s08-p)) + (100px - 40px * var(--hc,0)) * var(--s08-p)) calc((100% - var(--s08-fx,24px) - var(--s08-fw,calc(100% - 96px))) * (1 - var(--s08-p))) calc((100% - var(--s08-fy,148px) - var(--s08-fh,calc(100% - 220px))) * (1 - var(--s08-p)) + 72px * var(--s08-p)) calc(var(--s08-fx,24px) * (1 - var(--s08-p))) round 24px)}
+.s08-l1.is-top .s08-body{background:transparent}
+.s08-l0.is-under,.s08-l1.is-under{transform:translateX(calc(var(--s08-u) * (28px - 100cqw)))}
+.s08-l2.is-under{transform:translateX(calc(var(--s08-u) * (36px - 100cqw)))}
+.s08-l0 .s08-fly,.s08-l2 .s08-fly,.s08-l0 .s08-back{display:none}
+.s08-l2 .s08-phd,.s08-l2 .s08-body{transform:translateX(calc((1 - var(--s08-p)) * (100cqw - 28px)))}
 .s08-l2 .s08-back{left:38px;opacity:1}
-.s08-l2 .s08-ptl{left:calc(56px + (50% - 42px) * var(--hc,0));opacity:1}
+.s08-l2 .s08-ptl{left:calc(56px + (50% - 42px) * var(--hc,0));max-width:calc(100% - 140px);opacity:1}
 .s08-l2 .s08-pmeta{right:36px;opacity:calc(1 - var(--hc,0) * 1.8)}
-.s08-c2{position:absolute;left:36px;width:calc(100% - 44px);top:calc(100px - 40px * var(--hc,0));bottom:max(14px, var(--kb,0px));display:flex;flex-direction:column;border-radius:24px;background:var(--paper);pointer-events:auto;overflow:hidden}
-.s08-c2-sc{flex:1 1 auto;min-height:0;overflow-y:auto;padding:22px 20px calc(28px + var(--kb,0px));scrollbar-width:none}
+.s08-l2 .s08-body{left:36px;width:calc(100% - 44px);top:calc(100px - 40px * var(--hc,0));bottom:max(14px, var(--kb,0px));border-radius:24px;overflow:hidden}
+.s08-sc{position:relative;flex:1 1 auto;min-height:0;overflow-x:hidden;overflow-y:auto;padding:24px 28px calc(40px + var(--kb,0px));scrollbar-width:none;overscroll-behavior:contain}
+.s08-l2 .s08-sc{padding:22px 20px calc(28px + var(--kb,0px))}
+.s08-flow{transform:translate(calc((var(--s08-fx,24px) - 8px) * (1 - var(--s08-p))),calc((var(--s08-fy,148px) - var(--s08-sy,0px) - 100px + 40px * var(--hc,0) + var(--s08-st1,0px)) * (1 - var(--s08-p))))}
+.s08-l1 :is(.s08-rest,.s08-frail,.s08-panes,.s08-bar,.s08-fade){opacity:clamp(0,calc((var(--s08-p) - .35) * 2),1)}
 .app.s08-deep .s08-root{opacity:0;transform:translateY(16px);pointer-events:none}
-
-/* profile (the expanded 你) */
-.s08-btn-s{height:34px;padding:0 14px;font-family:"Noto Sans SC",sans-serif;font-size:14px}
-.s08-note{margin-top:18px;font-size:15px;line-height:1.6;color:var(--body)}
-.s08-acts{display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;margin-top:22px}
-
-/* profile edit: the fields are columns too — a field rail, one big input per pane, the JU-blue save at the column foot */
-.s08-c2{--e0:clamp(0,var(--s08-f),1);--e1:clamp(0,calc(var(--s08-f) - 1),1);transition:--s08-f calc(300ms * var(--k,1)) var(--ease)}
-.s08-frail{position:relative;flex:0 0 52px;display:flex;gap:22px;padding:0 20px;border-bottom:1px solid var(--rule)}
-.s08-fr{position:relative;flex:0 0 auto;height:51px;font-size:15px;line-height:51px;color:var(--sec);white-space:nowrap;transition:font-size calc(240ms * var(--k,1)) var(--ease)}
+/* sub-columns: a name rail and one pane per group, the same column logic inside every page */
+.s08-frail{position:relative;flex:0 0 52px;display:flex;gap:22px;padding:0 20px;border-bottom:1px solid var(--rule);overflow:clip}
+.s08-l0 .s08-frail,.s08-l1 .s08-frail{padding:0 28px}
+.s08-fr{position:relative;flex:0 0 auto;height:51px;font-size:15px;line-height:51px;color:var(--ink2);white-space:nowrap;transition:font-size calc(240ms * var(--k,1)) var(--ease)}
 .s08-fr.s08-cur{font-size:17px;font-weight:600;color:var(--ink)}
 .s08-dot,.s08-okdot{position:absolute;right:-10px;top:15px;width:7px;height:7px;border-radius:50%;background:var(--err)}
 .s08-okdot{background:var(--ok)}
-.s08-fmk{position:absolute;left:20px;bottom:-1px;height:3px;border-radius:2px;background:var(--acc);width:calc(34px + var(--e0) * 17px - var(--e1) * 17px);transform:translateX(calc(var(--e0) * 56px + var(--e1) * 73px))}
-.s08-panes{position:relative;flex:1 1 auto;min-height:0;overflow:clip}
-.s08-pane{position:absolute;inset:0;transform:translateX(calc((var(--j) - var(--s08-f)) * (100% + 24px)))}
-.s08-pane-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;padding:20px 20px 20px;scrollbar-width:none;display:flex;flex-direction:column}
+.s08-dot-i{position:relative;display:inline-block;right:auto;top:-7px;margin-left:4px}
+.s08-fmk{position:absolute;left:20px;bottom:0;height:3px;border-radius:2px;background:var(--acc);transition:transform calc(300ms * var(--k,1)) var(--ease),width calc(300ms * var(--k,1)) var(--ease)}
+.s08-l0 .s08-fmk,.s08-l1 .s08-fmk{left:28px}
+.s08-panes{position:relative;flex:1 1 auto;min-height:0;overflow:clip;transition:--s08-f calc(300ms * var(--k,1)) var(--ease)}
+.s08-panes.s08-drag{transition:none}
+.s08-pane{position:absolute;inset:0;transform:translateX(calc((var(--j) - var(--s08-f)) * (100% + 24px)));visibility:hidden;transition:visibility 0s linear calc(300ms * var(--k,1))}
+.s08-pane.s08-cur,.s08-panes.s08-drag .s08-pane{visibility:visible;transition-delay:0s}
+.s08-pane-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;padding:20px 20px calc(24px + var(--kb,0px));scrollbar-width:none;display:flex;flex-direction:column;touch-action:pan-y}
+.s08-l0 .s08-pane-sc,.s08-l1 .s08-pane-sc{padding-left:28px;padding-right:28px}
 .s08-pane-sc > *{flex:0 0 auto}
 .s08-foot{margin-top:auto;padding-top:20px}
 .s08-foot p{padding-top:12px;border-top:1px solid var(--rule);font-size:13px;line-height:1.6;color:var(--sec)}
-
+.s08-bar{flex:0 0 auto;padding:12px 20px 16px;border-top:1px solid var(--rule)}
+.s08-bar .s08-err{margin:0 0 10px;text-align:center}
+.s08-bar2{display:flex;align-items:center;justify-content:center;gap:16px}
+.s08-bar2 .s08-cta{flex:1 1 auto;margin:0}
+.s08-cta{display:block;width:min(100%,280px);height:48px;margin:0 auto;border-radius:24px;color:#fff;font-size:16px;font-weight:600;letter-spacing:.02em;text-align:center;
+  background:linear-gradient(180deg,#5765d2 0%,#4553BE 55%,#3b48ab 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.2);transition:transform calc(120ms * var(--k,1)) var(--ease),opacity calc(160ms * var(--k,1))}
+.s08-cta:active{transform:scale(.958)}
+.s08-cta[aria-busy=true]{opacity:.82}
+/* fields */
 .s08-in{display:block;width:100%;margin:8px 0 0;padding:0 0 6px;border:0;border-bottom:2px solid rgba(20,22,31,.2);border-radius:0;background:transparent;outline:0;color:var(--ink);-webkit-user-select:text;user-select:text;transition:border-color calc(160ms * var(--k,1))}
 .s08-in:focus{border-bottom-color:var(--focus)}
 .s08-in.s08-bad{border-bottom-color:var(--err)}
 .s08-in-xl{font-size:34px;font-weight:600;line-height:1.3}
 .s08-in-l{font-family:var(--num);font-size:26px;font-weight:500;line-height:1.35}
 .s08-in-m{font-family:var(--num);font-size:20px;font-weight:500;line-height:1.4}
+.s08-in-s{font-size:17px;line-height:1.4}
 .s08-in-code{flex:1 1 auto;min-width:0;margin:0;font-family:var(--num);font-size:28px;font-weight:500;line-height:1.3;letter-spacing:.22em}
+.s08-ta{display:block;width:100%;min-height:168px;margin-top:10px;padding:12px 14px;border:0;border-radius:14px;background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.16);outline:0;resize:none;font-size:17px;line-height:1.65;color:var(--ink);-webkit-user-select:text;user-select:text}
+.s08-ta:focus{box-shadow:inset 0 0 0 2px var(--focus)}
+.s08-ta.s08-bad{box-shadow:inset 0 0 0 2px var(--err)}
 .s08-err{margin-top:8px;font-size:13px;line-height:1.5;color:var(--errt)}
 .s08-lab .s08-late{color:var(--errt)}
 .s08-okt{color:var(--okt)}
-.s08-oth{margin-top:26px}
+.s08-oth{margin-top:24px}
 .s08-oth .s08-row em{max-width:62%;font-family:var(--num);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .s08-oth .s08-row em.s08-ph{font-family:inherit}
-.s08-dot-i{position:relative;display:inline-block;right:auto;top:-7px;margin-left:4px}
 .s08-code{margin-top:20px;padding-top:16px;border-top:1px solid var(--rule)}
 .s08-coderow{display:flex;align-items:flex-end;gap:12px;margin-top:8px}
-.s08-code .s08-link:disabled{color:var(--sec);cursor:default}
+.s08-link:disabled{color:var(--sec);cursor:default}
 .s08-okline{margin-top:14px;font-size:15px;line-height:1.5;color:var(--okt)}
-.s08-bar{flex:0 0 auto;padding:12px 20px 16px;border-top:1px solid var(--rule)}
-.s08-bar .s08-err{margin:0 0 10px;text-align:center}
-.s08-cta{display:block;width:min(100%,280px);height:48px;margin:0 auto;border-radius:24px;color:#fff;font-size:16px;font-weight:600;letter-spacing:.02em;text-align:center;
-  background:linear-gradient(180deg,#5765d2 0%,#4553BE 55%,#3b48ab 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.2);transition:transform calc(120ms * var(--k,1)) var(--ease),opacity calc(160ms * var(--k,1))}
-.s08-cta:active{transform:scale(.958)}
-.s08-cta[aria-busy=true]{opacity:.82}
+.s08-ctx{padding-bottom:14px;border-bottom:1px solid var(--rule)}
+.s08-ctx b{display:block;margin-top:2px;font-size:20px;font-weight:600;line-height:1.35;color:var(--ink)}
+.s08-drop{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-height:132px;margin-top:12px;border-radius:16px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.22);font-size:17px;font-weight:500;color:var(--ink);cursor:pointer;text-align:center}
+.s08-drop input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.s08-drop span{font-size:13px;font-weight:400;color:var(--sec)}
+.s08-file{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;border-top:1px solid var(--rule);font-size:15px}
+.s08-file span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s08-file em{font-style:normal;font-size:13px;color:var(--sec);margin-left:8px}
+.s08-x{flex:0 0 auto;min-height:36px;padding:0 4px;font-size:14px;color:var(--errt)}
+/* page content blocks */
+.s08-date{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.s08-date b{font-family:var(--num);font-size:48px;font-weight:600;line-height:1;letter-spacing:-.02em}
+.s08-date span{font-size:15px;color:var(--ink2)}
+.s08-dt{margin-top:12px;font-size:24px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere}
+.s08-facts{margin-top:14px}
+.s08-fact{display:flex;justify-content:space-between;gap:14px;padding:10px 0;border-top:1px solid var(--rule);font-size:15px;line-height:1.5}
+.s08-fact span{flex:0 0 auto;color:var(--sec);font-size:13px;line-height:22px}
+.s08-fact b{font-weight:500;text-align:right;overflow-wrap:anywhere;min-width:0}
+.s08-wx{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:6px;font-family:var(--num);font-size:24px;font-weight:500}
+.s08-box{margin-top:18px;padding:14px 16px;border-radius:16px;background:var(--accl);font-size:15px;line-height:1.6;color:var(--ink)}
+.s08-box b{display:block;font-size:17px;font-weight:600;margin-bottom:2px}
+.s08-fcard{display:flex;align-items:stretch;gap:10px;margin-top:10px;padding:14px 12px 14px 16px;border-radius:18px;background:var(--card);box-shadow:0 0 0 1px rgba(20,22,31,.07)}
+.s08-fcard > button:first-child{flex:1 1 auto;min-width:0;display:block;text-align:left}
+.s08-fcard .s08-card-t{-webkit-line-clamp:3}
+.s08-fcard .s08-x{align-self:center;color:var(--ink2);min-width:44px;min-height:44px}
+.s08-undo{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 16px 12px;padding:10px 12px 10px 16px;border-radius:16px;background:var(--ink);color:#fff;font-size:14px;animation:s08-toast-in calc(220ms * var(--k,1)) var(--ease) both}
+.s08-undo button{min-height:36px;padding:0 10px;font-weight:600;color:#fff}
+.s08-search{display:flex;align-items:center;gap:10px;margin-top:18px;padding:0 4px 0 14px;height:48px;border-radius:24px;background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.16)}
+.s08-search input{flex:1 1 auto;min-width:0;height:46px;border:0;background:transparent;outline:0;font-size:16px;-webkit-user-select:text;user-select:text}
+.s08-search button{min-width:40px;min-height:40px;font-size:14px;color:var(--ink2)}
+.s08-cityrow{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;min-height:56px;border-top:1px solid var(--rule);font-size:17px;text-align:left}
+.s08-cityrow em{font-style:normal;font-size:15px;color:var(--sec)}
+.s08-cityrow.s08-on{font-weight:600}
+.s08-cityrow.s08-on em{color:var(--ink)}
+.s08-cityrow.s08-on em::before{content:'✓ ';color:var(--okt)}
+.s08-flash{animation:s08-flash calc(600ms * var(--k,1)) var(--ease) both}
+@keyframes s08-flash{from{background:var(--accl)}to{background:transparent}}
+.s08-layer{padding:14px 0;border-top:1px solid var(--rule)}
+.s08-layer > span{display:block;font-size:13px;color:var(--sec)}
+.s08-layer b{display:block;margin-top:2px;font-size:17px;font-weight:600;line-height:1.4}
+.s08-layer p{margin-top:4px;font-size:15px;line-height:1.6;color:var(--body)}
+.s08-layer .s08-cta{margin:14px 0 2px}
+.s08-say2{display:flex;gap:10px;font-size:24px;font-weight:600;line-height:1.4;color:var(--ink)}
+.s08-say2::before{content:'';flex:0 0 10px;height:10px;margin-top:14px;border-radius:50%;background:var(--acc)}
+.s08-prev{position:relative;height:220px;border-radius:18px;overflow:hidden}
+.s08-prev .s08-tag{position:absolute;left:14px;top:14px}
+.s08-skn{margin-top:16px;font-size:30px;font-weight:600;line-height:1.3}
+.s08-skn small{margin-left:10px;font-family:var(--num);font-size:15px;font-weight:500;color:var(--ink2)}
+.s08-rule{padding:16px 0;border-top:1px solid var(--rule);max-width:32em}
+.s08-rule b{display:flex;gap:10px;font-size:17px;font-weight:600;line-height:1.45}
+.s08-rule b i{flex:0 0 auto;font-family:var(--num);font-style:normal;font-weight:500;color:var(--sec)}
+.s08-rule p{margin-top:6px;font-size:15px;line-height:1.75;color:var(--body)}
+.s08-tl{display:flex;gap:8px;margin-top:14px;overflow-x:auto;scrollbar-width:none}
+.s08-tl > div{flex:1 0 96px;min-width:96px;padding:10px 12px;border-radius:14px;background:rgba(20,22,31,.05)}
+.s08-tl > div:last-child{background:var(--accl)}
+.s08-tl b{display:block;font-size:15px;font-weight:600}
+.s08-tl span{display:block;margin-top:2px;font-size:13px;color:var(--ink2)}
+.s08-quote{margin-top:10px;padding-left:12px;border-left:3px solid var(--acc);font-size:15px;line-height:1.7;color:var(--body)}
+.s08-sup{padding:12px 0;border-top:1px solid var(--rule);font-size:15px;line-height:1.6}
+.s08-sup span{display:block;font-size:13px;color:var(--sec)}
+/* 找局 cards (V27 swipe: right > 82px adds, left < −82px removes) */
+.s08-fc{position:relative;display:block;margin-top:10px;padding:14px 16px;border-radius:18px;background:var(--card);box-shadow:0 0 0 1px rgba(20,22,31,.07);touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:pointer;transition:transform .5s cubic-bezier(.2,.9,.3,1.04),background-color calc(160ms * var(--k,1))}
+.s08-fc.is-drag{transition:none}
+.s08-fc.is-wrong{background:#eceaee}
+.s08-fc .s08-card-t{-webkit-line-clamp:2}
+.s08-star{font-size:18px;line-height:20px;color:var(--sec)}
+.s08-fc.is-fav .s08-star{color:var(--ink)}
+.s08-fc.is-armed .s08-star{color:var(--acc)}
+.s08-fc-h{display:block;margin-top:6px;font-size:13px;font-weight:600;color:var(--ink2);min-height:0}
+.s08-mr{display:flex;align-items:center;gap:12px;min-height:64px;padding:10px 0;border-top:1px solid var(--rule)}
+.s08-mr > div{flex:1 1 auto;min-width:0}
+.s08-mr b{display:block;font-size:17px;font-weight:600;line-height:1.4;overflow-wrap:anywhere}
+.s08-mr span{display:block;margin-top:2px;font-size:15px;color:var(--ink2)}
+.s08-mr .s08-tag{margin-top:6px}
+.s08-starb{flex:0 0 auto;min-width:44px;min-height:44px;font-size:20px;color:var(--ink)}
+.s08-who{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:56px;border-top:1px solid var(--rule);font-size:17px;text-align:left}
+.s08-who i{width:22px;height:22px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.35)}
+.s08-who[aria-pressed=true] i{background:var(--ink);box-shadow:inset 0 0 0 6px var(--ink),inset 0 0 0 9px #fff}
 
-/* root nav (on the light), confirm column, toast */
+/* root nav, confirm column, system prompt, toast */
 .s08-root{position:absolute;left:0;right:0;bottom:0;height:72px;z-index:20;display:flex;padding:0 12px 14px;transition:opacity calc(240ms * var(--k,1)),transform calc(240ms * var(--k,1)) var(--ease)}
 .s08-root button{position:relative;flex:1 1 0;height:58px;font-size:13px;line-height:1;text-align:center;color:var(--ink2)}
 .s08-root button.on{color:var(--ink);font-weight:600}
@@ -311,31 +404,39 @@ body{margin:0}
 @keyframes s08-ask{from{transform:translateX(calc(100% + 24px))}to{transform:none}}
 .s08-ask-t{font-size:20px;font-weight:600;line-height:1.35}
 .s08-ask-b{margin-top:8px;font-size:15px;line-height:1.6;color:var(--body)}
-.s08-ask-a{display:flex;align-items:center;gap:16px;margin-top:20px}
+.s08-ask-a{display:flex;align-items:center;flex-wrap:wrap;gap:12px 16px;margin-top:20px}
 .s08-btn-ink{background:var(--ink);color:#fff;box-shadow:none}
 .s08-btn-x{min-height:44px;padding:0 6px;font-size:15px;font-weight:500;color:var(--errt)}
+.s08-sys{position:absolute;left:50%;top:50%;width:min(280px,calc(100% - 64px));border-radius:20px;background:var(--card);text-align:center;transform:translate(-50%,-50%);animation:s08-sys calc(240ms * var(--k,1)) var(--ease) both;overflow:hidden}
+@keyframes s08-sys{from{opacity:0;transform:translate(-50%,-50%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%)}}
+.s08-sys b{display:block;padding:20px 18px 6px;font-size:17px;font-weight:600}
+.s08-sys p{padding:0 18px 16px;font-size:13px;line-height:1.55;color:var(--ink2)}
+.s08-sys div{display:flex;border-top:1px solid var(--rule)}
+.s08-sys button{flex:1 1 0;min-height:48px;font-size:16px;text-align:center}
+.s08-sys button + button{border-left:1px solid var(--rule);font-weight:600}
 .s08-toast{position:absolute;left:50%;bottom:calc(96px + var(--kb,0px));z-index:60;width:max-content;max-width:calc(100% - 56px);padding:11px 18px;border-radius:22px;background:rgba(20,22,31,.92);color:#fff;font-size:14px;line-height:1.45;transform:translateX(-50%);animation:s08-toast calc(220ms * var(--k,1)) var(--ease) both}
 .s08-toast.k-error{background:#9b2236}
 @keyframes s08-toast{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes s08-toast-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.s08-fl0{animation:s08-fl0 calc(600ms * var(--k,1)) var(--ease) both}
+.s08-fl1{animation:s08-fl1 calc(600ms * var(--k,1)) var(--ease) both}
+@keyframes s08-fl0{from{color:var(--acc)}to{color:var(--ink)}}
+@keyframes s08-fl1{from{color:var(--acc)}to{color:var(--ink)}}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
     <div class="app s08{{panel.rootCls}}{{c.nav.rootCls}}{{x.appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};{{x.appStyle}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
 
-      <!-- HOME = the row of columns. Always mounted (every column keeps its own scroll); pages cover it via --s08-q. -->
+      <!-- HOME = the row of columns (always mounted: every column keeps its own scroll; pages cover it via --s08-q) -->
       <section class="s08-home {{x.homeCls}}" data-surface="home">
         <div class="s08-pan {{x.panCls}}" style="{{x.panStyle}}" ref="{{panRef}}">
           <div class="s08-land" aria-hidden="true"><div class="s08-sky s08-k-cotton {{x.sky.cotton}}"></div><div class="s08-sky s08-k-halo {{x.sky.halo}}"></div><div class="s08-sky s08-k-sunset {{x.sky.sunset}}"></div></div>
-          <header class="s08-hd" data-header><p class="s08-meta">{{x.meta}}</p><h1 class="s08-ttl">设置</h1></header>
-          <nav class="s08-rail" aria-label="设置分栏"><div class="s08-rail-in">
-            <sc-for list="{{x.rail}}" as="r" hint-placeholder-count="7"><button type="button" class="s08-rn {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}</button></sc-for>
-            <i class="s08-mk"></i>
-          </div></nav>
-          <div class="s08-track" ref="{{trackRef}}" onPointerDown="{{x.pan.down}}" onPointerMove="{{x.pan.move}}" onPointerUp="{{x.pan.up}}" onPointerCancel="{{x.pan.cancel}}" onClickCapture="{{x.pan.click}}" onWheel="{{x.pan.wheel}}">
+          <header class="s08-hd" data-header><p class="s08-meta">{{x.meta}}</p><p class="s08-dots" aria-hidden="true"><sc-for list="{{x.dots}}" as="d" hint-placeholder-count="7"><i class="{{d}}"></i></sc-for></p><h1 class="s08-ttl">设置</h1></header>
+          <nav class="s08-names" aria-label="设置分栏"><sc-for list="{{x.rail}}" as="r" hint-placeholder-count="7"><button type="button" class="s08-nm {{r.cls}}" style="{{r.style}}" aria-current="{{r.cur}}" onClick="{{r.go}}">{{r.name}}</button></sc-for></nav>
+          <div class="s08-track" onPointerDown="{{x.pan.down}}" onPointerMove="{{x.pan.move}}" onPointerUp="{{x.pan.up}}" onPointerCancel="{{x.pan.cancel}}" onClickCapture="{{x.pan.click}}" onWheel="{{x.pan.wheel}}">
 
-            <!-- 0 你: 称呼 48 + 账号 + 两件待处理事 -->
-            <div class="s08-col {{x.c.0.cls}}" style="{{x.c.0.style}}" data-col="you"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.0.cls}}" style="{{x.c.0.style}}" data-i="0"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.0.sc}}" onScroll="{{x.c.0.scroll}}">
                 <div class="s08-first">
                   <button type="button" class="s08-id s08-press" data-origin="profile" onClick="{{x.you.open}}"><span class="s08-name {{x.you.nameCls}}">{{c.you.name}}<sc-if value="{{x.fresh.name}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-kv"><span class="s08-k">微信号<sc-if value="{{x.fresh.wx}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.wxCls}}">{{x.pr.wx}}</span></span><span class="s08-kv"><span class="s08-k">邮箱<sc-if value="{{x.fresh.email}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.emailCls}}">{{x.pr.email}}</span><span class="s08-st {{x.pr.stCls}}">{{x.pr.st}}</span></span></button>
@@ -354,33 +455,30 @@ body{margin:0}
               </div>
             </div>
 
-            <!-- 1 收藏: three saved 局 as a deck + the browse city -->
-            <div class="s08-col {{x.c.1.cls}}" style="{{x.c.1.style}}" data-col="fav"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.1.cls}}" style="{{x.c.1.style}}" data-i="1"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.1.sc}}" onScroll="{{x.c.1.scroll}}">
-                <div class="s08-ch"><b class="s08-h">收藏的局</b><span class="s08-sub">{{x.fav.sub}}</span></div>
-                <sc-if value="{{c.fav.empty}}"><div class="s08-empty"><b>{{c.fav.emptyCopy.title}}</b><span>{{c.fav.emptyCopy.body}}</span><button type="button" class="s08-btn" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button></div></sc-if>
                 <sc-if value="{{x.fav.has}}">
+                  <button type="button" class="s08-numb" data-origin="favorites" onClick="{{x.fav.all}}"><span class="s08-num">{{c.fav.count}}</span><span class="s08-numl">{{x.fav.sub}}</span></button>
                   <div class="s08-deck" style="{{x.fav.deckStyle}}">
                     <sc-for list="{{x.fav.deck}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-card s08-press {{r.cls}}" style="{{r.style}}" data-rid="{{r.id}}" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span class="s08-card-w"><span>{{r.when}}</span><em class="s08-tag {{r.tagCls}}">{{r.tag}}</em></span><span class="s08-card-t">{{r.title}}</span><span class="s08-card-s">{{r.sub}}</span></button></sc-for>
                   </div>
                   <button type="button" class="s08-link" data-origin="favorites" onClick="{{x.fav.all}}">{{x.fav.allLabel}} <span>›</span></button>
                 </sc-if>
+                <sc-if value="{{c.fav.empty}}"><p class="s08-hero">{{c.fav.emptyCopy.title}}</p><p class="s08-lead">{{c.fav.emptyCopy.body}}</p><div class="s08-acts"><button type="button" class="s08-btn" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button></div></sc-if>
                 <button type="button" class="s08-city s08-press" data-origin="city" onClick="{{c.nav.go.city}}"><span class="s08-lab"><span>默认浏览城市</span><span>›</span></span><span class="s08-big">{{c.sum.cityLabel}}</span><span class="s08-hint">{{c.city.scope}}</span></button>
               </div>
             </div>
 
-            <!-- 2 提醒: 6/6 at 64px + the six switches -->
-            <div class="s08-col {{x.c.2.cls}}" style="{{x.c.2.style}}" data-col="notify"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.2.cls}}" style="{{x.c.2.style}}" data-i="2"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.2.sc}}" onScroll="{{x.c.2.scroll}}">
                 <button type="button" class="s08-numb" data-origin="notify" onClick="{{c.nav.go.notify}}"><span class="s08-num">{{c.notify.onCount}}<small>/{{c.notify.total}}</small></span><span class="s08-numl">类提醒开启</span></button>
-                <button type="button" class="s08-say" onClick="{{c.nav.go.notify}}"><i></i><span>{{c.notify.deliverLabel}}</span><b>›</b></button>
+                <button type="button" class="s08-say" data-origin="notify" onClick="{{c.nav.go.notify}}"><i></i><span>{{c.notify.deliverLabel}}</span><b>›</b></button>
                 <sc-for list="{{c.notify.cats}}" as="t" hint-placeholder-count="6"><button type="button" class="s08-swr" role="switch" aria-checked="{{t.aria}}" data-act="toggle" data-rid="{{t.key}}" onClick="{{t.toggle}}"><span>{{t.label}}</span><i class="s08-sw"><i></i></i></button></sc-for>
                 <p class="s08-hint">{{c.notify.prefHint}}</p>
               </div>
             </div>
 
-            <!-- 3 外观: three full-width environment swatches -->
-            <div class="s08-col {{x.c.3.cls}}" style="{{x.c.3.style}}" data-col="look"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.3.cls}}" style="{{x.c.3.style}}" data-i="3"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.3.sc}}" onScroll="{{x.c.3.scroll}}">
                 <sc-for list="{{x.sk}}" as="k" hint-placeholder-count="3"><button type="button" class="s08-swatch s08-press s08-k-{{k.key}} {{k.cls}}" data-act="preview" data-rid="{{k.key}}" data-origin="appearance" onClick="{{k.go}}"><span class="s08-sw-n">{{k.name}}<small>{{k.en}}</small></span><span class="s08-sw-l">{{k.line}}</span><sc-if value="{{k.tag}}"><em class="s08-tag s08-on">{{k.tag}}</em></sc-if></button></sc-for>
                 <button type="button" class="s08-swr" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" data-rid="reduce-motion" onClick="{{c.skin.rmToggle}}"><span>减少动态</span><i class="s08-sw"><i></i></i></button>
@@ -388,122 +486,65 @@ body{margin:0}
               </div>
             </div>
 
-            <!-- 4 记录与举报 -->
-            <div class="s08-col {{x.c.4.cls}}" style="{{x.c.4.style}}" data-col="rec"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.4.cls}}" style="{{x.c.4.style}}" data-i="4"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.4.sc}}" onScroll="{{x.c.4.scroll}}">
                 <div class="s08-pair">
                   <button type="button" class="s08-stat" data-origin="records" onClick="{{c.nav.go.records}}"><span class="s08-num">{{c.recs.count}}</span><span class="s08-numl">条记录</span><span class="s08-stat-l {{x.rec.cls}}">{{x.rec.line}}</span></button>
                   <button type="button" class="s08-stat" data-origin="reports" onClick="{{c.nav.go.reports}}"><span class="s08-num">{{c.reps.count}}</span><span class="s08-numl">条举报</span><span class="s08-stat-l {{x.rep.cls}}">{{x.rep.line}}</span></button>
                 </div>
-                <p class="s08-hint">{{x.rec.note}}</p>
+                <p class="s08-hint">{{c.reps.note}}</p>
                 <div class="s08-gapline"><sc-for list="{{x.recRows}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-row" data-rid="{{r.id}}" onClick="{{r.open}}"><span>{{r.label}}</span><em class="{{r.cls}}">{{r.side}}</em></button></sc-for></div>
                 <button type="button" class="s08-link" data-origin="records" onClick="{{c.nav.go.records}}">全部记录 <span>›</span></button>
               </div>
             </div>
 
-            <!-- 5 帮助 -->
-            <div class="s08-col {{x.c.5.cls}}" style="{{x.c.5.style}}" data-col="help"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.5.cls}}" style="{{x.c.5.style}}" data-i="5"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.5.sc}}" onScroll="{{x.c.5.scroll}}">
-                <button type="button" class="s08-numb" data-origin="rules" onClick="{{c.help.goRules}}"><span class="s08-num">{{x.help.n}}</span><span class="s08-numl">条参加约定 · {{c.about.rulesVersion}}</span></button>
-                <div class="s08-grps"><sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3"><button type="button" class="s08-grp" onClick="{{c.help.goRules}}"><b>{{g.name}}</b><span>{{g.line}}</span></button></sc-for></div>
-                <button type="button" class="s08-row" data-origin="feedback" onClick="{{c.help.goFeedback}}"><span>写反馈</span><em>{{x.help.fb}}</em></button>
+                <button type="button" class="s08-numb" data-origin="help" onClick="{{c.nav.go.help}}"><span class="s08-num">{{x.help.n}}</span><span class="s08-numl">条参加约定 · {{c.about.rulesVersion}}</span></button>
+                <div class="s08-grps"><sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3"><button type="button" class="s08-grp" data-origin="help" onClick="{{c.nav.go.help}}"><b>{{g.name}}</b><span>{{g.line}}</span></button></sc-for></div>
+                <button type="button" class="s08-row" data-origin="help" onClick="{{x.help.goFb}}"><span>写反馈</span><em>{{x.help.fb}}</em></button>
                 <button type="button" class="s08-row" data-origin="help" onClick="{{c.nav.go.help}}"><span>常见问题</span><em>›</em></button>
               </div>
             </div>
 
-            <!-- 6 账户与关于 -->
-            <div class="s08-col {{x.c.6.cls}}" style="{{x.c.6.style}}" data-col="acct"><div class="s08-col-bg"></div>
+            <div class="s08-col {{x.c.6.cls}}" style="{{x.c.6.style}}" data-i="6"><div class="s08-col-bg"></div>
               <div class="s08-col-sc" data-scroller="{{x.c.6.sc}}" onScroll="{{x.c.6.scroll}}">
-                <p class="s08-big2">{{x.acct.big}}</p>
+                <p class="s08-big2">{{c.acct.device}}</p>
                 <p class="s08-numl">{{x.acct.line}}</p>
-                <p class="s08-hint">{{c.acct.noAccount}}</p>
                 <div class="s08-gapline">
+                  <button type="button" class="s08-row" data-origin="account" onClick="{{c.nav.go.account}}"><span>账户与本机数据</span><em>›</em></button>
                   <button type="button" class="s08-row" data-origin="about" onClick="{{c.nav.go.about}}"><span>关于与规则</span><em>{{c.about.rulesVersion}}</em></button>
-                  <button type="button" class="s08-row" data-origin="account" onClick="{{c.nav.go.account}}"><span>本机数据与会话</span><em>›</em></button>
-                  <button type="button" class="s08-row s08-danger" data-origin="account" onClick="{{c.nav.go.account}}"><span>退出登录（本地演示）</span><em>›</em></button>
+                  <button type="button" class="s08-row" data-origin="privacy" onClick="{{c.nav.go.privacy}}"><span>隐私与资料可见性</span><em>›</em></button>
+                  <button type="button" class="s08-row s08-danger" data-origin="account" onClick="{{c.nav.go.account}}"><span>{{x.acct.endLabel}}</span><em>›</em></button>
                 </div>
               </div>
             </div>
           </div>
         </div>
       </section>
-
-      <!-- PROFILE = the 你 column expanded (L1). Same identity block, same place; the rest fades in. -->
-      <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
-        <section class="s08-pg {{x.lv.profile}} {{c.nav.cls.profile}}" data-surface="profile">
-          <div class="s08-sheet"><div class="s08-sc" data-scroller="profile" onScroll="{{x.l1Scroll}}"><div class="s08-flow">
-            <div class="s08-id"><span class="s08-name {{x.you.nameCls}}">{{c.you.name}}<sc-if value="{{x.fresh.name}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-kv"><span class="s08-k">微信号<sc-if value="{{x.fresh.wx}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.wxCls}}">{{x.pr.wx}}</span><sc-if value="{{c.you.wx}}"><button type="button" class="s08-btn s08-btn-s s08-copy s08-rest" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></span><span class="s08-kv"><span class="s08-k">邮箱<sc-if value="{{x.fresh.email}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.emailCls}}">{{x.pr.email}}</span><span class="s08-st {{x.pr.stCls}}">{{x.pr.st}}</span></span></div>
-            <div class="s08-rest">
-              <sc-if value="{{c.you.copyFail}}"><p class="s08-err">{{x.pr.copyFail}}</p></sc-if>
-              <p class="s08-pv s08-pv1">{{x.pr.policy}}</p>
-              <p class="s08-pv">{{x.pr.mailRule}}</p>
-              <p class="s08-note">{{x.pr.snapshot}}</p>
-              <div class="s08-acts"><button type="button" class="s08-btn" data-act="edit" data-origin="edit" onClick="{{x.pr.edit}}">编辑资料</button><button type="button" class="s08-link" data-origin="privacy" onClick="{{c.nav.go.privacy}}">谁能看到你的资料 <span>›</span></button></div>
-            </div>
-          </div></div></div>
-          <header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">‹ 设置</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">个人资料</h2></header>
-        </section>
-      </sc-if>
-
-      <!-- PROFILE EDIT = a new column from the right (L2); the fields are columns too (rail + one big input per pane) -->
-      <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
-        <section class="s08-pg {{x.lv.edit}} {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
-          <div class="s08-c2" style="{{x.f.style}}">
-            <div class="s08-frail"><sc-for list="{{x.f.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.bad}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk"></i></div>
-            <div class="s08-panes">
-              <div class="s08-pane" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.f.sc.0}}" onScroll="{{x.f.on.0}}">
-                <label class="s08-lab" for="s08-in-name"><span>怎么称呼</span><span class="{{x.f.countCls}}">{{c.pf.nameCount}}</span></label>
-                <input id="s08-in-name" class="s08-in s08-in-xl {{x.f.bad.name}}" data-field="name" value="{{c.pf.name}}" onInput="{{c.pf.onName}}" autocomplete="off" spellcheck="false">
-                <sc-if value="{{c.pf.err.name}}"><p class="s08-err" role="alert">{{c.pf.err.name}}</p></sc-if>
-                <p class="s08-hint">{{x.f.nameHint}}</p>
-                <div class="s08-oth"><sc-for list="{{x.f.oth.0}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div>
-                <div class="s08-foot"><p>{{x.f.snap}}</p></div>
-              </div></div>
-              <div class="s08-pane" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.f.sc.1}}" onScroll="{{x.f.on.1}}">
-                <label class="s08-lab" for="s08-in-wx"><span>微信号</span></label>
-                <input id="s08-in-wx" class="s08-in s08-in-l {{x.f.bad.wx}}" data-field="wx" value="{{c.pf.wx}}" onInput="{{c.pf.onWx}}" autocomplete="off" autocapitalize="off" spellcheck="false">
-                <sc-if value="{{c.pf.err.wx}}"><p class="s08-err" role="alert">{{c.pf.err.wx}}</p></sc-if>
-                <p class="s08-hint">{{x.f.wxHint}}</p>
-                <div class="s08-oth"><sc-for list="{{x.f.oth.1}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div>
-                <div class="s08-foot"><p>{{x.f.snap}}</p></div>
-              </div></div>
-              <div class="s08-pane" style="--j:2"><div class="s08-pane-sc" data-scroller="{{x.f.sc.2}}" onScroll="{{x.f.on.2}}">
-                <label class="s08-lab" for="s08-in-email"><span>工作或学校邮箱（可空）</span><sc-if value="{{c.pf.codeVerified}}"><span class="s08-okt">已验证</span></sc-if></label>
-                <input id="s08-in-email" type="email" class="s08-in s08-in-m {{x.f.bad.email}}" data-field="email" value="{{c.pf.email}}" onInput="{{c.pf.onEmail}}" autocomplete="off" autocapitalize="off" spellcheck="false">
-                <sc-if value="{{c.pf.err.email}}"><p class="s08-err" role="alert">{{c.pf.err.email}}</p></sc-if>
-                <p class="s08-hint">{{c.pf.emailHint}}</p>
-                <sc-if value="{{c.pf.needCode}}"><div class="s08-code">
-                  <sc-if value="{{c.pf.codeNone}}"><button type="button" class="s08-btn" data-act="send" onClick="{{c.pf.sendCode}}">发送验证码</button></sc-if>
-                  <sc-if value="{{x.f.codeOpen}}">
-                    <label class="s08-lab" for="s08-in-code"><span>6 位验证码</span><span class="{{x.f.expCls}}">{{x.f.exp}}</span></label>
-                    <div class="s08-coderow"><input id="s08-in-code" class="s08-in s08-in-code {{x.f.bad.code}}" data-field="code" inputmode="numeric" autocomplete="one-time-code" value="{{c.pf.code}}" onInput="{{c.pf.onCode}}" onKeyDown="{{c.pf.onKeyCode}}"><button type="button" class="s08-btn" data-act="verify" onClick="{{c.pf.verify}}">验证</button></div>
-                    <sc-if value="{{c.pf.err.code}}"><p class="s08-err" role="alert">{{c.pf.err.code}}</p></sc-if>
-                    <button type="button" class="s08-link" data-act="resend" disabled="{{x.f.resendOff}}" onClick="{{c.pf.resend}}">{{c.pf.resendLabel}}</button>
-                  </sc-if>
-                  <p class="s08-hint">{{c.pf.codeNote}}</p>
-                </div></sc-if>
-                <sc-if value="{{c.pf.codeVerified}}"><p class="s08-okline">✓ {{c.pf.verifiedText}}</p></sc-if>
-                <div class="s08-oth"><sc-for list="{{x.f.oth.2}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div>
-                <div class="s08-foot"><p>{{x.f.snap}}</p></div>
-              </div></div>
-            </div>
-            <div class="s08-bar">
-              <sc-if value="{{x.f.summary}}"><p class="s08-err">{{x.f.summary}}</p></sc-if>
-              <sc-if value="{{c.pf.failed}}"><p class="s08-err" role="alert">{{c.pf.failText}}</p></sc-if>
-              <button type="button" class="s08-cta" data-act="save" aria-busy="{{x.f.busy}}" onClick="{{c.pf.save}}">{{c.pf.saveLabel}}</button>
-            </div>
-          </div>
-          <header class="s08-phd" data-header><button type="button" class="s08-back" data-act="cancel" onClick="{{c.pf.cancel}}">取消</button><h2 class="s08-ptl">编辑资料</h2><p class="s08-pmeta">{{x.f.meta}}</p></header>
-        </section>
-      </sc-if>
-
-      <!-- stage-1 generic column page for surfaces whose S08 layout arrives in stage 2 (same expansion / arrival geometry) -->
-      <sc-if value="{{x.stubU.on}}"><section class="s08-pg {{x.stubU.cls}}" data-surface="{{x.stubU.s}}"><div class="s08-sheet"><div class="s08-sc" data-scroller="{{x.stubU.sc1}}"></div></div><div class="s08-c2"><div class="s08-c2-sc" data-scroller="{{x.stubU.sc2}}"></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back">{{x.stubU.backLabel}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">{{x.stubU.title}}</h2></header></section></sc-if>
-      <sc-if value="{{x.stubT.on}}"><section class="s08-pg {{x.stubT.cls}}" data-surface="{{x.stubT.s}}"><div class="s08-sheet"><div class="s08-sc" data-scroller="{{x.stubT.sc1}}" onScroll="{{x.stubT.scroll1}}"></div></div><div class="s08-c2"><div class="s08-c2-sc" data-scroller="{{x.stubT.sc2}}" onScroll="{{x.stubT.scroll2}}"></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.stubT.backLabel}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">{{x.stubT.title}}</h2></header></section></sc-if>
-
+<sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.profile}} {{c.nav.cls.profile}}" data-surface="profile"><div class="s08-body"><div class="s08-sc" data-scroller="profile" onScroll="{{x.l1Scroll}}"><div class="s08-flow"><div class="s08-id"><span class="s08-name {{x.you.nameCls}}">{{c.you.name}}<sc-if value="{{x.fresh.name}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-kv"><span class="s08-k">微信号<sc-if value="{{x.fresh.wx}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.wxCls}}">{{x.pr.wx}}</span><sc-if value="{{c.you.wx}}"><button type="button" class="s08-btn s08-btn-s s08-copy s08-rest" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></span><span class="s08-kv"><span class="s08-k">邮箱<sc-if value="{{x.fresh.email}}"><em class="s08-chip">刚更新</em></sc-if></span><span class="s08-v {{x.pr.emailCls}}">{{x.pr.email}}</span><span class="s08-st {{x.pr.stCls}}">{{x.pr.st}}</span></span></div><div class="s08-rest"><sc-if value="{{c.you.copyFail}}"><p class="s08-err">{{x.pr.copyFail}}</p></sc-if><p class="s08-pv s08-pv1">{{x.pr.policy}}</p><p class="s08-pv">{{x.pr.mailRule}}</p><p class="s08-note">{{x.pr.snapshot}}</p><div class="s08-acts"><button type="button" class="s08-btn" data-act="edit" data-origin="edit" onClick="{{x.pr.edit}}">编辑资料</button><button type="button" class="s08-link" data-origin="privacy" onClick="{{c.nav.go.privacy}}">谁能看到你的资料 <span>›</span></button></div></div></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.profile}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">个人资料</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.edit}} {{c.nav.cls.profile-edit}}" data-surface="profile-edit"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.f.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.f.u.mk}}"></i></div><div class="s08-panes" style="{{x.f.u.style}}" data-sub="profile-edit" data-n="{{x.f.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.f.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.f.u.sc.0}}" onScroll="{{x.f.u.on.0}}"><label class="s08-lab" for="s08-in-name"><span>怎么称呼</span><span class="{{x.f.countCls}}">{{c.pf.nameCount}}</span></label><input id="s08-in-name" class="s08-in s08-in-xl {{x.f.bad.name}}" data-field="name" value="{{c.pf.name}}" onInput="{{c.pf.onName}}" autocomplete="off" spellcheck="false"><sc-if value="{{c.pf.err.name}}"><p class="s08-err" role="alert">{{c.pf.err.name}}</p></sc-if><p class="s08-hint">{{x.f.nameHint}}</p><div class="s08-oth"><sc-for list="{{x.f.oth.0}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div><div class="s08-foot"><p>{{x.f.snap}}</p></div></div></div><div class="s08-pane {{x.f.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.f.u.sc.1}}" onScroll="{{x.f.u.on.1}}"><label class="s08-lab" for="s08-in-wx"><span>微信号</span></label><input id="s08-in-wx" class="s08-in s08-in-l {{x.f.bad.wx}}" data-field="wx" value="{{c.pf.wx}}" onInput="{{c.pf.onWx}}" autocomplete="off" autocapitalize="off" spellcheck="false"><sc-if value="{{c.pf.err.wx}}"><p class="s08-err" role="alert">{{c.pf.err.wx}}</p></sc-if><p class="s08-hint">{{x.f.wxHint}}</p><div class="s08-oth"><sc-for list="{{x.f.oth.1}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div><div class="s08-foot"><p>{{x.f.snap}}</p></div></div></div><div class="s08-pane {{x.f.u.pc.2}}" style="--j:2"><div class="s08-pane-sc" data-scroller="{{x.f.u.sc.2}}" onScroll="{{x.f.u.on.2}}"><label class="s08-lab" for="s08-in-email"><span>工作或学校邮箱（可空）</span><sc-if value="{{c.pf.codeVerified}}"><span class="s08-okt">已验证</span></sc-if></label><input id="s08-in-email" type="email" class="s08-in s08-in-m {{x.f.bad.email}}" data-field="email" value="{{c.pf.email}}" onInput="{{c.pf.onEmail}}" autocomplete="off" autocapitalize="off" spellcheck="false"><sc-if value="{{c.pf.err.email}}"><p class="s08-err" role="alert">{{c.pf.err.email}}</p></sc-if><p class="s08-hint">{{c.pf.emailHint}}</p><sc-if value="{{c.pf.needCode}}"><div class="s08-code"><sc-if value="{{c.pf.codeNone}}"><button type="button" class="s08-btn" data-act="send" onClick="{{c.pf.sendCode}}">发送验证码</button></sc-if><sc-if value="{{x.f.codeOpen}}"><label class="s08-lab" for="s08-in-code"><span>6 位验证码</span><span class="{{x.f.expCls}}">{{x.f.exp}}</span></label><div class="s08-coderow"><input id="s08-in-code" class="s08-in s08-in-code {{x.f.bad.code}}" data-field="code" inputmode="numeric" autocomplete="one-time-code" value="{{c.pf.code}}" onInput="{{c.pf.onCode}}" onKeyDown="{{c.pf.onKeyCode}}"><button type="button" class="s08-btn" data-act="verify" onClick="{{c.pf.verify}}">验证</button></div><sc-if value="{{c.pf.err.code}}"><p class="s08-err" role="alert">{{c.pf.err.code}}</p></sc-if><button type="button" class="s08-link" data-act="resend" disabled="{{x.f.resendOff}}" onClick="{{c.pf.resend}}">{{c.pf.resendLabel}}</button></sc-if><p class="s08-hint">{{c.pf.codeNote}}</p></div></sc-if><sc-if value="{{c.pf.codeVerified}}"><p class="s08-okline">✓ {{c.pf.verifiedText}}</p></sc-if><div class="s08-oth"><sc-for list="{{x.f.oth.2}}" as="o" hint-placeholder-count="2"><button type="button" class="s08-row" onClick="{{o.go}}"><span>{{o.name}}<sc-if value="{{o.bad}}"><i class="s08-dot s08-dot-i"></i></sc-if></span><em class="{{o.cls}}">{{o.value}}</em></button></sc-for></div><div class="s08-foot"><p>{{x.f.snap}}</p></div></div></div></div><div class="s08-bar"><sc-if value="{{x.f.summary}}"><p class="s08-err">{{x.f.summary}}</p></sc-if><sc-if value="{{c.pf.failed}}"><p class="s08-err" role="alert">{{c.pf.failText}}</p></sc-if><button type="button" class="s08-cta" data-act="save" aria-busy="{{x.f.busy}}" onClick="{{c.pf.save}}">{{c.pf.saveLabel}}</button></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="cancel" onClick="{{c.pf.cancel}}">取消</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">编辑资料</h2><p class="s08-pmeta">{{x.f.meta}}</p></header></section></sc-if>
+<sc-if value="{{c.nav.on.favorites}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.favorites}} {{c.nav.cls.favorites}}" data-surface="favorites"><div class="s08-body"><sc-if value="{{c.fav.empty}}"><div class="s08-sc" data-scroller="favorites" onScroll="{{x.l1Scroll}}"><div class="s08-fade"><p class="s08-hero">{{c.fav.emptyCopy.title}}</p><p class="s08-lead">{{c.fav.emptyCopy.body}}</p><div class="s08-acts"><button type="button" class="s08-btn" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button></div></div></div></sc-if><sc-if value="{{x.fv.has}}"><div class="s08-frail"><sc-for list="{{x.fv.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.fv.u.mk}}"></i></div><div class="s08-panes" style="{{x.fv.u.style}}" data-sub="favorites" data-n="{{x.fv.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.fv.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.fv.u.sc.0}}" onScroll="{{x.fv.u.on.0}}"><p class="s08-num">{{x.fv.na}}</p><p class="s08-numl">{{x.fv.la}}</p><sc-for list="{{x.fv.act}}" as="r" hint-placeholder-count="3"><div class="s08-fcard" data-rid="{{r.id}}"><button type="button" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span class="s08-card-w"><span>{{r.when}}</span><em class="s08-tag {{r.tagCls}}">{{r.tag}}</em></span><span class="s08-card-t">{{r.title}}</span><span class="s08-card-s">{{r.sub}}</span></button><button type="button" class="s08-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></sc-for><div class="s08-foot"><p>{{x.fv.note}}</p></div></div></div><div class="s08-pane {{x.fv.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.fv.u.sc.1}}" onScroll="{{x.fv.u.on.1}}"><p class="s08-num">{{x.fv.nb}}</p><p class="s08-numl">{{x.fv.lb}}</p><sc-for list="{{x.fv.arc}}" as="r" hint-placeholder-count="1"><div class="s08-fcard" data-rid="{{r.id}}"><button type="button" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span class="s08-card-w"><span>{{r.when}}</span><em class="s08-tag {{r.tagCls}}">{{r.tag}}</em></span><span class="s08-card-t">{{r.title}}</span><span class="s08-card-s">{{r.sub}}</span></button><button type="button" class="s08-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></sc-for></div></div></div></sc-if><sc-if value="{{c.fav.undo.on}}"><div class="s08-undo" role="status"><span>{{c.fav.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.fav.undo.act}}">{{c.fav.undo.label}}</button></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.favorites}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">收藏的局</h2><p class="s08-pmeta">{{x.fv.meta}}</p></header></section></sc-if>
+<sc-if value="{{x.dt.on}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.dt.lv}} {{x.dt.cls}}" data-surface="{{x.dt.s}}"><div class="s08-body"><div class="s08-sc" data-scroller="{{x.dt.s}}" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><div class="s08-date"><b>{{x.dt.md}}</b><span>{{x.dt.wd}}</span></div><p class="s08-dt">{{x.dt.title}}</p><div class="s08-acts"><em class="s08-tag {{x.dt.stCls}}">{{x.dt.status}}</em><em class="s08-tag {{x.dt.jCls}}">{{x.dt.joinedLabel}}</em></div><div class="s08-facts"><p class="s08-fact"><span>地点</span><b>{{x.dt.place}}</b></p><p class="s08-fact"><span>局主</span><b>{{x.dt.host}}</b></p><p class="s08-fact"><span>人数</span><b>{{x.dt.cap}}</b></p><sc-if value="{{x.dt.cross}}"><p class="s08-fact"><span>城市</span><b>{{x.dt.cityLine}}</b></p></sc-if><sc-if value="{{x.dt.favAgo}}"><p class="s08-fact"><span>收藏于</span><b>{{x.dt.favAgo}}</b></p></sc-if></div><sc-if value="{{x.dt.note}}"><p class="s08-lead">{{x.dt.note}}</p></sc-if><div class="s08-box"><b>局主微信</b><sc-if value="{{x.dt.canSee}}"><div class="s08-wx"><span>{{x.dt.hostWx}}</span><button type="button" class="s08-btn s08-btn-s" data-act="copy" onClick="{{x.dt.copy}}">复制</button></div></sc-if>{{x.dt.rule}}</div><div class="s08-acts"><button type="button" class="s08-btn" data-act="{{x.dt.favAct}}" onClick="{{x.dt.toggle}}">{{x.dt.favLabel}}</button></div><p class="s08-hint">{{x.dt.applyNote}}</p></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.dt.back}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">活动详情</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.city}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.city}} {{c.nav.cls.city}}" data-surface="city"><div class="s08-body"><div class="s08-sc" data-scroller="city" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><p class="s08-lab"><span>默认浏览城市</span></p><p class="s08-hero {{x.ct.fl}}">{{c.city.cur.name}}</p><p class="s08-numl">{{c.city.cur.tzLabel}} · {{c.city.cur.en}}</p><div class="s08-search"><input data-field="search" placeholder="搜索城市（中文或英文）" value="{{c.city.q}}" onInput="{{c.city.onQ}}" autocomplete="off" spellcheck="false"><sc-if value="{{c.city.q}}"><button type="button" onClick="{{c.city.clearQ}}">清除</button></sc-if></div><sc-if value="{{c.city.none}}"><div class="s08-box"><b>{{c.city.noResult}}</b><button type="button" class="s08-link" onClick="{{c.city.clearQ}}">{{c.city.retry}} <span>›</span></button></div></sc-if><div class="s08-gapline"><sc-for list="{{x.ct.list}}" as="k" hint-placeholder-count="6"><button type="button" class="s08-cityrow {{k.cls}}" data-rid="{{k.key}}" onClick="{{k.pick}}"><span>{{k.name}}</span><em>{{k.en}}</em></button></sc-for></div><p class="s08-hint">{{c.city.scope}}</p><p class="s08-hint">{{c.city.note}}</p></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.city}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">默认浏览城市</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.notify}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.notify}} {{c.nav.cls.notify}}" data-surface="notify"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.nt.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.nt.u.mk}}"></i></div><div class="s08-panes" style="{{x.nt.u.style}}" data-sub="notify" data-n="{{x.nt.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.nt.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.nt.u.sc.0}}" onScroll="{{x.nt.u.on.0}}"><p class="s08-say2">{{c.notify.deliverLabel}}</p><div class="s08-layer s08-gapline"><span>偏好</span><b>{{c.notify.onCount}}/{{c.notify.total}} 类提醒开启</b><button type="button" class="s08-link" onClick="{{x.nt.toCats}}">调整类别 <span>›</span></button></div><div class="s08-layer"><span>系统权限 · {{c.notify.permissionLabel}}</span><b>{{c.notify.permCopy.title}}</b><p>{{c.notify.permCopy.body}}</p><sc-if value="{{c.notify.isDefault}}"><button type="button" class="s08-cta" data-act="request" onClick="{{c.notify.request}}">开启提醒</button></sc-if></div><div class="s08-layer"><span>提醒服务</span><b>{{x.nt.svc}}</b><p>{{c.notify.serviceCopy}}</p></div></div></div><div class="s08-pane {{x.nt.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.nt.u.sc.1}}" onScroll="{{x.nt.u.on.1}}"><p class="s08-num">{{c.notify.onCount}}<small>/{{c.notify.total}}</small></p><p class="s08-numl">类提醒开启</p><div class="s08-gapline"><sc-for list="{{c.notify.cats}}" as="t" hint-placeholder-count="6"><button type="button" class="s08-swr" role="switch" aria-checked="{{t.aria}}" data-act="toggle" data-rid="{{t.key}}" onClick="{{t.toggle}}"><span>{{t.label}}</span><i class="s08-sw"><i></i></i></button></sc-for></div><p class="s08-hint">{{c.notify.prefHint}}</p></div></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.notify}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">通知与提醒</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.appearance}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.appearance}} {{c.nav.cls.appearance}}" data-surface="appearance"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.ap.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.ap.u.mk}}"></i></div><div class="s08-panes" style="{{x.ap.u.style}}" data-sub="appearance" data-n="{{x.ap.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><sc-for list="{{x.ap.skins}}" as="k" hint-placeholder-count="3"><div class="s08-pane {{k.pc}}" style="{{k.st}}"><div class="s08-pane-sc" data-scroller="{{k.sc}}" onScroll="{{k.on}}"><div class="s08-prev s08-k-{{k.key}}"><em class="s08-tag {{k.tagCls}}">{{k.tag}}</em></div><p class="s08-skn">{{k.name}}<small>{{k.en}}</small></p><p class="s08-lead">{{k.line}}</p><p class="s08-hint">{{k.note}}</p></div></div></sc-for><div class="s08-pane {{x.ap.u.pc.3}}" style="--j:3"><div class="s08-pane-sc" data-scroller="{{x.ap.u.sc.3}}" onScroll="{{x.ap.u.on.3}}"><p class="s08-hero">动态</p><div class="s08-gapline"><button type="button" class="s08-swr" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" data-rid="reduce-motion" onClick="{{c.skin.rmToggle}}"><span>减少动态</span><i class="s08-sw"><i></i></i></button></div><p class="s08-lead">{{c.skin.rmLine}}</p><p class="s08-hint">{{x.ap.sys}}</p></div></div></div><sc-if value="{{c.skin.previewing}}"><div class="s08-bar s08-bar2"><button type="button" class="s08-cta" data-act="apply" onClick="{{c.skin.apply}}">{{c.skin.applyLabel}}</button><button type="button" class="s08-link" data-act="cancel" onClick="{{x.ap.cancel}}">取消预览</button></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.appearance}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">外观与动态</h2><p class="s08-pmeta">{{x.ap.meta}}</p></header></section></sc-if>
+<sc-if value="{{c.nav.on.records}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.records}} {{c.nav.cls.records}}" data-surface="records"><div class="s08-body"><sc-if value="{{c.recs.empty}}"><div class="s08-sc" data-scroller="records" onScroll="{{x.l1Scroll}}"><div class="s08-fade"><p class="s08-hero">{{c.recs.emptyText}}</p><p class="s08-lead">{{c.recs.creditSettings}}</p></div></div></sc-if><sc-if value="{{x.rg.has}}"><div class="s08-frail"><sc-for list="{{x.rg.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.rg.mk}}"></i></div><div class="s08-panes" style="{{x.rg.style}}" data-sub="records" data-n="{{x.rg.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><sc-for list="{{x.rg.panes}}" as="g" hint-placeholder-count="2"><div class="s08-pane {{g.pc}}" style="{{g.st}}"><div class="s08-pane-sc" data-scroller="{{g.sc}}" onScroll="{{g.on}}"><p class="s08-num">{{g.count}}</p><p class="s08-numl">{{g.title}}</p><p class="s08-lead">{{g.note}}</p><div class="s08-gapline"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s08-row" data-rid="{{r.id}}" onClick="{{r.open}}"><span>{{r.label}}</span><em class="{{r.cls}}">{{r.side}}</em></button></sc-for></div><div class="s08-foot"><p>{{c.recs.quotaNo}}</p></div></div></div></sc-for></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.records}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">我的记录</h2><p class="s08-pmeta">{{c.sum.recordLabel}}</p></header></section></sc-if>
+<sc-if value="{{c.nav.on.record-detail}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.recd}} {{c.nav.cls.record-detail}}" data-surface="record-detail"><div class="s08-body"><sc-if value="{{c.rec}}"><div class="s08-sc" data-scroller="record-detail" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><p class="s08-lab"><span>{{c.rec.kindLabel}}</span><span>{{c.rec.atText}}</span></p><p class="s08-hero">{{c.rec.label}}</p><div class="s08-acts"><em class="s08-tag s08-hot">{{c.rec.statusLabel}}</em></div><p class="s08-dt">{{c.rec.title}}</p><div class="s08-facts"><p class="s08-fact"><span>时间</span><b>{{c.rec.when.zh}}</b></p><p class="s08-fact"><span>地点</span><b>{{c.rec.place.full}}</b></p><p class="s08-fact"><span>局主</span><b>{{c.rec.host}}</b></p><sc-if value="{{c.rec.quotaLabel}}"><p class="s08-fact"><span>机会</span><b>{{c.rec.quotaLabel}}</b></p></sc-if></div><sc-for list="{{c.rec.supplementRows}}" as="s" hint-placeholder-count="1"><div class="s08-sup">补充 · {{s.text}}<span>{{s.atText}} {{s.materialsText}}</span></div></sc-for><sc-for list="{{c.rec.appealRows}}" as="a" hint-placeholder-count="1"><div class="s08-sup">{{a.kindLabel}} · {{a.reason}}<span>{{a.atText}} · {{a.statusLabel}}</span></div></sc-for><div class="s08-acts"><button type="button" class="s08-btn" data-act="supplement" data-origin="rs" onClick="{{c.rec.goSupplement}}">补充说明</button><sc-if value="{{c.rec.goDispute}}"><button type="button" class="s08-btn" data-act="dispute" data-origin="rd" onClick="{{c.rec.goDispute}}">提出出席异议</button></sc-if><sc-if value="{{c.rec.goAppeal}}"><button type="button" class="s08-btn" data-act="appeal" data-origin="ra" onClick="{{c.rec.goAppeal}}">补充与申诉</button></sc-if></div><p class="s08-hint">{{c.recs.help}}</p></div></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.record-detail}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">记录详情</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.reports}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.reports}} {{c.nav.cls.reports}}" data-surface="reports"><div class="s08-body"><sc-if value="{{c.reps.empty}}"><div class="s08-sc" data-scroller="reports" onScroll="{{x.l1Scroll}}"><div class="s08-fade"><p class="s08-hero">{{c.reps.emptyText}}</p><p class="s08-lead">{{c.reps.mock}}</p></div></div></sc-if><sc-if value="{{x.rpg.has}}"><div class="s08-frail"><sc-for list="{{x.rpg.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.rpg.mk}}"></i></div><div class="s08-panes" style="{{x.rpg.style}}" data-sub="reports" data-n="{{x.rpg.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><sc-for list="{{x.rpg.panes}}" as="g" hint-placeholder-count="2"><div class="s08-pane {{g.pc}}" style="{{g.st}}"><div class="s08-pane-sc" data-scroller="{{g.sc}}" onScroll="{{g.on}}"><p class="s08-num">{{g.count}}</p><p class="s08-numl">{{g.title}}</p><p class="s08-lead">{{g.note}}</p><div class="s08-gapline"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s08-row" data-rid="{{r.id}}" onClick="{{r.open}}"><span>{{r.label}}</span><em class="{{r.cls}}">{{r.side}}</em></button></sc-for></div><div class="s08-foot"><p>{{c.reps.mock}}</p></div></div></div></sc-for></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.reports}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">我的举报</h2><p class="s08-pmeta">{{c.sum.reportLabel}}</p></header></section></sc-if>
+<sc-if value="{{c.nav.on.report-detail}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.repd}} {{c.nav.cls.report-detail}}" data-surface="report-detail"><div class="s08-body"><sc-if value="{{c.rep}}"><div class="s08-sc" data-scroller="report-detail" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><p class="s08-lab"><span>本地编号 {{c.rep.id}}</span></p><p class="s08-hero">{{c.rep.statusLabel}}</p><sc-if value="{{c.rep.needsMore}}"><div class="s08-box"><b>需要补充</b>{{c.rep.needsText}}</div></sc-if><p class="s08-dt">{{c.rep.title}}</p><div class="s08-facts"><p class="s08-fact"><span>对象</span><b>{{c.rep.whoName}}</b></p><p class="s08-fact"><span>提交于</span><b>{{c.rep.atText}}</b></p><p class="s08-fact"><span>更新于</span><b>{{c.rep.updatedText}}</b></p></div><p class="s08-quote">{{c.rep.text}}</p><sc-for list="{{c.rep.shotRows}}" as="f" hint-placeholder-count="1"><p class="s08-file"><span>{{f.name}}</span><em>{{f.sizeText}}</em></p></sc-for><p class="s08-h s08-gapline">进度</p><div class="s08-tl"><sc-for list="{{c.rep.timelineRows}}" as="t" hint-placeholder-count="3"><div><b>{{t.label}}</b><span>{{t.atText}}</span></div></sc-for></div><sc-for list="{{c.rep.supplementRows}}" as="s" hint-placeholder-count="1"><div class="s08-sup">补充 · {{s.text}}<span>{{s.atText}}</span></div></sc-for><sc-if value="{{c.rep.goSupplement}}"><div class="s08-acts"><button type="button" class="s08-btn" data-act="supplement" data-origin="rps" onClick="{{c.rep.goSupplement}}">补充材料</button></div></sc-if><p class="s08-hint">{{c.reps.note}} {{c.reps.mock}}</p></div></div></sc-if></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.report-detail}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">举报详情</h2></header></section></sc-if>
+<sc-if value="{{c.form.on}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.fm.lv}} {{x.fm.cls}}" data-surface="{{x.fm.s}}"><div class="s08-body"><sc-if value="{{x.fm.multi}}"><div class="s08-frail"><sc-for list="{{x.fm.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.fm.u.mk}}"></i></div></sc-if><div class="s08-panes" style="{{x.fm.u.style}}" data-sub="{{x.fm.s}}" data-n="{{x.fm.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><sc-if value="{{c.form.needWho}}"><div class="s08-pane {{x.fm.p.who.pc}}" style="{{x.fm.p.who.st}}"><div class="s08-pane-sc" data-scroller="{{x.fm.p.who.sc}}" onScroll="{{x.fm.p.who.on}}"><sc-if value="{{x.fm.ctx}}"><div class="s08-ctx"><span class="s08-k">{{x.fm.ctx.k}}</span><b>{{x.fm.ctx.t}}</b><sc-if value="{{x.fm.ctx.n}}"><p class="s08-hint">{{x.fm.ctx.n}}</p></sc-if></div></sc-if><p class="s08-h s08-gapline">举报谁</p><sc-for list="{{c.form.who}}" as="w" hint-placeholder-count="3"><button type="button" class="s08-who" aria-pressed="{{w.on}}" data-rid="{{w.k}}" onClick="{{w.toggle}}"><span>{{w.label}}</span><i></i></button></sc-for><sc-if value="{{c.form.err.who}}"><p class="s08-err" role="alert">{{c.form.err.who}}</p></sc-if><p class="s08-hint">{{c.reps.note}}</p></div></div></sc-if><div class="s08-pane {{x.fm.p.text.pc}}" style="{{x.fm.p.text.st}}"><div class="s08-pane-sc" data-scroller="{{x.fm.p.text.sc}}" onScroll="{{x.fm.p.text.on}}"><sc-if value="{{x.fm.ctxText}}"><sc-if value="{{x.fm.ctx}}"><div class="s08-ctx"><span class="s08-k">{{x.fm.ctx.k}}</span><b>{{x.fm.ctx.t}}</b><sc-if value="{{x.fm.ctx.n}}"><p class="s08-hint">{{x.fm.ctx.n}}</p></sc-if></div></sc-if></sc-if><label class="s08-lab s08-gapline" for="s08-ta"><span>{{c.form.label}}</span><span class="{{x.fm.cntCls}}">{{x.fm.cnt}}</span></label><textarea id="s08-ta" class="s08-ta {{x.fm.bad}}" data-field="text" placeholder="{{c.form.placeholder}}" value="{{c.form.text}}" onInput="{{c.form.onInput}}"></textarea><sc-if value="{{c.form.err.text}}"><p class="s08-err" role="alert">{{c.form.err.text}}</p></sc-if><p class="s08-hint">{{x.fm.hint}}</p></div></div><sc-if value="{{c.form.canFiles}}"><div class="s08-pane {{x.fm.p.files.pc}}" style="{{x.fm.p.files.st}}"><div class="s08-pane-sc" data-scroller="{{x.fm.p.files.sc}}" onScroll="{{x.fm.p.files.on}}"><p class="s08-h">材料</p><label class="s08-drop">添加材料<span>截图、聊天记录，最多 3 个</span><input type="file" multiple data-field="files" onChange="{{c.form.onFiles}}"></label><sc-for list="{{c.form.files}}" as="f" hint-placeholder-count="1"><div class="s08-file"><span>{{f.name}}<em>{{f.sizeText}}</em></span><button type="button" class="s08-x" onClick="{{f.remove}}">移除</button></div></sc-for><p class="s08-hint">{{c.form.fileNote}}</p></div></div></sc-if></div><div class="s08-bar"><sc-if value="{{c.form.failed}}"><p class="s08-err" role="alert">{{c.form.failText}}</p></sc-if><button type="button" class="s08-cta" data-act="submit" aria-busy="{{x.fm.busy}}" onClick="{{c.form.submit}}">{{c.form.submitLabel}}</button></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="cancel" onClick="{{c.form.cancel}}">取消</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">{{c.form.title}}</h2><p class="s08-pmeta">{{x.fm.meta}}</p></header></section></sc-if>
+<sc-if value="{{c.nav.on.help}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.help}} {{c.nav.cls.help}}" data-surface="help"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.hp.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.hp.u.mk}}"></i></div><div class="s08-panes" style="{{x.hp.u.style}}" data-sub="help" data-n="{{x.hp.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.hp.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.hp.u.sc.0}}" onScroll="{{x.hp.u.on.0}}"><sc-for list="{{c.help.faq}}" as="r" hint-placeholder-count="3"><div class="s08-rule"><b><i>{{r.n}}</i>{{r.title}}</b><p>{{r.body}}</p></div></sc-for></div></div><div class="s08-pane {{x.hp.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.hp.u.sc.1}}" onScroll="{{x.hp.u.on.1}}"><p class="s08-num">{{x.hp.nfb}}</p><p class="s08-numl">条我的反馈</p><div class="s08-acts"><button type="button" class="s08-btn" data-origin="feedback" onClick="{{c.help.goFeedback}}">写反馈</button></div><div class="s08-gapline"><sc-for list="{{c.help.feedback}}" as="f" hint-placeholder-count="1"><div class="s08-sup">{{f.text}}<span>{{f.statusLabel}} · {{f.localNo}} · {{f.atText}}</span></div></sc-for></div></div></div><div class="s08-pane {{x.hp.u.pc.2}}" style="--j:2"><div class="s08-pane-sc" data-scroller="{{x.hp.u.sc.2}}" onScroll="{{x.hp.u.on.2}}"><sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3"><button type="button" class="s08-grp" data-origin="rules" onClick="{{c.help.goRules}}"><b>{{g.name}}</b><span>{{g.line}}</span></button></sc-for><button type="button" class="s08-row" data-origin="rules" onClick="{{c.help.goRules}}"><span>参加约定全文</span><em>{{c.about.rulesVersion}}</em></button><button type="button" class="s08-row" data-origin="reports" onClick="{{c.help.goReports}}"><span>我的举报</span><em>{{c.sum.reportLabel}}</em></button></div></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.help}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">帮助与反馈</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.privacy}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.privacy}} {{c.nav.cls.privacy}}" data-surface="privacy"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.pv.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.pv.u.mk}}"></i></div><div class="s08-panes" style="{{x.pv.u.style}}" data-sub="privacy" data-n="{{x.pv.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.pv.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.pv.u.sc.0}}" onScroll="{{x.pv.u.on.0}}"><p class="s08-lead">{{c.privacy.lead}}</p><sc-for list="{{c.privacy.general}}" as="g" hint-placeholder-count="4"><div class="s08-rule"><p>{{g}}</p></div></sc-for><p class="s08-hint">{{c.privacy.noToggles}}</p></div></div><div class="s08-pane {{x.pv.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.pv.u.sc.1}}" onScroll="{{x.pv.u.on.1}}"><p class="s08-num">{{x.pv.n}}</p><p class="s08-numl">个正在进行的局</p><div class="s08-gapline"><sc-for list="{{c.privacy.facts}}" as="f" hint-placeholder-count="3"><div class="s08-mr" data-rid="{{f.eventId}}"><div><b>{{f.title}}</b><span>{{f.rule}}</span><em class="s08-tag">{{f.role}}</em></div></div></sc-for></div></div></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.privacy}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">隐私与资料可见性</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.account}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.account}} {{c.nav.cls.account}}" data-surface="account"><div class="s08-body"><div class="s08-sc" data-scroller="account" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><p class="s08-lab"><span>账户</span></p><p class="s08-hero">{{c.acct.device}}</p><p class="s08-numl">{{x.acct.line}}</p><p class="s08-lead">{{c.acct.noAccount}}</p><p class="s08-hint">{{c.acct.storageNote}}</p><sc-if value="{{c.acct.demo}}"><div class="s08-acts"><button type="button" class="s08-btn s08-btn-red" data-act="end" onClick="{{c.acct.end}}">{{x.acct.endLabel}}</button></div></sc-if><sc-if value="{{c.acct.ended}}"><div class="s08-box"><b>演示会话已结束</b>{{x.acct.endedLine}}</div><div class="s08-acts"><button type="button" class="s08-cta" data-act="restart" onClick="{{c.acct.restart}}">重新开始</button></div></sc-if></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.account}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">账户与本机数据</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.about}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.about}} {{c.nav.cls.about}}" data-surface="about"><div class="s08-body"><div class="s08-sc" data-scroller="about" onScroll="{{x.l1Scroll}}"><div class="s08-flow s08-fade"><p class="s08-hero">{{c.about.version}}</p><div class="s08-facts"><p class="s08-fact"><span>约定版本</span><b>{{c.about.rulesVersion}}</b></p><p class="s08-fact"><span>城市</span><b>{{x.ab.cities}}</b></p><sc-if value="{{c.about.built}}"><p class="s08-fact"><span>构建</span><b>{{c.about.built}}</b></p></sc-if></div><p class="s08-lead">{{c.about.policyNote}}</p><p class="s08-hint">{{c.about.demo}}</p><div class="s08-acts"><button type="button" class="s08-btn" data-origin="rules" onClick="{{c.about.goRules}}">参加约定全文</button></div></div></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.about}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">关于与规则</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.rules}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.rules}} {{c.nav.cls.rules}}" data-surface="rules"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.ru.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.ru.mk}}"></i></div><div class="s08-panes" style="{{x.ru.style}}" data-sub="rules" data-n="{{x.ru.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><sc-for list="{{x.ru.panes}}" as="g" hint-placeholder-count="3"><div class="s08-pane {{g.pc}}" style="{{g.st}}"><div class="s08-pane-sc" data-scroller="{{g.sc}}" onScroll="{{g.on}}"><p class="s08-hero">{{g.name}}</p><p class="s08-lead">{{g.line}}</p><div class="s08-gapline"><sc-for list="{{g.rules}}" as="r" hint-placeholder-count="3"><div class="s08-rule"><b><i>{{r.n}}</i>{{r.title}}</b><sc-if value="{{r.body}}"><p>{{r.body}}</p></sc-if></div></sc-for></div><div class="s08-foot"><p>{{c.about.rulesVersion}} · {{c.about.policyNote}}</p></div></div></div></sc-for></div></div><header class="s08-phd" data-header><button type="button" class="s08-back" data-act="back" onClick="{{c.nav.back}}">{{x.bk.rules}}</button><span class="s08-fly" aria-hidden="true">{{x.flyName}}</span><h2 class="s08-ptl">参加约定</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.feed}} {{c.nav.cls.seam-feed}}" data-surface="seam-feed"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.fd.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.fd.u.mk}}"></i></div><div class="s08-sc" data-scroller="seam-feed" onScroll="{{x.l1Scroll}}"><p class="s08-hint">{{c.feed.hintIdle}} · 点卡片看详情</p><sc-if value="{{c.feed.empty}}"><p class="s08-hero s08-gapline">{{c.feed.emptyText}}</p></sc-if><sc-for list="{{c.feed.rows}}" as="r" hint-placeholder-count="4"><div class="s08-fc {{r.cls}}" data-rid="{{r.id}}" tabindex="0" style="{{r.style}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}"><span class="s08-card-w"><span>{{r.when.zh}}</span><b class="s08-star">{{r.star}}</b></span><span class="s08-card-t">{{r.title}}</span><span class="s08-card-s">{{r.place.hood}} · 局主 {{r.host}}</span><sc-if value="{{r.hint}}"><span class="s08-fc-h">{{r.hint}}</span></sc-if></div></sc-for></div></div><header class="s08-phd" data-header><p class="s08-pmeta">{{x.fd.meta}}</p><h2 class="s08-ptl">找局</h2></header></section></sc-if>
+<sc-if value="{{c.nav.on.seam-mine}}" hint-placeholder-val="{{false}}"><section class="s08-pg {{x.lv.mine}} {{c.nav.cls.seam-mine}}" data-surface="seam-mine"><div class="s08-body"><div class="s08-frail"><sc-for list="{{x.mn.u.rail}}" as="r" hint-placeholder-count="3"><button type="button" class="s08-fr {{r.cls}}" style="{{r.style}}" onClick="{{r.go}}">{{r.name}}<sc-if value="{{r.dot}}"><i class="s08-dot"></i></sc-if><sc-if value="{{r.ok}}"><i class="s08-okdot"></i></sc-if></button></sc-for><i class="s08-fmk" style="{{x.mn.u.mk}}"></i></div><div class="s08-panes" style="{{x.mn.u.style}}" data-sub="seam-mine" data-n="{{x.mn.u.n}}" onPointerDown="{{x.sp.down}}" onPointerMove="{{x.sp.move}}" onPointerUp="{{x.sp.up}}" onPointerCancel="{{x.sp.cancel}}" onClickCapture="{{x.sp.click}}"><div class="s08-pane {{x.mn.u.pc.0}}" style="--j:0"><div class="s08-pane-sc" data-scroller="{{x.mn.u.sc.0}}" onScroll="{{x.mn.u.on.0}}"><sc-for list="{{c.mine.current}}" as="r" hint-placeholder-count="4"><div class="s08-mr" data-rid="{{r.id}}"><div><b>{{r.title}}</b><span>{{r.label}}</span></div><button type="button" class="s08-starb" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.fav}}" aria-label="收藏" onClick="{{r.toggleFav}}">{{r.star}}</button></div></sc-for><div class="s08-foot"><p>{{c.mine.snapshotNote}}</p></div></div></div><div class="s08-pane {{x.mn.u.pc.1}}" style="--j:1"><div class="s08-pane-sc" data-scroller="{{x.mn.u.sc.1}}" onScroll="{{x.mn.u.on.1}}"><sc-for list="{{c.mine.history}}" as="r" hint-placeholder-count="4"><div class="s08-mr" data-rid="{{r.id}}"><div><b>{{r.title}}</b><span>{{r.label}}</span><sc-if value="{{r.receipt}}"><em class="s08-tag s08-hot">举报 · {{r.receipt}}</em></sc-if></div><sc-if value="{{r.canReport}}"><button type="button" class="s08-btn s08-btn-s" data-act="report" data-rid="{{r.id}}" data-origin="rep-{{r.id}}" onClick="{{r.report}}">举报</button></sc-if><button type="button" class="s08-starb" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.fav}}" aria-label="收藏" onClick="{{r.toggleFav}}">{{r.star}}</button></div></sc-for><div class="s08-foot"><p>{{c.reps.note}}</p></div></div></div><div class="s08-pane {{x.mn.u.pc.2}}" style="--j:2"><div class="s08-pane-sc" data-scroller="{{x.mn.u.sc.2}}" onScroll="{{x.mn.u.on.2}}"><sc-for list="{{c.mine.hosted}}" as="r" hint-placeholder-count="3"><div class="s08-mr" data-rid="{{r.id}}"><div><b>{{r.title}}</b><span>{{r.label}}</span></div><button type="button" class="s08-starb" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.fav}}" aria-label="收藏" onClick="{{r.toggleFav}}">{{r.star}}</button></div></sc-for></div></div></div></div><header class="s08-phd" data-header><p class="s08-pmeta">{{x.mn.meta}}</p><h2 class="s08-ptl">我的局</h2></header></section></sc-if>
       <nav class="s08-root" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for></nav>
       <p class="s08-ju">JU</p>
 
+      <sc-if value="{{c.notify.sys.on}}"><div class="s08-over" role="alertdialog" aria-modal="true"><div class="s08-dim"></div><div class="s08-sys"><b>{{c.notify.sys.title}}</b><p>{{c.notify.sys.body}}</p><div><button type="button" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button><button type="button" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button></div></div></div></sc-if>
       <sc-if value="{{c.sheet.on}}"><div class="s08-over" role="dialog" aria-modal="true"><div class="s08-dim" onClick="{{x.sheetDim}}"></div><div class="s08-ask">
         <p class="s08-ask-t">{{c.sheet.title}}</p><p class="s08-ask-b">{{c.sheet.body}}</p>
         <sc-if value="{{c.sheet.unsaved}}"><div class="s08-ask-a"><button type="button" class="s08-btn s08-btn-ink" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s08-btn-x" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></div></sc-if>
@@ -518,43 +559,37 @@ body{margin:0}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* S08 横向分栏 — the settings home IS a row of full-height paper columns browsed sideways (column names on a rail, the next
-   column peeking 28px); one landscape of environment light runs behind all of them. Depth runs sideways too: the current
-   column expands into its page (L1, its rail name flies into the header); deeper pages arrive as columns from the right (L2)
-   while the page underneath folds into a 28px strip. Behaviour (navigation, forms, validation, code, save/fail/retry,
-   unsaved guard, seams, index) is the shared controller JUS.ctl; this file is composition, type, surface and motion. */
-const S08_COLS = [
-  { key: 'you', name: '你', n: 1 }, { key: 'fav', name: '收藏', n: 2 }, { key: 'notify', name: '提醒', n: 2 }, { key: 'look', name: '外观', n: 2 },
-  { key: 'rec', name: '记录与举报', n: 5 }, { key: 'help', name: '帮助', n: 2 }, { key: 'acct', name: '账户与关于', n: 5 }
-];
-/* the column each surface belongs to (back from a page returns to it) */
+/* S08 横向分栏 — the settings home IS a row of full-height paper columns browsed sideways; each column's name rides above
+   its own left edge, the next column peeks 64px with its big value, the previous one shows a 16px sliver; one landscape of
+   environment light runs behind all of them. Depth runs sideways too: the current column expands into its page (L1),
+   deeper pages arrive as columns from the right (L2) while the page underneath folds into a 28px strip, and inside every
+   page the groups are sub-columns under a name rail. Behaviour is the shared controller JUS.ctl. */
+const S08_COLS = [{ key: 'you', name: '你' }, { key: 'fav', name: '收藏' }, { key: 'notify', name: '提醒' }, { key: 'look', name: '外观' }, { key: 'rec', name: '记录与举报' }, { key: 'help', name: '帮助' }, { key: 'acct', name: '账户与关于' }];
 const S08_HOME_OF = { profile: 0, 'profile-edit': 0, privacy: 0, favorites: 1, 'favorite-detail': 1, city: 1, notify: 2, appearance: 3, records: 4, 'record-detail': 4,
   'record-supplement': 4, 'record-dispute': 4, 'record-appeal': 4, reports: 4, 'report-detail': 4, 'report-supplement': 4, help: 5, feedback: 5, rules: 5, account: 6, about: 6 };
 const S08_FIELD = { name: 0, wx: 1, email: 2, code: 2 };
-/* stage 1: surfaces with their own S08 page; the rest use the generic column page until stage 2 */
-const S08_BUILT = { home: 1, profile: 1, 'profile-edit': 1 };
+const S08_FORM = { supplement: 'record-supplement', dispute: 'record-dispute', appeal: 'record-appeal', rsupp: 'report-supplement', feedback: 'feedback', report: 'seam-report' };
+function s08w(t) { let w = 0; for (const ch of String(t)) w += /[⺀-鿿＀-￯]/.test(ch) ? 17 : ch === ' ' ? 5 : 10; return Math.ceil(w); }
+function s08J() { return typeof JU !== 'undefined' && JU.fx && JU.fx.rectIn; }
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
     this.motionSpec = { fwd: 340, back: 300, root: 320, swap: 300 };
-    this.panRef = { current: null }; this.trackRef = { current: null };
-    this._fx = null; this._drag = null; this._dragged = false; this._wheel = 0; this._flip = null;
+    this.panRef = { current: null }; this._fx = null; this._drag = null; this._dragged = false; this._wheel = 0; this._flip = null;
   }
-  initialState(v) { return Object.assign(JUS.baseState(v), { s08: { col: 0, field: 0, snapFrom: null, snapSeq: 0, fresh: null } }); }
+  initialState(v) { return Object.assign(JUS.baseState(v), { s08: { col: 0, sub: {}, snapFrom: null, snapSeq: 0, fresh: null } }); }
   s8(patch) { this.setState(s => ({ s08: Object.assign({}, s.s08, typeof patch === 'function' ? patch(s.s08) : patch) })); }
-  pitch() { const r = this.rootRef.current; return Math.max(1, ((r && r.clientWidth) || 390) - 36); }
+  setSub(sf, j) { this.s8(s => { const sub = Object.assign({}, s.sub); sub[sf] = j; return { sub: sub }; }); }
+  subGo(sf, j) { if (sf === 'appearance' && j < JUS.SKINS.length) this.skinTo(j); this.setSub(sf, j); }
+  pitch() { const r = this.rootRef.current; return Math.max(1, ((r && r.clientWidth) || 390) - 88); }
   homeIdle() { const n = this.state.nav; return !!n && n.stack.length === 1 && n.stack[0].s === 'home' && n.phase === 'idle'; }
 
-  /* ---------- 翻栏: the columns are the subject; one registered number --s08-pos moves columns, rail and light together ---------- */
+  /* ---------- 翻栏: one registered number --s08-pos moves columns, names and light together (keyframed: pause / scrub work) ---------- */
   flipTo(i, from) {
     const S = this.state.s08, last = S08_COLS.length - 1; i = Math.max(0, Math.min(last, i));
     if (from == null) { if (i === S.col) return; from = S.col; }
     this._flip = { from: from, to: i };
-    this.motion('flip', () => {
-      const f = this._flip;
-      this.s8(s => ({ col: f.to, snapFrom: f.from, snapSeq: (s.snapSeq || 0) + 1 }));
-      this.afterKey('snap', 320, () => this.s8({ snapFrom: null }));
-    });
+    this.motion('flip', () => { const f = this._flip; this.s8(s => ({ col: f.to, snapFrom: f.from, snapSeq: (s.snapSeq || 0) + 1 })); });
   }
   livePos() { const pan = this.panRef.current; if (!pan) return this.state.s08.col; const v = parseFloat(getComputedStyle(pan).getPropertyValue('--s08-pos')); return isNaN(v) ? this.state.s08.col : v; }
   panDown(ev) {
@@ -569,10 +604,9 @@ class Component extends DCLogic {
     if (!g.axis) {
       if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return;
       g.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
-      if (g.axis === 'y') { this._drag = null; return; }   /* vertical: the column scrolls natively (touch-action:pan-y) */
+      if (g.axis === 'y') { this._drag = null; return; }
       try { g.el.setPointerCapture(ev.pointerId); } catch (e) { }
-      g.pos0 = this.livePos(); this.cancelKey('snap');
-      const pan = this.panRef.current; if (pan) { pan.classList.remove('s08-snap-a', 's08-snap-b'); pan.classList.add('s08-drag'); }
+      g.pos0 = this.livePos(); const pan = this.panRef.current; if (pan) { pan.classList.remove('s08-snap-a', 's08-snap-b'); pan.classList.add('s08-drag'); }
     }
     const last = S08_COLS.length - 1; let p = g.pos0 - dx / this.pitch();
     if (p < 0) p *= 0.3; else if (p > last) p = last + (p - last) * 0.3;
@@ -582,32 +616,62 @@ class Component extends DCLogic {
   panUp(ev, cancel) {
     const g = this._drag; this._drag = null; if (!g || g.axis !== 'x') return;
     this._dragged = true; const pan = this.panRef.current; if (pan) pan.classList.remove('s08-drag');
-    const last = S08_COLS.length - 1; let t = Math.round(g.pos);
-    const base = Math.round(g.pos0), dd = g.pos - base;
+    const last = S08_COLS.length - 1, base = Math.round(g.pos0), dd = g.pos - base; let t = Math.round(g.pos);
     if (cancel) t = base; else if (g.v < -0.35 || dd > 0.3) t = Math.floor(g.pos + 0.02) + 1; else if (g.v > 0.35 || dd < -0.3) t = Math.ceil(g.pos - 0.02) - 1;
-    t = Math.max(0, Math.min(last, t));
-    if (pan) pan.style.setProperty('--s08-pos', String(t));
+    t = Math.max(0, Math.min(last, t)); if (pan) pan.style.setProperty('--s08-pos', String(t));
     this.flipTo(t, g.pos);
   }
-  panClick(ev) { if (this._dragged) { ev.stopPropagation(); ev.preventDefault(); this._dragged = false; } }
+  /* a tap on the peeking (or previous) column pages to it instead of opening its content */
+  panClick(ev) {
+    if (this._dragged) { ev.stopPropagation(); ev.preventDefault(); this._dragged = false; return; }
+    const ce = ev.target && ev.target.closest ? ev.target.closest('.s08-col') : null; if (!ce) return;
+    const i = +ce.getAttribute('data-i'); if (i !== this.state.s08.col) { ev.stopPropagation(); ev.preventDefault(); this.flipTo(i); }
+  }
   panWheel(ev) {
     if (!this.homeIdle() || Math.abs(ev.deltaX) <= Math.abs(ev.deltaY)) return;
     ev.preventDefault(); if (this._wheelLock) return; this._wheel += ev.deltaX;
-    if (Math.abs(this._wheel) > 40) { const d = this._wheel > 0 ? 1 : -1; this._wheel = 0; this._wheelLock = true; this.hold(420, () => { this._wheelLock = false; }); this.flipTo(this.state.s08.col + d); }
+    if (Math.abs(this._wheel) > 40) { const dd = this._wheel > 0 ? 1 : -1; this._wheel = 0; this._wheelLock = true; this.hold(420, () => { this._wheelLock = false; }); this.flipTo(this.state.s08.col + dd); }
   }
-
-  /* ---------- 栏展开: measure the current column at the moment it is tapped, so the page grows out of exactly that paper ---------- */
+  /* ---------- sub-columns inside pages: same drag grammar as the home ---------- */
+  subDown(ev) {
+    this._sDrag = false; this._sd = null; if (ev.button != null && ev.button !== 0) return;
+    if (ev.target && ev.target.closest && ev.target.closest('input,textarea,.s08-fc')) return;
+    const el = ev.currentTarget; const sf = el.getAttribute('data-sub'); const n = +el.getAttribute('data-n') || 1; if (n < 2) return;
+    const i0 = +(getComputedStyle(el).getPropertyValue('--s08-f')) || 0;
+    this._sd = { el: el, sf: sf, n: n, i0: Math.round(i0), x: ev.clientX, y: ev.clientY, axis: null, id: ev.pointerId, pos: i0, t: Date.now(), lx: ev.clientX, v: 0 };
+  }
+  subMove(ev) {
+    const g = this._sd; if (!g || g.id !== ev.pointerId) return; const dx = ev.clientX - g.x, dy = ev.clientY - g.y;
+    if (!g.axis) { if (Math.abs(dx) < 6 && Math.abs(dy) < 6) return; g.axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y'; if (g.axis === 'y') { this._sd = null; return; } try { g.el.setPointerCapture(ev.pointerId); } catch (e) { } g.el.classList.add('s08-drag'); }
+    const w = (g.el.clientWidth || 300) + 24; let p = g.i0 - dx / w; const last = g.n - 1; if (p < 0) p *= 0.3; else if (p > last) p = last + (p - last) * 0.3;
+    g.pos = p; const now = Date.now(); if (now > g.t) { g.v = (ev.clientX - g.lx) / (now - g.t); g.lx = ev.clientX; g.t = now; }
+    g.el.style.setProperty('--s08-f', p.toFixed(4));
+  }
+  subUp(ev, cancel) {
+    const g = this._sd; this._sd = null; if (!g || g.axis !== 'x') return; this._sDrag = true; g.el.classList.remove('s08-drag');
+    const dd = g.pos - g.i0; let t = Math.round(g.pos);
+    if (cancel) t = g.i0; else if (g.v < -0.35 || dd > 0.3) t = Math.floor(g.pos + 0.02) + 1; else if (g.v > 0.35 || dd < -0.3) t = Math.ceil(g.pos - 0.02) - 1;
+    t = Math.max(0, Math.min(g.n - 1, t)); g.el.style.setProperty('--s08-f', String(t)); if (t !== g.i0) this.subGo(g.sf, t);
+  }
+  subClick(ev) { if (this._sDrag) { ev.stopPropagation(); ev.preventDefault(); this._sDrag = false; } }
+  /* ---------- 环境切换: paging the appearance columns previews the whole landscape (keyframed fade + blur) ---------- */
+  skinTo(j) {
+    const k = JUS.SKINS[j].key; const from = this.state.ui.skinPreview || this.state.data.appearance.skin; if (k === from) return;
+    this._skinM = { from: from, to: k }; this.motion('skin', () => this.skinPick(this._skinM.to));
+  }
+  /* ---------- 栏展开: measure the tapped column so the page grows out of exactly that paper ---------- */
   onNav(type, s, p) {
     const nav = this.state.nav;
-    if (type === 'go' && nav && nav.stack.length === 1 && nav.stack[0].s === 'home') { this.measureColumn(); this.syncL1(null); }
+    if (type === 'go' && nav && nav.stack.length === 1 && nav.stack[0].s === 'home') { this.measureColumn(); this.syncL1(null); const ss = s, pp = p; this.lastMotion = { name: 'expand', fn: () => this.go(ss, pp) }; }
+    if (type === 'go' && s === 'appearance') this.setSub('appearance', undefined);
+    if (type === 'go' && (S08_FORM[s] || Object.keys(S08_FORM).some(k => S08_FORM[k] === s))) this.setSub(s, 0);
     if (type === 'root') this._fx = null;
   }
   measureColumn() {
-    const root = this.rootRef.current; if (!root || !global_JU()) return;
+    const root = this.rootRef.current; if (!root || !s08J()) return;
     const col = root.querySelector('.s08-col.s08-cur'); if (!col) { this._fx = null; return; }
     const r = JU.fx.rectIn(col, root); const sc = col.querySelector('.s08-col-sc'); const home = root.querySelector('.s08-home');
-    const hc0 = home ? (parseFloat(home.style.getPropertyValue('--hc')) || 0) : 0;
-    this._fx = { x: r.x, y: r.y, w: r.w, h: r.h, sy: sc ? sc.scrollTop : 0, hc0: hc0 };
+    this._fx = { x: r.x, y: r.y, w: r.w, h: r.h, sy: sc ? sc.scrollTop : 0, hc0: home ? (parseFloat(home.style.getPropertyValue('--hc')) || 0) : 0 };
   }
   /* the L1 page's own scroll feeds the column paper (its top) and the fold-back (the shared identity lands exactly in place) */
   syncL1(el) {
@@ -617,10 +681,10 @@ class Component extends DCLogic {
   }
   openProfile(ev) { this.motion('expand', () => this.go('profile', {}, ev)); }
   beforeReplay(name) {
-    if (name === 'expand') { this.home(); this.s8({ snapFrom: null }); }
+    if (name === 'expand') this.home();
     if (name === 'flip' && this._flip) this.s8({ col: Math.round(this._flip.from), snapFrom: null });
+    if (name === 'skin' && this._skinM) { const m = this._skinM, cur = this.state.data.appearance.skin; this.setState(st => ({ ui: Object.assign({}, st.ui, { skinPreview: m.from === cur ? null : m.from }) })); }
   }
-  /* saved: toast, the edit column leaves, the changed value carries a 刚更新 mark where it lives (profile, then the 你 column) */
   onProfileSaved(e) {
     this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
     this.s8({ fresh: e.nothing ? null : (e.changed || []).slice() });
@@ -634,91 +698,146 @@ class Component extends DCLogic {
       ['name', 'wx', 'email', 'code'].forEach(k => { if (a[k] !== b[k]) f = S08_FIELD[k]; });
       if (b.codeState !== a.codeState && (b.codeState === 'sent' || b.codeState === 'expired')) f = 2;
       if ((b.shake || 0) !== (a.shake || 0)) { const e = b.errors || {}; f = e.name ? 0 : e.wx ? 1 : (e.email || e.code) ? 2 : f; }
-      if (f != null && f !== this.state.s08.field) this.s8({ field: f });
+      if (f != null && f !== ((this.state.s08.sub || {})['profile-edit'] || 0)) this.setSub('profile-edit', f);
     }
+    const ta = (ps && ps.tf) || {}, tb = this.state.tf || {};
+    Object.keys(tb).forEach(k => { const o = ta[k] || {}, n = tb[k] || {}; if ((n.shake || 0) !== (o.shake || 0)) { const kind = k.split(':')[0], e = n.errors || {}; this.setSub(S08_FORM[kind], e.who ? 0 : kind === 'report' ? 1 : 0); } });
   }
   applyJump(e) {
     this._fx = null; this.syncL1(null); this.ctlJump(e);
-    const o = e.open || {}; const sf = o.surface || 'home';
-    const col = S08_HOME_OF[sf] != null ? S08_HOME_OF[sf] : 0;
-    const field = sf === 'profile-edit' && (o.state === 'code' || o.state === 'code-expired') ? 2 : 0;
-    this.s8({ col: col, field: field, snapFrom: null, fresh: sf === 'profile' && o.state === 'saved' ? ['name'] : null });
+    const o = e.open || {}; const sf = o.surface || 'home'; const sub = {};
+    if (sf === 'profile-edit' && (o.state === 'code' || o.state === 'code-expired')) sub['profile-edit'] = 2;
+    if (sf === 'appearance' && o.state === 'preview') sub.appearance = Math.max(0, JUS.SKINS.findIndex(k => k.key === (o.id || 'sunset')));
+    this.s8({ col: S08_HOME_OF[sf] != null ? S08_HOME_OF[sf] : 0, sub: sub, snapFrom: null, fresh: sf === 'profile' && o.state === 'saved' ? ['name'] : null });
     const root = this.rootRef.current; if (root) root.querySelectorAll('.s08-col-sc').forEach(el => { el.scrollTop = 0; });
   }
-
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
-    const c = this.ctlVals(); const self = this, s = this.state, d = s.data, S = s.s08 || {}, nav = s.nav, stack = nav.stack;
-    const top = stack[stack.length - 1], under = stack.length > 1 ? stack[stack.length - 2] : null; const col = S.col || 0, fx = this._fx;
+    const c = this.ctlVals(); const self = this, s = this.state, d = s.data, S = s.s08 || {}, nav = s.nav, stack = nav.stack, SUB = S.sub || {};
+    const top = stack[stack.length - 1], col = S.col || 0, fx = this._fx;
     const x = {};
-    x.appCls = (d.appearance.reduceMotion ? ' rm-user' : '') + (stack.length >= 3 ? ' s08-deep' : '');
+    const idx = (sf) => { let i = -1; stack.forEach((e, k) => { if (e.s === sf) i = k; }); return i; };
+    const lvOf = (sf) => { const i = idx(sf); return i <= 0 ? 's08-l0' : i === 1 && stack[0].s === 'home' ? 's08-l1' : 's08-l2'; };
+    x.l1Scroll = ev => { c.nav.onScroll(ev); self.syncL1(ev.currentTarget); };
+    const sub = (sf, items, def, force) => {
+      if (!items.length) items = [{ name: '' }];
+      const n = items.length; const want = force != null ? force : SUB[sf] != null ? SUB[sf] : (def || 0); const i = Math.max(0, Math.min(n - 1, want)); let x0 = 0;
+      const sl = items.map(it => { const w = s08w(it.name); const o = { x: x0, w: w }; x0 += w + 22; return o; });
+      return { i: i, n: n, style: '--s08-f:' + i, mk: 'transform:translateX(' + sl[i].x + 'px);width:' + sl[i].w + 'px',
+        rail: items.map((it, j) => ({ name: it.name, style: 'width:' + sl[j].w + 'px', cls: j === i ? 's08-cur' : '', dot: !!it.dot, ok: !!it.ok, go: it.go || (() => self.subGo(sf, j)) })),
+        pc: items.map((it, j) => j === i ? 's08-cur' : ''), sc: items.map((it, j) => j === i ? sf : false), on: items.map((it, j) => j === i ? x.l1Scroll : null) };
+    };
+    const lvTop = lvOf(top.s);
+    x.appCls = (d.appearance.reduceMotion ? ' rm-user' : '') + (stack.length >= 3 || (lvTop === 's08-l2' && top.s !== 'home') ? ' s08-deep' : '');
     x.appStyle = fx ? '--s08-fx:' + fx.x.toFixed(1) + 'px;--s08-fy:' + fx.y.toFixed(1) + 'px;--s08-fw:' + fx.w.toFixed(1) + 'px;--s08-fh:' + fx.h.toFixed(1) + 'px;--s08-sy:' + Math.round(fx.sy) + 'px;--s08-hc0:' + fx.hc0 : '';
     x.homeCls = c.nav.cls.home + (c.nav.on.home ? '' : ' s08-away');
     const snapping = S.snapFrom != null;
     x.panCls = snapping ? (S.snapSeq % 2 ? 's08-snap-a' : 's08-snap-b') : '';
     x.panStyle = '--s08-pos:' + col + (snapping ? ';--s08-from:' + (+S.snapFrom).toFixed(4) + ';--s08-to:' + col : '');
-    x.sky = { cotton: c.skinShown === 'cotton' ? 's08-on' : '', halo: c.skinShown === 'halo' ? 's08-on' : '', sunset: c.skinShown === 'sunset' ? 's08-on' : '' };
-    x.meta = (c.attCount ? c.attCount + ' 件事等你 · ' : '') + c.sum.cityLabel + (c.attCount ? '' : ' · ' + c.sum.favLabel);
-    x.rail = S08_COLS.map((k, i) => ({ name: k.name, style: 'width:' + (k.n * 17) + 'px', cls: i === col ? 's08-cur' : '', go: () => self.flipTo(i) }));
-    x.c = S08_COLS.map((k, i) => ({ cls: i === col ? 's08-cur' : '', style: '--i:' + i + ';--side:' + (i < col ? -1 : i > col ? 1 : 0), sc: i === col ? 'home' : false, scroll: i === col ? c.nav.onScroll : null }));
-    x.l1Scroll = ev => { c.nav.onScroll(ev); self.syncL1(ev.currentTarget); };
+    if (c.skinShown !== this._skinNow) { this._skinWas = this._skinNow; this._skinNow = c.skinShown; }
+    x.sky = {}; JUS.SKINS.forEach(k => { x.sky[k.key] = k.key === c.skinShown ? 's08-on' : k.key === this._skinWas ? 's08-was' : ''; });
+    x.meta = (c.attCount ? c.attCount + ' 件事等你回应 · ' : '') + c.sum.cityLabel + (c.attCount ? '' : ' · ' + c.sum.favLabel);
+    x.dots = S08_COLS.map((k, i) => i === col ? 's08-cur' : '');
+    const side = i => '--i:' + i + ';--side:' + (i < col ? -1 : i > col ? 1 : 0);
+    x.rail = S08_COLS.map((k, i) => ({ name: k.name, style: side(i), cls: i === col ? 's08-cur' : '', cur: i === col ? 'page' : false, go: () => self.flipTo(i) }));
+    x.c = S08_COLS.map((k, i) => ({ cls: i === col ? 's08-cur' : '', style: side(i), sc: i === col ? 'home' : false, scroll: i === col ? c.nav.onScroll : null }));
     x.pan = this._pan || (this._pan = { down: ev => self.panDown(ev), move: ev => self.panMove(ev), up: ev => self.panUp(ev, false), cancel: ev => self.panUp(ev, true), click: ev => self.panClick(ev), wheel: ev => self.panWheel(ev) });
+    x.sp = this._sp || (this._sp = { down: ev => self.subDown(ev), move: ev => self.subMove(ev), up: ev => self.subUp(ev, false), cancel: ev => self.subUp(ev, true), click: ev => self.subClick(ev) });
     x.flyName = S08_COLS[col].name;
     const fr = S.fresh || []; x.fresh = { name: fr.indexOf('name') >= 0, wx: fr.indexOf('wx') >= 0, email: fr.indexOf('email') >= 0 };
-    /* 你 */
+    x.bk = {}; stack.forEach((e, k) => { if (k > 0) { const b = stack[k - 1]; x.bk[e.s] = '‹ ' + (b.s === 'home' ? '设置' : (c.nav.title[b.s] || '返回')); } });
+    x.lv = { profile: lvOf('profile'), edit: lvOf('profile-edit'), favorites: lvOf('favorites'), city: lvOf('city'), notify: lvOf('notify'), appearance: lvOf('appearance'), records: lvOf('records'), recd: lvOf('record-detail'),
+      reports: lvOf('reports'), repd: lvOf('report-detail'), help: lvOf('help'), privacy: lvOf('privacy'), account: lvOf('account'), about: lvOf('about'), rules: lvOf('rules'), feed: lvOf('seam-feed'), mine: lvOf('seam-mine') };
+    /* home: 你 */
     const y = c.you;
-    x.you = { nameCls: Array.from(y.name || '').length > 6 ? 's08-long' : '', open: ev => self.openProfile(ev),
-      attHead: c.attCount + ' 件事等你回应', calm: !c.attCount, calmLine: '没有需要你回应的事。' + c.sum.cityLabel + ' · ' + c.sum.favLabel };
+    x.you = { nameCls: Array.from(y.name || '').length > 6 ? 's08-long' : '', open: ev => self.openProfile(ev), attHead: c.attCount + ' 件事等你回应', calm: !c.attCount, calmLine: '没有需要你回应的事。' };
     x.att = c.att.map(a => ({ key: a.key, open: a.open, title: a.title, kind: a.kind === 'record' ? a.label + ' · ' + a.status : a.label, line: (a.kind === 'record' ? '可补充说明或提出异议' : a.line) + ' ›' }));
     x.priv = (c.privacy.general || []).slice(0, 2);
-    /* 收藏 */
-    const fav = c.fav.rows, deck = fav.slice(0, 3).reverse();
-    x.fav = { has: !c.fav.empty, sub: c.fav.empty ? '' : c.fav.count + ' 个 · 最近一次 ' + fav[0].favAgo, deckStyle: '--n:' + Math.max(0, deck.length - 1),
-      deck: deck.map((r, k) => ({ id: r.id, open: r.open, cls: k === deck.length - 1 ? 's08-front' : '', style: '--k:' + k, when: r.when.zh, title: r.title,
-        sub: r.place.hood + ' · 局主 ' + r.host + (r.crossCity ? ' · ' + r.cityName : ''), tag: r.joined ? r.relLabel : r.hosted ? '我发起的' : r.statusLabel, tagCls: r.joined ? 's08-on' : r.closed ? 's08-off' : '' })),
-      allLabel: c.fav.count > 3 ? '全部 ' + c.fav.count + ' 个收藏' : '管理收藏', all: ev => self.go('favorites', {}, ev) };
-    /* 外观 */
-    x.sk = c.skin.list.map(k => ({ key: k.key, name: k.name, en: k.en, line: k.line, cls: k.on ? 's08-cur' : '', tag: k.on ? '正在使用' : '', go: ev => self.go('appearance', {}, ev) }));
-    /* 记录与举报 / 帮助 / 账户 */
-    const pend = c.sum.pendingRecords, need = c.sum.needMore, openRep = c.reps.rows.filter(r => r.open).length;
-    x.rec = { line: c.recs.empty ? '暂无记录' : pend ? pend + ' 条待核实 · 未处罚' : '都已记录', cls: pend ? 's08-hot' : '', note: c.reps.note };
-    x.rep = { line: c.reps.empty ? '暂无举报' : need ? need + ' 条需补充' : openRep ? openRep + ' 条处理中' : '均已处理', cls: need ? 's08-hot' : '' };
-    x.recRows = c.recs.rows.slice(0, 3).map(r => ({ id: r.id, open: r.open, label: r.label, side: r.pendingReview ? '待核实' : r.kindLabel, cls: r.pendingReview ? 's08-hot' : '' }));
-    x.help = { n: JUS.RULES.length, fb: c.help.feedback.length ? '我的反馈 ' + c.help.feedback.length + ' 条' : '›' };
-    x.acct = { big: c.acct.device, line: c.acct.demo ? '会话开始于 ' + c.acct.startedText : '会话已于 ' + c.acct.endedText + ' 结束' };
-    /* profile */
     x.pr = { wx: y.wx || '未填写', wxCls: y.wx ? '' : 's08-ph', email: y.email || '未填写', emailCls: y.email ? '' : 's08-ph',
       st: y.email ? (y.verified ? '✓ 已验证 · ' + (y.emailKind === 'school' ? '学校邮箱' : '工作邮箱') : '未验证 · 编辑资料时重新验证') : '可空 · 填工作或学校邮箱后显示验证标记', stCls: y.verified ? 's08-ok' : '',
       mailRule: (c.privacy.general || [])[2] || '', copyFail: JUS.COPY.copyFailInline + '：' + (y.copyFail || ''), policy: JUS.COPY.wxPolicy, snapshot: JUS.COPY.snapshotNote, edit: ev => self.go('profile-edit', {}, ev) };
-    /* profile edit */
-    const pf = c.pf.on ? c.pf : null, field = S.field || 0, tri = [0, 1, 2];
+    /* home: 收藏 / 外观 / 记录 / 帮助 / 账户 */
+    const fcard = r => ({ id: r.id, open: r.open, remove: r.remove, when: r.when.zh, title: r.title, sub: r.place.hood + ' · 局主 ' + r.host + (r.crossCity ? ' · ' + r.cityName : ''),
+      tag: r.joined ? r.relLabel : r.hosted ? '我发起的' : r.statusLabel, tagCls: r.joined ? 's08-on' : r.closed ? 's08-off' : '' });
+    const fav = c.fav.rows, deck = fav.slice(0, 3).reverse();
+    x.fav = { has: !c.fav.empty, sub: c.fav.empty ? '' : '个收藏的局 · 最近一次 ' + fav[0].favAgo, deckStyle: '--n:' + Math.max(0, deck.length - 1),
+      deck: deck.map((r, k) => Object.assign(fcard(r), { cls: k === deck.length - 1 ? 's08-front' : '', style: '--k:' + k })), allLabel: c.fav.count > 3 ? '全部 ' + c.fav.count + ' 个收藏' : '管理收藏', all: ev => self.go('favorites', {}, ev) };
+    x.sk = c.skin.list.map((k, j) => ({ key: k.key, name: k.name, en: k.en, line: k.line, cls: k.on ? 's08-cur' : '', tag: k.on ? '正在使用' : '',
+      go: ev => { self.go('appearance', {}, ev); if (!k.on) { self.setSub('appearance', j); self._skinM = { from: c.skin.cur, to: k.key }; self.skinPick(k.key); } } }));
+    const pend = c.sum.pendingRecords, need = c.sum.needMore, openRep = c.reps.rows.filter(r => r.open).length;
+    x.rec = { line: c.recs.empty ? '暂无记录' : pend ? pend + ' 条待核实 · 未处罚' : '都已记录', cls: pend ? 's08-hot' : '' };
+    x.rep = { line: c.reps.empty ? '暂无举报' : need ? need + ' 条需补充' : openRep ? openRep + ' 条处理中' : '均已处理', cls: need ? 's08-hot' : '' };
+    x.recRows = c.recs.rows.slice(0, 3).map(r => ({ id: r.id, open: r.open, label: r.label, side: r.pendingReview ? '待核实' : r.kindLabel, cls: r.pendingReview ? 's08-hot' : '' }));
+    x.help = { n: JUS.RULES.length, fb: c.help.feedback.length ? '我的反馈 ' + c.help.feedback.length + ' 条' : '›', goFb: c.help.goFeedback };
+    x.acct = { line: c.acct.demo ? '会话开始于 ' + c.acct.startedText : '会话已于 ' + c.acct.endedText + ' 结束', endLabel: c.sheet.confirmLabel, endedLine: '结束于 ' + c.acct.endedText };
+    /* profile edit: field rail */
+    const pf = c.pf.on ? c.pf : null, tri = [0, 1, 2];
     if (pf) {
       const er = pf.err || {}; const bad = { name: !!er.name, wx: !!er.wx, email: !!er.email, code: !!er.code };
       const nBad = (bad.name ? 1 : 0) + (bad.wx ? 1 : 0) + (bad.email || bad.code ? 1 : 0); const ex = Math.max(0, pf.expiresIn || 0);
-      const fields = [['称呼', 2, bad.name, false], ['微信号', 3, bad.wx, false], ['邮箱', 2, bad.email || bad.code, pf.codeVerified]];
-      x.f = { style: '--s08-f:' + field, rail: fields.map((n, j) => ({ name: n[0], style: 'width:' + (n[1] * 17) + 'px', cls: j === field ? 's08-cur' : '', bad: n[2], ok: n[3] && !n[2], go: () => self.s8({ field: j }) })),
-        oth: tri.map(j => tri.filter(k => k !== j).map(k => { const v = [pf.name, pf.wx, pf.email][k]; return { name: fields[k][0], value: v || (k === 2 ? '可空' : '未填写'), cls: v ? '' : 's08-ph', bad: fields[k][2], go: () => self.s8({ field: k }) }; })),
-        sc: tri.map(j => j === field ? 'profile-edit' : false), on: tri.map(j => j === field ? c.nav.onScroll : null), to: tri.map(j => () => self.s8({ field: j })),
+      const fields = [['称呼', bad.name, false], ['微信号', bad.wx, false], ['邮箱', bad.email || bad.code, pf.codeVerified]];
+      x.f = { u: sub('profile-edit', fields.map(f => ({ name: f[0], dot: f[1], ok: f[2] && !f[1] }))),
+        oth: tri.map(j => tri.filter(k => k !== j).map(k => { const v = [pf.name, pf.wx, pf.email][k]; return { name: fields[k][0], value: v || (k === 2 ? '可空' : '未填写'), cls: v ? '' : 's08-ph', bad: fields[k][1], go: () => self.setSub('profile-edit', k) }; })),
         bad: { name: bad.name ? 's08-bad' : '', wx: bad.wx ? 's08-bad' : '', email: bad.email ? 's08-bad' : '', code: bad.code ? 's08-bad' : '' }, countCls: pf.nameOver ? 's08-late' : '',
         summary: nBad > 1 ? nBad + ' 项需要修改' : '', busy: pf.saving ? 'true' : 'false', codeOpen: pf.codeSent || pf.codeExpired,
         exp: pf.codeExpired ? '已过期' : Math.floor(ex / 60) + ':' + String(ex % 60).padStart(2, '0') + ' 内有效', expCls: pf.codeExpired ? 's08-late' : '', resendOff: !!(pf.codeSent && pf.resendLeft > 0),
         meta: pf.saving ? '正在保存…' : pf.dirty ? '有改动，还没保存' : '还没有改动', snap: JUS.COPY.snapshotNote, nameHint: ((c.privacy.general || [])[0] || '') + '最多 10 个字。', wxHint: '只能填字母、数字、下划线或短横线。' + JUS.COPY.wxPolicy };
-    } else x.f = { style: '', rail: [], sc: [false, false, false], on: [null, null, null], to: [null, null, null], bad: {} };
-    /* page level: the first page above home is the expanded column (L1); deeper pages are columns from the right (L2) */
-    const lvOf = (sf) => { let i = -1; stack.forEach((e, k) => { if (e.s === sf) i = k; }); return i >= 2 ? 's08-l2' : 's08-l1'; };
-    x.lv = { profile: lvOf('profile'), edit: lvOf('profile-edit') };
-    const stub = (e, isTop) => {
-      if (!e || S08_BUILT[e.s] || !c.nav.on[e.s]) return { on: false };
-      const lv = lvOf(e.s); const below = stack[stack.indexOf(e) - 1];
-      return { on: true, s: e.s, cls: lv + ' ' + c.nav.cls[e.s], title: c.nav.title[e.s] || '', backLabel: '‹ ' + (below && below.s !== 'home' ? c.nav.title[below.s] : '设置'),
-        sc1: lv === 's08-l1' ? e.s : false, sc2: lv === 's08-l2' ? e.s : false, scroll1: isTop && lv === 's08-l1' ? x.l1Scroll : null, scroll2: isTop && lv === 's08-l2' ? c.nav.onScroll : null };
-    };
-    x.stubT = stub(top, true); x.stubU = under ? stub(under, false) : { on: false };
+    } else x.f = { u: sub('profile-edit', [{ name: '称呼' }, { name: '微信号' }, { name: '邮箱' }]), oth: [[], [], []], bad: {} };
+    /* favorites: 可报名 / 已结束 */
+    x.fv = { has: !c.fav.empty, act: c.fav.active.map(fcard), arc: c.fav.archived.map(fcard), na: c.fav.active.length, nb: c.fav.archived.length, la: '个还能报名的局', lb: '个已结束或已取消',
+      note: '收藏不等于报名；拿出收藏也不会影响已报名的局。', meta: c.sum.favLabel, u: sub('favorites', [{ name: '可报名 ' + c.fav.active.length }, { name: '已结束 ' + c.fav.archived.length }]) };
+    /* event detail */
+    const dsf = c.nav.on['favorite-detail'] ? 'favorite-detail' : c.nav.on['seam-feed-detail'] ? 'seam-feed-detail' : null; const dv = c.favDetail || c.feedDetail;
+    x.dt = dsf && dv ? { on: true, s: dsf, lv: lvOf(dsf), cls: c.nav.cls[dsf], back: x.bk[dsf] || '‹ 返回', md: dv.when.md, wd: dv.when.wdZh + ' ' + dv.when.time, title: dv.title, status: dv.status.label, stCls: dv.status.closed ? 's08-off' : '',
+      joinedLabel: dv.joined ? dv.joinedLabel : '未报名', jCls: dv.joined ? 's08-on' : '', place: dv.place.full, host: dv.host, cap: dv.cap, cross: dv.crossCity, cityLine: dv.city.name + ' · ' + dv.city.tzLabel, favAgo: dv.favAgo, note: dv.note,
+      canSee: dv.canSeeHostWx, hostWx: dv.hostWx, copy: dv.copyHostWx, rule: dv.hostWxRule, favAct: dv.fav ? 'unfav' : 'fav', toggle: dv.toggleFav, favLabel: dv.favLabel, applyNote: dv.applyNote } : { on: false };
+    /* city */
+    const ci = Math.max(0, JUS.CITIES.findIndex(k => k.key === c.city.cur.key));
+    x.ct = { list: c.city.list.map(k => ({ key: k.key, name: k.name, en: k.en, pick: k.pick, cls: k.on ? 's08-on' : '' })), fl: c.city.flash ? 's08-fl' + (ci % 2) : '' };
+    /* notify: 送达 / 类别 */
+    x.nt = { u: sub('notify', [{ name: '送达' }, { name: '类别 ' + c.notify.onCount + '/' + c.notify.total }]), svc: c.notify.serviceConnected ? '已连接' : '未开通', toCats: () => self.setSub('notify', 1) };
+    /* appearance: one column per environment + 动态 */
+    const apDef = Math.max(0, JUS.SKINS.findIndex(k => k.key === c.skin.shown));
+    const apu = sub('appearance', JUS.SKINS.map(k => ({ name: k.name })).concat([{ name: '动态' }]), apDef);
+    x.ap = { u: apu, skins: c.skin.list.map((k, j) => ({ key: k.key, name: k.name, en: k.en, line: k.line, pc: apu.pc[j], st: '--j:' + j, sc: apu.sc[j], on: apu.on[j],
+        tag: k.on ? '正在使用' : k.shown ? '预览中' : '', tagCls: k.on ? 's08-on' : 's08-hot', note: k.on ? '这是现在的外观。' : '翻到这一栏，整个画面就换成这种光；应用后才会保存。' })),
+      sys: c.skin.rmSys ? '系统设置：减少动态已开启 · JU 跟随系统' : '系统设置：减少动态未开启', cancel: () => { c.skin.cancel(); self.setSub('appearance', Math.max(0, JUS.SKINS.findIndex(k => k.key === c.skin.cur))); },
+      meta: c.skin.previewing ? '预览「' + c.skin.shownName + '」' : '正在使用「' + c.skin.curName + '」' };
+    /* records / reports: one column per group */
+    const gnote = { '出席记录': c.recs.help, '主动退出': c.recs.quotaRule, '安排变化': '不占机会 · 不记失约' };
+    const grp = (sf, gs, rowsOf, noteOf) => { const u = sub(sf, gs.map(g => ({ name: g.title + ' ' + g.rows.length }))); return Object.assign(u, { has: gs.length > 0,
+      panes: gs.map((g, j) => ({ count: g.rows.length, title: '条' + g.title, note: noteOf(g), rows: g.rows.map(rowsOf), pc: u.pc[j], st: '--j:' + j, sc: u.sc[j], on: u.on[j] })) }); };
+    x.rg = grp('records', c.recs.groups, r => ({ id: r.id, open: r.open, label: r.title, side: r.pendingReview ? '待核实' : r.label, cls: r.pendingReview ? 's08-hot' : '' }), g => gnote[g.title] || '');
+    const rr = c.reps.rows;
+    x.rpg = grp('reports', [{ title: '需补充', rows: rr.filter(r => r.needsMore) }, { title: '处理中', rows: rr.filter(r => r.open && !r.needsMore) }, { title: '已处理', rows: rr.filter(r => !r.open) }].filter(g => g.rows.length),
+      r => ({ id: r.id, open: r.open, label: r.title, side: r.statusLabel, cls: r.needsMore ? 's08-hot' : '' }), g => g.title === '需补充' ? (g.rows[0].needsText || c.reps.note) : c.reps.note);
+    /* forms: panes 对象 · 经过/说明 · 材料 */
+    if (c.form.on) {
+      const fk = c.form.kind, fs = top.s, er = c.form.err || {};
+      const items = (c.form.needWho ? [{ name: '对象', dot: !!er.who }] : []).concat([{ name: fk === 'report' ? '经过' : fk === 'feedback' ? '反馈' : fk === 'rsupp' ? '补充' : '说明', dot: !!er.text }]).concat(c.form.canFiles ? [{ name: '材料' + (c.form.files.length ? ' ' + c.form.files.length : '') }] : []);
+      const fu = sub(fs, items); const jT = c.form.needWho ? 1 : 0; const pp = j => j < 0 ? { pc: '', st: '', sc: false, on: null } : { pc: fu.pc[j], st: '--j:' + j, sc: fu.sc[j], on: fu.on[j] };
+      let ctx = null;
+      if (/^record-/.test(fs) && c.rec) ctx = { k: c.rec.label + ' · ' + c.rec.statusLabel, t: c.rec.title, n: '' };
+      if (fs === 'report-supplement' && c.rep) ctx = { k: '举报 · ' + c.rep.statusLabel, t: c.rep.title, n: c.rep.needsText || '' };
+      if (fs === 'seam-report' && c.seamReport) ctx = { k: c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host, t: c.seamReport.title, n: c.seamReport.existing.length ? '这个局已有 ' + c.seamReport.existing.length + ' 条举报 · ' + c.seamReport.existing[0].statusLabel : '' };
+      x.fm = { s: fs, lv: lvOf(fs), cls: c.nav.cls[fs], u: fu, multi: items.length > 1, p: { who: pp(c.form.needWho ? 0 : -1), text: pp(jT), files: pp(c.form.canFiles ? jT + 1 : -1) }, ctx: ctx, ctxText: !c.form.needWho,
+        cnt: c.form.count + ' 字' + (fk === 'rsupp' ? '' : ' · 至少 ' + c.form.min + ' 字'), cntCls: er.text ? 's08-late' : '', bad: er.text ? 's08-bad' : '', busy: c.form.saving ? 'true' : 'false',
+        meta: c.form.saving ? '正在提交…' : c.form.failed ? '没有提交，输入还在' : (c.form.text || c.form.files.length) ? '有草稿，还没提交' : '', hint: fk === 'appeal' ? JUS.COPY.appealSaved : fk === 'feedback' ? '' : c.recs.help };
+    } else x.fm = { u: sub('-', [{ name: '-' }]), p: { who: {}, text: {}, files: {} } };
+    /* help / privacy / about / rules */
+    x.hp = { u: sub('help', [{ name: '常见问题' }, { name: '我的反馈 ' + c.help.feedback.length }, { name: '约定与举报' }]), nfb: c.help.feedback.length };
+    x.pv = { u: sub('privacy', [{ name: '规则' }, { name: '你的局 ' + c.privacy.facts.length }]), n: c.privacy.facts.length };
+    x.ab = { cities: JUS.CITIES.length + ' 座城市可选' };
+    const ru = sub('rules', c.help.groups.map(g => ({ name: g.name })));
+    x.ru = Object.assign(ru, { panes: c.help.groups.map((g, j) => ({ name: g.name, line: g.line, rules: g.rules, pc: ru.pc[j], st: '--j:' + j, sc: ru.sc[j], on: ru.on[j] })) });
+    /* seams */
+    const allN = JUS.derive.feed(d, 'all').count;
+    x.fd = { u: sub('seam-feed', [{ name: '全部 ' + allN, go: c.feed.setAll }, { name: '只看收藏 ' + c.feed.favCount, go: c.feed.setFav }], 0, c.feed.isFav ? 1 : 0), meta: c.feed.city.name + ' · 收藏 ' + c.feed.favCount + ' 个' };
+    x.mn = { u: sub('seam-mine', [{ name: '进行中 ' + c.mine.current.length }, { name: '历史 ' + c.mine.history.length }, { name: '我发起的 ' + c.mine.hosted.length }]), meta: c.sum.joinedCount + ' 个进行中 · 发起 ' + c.sum.hostedCount + ' 个' };
     x.sheetDim = c.sheet.unsaved ? c.sheet.keep : c.sheet.cancel;
-    return { panel, rootRef: this.rootRef, panRef: this.panRef, trackRef: this.trackRef, c, x };
+    return { panel, rootRef: this.rootRef, panRef: this.panRef, c, x };
   }
 }
-function global_JU() { return typeof JU !== 'undefined' && JU.fx && JU.fx.rectIn; }
 JUS.mixin(Component);
 </script>
 </body>

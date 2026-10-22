@@ -226,7 +226,7 @@ textarea.s01-in{min-height:1lh}
 .s01-cta{width:min(100%,280px);height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:17px;font-weight:600;letter-spacing:.06em;color:#fff;background:#4553BE;
   box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -2px 0 rgba(12,16,64,.24),0 1px 0 rgba(20,22,31,.08);transition:transform calc(120ms * var(--k,1)) var(--e1),opacity 160ms}
 .s01-cta:active{transform:scale(.958)}
-.s01-cta.is-busy{opacity:.82;cursor:progress}
+.s01-cta.is-busy,.s01-cta[disabled]{opacity:.82;cursor:progress}
 .s01-cta-in{margin-top:20px}
 .s01-ed,.s01-form{--cb:96px}
 .s01-ed.is-failed,.s01-form.is-failed{--cb:128px}
@@ -575,7 +575,7 @@ textarea.s01-in{min-height:1lh}
           <div class="s01-sc" data-scroller="notify" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">开着的提醒</span><span class="s01-lv{{v.nt.fl}}" data-m="notify-n"><b class="s01-n">{{v.nt.n}}</b>类提醒</span><p class="s01-ls s01-fx">{{c.notify.deliverLabel}}</p>
-              <sc-if value="{{c.notify.isDefault}}"><button type="button" class="s01-cta s01-cta-in s01-fx" data-act="request" onClick="{{c.notify.request}}">开启提醒</button></sc-if></div>
+              <sc-if value="{{v.nt.cta}}"><button type="button" class="s01-cta s01-cta-in s01-fx{{v.nt.ctaCls}}" data-act="request" disabled="{{c.notify.isRequesting}}" aria-busy="{{c.notify.isRequesting}}" onClick="{{c.notify.request}}">{{v.nt.ctaLabel}}</button></sc-if></div>
             <div class="s01-vg s01-fx">
               <div><span class="s01-lab">系统权限</span><span class="s01-v3">{{v.nt.perm}}</span></div>
               <div><span class="s01-lab">提醒服务</span><span class="s01-v3">{{v.nt.svc}}</span></div>
@@ -723,7 +723,7 @@ textarea.s01-in{min-height:1lh}
           <div class="s01-sc" data-scroller="account" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">本机会话</span><span class="s01-lv{{v.ac.fl}}">{{v.ac.state}}</span><p class="s01-ls s01-fx">{{v.ac.line}}</p>
-              <sc-if value="{{c.acct.ended}}"><button type="button" class="s01-cta s01-cta-in s01-fx" data-act="restart" onClick="{{c.acct.restart}}">重新开始</button></sc-if></div>
+              <sc-if value="{{c.acct.ended}}"><button type="button" class="s01-cta s01-cta-in s01-fx" data-act="restart" onClick="{{v.ac.restart}}">重新开始</button></sc-if></div>
             <p class="s01-read s01-fx">{{c.acct.noAccount}}</p>
             <div class="s01-vg s01-fx"><div><span class="s01-lab">设备</span><span class="s01-v2">{{c.acct.device}}</span></div><div><span class="s01-lab">本机数据</span><span class="s01-v2 s01-v2n">{{v.ac.key}}</span></div></div>
             <p class="s01-sub s01-fx">{{c.acct.storageNote}}</p>
@@ -816,7 +816,7 @@ textarea.s01-in{min-height:1lh}
           <p class="s01-sheet-q">{{c.sheet.title}}</p><p class="s01-sheet-p">{{c.sheet.body}}</p>
           <div class="s01-sheet-acts">
             <sc-if value="{{c.sheet.unsaved}}"><button type="button" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s01-danger" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></sc-if>
-            <sc-if value="{{c.sheet.accountEnd}}"><button type="button" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s01-danger" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></sc-if>
+            <sc-if value="{{c.sheet.accountEnd}}"><button type="button" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s01-danger" data-act="confirm" onClick="{{v.ac.confirm}}">{{c.sheet.confirmLabel}}</button></sc-if>
           </div>
         </div></div>
       </sc-if>
@@ -993,7 +993,7 @@ class Component extends DCLogic {
       list: c.city.list.map(function (x) { return { key: x.key, name: x.name, pressed: x.on ? 'true' : 'false', right: x.on ? '当前' : x.tzLabel, rcls: x.on ? ' is-on' : '', pick: function () { x.pick(); self.s01Flash('city'); } }; }) };
     /* notify */
     var NT = c.notify;
-    v.nt = { n: String(NT.onCount), fl: flc('nt'), perm: ({ default: '未申请', requesting: '请求中', granted: '已允许', denied: '已拒绝', unsupported: '不支持' })[NT.permission] || '', svc: NT.serviceConnected ? '已连接' : '未连接',
+    v.nt = { cta: NT.isDefault || NT.isRequesting, ctaLabel: NT.isRequesting ? '请求中…' : '开启提醒', ctaCls: NT.isRequesting ? ' is-busy' : '', n: String(NT.onCount), fl: flc('nt'), perm: ({ default: '未申请', requesting: '请求中', granted: '已允许', denied: '已拒绝', unsupported: '不支持' })[NT.permission] || '', svc: NT.serviceConnected ? '已连接' : '未连接',
       cats: NT.cats.map(function (x) { return { key: x.key, label: x.label, sub: x.sub, aria: x.aria, toggle: function () { x.toggle(); self.s01Flash('nt'); } }; }) };
     /* appearance */
     var SK = c.skin; var shown = JUS.SKINS.filter(function (k) { return k.key === SK.shown; })[0] || JUS.SKINS[0];
@@ -1020,7 +1020,7 @@ class Component extends DCLogic {
     var PR = c.privacy; var pol = JUS.COPY.wxPolicy.split('。');
     v.pr = { head: pol[0] + '。', rest: pol.slice(1).join('。'), general: PR.general.filter(function (g) { return g !== JUS.COPY.wxPolicy; }), factN: PR.facts.length + ' 个局', aux: '由成局、票根与散场决定 · 没有开关' };
     var A = c.acct;
-    v.ac = { state: A.demo ? '本机演示中' : '已退出', line: A.demo ? '开始于 ' + A.startedText : '已于 ' + A.endedText + ' 结束本机演示会话；记录、举报与资料都保留。', key: JUS.store.key(this.concept.code), fl: flc('acct') };
+    v.ac = { state: A.demo ? '本机演示中' : '已退出', line: A.demo ? '开始于 ' + A.startedText : '已于 ' + A.endedText + ' 结束本机演示会话；记录、举报与资料都保留。', key: JUS.store.key(this.concept.code), fl: flc('acct'), confirm: function () { c.sheet.confirm(); self.s01Flash('acct'); }, restart: function () { c.acct.restart(); self.s01Flash('acct'); } };
     v.ab = { built: (c.about.built || '').replace('T', ' ').slice(0, 16) || '本机构建' };
     /* text forms */
     var FM = c.form; var fS = st[st.length - 1].s;

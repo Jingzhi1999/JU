@@ -185,7 +185,10 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
 .s09-row.is-on .s09-row-t{color:var(--t0)}
 .s09-quote{margin-top:10px;padding-left:16px;border-left:2px solid rgba(255,255,255,.24);font-size:17px;line-height:1.75;color:var(--w92);overflow-wrap:anywhere}
 .s09-flag{position:relative;margin-top:22px;padding-left:18px;font-size:16px;line-height:1.7;color:#fff}
-.s09-flag::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:3px;border-radius:3px;background:var(--ju-lit)}
+.s09-flag::before{content:"";position:absolute;left:0;top:5px;bottom:5px;width:2px;border-radius:2px;background:rgba(255,255,255,.3)}
+.s09-flag{color:var(--w92)}
+.s09-flag.is-att::before{width:3px;background:var(--ju-lit)}
+.s09-flag.is-att{color:#fff}
 .s09-dots{list-style:none;margin-top:22px}
 .s09-dots li{position:relative;padding-left:18px;font-size:15px;line-height:1.7;color:var(--w80)}
 .s09-dots li+li{margin-top:10px}
@@ -298,6 +301,9 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
 .s09-toast.k-ok::before,.s09-toast.k-error::before{content:"";display:inline-block;width:7px;height:7px;margin:0 9px 1px 0;border-radius:50%;background:var(--ok);vertical-align:middle}
 .s09-toast.k-error::before{background:var(--err)}
 .s09-flash{animation:s09-flash calc(420ms * var(--k)) ease both}
+.s09-st-ts span,.s09-row-t,.s09-row-m,.s09-fv,.s09-st-v,.s09-big,.s09-hero,.s09-idl,.s09-sw-t,.s09-sent,.s09-st-s{word-break:keep-all;overflow-wrap:anywhere}
+.s09-big,.s09-hero,.s09-sent,.s09-st-v,.s09-row-t,.s09-st-ts span,.s09-title{text-wrap:balance}
+.s09-say,.s09-att,.s09-note,.s09-flag,.s09-dots li,.s09-quote{text-wrap:pretty}
 @keyframes s09-flash{from{opacity:.35}to{opacity:1}}
 
 /* ---------- review: reduced motion (three sources), pause, keyframe scrub ---------- */
@@ -682,7 +688,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
             <section class="s09-pg {{c.nav.cls.report-detail}}" data-surface="report-detail">
               <div class="s09-sc s09-sc-slab" data-scroller="report-detail" onScroll="{{c.nav.onScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">{{v.rep.title}}</span><span class="s09-hero">{{v.rep.status}}</span></div>
-                <sc-if value="{{v.rep.needs}}" hint-placeholder-val="{{true}}"><p class="s09-flag">{{v.rep.needsText}}</p></sc-if>
+                <sc-if value="{{v.rep.needs}}" hint-placeholder-val="{{true}}"><p class="s09-flag is-att">{{v.rep.needsText}}</p></sc-if>
                 <div class="s09-facts"><sc-for list="{{v.rep.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <p class="s09-gl">原文</p><p class="s09-quote">{{v.rep.text}}</p>
                 <sc-if value="{{v.rep.hasShots}}" hint-placeholder-val="{{true}}"><p class="s09-gl">材料</p><sc-for list="{{v.rep.shots}}" as="x" hint-placeholder-count="1"><p class="s09-fileline">{{x.name}} · {{x.sizeText}}</p></sc-for></sc-if>
@@ -767,10 +773,9 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <sc-if value="{{c.nav.on.about}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.about}}" data-surface="about">
               <div class="s09-sc s09-sc-slab" data-scroller="about" onScroll="{{c.nav.onScroll}}">
-                <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">关于</span><span class="s09-hero">{{v.about.big}}</span><span class="s09-say">{{v.about.sub}}</span></div>
+                <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{v.about.sub}}</span><span class="s09-hero">{{v.about.big}}</span><span class="s09-say">{{c.about.demo}}</span></div>
                 <div class="s09-facts"><sc-for list="{{v.about.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <p class="s09-say s09-gap">{{c.about.policyNote}}</p>
-                <p class="s09-say">{{c.about.demo}}</p>
                 <button type="button" class="s09-link s09-gap" data-origin="about-rules" onClick="{{v.about.goRules}}">参加约定全文</button>
               </div>
               <header class="s09-hd s09-shd" data-header>
@@ -1023,7 +1028,8 @@ class Component extends DCLogic {
     var W = s.review.pw || 390, H = s.review.ph || 844, R = S09.REST[skin], T = S09.TINT[skin];
     var n1 = function (v) { return Math.round(v * 10) / 10; };
     var wrap = function (fn) { return fn ? function (ev) { self.followRow(ev, fn); } : null; };
-    var fct = function (list) { return list.filter(Boolean).map(function (f) { return { l: f[0], v: f[1], cls: f[2] ? 's09-wide' : '' }; }); };
+    var nb = function (t) { return String(t == null ? '' : t).replace(/ · /g, '\u00a0· '); };
+    var fct = function (list) { return list.filter(Boolean).map(function (f) { return { l: f[0], v: nb(f[1]), cls: f[2] ? 's09-wide' : '' }; }); };
     /* lamps: keyframes from the position they had when focus changed to the new target */
     var L = s.lamp || {}, to = this.lampTargets(L.mode || 'rest', L, W, H, skin), from = L.from || to;
     var anim = (L.seq || 0) % 2 ? 's09-lamp-a' : 's09-lamp-b', dur = L.dur || 1;
@@ -1041,7 +1047,7 @@ class Component extends DCLogic {
     var home = { cls: fk ? ' has-focus' : '', fc: fc,
       wx: you.wx ? you.wx : '微信号未填写', mail: you.email ? you.email : '邮箱未填写', mailState: you.email ? you.emailLabel : '',
       meta: (c.attCount ? c.attCount + ' 件事等你回应' : '没有要你处理的事') + ' · ' + sum.cityLabel,
-      fav: { value: c.fav.count ? sum.favLabel : '0 个局', titles: c.fav.rows.slice(0, 3).map(function (r) { return r.title; }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.title : '') },
+      fav: { value: c.fav.count ? sum.favLabel : '0 个局', titles: c.fav.rows.slice(0, 3).map(function (r) { return nb(r.title); }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.title : '') },
       city: { value: sum.cityLabel, sub: c.feed.count ? JUS.derive.feed(d, 'all').count + ' 个局可报名' : '暂时没有可报名的局' },
       notify: { value: c.notify.onCount + ' 类提醒', sub: permShort },
       appearance: { value: c.skin.curName, sub: c.skin.rmOn ? '减少动态' : '正常动态' },
@@ -1053,11 +1059,11 @@ class Component extends DCLogic {
       open[p[0]] = function () { self.motion('rise', function () { this.rise(p[1], p[0]); }); };
     });
     var att = c.att.map(function (a, i) { var id = a.key.replace(/^re[cp]-/, ''), sf = a.kind === 'record' ? 'record-detail' : 'report-detail', end = i === c.att.length - 1 ? '。' : '；';
-      return { key: a.key, rid: id, title: a.title, tail: (a.kind === 'record' ? '的' + a.label + '待核实' : '的举报需要补充') + end, go: function () { self.motion('rise', function () { this.rise(sf, a.key, { id: id }); }); } }; });
+      return { key: a.key, rid: id, title: nb(a.title), tail: (a.kind === 'record' ? '的' + a.label + '待核实' : '的举报需要补充') + end, go: function () { self.motion('rise', function () { this.rise(sf, a.key, { id: id }); }); } }; });
     /* ---- rooms · 找局 / 我的局 ---- */
-    c.feed.rows.forEach(function (r) { r.fc = fk === 'feed-' + r.id ? ' is-focus' : ''; });
+    c.feed.rows.forEach(function (r) { r.fc = fk === 'feed-' + r.id ? ' is-focus' : ''; r.title = nb(r.title); r.when = { zh: nb(r.when.zh) }; });
     var feed = { meta: c.feed.city.name + ' · ' + JUS.derive.feed(d, 'all').count + ' 个局可报名', allCount: JUS.derive.feed(d, 'all').count, allOn: c.feed.isAll ? 'true' : 'false', favOn: c.feed.isFav ? 'true' : 'false' };
-    var mk = function (r, report) { return { id: r.id, title: r.title, when: r.when.zh, label: r.label, receipt: r.receipt ? '举报' + r.receipt : '', star: r.star, starOn: r.fav ? 'true' : 'false', starLabel: r.fav ? '拿出收藏' : '收进收藏', toggle: r.toggleFav, canReport: !!(report && r.canReport), report: r.report, fc: fk === 'mine-' + r.id ? ' is-focus' : '' }; };
+    var mk = function (r, report) { return { id: r.id, title: nb(r.title), when: nb(r.when.zh), label: r.label, receipt: r.receipt ? '举报' + r.receipt : '', star: r.star, starOn: r.fav ? 'true' : 'false', starLabel: r.fav ? '拿出收藏' : '收进收藏', toggle: r.toggleFav, canReport: !!(report && r.canReport), report: r.report, fc: fk === 'mine-' + r.id ? ' is-focus' : '' }; };
     var mine = { value: c.mine.current.length + ' 个局', meta: c.mine.current.length + ' 个进行中 · ' + c.mine.hosted.length + ' 个我发起的',
       groups: [['进行中', c.mine.current.map(function (r) { return mk(r); })], ['我发起的', c.mine.hosted.map(function (r) { return mk(r); })], ['历史', c.mine.history.map(function (r) { return mk(r, true); })]].filter(function (g) { return g[1].length; }).map(function (g) { return { title: g[0], rows: g[1] }; }) };
     /* ---- slab ---- */
@@ -1083,11 +1089,11 @@ class Component extends DCLogic {
       codeOpen: !!(P.codeSent || P.codeExpired), resendOff: !!(P.codeSent && P.resendLeft > 0),
       expiry: P.codeSent && P.expiresIn > 0 ? Math.floor(P.expiresIn / 60) + ':' + String(P.expiresIn % 60).padStart(2, '0') + ' 后过期' : (P.codeExpired ? '已过期' : ''), cta: P.saving ? ' is-busy' : '', formCls: s.focusField ? ' has-focus' : '' };
     /* favorites + details */
-    var mkFav = function (r) { return { id: r.id, key: 'fav-' + r.id, title: r.title, meta: r.when.zh + ' · ' + r.place.hood + (r.crossCity ? ' · ' + r.cityName : ''), rel: r.closed ? r.statusLabel : r.relLabel, rc: (r.joined || r.hosted) ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open), remove: r.remove }; };
+    var mkFav = function (r) { return { id: r.id, key: 'fav-' + r.id, title: nb(r.title), meta: nb(r.when.zh + ' · ' + r.place.hood + (r.crossCity ? ' · ' + r.cityName : '')), rel: r.closed ? r.statusLabel : r.relLabel, rc: (r.joined || r.hosted) ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open), remove: r.remove }; };
     var fav = { has: !c.fav.empty, value: c.fav.count + ' 个局', active: c.fav.active.map(mkFav), archived: c.fav.archived.map(mkFav), hasArchived: c.fav.archived.length > 0,
       line: [c.fav.active.length ? c.fav.active.length + ' 个可报名' : '', c.fav.archived.length ? c.fav.archived.length + ' 个已结束或取消' : ''].filter(Boolean).join(' · ') + '；收藏不等于报名',
       meta: c.fav.empty ? JUS.COPY.favEmpty.body : '最近一次收藏在 ' + c.fav.rows[0].favAgo };
-    var mkDet = function (sf, D) { return { s: sf, cls: nav.cls[sf], kicker: D.status.label + (D.crossCity ? ' · ' + D.city.name : ''), title: D.title, meta: D.when.zh + (D.crossCity ? ' · ' + D.city.tzLabel : ''),
+    var mkDet = function (sf, D) { return { s: sf, cls: nav.cls[sf], kicker: D.status.label + (D.crossCity ? ' · ' + D.city.name : ''), title: nb(D.title), meta: D.when.zh + (D.crossCity ? ' · ' + D.city.tzLabel : ''),
       facts: fct([['时间', D.when.long || D.when.zh, 1], ['地点', D.place.full, 1], ['局主', D.host], ['人数', D.cap], ['我和这个局', D.joinedLabel], D.favAgo ? ['收藏于', D.favAgo] : null]),
       note: D.note, canSee: D.canSeeHostWx, hostWx: D.hostWx, copy: D.copyHostWx, rule: D.hostWxRule, favLabel: D.favLabel, favAct: D.fav ? 'unfav' : 'fav', toggle: D.toggleFav, apply: D.applyNote }; };
     var dets = []; if (nav.on['favorite-detail'] && c.favDetail) dets.push(mkDet('favorite-detail', c.favDetail)); if (nav.on['seam-feed-detail'] && c.feedDetail) dets.push(mkDet('seam-feed-detail', c.feedDetail));
@@ -1100,36 +1106,36 @@ class Component extends DCLogic {
     var skin2 = { lead: c.skin.previewing ? '正在预览 · 还没有应用' : '当前外观', line: shownSkin.en + ' · ' + shownSkin.line, meta: c.skin.rmSys ? '系统已开启减少动态 · 跟随系统' : '跟随系统的减少动态设置', scCls: c.skin.previewing ? ' s09-sc-bar' : '',
       list: c.skin.list.map(function (x) { return { key: x.key, name: x.name, en: x.en, line: x.line, tag: x.on ? '当前' : x.shown ? '预览中' : '', pressed: x.shown ? 'true' : 'false', go: function () { self.motion('skin', function () { x.pick(); }); } }; }) };
     /* records / reports */
-    var mkRec = function (r) { return { id: r.id, key: 'rec-row-' + r.id, label: r.label, meta: r.title + ' · ' + r.when.md, status: r.statusLabel, rc: r.pendingReview ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
+    var mkRec = function (r) { return { id: r.id, key: 'rec-row-' + r.id, label: r.label, meta: nb(r.title + ' · ' + r.when.md), status: r.statusLabel, rc: r.pendingReview ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
     var recs = { value: c.recs.empty ? c.recs.emptyText : c.recs.count + ' 条事实', bigCls: c.recs.empty ? 's09-big' : 's09-hero', groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, rows: g.rows.map(mkRec) }; }), meta: sum.pendingRecords ? sum.pendingRecords + ' 条待核实 · 未处罚' : (c.recs.count ? '没有待核实的记录' : JUS.COPY.creditEmpty) };
     var R2 = c.rec; var rec = { on: !!(R2 && nav.on['record-detail']) };
     if (rec.on) rec = Object.assign(rec, { label: R2.label, status: R2.statusLabel, kind: R2.kindLabel, meta: R2.kindLabel + ' · 记录于 ' + R2.atText,
       facts: fct([['活动', R2.title, 1], ['时间', R2.when.zh], ['局主', R2.host], ['地点', R2.place.full, 1], R2.quotaLabel ? ['主动退出机会', R2.quotaLabel, 1] : null]),
       help: R2.pendingReview ? JUS.COPY.recordHelp : '', supp: R2.supplementRows.map(function (x) { return { text: x.text, atText: x.atText, mat: x.materialsText ? ' · ' + x.materialsText : '' }; }), hasSupp: R2.supplementRows.length > 0, appeals: R2.appealRows, hasAppeals: R2.appealRows.length > 0,
       goSupp: wrap(R2.goSupplement), goDispute: wrap(R2.goDispute), goAppeal: wrap(R2.goAppeal) });
-    var mkRep = function (r) { return { id: r.id, key: 'rep-row-' + r.id, title: r.title, status: r.statusLabel, meta: '更新于 ' + r.updatedText, rc: r.needsMore ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
+    var mkRep = function (r) { return { id: r.id, key: 'rep-row-' + r.id, title: nb(r.title), status: r.statusLabel, meta: '更新于 ' + r.updatedText, rc: r.needsMore ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
     var reps = { value: c.reps.empty ? c.reps.emptyText : c.reps.count + ' 条举报', bigCls: c.reps.empty ? 's09-big' : 's09-hero', rows: c.reps.rows.map(mkRep), meta: sum.needMore ? sum.needMore + ' 条需补充' : (c.reps.count ? '没有需要补充的举报' : JUS.COPY.reportsEmpty) };
     var P2 = c.rep; var rep = { on: !!(P2 && nav.on['report-detail']) };
-    if (rep.on) rep = Object.assign(rep, { status: P2.statusLabel, title: P2.title, needs: P2.needsMore, needsText: P2.needsText || '需要补充材料', meta: '本地编号 ' + P2.id, text: P2.text,
+    if (rep.on) rep = Object.assign(rep, { status: P2.statusLabel, title: nb(P2.title), needs: P2.needsMore, needsText: P2.needsText || '需要补充材料', meta: '本地编号 ' + P2.id, text: P2.text,
       facts: fct([['举报对象', P2.whoName], ['本地编号', P2.id], ['提交于', P2.atText], ['更新于', P2.updatedText]]), shots: P2.shotRows, hasShots: P2.shotRows.length > 0,
       timeline: P2.timelineRows.map(function (x) { return { label: x.label, atText: x.atText, tx: x.text ? ' · ' + x.text : '' }; }), supp: P2.supplementRows, hasSupp: P2.supplementRows.length > 0, goSupp: wrap(P2.goSupplement) });
     /* help / privacy / account / about / rules */
     var help = { value: JUS.RULES.length + ' 条约定', meta: '规则版本 ' + c.about.rulesVersion, goRules: wrap(c.help.goRules), goFeedback: wrap(c.help.goFeedback), goReports: wrap(c.help.goReports) };
-    var priv = { value: c.privacy.facts.length + ' 种情形', meta: '按你参加和发起的局，逐条派生', facts: c.privacy.facts.map(function (f) { return { title: f.title, role: f.role, rule: f.rule, rc: f.open ? 'var(--t0)' : 'var(--w70)' }; }) };
+    var priv = { value: c.privacy.facts.length + ' 种情形', meta: '按你参加和发起的局，逐条派生', facts: c.privacy.facts.map(function (f) { return { title: nb(f.title), role: f.role, rule: f.rule, rc: f.open ? 'var(--t0)' : 'var(--w70)' }; }) };
     var acct = { big: c.acct.demo ? '演示进行中' : '演示已结束', demo: JUS.COPY.demoOnly, meta: c.acct.device + (c.acct.ended ? ' · 结束于 ' + c.acct.endedText : ' · 开始于 ' + c.acct.startedText),
       facts: fct([['设备', c.acct.device], ['开始于', c.acct.startedText], c.acct.ended ? ['结束于', c.acct.endedText] : null]) };
     var vparts = String(c.about.version).split(' · ');
-    var about = { big: vparts[0], sub: vparts.slice(1).join(' · '), meta: c.about.built ? '构建于 ' + String(c.about.built).slice(0, 16).replace('T', ' ') : c.about.version, goRules: wrap(c.about.goRules),
-      facts: fct([['规则版本', c.about.rulesVersion, 1], ['可选城市', c.about.cities + ' 座'], ['本机存储', JUS.store.key(this.concept.code)]]) };
+    var about = { big: vparts[0], sub: vparts[1] || '关于', meta: '规则版本 ' + c.about.rulesVersion, goRules: wrap(c.about.goRules),
+      facts: fct([['规则版本', c.about.rulesVersion, 1], ['可选城市', c.about.cities + ' 座'], ['本机存储', JUS.store.key(this.concept.code)], c.about.built ? ['构建于', String(c.about.built).slice(0, 16).replace('T', ' '), 1] : null]) };
     var rules = { meta: c.about.rulesVersion + ' · ' + JUS.RULES.length + ' 条', note: c.about.policyNote };
     /* text forms */
     var forms = [];
     if (c.form.on) {
       var fkd = c.form.kind, sf = nav.cur, fx = { s: sf, cls: nav.cls[sf], kicker: '', subj: '', sub: '', meta: '', foot: '' };
       if (/^(supplement|dispute|appeal)$/.test(fkd) && c.rec) { fx.kicker = c.rec.label; fx.subj = c.rec.statusLabel; fx.meta = c.rec.title + ' · ' + c.rec.when.md; fx.foot = fkd === 'appeal' ? JUS.COPY.quotaRule : JUS.COPY.recordHelp; }
-      else if (fkd === 'rsupp' && c.rep) { fx.kicker = '举报 · ' + c.rep.statusLabel; fx.subj = c.rep.title; fx.sub = c.rep.needsText || ''; fx.meta = '本地编号 ' + c.rep.id; fx.foot = JUS.COPY.reportNote; }
-      else if (fkd === 'report' && c.seamReport) { fx.kicker = '举报这个局'; fx.subj = c.seamReport.title; fx.sub = c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host; fx.meta = c.seamReport.existing.length ? '已有 ' + c.seamReport.existing.length + ' 条举报 · ' + c.seamReport.existing[0].statusLabel : c.seamReport.place.full; fx.foot = JUS.COPY.reportNote; }
-      else { fx.kicker = '产品反馈'; fx.subj = '想对 JU 说的话'; fx.meta = c.help.feedback.length ? '已提交 ' + c.help.feedback.length + ' 条反馈' : '写下哪里不好用、希望加什么'; }
+      else if (fkd === 'rsupp' && c.rep) { fx.kicker = '举报 · ' + c.rep.statusLabel; fx.subj = nb(c.rep.title); fx.sub = c.rep.needsText || ''; fx.meta = '本地编号 ' + c.rep.id; fx.foot = JUS.COPY.reportNote; }
+      else if (fkd === 'report' && c.seamReport) { fx.kicker = '举报这个局'; fx.subj = nb(c.seamReport.title); fx.sub = nb(c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host); fx.meta = c.seamReport.existing.length ? '已有 ' + c.seamReport.existing.length + ' 条举报 · ' + c.seamReport.existing[0].statusLabel : c.seamReport.place.full; fx.foot = JUS.COPY.reportNote; }
+      else { var fbl = c.help.feedback; fx.kicker = '我的反馈'; fx.subj = fbl.length ? fbl.length + ' 条已提交' : '还没有提交过'; fx.sub = fbl.length ? '上一条：' + fbl[0].text + ' · ' + fbl[0].statusLabel : ''; fx.meta = '帮助与反馈 · 本机保存'; }
       forms.push(fx);
       (c.form.who || []).forEach(function (w) { w.pressed = w.on ? 'true' : 'false'; });
     }
