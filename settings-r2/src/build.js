@@ -115,7 +115,7 @@ function md(s) {
   return out.join('\n');
 }
 const docs = {};
-for (const [k, f] of Object.entries({ matrix: 'settings-r2/spec/directions.md', refs: 'settings-r2/spec/concept-refs.md', mapping: 'settings-r2/spec/function-state-map.md', verification: 'settings-r2/spec/verification.md', observations: 'settings-r2/spec/baseline-observations.md', contract: 'settings-r2/spec/state-contract.md', ledger: 'settings-r2/research/ledger.md', limits: 'settings-r2/spec/limits.md' })) { if (exists(f)) docs[k] = md(read(f)); else docs[k] = '<p>（尚未生成：' + f + '）</p>'; }
+for (const [k, f] of Object.entries({ matrix: exists('settings-r2/spec/matrix.md') ? 'settings-r2/spec/matrix.md' : 'settings-r2/spec/directions.md', refs: 'settings-r2/spec/concept-refs.md', mapping: 'settings-r2/spec/function-state-map.md', verification: 'settings-r2/spec/verification.md', observations: 'settings-r2/spec/baseline-observations.md', contract: 'settings-r2/spec/state-contract.md', ledger: 'settings-r2/research/ledger.md', rules: 'settings-r2/spec/rules-check.md', limits: 'settings-r2/spec/limits.md' })) { if (exists(f)) docs[k] = md(read(f)); else docs[k] = '<p>（尚未生成：' + f + '）</p>'; }
 
 /* ---- standalone ---- */
 const shellHtml = read('settings-r2/src/shell/shell.html');
