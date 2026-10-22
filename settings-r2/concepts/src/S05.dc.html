@@ -45,6 +45,10 @@ body{margin:0}
 .s05-pool{left:-36%;right:-36%;bottom:-176px;height:388px;z-index:1;overflow:hidden}
 .s05-glow{left:50%;top:50%;width:360px;height:360px;margin:-180px 0 0 -180px;z-index:0}
 .s05-glow.sm{width:316px;height:316px;margin:-158px 0 0 -158px}
+.s05-glow.md{width:288px;height:288px;margin:-144px 0 0 -144px}
+/* seam roots (找局 / 我的局): their own light at the top, the page's count standing in it */
+.s05-rhd{position:relative;margin:116px 0 4px;min-height:236px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.s05-rhd>*:not(.s05-glow){position:relative;z-index:1}
 .s05-env::before,.s05-env::after,.s05-pool::before,.s05-pool::after,.s05-glow::before,.s05-glow::after,.s05-dot::before{content:"";position:absolute;inset:0}
 .s05-pool::before,.s05-pool::after,.s05-glow::before,.s05-glow::after,.s05-dot::before{border-radius:50%}
 .s05-env::after,.s05-pool::after,.s05-glow::after{opacity:0}
@@ -478,7 +482,12 @@ body{margin:0}
       <sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}">
         <section class="s05-root {{c.nav.cls.seam-feed}}" data-surface="seam-feed">
           <div class="s05-sc" data-scroller="seam-feed" onScroll="{{c.nav.onScroll}}">
-            <div style="height:124px"></div>
+            <div class="s05-rhd">
+              <span class="s05-glow md" aria-hidden="true"></span>
+              <span class="s05-v-l">{{s5.feed.cap}}</span>
+              <span class="s05-big"><b class="s05-num">{{c.feed.count}}</b><span class="s05-unit">个局</span></span>
+              <span class="s05-hl">{{s5.feed.line}}</span>
+            </div>
             <div class="s05-bar">
               <div class="s05-seg" role="group" aria-label="筛选"><button type="button" aria-pressed="{{s5.feed.allP}}" onClick="{{c.feed.setAll}}">全部</button><button type="button" data-act="fav-filter" aria-pressed="{{s5.feed.favP}}" onClick="{{c.feed.setFav}}">只看收藏</button></div>
               <small>{{c.feed.hintIdle}}</small>
@@ -498,7 +507,7 @@ body{margin:0}
           <header class="s05-hd" data-header>
             <span class="s05-ju">JU</span>
             <h1 class="s05-hd-t">找局</h1>
-            <p class="s05-hd-m">{{s5.feed.meta}}</p>
+            <p class="s05-hd-m"></p>
           </header>
         </section>
       </sc-if>
@@ -507,9 +516,14 @@ body{margin:0}
       <sc-if value="{{c.nav.on.seam-mine}}" hint-placeholder-val="{{false}}">
         <section class="s05-root {{c.nav.cls.seam-mine}}" data-surface="seam-mine">
           <div class="s05-sc" data-scroller="seam-mine" onScroll="{{c.nav.onScroll}}">
-            <div style="height:108px"></div>
+            <div class="s05-rhd">
+              <span class="s05-glow md" aria-hidden="true"></span>
+              <sc-if value="{{s5.mine.none}}" hint-placeholder-val="{{false}}"><span class="s05-hv">还没有局</span></sc-if>
+              <sc-if value="{{s5.mine.some}}" hint-placeholder-val="{{true}}"><span class="s05-big"><b class="s05-num">{{c.mine.current.length}}</b><span class="s05-unit">个进行中</span></span></sc-if>
+              <span class="s05-hl">{{s5.mine.line}}</span>
+            </div>
             <div class="s05-mine" style="text-align:center">
-              <sc-if value="{{s5.mine.none}}" hint-placeholder-val="{{false}}"><p class="s05-empty">还没有报名或发起的局</p></sc-if>
+              <sc-if value="{{s5.mine.none}}" hint-placeholder-val="{{false}}"><p class="s05-empty">报名或发起之后，会在这里看到进度</p></sc-if>
               <sc-if value="{{c.mine.current.length}}" hint-placeholder-val="{{true}}"><span class="s05-sec">进行中</span>
                 <div class="s05-list"><sc-for list="{{s5.mine.cur}}" as="r" hint-placeholder-count="3"><div class="s05-ve" data-rid="{{r.id}}"><span class="s05-vt">{{r.title}}</span><span class="s05-ld">{{r.label}}</span><button type="button" class="s05-mini {{r.favCls}}" data-act="fav" aria-pressed="{{r.favP}}" onClick="{{r.toggleFav}}">{{r.favTxt}}</button></div></sc-for></div></sc-if>
               <sc-if value="{{c.mine.hosted.length}}" hint-placeholder-val="{{true}}"><span class="s05-sec">我发起的</span>
@@ -522,7 +536,7 @@ body{margin:0}
           <header class="s05-hd" data-header>
             <span class="s05-ju">JU</span>
             <h1 class="s05-hd-t">我的局</h1>
-            <p class="s05-hd-m">{{s5.mine.meta}}</p>
+            <p class="s05-hd-m"></p>
           </header>
         </section>
       </sc-if>
@@ -1222,10 +1236,10 @@ class Component extends DCLogic {
       var leaving = nav.phase === 'exit'; if (!leaving) this._s5Tf = { text: c.form.text, count: c.form.count }; var tf = leaving && this._s5Tf ? this._s5Tf : { text: c.form.text, count: c.form.count };
       var tlp = String(subj.subject || '').split(' · '); form = Object.assign(subj, { tl: tlp, tlCls2: tlp.length > 2 ? 'many' : '', on: true, surface: top.s, text: tf.text, count: tf.count, cls: c.nav.cls[top.s], errCls: c.form.err.text ? 'err' : '', tlCls: Array.from(c.form.title || '').length > 6 ? 'long' : '', act: c.form.failed ? 'retry' : 'submit', ctaCls: c.form.saving ? 'busy' : '' }); }
     /* seams */
-    var feed = { meta: c.feed.city.name + ' · ' + c.feed.count + ' 个局 · 收藏 ' + c.feed.favCount, allP: c.feed.isAll ? 'true' : 'false', favP: c.feed.isFav ? 'true' : 'false' };
+    var feed = { meta: c.feed.city.name + ' · ' + c.feed.count + ' 个局 · 收藏 ' + c.feed.favCount, cap: c.feed.city.name + (c.feed.isFav ? ' · 只看收藏' : ''), line: '收藏 ' + c.feed.favCount + ' 个 · 收藏不等于报名', allP: c.feed.isAll ? 'true' : 'false', favP: c.feed.isFav ? 'true' : 'false' };
     c.feed.rows.forEach(function (r) { r.line = nb(wd(r.when) + ' · ' + r.when.time + ' · ' + r.place.hood + (r.joinedLabel ? ' · ' + r.joinedLabel : '')); r.noHint = !r.hint; });
     var mrow = function (r) { return { id: r.id, title: nb(r.title), label: r.label, line: nb(r.label + (r.receipt ? ' · 举报' + r.receipt : '')), dot: r.receipt ? 'dot' : '', favTxt: r.fav ? '★ 已收藏' : '☆ 收藏', favCls: r.fav ? 'blue' : '', favP: r.fav ? 'true' : 'false', toggleFav: r.toggleFav, report: r.report }; };
-    var mine = { cur: c.mine.current.map(mrow), host: c.mine.hosted.map(mrow), hist: c.mine.history.map(mrow), none: !c.mine.current.length && !c.mine.hosted.length && !c.mine.history.length, meta: c.mine.current.length + ' 个进行中 · 发起 ' + c.mine.hosted.length + ' 个' };
+    var mine = { cur: c.mine.current.map(mrow), host: c.mine.hosted.map(mrow), hist: c.mine.history.map(mrow), none: !c.mine.current.length && !c.mine.hosted.length && !c.mine.history.length, some: !!(c.mine.current.length || c.mine.hosted.length || c.mine.history.length), line: '我发起的 ' + c.mine.hosted.length + ' 个 · 历史 ' + c.mine.history.length + ' 个', meta: c.mine.current.length + ' 个进行中 · 发起 ' + c.mine.hosted.length + ' 个' };
     var acct = c.acct.ended ? { head: '已结束', line: '于 ' + c.acct.endedText + ' 结束 · ' + c.acct.device } : { head: '本地演示', line: c.acct.device + ' · 开始于 ' + c.acct.startedText };
     var sw = s5.sw;
     return {
