@@ -20,26 +20,37 @@
 
   /* ---------- instance lifecycle ---------- */
   function anims(m) { try { return m && m.root && m.root.getAnimations ? m.root.getAnimations({ subtree: true }) : []; } catch (e) { return []; } }
-  /* sleep(): an instance that is not on screen stops consuming — its timers are paused and every running animation is paused */
+  /* the shared environment engines (JU.shared.skins, injected once by the shell): a WebGL background is "live" on at most one
+     host; an instance off screen hands its engine back (pause = snapshot + engine removed), the current stage takes it (setLive) */
+  function skins() { return (window.JU && window.JU.shared && window.JU.shared.skins) || null; }
+  function envHosts(m) { var S = skins(); if (!S || !m || !m.root) return []; var out = []; S.hosts.forEach(function (rec, host) { try { if (m.root.contains(host)) out.push(host); } catch (e) { } }); return out; }
+  function envLive(host) { var S = skins(); var st = S && S.state(host); return !!(st && st.live && !st.paused); }
+  /* sleep(): an instance that is not on screen stops consuming — its timers are paused, every running animation is paused and
+     its environment engine is paused (snapshot shown instead) */
   function sleep(m) {
     if (!m || m.__asleep) return; m.__asleep = true;
     var i = m.instance; try { if (i && i.pauseTimers) i.pauseTimers(); } catch (e) { }
     m.__pausedAnims = [];
     anims(m).forEach(function (a) { try { if (a.playState === 'running') { a.pause(); m.__pausedAnims.push(a); } } catch (e) { } });
+    var S = skins(); envHosts(m).forEach(function (h) { try { S.pause(h); } catch (e) { } });
   }
-  /* wake(): back on screen — resume the timers (unless the reviewer had pressed 暂停 in the panel) and the animations we paused */
+  /* wake(): back on screen — resume the timers (unless the reviewer had pressed 暂停 in the panel), the animations we paused and
+     the environment engine; the full-size stage also takes the single live environment back (previews never do) */
   function wake(m) {
     if (!m || !m.__asleep) return; m.__asleep = false;
     var i = m.instance; var panelPaused = !!(i && i.state && i.state.review && (i.state.review.paused || i.state.review.scrub != null));
     try { if (i && i.resumeTimers && !panelPaused) i.resumeTimers(); } catch (e) { }
     (m.__pausedAnims || []).forEach(function (a) { try { if (a.playState === 'paused') a.play(); } catch (e) { } }); m.__pausedAnims = [];
+    var S = skins(); var hs = envHosts(m); hs.forEach(function (h) { try { S.resume(h); } catch (e) { } });
+    if (m.__kind === 'stage' && hs.length && !hs.some(envLive)) { try { S.setLive(hs[0]); } catch (e) { } }
   }
   /* unmountHost(): the runtime's handle.unmount() renders null (componentWillUnmount → clearTimers); we also cancel every animation
-     first and clear the shadow root, then remove the host node, so nothing of the old instance keeps running */
+     first, release the environment engine, clear the shadow root and remove the host node, so nothing of the old instance keeps running */
   function unmountHost(h) {
     var m = h && h.__m;
     if (m) {
       var i = m.instance;
+      var S = skins(); envHosts(m).forEach(function (eh) { try { S.unmount(eh); } catch (e) { } });
       anims(m).forEach(function (a) { try { a.cancel(); } catch (e) { } });
       try { if (i && i.clearTimers) i.clearTimers(); } catch (e) { }
       try { if (m.unmount) m.unmount(); else if (i && i.componentWillUnmount) i.componentWillUnmount(); } catch (e) { }
@@ -59,17 +70,23 @@
     if (kind === 'compare') return currentView === 'compare';
     return false;
   }
-  /* stats(): what is still running — offline-check.cjs asserts that nothing outside the current view / concept is */
+  /* stats(): what is still running — offline-check.cjs asserts that nothing outside the current view / concept is, and that at
+     most one environment engine is live (liveEnv ≤ 1) and it belongs to the current stage (liveEnvOutsideCurrent === 0) */
   function stats() {
-    var out = { view: currentView, current: currentCode, mounts: 0, running: 0, runningOutsideCurrent: 0, timers: 0, timersOutsideCurrent: 0, detail: [] };
+    var out = { view: currentView, current: currentCode, mounts: 0, running: 0, runningOutsideCurrent: 0, timers: 0, timersOutsideCurrent: 0, envHosts: 0, liveEnv: 0, liveEnvOutsideCurrent: 0, detail: [] };
+    var seen = [];
     eachMount(function (kind, k, m) {
       out.mounts++;
       var cur = isCurrent(kind, m);
       var r = anims(m).filter(function (a) { return a.playState === 'running'; }).length;
       var t = ((m.instance && m.instance._timers) || []).filter(function (e) { return e.id; }).length;
-      out.running += r; out.timers += t; if (!cur) { out.runningOutsideCurrent += r; out.timersOutsideCurrent += t; }
-      if (r || t) out.detail.push({ kind: kind, key: k, current: cur, running: r, timers: t });
+      var hs = envHosts(m); var live = hs.filter(envLive).length; hs.forEach(function (h) { seen.push(h); });
+      out.running += r; out.timers += t; out.envHosts += hs.length; out.liveEnv += live;
+      if (!cur) { out.runningOutsideCurrent += r; out.timersOutsideCurrent += t; out.liveEnvOutsideCurrent += live; }
+      if (r || t || live) out.detail.push({ kind: kind, key: k, current: cur, running: r, timers: t, liveEnv: live });
     });
+    /* environment hosts that belong to no mount we know (stray engines) count as outside the current stage */
+    var S = skins(); if (S) S.hosts.forEach(function (rec, host) { if (seen.indexOf(host) < 0) { out.envHosts++; if (envLive(host)) { out.liveEnv++; out.liveEnvOutsideCurrent++; out.detail.push({ kind: 'stray-env', liveEnv: 1 }); } } });
     return out;
   }
   function settleMounts() {
@@ -229,6 +246,22 @@
     if (k === 'coverage-table') { renderCoverage(box); return; }
     if (k === 'evidence') { renderEvidence(box); return; }
     var d = DOCS[k]; box.innerHTML = d ? (d.present === false ? '<p class="apx-missing">（尚未生成：' + esc(d.file) + '）</p>' : d.html) : '';
+    if (k === 'limits') box.insertAdjacentHTML('beforeend', fontsSection());
+  }
+  /* 限制与未验证项 → 字体：what the deliverable embeds (families, weights, subset, licence), from window.__JU_FONTS (build.js) */
+  function fontsSection() {
+    var F = window.__JU_FONTS; if (!F) return '';
+    var B = window.__JU_SHARED_BUNDLE || null;
+    var h = '<h2 id="fonts">字体与共享资源（构建记录）</h2>';
+    if (!F.embedded) h += '<p class="apx-note">' + esc(F.note || '本次构建未内嵌字体') + '</p>';
+    else {
+      h += '<p class="apx-note">内嵌于交付文件（' + esc(F.css || '') + '）：' + (F.families || []).length + ' 个家族' + (F.faces ? ' · ' + (Array.isArray(F.faces) ? F.faces.length : F.faces) + ' 个字面' : '') + (F.chars ? ' · 子集 ' + F.chars + ' 字' : '') + (F.totalKB ? ' · WOFF2 共 ' + F.totalKB + ' KB' : '') + '。许可：全部 SIL Open Font License 1.1（Google Fonts 公开目录；许可文本以各字体仓库为准）。字体加载失败不换字：规则 font-display:block，数据内嵌。</p>';
+      h += '<table><thead><tr><th>家族</th><th>字重 / 样式</th><th>子集</th><th>许可</th><th>来源</th></tr></thead><tbody>' + (F.families || []).map(function (f) { return '<tr><td>' + esc(f.family) + '</td><td>' + esc((f.weights || []).join(' / ')) + '</td><td>' + esc(f.subset || (f.chars ? f.chars + ' 字' : '全部子集')) + (f.woff2KB ? ' · ' + f.woff2KB + ' KB' : '') + '</td><td>' + esc(f.license || 'SIL OFL 1.1') + '</td><td>' + esc(f.source || 'Google Fonts') + '</td></tr>'; }).join('') + '</tbody></table>';
+      if (F.missing && F.missing.length) h += '<p class="apx-note">未能内嵌（缓存中没有，需联网后重跑 embed-fonts.py）：' + F.missing.map(esc).join('；') + '</p>';
+      if (F.note) h += '<p class="apx-note">' + esc(F.note) + '</p>';
+    }
+    if (B) h += '<p class="apx-note">共享 JS（three.js r185 · 环境引擎 · 仪式引擎）在交付文件里只出现一次（' + esc(B.mode) + '，' + Math.round((B.bytes || 0) / 1024) + ' KB）：' + (B.js || []).map(esc).join('，') + (B.svgReference && B.svgReference.length ? '；参考图（外壳一次，隐藏）：' + B.svgReference.map(esc).join('，') : '') + (B.skipped && B.skipped.length ? '；未注入（不是可独立运行的模块）：' + B.skipped.map(esc).join('，') : '') + '</p>';
+    return h;
   }
   var COLS = [['entry', '入口存在'], ['op', '真实操作成功'], ['static', '静态视觉已看'], ['motion', '正常速度动效已看'], ['pending', '仍需用户验收']];
   function cellCls(k, v) { v = String(v || '').trim(); if (!v || v === '–' || v === '-' || v === '—') return 'na'; if (k === 'pending') return 'pend'; if (/^[✓✔]/.test(v)) return 'ok'; if (/^[✗✘×x]/i.test(v)) return 'no'; return 'txt'; }

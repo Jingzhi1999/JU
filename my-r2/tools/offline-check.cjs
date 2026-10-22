@@ -4,7 +4,10 @@
 //       running animations and armed timers of instances off screen must be 0 (JUShell.stats),
 //   (3) fonts: with the network blocked no font family used inside a phone falls back — every family resolves to an embedded face,
 //   (4) 总览: every built concept's card has its four previews mounted (参加者首屏 / 局主首屏 / 局内详情 / 出席记录),
-//   (5) 附录: the five-column coverage table page exists (and whether it has data), each concept opens without errors.
+//   (5) 附录: the five-column coverage table page exists (and whether it has data), each concept opens without errors,
+//   (6) budget: the deliverable is ≤ 40 MB, every concept SOURCE is ≤ 200 KB (srcBytes recorded by build.js), the shared JS
+//       bundle (three.js, skins, ritual engines) occurs exactly once in the file, and at most one environment engine is live —
+//       the current stage's (JUShell.stats().liveEnv ≤ 1, liveEnvOutsideCurrent === 0).
 // Usage: node my-r2/tools/offline-check.cjs <file> <outdir>   → outdir/*.jpg + outdir/log.json, prints a JSON summary; exit 1 on a failed check
 const L = require('./_lib.cjs'); const fs = L.fs, path = L.path;
 (async () => {
@@ -12,6 +15,16 @@ const L = require('./_lib.cjs'); const fs = L.fs, path = L.path;
   const { b, p, errors, blocked } = await L.launch({ viewport: { width: 1440, height: 1000 }, offline: true });
   const fails = []; const ok = (name, cond, info) => { if (!cond) fails.push(name + (info ? ': ' + JSON.stringify(info).slice(0, 300) : '')); };
   const res = { file };
+  /* (6) budget, on the file itself */
+  const text = fs.readFileSync(file, 'utf8'); res.bytes = Buffer.byteLength(text, 'utf8');
+  ok('deliverable ≤ 40 MB', res.bytes <= 40 * 1024 * 1024, { MB: +(res.bytes / 1048576).toFixed(2) });
+  const bm = /window\.__JU_SHARED_BUNDLE=(\{.*?\});window\.__JU_BUILT=/s.exec(text); const bundle = bm ? JSON.parse(bm[1]) : null;
+  res.sharedOnce = bundle ? bundle.js.map(f => ({ f, n: text.split('/* ---- ' + f + ' ---- */').length - 1 })) : null;
+  ok('shared JS bundle recorded by the build', !!bundle && bundle.mode === 'shell-once', bundle && bundle.mode);
+  ok('each shared JS module occurs exactly once in the file', !res.sharedOnce || res.sharedOnce.every(x => x.n === 1), res.sharedOnce && res.sharedOnce.filter(x => x.n !== 1));
+  const mm = /window\.__JU_META=(\[.*?\]);window\.__JU_META_ALL=/s.exec(text); const metaRec = mm ? JSON.parse(mm[1]) : [];
+  res.sources = metaRec.map(c => ({ code: c.code, srcKB: c.srcBytes != null ? +(c.srcBytes / 1024).toFixed(1) : null }));
+  ok('every concept source ≤ 200 KB', res.sources.every(s => s.srcKB == null || s.srcKB <= 200), res.sources.filter(s => s.srcKB > 200));
   /* (1) direct #compare */
   await p.goto('file://' + file + '#compare'); await p.waitForTimeout(3000);
   res.compareDirect = await p.evaluate(() => ({ view: (document.querySelector('.view.on') || {}).id, injectedIndex: (window.__JU_INDEX || []).length, states: document.querySelectorAll('#cmp-state option[value]:not([value=""])').length, hosts: document.querySelectorAll('.cmp-host').length, mounted: [...document.querySelectorAll('.cmp-host')].filter(h => h.shadowRoot && h.shadowRoot.querySelector('.ju-phone')).length }));
@@ -22,10 +35,11 @@ const L = require('./_lib.cjs'); const fs = L.fs, path = L.path;
   const META = await p.evaluate(() => window.__JU_META.map(c => c.code));
   const switches = []; const picks = META.length >= 3 ? [[META[0], META[1], META[2]], [META[1], META[2], ''], [META[2], META[0], META[1]]] : [[META[0], META[1] || '', ''], [META[1] || META[0], '', ''], [META[0], '', '']];
   await p.selectOption('#cmp-scope', 'pick');
-  for (const [a, b2, c] of picks) { await p.selectOption('#cmp-a', a); if (b2) await p.selectOption('#cmp-b', b2); await p.selectOption('#cmp-c', c); await p.waitForTimeout(1800); switches.push(await p.evaluate(() => { const s = window.JUShell.stats(); return { hosts: document.querySelectorAll('.cmp-host').length, mounts: Object.keys(window.JUShell.mounts.compare).length, running: s.running, timers: s.timers, outsideRunning: s.runningOutsideCurrent, outsideTimers: s.timersOutsideCurrent }; })); }
+  for (const [a, b2, c] of picks) { await p.selectOption('#cmp-a', a); if (b2) await p.selectOption('#cmp-b', b2); await p.selectOption('#cmp-c', c); await p.waitForTimeout(1800); switches.push(await p.evaluate(() => { const s = window.JUShell.stats(); return { hosts: document.querySelectorAll('.cmp-host').length, mounts: Object.keys(window.JUShell.mounts.compare).length, running: s.running, timers: s.timers, outsideRunning: s.runningOutsideCurrent, outsideTimers: s.timersOutsideCurrent, envHosts: s.envHosts, liveEnv: s.liveEnv, liveEnvOutside: s.liveEnvOutsideCurrent }; })); }
   res.switches = switches;
   ok('compare switches unmount the previous combination', switches.every(s => s.mounts === s.hosts), switches);
   ok('after three switches nothing outside the current stages runs', switches.every(s => s.outsideRunning === 0 && s.outsideTimers === 0), switches);
+  ok('after three switches at most one environment engine is live', switches.every(s => s.liveEnv <= 1 && s.liveEnvOutside === 0), switches);
   await p.screenshot({ path: outdir + '/compare-switched.jpg', type: 'jpeg', quality: 70 });
   /* tour: overview → each concept → appendix; off-screen instances must be asleep */
   await p.evaluate(() => { location.hash = '#overview'; }); await p.waitForTimeout(6000);
@@ -37,10 +51,11 @@ const L = require('./_lib.cjs'); const fs = L.fs, path = L.path;
   for (const c of META) {
     const before = errors.length;
     await p.evaluate(c => { location.hash = '#concept/' + c; }, c); await p.waitForTimeout(1800);
-    res.concepts[c] = await p.evaluate(c => { const h = document.querySelector('.stage-host.on'); if (!h || h.dataset.code !== c) return { mounted: false }; const fams = new Set(); h.shadowRoot.querySelectorAll('.ju-phone *').forEach(e => { const cs = getComputedStyle(e); if (cs.display !== 'none' && e.textContent && e.textContent.trim()) fams.add(cs.fontFamily.split(',')[0].replace(/["']/g, '').trim()); }); const s = window.JUShell.stats(); return { mounted: true, families: [...fams], outsideRunning: s.runningOutsideCurrent, outsideTimers: s.timersOutsideCurrent }; }, c);
+    res.concepts[c] = await p.evaluate(c => { const h = document.querySelector('.stage-host.on'); if (!h || h.dataset.code !== c) return { mounted: false }; const fams = new Set(); h.shadowRoot.querySelectorAll('.ju-phone *').forEach(e => { const cs = getComputedStyle(e); if (cs.display !== 'none' && e.textContent && e.textContent.trim()) fams.add(cs.fontFamily.split(',')[0].replace(/["']/g, '').trim()); }); const s = window.JUShell.stats(); return { mounted: true, families: [...fams], outsideRunning: s.runningOutsideCurrent, outsideTimers: s.timersOutsideCurrent, envHosts: s.envHosts, liveEnv: s.liveEnv, liveEnvOutside: s.liveEnvOutsideCurrent }; }, c);
     res.concepts[c].errors = errors.slice(before, before + 3);
     ok(c + ': mounted without errors', res.concepts[c].mounted && errors.length === before, res.concepts[c]);
     ok(c + ': other instances asleep', res.concepts[c].outsideRunning === 0 && res.concepts[c].outsideTimers === 0, res.concepts[c]);
+    ok(c + ': at most one live environment, on this stage', res.concepts[c].liveEnv <= 1 && res.concepts[c].liveEnvOutside === 0, res.concepts[c]);
     await p.screenshot({ path: outdir + '/' + c + '.jpg', type: 'jpeg', quality: 70 });
   }
   /* (3) fonts offline: every family used inside a phone must resolve to a loaded embedded face (no fallback) */

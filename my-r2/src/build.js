@@ -79,36 +79,66 @@ function sharedFiles(ext) {
   return files.filter(f => f.endsWith(ext));
 }
 const sharedCssFiles = sharedFiles('.css'), sharedJsFiles = sharedFiles('.js').filter(f => parses(read(f), f)), sharedSvgFiles = sharedFiles('.svg');
-[].concat(sharedCssFiles, sharedJsFiles, sharedSvgFiles).forEach(f => { const kb = fs.statSync(abs(f)).size / 1024; if (kb > 120) warn('shared module is large (' + kb.toFixed(0) + ' KB, injected into every concept): ' + f); });
-const sharedCss = sharedCssFiles.map(f => '/* ---- ' + f + ' ---- */\n' + read(f)).join('\n');
-const sharedJs = sharedJsFiles.map(f => '/* ---- ' + f + ' ---- */\n' + guardScript(read(f), f)).join('\n');
-const sharedSvg = sharedSvgFiles.map(read).join('\n');
+const rel = (f) => path.relative(ROOT, abs(f));
+/* Shared JS is injected ONCE: in the offline deliverable (and a JU_STANDALONE private build) it lives in the shell as one
+   window-level bundle (three.js, the skins, the ritual engines); a concept's /* @core *​/ then holds only ju-fx + ju-data +
+   ju-ctl + ju-review + CONCEPT. The Design-canvas artboards (my-r2/concepts/project/*.dc.html) must stay self-contained, so
+   there — and with JU_CANVAS=1 for the standalone too — every artboard carries the whole shared bundle.
+   Each module is wrapped in a once-only guard (window.__JU_SHARED[<file>]), so running a bundle twice is harmless; the
+   modules keep their own guards as well (window.JU_THREE, customElements.get, JU.shared.skins). */
+const CANVAS_MODE = !!process.env.JU_CANVAS;
+const wrapShared = (f) => { const key = rel(f); return '/* ---- ' + key + ' ---- */\n(function () {\nvar R = window.__JU_SHARED = window.__JU_SHARED || {}; if (R[' + JSON.stringify(key) + ']) return; R[' + JSON.stringify(key) + '] = true;\n' + guardScript(read(f), f) + '\n})();'; };
+const sharedCss = sharedCssFiles.map(f => '/* ---- ' + rel(f) + ' ---- */\n' + read(f)).join('\n');
+const sharedJs = sharedJsFiles.map(wrapShared).join('\n');
+/* a shared SVG that holds only <defs> (filters / masks / gradients / symbols) is injected into every concept at <!-- @fx-svg -->,
+   because url(#id) references inside a shadow tree only resolve within that tree; any other SVG (a reference drawing such as
+   rituals/burn.svg) goes into the shell once, hidden */
+function svgDefsOnly(s) {
+  const body = s.replace(/<\?xml[^>]*>/g, '').replace(/<!--[\s\S]*?-->/g, ''); const open = /<svg\b[^>]*>/.exec(body); if (!open) return false;
+  const inner = body.slice(open.index + open[0].length).replace(/<\/svg>\s*$/, ''); const re = /<(\/?)([a-zA-Z][\w:-]*)\b[^>]*?(\/?)>/g; let depth = 0, m; const kids = [];
+  while ((m = re.exec(inner))) { if (m[1]) { depth--; continue; } if (depth === 0) kids.push(m[2].toLowerCase()); if (!m[3]) depth++; }
+  return kids.length > 0 && kids.every(k => ['defs', 'style', 'title', 'desc', 'metadata'].indexOf(k) >= 0);
+}
+const sharedSvgDefsFiles = sharedSvgFiles.filter(f => svgDefsOnly(read(f))), sharedSvgRefFiles = sharedSvgFiles.filter(f => !svgDefsOnly(read(f)));
+const sharedSvg = sharedSvgDefsFiles.map(read).join('\n');
+const sharedSvgRef = sharedSvgRefFiles.map(f => '<!-- ' + rel(f) + ' -->\n' + read(f).replace(/<\?xml[^>]*>/g, '')).join('\n');
+sharedCssFiles.concat(sharedSvgDefsFiles).forEach(f => { const kb = fs.statSync(abs(f)).size / 1024; if (kb > 120) warn('shared file is large (' + kb.toFixed(0) + ' KB, injected into every concept): ' + rel(f)); });
+const sharedJsBytes = Buffer.byteLength(sharedJs, 'utf8');
 if (!sharedCssFiles.length && !sharedJsFiles.length) warn('no shared modules under ' + SHARED_DIR + ' yet (nothing injected)');
-else console.log('shared modules:', [].concat(sharedCssFiles, sharedJsFiles, sharedSvgFiles).map(f => path.relative(ROOT, abs(f))).join(', '));
+else console.log('shared modules: css [' + sharedCssFiles.map(rel).join(', ') + '] js once [' + sharedJsFiles.map(rel).join(', ') + '] (' + (sharedJsBytes / 1024).toFixed(0) + ' KB' + (CANVAS_MODE ? ', JU_CANVAS: per artboard' : ', shell once') + ')' + (sharedSvgDefsFiles.length ? ' svg defs per concept [' + sharedSvgDefsFiles.map(rel).join(', ') + ']' : '') + (sharedSvgRefFiles.length ? ' svg reference in shell [' + sharedSvgRefFiles.map(rel).join(', ') + ']' : ''));
 
 /* ---- assemble one artboard ---- */
 const BANNED = ['扣分', '信用分', '处罚', '等级', '剩余次数'];
-function assemble(c) {
+/* assemble(c, withShared): withShared = true → self-contained artboard (shared JS inside /* @core *​/, for the Design canvas);
+   false → the shell-bundle variant for the standalone (the shell injects the shared JS once, see wrapShared above) */
+function assemble(c, withShared) {
   const file = path.join(SRC_DIR, c.file);
   let src = read(file);
   const missing = ['<!-- @panel -->', '/* @core */', '/* @panel-css */'].filter(m => !src.includes(m));
-  if (missing.length) { warn('skip (markers missing, still being written?):', c.file, missing.join(' ')); return null; }
-  if (!src.includes('<!-- @fx-svg -->')) warn(c.file + ': no <!-- @fx-svg --> marker — fx defs not injected');
-  const kb = Buffer.byteLength(src, 'utf8') / 1024; if (kb > 200) warn(c.file + ': source is ' + kb.toFixed(0) + ' KB (> 200 KB limit)');
-  const hits = BANNED.filter(w => src.includes(w)); if (hits.length) warn(c.file + ': banned words present: ' + hits.join(' '));
+  if (missing.length) { if (!c._warned) warn('skip (markers missing, still being written?):', c.file, missing.join(' ')); c._warned = true; return null; }
+  if (!c._checked) {
+    if (!src.includes('<!-- @fx-svg -->')) warn(c.file + ': no <!-- @fx-svg --> marker — fx defs not injected');
+    const kb = Buffer.byteLength(src, 'utf8') / 1024; if (kb > 200) warn(c.file + ': source is ' + kb.toFixed(0) + ' KB (> 200 KB limit)');
+    const hits = BANNED.filter(w => src.includes(w)); if (hits.length) warn(c.file + ': banned words present: ' + hits.join(' '));
+    c._checked = true;
+  }
   const conceptJson = JSON.stringify({ code: c.code, name: c.name, line: c.line, notes: c.notes || '', motions: c.motions || [] });
   const hasShared = src.includes('/* @shared-css */');
   src = src.replace('<!-- @panel -->', () => '<sc-if value="{{panel.show}}" hint-placeholder-val="{{true}}">\n' + panelHtml + '\n</sc-if>');
   src = src.replace('/* @panel-css */', () => panelCss + '\n' + fxCss + (hasShared ? '' : '\n' + sharedCss));
   if (hasShared) src = src.replace('/* @shared-css */', () => sharedCss);
   src = src.replace('<!-- @fx-svg -->', () => fxSvg + (sharedSvg ? '\n' + sharedSvg : ''));
-  src = src.replace('/* @core */', () => core + '\n' + sharedJs + '\nvar CONCEPT = ' + conceptJson + ';');
+  src = src.replace('/* @core */', () => core + (withShared ? '\n' + sharedJs : '\n/* shared JS: injected once by the shell (window.__JU_SHARED) */') + '\nvar CONCEPT = ' + conceptJson + ';');
   if (!/<title>/.test(src)) src = src.replace('<head>', '<head>\n<title>' + c.code + ' ' + c.name + '</title>');
   return src;
 }
 const built = {}; const metaBuilt = [];
-for (const c of meta) { const out = assemble(c); if (!out) continue; built[c.code] = out; metaBuilt.push(c); }
-if (!PRIVATE) { fs.mkdirSync(path.join(ROOT, 'my-r2/concepts/project'), { recursive: true }); for (const c of metaBuilt) fs.writeFileSync(path.join(ROOT, 'my-r2/concepts/project', c.file), built[c.code]); }
+for (const c of meta) {
+  const out = assemble(c, CANVAS_MODE); if (!out) continue;
+  built[c.code] = out; c.srcBytes = fs.statSync(abs(path.join(SRC_DIR, c.file))).size; metaBuilt.push(c);
+  if (!PRIVATE) { fs.mkdirSync(path.join(ROOT, 'my-r2/concepts/project'), { recursive: true }); fs.writeFileSync(path.join(ROOT, 'my-r2/concepts/project', c.file), CANVAS_MODE ? out : assemble(c, true)); }
+}
+for (const c of meta) { delete c._warned; delete c._checked; }
 
 /* ---- canvas index + Main entry artboard (only built concepts are listed; the canvas needs a file per entry) ---- */
 const W = 780, H = 884, GX = 80, GY = 120; const perRow = 5;
@@ -278,16 +308,29 @@ const FONTS_CSS = process.env.JU_FONTS_CSS && fs.existsSync(process.env.JU_FONTS
 if (process.env.JU_FONTS_CSS && !FONTS_CSS) warn('JU_FONTS_CSS not found: ' + process.env.JU_FONTS_CSS + ' (fonts stay online links)');
 const stripFontLinks = (s) => s.replace(/<link[^>]+href="https:\/\/fonts\.googleapis\.com[^"]*"[^>]*>\s*/g, '');
 if (FONTS_CSS) { for (const k of Object.keys(built)) built[k] = stripFontLinks(built[k]); }
+/* window.__JU_FONTS — the family / weight / subset / licence record for the appendix (限制与未验证项 → 字体): taken from the
+   sidecar report embed-fonts.py writes next to its CSS (<css>.json); without it, derived from the @font-face rules themselves */
+const FONTS_INFO = (() => {
+  if (!FONTS_CSS) return { embedded: false, note: '本次构建未内嵌字体（未设置 JU_FONTS_CSS）：画面依赖在线 Google Fonts，断网会回退系统字体' };
+  const side = process.env.JU_FONTS_CSS + '.json';
+  if (fs.existsSync(side)) { try { return Object.assign({ embedded: true, css: path.relative(ROOT, process.env.JU_FONTS_CSS) }, JSON.parse(fs.readFileSync(side, 'utf8'))); } catch (e) { warn('cannot parse ' + side + ': ' + e.message); } }
+  const fams = {}; FONTS_CSS.replace(/@font-face\{[^}]*\}/g, (block) => { const f = /font-family:'([^']+)'/.exec(block), w = /font-weight:([^;]+);/.exec(block), st = /font-style:(\w+)/.exec(block); if (!f) return ''; const k = f[1]; fams[k] = fams[k] || { family: k, weights: [], license: 'SIL Open Font License 1.1', source: 'Google Fonts' }; const ww = (w ? w[1].trim() : '400') + (st && st[1] !== 'normal' ? ' ' + st[1] : ''); if (fams[k].weights.indexOf(ww) < 0) fams[k].weights.push(ww); return ''; });
+  return { embedded: true, css: path.relative(ROOT, process.env.JU_FONTS_CSS), families: Object.values(fams), faces: null, chars: null, totalKB: Math.round(Buffer.byteLength(FONTS_CSS, 'utf8') * 3 / 4 / 1024), missing: [], note: '无 sidecar 报告：清单由 @font-face 规则推得' };
+})();
+const SHARED_BUNDLE = { mode: CANVAS_MODE ? 'per-artboard' : 'shell-once', js: sharedJsFiles.map(rel), bytes: sharedJsBytes, css: sharedCssFiles.map(rel), svgDefs: sharedSvgDefsFiles.map(rel), svgReference: sharedSvgRefFiles.map(rel), skipped: sharedFiles('.js').filter(f => sharedJsFiles.indexOf(f) < 0).map(rel) };
 const scope = { demoNow: '2026-12-17 15:00', assumptions: ['预留 6 小时', '撕票后 8 小时联系', '散场后 24 小时联系关闭', '年度 4 次主动退出', '容量含局主', '全员确认成局出票'], outOfScope: ['继续编辑草稿', '再开一局', '去找局', '去开局', '查看进度', '账户级记录页', '发现 / 城市 / 完整报名 / 开局编辑器 / 登录 / 设置 / 后端'] };
-const data = `window.__JU_SOURCES=${js(built)};window.__JU_META=${js(metaBuilt)};window.__JU_META_ALL=${js(publicMeta.map(c => ({ code: c.code, name: c.name, line: c.line || '', motions: c.motions || [] })))};window.__JU_DOCS=${js(docs)};window.__JU_INDEX=${js(INDEX_LIST)};window.__JU_COVERAGE=${js(COVERAGE)};window.__JU_EVIDENCE=${js(EVIDENCE)};window.__JU_SCOPE=${js(scope)};window.__JU_BUILT=${js(new Date().toISOString())};`;
+const data = `window.__JU_SOURCES=${js(built)};window.__JU_META=${js(metaBuilt)};window.__JU_META_ALL=${js(publicMeta.map(c => ({ code: c.code, name: c.name, line: c.line || '', motions: c.motions || [] })))};window.__JU_DOCS=${js(docs)};window.__JU_INDEX=${js(INDEX_LIST)};window.__JU_COVERAGE=${js(COVERAGE)};window.__JU_EVIDENCE=${js(EVIDENCE)};window.__JU_SCOPE=${js(scope)};window.__JU_FONTS=${js(FONTS_INFO)};window.__JU_SHARED_BUNDLE=${js(SHARED_BUNDLE)};window.__JU_BUILT=${js(new Date().toISOString())};`;
 const standalone = (FONTS_CSS ? stripFontLinks(shellHtml) : shellHtml)
   .replace('/*@fonts*/', () => FONTS_CSS)
   .replace('/*@shell-css*/', () => read('my-r2/src/shell/shell.css'))
   .replace('/*@preact*/', () => read('src/runtime/preact.min.js'))
   .replace('/*@runtime*/', () => read('src/runtime/dc-mini-runtime.js'))
   .replace('/*@data*/', () => data)
+  .replace('<!--@shared-svg-->', () => sharedSvgRef ? '<div id="ju-shared-svg" hidden aria-hidden="true">\n' + sharedSvgRef + '\n</div>' : '')
+  .replace('/*@shared-js*/', () => CANVAS_MODE ? '/* JU_CANVAS: shared JS travels inside each artboard */' : sharedJs)
   .replace('/*@shell-js*/', () => read('my-r2/src/shell/shell.js'));
 const outPath = PRIVATE ? path.resolve(PRIVATE) : path.join(ROOT, DELIVERABLE);
 fs.mkdirSync(path.dirname(outPath), { recursive: true });
 fs.writeFileSync(outPath, standalone);
-console.log('built', metaBuilt.length, 'concepts (' + metaBuilt.map(c => c.code).join(', ') + ');', 'index', INDEX_LIST.length, 'states;', 'shared', sharedCssFiles.length + ' css / ' + sharedJsFiles.length + ' js;', 'docs', Object.keys(docs).filter(k => docs[k].present).length + '/' + Object.keys(docs).length + ';', 'evidence', EVIDENCE.items.length + ';', (standalone.length / 1024 / 1024).toFixed(2), 'MB →', outPath);
+const srcKB = metaBuilt.map(c => c.code + ' ' + (c.srcBytes / 1024).toFixed(0) + ' KB').join(', ');
+console.log('built', metaBuilt.length, 'concepts (' + srcKB + ');', 'index', INDEX_LIST.length, 'states;', 'shared js once', (sharedJsBytes / 1024).toFixed(0), 'KB;', 'fonts', FONTS_INFO.embedded ? (FONTS_CSS.length / 1024).toFixed(0) + ' KB css' : 'online;', 'docs', Object.keys(docs).filter(k => docs[k].present).length + '/' + Object.keys(docs).length + ';', 'evidence', EVIDENCE.items.length + ';', (Buffer.byteLength(standalone, 'utf8') / 1024 / 1024).toFixed(2), 'MB →', outPath);
