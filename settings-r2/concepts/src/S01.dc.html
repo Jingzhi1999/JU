@@ -214,7 +214,7 @@ body{margin:0}
 .s01-lentb:active .s01-rt{color:var(--blue);transition:color 90ms}
 .s01-say-s{margin-top:10px;font-size:28px;line-height:1.3}
 .s01-say.is-act{color:var(--blue)}
-.s01-lent.is-swapout :is(.s01-lentb,.s01-lentf){animation:s01-fo calc(200ms * var(--k,1)) var(--e1) forwards}
+.s01-lent.is-swapout :is(.s01-lentb,.s01-lentf){animation:s01-fo calc(260ms * var(--k,1)) var(--e2) forwards}
 .s01-lent.is-swapin :is(.s01-lentb,.s01-lentf){animation:s01-fi calc(240ms * var(--k,1)) var(--e1) backwards}
 /* list yield: a removed entry folds its height away (rows below follow); undo unfolds it */
 .s01-yield{display:grid;grid-template-rows:1fr}
@@ -284,6 +284,9 @@ body{margin:0}
 .s01-li{display:block;margin-top:7px;padding-left:14px;position:relative;font-size:15px;line-height:1.45;color:var(--body);word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .s01-li::before{content:"";position:absolute;left:0;top:.72em;width:7px;height:1px;background:var(--ink)}
 .s01-li+.s01-li{margin-top:5px}
+/* home: one line per favourite — the name, then its tagline only if the whole tagline fits (it wraps to the clipped 2nd line otherwise) */
+.s01-li.is-1{display:block;height:1.45em;-webkit-line-clamp:none}
+.s01-li.is-1>span{display:inline-block;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;vertical-align:top}
 .s01-more{display:block;margin-top:7px;padding-left:14px;font-size:13px;color:var(--sec)}
 .s01-idx{display:flex;flex-wrap:wrap;margin-top:52px;border-top:1px solid var(--rule)}
 .s01-idx button{position:relative;min-height:56px;padding:0 15px 0 0;margin-right:15px;font-size:15px;color:var(--body)}
@@ -529,7 +532,7 @@ textarea.s01-in{min-height:1lh}
                   <span class="s01-lab">收藏的局</span>
                   <sc-if value="{{v.home.favEmpty}}"><span class="s01-val" data-m="fav-n">还没有</span><span class="s01-sub">遇到想去的，留在这里</span></sc-if>
                   <sc-if value="{{v.home.favAny}}"><span class="s01-val" data-m="fav-n"><b class="s01-n">{{v.home.favN}}</b>个局</span>
-                    <sc-for list="{{v.home.favNames}}" as="f" hint-placeholder-count="3"><span class="s01-li">{{f}}</span></sc-for>
+                    <sc-for list="{{v.home.favNames}}" as="f" hint-placeholder-count="3"><span class="s01-li is-1"><span>{{f.a}}</span><sc-if value="{{f.b}}"><span>{{f.b}}</span></sc-if></span></sc-for>
                     <sc-if value="{{v.home.favMore}}"><span class="s01-more">{{v.home.favMore}}</span></sc-if></sc-if>
                 </button>
                 <button type="button" class="s01-blk" data-origin="notify" onClick="{{v.h.goVal.notify}}">
@@ -993,7 +996,6 @@ function s01Pg(s) { return s === 'profile-edit' ? 'profile' : (s === 'favorite-d
 /* 局 titles: the separator dot stays with the phrase before it, so a line never starts with (or is only) a dot */
 function s01T(t) { return String(t || '').replace(/ · /g, '\u00a0· '); }
 /* home list: at most two phrases of a title, never ending on a separator */
-function s01Short(t) { var p = String(t || '').split(' · '); return p.length > 2 ? s01T(p.slice(0, 2).join(' · ')) + '…' : s01T(t); }
 function s01Brk(t) { return String(t || '').replace(/([@._-])/g, '$1​'); }
 function s01Uniq(s) { var seen = {}, out = ''; Array.from(s).forEach(function (ch) { if (!seen[ch] && !/\s/.test(ch)) { seen[ch] = 1; out += ch; } }); return out; }
 function s01Strings(o, out) { if (typeof o === 'string') out.push(o); else if (o && typeof o === 'object') Object.keys(o).forEach(function (k) { s01Strings(o[k], out); }); return out; }
@@ -1175,10 +1177,10 @@ class Component extends DCLogic {
     v.mailState = you.email ? (you.verified ? '已验证' : '未验证') : ''; v.mailMark = you.email && you.verified ? '✓' : '';
     v.copyFail = you.copyFail ? JUS.COPY.copyFailInline + '：' + you.copyFail : '';
     /* home */
-    var favRows = c.fav.rows || []; var reps = c.reps.rows || []; var repOpen = reps.filter(function (r) { return r.open; }).length; var perm = sum.permission;
+    var favRows = c.fav.rows || []; var perm = sum.permission;
     v.home = {
       aux: ((!you.wx || !you.email) ? '资料待完善' : you.verified ? '资料已验证' : '邮箱未验证') + ' · ' + sum.cityLabel,
-      favAny: sum.favCount > 0, favEmpty: sum.favCount === 0, favN: String(sum.favCount), favNames: favRows.slice(0, 3).map(function (r) { return s01Short(r.title); }), favMore: sum.favCount > 3 ? '还有 ' + (sum.favCount - 3) + ' 个' : '',
+      favAny: sum.favCount > 0, favEmpty: sum.favCount === 0, favN: String(sum.favCount), favNames: favRows.slice(0, 3).map(function (r) { var p = String(r.title || '').split(' · '); return { a: p[0], b: p.length > 1 ? '\u00a0·\u00a0' + p[1] + (p.length > 2 ? '…' : '') : '' }; }), favMore: sum.favCount > 3 ? '还有 ' + (sum.favCount - 3) + ' 个' : '',
       notifyN: String(c.notify.onCount),
       permLine: ({ default: '还没申请系统权限 ›', requesting: '正在等系统回答', granted: sum.serviceConnected ? '系统已允许 · 可以送达' : '系统已允许 · 提醒暂未开通', denied: '系统通知已拒绝', unsupported: '当前环境不支持系统通知' })[perm] || '',
       permCls: perm === 'default' ? ' s01-link' : '',
