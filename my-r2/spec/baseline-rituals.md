@@ -44,7 +44,7 @@
 | 齿孔线 | 未撕段 1.4 px 虚线 `[3.4,3.4]` rgba(26,29,42,.30)，前沿 1–2 px 张力翘起；已撕段毛边 rgba(214,217,229,.95) 1.6 px，步长 3.2 | ju-tear.js `paint` ④ |
 | 影子外壳 `.ju-paper-shadow24` | 与纸同形（圆角 14 14 10 10），`drop-shadow(0 18px 26px rgba(18,22,48,.26)) drop-shadow(0 3px 4px rgba(18,22,48,.18))`；`clip-path:inset(0 0 var(--ju-shadow-stub25) 0)` 让出副券 84 px（副券画布自带软影） | 第 327、347 行 |
 | 「时间已改」章 `[data-raster=stamp]` | `top:150px; right:-20px`（右缘外溢 20 px）；`2.5px double #4550BE`；`700 10px Space Mono` 字距 .14em；padding 7 10；圆角 8；`rotate(-9deg)`；底 rgba(243,244,251,.86)；实测约 82 × 32 | 第 3952 行 |
-| s12 取消票章 `p12Stamp` | top 118 right −14，边 rgba(26,29,42,.5)，11px .16em，`juStamp .55s ease .4s both` | 第 4003 行 |
+| s12 取消票章 | 模板实际用 `cancelStamp21`（= `pr10Stamp`，静态，第 4370 行）；vals12 的 `p12Stamp`（top 118 right −14、边 rgba(26,29,42,.5)、11px .16em、`juStamp .55s ease .4s both` 落章动画）**未被模板引用**；`juStamp` 只出现在 s11 隐藏的旧「REISSUED」卡里 | 第 4003、4370 行 |
 | 燃烧宿主 `[data-burn]` | 258 × 0，left 0 top 0，z 9 | 第 3948 行 |
 
 **三态：** 未撕 ready（纸 + 副券 + 抓手圆点）→ 已撕 torn（副券画布 display:none，宿主收成 0 并 visibility hidden，影子不再让位）→ 作废 void（纸被 clip-path 吃完、`opacity:0` / body display:none；舞台留空，终态由页头文案 + 页脚 CTA 表达）。复用件：`ticket.css`（`data-state="idle|printing|ready|torn|burning|void"`）、`ticket.html`（四张静态样张）。
@@ -90,7 +90,7 @@
 - **引擎：** `JUNativeBurn`（version `25.0-shadow-handoff`）。真实 DOM 票面从不被采样或替换：每帧改 `surface.style.clipPath = path(evenodd, 外框 + 到达时间场的等时线)`，影子外壳同步同一 clip；画布（四周 **pad 74 px**，即 406 × (H+148)）只画炭化带、热边、卷曲碎片、落灰。章 `[data-raster=stamp]` 的外轮廓并入纸的蒙版，一起被烧。
 - **三种到达场：** A 右下角起燃（end 7.2 s / 场时长 9.3 s / curls 58 / ash 78 / fold 8.5 / char 1；V27 页面未用）；**B 多点烧穿**（点 .32,.31 / .78,.65 / .13,.92；end 8.2 / 10.6 / 118 / 136 / 17 / 1.5）= **改期拒绝「去不了了」**（s11，`startBurn`）；**C 左侧横向推进**（end 9.3 / 12.6 / 72 / 126 / 10 / 1.05）= **局主取消**（s12，进屏即点火）与 **主动退出**（s06 `exitConfirmed22`）。
 - **时长：** V27 传 `duration: 6.6`，`playbackDuration = min(6.6, 7.6) = 6.6 s`，`rate = 场时长 / 6.6`；主体烧尽且无大碎片后 .45 s 内画布 `destination-out` 整体淡出 → `onDone`。伪时钟实测（258 × 351 票面，duration 6.6）：B 主体烧尽 4.27 s、结束 4.74 s；C 4.40 s / 4.86 s（与 V27 s12 原页 metrics 一致：mainGone 4.40、resultReady 4.864）；A 4.70 s / 5.17 s；6.6 s 是上限不是实际长度。炭化带 5 层描边 25c/17c/9c/4c/1.7c（ignite = smooth(.06,.72,t)），热边 #d43b0d 5.5 px + #ff5419 1.45 px（shadowBlur 5）+ 逐纤维 #ffb451 / #ff7726；卷曲碎片 `curlScale .48`；落灰重力 150（C 119）、落点 H + 14 + 18r。
-- **终态（ash）：** 纸 `display:none` / `opacity:0`（画布已淡出）；**页面实际渲染的终态只有页头文案改写 + 页脚 CTA**：s11 `s11Title`「已退出这局」（sub 清空）+ `ashCta`「再找个局」（`exit10On` 在燃烧中即显示），随后 `finishBurnRoute27('s06g')`；s12 页头「活动已取消 / {局名} · 原定 12.18 · 19:30 / 不计为未出席，也不影响成局信用。」+ 常显 CTA「再找个局」；s06 主动退出后 CTA「查看退出结果」。vals11 里的 `ashWrap / ashTitleStyle / ashSubStyle`（居中三段 `juSettle` 文案「已退出改期活动…」）**未被模板引用**，s12 的 `ash12Wrap` 只渲染两个空 span（第 1656-1663 行）——均为遗留，复用件按源码收录在 `burn.css` 但 demo 不用。
+- **终态（ash）：** 纸 `display:none` / `opacity:0`（画布已淡出）；**页面实际渲染的终态只有页头文案改写 + 页脚 CTA**：s11 `s11Title`「已退出这局」（sub 保留新时间行）+ 页脚 `ashCta`「查看退出结果」（第 4521 行覆盖了基础值「再找个局」；`exit10On = application==='declined'`，燃烧中即显示；`v27-burnB-4-ash`），随后 `finishBurnRoute27('s06g')`；s12 页头「活动已取消 / {局名} · 原定 12.18 · 19:30 / 不计为未出席，也不影响成局信用。」+ 常显 CTA「再找个局」；s06 主动退出后 CTA「查看退出结果」。vals11 里的 `ashWrap / ashTitleStyle / ashSubStyle`（居中三段 `juSettle` 文案「已退出改期活动…」）**未被模板引用**，s12 的 `ash12Wrap` 只渲染两个空 span（第 1656-1663 行）——均为遗留，复用件按源码收录在 `burn.css` 但 demo 不用。
 - **已撕的票再烧（s06 主动退出）：** torn 态副券宿主已收 0，纸面 = 主票 267 px；复用件 `burn.js` 点火前再确认宿主收起（引擎的内联 clip-path 会盖掉影子外壳的 `inset` 让位，若宿主未收会露出一块纸影）。
 - **可见性：** IntersectionObserver + visibilitychange + scroll / resize，不可见即暂停，回来接着烧，不重头；`prepareBurnLayout26` 在手机高 < 720 时先把票挪进安全区（320 ms，cubic-bezier(.16,1,.3,1)）再点火。
 - **减少动态：** **V27 源码未接系统设置**（任务书 §10 已指出），复用件补：`engine.seek(duration)` 直接到终态再落定文案（不改曲线）。
@@ -117,11 +117,11 @@
 
 **可独立运行的最小版本（`stamp.js`）：** 四个原件脚本（paper-film / envelope / stamp / tickets2，共 ≈ 140 KB）+ 字体 + 一个 `JuLedger` 垫片（`lookup→null`、`eventProjection→e`、`personalHistory→历史数组`、`original→当前局`）；不需要 three.js、`ju-paper-model.js`（1.6 MB）或 `JU_CARD_DATA`。限制：必须有 WebGL2（否则引擎自动回落到 `<img data-t08="flat">` 平面图，无盖章动作）；`paintCard` 的其他版式（street / grain / mono / riso / acid）需要同一套字体，已一并打包。
 
-- **证据：** `v27-stamp-0…6`、`r9-stamp-0…9`、`demo-stamp-1…8`、`demo-reduced-4-stamp-endstate`。
+- **证据：** `v27-stamp-0…6`（`v27-capture-notes-stamp.json`：webgl true、`JuLedger.attend` → `att8:'present'` → `mode:'present'`、stampT 2.952 s、cardWidth 245.52）、`r9-stamp-0…9`（`r9-capture-notes.json`：quick 时间线、MARK r .264、card 245 × 306.25、elapsedMs 560）、`demo-stamp-1…8`、`demo-reduced-4-stamp-endstate`。
 
 ## 7 · 改期（RESCHEDULE）
 
-- **原件有的：** 局主改时间（`reschedule18 → JuLedger.propose`）→ 进入 s11，**新票出票**（同一打印序列，纸顶 24 px）：时间行换成新时间（SAT 12.19 / 20:00），加「原定 FRI 12.18 19:30」划线行，右缘「时间已改」章，副券文案「撕下，确认新时间」；页头「局主改时间 / 时间挪了一下」。**接受** = 撕副券（`onDetach → JuLedger.choose(true)`，撕完 → 「按新时间见」+ 联系层）；**拒绝** = 「去不了了」→ 确认 sheet →`JuLedger.choose(false)` → **variant B 燃烧**这张新票 → 终态「已退出改期活动」。
+- **原件有的：** 局主改时间（`reschedule18 → JuLedger.propose`）→ 进入 s11，**新票出票**（同一打印序列，纸顶 24 px）：时间行换成新时间（SAT 12.19 / 20:00），加「原定 FRI 12.18 19:30」划线行，右缘「时间已改」章，副券文案「撕下，确认新时间」；页头「局主改时间 / 时间挪了一下」。**接受** = 撕副券（`onDetach → JuLedger.choose(true)`，撕完 → 「按新时间见」+ 联系层）；**拒绝** = 「去不了了」→ 确认 sheet →`JuLedger.choose(false)` → **variant B 燃烧**这张新票 → 终态：页头「已退出这局」+ 页脚「查看退出结果」→ `finishBurnRoute27('s06g')`。
 - **原件没有的：** 旧票没有单独的作废动画——旧票（s06）不再展示，新票替换之；取消时若票已改期，s12 票面带「原定」行与章（`cancelReissued21`），再被 variant C 烧掉。
 - **证据：** `v27-reschedule-1…2`、`v27-burnB-*`、`demo-reschedule-1…4`、`demo-burnB-*`。
 
@@ -181,6 +181,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 
 - V27 的评审外壳：手机黑边框、状态栏「9:41」、底部进度条、Cotton Candy 三维背景（`cotton-bg` / three.js / mist rig），以及 `ju-scale.js` 的整机缩放。
 - 作废终态的居中文案：vals11 `ashWrap / ashTitleStyle / ashSubStyle / ashSecStyle`（未被模板引用）与 s12 `ash12Wrap`（空 span）、`ashDust / ash12Dust`（空数组）；V27 真正的终态是页头文案 + 页脚 CTA。
+- `p12Stamp` 的 `juStamp` 落章动画（未被引用）：可见票面上的「时间已改」章在 V27 里都是静态出现的。
 - 旧方案主题装饰：隐藏的「REISSUED」卡（第 1565–1580 行，Noto Sans SC 900 标题、条码、打孔；`display:none` 的遗留）、`print10()` 的百分比打印进度条（`prt10`，第 3665 行，旧 DOM 版打印）、`startStub10` 的拖 120 px 撕票（旧 DOM 版，第 3813 行）、`pr7HintPill`「往右撕副券」胶囊、`juCueTear / juCueX` 提示、`juB1–B8 / juEmber / juCharGrow` DOM 粒子（`ashDust` 为空数组，未用）、`ju-burn.js` 火焰版燃烧（未被页面调用）。
 - `JuStamp` 的 v1 影片合成（`Compositor / retexture / VID_QUAD`）。
 - 第 217 行把散场提示整行 `display:none` 的权宜、第 311 行用 `:has()` 按屏号隐藏联系层的选择器（新方案应按状态驱动）。
@@ -189,7 +190,7 @@ demo 的「减少动态」开关通过代理 `matchMedia` 让原件引擎与 CSS
 
 ## 13 · 证据与捕获方法
 
-- 原页：Playwright 1.56 + 本机 Chromium（SwiftShader WebGL2），`page.clock.install()` 伪时钟让 rAF / performance.now 按虚拟时间逐帧推进（页面在无 GPU 环境只有 1–2 fps，墙钟截图会漂移）；V27 走评审视图、`data-review-size=390x844`（整机 1:1）、`JU_APP.resetScreen19(屏)` 建 fixture，其余屏 `display:none`（否则 15 台手机的 WebGL 上下文把 08 散场挤成平面回退）；R9 用 `JUHost.fixture('ended-six')` + `JU_CREATE.go('s09a')`。CSS 过渡 / Web Animations 不受伪时钟控制，截图里它们按真实时间走（已在文件名标注虚拟时间）。
+- 原页：Playwright 1.56 + 本机 Chromium（SwiftShader WebGL2），`page.clock.install()` 伪时钟让 rAF / performance.now 按虚拟时间逐帧推进（页面在无 GPU 环境只有 1–2 fps，墙钟截图会漂移）；V27 走评审视图、`data-review-size=390x844`（整机 1:1）、`JU_APP.resetScreen19(屏)` 建 fixture，其余屏 `display:none` 以减轻 15 台手机同时渲染的负担；出席章必须走原件的数据路径触发（`JuLedger.attend(EVENT,'present')` → `refresh18()` → `att8` → `t08Sync()` → `setMode`），直接改 `state.att8` 不会播章（第一次原页截图就是这样得到一张只在 browse 态的卡）；R9 用 `JUHost.fixture('ended-six')` + `JU_CREATE.go('s09a')`，点「出席」按钮。CSS 过渡 / Web Animations 不受伪时钟控制，截图里它们按真实时间走（已在文件名标注虚拟时间）。
 - 复用件：`demo.html` 同法逐帧截取（`demo-*`），每个仪式 ≥ 4 帧（开始 / 过程 / 落点 / 稳定）+ 减少动态终态 4 帧；`ticket-states-static.png` 为 `ticket.html` 四张静态样张（258 宽；未撕 351 高 / 已撕 267 / 改期 374）。原页 `v27-capture-notes.json` 记录了撕票松手时 p = .558、torn 态舞台 371 / rig 0、复制成功文案等。
 - 对照：同名仪式的 `v27-*` 与 `demo-*` 并列；票根 258 宽、主票 268 高、副券 84 高、散场局卡 245.5 宽、章 64 px 等数值一致即未缩小、未走样。
 

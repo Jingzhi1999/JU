@@ -218,11 +218,12 @@
     if (stage.dataset.state !== 'ready' && stage.dataset.state !== 'torn') return say('先出票（燃烧作用于原票件）');
     const v = $('variant').value; const data = { reason: v === 'A' ? 'cancelled' : v };
     contact().hide();   // V27 第 311 行：燃烧中联系层 / 动作按钮 display:none
-    $('ashCta').hidden = false;   // V27 s11 exit10On：燃烧中即显示「再找个局」；s12 常显
+    const ctaLabel = v === 'reschedule-declined' ? '查看退出结果' : '再找个局';   // V27 第 4521 行：s11 ashCtaLabel 覆盖为「查看退出结果」，exit10On = application==='declined'（燃烧中即显示）；s12 常显「再找个局」
+    $('ashCta').hidden = false; $('ashCta').querySelector('.cta-text').textContent = ctaLabel; $('ashCta').setAttribute('aria-label', ctaLabel);
     say('写入作废事实（V27：先 JuLedger.cancel / choose(false)，成功才点火）→ 燃烧 variant ' + (v === 'A' ? 'A' : v === 'cancelled' ? 'C' : 'B') + '，6.6s');
     burnHandle = window.JURitual.burn(stage, data, { variant: v === 'A' ? 'A' : undefined, onDone: () => {
       // V27 终态：纸烧尽 + 页头文案改写（s11Title「已退出这局」/ s12「活动已取消」+ 原定 + 说明）+ 页脚 CTA
-      if (v === 'reschedule-declined') { $('hTitle').textContent = '已退出这局'; $('hSub').textContent = ''; }
+      if (v === 'reschedule-declined') { $('hTitle').textContent = '已退出这局'; }
       else { $('hTitle').textContent = '活动已取消'; $('hSub').textContent = '深夜救急火锅局 · 原定 12.18 · 19:30'; $('hNote').textContent = '不计为未出席，也不影响成局信用。'; }
       say('燃尽 → data-state=void；页头改写，页脚「再找个局」');
     } });
