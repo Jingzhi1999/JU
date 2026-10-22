@@ -12,13 +12,14 @@
 <style>
 body{margin:0}
 /* @panel-css */
-/* ================= S09 夜灯 · v2 =================
+/* ================= S09 夜灯 · v2 =================
    One light logic. Three environment lamps (radial pools 340–460px, peak alpha .30–.45) lie UNDER everything and never drift;
    they move (400–620ms) only when focus changes. Rooms (设置 / 找局 / 我的局) are statements under the light: a 13px label over a
    30px value tinted by the lamp above it. Every other page is an ink slab, inset 12px and rounded on all corners, that rises from
    below; the lamps gather behind it so light leaks around its edges, and the slab carries one reading pool that follows focus.
    While you write, the room light dims and only the pool over the focused field remains. JU blue appears as the attention line
-   and on the primary confirm (the only glow). */
+   and on the primary confirm (the only glow). A decision (confirm, system prompt, toast) is a small ink slab rising in the dark
+   with the three lamps gathered behind it; its safe choice is lit by them, the destructive one stays dim. */
 .app.s09{position:absolute;inset:0;overflow:hidden;background:#0E1016;color:#fff;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   --w70:rgba(255,255,255,.72);--w80:rgba(255,255,255,.82);--w92:rgba(255,255,255,.93);--ink:#14161F;--nav-h:64px;
   --ju-lit:#7685FF;--err:#FF8FA2;--err-line:#E8566F;--ok:#55DBB0;--slab-top:48px;--slab-in:12px;--gut:24px;
@@ -53,7 +54,7 @@ body{margin:0}
 .s09-ju{padding-left:16px;font-size:16px;font-weight:700;letter-spacing:.14em;line-height:1}
 .s09-title{position:absolute;left:calc(var(--gx) + (50% - var(--gx)) * var(--hc,0));top:calc(var(--ty) - (var(--ty) - 19px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));
   max-width:calc(100% - 2 * var(--gx) - 72px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s09-meta{position:absolute;left:var(--gx);right:var(--gx);top:calc(var(--ty) + 42px);font-size:14px;line-height:1.5;color:var(--w70);opacity:calc(1 - 2.2 * var(--hc,0));transform:translateY(calc(-10px * var(--hc,0)))}
+.s09-meta{position:absolute;left:var(--gx);right:var(--gx);top:calc(var(--ty) + 42px);font-size:14px;line-height:1.5;color:var(--w80);opacity:calc(1 - 2.2 * var(--hc,0));transform:translateY(calc(-10px * var(--hc,0)))}
 .s09-hd-home{--gx:24px;--ty:58px}
 .s09-shd{--gx:20px;--ty:56px}
 .s09-shd::before{content:"";position:absolute;left:0;right:0;top:0;height:60px;background:var(--ink);opacity:var(--hc,0);border-radius:28px 28px 0 0}
@@ -73,18 +74,19 @@ body{margin:0}
 .s09-list{margin-top:10px}
 .s09-fill-end{margin-top:auto;padding-top:36px}
 
-/* ---------- rooms (设置 · 找局 · 我的局) ---------- */
+/* ---------- rooms (设置 · 找局 · 我的局) ---------- */
 .s09-room{position:absolute;inset:0;z-index:1}
 .s09-room.is-under{pointer-events:none}
 .s09-room.is-under.ph-idle{visibility:hidden}
-.s09-room.is-leaving{animation:s09-fade-out calc(240ms * var(--k)) ease both}
+.s09-room.is-leaving{animation:s09-fade-out calc(140ms * var(--k)) ease-in both}
 .s09-room.is-top.ph-enter.dir-root{opacity:0}
-.s09-room.is-top.ph-in.dir-root{animation:s09-fade-in calc(320ms * var(--k)) ease both}
+.s09-room.is-top.ph-in.dir-root{animation:s09-room-in calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(120ms * var(--k)) both}
+@keyframes s09-room-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 .s09-dim{transition:opacity calc(360ms * var(--k)) ease}
 .s09-room.has-focus .s09-dim:not(.is-focus){opacity:.64}
 .s09-room.is-under.ph-enter .s09-dim:not(.is-focus),.s09-room.is-under.ph-in .s09-dim:not(.is-focus){opacity:.14}
 .s09-id{display:block;width:100%;text-align:left;border-radius:14px}
-.s09-name{display:block;font-size:52px;font-weight:500;line-height:1.1;letter-spacing:-.005em;overflow-wrap:anywhere}
+.s09-name{display:block;font-size:52px;font-weight:500;line-height:1.1;letter-spacing:-.005em;overflow-wrap:anywhere;text-wrap:balance}
 .s09-idl{display:block;margin-top:10px;font-size:15px;line-height:1.5;color:var(--w80);overflow-wrap:anywhere}
 .s09-idl i{font-style:normal;padding:0 7px;color:var(--w70)}
 .s09-idl b{margin-left:8px;font-weight:500;color:var(--t0);white-space:nowrap}
@@ -102,15 +104,17 @@ body{margin:0}
 .s09-st-s{display:block;margin-top:6px;font-size:15px;line-height:1.45;color:var(--w80);overflow-wrap:anywhere}
 .s09-st-ts{display:block;margin-top:8px}
 .s09-st-ts span{display:block;font-size:15px;line-height:21px;color:var(--w92);overflow-wrap:anywhere}
-.s09-st-ts span+span{margin-top:4px}
+.s09-st-ts span+span{margin-top:7px}
+.s09-ln{display:block;font-weight:inherit;word-break:keep-all;overflow-wrap:anywhere}
 button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-name{opacity:.7}
 .s09-grid-sm{gap:20px 36px;margin-top:48px}
 .s09-grid-sm .s09-st{min-height:56px}
 .s09-grid-sm .s09-st-v{margin-top:4px;font-size:17px;line-height:1.4;color:var(--w92)}
 .s09-st-x{margin-top:2px;font-size:13px;line-height:1.5;color:var(--w70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 /* root navigation: floats over the light; content never passes under it */
-.s09-nav{position:absolute;left:0;right:0;bottom:0;height:var(--nav-h);z-index:4;display:flex;padding:4px 8px 14px}
-.s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;line-height:1;color:var(--w70);text-align:center;border-radius:14px}
+.s09-nav{position:absolute;left:0;right:0;bottom:0;height:var(--nav-h);z-index:4;display:flex;padding:4px 8px 14px;transition:visibility 0s}
+.app.s09.slab-up:not(.paused):not(.scrub) .s09-nav{visibility:hidden;transition:visibility 0s linear calc(520ms * var(--k))}
+.s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;line-height:1;color:var(--w80);text-align:center;border-radius:14px}
 .s09-tab::after{content:"";width:4px;height:4px;border-radius:50%;background:transparent}
 .s09-tab.on{color:#fff;font-weight:500}
 .s09-tab.on::after{background:var(--t0)}
@@ -139,8 +143,8 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
 .s09-slab.deep .s09-pg.is-top.ph-exit{animation:s09-pg-out calc(140ms * var(--k)) ease-in both}
 .s09-slab.deep .s09-pg.is-under.ph-exit{animation:s09-pg-back calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(110ms * var(--k)) both}
 .s09-slab .s09-pg.is-top.ph-enter.dir-swap{opacity:0}
-.s09-slab .s09-pg.is-top.ph-in.dir-swap{animation:s09-fade-in calc(280ms * var(--k)) ease both}
-.s09-slab .s09-pg.is-leaving{animation:s09-fade-out calc(240ms * var(--k)) ease both}
+.s09-slab .s09-pg.is-top.ph-in.dir-swap{animation:s09-fade-in calc(220ms * var(--k)) ease calc(100ms * var(--k)) both}
+.s09-slab .s09-pg.is-leaving{animation:s09-fade-out calc(120ms * var(--k)) ease-in both}
 @keyframes s09-pg-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 @keyframes s09-pg-under{from{opacity:1}to{opacity:0}}
 @keyframes s09-pg-out{from{opacity:1}to{opacity:0}}
@@ -156,7 +160,7 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
 .s09-pf .s09-st+.s09-st,.s09-stack>*+*{margin-top:34px}
 .s09-st-hit{display:block;width:100%;text-align:left;border-radius:12px}
 .s09-say{display:block;margin-top:10px;font-size:15px;line-height:1.7;color:var(--w80);overflow-wrap:anywhere}
-.s09-note{display:block;margin-top:14px;font-size:13px;line-height:1.65;color:var(--w70)}
+.s09-note{display:block;margin-top:14px;font-size:13px;line-height:1.65;color:var(--w80)}
 .s09-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:15px;font-weight:500;color:var(--w92);border-radius:10px}
 .s09-link::after{content:"›";font-size:19px;line-height:1;color:var(--w70)}
 .s09-link[disabled]{color:var(--w70);cursor:default}
@@ -298,47 +302,66 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
 .s09-star{flex:0 0 auto;width:44px;height:44px;border-radius:22px;font-size:20px;color:var(--w70)}
 .s09-star[aria-pressed=true]{color:var(--t0)}
 
-/* ---------- overlays: a decision is a small ink slab rising in the dark; the lamps gather behind it ---------- */
+/* ---------- overlays: a decision is a small ink slab rising in the dark; the three lamps gather behind it ---------- */
 .s09-over{position:absolute;inset:0;z-index:20}
-.s09-veil{position:absolute;inset:0;background:rgba(6,7,11,.74);animation:s09-fade-in calc(220ms * var(--k)) ease both}
-.s09-olamp{position:absolute;left:50%;width:520px;height:440px;margin-left:-260px;pointer-events:none;mix-blend-mode:screen;
-  background:radial-gradient(closest-side at 40% 52%,rgb(var(--l0) / .48) 0%,rgb(var(--l0) / .3) 46%,rgb(var(--r0,var(--l0)) / .1) 78%,rgb(var(--r0,var(--l0)) / 0) 100%),
-             radial-gradient(closest-side at 70% 44%,rgb(var(--l1) / .4) 0%,rgb(var(--l1) / .16) 56%,rgb(var(--l1) / 0) 100%);
-  animation:s09-olamp calc(460ms * var(--k)) var(--ease-out) both}
-.s09-olamp.at-sheet{bottom:calc(-60px + var(--kb,0px))}
-.s09-olamp.at-sys{top:50%;margin-top:-240px}
-@keyframes s09-olamp{from{opacity:0;transform:translateY(70px) scale(.82)}to{opacity:1;transform:none}}
-.s09-sheet{position:absolute;left:var(--slab-in);right:var(--slab-in);bottom:calc(12px + var(--kb,0px));padding:28px 22px 18px;border-radius:28px;background:#161924;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.04);animation:s09-sheet-in calc(340ms * var(--k)) var(--ease-rise) both}
-@keyframes s09-sheet-in{from{transform:translateY(calc(100% + 24px))}to{transform:translateY(0)}}
-.s09-sheet-t,.s09-sys-t{font-size:24px;font-weight:500;line-height:1.35;color:color-mix(in srgb,var(--t0) 70%,#fff);text-wrap:balance}
+.s09-over.is-sys{display:flex;align-items:center;justify-content:center}
+.s09-veil{position:absolute;inset:0;background:rgba(5,6,10,.8);animation:s09-fade-in calc(220ms * var(--k)) ease both}
+.s09-sheet-w{position:absolute;left:var(--slab-in);right:var(--slab-in);bottom:calc(12px + var(--kb,0px))}
+.s09-sys-w{position:relative;width:min(306px,calc(100% - 56px))}
+.s09-og{position:absolute;pointer-events:none;mix-blend-mode:screen;animation:calc(420ms * var(--k)) var(--ease-out) both}
+.s09-og.g0{left:-22%;top:-124px;width:80%;height:250px;background:radial-gradient(closest-side,rgb(var(--l0) / .82),rgb(var(--l0) / .46) 40%,rgb(var(--r0,var(--l0)) / .14) 72%,rgb(var(--r0,var(--l0)) / 0));animation-name:s09-og0}
+.s09-og.g1{right:-24%;top:-100px;width:74%;height:224px;background:radial-gradient(closest-side,rgb(var(--l1) / .74),rgb(var(--l1) / .40) 42%,rgb(var(--r1,var(--l1)) / .12) 72%,rgb(var(--r1,var(--l1)) / 0));animation-name:s09-og1}
+.s09-og.g2{left:12%;bottom:-86px;width:76%;height:176px;background:radial-gradient(closest-side,rgb(var(--l2) / .62),rgb(var(--l2) / .30) 44%,rgb(var(--r2,var(--l2)) / 0));animation-name:s09-og2}
+.s09-sys-w .s09-og.g0{left:-38%;top:-96px;width:96%;height:220px}
+.s09-sys-w .s09-og.g1{right:-40%;top:-60px;width:92%;height:210px}
+.s09-sys-w .s09-og.g2{left:6%;bottom:-100px;width:88%;height:200px}
+@keyframes s09-og0{from{opacity:0;transform:translate(-60px,-150px) scale(1.3)}to{opacity:1;transform:none}}
+@keyframes s09-og1{from{opacity:0;transform:translate(70px,-220px) scale(1.3)}to{opacity:1;transform:none}}
+@keyframes s09-og2{from{opacity:0;transform:translate(-30px,110px) scale(1.2)}to{opacity:1;transform:none}}
+.s09-sheet,.s09-sys{position:relative;border-radius:28px;background:radial-gradient(120% 90% at 20% -12%,rgb(var(--l0) / .13),rgb(var(--l0) / 0) 62%),#151823;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 1px rgba(255,255,255,.035)}
+.s09-sheet{padding:28px 22px 18px;animation:s09-sheet-in calc(340ms * var(--k)) var(--ease-rise) calc(40ms * var(--k)) both}
+@keyframes s09-sheet-in{from{transform:translateY(calc(100% + 28px))}to{transform:none}}
+.s09-sheet-t,.s09-sys-t{font-size:24px;font-weight:500;line-height:1.35;color:color-mix(in srgb,var(--t0) 72%,#fff);text-wrap:balance}
 .s09-sheet-b{margin-top:10px;font-size:15px;line-height:1.7;color:var(--w80);text-wrap:pretty}
-.s09-sheet-acts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:26px}
-.s09-keep{flex:1 1 auto;max-width:230px;display:inline-flex;align-items:center;justify-content:center;height:48px;padding:0 22px;border-radius:24px;background:color-mix(in srgb,var(--t0) 86%,#fff);color:#14161F;font-size:16px;font-weight:500;transition:transform calc(120ms * var(--k)) ease}
+.s09-sheet-acts{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:26px}
+.s09-keep{flex:1 1 auto;max-width:232px;display:inline-flex;align-items:center;justify-content:center;height:50px;padding:0 22px;border-radius:25px;font-size:16px;font-weight:500;
+  color:color-mix(in srgb,var(--t0) 62%,#fff);background:radial-gradient(110% 150% at 50% 0%,rgb(var(--l0) / .34),rgb(var(--l0) / .12) 70%);
+  box-shadow:inset 0 0 0 1px rgb(var(--l0) / .62),inset 0 1px 0 rgba(255,255,255,.18);transition:transform calc(120ms * var(--k)) ease}
 .s09-keep:active{transform:scale(.96)}
-.s09-leave{flex:0 1 auto;height:48px;padding:0 8px;font-size:15px;font-weight:500;color:var(--w70);border-radius:16px;text-align:right}
-.s09-leave:active{color:#fff}
-.s09-sys{position:absolute;left:50%;top:50%;width:min(304px,calc(100% - 56px));padding:26px 20px 14px;border-radius:26px;text-align:center;background:#161924;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.04);transform:translate(-50%,-50%);animation:s09-sys-in calc(260ms * var(--k)) var(--ease-out) both}
-@keyframes s09-sys-in{from{opacity:0;transform:translate(-50%,-44%)}to{opacity:1;transform:translate(-50%,-50%)}}
+.s09-leave{flex:0 1 auto;min-height:48px;padding:0 6px;font-size:15px;line-height:1.35;color:var(--w70);border-radius:16px;text-align:right}
+.s09-leave:active{color:var(--w92)}
+.s09-sys{padding:26px 22px 0;text-align:center;overflow:hidden;animation:s09-sys-in calc(260ms * var(--k)) var(--ease-out) calc(40ms * var(--k)) both}
+@keyframes s09-sys-in{from{opacity:0;transform:translateY(16px) scale(.97)}to{opacity:1;transform:none}}
 .s09-sys-t{font-size:20px}
-.s09-sys-b{margin-top:8px;font-size:13px;line-height:1.65;color:var(--w80)}
-.s09-sys-acts{display:flex;flex-direction:column;align-items:stretch;gap:6px;margin-top:20px}
-.s09-sys-acts .s09-keep{max-width:none}
-.s09-sys-acts .s09-leave{text-align:center}
-/* toasts: an ink capsule with a small lamp behind it */
-.s09-toast-w{position:absolute;left:50%;bottom:calc(var(--nav-h) + 18px + var(--kb,0px));z-index:30;max-width:calc(100% - 48px);transform:translateX(-50%);animation:s09-toast calc(280ms * var(--k)) var(--ease-out) both}
-.s09-toast-lamp{position:absolute;left:50%;top:50%;width:260px;height:140px;margin:-70px 0 0 -130px;border-radius:50%;pointer-events:none;mix-blend-mode:screen;background:radial-gradient(closest-side,rgb(var(--l0) / .42),rgb(var(--l0) / .16) 55%,rgb(var(--l0) / 0))}
-.s09-toast{position:relative;display:block;padding:12px 18px;border-radius:20px;background:#161924;color:#fff;font-size:14px;line-height:1.45;box-shadow:inset 0 1px 0 rgba(255,255,255,.16),inset 0 0 0 1px rgba(255,255,255,.04)}
-@keyframes s09-toast{from{opacity:0;transform:translate(-50%,12px)}to{opacity:1;transform:translate(-50%,0)}}
-.app.s09.slab-up .s09-toast-w{top:4px;bottom:auto;animation-name:s09-toast-top}
-.app.s09.slab-up .s09-toast{padding:8px 16px;line-height:20px;white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis}
-@keyframes s09-toast-top{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+.s09-sys-b{margin-top:8px;font-size:14px;line-height:1.65;color:var(--w80);text-wrap:pretty}
+.s09-sys-acts{display:grid;grid-template-columns:1fr 1fr;margin:22px -22px 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.s09-sysb{height:54px;font-size:16px;font-weight:500;color:color-mix(in srgb,var(--t0) 62%,#fff)}
+.s09-sysb + .s09-sysb{box-shadow:inset 1px 0 0 rgba(255,255,255,.1)}
+.s09-sysb:active{background:rgba(255,255,255,.06)}
+/* toasts: a small ink capsule; two lamps peek out at its ends */
+.s09-toast-w{position:absolute;left:0;right:0;bottom:calc(var(--nav-h) + 18px + var(--kb,0px));z-index:30;display:flex;justify-content:center;pointer-events:none}
+.s09-toast-b{position:relative;max-width:calc(100% - 64px);animation:s09-toast calc(280ms * var(--k)) var(--ease-out) both}
+.s09-tl{position:absolute;top:50%;width:150px;height:84px;margin-top:-42px;pointer-events:none;animation:s09-fade-in calc(420ms * var(--k)) var(--ease-out) both}
+.s09-tl.a{left:-58px;background:radial-gradient(closest-side,rgb(var(--l0) / .7),rgb(var(--l0) / .3) 45%,rgb(var(--l0) / 0))}
+.s09-tl.b{right:-58px;background:radial-gradient(closest-side,rgb(var(--l1) / .62),rgb(var(--l1) / .26) 45%,rgb(var(--l1) / 0))}
+.s09-toast{position:relative;display:block;padding:12px 20px;border-radius:22px;background:#151823;color:#fff;font-size:14px;line-height:1.45;box-shadow:inset 0 1px 0 rgba(255,255,255,.2),inset 0 0 0 1px rgba(255,255,255,.035)}
+@keyframes s09-toast{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.app.s09.slab-up .s09-toast-w{top:5px;bottom:auto}
+.app.s09.slab-up .s09-toast-b{animation-name:s09-toast-top}
+.app.s09.slab-up .s09-toast{padding:8px 16px;line-height:20px;white-space:nowrap;max-width:calc(100vw - 64px);overflow:hidden;text-overflow:ellipsis}
+.app.s09.slab-up .s09-tl{height:60px;margin-top:-30px}
+.app.s09.slab-up .s09-toast-w.is-long{top:auto;bottom:calc(var(--slab-in) + 22px + var(--kb,0px))}
+.app.s09.slab-up .s09-toast-w.is-long .s09-toast-b{animation-name:s09-toast}
+.app.s09.slab-up .s09-toast-w.is-long .s09-toast{padding:12px 20px;line-height:1.45;white-space:normal;text-align:center;text-wrap:balance}
+.app.s09.slab-up .s09-toast-w.is-long .s09-tl{height:84px;margin-top:-42px}
+@keyframes s09-toast-top{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .s09-toast.k-ok::before,.s09-toast.k-error::before{content:"";display:inline-block;width:7px;height:7px;margin:0 9px 1px 0;border-radius:50%;background:var(--ok);vertical-align:middle}
 .s09-toast.k-error::before{background:var(--err)}
 .s09-flash{animation:s09-flash calc(420ms * var(--k)) ease both}
-.s09-slab .s09-hero,.s09-slab .s09-big,.s09-slab .s09-st-v,.s09-slab .s09-rg,.s09-slab .s09-dt b{color:color-mix(in srgb,var(--tv,#fff) 78%,#fff)}
-.s09-slab .s09-st-l,.s09-slab .s09-fld-l,.s09-slab .s09-gl{color:rgba(255,255,255,.78)}
+.s09-slab .s09-hero,.s09-slab .s09-big,.s09-slab .s09-st-v,.s09-slab .s09-rg,.s09-slab .s09-dt b{color:color-mix(in srgb,var(--tv,#fff) 70%,#fff)}
+.s09-slab .s09-st-l,.s09-slab .s09-fld-l,.s09-slab .s09-gl,.s09-lead .s09-st-l{color:rgba(255,255,255,.84)}
+.s09-lead .s09-hero{color:color-mix(in srgb,var(--tv,#fff) 70%,#fff)}
 .s09-st-ts span,.s09-row-t,.s09-row-m,.s09-fv,.s09-st-v,.s09-big,.s09-hero,.s09-idl,.s09-sw-t,.s09-sent,.s09-st-s{word-break:keep-all;overflow-wrap:anywhere}
 .s09-big,.s09-hero,.s09-sent,.s09-st-v,.s09-row-t,.s09-st-ts span,.s09-title{text-wrap:balance}
 .s09-say,.s09-att,.s09-note,.s09-flag,.s09-dots li,.s09-quote{text-wrap:pretty}
@@ -364,7 +387,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
         <sc-for list="{{v.lamps}}" as="l" hint-placeholder-count="3"><div class="s09-lamp s09-lamp-{{l.i}}" style="{{l.style}}"></div></sc-for>
       </div>
 
-      <!-- ================= ROOM · 设置 ================= -->
+      <!-- ================= ROOM · 设置 ================= -->
       <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
         <section class="s09-room {{c.nav.cls.home}}{{v.home.cls}}" data-surface="home">
           <div class="s09-sc s09-sc-home" data-scroller="home" onScroll="{{c.nav.onScroll}}">
@@ -379,7 +402,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
               <button type="button" class="s09-st s09-dim{{v.home.fc.favorites}}" style="--tv:{{v.tint.fav}}" data-origin="favorites" onClick="{{v.open.favorites}}">
                 <span class="s09-st-l">收藏的局</span>
                 <span class="s09-st-v">{{v.home.fav.value}}</span>
-                <span class="s09-st-ts"><sc-for list="{{v.home.fav.titles}}" as="t" hint-placeholder-count="3"><span>{{t}}</span></sc-for></span>
+                <span class="s09-st-ts"><sc-for list="{{v.home.fav.titles}}" as="t" hint-placeholder-count="3"><span class="s09-tt"><sc-for list="{{t.lines}}" as="l" hint-placeholder-count="2"><b class="s09-ln">{{l}}</b></sc-for></span></sc-for></span>
                 <sc-if value="{{v.home.fav.sub}}" hint-placeholder-val="{{false}}"><span class="s09-st-s">{{v.home.fav.sub}}</span></sc-if>
               </button>
               <button type="button" class="s09-st s09-dim{{v.home.fc.city}}" style="--tv:{{v.tint.city}}" data-origin="city" onClick="{{v.open.city}}"><span class="s09-st-l">默认浏览城市</span><span class="s09-st-v">{{v.home.city.value}}</span><span class="s09-st-s">{{v.home.city.sub}}</span></button>
@@ -403,7 +426,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
         </section>
       </sc-if>
 
-      <!-- ================= ROOM · 找局 (入局 01 seam) ================= -->
+      <!-- ================= ROOM · 找局 (入局 01 seam) ================= -->
       <sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}">
         <section class="s09-room {{c.nav.cls.seam-feed}}{{v.roomCls}}" data-surface="seam-feed">
           <div class="s09-sc s09-sc-home" data-scroller="seam-feed" onScroll="{{c.nav.onScroll}}">
@@ -428,7 +451,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
         </section>
       </sc-if>
 
-      <!-- ================= ROOM · 我的局 (seam) ================= -->
+      <!-- ================= ROOM · 我的局 (seam) ================= -->
       <sc-if value="{{c.nav.on.seam-mine}}" hint-placeholder-val="{{false}}">
         <section class="s09-room {{c.nav.cls.seam-mine}}{{v.roomCls}}" data-surface="seam-mine">
           <div class="s09-sc s09-sc-home" data-scroller="seam-mine" onScroll="{{c.nav.onScroll}}">
@@ -437,7 +460,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
               <p class="s09-gl s09-dim">{{g.title}}</p>
               <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
                 <div class="s09-dr s09-dr-mine s09-dim{{r.fc}}" data-rid="{{r.id}}">
-                  <span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m"><b>{{r.label}}</b><sc-if value="{{r.receipt}}" hint-placeholder-val="{{false}}"> · {{r.receipt}}</sc-if></span></span><span class="s09-acts-r">
+                  <span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m"><b>{{r.label}}</b><sc-if value="{{r.receipt}}" hint-placeholder-val="{{false}}"> · {{r.receipt}}</sc-if></span></span><span class="s09-acts-r">
                   <sc-if value="{{r.canReport}}" hint-placeholder-val="{{false}}"><button type="button" class="s09-row-a" data-act="report" data-origin="mine-{{r.id}}" onClick="{{r.report}}">举报</button></sc-if>
                   <button type="button" class="s09-star" data-act="fav" aria-pressed="{{r.starOn}}" aria-label="{{r.starLabel}}" onClick="{{r.toggle}}">{{r.star}}</button></span>
                 </div>
@@ -553,19 +576,19 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
             <section class="s09-pg {{c.nav.cls.favorites}}" data-surface="favorites">
               <div class="s09-sc s09-sc-slab" data-scroller="favorites" onScroll="{{c.nav.onScroll}}">
                 <sc-if value="{{c.fav.empty}}" hint-placeholder-val="{{false}}">
-                  <div class="s09-lead" data-lamp><span class="s09-st-l">收藏的局</span><span class="s09-big">{{c.fav.emptyCopy.title}}</span><span class="s09-say">{{c.fav.emptyCopy.body}}</span></div>
+                  <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">收藏的局</span><span class="s09-hero">0 个局</span><span class="s09-say">{{v.fav.emptySay}}</span></div>
                   <button type="button" class="s09-ghost" data-act="find" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button>
                 </sc-if>
                 <sc-if value="{{v.fav.has}}" hint-placeholder-val="{{true}}">
                   <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">收藏的局</span><span class="s09-hero">{{v.fav.value}}</span><span class="s09-say">{{v.fav.line}}</span></div>
                   <p class="s09-gl">可报名</p>
                   <sc-for list="{{v.fav.active}}" as="r" hint-placeholder-count="3">
-                    <div class="s09-row" data-rid="{{r.id}}"><button type="button" class="s09-dr s09-dr-in" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.place}} · <b>{{r.rel}}</b></span></span></button><button type="button" class="s09-row-a" data-act="unfav" onClick="{{r.remove}}">拿出</button></div>
+                    <div class="s09-row" data-rid="{{r.id}}"><button type="button" class="s09-dr s09-dr-in" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.place}} · <b>{{r.rel}}</b></span></span></button><button type="button" class="s09-row-a" data-act="unfav" onClick="{{r.remove}}">拿出</button></div>
                   </sc-for>
                   <sc-if value="{{v.fav.hasArchived}}" hint-placeholder-val="{{false}}">
-                    <p class="s09-gl">已结束 · 已取消</p>
+                    <p class="s09-gl">已结束 · 已取消</p>
                     <sc-for list="{{v.fav.archived}}" as="r" hint-placeholder-count="1">
-                      <div class="s09-row" data-rid="{{r.id}}"><button type="button" class="s09-dr s09-dr-in" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.place}} · <b>{{r.rel}}</b></span></span></button><button type="button" class="s09-row-a" data-act="unfav" onClick="{{r.remove}}">拿出</button></div>
+                      <div class="s09-row" data-rid="{{r.id}}"><button type="button" class="s09-dr s09-dr-in" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.place}} · <b>{{r.rel}}</b></span></span></button><button type="button" class="s09-row-a" data-act="unfav" onClick="{{r.remove}}">拿出</button></div>
                     </sc-for>
                   </sc-if>
                 </sc-if>
@@ -667,8 +690,8 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
               <div class="s09-sc s09-sc-slab" data-scroller="records" onScroll="{{c.nav.onScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t2)"><span class="s09-st-l">我的记录</span><span class="{{v.recs.bigCls}}">{{v.recs.value}}</span><span class="s09-say">{{c.recs.help}}</span></div>
                 <sc-for list="{{v.recs.groups}}" as="g" hint-placeholder-count="3">
-                  <p class="s09-gl">{{g.title}} · {{g.count}}</p>
-                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s09-dr" data-rid="{{r.id}}" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wd}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.label}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.meta}} · <b>{{r.status}}</b></span></span><span class="s09-chev" aria-hidden="true">›</span></button></sc-for>
+                  <p class="s09-gl">{{g.title}} · {{g.count}}</p>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s09-dr" data-rid="{{r.id}}" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wd}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.label}}</span><span class="s09-row-m" style="--rc:{{r.rc}}">{{r.meta}} · <b>{{r.status}}</b></span></span><span class="s09-chev" aria-hidden="true">›</span></button></sc-for>
                 </sc-for>
                 <p class="s09-note">{{c.recs.quotaRule}}</p>
                 <p class="s09-note">{{c.recs.quotaNo}}</p>
@@ -690,7 +713,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
                 <div class="s09-facts"><sc-for list="{{v.rec.facts}}" as="f" hint-placeholder-count="5"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <sc-if value="{{v.rec.help}}" hint-placeholder-val="{{true}}"><p class="s09-flag">{{v.rec.help}}</p></sc-if>
                 <sc-if value="{{v.rec.hasSupp}}" hint-placeholder-val="{{true}}"><p class="s09-gl">已补充</p><sc-for list="{{v.rec.supp}}" as="x" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{x.text}}</span><span class="s09-row-m">{{x.atText}}{{x.mat}}</span></span></div></sc-for></sc-if>
-                <sc-if value="{{v.rec.hasAppeals}}" hint-placeholder-val="{{false}}"><p class="s09-gl">异议与申诉</p><sc-for list="{{v.rec.appeals}}" as="x" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{x.reason}}</span><span class="s09-row-m">{{x.kindLabel}} · <b>{{x.statusLabel}}</b> · {{x.atText}}</span></span></div></sc-for></sc-if>
+                <sc-if value="{{v.rec.hasAppeals}}" hint-placeholder-val="{{false}}"><p class="s09-gl">异议与申诉</p><sc-for list="{{v.rec.appeals}}" as="x" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{x.reason}}</span><span class="s09-row-m">{{x.kindLabel}} · <b>{{x.statusLabel}}</b> · {{x.atText}}</span></span></div></sc-for></sc-if>
                 <div class="s09-acts">
                   <button type="button" class="s09-ghost" data-act="supplement" data-origin="rec-supp" onClick="{{v.rec.goSupp}}">补充说明</button>
                   <sc-if value="{{v.rec.goDispute}}" hint-placeholder-val="{{true}}"><button type="button" class="s09-ghost" data-act="dispute" data-origin="rec-dispute" onClick="{{v.rec.goDispute}}">提出出席异议</button></sc-if>
@@ -710,7 +733,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
             <section class="s09-pg {{c.nav.cls.reports}}" data-surface="reports">
               <div class="s09-sc s09-sc-slab" data-scroller="reports" onScroll="{{c.nav.onScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">我的举报</span><span class="{{v.reps.bigCls}}">{{v.reps.value}}</span><span class="s09-say">{{c.reps.note}}</span></div>
-                <div class="s09-list s09-gap"><sc-for list="{{v.reps.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s09-dr" data-rid="{{r.id}}" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}"><b>{{r.status}}</b> · {{r.meta}}</span></span><span class="s09-chev" aria-hidden="true">›</span></button></sc-for></div>
+                <div class="s09-list s09-gap"><sc-for list="{{v.reps.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s09-dr" data-rid="{{r.id}}" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}"><b>{{r.status}}</b> · {{r.meta}}</span></span><span class="s09-chev" aria-hidden="true">›</span></button></sc-for></div>
                 <p class="s09-note">{{c.reps.mock}}</p>
               </div>
               <header class="s09-hd s09-shd" data-header>
@@ -729,7 +752,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
                 <sc-if value="{{v.rep.needs}}" hint-placeholder-val="{{true}}"><p class="s09-flag is-att">{{v.rep.needsText}}</p></sc-if>
                 <div class="s09-facts"><sc-for list="{{v.rep.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <p class="s09-gl">原文</p><p class="s09-quote">{{v.rep.text}}</p>
-                <sc-if value="{{v.rep.hasShots}}" hint-placeholder-val="{{true}}"><p class="s09-gl">材料</p><sc-for list="{{v.rep.shots}}" as="x" hint-placeholder-count="1"><p class="s09-fileline">{{x.name}} · {{x.sizeText}}</p></sc-for></sc-if>
+                <sc-if value="{{v.rep.hasShots}}" hint-placeholder-val="{{true}}"><p class="s09-gl">材料</p><sc-for list="{{v.rep.shots}}" as="x" hint-placeholder-count="1"><p class="s09-fileline">{{x.name}} · {{x.sizeText}}</p></sc-for></sc-if>
                 <p class="s09-gl">进度</p>
                 <sc-for list="{{v.rep.timeline}}" as="x" hint-placeholder-count="3"><div class="s09-dr"><span class="s09-dt" style="--tv:{{x.dc}}"><b>{{x.md}}</b><i>{{x.time}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{x.label}}</span><sc-if value="{{x.text}}" hint-placeholder-val="{{false}}"><span class="s09-row-m">{{x.text}}</span></sc-if></span></div></sc-for>
                 <sc-if value="{{v.rep.hasSupp}}" hint-placeholder-val="{{false}}"><p class="s09-gl">已提交补充</p><sc-for list="{{v.rep.supp}}" as="x" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{x.text}}</span><span class="s09-row-m">{{x.atText}}</span></span></div></sc-for></sc-if>
@@ -754,7 +777,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
                 <p class="s09-gl">常被问到</p>
                 <sc-for list="{{c.help.faq}}" as="r" hint-placeholder-count="3"><div class="s09-rule"><p class="s09-rule-t"><b>{{r.n}}</b>{{r.title}}</p><p class="s09-say">{{r.body}}</p></div></sc-for>
                 <p class="s09-gl">我的反馈</p>
-                <sc-for list="{{c.help.feedback}}" as="f" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{f.text}}</span><span class="s09-row-m"><b>{{f.statusLabel}}</b> · {{f.localNo}} · {{f.atText}}</span></span></div></sc-for>
+                <sc-for list="{{c.help.feedback}}" as="f" hint-placeholder-count="1"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{f.text}}</span><span class="s09-row-m"><b>{{f.statusLabel}}</b> · {{f.localNo}} · {{f.atText}}</span></span></div></sc-for>
                 <div class="s09-acts">
                   <button type="button" class="s09-ghost" data-act="feedback" data-origin="help-fb" onClick="{{v.help.goFeedback}}">写反馈</button>
                   <button type="button" class="s09-link" data-origin="help-reps" onClick="{{v.help.goReports}}">我的举报</button>
@@ -775,7 +798,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">{{c.privacy.lead}}</span><span class="s09-hero">{{v.priv.value}}</span></div>
                 <ul class="s09-dots"><sc-for list="{{c.privacy.general}}" as="g" hint-placeholder-count="4"><li>{{g}}</li></sc-for></ul>
                 <p class="s09-gl">按你参加和发起的局</p>
-                <sc-for list="{{v.priv.facts}}" as="f" hint-placeholder-count="4"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{f.title}}</span><span class="s09-row-m" style="--rc:{{f.rc}}">{{f.role}} · <b>{{f.rule}}</b></span></span></div></sc-for>
+                <sc-for list="{{v.priv.facts}}" as="f" hint-placeholder-count="4"><div class="s09-row"><span class="s09-row-b"><span class="s09-row-t">{{f.title}}</span><span class="s09-row-m" style="--rc:{{f.rc}}">{{f.role}} · <b>{{f.rule}}</b></span></span></div></sc-for>
                 <p class="s09-flag">{{c.privacy.noToggles}}</p>
               </div>
               <header class="s09-hd s09-shd" data-header>
@@ -859,7 +882,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
                   </div>
                   <sc-if value="{{c.form.canFiles}}" hint-placeholder-val="{{true}}">
                     <div class="s09-fld"><label class="s09-pill s09-file">添加材料<input type="file" multiple aria-label="添加材料" onChange="{{c.form.onFiles}}"></label>
-                      <sc-for list="{{c.form.files}}" as="x" hint-placeholder-count="1"><div class="s09-fileline"><span>{{x.name}} · {{x.sizeText}}</span><button type="button" class="s09-tbtn" data-act="remove" onClick="{{x.remove}}">移除</button></div></sc-for>
+                      <sc-for list="{{c.form.files}}" as="x" hint-placeholder-count="1"><div class="s09-fileline"><span>{{x.name}} · {{x.sizeText}}</span><button type="button" class="s09-tbtn" data-act="remove" onClick="{{x.remove}}">移除</button></div></sc-for>
                       <p class="s09-hint">{{c.form.fileNote}}</p></div>
                   </sc-if>
                   <sc-if value="{{f.foot}}" hint-placeholder-val="{{true}}"><p class="s09-say s09-fill-end">{{f.foot}}</p></sc-if>
@@ -881,21 +904,21 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
 
       <!-- ================= overlays ================= -->
       <sc-if value="{{c.notify.sys.on}}" hint-placeholder-val="{{false}}">
-        <div class="s09-over"><div class="s09-veil"></div><div class="s09-olamp at-sys" aria-hidden="true"></div><div class="s09-sys" role="alertdialog" aria-modal="true"><p class="s09-sys-t">{{c.notify.sys.title}}</p><p class="s09-sys-b">{{c.notify.sys.body}}</p><div class="s09-sys-acts"><button type="button" class="s09-keep" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button><button type="button" class="s09-leave" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button></div></div></div>
+        <div class="s09-over is-sys"><div class="s09-veil"></div><div class="s09-sys-w"><i class="s09-og g0" aria-hidden="true"></i><i class="s09-og g1" aria-hidden="true"></i><i class="s09-og g2" aria-hidden="true"></i><div class="s09-sys" role="alertdialog" aria-modal="true"><p class="s09-sys-t">{{c.notify.sys.title}}</p><p class="s09-sys-b">{{c.notify.sys.body}}</p><div class="s09-sys-acts"><button type="button" class="s09-sysb" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button><button type="button" class="s09-sysb" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button></div></div></div></div>
       </sc-if>
       <sc-if value="{{c.sheet.on}}" hint-placeholder-val="{{false}}">
         <div class="s09-over">
           <div class="s09-veil" onClick="{{v.sheetDismiss}}"></div>
-          <div class="s09-olamp at-sheet" aria-hidden="true"></div>
+          <div class="s09-sheet-w"><i class="s09-og g0" aria-hidden="true"></i><i class="s09-og g1" aria-hidden="true"></i><i class="s09-og g2" aria-hidden="true"></i>
           <div class="s09-sheet" role="dialog" aria-modal="true">
             <p class="s09-sheet-t">{{c.sheet.title}}</p>
             <p class="s09-sheet-b">{{c.sheet.body}}</p>
             <sc-if value="{{c.sheet.unsaved}}" hint-placeholder-val="{{true}}"><div class="s09-sheet-acts"><button type="button" class="s09-keep" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s09-leave" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></div></sc-if>
             <sc-if value="{{c.sheet.accountEnd}}" hint-placeholder-val="{{false}}"><div class="s09-sheet-acts"><button type="button" class="s09-keep" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s09-leave" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></div></sc-if>
-          </div>
+          </div></div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s09-toast-w" role="status"><i class="s09-toast-lamp" aria-hidden="true"></i><span class="s09-toast {{c.toast.cls}}">{{c.toast.text}}</span></div></sc-if>
+      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s09-toast-w{{v.toastCls}}" role="status"><div class="s09-toast-b"><i class="s09-tl a" aria-hidden="true"></i><i class="s09-tl b" aria-hidden="true"></i><span class="s09-toast {{c.toast.cls}}">{{c.toast.text}}</span></div></div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -926,7 +949,7 @@ class Component extends DCLogic {
     super(p);
     this.reviewInit(CONCEPT);
     /* fwd = 90ms pre-roll while the lamps find the tapped statement + 420ms slab rise; back = 300ms sink */
-    this.motionSpec = { fwd: 520, back: 300, root: 320, swap: 300 };
+    this.motionSpec = { fwd: 520, back: 300, root: 400, swap: 340 };
     this.headerRange = 96; this.saveMs = 380;
   }
   initialState(vk) {
@@ -1068,7 +1091,14 @@ class Component extends DCLogic {
     var n1 = function (v) { return Math.round(v * 10) / 10; };
     var wrap = function (fn) { return fn ? function (ev) { self.followRow(ev, fn); } : null; };
     var nb = function (t) { return String(t == null ? '' : t).replace(/ · /g, '\u00a0· '); };
-    var fct = function (list) { return list.filter(Boolean).map(function (f) { return { l: f[0], v: nb(f[1]), cls: f[2] ? 's09-wide' : '' }; }); };
+    /* a title in the home's narrow column: whole segments per line, joined by " · " only inside a line (a separator never starts a line; it ends one only when it fits) */
+    var segLines = function (title, colW) {
+      var cw = function (t) { var u = 0; String(t).split('').forEach(function (ch) { u += /[\u2e80-\u9fff\uff00-\uffef\u3000-\u303f]/.test(ch) ? 15 : ch === ' ' ? 4 : 8.8; }); return u; };
+      var lines = [], cur = '', w = 0;
+      String(title).split(' · ').forEach(function (sg) { var sw = cw(sg); if (!cur) { cur = sg; w = sw; } else if (w + 24 + sw <= colW) { cur += ' · ' + sg; w += 24 + sw; } else { lines.push(w + 19 <= colW ? cur + '\u00a0·' : cur); cur = sg; w = sw; } });
+      if (cur) lines.push(cur); return lines.map(nb);
+    };
+    var fct = function (list) { return list.filter(function (f) { return f && f[1] != null && String(f[1]) !== ''; }).map(function (f) { return { l: f[0], v: nb(f[1]), cls: f[2] ? 's09-wide' : '' }; }); };
     /* lamps: keyframes from the position they had when focus changed to the new target */
     var L = s.lamp || {}, to = this.lampTargets(L.mode || 'rest', L, W, H, skin), from = L.from || to;
     var anim = (L.seq || 0) % 2 ? 's09-lamp-a' : 's09-lamp-b', dur = L.dur || 1;
@@ -1084,9 +1114,9 @@ class Component extends DCLogic {
     var permShort = String(sum.notifyLabel || '').split(' · ').slice(1).join(' · ');
     var openReps = c.reps.rows.filter(function (r) { return r.open; }).length;
     var home = { cls: fk ? ' has-focus' : '', fc: fc,
-      wx: you.wx ? you.wx : '微信号未填写', mail: you.email ? you.email : '邮箱未填写', mailState: you.email ? you.emailLabel : '',
+      wx: you.wx ? you.wx : '微信号未填写', mail: '\u200b' + (you.email ? String(you.email).replace('@', '\u200b@') : '邮箱未填写'), mailState: you.email ? you.emailLabel : '',
       meta: (c.attCount ? c.attCount + ' 件事等你回应' : '没有要你处理的事') + ' · ' + sum.cityLabel,
-      fav: { value: c.fav.count ? sum.favLabel : '0 个局', titles: c.fav.rows.slice(0, 3).map(function (r) { return nb(r.title); }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.title : '') },
+      fav: { value: c.fav.count ? sum.favLabel : '0 个局', titles: c.fav.rows.slice(0, 3).map(function (r) { return { lines: segLines(r.title, (W - 84) / 2 - 4) }; }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.title : '') },
       city: { value: sum.cityLabel, sub: c.feed.count ? JUS.derive.feed(d, 'all').count + ' 个局可报名' : '暂时没有可报名的局' },
       notify: { value: c.notify.onCount + ' 类提醒', sub: permShort },
       appearance: { value: c.skin.curName, sub: c.skin.rmOn ? '减少动态' : '正常动态' },
@@ -1103,7 +1133,7 @@ class Component extends DCLogic {
     var DIM = 'rgba(255,255,255,.72)';
     c.feed.rows.forEach(function (r) { r.fc = fk === 'feed-' + r.id ? ' is-focus' : ''; r.title = nb(r.title); r.md = r.when.md; r.wt = r.when.wdZh + ' ' + r.when.time; r.where = nb(r.place.hood + ' · 局主 ' + r.host); });
     var feed = { meta: c.feed.city.name + ' · ' + JUS.derive.feed(d, 'all').count + ' 个局可报名', allCount: JUS.derive.feed(d, 'all').count, allOn: c.feed.isAll ? 'true' : 'false', favOn: c.feed.isFav ? 'true' : 'false' };
-    var mk = function (r, report) { return { id: r.id, title: nb(r.title), md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, dc: report ? DIM : 'var(--t0)', label: r.label, receipt: r.receipt ? '举报' + r.receipt : '', star: r.star, starOn: r.fav ? 'true' : 'false', starLabel: r.fav ? '拿出收藏' : '收进收藏', toggle: r.toggleFav, canReport: !!(report && r.canReport), report: r.report, fc: fk === 'mine-' + r.id ? ' is-focus' : '' }; };
+    var mk = function (r, report) { return { id: r.id, title: nb(r.title), md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, dc: report ? DIM : 'var(--t0)', label: nb(r.label), receipt: r.receipt ? nb('举报' + r.receipt) : '', star: r.star, starOn: r.fav ? 'true' : 'false', starLabel: r.fav ? '拿出收藏' : '收进收藏', toggle: r.toggleFav, canReport: !!(report && r.canReport), report: r.report, fc: fk === 'mine-' + r.id ? ' is-focus' : '' }; };
     var mine = { value: c.mine.current.length + ' 个局', meta: c.mine.current.length + ' 个进行中 · ' + c.mine.hosted.length + ' 个我发起的',
       groups: [['进行中', c.mine.current.map(function (r) { return mk(r); })], ['我发起的', c.mine.hosted.map(function (r) { return mk(r); })], ['历史', c.mine.history.map(function (r) { return mk(r, true); })]].filter(function (g) { return g[1].length; }).map(function (g) { return { title: g[0], rows: g[1] }; }) };
     /* ---- slab ---- */
@@ -1116,7 +1146,8 @@ class Component extends DCLogic {
       if (depth >= 3) slabCls += ' deep';
     }
     var kind = d.you.emailKind === 'school' ? '学校邮箱' : d.you.emailKind === 'work' ? '工作邮箱' : '';
-    var pf = { email: you.email || '未填写', emailSub: you.email ? [you.emailLabel, you.domain, kind].filter(Boolean).join(' · ') : '',
+    var em = function (t) { return String(t || '').replace('@', '\u200b@'); };
+    var pf = { email: you.email ? em(you.email) : '未填写', emailSub: you.email ? [you.emailLabel, you.domain, kind].filter(Boolean).join(' · ') : '',
       meta: JUS.COPY.snapshotNote, policy: JUS.COPY.wxPolicy, copyFail: JUS.COPY.copyFailInline + '：' + (you.copyFail || ''),
       edit: function () { self.motion('edit', function () { this.toEdit(null); }); },
       editName: function () { self.motion('edit', function () { this.toEdit('name'); }); },
@@ -1129,10 +1160,10 @@ class Component extends DCLogic {
       codeOpen: !!(P.codeSent || P.codeExpired), resendOff: !!(P.codeSent && P.resendLeft > 0),
       expiry: P.codeSent && P.expiresIn > 0 ? Math.floor(P.expiresIn / 60) + ':' + String(P.expiresIn % 60).padStart(2, '0') + ' 后过期' : (P.codeExpired ? '已过期' : ''), cta: P.saving ? ' is-busy' : '', formCls: s.focusField ? ' has-focus' : '' };
     /* favorites + details */
-    var mkFav = function (r) { return { id: r.id, key: 'fav-' + r.id, title: nb(r.title), md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, dc: r.closed ? DIM : 'var(--t0)', place: nb(r.place.hood + (r.crossCity ? ' · ' + r.cityName : '')), rel: r.closed ? r.statusLabel : r.relLabel, rc: (r.joined || r.hosted) ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open), remove: r.remove }; };
+    var mkFav = function (r) { return { id: r.id, key: 'fav-' + r.id, title: nb(r.title), md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, dc: r.closed ? DIM : 'var(--t0)', place: nb(r.place.hood + (r.crossCity ? ' · ' + r.cityName : '')), rel: nb(r.closed ? r.statusLabel : r.relLabel), rc: (r.joined || r.hosted) ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open), remove: r.remove }; };
     var fav = { has: !c.fav.empty, value: c.fav.count + ' 个局', active: c.fav.active.map(mkFav), archived: c.fav.archived.map(mkFav), hasArchived: c.fav.archived.length > 0,
       line: [c.fav.active.length ? c.fav.active.length + ' 个可报名' : '', c.fav.archived.length ? c.fav.archived.length + ' 个已结束或取消' : ''].filter(Boolean).join(' · ') + '；收藏不等于报名',
-      meta: c.fav.empty ? JUS.COPY.favEmpty.body : '最近一次收藏在 ' + c.fav.rows[0].favAgo };
+      meta: c.fav.empty ? '在找局右滑一张局卡，就会收进这里' : '最近一次收藏在 ' + c.fav.rows[0].favAgo, emptySay: JUS.COPY.favEmpty.title + '。' + JUS.COPY.favEmpty.body };
     var mkDet = function (sf, D) { return { s: sf, cls: nav.cls[sf], kicker: D.status.label + (D.crossCity ? ' · ' + D.city.name + '当地时间' : ''), title: nb(D.title), meta: D.when.long || D.when.zh,
       nums: [{ l: D.when.wdZh, v: D.when.md }, { l: '开始', v: D.when.time }, { l: '人数', v: String(D.cap).replace('共 ', '') }],
       facts: fct([['地点', D.place.full, 1], ['局主', D.host], ['我和这个局', D.joinedLabel], D.favAgo ? ['收藏于', D.favAgo] : null]),
@@ -1145,18 +1176,18 @@ class Component extends DCLogic {
     var notify = { perm: permLabels[c.notify.permission] || '', service: c.notify.serviceConnected ? '已连接' : '暂未开通', meta: c.notify.onCount + '/' + c.notify.total + ' 类开启 · ' + (permLabels[c.notify.permission] || '') };
     var shownSkin = JUS.SKINS.filter(function (k) { return k.key === c.skin.shown; })[0] || JUS.SKINS[0];
     var skin2 = { lead: c.skin.previewing ? '正在预览 · 还没有应用' : '当前外观', line: shownSkin.en + ' · ' + shownSkin.line, meta: c.skin.rmSys ? '系统已开启减少动态 · 跟随系统' : '跟随系统的减少动态设置', scCls: c.skin.previewing ? ' s09-sc-bar' : '',
-      list: c.skin.list.map(function (x) { return { key: x.key, name: x.name, en: x.en, line: x.line, tag: x.on ? '当前' : x.shown ? '预览中' : '', pressed: x.shown ? 'true' : 'false', go: function () { self.motion('skin', function () { x.pick(); }); } }; }) };
+      list: c.skin.list.map(function (x) { return { key: x.key, name: x.name, en: x.en, line: nb(x.line), tag: x.on ? '当前' : x.shown ? '预览中' : '', pressed: x.shown ? 'true' : 'false', go: function () { self.motion('skin', function () { x.pick(); }); } }; }) };
     /* records / reports */
-    var mkRec = function (r) { return { id: r.id, key: 'rec-row-' + r.id, label: r.label, md: r.when.md, wd: r.when.wdZh, dc: r.pendingReview ? 'var(--t0)' : DIM, meta: nb(r.title), status: r.statusLabel, rc: r.pendingReview ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
-    var recs = { value: c.recs.empty ? c.recs.emptyText : c.recs.count + ' 条事实', bigCls: c.recs.empty ? 's09-big' : 's09-hero', groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, rows: g.rows.map(mkRec) }; }), meta: sum.pendingRecords ? sum.pendingRecords + ' 条待核实 · 未处罚' : (c.recs.count ? '没有待核实的记录' : JUS.COPY.creditEmpty) };
+    var mkRec = function (r) { return { id: r.id, key: 'rec-row-' + r.id, label: nb(r.label), md: r.when.md, wd: r.when.wdZh, dc: r.pendingReview ? 'var(--t0)' : DIM, meta: nb(r.title), status: nb(r.statusLabel), rc: r.pendingReview ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
+    var recs = { value: c.recs.count + ' 条事实', bigCls: 's09-hero', groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, rows: g.rows.map(mkRec) }; }), meta: sum.pendingRecords ? sum.pendingRecords + ' 条待核实 · 未处罚' : (c.recs.count ? '没有待核实的记录' : JUS.COPY.creditEmpty) };
     var R2 = c.rec; var rec = { on: !!(R2 && nav.on['record-detail']) };
     if (rec.on) { var sp = String(R2.statusLabel).split(' · '); rec = Object.assign(rec, { label: R2.label, head: sp[0], tail: sp.slice(1).join(' · '), status: R2.statusLabel, kind: R2.kindLabel, meta: R2.kindLabel + ' · 记录于 ' + R2.atText,
       nums: [{ l: R2.when.wdZh, v: R2.when.md }, { l: '开始', v: R2.when.time }, { l: '局主', v: R2.host }],
       facts: fct([['活动', R2.title, 1], ['地点', R2.place.full, 1], R2.quotaLabel ? ['主动退出机会', R2.quotaLabel, 1] : null]),
-      help: R2.pendingReview ? JUS.COPY.recordHelp : '', supp: R2.supplementRows.map(function (x) { return { text: x.text, atText: x.atText, mat: x.materialsText ? ' · ' + x.materialsText : '' }; }), hasSupp: R2.supplementRows.length > 0, appeals: R2.appealRows, hasAppeals: R2.appealRows.length > 0,
+      help: R2.pendingReview ? JUS.COPY.recordHelp : '', supp: R2.supplementRows.map(function (x) { return { text: nb(x.text), atText: nb(x.atText), mat: x.materialsText ? '\u00a0· ' + nb(x.materialsText) : '' }; }), hasSupp: R2.supplementRows.length > 0, appeals: R2.appealRows, hasAppeals: R2.appealRows.length > 0,
       goSupp: wrap(R2.goSupplement), goDispute: wrap(R2.goDispute), goAppeal: wrap(R2.goAppeal) }); }
-    var mkRep = function (r) { var uw = JUS.fmt.when(r.updatedAt || r.createdAt); return { id: r.id, key: 'rep-row-' + r.id, title: nb(r.title), md: uw.md, wt: '更新 ' + uw.time, dc: r.needsMore ? 'var(--t0)' : DIM, status: r.statusLabel, meta: '本地编号 ' + r.id, rc: r.needsMore ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
-    var reps = { value: c.reps.empty ? c.reps.emptyText : c.reps.count + ' 条举报', bigCls: c.reps.empty ? 's09-big' : 's09-hero', rows: c.reps.rows.map(mkRep), meta: sum.needMore ? sum.needMore + ' 条需补充' : (c.reps.count ? '没有需要补充的举报' : JUS.COPY.reportsEmpty) };
+    var mkRep = function (r) { var uw = JUS.fmt.when(r.updatedAt || r.createdAt); return { id: r.id, key: 'rep-row-' + r.id, title: nb(r.title), md: uw.md, wt: '更新 ' + uw.time, dc: r.needsMore ? 'var(--t0)' : DIM, status: nb(r.statusLabel), meta: '本地编号 ' + r.id, rc: r.needsMore ? 'var(--t0)' : 'var(--w80)', go: wrap(r.open) }; };
+    var reps = { value: c.reps.count + ' 条举报', bigCls: 's09-hero', rows: c.reps.rows.map(mkRep), meta: sum.needMore ? sum.needMore + ' 条需补充' : (c.reps.count ? '没有需要补充的举报' : JUS.COPY.reportsEmpty) };
     var P2 = c.rep; var rep = { on: !!(P2 && nav.on['report-detail']) };
     if (rep.on) rep = Object.assign(rep, { status: P2.statusLabel, title: nb(P2.title), needs: P2.needsMore, needsText: P2.needsText || '需要补充材料', meta: '本地编号 ' + P2.id, text: P2.text,
       facts: fct([['举报对象', P2.whoName], ['本地编号', P2.id], ['提交于', P2.atText], ['更新于', P2.updatedText]]), shots: P2.shotRows, hasShots: P2.shotRows.length > 0,
@@ -1165,7 +1196,7 @@ class Component extends DCLogic {
     var help = { value: JUS.RULES.length + ' 条约定', meta: '规则版本 ' + c.about.rulesVersion, goRules: wrap(c.help.goRules), goFeedback: wrap(c.help.goFeedback), goReports: wrap(c.help.goReports) };
     var priv = { value: c.privacy.facts.length + ' 种情形', meta: '按你参加和发起的局，逐条派生', facts: c.privacy.facts.map(function (f) { return { title: nb(f.title), role: f.role, rule: f.rule, rc: f.open ? 'var(--t0)' : 'var(--w70)' }; }) };
     var acct = { big: c.acct.demo ? '演示进行中' : '演示已结束', demo: JUS.COPY.demoOnly, meta: c.acct.device + (c.acct.ended ? ' · 结束于 ' + c.acct.endedText : ' · 开始于 ' + c.acct.startedText),
-      facts: fct([['设备', c.acct.device], ['开始于', c.acct.startedText], c.acct.ended ? ['结束于', c.acct.endedText] : null]) };
+      facts: fct([['设备', c.acct.device], c.acct.startedText ? ['开始于', c.acct.startedText] : null, c.acct.ended ? ['结束于', c.acct.endedText] : null]) };
     var vparts = String(c.about.version).split(' · ');
     var about = { big: vparts[0], sub: vparts[1] || '关于', meta: '规则版本 ' + c.about.rulesVersion, goRules: wrap(c.about.goRules),
       facts: fct([['规则版本', c.about.rulesVersion, 1], ['可选城市', c.about.cities + ' 座'], ['本机存储', JUS.store.key(this.concept.code)], c.about.built ? ['构建于', String(c.about.built).slice(0, 16).replace('T', ' '), 1] : null]) };
@@ -1181,7 +1212,8 @@ class Component extends DCLogic {
       forms.push(fx);
       (c.form.who || []).forEach(function (w) { w.pressed = w.on ? 'true' : 'false'; });
     }
-    var v = { skin: skin, rootCls: (d.appearance.reduceMotion ? ' rm-user' : '') + (slabOn && !(depth === 2 && nav.phase === 'exit') ? ' slab-up' : ''), lamps: lamps, lampsCls: s.skinSeq ? (s.skinSeq % 2 ? ' fx-a' : ' fx-b') : '', tint: tint,
+    var v = { skin: skin, rootCls: (d.appearance.reduceMotion ? ' rm-user' : '') + (slabOn && !(depth === 2 && nav.phase === 'exit') ? ' slab-up' : ''),
+      toastCls: (function (t) { var u = 0; String(t || '').split('').forEach(function (ch) { u += /[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 1 : .56; }); return u * 14 + 50 > W - 64 ? ' is-long' : ''; })(c.toast && c.toast.text), lamps: lamps, lampsCls: s.skinSeq ? (s.skinSeq % 2 ? ' fx-a' : ' fx-b') : '', tint: tint,
       home: home, open: open, att: att, roomCls: fk && /^(feed|mine)-/.test(fk) ? ' has-focus' : '', feed: feed, mine: mine,
       slab: { on: slabOn, cls: slabCls, pool: pool }, pf: pf, pfv: P, err: err, ed: ed, fav: fav, dets: dets, city: city, notify: notify, skin2: skin2,
       recs: recs, rec: rec, reps: reps, rep: rep, help: help, priv: priv, acct: acct, about: about, rules: rules, forms: forms, formCta: c.form.on && c.form.saving ? ' is-busy' : '',
