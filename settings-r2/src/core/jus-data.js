@@ -96,7 +96,7 @@
     profileErrors: { nameEmpty: '请填写称呼', nameLong: '称呼最多10个字', wxEmpty: '请填写微信号', wxChars: '微信号仅填写字母、数字、下划线或短横线', mailFormat: '邮箱格式不正确', mailFree: '请使用工作或学校邮箱', mailUnverified: '请完成邮箱验证，或清空后跳过', codeWrong: '验证码不正确', codeExpired: '验证码已过期，请重新发送', codeResend: '重新发送' },
     emailHint: '改了邮箱要重新验证；验证码只在本机生成，不会真的发邮件。',
     snapshotNote: '已报名的局仍使用报名时填写的资料；新资料只用于之后的报名。',
-    unsaved: { title: '有没保存的修改', body: '离开会丢掉刚才的输入。', keep: '继续编辑', discard: '放弃修改' },
+    unsaved: { title: '修改还没保存', body: '离开会丢掉刚才的输入。', keep: '继续编辑', discard: '放弃修改' },
     draftKept: '草稿未保存，当前内容仍保留，请重试。',
     appealSaved: '申诉说明已保存本机，尚未提交审核服务。', appealFail: '申诉未保存，内容已保留，请重试。',
     supplementFail: '补充未提交，内容已保留，请重试。',
@@ -355,13 +355,15 @@
       var city = JUS.cityByKey(d.prefs.city); var n = d.notify; var onCount = Object.keys(n.prefs).filter(function (k) { return n.prefs[k]; }).length;
       var permLabel = { default: '未申请系统权限', requesting: '请求中', granted: n.serviceConnected ? '已允许通知 · 提醒已连接' : '已允许通知 · 提醒暂未开通', denied: '通知已拒绝', unsupported: '暂不支持通知' }[n.permission];
       var openReports = d.reports.filter(function (r) { return r.status !== 'resolved'; }).length, needMore = d.reports.filter(function (r) { return r.status === 'needs_info'; }).length;
+      /* 待核实 describes the record (still under review after a dispute); attention counts only the ones still waiting for you */
+      var pendingAll = d.records.filter(function (r) { return r.status === 'pending_review'; }).length;
       var pending = d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; }).length;
       return {
         you: d.you, emailLabel: d.you.email ? (d.you.emailVerified ? '已验证' : '未验证') : '未填写', wxLabel: d.you.wx ? d.you.wx : '未填写',
         favCount: d.favorites.length, favLabel: d.favorites.length ? d.favorites.length + ' 个局' : '还没有收藏',
         city: city, cityLabel: city.name, notifyLabel: onCount + '/' + JUS.NOTIFY_CATS.length + ' 类开启 · ' + permLabel, permission: n.permission, serviceConnected: n.serviceConnected,
         skin: JUS.SKINS.filter(function (s) { return s.key === d.appearance.skin; })[0], reduceMotion: d.appearance.reduceMotion, appearanceLabel: JUS.SKINS.filter(function (s) { return s.key === d.appearance.skin; })[0].name + (d.appearance.reduceMotion ? ' · 减少动态' : ''),
-        recordCount: d.records.length, recordLabel: d.records.length ? d.records.length + ' 条事实' + (pending ? ' · ' + pending + ' 条待核实' : '') : JUS.COPY.creditEmpty, pendingRecords: pending,
+        recordCount: d.records.length, recordLabel: d.records.length ? d.records.length + ' 条事实' + (pendingAll ? ' · ' + pendingAll + ' 条待核实' : '') : JUS.COPY.creditEmpty, pendingRecords: pendingAll, pendingToAnswer: pending,
         reportCount: d.reports.length, reportLabel: d.reports.length ? (openReports ? openReports + ' 条处理中' : '均已处理') + (needMore ? ' · ' + needMore + ' 条需补充' : '') : JUS.COPY.reportsEmpty, needMore: needMore,
         feedbackCount: d.feedback.length, attention: needMore + pending,
         sessionLabel: d.session.kind === 'demo' ? JUS.COPY.demoOnly : '', joinedCount: d.joined.filter(function (j) { return j.group !== '历史'; }).length, hostedCount: d.hosted.filter(function (h) { return !h.ended; }).length

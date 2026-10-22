@@ -443,6 +443,7 @@
       /* confirm sheets */
       var sh = s.sheet;
       out.sheet = { on: !!sh, kind: sh ? sh.kind : '', unsaved: !!(sh && sh.kind === 'unsaved'), accountEnd: !!(sh && sh.kind === 'account-end'),
+        guards: sh && sh.kind === 'unsaved' ? (sh.form ? sh.form.split(':')[0] : 'profile') : '', guardsKey: sh && sh.form ? sh.form : '', /* which draft the unsaved sheet protects: 'profile' or a form kind (+ its kind:id key) */
         title: sh ? (sh.kind === 'unsaved' ? JUS.COPY.unsaved.title : '退出本机演示会话？') : '', body: sh ? (sh.kind === 'unsaved' ? JUS.COPY.unsaved.body : '只结束本机的演示会话；已提交的记录、举报与资料都保留，不会发出任何真实请求。') : '',
         keepLabel: JUS.COPY.unsaved.keep, discardLabel: JUS.COPY.unsaved.discard, keep: function () { self.sheetKeep(); }, discard: function () { self.sheetDiscard(); },
         confirmLabel: '退出登录（本地演示）', cancelLabel: '再想想', confirm: function () { self.acctConfirm(); }, cancel: function () { self.closeSheet(); } };
@@ -450,7 +451,7 @@
       var f = s.pf;
       if (f) {
         var emailT = (f.email || '').trim(); var changed = emailT !== f.base.email;
-        out.pf = { on: true, name: f.name, wx: f.wx, email: f.email, code: f.code, err: f.errors || {}, hasErr: !!(f.errors && (f.errors.name || f.errors.wx || f.errors.email || f.errors.code)),
+        out.pf = { on: true, name: f.name, wx: f.wx, email: f.email, code: f.code, err: f.errors || {}, base: f.base || { name: d.you.name, wx: d.you.wx, email: d.you.email }, hasErr: !!(f.errors && (f.errors.name || f.errors.wx || f.errors.email || f.errors.code)),
           dirty: this._pfDirty(f), saving: f.saving, failed: f.failed, saved: f.saved, shake: f.shake || 0, shakeCls: f.shake ? ('shake-' + (f.shake % 2)) : '',
           emailChanged: changed, needCode: changed && !!emailT && f.codeState !== 'verified', codeState: f.codeState, codeNone: f.codeState === 'none', codeSent: f.codeState === 'sent', codeExpired: f.codeState === 'expired', codeVerified: f.codeState === 'verified',
           resendLeft: f.resendLeft, canResend: f.codeState === 'expired' || (f.codeState === 'sent' && f.resendLeft <= 0), resendLabel: f.codeState === 'sent' && f.resendLeft > 0 ? f.resendLeft + ' 秒后可重发' : '重新发送', expiresIn: f.expiresIn,
