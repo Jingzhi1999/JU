@@ -1,8 +1,9 @@
 // Same-flow comparison across concepts (差异检查 3): runs the SAME representative flow in every concept at normal speed —
 // home → open 个人资料 → 编辑 → change 称呼 → 保存 (pending → saved → returns) → back to home — and tiles fixed-time frames,
 // one row per concept, so the spatial organisation of each concept's transition can be compared side by side.
-// Real clicks are used when the concept marks its controls ([data-origin="profile"], [data-act="edit"], [data-act="save"],
-// [data-act="back"]); otherwise the shared controller is driven directly (inst.go / inst.back), and the log says so.
+// Real pointer clicks (at the centre of the concept's marked control: [data-origin="profile"], [data-act="edit"], [data-act="save"],
+// [data-act="back"]) are used; if a control is missing or the click changes nothing, the shared controller is driven directly
+// (inst.go / inst.pfSave / inst.back) and the log says so.
 // Usage: node settings-r2/tools/flow-compare.cjs <outdir> [--codes S01,S02,...] [--final] [--skin cotton] [--speed 1]
 const { chromium } = require('/opt/node-tools/node_modules/playwright'); const fs = require('fs'); const path = require('path'); const { execSync } = require('child_process');
 const outdir = process.argv[2]; const opt = (k, d) => { const i = process.argv.indexOf('--' + k); return i >= 0 ? process.argv[i + 1] : d; }; const flag = (k) => process.argv.indexOf('--' + k) >= 0;
@@ -21,7 +22,15 @@ const outdir = process.argv[2]; const opt = (k, d) => { const i = process.argv.i
     const box = await p.evaluate(c => { const h = document.querySelector('.stage-host[data-code="' + c + '"]'); const r = h.shadowRoot.querySelector('.ju-phone').getBoundingClientRect(); return { x: r.left, y: r.top, width: r.width, height: r.height }; }, code);
     const frames = []; const how = [];
     const shot = async (label) => { const f = path.join(outdir, `${code}-${String(frames.length).padStart(2, '0')}.png`); await p.screenshot({ path: f, clip: box }); frames.push({ f, label }); };
-    const clickOr = async (sel, fallback, label) => { const ok = await E("const el = root.querySelector(a); if (!el) return false; el.click(); return true;", sel); if (!ok) { await E(fallback); how.push(label + ':ctl'); } else how.push(label + ':click'); };
+    /* a real pointer click at the marked element's centre (hit-testing decides which child receives it, as for a person) */
+    const clickOr = async (sel, fallback, label) => {
+      const pt = await E("const el = root.querySelector(a); if (!el) return null; const r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; return { x: r.left + r.width / 2, y: r.top + Math.min(r.height / 2, 48) };", sel);
+      if (!pt) { await E(fallback); how.push(label + ':ctl'); return; }
+      const before = await E("return JSON.stringify([inst.state.nav.stack.map(x => x.s), inst.state.nav.phase, inst.state.pf && inst.state.pf.saving])");
+      await p.mouse.click(pt.x, pt.y); await p.waitForTimeout(30);
+      const after = await E("return JSON.stringify([inst.state.nav.stack.map(x => x.s), inst.state.nav.phase, inst.state.pf && inst.state.pf.saving])");
+      if (before === after) { await E(fallback); how.push(label + ':ctl(click had no effect)'); } else how.push(label + ':click');
+    };
     await shot('首页');
     await clickOr('[data-origin="profile"]', "inst.go('profile')", 'open');
     for (const t of [60, 160, 300]) { await p.waitForTimeout(t === 60 ? 60 : t - (t === 160 ? 60 : 160)); await shot('进入资料 ' + t + 'ms'); }

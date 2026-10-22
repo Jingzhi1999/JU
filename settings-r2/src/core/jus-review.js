@@ -64,13 +64,92 @@
     p.advanceClock = function (ms) { JUS.advance(ms || 5 * 60000); this.setReview({ clockTick: (this.state.review.clockTick || 0) + 1 }); };
     p.expireCode = function () { var self = this; this.setState(function (s) { return { data: JUS.engine.expireEmailCode(s.data, {}).data }; }); };
     p.togglePause = function () { var on = !this.state.review.paused; if (on) this.pauseTimers(); else if (this.state.review.scrub == null) this.resumeTimers(); this.setReview({ paused: on }); };
-    p.scrubTo = function (v) { if (v == null) { this.resumeTimers(); } else { this.pauseTimers(); } this.setReview({ scrub: v == null ? null : +v, paused: v != null }); };
-    p.reset = function (variant) { this.clearTimers(); this._paused = false; var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false }); st.jumpKey = null; if (this.persist) JUS.store.clear(this.concept.code); this.setState(st); };
+    p.scrubTo = function (v) {
+      var self = this;
+      if (v == null) { this._scrubRestore(); this.resumeTimers(); this.setReview({ scrub: null, paused: false }); return; }
+      if (!this._scrubS) {
+        var s = this._scrubS = { seen: [], zeroed: [], replay: false };
+        if (!this._finiteAnims().length && this.lastMotion && !this.isRM()) {
+          /* nothing is moving (the last motion has settled and its animations are gone): replay the last core motion with its own
+             timers running, and freeze it the moment it is under way — the root already carries .paused, so its keyframes sit at 0 */
+          s.replay = true; this.resumeTimers();
+          var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name);
+          setTimeout(function () { if (self._scrubS !== s) return; m.fn.call(self); self._scrubWait(s, Date.now()); }, 60);
+        } else this.pauseTimers();
+      }
+      if (!this._scrubS.replay) setTimeout(function () { self._scrubZero(0); }, 0);
+      this.setReview({ scrub: +v, paused: true });
+    };
+    p._finiteAnims = function () {
+      var app = this.rootRef && this.rootRef.current; if (!app || !app.getAnimations) return [];
+      return app.getAnimations({ subtree: true }).filter(function (a) { try { var t = a.effect.getComputedTiming(); return isFinite(t.endTime) && t.endTime > 0; } catch (e) { return false; } });
+    };
+    /* the replayed motion is "under way" when navigation reaches its moving phase, or when keyframes exist and no timer of the
+       motion is about to fire (a save, for instance, shows its toast first and starts the real travel 220ms later) */
+    p._scrubWait = function (s, t0) {
+      var self = this;
+      var step = function () {
+        if (self._scrubS !== s) return;
+        var nav = self.state.nav, moving = !!(nav && (nav.phase === 'in' || nav.phase === 'exit'));
+        var now = Date.now(), soon = (self._timers || []).some(function (e) { return e.id && e.due - now < 260; });
+        if (moving || (self._finiteAnims().length && !soon) || now - t0 > 1600) { s.replay = false; self.pauseTimers(); self._scrubZero(0); return; }
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    };
+    /* 关键帧 (R2 shared fix): a concept's `.scrub` rules turn the slider into a negative animation-delay, which lands on the intended
+       frame only when the animation's own current time is 0. Paused mid-motion — or already finished and held at its end — the
+       current time is not 0, so every frame came out shifted by however far the motion had run (a finished motion did not move at
+       all). Once the `.scrub` class is on the root, the mixin sets current time to 0 on exactly the animations a `.scrub` rule that
+       sets animation-delay / animation controls (found by matching the concept's own rules, pseudo-elements included), and 释放 puts
+       each back where it was, so the live state carries on unchanged. Only currentTime is written — never play()/pause() — so CSS
+       keeps control of play-state. Concepts that seek in script instead (no such rules) are left alone. */
+    function splitSel(s) { var out = [], d = 0, cur = ''; for (var i = 0; i < s.length; i++) { var ch = s.charAt(i); if (ch === '(') d++; else if (ch === ')') d--; if (ch === ',' && d === 0) { out.push(cur.trim()); cur = ''; } else cur += ch; } if (cur.trim()) out.push(cur.trim()); return out; }
+    p._scrubRules = function (app) {
+      if (this._scrubSel) return this._scrubSel;
+      var list = [], node = app.getRootNode ? app.getRootNode() : null, sheets = [];
+      if (node && node.styleSheets) sheets = sheets.concat([].slice.call(node.styleSheets));
+      if (node && node.adoptedStyleSheets) sheets = sheets.concat([].slice.call(node.adoptedStyleSheets));
+      var walk = function (rules) {
+        [].forEach.call(rules || [], function (r) {
+          if (!r.selectorText) { if (r.cssRules) walk(r.cssRules); return; }
+          if (r.selectorText.indexOf('.scrub') < 0 || !r.style) return;
+          if (!(r.style.animationDelay || r.style.animationName || r.style.getPropertyValue('animation'))) return;
+          splitSel(r.selectorText).forEach(function (part) {
+            if (part.indexOf('.scrub') < 0) return;
+            var m = /::?(before|after)$/.exec(part);
+            list.push({ sel: m ? part.slice(0, m.index) : part, pseudo: m ? '::' + m[1] : null });
+          });
+        });
+      };
+      sheets.forEach(function (sh) { try { walk(sh.cssRules); } catch (e) { } });
+      return (this._scrubSel = list);
+    };
+    p._scrubZero = function (tries) {
+      var s = this._scrubS, app = this.rootRef && this.rootRef.current, self = this;
+      if (!s || !app || !app.getAnimations) return;
+      if (!app.classList.contains('scrub')) { if (tries < 6) requestAnimationFrame(function () { self._scrubZero(tries + 1); }); return; }
+      var rules = this._scrubRules(app); if (!rules.length) return;
+      app.getAnimations({ subtree: true }).forEach(function (a) {
+        if (s.seen.indexOf(a) >= 0) return; s.seen.push(a);
+        var ef = a.effect, el = ef && ef.target; if (!el || !el.matches) return;
+        var ps = ef.pseudoElement ? String(ef.pseudoElement).replace(/^:+/, '::') : null;
+        var hit = rules.some(function (r) { if (r.pseudo !== ps) return false; try { return el.matches(r.sel); } catch (e) { return false; } });
+        if (!hit) return;
+        s.zeroed.push({ a: a, ct: a.currentTime });
+        try { a.currentTime = 0; } catch (e) { }
+      });
+    };
+    p._scrubRestore = function () {
+      var s = this._scrubS; this._scrubS = null; if (!s) return;
+      s.zeroed.forEach(function (z) { try { if (z.ct != null && z.a.effect && z.a.effect.target && z.a.effect.target.isConnected) z.a.currentTime = z.ct; } catch (e) { } });
+    };
+    p.reset = function (variant) { this.clearTimers(); this._paused = false; this._scrubS = null; var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false }); st.jumpKey = null; if (this.persist) JUS.store.clear(this.concept.code); this.setState(st); };
     p.loadVariant = function (key) { this.reset(key); };
     p.replay = function () { if (!this.lastMotion) return; var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name); var self = this; this.after(60, function () { m.fn.call(self); }); };
     p.jumpTo = function (key) {
       var e = JUS.INDEX.filter(function (x) { return x.key === key; })[0]; if (!e) return;
-      this.clearTimers(); this._paused = false;
+      this.clearTimers(); this._paused = false; this._scrubS = null;
       var st = this.initialState(e.variant || 'default');
       st.review = Object.assign({}, this.state.review, { scrub: null, paused: false });
       st.jumpKey = e.key;
