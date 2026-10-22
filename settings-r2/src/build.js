@@ -112,7 +112,9 @@ function splitRow(r) {
 }
 function md(s) {
   const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (t) => esc(t).replace(/&lt;br\s*\/?&gt;/g, '<br>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/(^|[^"'>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  /* code spans are cut out first, so text inside backticks (e.g. `<br>` or `a | b`) stays literal */
+  const prose = (t) => esc(t).replace(/&lt;br\s*\/?&gt;/g, '<br>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/(^|[^"'>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  const inline = (t) => t.split('`').map((seg, k) => k % 2 ? '<code>' + esc(seg) + '</code>' : prose(seg)).join('');
   const lines = s.split('\n'); let out = [], i = 0;
   while (i < lines.length) {
     const l = lines[i];

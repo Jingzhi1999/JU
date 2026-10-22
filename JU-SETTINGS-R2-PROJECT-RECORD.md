@@ -6,12 +6,12 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-22 09:xx UTC（时刻以提交时间为准） |
+| 最后更新 | 2026-10-22 11:xx UTC（时刻以提交时间为准） |
 | 分支 / 提交 | `claude/eager-brahmagupta-ct0owo`（本次更新后推送；`git log -1` 为准） |
 | 任务书 | `settings-r2/brief/R2-PROMPT.txt`（用户上传的 `JU-SETTINGS-FABLO51-REDESIGN-R2-PROMPT.txt` 原文；附带的审查页 `JU-SETTINGS-R2-REVIEW-AND-PROMPT.html` 的逐套诊断已读） |
 | 用户本轮原话（要点） | 旧十套全部重新构思，不选任何一套继续修，不拼接旧构图，不换皮交付；十套各有独立、成熟的艺术指导；共有的 JU 身份与关键行为保持稳定，正文构图 / 空间比例 / 中文排版 / 色彩面积 / 表面层次 / 运动编排充分开放；视觉吸引力是独立且必要的门槛；一次性交付十套完整、可体验、可离线打开的方案；用实际画面和真实操作证明 |
-| 主要交付 | **`JU-SETTINGS-R2-TEN-DIRECTIONS.html`**（仓库根，4.8 MB，单文件离线，字体内嵌；由 `JU_FONTS_CSS=.build/fonts-embed.css node settings-r2/src/build.js` 生成，字体子集由 `settings-r2/tools/embed-fonts.py` 生成）。另有画板版本 `settings-r2/concepts/project/`（官方画布渲染未核对） |
-| 当前步骤 | **十套全部通过并已组装交付文件**：每套经主负责人复看 + 独立复核 + 修复轮（S08 两轮修复 + 二次复核）；交付文件上的全部自动验收通过（`settings-r2/spec/verification.md` §4）；最后一位独立复核者正在交付文件上逐套人工操作（`settings-r2/evidence/final/review.md`）。之后：交给用户审阅。 |
+| 主要交付 | **`JU-SETTINGS-R2-TEN-DIRECTIONS.html`**（仓库根，约 10 MB，单文件离线、字体内嵌：交付文件里出现的全部字符 + GB2312 一级常用字）。生成：`.build/fontenv/bin/python settings-r2/tools/embed-fonts.py .build/fonts-embed.css --common <源文件>` → `JU_FONTS_CSS=.build/fonts-embed.css node settings-r2/src/build.js`。画板版本 `settings-r2/concepts/project/`（官方画布渲染未核对） |
+| 当前步骤 | **已交付，等待用户审阅。** 十套均经主负责人复看 + 独立复核 + 修复轮；交付文件上的全部验收通过，最终独立复核在重新组装的文件上结论「交付文件通过」（`settings-r2/spec/verification.md` §4）。 |
 | 恢复方法 | 交付文件已提交；重跑全部验收：`bash settings-r2/tools/final-check.sh`（结果 `settings-r2/evidence/final/summary.json`）；单套私有构建：`JU_STANDALONE=.build/SNN.html JUS_ONLY=SNN node settings-r2/src/build.js`；各套状态见 §E，验收见 `verification.md` |
 | 用户已认可 | **无**（截至本文，用户未审阅本阶段任何内容） |
 
@@ -44,6 +44,10 @@
 - 07:0x–08:0x UTC：S01、S06、S07、S08、S09 修复轮完成；S08 二次复核：视觉 blocker 已解，但栏名被屏幕边切断与「详情页按页面记栏位」未过，第二轮修复后主负责人复看通过——**十套全部通过**。最终差异矩阵 `settings-r2/spec/matrix.md`（按建成结果写八个字段、仍可能失败的判断、最接近的几对）；限制文档更新。
 - 08:3x UTC：用重新生成的字体子集（1047 字符）组装交付文件 `JU-SETTINGS-R2-TEN-DIRECTIONS.html`（4.8 MB），`final-check.sh` 在交付文件上全部通过（`verification.md` §4）。
 - 09:0x UTC：容器重启，最后一位交付文件复核者中断；已重新派出（`settings-r2/evidence/final/review.md`）。
+
+- 09:1x–10:0x UTC：最后一位复核者在交付文件上离线逐套人工操作：0 blocker、5 major（S04 提示条压标题；字体子集只有 910 个汉字，输入的称呼换字体；对比视图直接打开时无状态、430 被切、隐去名称无效；方案页在 1440×789 笔记本上放不下；附录内嵌的验收记录过期、表格被竖线拆坏），另有若干 minor。
+- 10:0x–10:5x UTC：S04 / S05 / S06 / S09 由各自构建者修复（提示条带、根切换交叉淡化、关键帧终态）；外壳、附录、字体由主负责人修复（构建写入状态索引、按内容定宽、隐去面板名称、回到顶部 + 「适应窗口高度」、pushState、总览换行、表格拆分与 `<br>`、GB2312 一级常用字）。重新组装后 `final-check.sh` 全部通过。
+- 11:0x UTC：同一位复核者在重新组装的文件上复核：**「交付文件通过」**，5 个 major 全部修复；新发现的 1 个 minor（附录里代码中的 `<br>` 被当成换行）已修并重新组装。交付给用户；删除自动续跑定时任务。
 
 ## B. 输入与基线（实际核对）
 
@@ -94,6 +98,6 @@
 - 尚未验证：真机与真实软键盘、真实系统设置、帧率；用户机器上双击打开；与 V27 / R8 真实画面的并排衔接（两份基准文件未上传，见 `settings-r2/spec/limits.md`）。
 
 ## G. 下一步
-1. 收到最后一位独立复核者的交付文件结论，若有 blocker 立即修复并重建、重跑 `final-check.sh`。
-2. 交给用户审阅（用户尚未认可任何一套）；按用户意见进入下一轮。
-3. 项目完成后删除每小时的自动续跑定时任务（「JU 设置 R2 · 额度重置后自动续跑」）。
+1. 用户审阅交付文件（用户尚未认可任何一套）；按用户意见进入下一轮（可整套推翻、合并或局部修改）。
+2. 若要继续：各套源码在 `settings-r2/concepts/src/`，共享核心在 `settings-r2/src/core/`；改完后按 §A 的命令重建并 `bash settings-r2/tools/final-check.sh`。
+3. 每小时的自动续跑定时任务已在交付时删除。
