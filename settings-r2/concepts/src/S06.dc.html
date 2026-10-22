@@ -85,6 +85,7 @@ body{margin:0}
 .app.s06-fv .s06-b.is-dn .s06-v.s06-att{background-color:rgba(69,83,190,calc(.09 * (1 - var(--s06-p))))}
 .app.s06-fv .s06-b.is-dn .s06-ix span.on{background-size:100% calc(2px * (1 - var(--s06-p)))}
 .s06-nb{white-space:nowrap}
+.s06-ka{word-break:keep-all}
 .s06-end{font-style:normal;margin-right:.32em}
 .s06-v{font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer;outline:none;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;padding:0 .1em 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px;transition:background-color calc(120ms * var(--k)) ease}
 .s06-v.s06-long{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
@@ -370,13 +371,13 @@ body{margin:0}
                 <!-- 我的记录: one fact per line, the kind opens it -->
                 <sc-if value="{{v.band.records}}"><div class="s06-bx {{v.bxDir}}">
                   <sc-if value="{{c.recs.empty}}"><p class="s06-say s06-big">{{c.recs.emptyText}}。</p></sc-if>
-                  <sc-for list="{{v.rc.groups}}" as="g" hint-placeholder-count="3"><p class="s06-said s06-grp">{{g.title}} · {{g.count}} 条</p><sc-for list="{{g.items}}" as="r" hint-placeholder-count="2"><p class="s06-item" data-rid="{{r.id}}"><span class="s06-v{{r.attCls}}" role="button" tabindex="0" data-origin="rec-{{r.id}}" onClick="{{r.open}}" onKeyDown="{{v.key}}">{{r.label}}</span>{{r.rest}}</p></sc-for></sc-for>
+                  <sc-for list="{{v.rc.groups}}" as="g" hint-placeholder-count="3"><p class="s06-said s06-grp">{{g.title}} · {{g.count}} 条</p><sc-for list="{{g.items}}" as="r" hint-placeholder-count="2"><p class="s06-item" data-rid="{{r.id}}"><span class="s06-v{{r.attCls}}" role="button" tabindex="0" data-origin="rec-{{r.id}}" onClick="{{r.open}}" onKeyDown="{{v.key}}">{{r.label}}</span>{{r.rest}}<span class="{{r.stCls}}">{{r.st}}</span>。</p></sc-for></sc-for>
                   <p class="s06-gloss">{{c.recs.help}}</p>
                   <p class="s06-gloss">{{c.recs.quotaRule}}</p><p class="s06-gloss" style="margin-top:6px">{{c.recs.quotaNo}}</p>
                 </div></sc-if>
                 <!-- 记录详情 -->
                 <sc-if value="{{v.band.recDetail}}"><div class="s06-bx {{v.bxDir}}">
-                  <p class="s06-say s06-big">这是一条 <b>{{c.rec.label}}</b>，<span class="{{v.rd.stCls}}">{{c.rec.statusLabel}}</span>。</p>
+                  <p class="s06-say s06-big">这是一条 <b>{{c.rec.label}}</b>，<span class="{{v.rd.stCls}}">{{v.rd.st}}</span>。</p>
                   <p class="s06-said">{{v.rd.sentence}}</p>
                   <p class="s06-gloss" style="margin:0 0 12px">{{v.rd.meta}}</p>
                   <sc-for list="{{c.rec.supplementRows}}" as="x" hint-placeholder-count="1"><p class="s06-quote">{{x.text}}<span>补充 · {{x.atText}}{{x.matLine}}</span></p></sc-for>
@@ -895,9 +896,9 @@ class Component extends DCLogic {
       post: '——整个画面会先换给你看。', line: '：' + (skl.filter(function (x) { return x.shown; })[0] || {}).line + '。' };
     v.rm = { offCls: '', word: c.skin.rmSys ? '跟随系统减少' : c.skin.rmUser ? '已减少' : '正常', line: (c.skin.rmSys || c.skin.rmUser) ? c.skin.rmLine : '' };
     /* records: one fact per line, grouped by kind */
-    v.rc = { groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, items: g.rows.map(function (r) { var att2 = r.pendingReview && !r.appeals.length; return { id: r.id, label: r.label, open: r.open, attCls: att2 ? ' s06-att' : '', rest: ' · ' + r.title + '，' + r.when.md + '，' + r.statusLabel + '。' }; }) }; }) };
+    v.rc = { groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, items: g.rows.map(function (r) { var att2 = r.pendingReview && !r.appeals.length; return { id: r.id, label: r.label, open: r.open, attCls: att2 ? ' s06-att' : '', rest: ' · ' + r.title + '，' + r.when.md + '，', st: r.statusLabel.replace(/ · /g, '\u00a0· '), stCls: Array.from(r.statusLabel).length <= 14 ? 's06-nb' : 's06-ka' }; }) }; }) };
     var rec = c.rec;
-    v.rd = rec ? { stCls: rec.pendingReview ? 's06-blue' : '', sentence: rec.title + '，' + rec.when.zh.replace(' · ', ' ') + '，在 ' + rec.place.full + '，局主 ' + rec.host + '。', meta: '记于 ' + rec.atText + (rec.quotaLabel ? '；' + rec.quotaLabel : '') + '。' } : {};
+    v.rd = rec ? { stCls: (rec.pendingReview ? 's06-blue ' : '') + (Array.from(rec.statusLabel).length <= 14 ? 's06-nb' : 's06-ka'), st: rec.statusLabel.replace(/ · /g, '\u00a0· '), sentence: rec.title + '，' + rec.when.zh.replace(' · ', ' ') + '，在 ' + rec.place.full + '，局主 ' + rec.host + '。', meta: '记于 ' + rec.atText + (rec.quotaLabel ? '；' + rec.quotaLabel : '') + '。' } : {};
     [rec, c.rep].forEach(function (o) { if (o) o.supplementRows.forEach(function (x) { x.matLine = x.materialsText ? ' · 材料 ' + x.materialsText : ''; }); });
     /* forms: one sentence names the object */
     var fm = c.form && c.form.on ? c.form : null; var rep = c.rep;

@@ -22,7 +22,7 @@ body{margin:0}
    with the three lamps gathered behind it; its safe choice is lit by them, the destructive one stays dim. */
 .app.s09{position:absolute;inset:0;overflow:hidden;background:#0E1016;color:#fff;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
   --w70:rgba(255,255,255,.72);--w80:rgba(255,255,255,.82);--w92:rgba(255,255,255,.93);--ink:#14161F;--nav-h:64px;
-  --ju-lit:#7685FF;--err:#FF8FA2;--err-line:#E8566F;--ok:#55DBB0;--slab-top:48px;--slab-in:12px;--gut:24px;
+  --ju-lit:#7685FF;--err:#FF8FA2;--err-line:#E8566F;--ok:#55DBB0;--slab-top:48px;--slab-in:16px;--gut:24px;
   --ease-out:cubic-bezier(.22,1,.36,1);--ease-rise:cubic-bezier(.32,.72,0,1)}
 /* environments: lamp cores (l0 l1 l2, "r g b"), optional rims (r0 r1 r2) and the value tints they cast (t0 t1 t2) */
 .app.s09[data-skin=cotton]{--l0:255 112 174;--l1:156 132 255;--l2:70 204 236;--t0:#FFB7D8;--t1:#D0C6FF;--t2:#A2E7F6}
@@ -129,6 +129,11 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
 @keyframes s09-sink{from{transform:translateY(0)}to{transform:translateY(calc(100% + 60px))}}
 /* the slab's reading pool: follows focus inside the slab (keyframes from where it is to where focus went); its wrapper takes the skin change */
 .s09-fpool{position:absolute;inset:0;z-index:0;pointer-events:none}
+/* the second, dimmer light low in the board: placed by page kind (lists: behind the date column; details: behind the facts;
+   long text: a floor glow; forms: by the action; settings / profile: low at one side), so the lower half is never plain ink */
+.s09-llamp{position:absolute;left:0;top:0;width:var(--lw,460px);height:var(--lh,420px);margin:calc(var(--lh,420px) / -2) 0 0 calc(var(--lw,460px) / -2);pointer-events:none;
+  background:radial-gradient(closest-side,rgb(var(--lc2) / var(--la,.3)) 0%,rgb(var(--lc2) / calc(var(--la,.3) * .82)) 34%,rgb(var(--lr2) / calc(var(--la,.3) * .38)) 66%,rgb(var(--lr2) / 0) 100%);
+  transform:translate3d(var(--lx,0),var(--ly,0),0);transition:transform calc(620ms * var(--k)) var(--ease-out),opacity calc(420ms * var(--k)) ease}
 .s09-fpool.fx-a{animation:s09-skin-a calc(650ms * var(--k)) var(--ease-out) both}
 .s09-fpool.fx-b{animation:s09-skin-b calc(650ms * var(--k)) var(--ease-out) both}
 .s09-flamp{position:absolute;left:0;top:0;width:460px;height:420px;margin:-210px 0 0 -230px;z-index:0;pointer-events:none;will-change:transform;
@@ -490,12 +495,12 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
       <!-- ================= the ink slab: every page that is not a room ================= -->
       <sc-if value="{{v.slab.on}}" hint-placeholder-val="{{false}}">
         <div class="s09-slab{{v.slab.cls}}">
-          <div class="s09-fpool{{v.lampsCls}}" aria-hidden="true"><div class="s09-flamp" style="{{v.slab.pool}}"></div></div>
+          <div class="s09-fpool{{v.lampsCls}}" aria-hidden="true"><div class="s09-llamp" style="{{v.slab.low}}"></div><div class="s09-flamp" style="{{v.slab.pool}}"></div></div>
 
           <!-- 个人资料 -->
           <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.profile}}" data-surface="profile">
-              <div class="s09-sc s09-sc-slab" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="profile" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-pf s09-fill">
                   <button type="button" class="s09-st s09-st-hit" data-lamp data-origin="pf-name" onClick="{{v.pf.editName}}">
                     <span class="s09-st-l">称呼</span>
@@ -528,7 +533,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 编辑资料 -->
           <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
-              <div class="s09-sc s09-sc-slab s09-sc-form" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab s09-sc-form" data-scroller="profile-edit" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-form s09-pfe s09-fill{{v.ed.formCls}}">
                   <div class="s09-fld{{v.ed.name}}" data-fw="name" data-lamp>
                     <label class="s09-fld-l" for="s09-f-name"><span>称呼</span><b>{{v.pfv.nameCount}}</b></label>
@@ -581,7 +586,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 收藏的局 -->
           <sc-if value="{{c.nav.on.favorites}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.favorites}}" data-surface="favorites">
-              <div class="s09-sc s09-sc-slab" data-scroller="favorites" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="favorites" onScroll="{{v.onSlabScroll}}">
                 <sc-if value="{{c.fav.empty}}" hint-placeholder-val="{{false}}">
                   <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">收藏的局</span><span class="s09-hero">0 个局</span><span class="s09-say">{{v.fav.emptySay}}</span></div>
                   <button type="button" class="s09-ghost" data-act="find" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button>
@@ -612,7 +617,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 活动详情 (收藏 / 找局) -->
           <sc-for list="{{v.dets}}" as="e" hint-placeholder-count="0">
             <section class="s09-pg {{e.cls}}" data-surface="{{e.s}}">
-              <div class="s09-sc s09-sc-slab" data-scroller="{{e.s}}" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="{{e.s}}" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp><span class="s09-st-l">{{e.kicker}}</span><span class="s09-big">{{e.title}}</span></div>
                 <div class="s09-nums"><sc-for list="{{e.nums}}" as="n" hint-placeholder-count="3"><div><span class="s09-st-l">{{n.l}}</span><b>{{n.v}}</b></div></sc-for></div>
                 <div class="s09-facts"><sc-for list="{{e.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
@@ -633,7 +638,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 默认浏览城市 -->
           <sc-if value="{{c.nav.on.city}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.city}}" data-surface="city">
-              <div class="s09-sc s09-sc-slab" data-scroller="city" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="city" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">找局默认显示</span><span class="s09-hero{{v.city.flash}}">{{c.city.cur.name}}</span><span class="s09-say">{{c.city.scope}}</span></div>
                 <div class="s09-fld{{v.ed.search}} s09-gap" data-fw="search">
                   <label class="s09-fld-l" for="s09-f-search"><span>搜索城市</span></label>
@@ -654,7 +659,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 通知与提醒 -->
           <sc-if value="{{c.nav.on.notify}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.notify}}" data-surface="notify">
-              <div class="s09-sc s09-sc-slab" data-scroller="notify" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="notify" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp><span class="s09-st-l">能不能送达</span><span class="s09-sent">{{c.notify.deliverLabel}}</span></div>
                 <div class="s09-stack s09-gap">
                   <div class="s09-st" style="--tv:var(--t1)"><span class="s09-st-l">系统权限</span><span class="s09-st-v">{{v.notify.perm}}</span><span class="s09-say">{{c.notify.permCopy.body}}</span>
@@ -677,7 +682,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 外观与动态 -->
           <sc-if value="{{c.nav.on.appearance}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.appearance}}" data-surface="appearance">
-              <div class="s09-sc s09-sc-slab{{v.skin2.scCls}}" data-scroller="appearance" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab{{v.skin2.scCls}}" data-scroller="appearance" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{v.skin2.lead}}</span><span class="s09-hero">{{c.skin.shownName}}</span><span class="s09-say">{{v.skin2.line}}</span></div>
                 <div class="s09-list s09-gap"><sc-for list="{{v.skin2.list}}" as="x" hint-placeholder-count="3"><button type="button" class="s09-row s09-envrow" data-act="preview" data-rid="{{x.key}}" aria-pressed="{{x.pressed}}" onClick="{{x.go}}"><span class="s09-gly s09-gly-{{x.key}}" aria-hidden="true"><i></i><i></i><i></i></span><span class="s09-row-b"><span class="s09-row-t">{{x.name}}<small>{{x.en}}</small></span><span class="s09-row-m">{{x.line}}</span></span><span class="s09-row-tag">{{x.tag}}</span></button></sc-for></div>
                 <button type="button" class="s09-sw s09-gap" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" onClick="{{c.skin.rmToggle}}"><span class="s09-sw-b"><span class="s09-sw-t">减少动态</span><span class="s09-sw-s">{{c.skin.rmLine}}</span></span><span class="s09-tog" aria-hidden="true"></span></button>
@@ -694,7 +699,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 我的记录 -->
           <sc-if value="{{c.nav.on.records}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.records}}" data-surface="records">
-              <div class="s09-sc s09-sc-slab" data-scroller="records" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="records" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t2)"><span class="s09-st-l">我的记录</span><span class="{{v.recs.bigCls}}">{{v.recs.value}}</span><span class="s09-say">{{c.recs.help}}</span></div>
                 <sc-for list="{{v.recs.groups}}" as="g" hint-placeholder-count="3">
                   <p class="s09-gl">{{g.title}} · {{g.count}}</p>
@@ -714,7 +719,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 记录详情 -->
           <sc-if value="{{v.rec.on}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.record-detail}}" data-surface="record-detail">
-              <div class="s09-sc s09-sc-slab" data-scroller="record-detail" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="record-detail" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{v.rec.label}}</span><span class="s09-hero">{{v.rec.head}}</span><sc-if value="{{v.rec.tail}}" hint-placeholder-val="{{true}}"><span class="s09-st-s">{{v.rec.tail}}</span></sc-if></div>
                 <div class="s09-nums"><sc-for list="{{v.rec.nums}}" as="n" hint-placeholder-count="3"><div><span class="s09-st-l">{{n.l}}</span><b>{{n.v}}</b></div></sc-for></div>
                 <div class="s09-facts"><sc-for list="{{v.rec.facts}}" as="f" hint-placeholder-count="5"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
@@ -738,7 +743,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 我的举报 -->
           <sc-if value="{{c.nav.on.reports}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.reports}}" data-surface="reports">
-              <div class="s09-sc s09-sc-slab" data-scroller="reports" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="reports" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">我的举报</span><span class="{{v.reps.bigCls}}">{{v.reps.value}}</span><span class="s09-say">{{c.reps.note}}</span></div>
                 <div class="s09-list s09-gap"><sc-for list="{{v.reps.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s09-dr" data-rid="{{r.id}}" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s09-dt" style="--tv:{{r.dc}}"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s09-row-b"><span class="s09-row-t">{{r.title}}</span><span class="s09-row-m" style="--rc:{{r.rc}}"><b>{{r.status}}</b> · {{r.meta}}</span></span><span class="s09-chev" aria-hidden="true">›</span></button></sc-for></div>
                 <p class="s09-note">{{c.reps.mock}}</p>
@@ -754,7 +759,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 举报详情 -->
           <sc-if value="{{v.rep.on}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.report-detail}}" data-surface="report-detail">
-              <div class="s09-sc s09-sc-slab" data-scroller="report-detail" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="report-detail" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">{{v.rep.title}}</span><span class="s09-hero">{{v.rep.status}}</span></div>
                 <sc-if value="{{v.rep.needs}}" hint-placeholder-val="{{true}}"><p class="s09-flag is-att">{{v.rep.needsText}}</p></sc-if>
                 <div class="s09-facts"><sc-for list="{{v.rep.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
@@ -777,7 +782,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 帮助与反馈 -->
           <sc-if value="{{c.nav.on.help}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.help}}" data-surface="help">
-              <div class="s09-sc s09-sc-slab" data-scroller="help" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="help" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">参加约定</span><span class="s09-hero">{{v.help.value}}</span></div>
                 <div class="s09-facts"><sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3"><div class="s09-wide"><span class="s09-st-l">{{g.name}}</span><span class="s09-fv">{{g.line}}</span></div></sc-for></div>
                 <button type="button" class="s09-link s09-gap" data-origin="help-rules" onClick="{{v.help.goRules}}">读全部约定</button>
@@ -801,7 +806,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 隐私与资料可见性 -->
           <sc-if value="{{c.nav.on.privacy}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.privacy}}" data-surface="privacy">
-              <div class="s09-sc s09-sc-slab" data-scroller="privacy" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="privacy" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t1)"><span class="s09-st-l">{{c.privacy.lead}}</span><span class="s09-hero">{{v.priv.value}}</span></div>
                 <ul class="s09-dots"><sc-for list="{{c.privacy.general}}" as="g" hint-placeholder-count="4"><li>{{g}}</li></sc-for></ul>
                 <p class="s09-gl">按你参加和发起的局</p>
@@ -819,7 +824,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 账户与本机数据 -->
           <sc-if value="{{c.nav.on.account}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.account}}" data-surface="account">
-              <div class="s09-sc s09-sc-slab" data-scroller="account" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="account" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">本机会话</span><span class="s09-big">{{v.acct.big}}</span><span class="s09-say">{{v.acct.demo}}</span></div>
                 <div class="s09-facts"><sc-for list="{{v.acct.facts}}" as="f" hint-placeholder-count="2"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <p class="s09-say s09-gap">{{c.acct.storageNote}}</p>
@@ -840,7 +845,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 关于与规则 -->
           <sc-if value="{{c.nav.on.about}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.about}}" data-surface="about">
-              <div class="s09-sc s09-sc-slab" data-scroller="about" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="about" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{v.about.sub}}</span><span class="s09-hero">{{v.about.big}}</span><span class="s09-say">{{c.about.demo}}</span></div>
                 <div class="s09-facts"><sc-for list="{{v.about.facts}}" as="f" hint-placeholder-count="4"><div class="{{f.cls}}"><span class="s09-st-l">{{f.l}}</span><span class="s09-fv">{{f.v}}</span></div></sc-for></div>
                 <p class="s09-say s09-gap">{{c.about.policyNote}}</p>
@@ -857,7 +862,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- 参加约定全文 -->
           <sc-if value="{{c.nav.on.rules}}" hint-placeholder-val="{{false}}">
             <section class="s09-pg {{c.nav.cls.rules}}" data-surface="rules">
-              <div class="s09-sc s09-sc-slab" data-scroller="rules" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="rules" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-lead" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{c.about.rulesVersion}}</span><span class="s09-hero">{{v.help.value}}</span><span class="s09-say">{{v.rules.note}}</span></div>
                 <sc-for list="{{c.help.groups}}" as="g" hint-placeholder-count="3">
                   <p class="s09-rg" style="--tv:var(--t1)">{{g.name}}</p><p class="s09-say">{{g.line}}</p>
@@ -875,7 +880,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
           <!-- text forms: 补充 / 异议 / 申诉 / 举报补充 / 反馈 / 举报 -->
           <sc-for list="{{v.forms}}" as="f" hint-placeholder-count="0">
             <section class="s09-pg {{f.cls}}" data-surface="{{f.s}}">
-              <div class="s09-sc s09-sc-slab s09-sc-form" data-scroller="{{f.s}}" onScroll="{{c.nav.onScroll}}">
+              <div class="s09-sc s09-sc-slab s09-sc-form" data-scroller="{{f.s}}" onScroll="{{v.onSlabScroll}}">
                 <div class="s09-form s09-fill{{v.ed.formCls}}">
                   <div class="s09-lead"><span class="s09-st-l">{{f.kicker}}</span><span class="s09-st-v" style="--tv:var(--t0)">{{f.subj}}</span><sc-if value="{{f.sub}}" hint-placeholder-val="{{true}}"><span class="s09-st-s">{{f.sub}}</span></sc-if></div>
                   <sc-if value="{{c.form.needWho}}" hint-placeholder-val="{{false}}">
@@ -936,7 +941,7 @@ button.s09-row:active .s09-row-t,.s09-row-b:active .s09-row-t{opacity:.7}
 /* @core */
 /* ---------- S09 geometry: where the three lamps rest in each environment (x = share of width, y = px from top, or share of height when <= 1.5) ---------- */
 var S09 = {
-  TOP: 48, IN: 12, EASE: 'cubic-bezier(.22,1,.36,1)',
+  TOP: 48, IN: 16, EASE: 'cubic-bezier(.22,1,.36,1)',
   REST: {
     cotton: [{ x: .40, y: 222, d: 460, a: .45 }, { x: .94, y: 486, d: 400, a: .36 }, { x: .06, y: 690, d: 360, a: .32 }],
     halo:   [{ x: .90, y: 158, d: 460, a: .45 }, { x: .66, y: 590, d: 400, a: .38 }, { x: .02, y: 330, d: 420, a: .42 }],
@@ -949,7 +954,12 @@ var S09 = {
     sunset: { fav: 2, city: 2, notify: 0, appearance: 1, records: 0, reports: 1, p1: 1, p2: 2 }
   },
   FORMS: { 'profile-edit': 1, 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'report-supplement': 1, 'feedback': 1, 'seam-report': 1 },
-  ROOMS: { 'home': 1, 'seam-feed': 1, 'seam-mine': 1 }
+  ROOMS: { 'home': 1, 'seam-feed': 1, 'seam-mine': 1 },
+  /* board page kinds: where the second, dimmer light sits (x, y as shares of the board; lamp index; size; peak alpha) */
+  KIND: { 'profile': 'profile', 'profile-edit': 'form', 'record-supplement': 'form', 'record-dispute': 'form', 'record-appeal': 'form', 'report-supplement': 'form', 'feedback': 'form', 'seam-report': 'form',
+    'favorites': 'list', 'records': 'list', 'reports': 'list', 'favorite-detail': 'detail', 'seam-feed-detail': 'detail', 'record-detail': 'detail', 'report-detail': 'detail',
+    'rules': 'text', 'help': 'text', 'privacy': 'text', 'about': 'text', 'notify': 'set', 'appearance': 'set', 'city': 'set', 'account': 'set' },
+  LOW: { list: [.13, .70, 2, 460, 440, .30], detail: [.86, .64, 1, 460, 420, .28], text: [.5, 1.0, 2, 560, 380, .32], form: [.5, .9, 1, 520, 360, .26], set: [.08, .74, 1, 460, 420, .28], profile: [.92, .76, 2, 460, 420, .28] }
 };
 class Component extends DCLogic {
   constructor(p) {
@@ -970,7 +980,7 @@ class Component extends DCLogic {
       var r = L.rect, cx = cl(r.x + Math.min(r.w, 260) / 2, 30, W - 30), cy = r.y + Math.min(r.h, 120) / 2;
       return [{ x: cx, y: cy, s: 1, o: 1 }, { x: cl(cx + W * .46, W * .55, W * 1.06), y: cy + 84, s: .94, o: 1 }, { x: cl(cx - W * .42, -W * .08, W * .45), y: cy + 150, s: .94, o: 1 }];
     }
-    if (mode === 'gather') return [{ x: W * .46, y: top + 30, s: 1, o: 1 }, { x: -W * .02, y: H * .40, s: .96, o: 1 }, { x: W * 1.02, y: H * .80, s: .96, o: 1 }];
+    if (mode === 'gather') return [{ x: W * .46, y: top + 30, s: 1, o: 1 }, { x: W * .01, y: H * .58, s: .96, o: 1 }, { x: W * .99, y: H * .88, s: .96, o: 1 }];
     if (mode === 'field' && L.fy != null) return [{ x: W * .46, y: top + 20, s: .9, o: .42 }, { x: -W * .02, y: L.fy, s: .96, o: .8 }, { x: W * 1.02, y: L.fy + 30, s: .96, o: .8 }];
     return R.map(function (l) { return { x: l.x * W, y: l.y <= 1.5 ? l.y * H : l.y, s: 1, o: 1 }; });
   }
@@ -1027,6 +1037,23 @@ class Component extends DCLogic {
     var el = ev && ev.currentTarget && ev.currentTarget.closest ? ev.currentTarget.closest('[data-origin]') : null; if (!el || !open) { if (open) open(ev); return; }
     var key = el.getAttribute('data-origin'); var self = this;
     this.motion('follow', function () { var r = self.rootRef.current; var e2 = r && r.querySelector('[data-origin="' + key + '"]'); if (!e2) return; self.placeFlamp(e2, { dur: 300 }); open({ currentTarget: e2 }); });
+  }
+  /* the reading light follows the eye down a long page: when scrolling settles it moves to the row nearest the reading line
+     (36% down the board); back at the top it returns to the page's anchor. Forms keep it on the focused field. */
+  scrollLight(ev) {
+    var sc = ev && ev.currentTarget; if (!sc || !sc.closest) return; var self = this;
+    this.afterKey('sl', 140, function () {
+      var t = self.state.nav; if (self._poolHold || t.phase !== 'idle') return;
+      var pg = sc.closest('.s09-pg'); if (!pg || !pg.classList.contains('is-top')) return;
+      if (S09.FORMS[t.stack[t.stack.length - 1].s] && self.state.focusField) return;
+      if (sc.scrollTop < 24) { self.placeFlamp(null, { dur: 520 }); return; }
+      var pr = pg.getBoundingClientRect(), line = pr.top + pr.height * .36, best = null, bd = 1e9;
+      Array.prototype.forEach.call(sc.querySelectorAll('[data-lamp], .s09-dr, .s09-row, .s09-st, .s09-rule, .s09-cell, .s09-fld, .s09-sw'), function (el) {
+        var r = el.getBoundingClientRect(); if (r.bottom < pr.top + 110 || r.top > pr.bottom - 40 || r.height > pr.height * .6) return;
+        var dd = Math.abs(r.top + Math.min(r.height, 120) / 2 - line); if (dd < bd) { bd = dd; best = el; }
+      });
+      if (best) self.placeFlamp(best, { dur: 520 });
+    });
   }
   poolReturn(entry) {
     var self = this; if (!entry || !entry.from) return;
@@ -1152,6 +1179,8 @@ class Component extends DCLogic {
       else slabCls = ' sl-up';
       if (depth >= 3) slabCls += ' deep';
     }
+    var topS = s.nav.stack[s.nav.stack.length - 1].s, L2 = S09.LOW[S09.KIND[topS] || 'set'], SW = W - 2 * S09.IN, SH = H - S09.TOP - S09.IN;
+    var low = '--lx:' + Math.round(SW * L2[0]) + 'px;--ly:' + Math.round(SH * L2[1]) + 'px;--lw:' + L2[3] + 'px;--lh:' + L2[4] + 'px;--la:' + L2[5] + ';--lc2:var(--l' + L2[2] + ');--lr2:var(--r' + L2[2] + ',var(--l' + L2[2] + '))';
     var kind = d.you.emailKind === 'school' ? '学校邮箱' : d.you.emailKind === 'work' ? '工作邮箱' : '';
     var em = function (t) { return String(t || '').replace('@', '\u200b@'); };
     var pf = { email: you.email ? em(you.email) : '未填写', emailSub: you.email ? [you.emailLabel, you.domain, kind].filter(Boolean).join(' · ') : '',
@@ -1223,7 +1252,7 @@ class Component extends DCLogic {
       toastText: nb(c.toast && c.toast.text),
       toastCls: (function (t) { var u = 0; String(t || '').split('').forEach(function (ch) { u += /[\u2e80-\u9fff\uff00-\uffef]/.test(ch) ? 1 : .56; }); return u * 14 + 50 > W - 64 ? ' is-long' : ''; })(c.toast && c.toast.text), lamps: lamps, lampsCls: s.skinSeq ? (s.skinSeq % 2 ? ' fx-a' : ' fx-b') : '', tint: tint,
       home: home, open: open, att: att, roomCls: fk && /^(feed|mine)-/.test(fk) ? ' has-focus' : '', feed: feed, mine: mine,
-      slab: { on: slabOn, cls: slabCls, pool: pool }, pf: pf, pfv: P, err: err, ed: ed, fav: fav, dets: dets, city: city, notify: notify, skin2: skin2,
+      slab: { on: slabOn, cls: slabCls, pool: pool, low: low }, onSlabScroll: function (ev) { c.nav.onScroll(ev); self.scrollLight(ev); }, pf: pf, pfv: P, err: err, ed: ed, fav: fav, dets: dets, city: city, notify: notify, skin2: skin2,
       recs: recs, rec: rec, reps: reps, rep: rep, help: help, priv: priv, acct: acct, about: about, rules: rules, forms: forms, formCta: c.form.on && c.form.saving ? ' is-busy' : '',
       onFocus: function (ev) { self.fieldFocus(ev); }, onBlur: function () { self.setState({ focusField: null }); },
       sheetDismiss: function () { if (c.sheet.unsaved) c.sheet.keep(); else c.sheet.cancel(); } };

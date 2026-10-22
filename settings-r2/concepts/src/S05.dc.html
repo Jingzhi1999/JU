@@ -364,8 +364,9 @@ body{margin:0}
 
 /* ---- edit: centred big-type inputs, centred underline that opens from the axis ---- */
 .s05-f{position:relative;margin:0 0 20px;isolation:isolate}
-.s05-f::before{content:"";position:absolute;left:50%;top:50%;z-index:-1;width:210px;height:210px;margin:-105px 0 0 -105px;border-radius:50%;background:var(--s5-g);opacity:0;transform:scale(.55);transition:opacity calc(240ms * var(--k,1)) ease,transform calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);pointer-events:none}
-.s05-f.ta::before{width:250px;height:250px;margin:-125px 0 0 -125px}
+.s05-f::before{content:"";position:absolute;left:50%;top:50%;z-index:-1;width:196px;height:196px;margin:-98px 0 0 -98px;border-radius:50%;background:var(--s5-g);-webkit-mask:radial-gradient(50% 50% at 50% 50%,#000 0 58%,rgba(0,0,0,.45) 82%,rgba(0,0,0,0) 100%);mask:radial-gradient(50% 50% at 50% 50%,#000 0 58%,rgba(0,0,0,.45) 82%,rgba(0,0,0,0) 100%);opacity:0;transform:scale(.55);transition:opacity calc(240ms * var(--k,1)) ease,transform calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);pointer-events:none}
+.s05-f.ta::before{width:200px;height:200px;margin:-100px 0 0 -100px}
+.s05-f.ta .s05-ta{max-width:300px;margin-left:auto;margin-right:auto}
 .s05-wr:not(:focus-within) .s05-f.lead::before,.s05-wr .s05-f:focus-within::before{opacity:.95;transform:none}
 .s05-wr .s05-f.first{margin-top:30px}
 .s05-cnt{font-style:normal;letter-spacing:0;margin-left:2px}
@@ -379,6 +380,7 @@ body{margin:0}
 .s05-in.s{font-size:17px}
 .s05-in.mail.m{font-size:17px}
 .s05-in.mail.s{font-size:15px}
+.s05-in.xs,.s05-in.mail.xs{font-size:13px}
 .s05-in.code{font-size:26px;letter-spacing:.32em;text-indent:.32em;font-feature-settings:"tnum"}
 .s05-in.q{font-size:20px;line-height:30px}
 .s05-in::placeholder{color:rgba(83,91,112,.62);font-weight:400;font-size:18px;letter-spacing:0}
@@ -1004,8 +1006,8 @@ body{margin:0}
                 <span class="s05-v-l">谁能看见你</span>
                 <sc-if value="{{s5.privN}}" hint-placeholder-val="{{true}}"><span class="s05-big"><b class="s05-num">{{s5.privN}}</b><span class="s05-unit">个局</span></span></sc-if>
                 <sc-if value="{{s5.privNone}}" hint-placeholder-val="{{false}}"><span class="s05-hv">还没有局</span></sc-if>
-                <span class="s05-hl">{{c.privacy.noToggles}}</span>
               </div>
+              <p class="s05-lead" style="margin-top:6px">{{c.privacy.noToggles}}</p>
               <span class="s05-sec">{{c.privacy.lead}}</span>
               <div class="s05-list"><sc-for list="{{s5.privFacts}}" as="f" hint-placeholder-count="3"><div class="s05-ve"><span class="s05-vt">{{f.title}}</span><span class="s05-ld">{{f.line}}</span></div></sc-for></div>
               <span class="s05-sec">一直如此</span>
@@ -1222,7 +1224,7 @@ class Component extends DCLogic {
       codeOpen: !!(pf.codeSent || pf.codeExpired), needCode: !!pf.needCode && !JUS.validate.email(pf.email || ''), headCls: pf.needCode && !JUS.validate.email(pf.email || '') ? 'cmp' : '', resendOff: !pf.canResend, busy: !!(pf.saving || pf.saved),
       label: pf.saving ? '保存中…' : pf.saved ? '已保存' : pf.failed ? '重试保存' : '保存', act: pf.failed ? 'retry' : 'save', ctaCls: pf.saving ? 'busy' : '' };
     var nlen = Array.from(pf.name || '').length, wlen = (pf.wx || '').length, elen = (pf.email || '').length;
-    pv.nameSz = nlen <= 8 ? '' : nlen <= 10 ? 'm' : 's'; pv.wxSz = wlen <= 20 ? '' : wlen <= 26 ? 'm' : 's'; pv.emailSz = elen <= 24 ? '' : elen <= 32 ? 'm' : 's';
+    pv.nameSz = nlen <= 8 ? '' : nlen <= 10 ? 'm' : 's'; pv.wxSz = wlen <= 20 ? '' : wlen <= 26 ? 'm' : wlen <= 34 ? 's' : 'xs'; pv.emailSz = elen <= 24 ? '' : elen <= 32 ? 'm' : elen <= 38 ? 's' : 'xs';
     pv.codeErr = er.code || (pf.codeExpired ? JUS.COPY.profileErrors.codeExpired : '');
     pv.sendOn = !!(pv.needCode && pf.codeNone);
     /* attention card */
@@ -1232,7 +1234,7 @@ class Component extends DCLogic {
     /* favorites */
     var fline = function (r) { return (r.crossCity ? r.cityName + ' · ' : '') + r.place.hood + ' · ' + (r.joined ? r.relLabel : r.hosted ? '我发起的' : r.closed ? r.statusLabel : '未报名'); };
     var frow = function (r) { return { id: r.id, title: nb(r.title), when: wd(r.when) + ' · ' + r.when.time, line: nb(fline(r)), open: r.open, unfav: function () { var old = String(c.fav.count); r.remove(); self.s5BumpQuiet('fav', old); } }; };
-    var fav = { n: c.fav.count || 0, none: !c.fav.count, head: c.fav.emptyCopy.title, line: c.fav.count ? (c.fav.active.length + ' 个还能报名' + (c.fav.archived.length ? ' · ' + c.fav.archived.length + ' 个已结束' : '') + ' · 收藏不等于报名') : c.fav.emptyCopy.body, active: c.fav.active.map(frow), archived: c.fav.archived.map(frow) };
+    var fav = { n: c.fav.count || 0, none: !c.fav.count, head: c.fav.emptyCopy.title, line: c.fav.count ? nb(c.fav.active.length + ' 个还能报名' + (c.fav.archived.length ? ' · ' + c.fav.archived.length + ' 个已结束' : '') + ' · 收藏不等于报名') : c.fav.emptyCopy.body, active: c.fav.active.map(frow), archived: c.fav.archived.map(frow) };
     /* event detail (favorite-detail / seam-feed-detail share one card) */
     var dk = on['favorite-detail'] ? 'favorite-detail' : on['seam-feed-detail'] ? 'seam-feed-detail' : null; var dd = c.favDetail || c.feedDetail;
     var det = dk && dd ? { on: true, surface: dk, cls: c.nav.cls[dk], title: dd.title, state: dd.joined ? '你已报名' : dd.status.label, head: (dd.crossCity ? dd.city.name + (dd.favAgo ? ' · ' : '') : '') + (dd.favAgo ? '收藏于 ' + dd.favAgo : ''), when: dd.when.zh, place: dd.place.full,
@@ -1249,7 +1251,7 @@ class Component extends DCLogic {
       return { key: x.key, label: x.label, sub: x.sub, onP: x.on ? 'true' : 'false', offP: x.on ? 'false' : 'true', setOn: function () { if (!x.on) go(); }, setOff: function () { if (x.on) go(); } }; });
     /* appearance */
     var shownRow = c.skin.list.filter(function (k) { return k.key === c.skin.shown; })[0] || {};
-    var look = { cap: c.skin.previewing ? '正在预览' : '正在用', line: shownRow.line + ' · ' + shownRow.en, rmCls: c.skin.rmOn ? 'on' : '',
+    var look = { cap: c.skin.previewing ? '正在预览' : '正在用', line: nb(shownRow.line + ' · ' + shownRow.en), rmCls: c.skin.rmOn ? 'on' : '',
       rmOnP: c.skin.rmOn ? 'true' : 'false', rmOffP: c.skin.rmOn ? 'false' : 'true', rmSetOn: function () { if (!c.skin.rmOn) c.skin.rmToggle(); }, rmSetOff: function () { if (c.skin.rmUser) c.skin.rmToggle(); },
       sys: c.skin.rmSys ? '跟随系统：系统已开启「减少动态」，JU 照此只呈现结果' : '跟随系统：系统没有开启「减少动态」；上面的开关只改 JU 自己',
       cancel: function () { var old = c.skin.shownName; c.skin.cancel(); if (c.skin.previewing) self.s5BumpQuiet('skin', old); },
