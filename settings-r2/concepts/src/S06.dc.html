@@ -106,7 +106,7 @@ body{margin:0}
 /* inline editors: same face, size and underline as the phrase they replace */
 .s06-in{font:600 22px/normal var(--serif);color:var(--ink);background:transparent;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;border:0;border-radius:0;margin:0;padding:0 .1em 2px;vertical-align:baseline;field-sizing:content;min-width:1.4em;max-width:100%;box-sizing:border-box;outline:none;caret-color:var(--focus);transition:background-color calc(160ms * var(--k)) ease}
 /* the identity sentence in edit: each value is an editable phrase (contenteditable plaintext) that wraps like the reading state */
-.s06-ce{font-weight:600;color:var(--ink);outline:none;caret-color:var(--focus);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-all;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;background-color:color-mix(in srgb,var(--tone) 10%,transparent);padding:0 .14em 2px;border-radius:4px 4px 0 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:text}
+.s06-ce{font-weight:600;color:var(--ink);outline:none;caret-color:var(--focus);white-space:pre-wrap;overflow-wrap:anywhere;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;background-color:color-mix(in srgb,var(--tone) 10%,transparent);padding:0 .14em 2px;border-radius:4px 4px 0 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:text}
 .s06-ce:focus{background-image:linear-gradient(var(--focus),var(--focus));background-color:rgba(74,90,214,.1)}
 .s06-ce.is-err{background-image:linear-gradient(var(--err),var(--err));background-color:rgba(218,58,82,.07)}
 .s06-ce:empty::before{content:attr(data-ph);color:rgba(20,22,31,.34);font-weight:400}
@@ -274,7 +274,7 @@ body{margin:0}
 .app.scrub.s06-m-focus.s06-closing{animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
 .app.scrub.s06-m-write .s06-v.s06-w-a,.app.scrub.s06-m-write .s06-v.s06-w-b{animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
 .app.scrub.s06-m-light.s06-sw0[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-m-light.s06-sw0[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-m-light.s06-sw0[data-skin="sunset"] .s06-sky .k-sunset,.app.scrub.s06-m-light.s06-sw1[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-m-light.s06-sw1[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-m-light.s06-sw1[data-skin="sunset"] .s06-sky .k-sunset{animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
-.app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:0s!important;transition-delay:0s!important;animation-duration:1ms!important;animation-delay:0ms!important}
 </style>
 </helmet>
 <div class="ju-stage">
@@ -555,6 +555,12 @@ class Component extends DCLogic {
   initialState(variant) { return Object.assign(JUS.baseState(variant), { s06w: null, s06sk: null, s06cat: null }); }
   componentDidMount() {
     var self = this; this.s06After();
+    var root = this.s06Root();
+    if (root && !root.__s06end) { root.__s06end = true; root.addEventListener('animationend', function (ev) {
+      if (ev.target !== root || (ev.animationName !== 's06-open' && ev.animationName !== 's06-shut')) return;
+      self._s06moEnded = true; self.forceUpdate();
+      if (ev.animationName === 's06-shut') requestAnimationFrame(function () { requestAnimationFrame(function () { self.s06Sink(); }); });
+    }); }
     try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { self._s06.lifted = false; self.s06Measure(); }); } catch (e) { }
   }
   componentDidUpdate() { this.s06After(); }
@@ -576,6 +582,12 @@ class Component extends DCLogic {
     if (nk !== this._s06nk) { this._s06nk = nk; this.s06NavScroll(nav); }
     var kbk = (this.state.review && this.state.review.kb ? 'kb:' : ':') + (this._s06bandS || '') + ':' + (this._s06seamS || '');
     if (kbk !== this._s06kbk) { this._s06kbk = kbk; if (this.state.review && this.state.review.kb) this.s06KbScroll(); }
+    /* editable phrases carry their own text (the template gives them no children): state → DOM only when the field is not being typed in */
+    var pf0 = this.state.pf;
+    if (pf0) { var act = root.getRootNode && root.getRootNode().activeElement; root.querySelectorAll('.s06-ce[data-field]').forEach(function (el) { var want = pf0[el.getAttribute('data-field')] || ''; if (el !== act && el.textContent !== want) el.textContent = want; }); }
+    /* 暂停 also holds CSS transitions (the band height when a deeper page swaps in) */
+    var pz = !!(this.state.review && (this.state.review.paused || this.state.review.scrub != null));
+    if (pz !== this._s06pz) { this._s06pz = pz; try { root.getAnimations({ subtree: true }).forEach(function (a) { if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition) { if (pz) a.pause(); else a.play(); } }); } catch (e) { } }
     /* a question written into the band is brought into view where it was asked */
     var ak = this.state.sheet ? this.state.sheet.kind : '';
     if (ak !== this._s06ak) { this._s06ak = ak; if (ak) { var q = root.querySelector('.s06-ask'); if (q) this.reveal(q); } }
@@ -583,11 +595,23 @@ class Component extends DCLogic {
   /* the light rises only to where the readable paragraph ends: if its last group reaches past 72% of the screen (deeper than the
      default layout ever does), the light sinks by that much — live with scroll, frozen while a band is open, fading with 聚焦 */
   s06Sink() {
-    var root = this.s06Root(); if (!root || this._s06fkv) return;
+    var root = this.s06Root(); if (!root) return;
     var sky = root.querySelector('.s06-sky'); if (!sky) return;
+    var self = this, pNow = function () { return parseFloat(getComputedStyle(root).getPropertyValue('--s06-p')) || 0; };
+    if (this._s06fkv) return;                                   /* a band is open: the light keeps the value it had at home */
+    if (pNow() > 0.001) {                                       /* still folding (or held by 暂停): measure once it is closed */
+      if (!this._s06sinkRaf) { var n = 0; var tick = function () { self._s06sinkRaf = null; if (self._s06fkv || ++n > 240) return; if (pNow() > 0.001) { self._s06sinkRaf = requestAnimationFrame(tick); return; } self.s06Sink(); }; this._s06sinkRaf = requestAnimationFrame(tick); }
+      return;
+    }
     var H = root.offsetHeight || 844, sink = 0;
     var endEl = root.querySelector('.s06-pg.is-on [data-s06-end], .s06-pg.is-in [data-s06-end]');
-    if (endEl) { var rb = root.getBoundingClientRect(); var sx = (rb.height / H) || 1; var bt = (endEl.getBoundingClientRect().bottom - rb.top) / sx; if (bt > 0 && bt < H * 1.6) sink = Math.max(0, Math.min(H * 0.26, bt + 24 - H * 0.72)); }
+    if (endEl) {
+      /* layout offsets, not the painted box: a translate that is still settling (e.g. under reduced motion) must not count */
+      var sc = endEl.closest('[data-scroller]'); var y = 0, el = endEl; while (el && el !== sc && sc && sc.contains(el)) { y += el.offsetTop; el = el.offsetParent; }
+      var rb = root.getBoundingClientRect(); var sx = (rb.height / H) || 1;
+      var bt = sc ? (sc.getBoundingClientRect().top - rb.top) / sx + y + endEl.offsetHeight - sc.scrollTop : (endEl.getBoundingClientRect().bottom - rb.top) / sx;
+      if (bt > 0 && bt < H * 1.6) sink = Math.max(0, Math.min(H * 0.26, bt + 24 - H * 0.72));
+    }
     sink = Math.round(sink); if (sink !== this._s06sinkV) { this._s06sinkV = sink; sky.style.setProperty('--s06-sink', sink + 'px'); }
   }
   s06Observe() {
@@ -685,17 +709,20 @@ class Component extends DCLogic {
     this._s06fk = fk; this._s06fkv = fkv; this._s06bandS = bandS; this._s06seamS = seamShown ? shown : null;
     /* 聚焦 motion class: opening when a group is first focused, closing when the paragraph folds back; kept while consistent */
     var fTop = !!S06_FOCUS[topS], fUnder = !!(under && S06_FOCUS[under]);
-    var mo = null;
+    var mo = null, mk = nav.seq + ':' + (phase === 'exit' ? 'x' : 'e');
     if ((phase === 'enter' || phase === 'in') && dir === 'fwd' && fTop && !fUnder) mo = 'open';
     else if (phase === 'exit' && fTop && !fUnder) mo = 'shut';
-    if (mo) this._s06mo = mo; else { var last = this._s06mo; if ((last === 'open' && fk) || (last === 'shut' && !fk)) mo = last; else this._s06mo = null; }
+    if (mo) { if (this._s06mk !== mk) { this._s06mk = mk; this._s06moEnded = false; } this._s06mo = mo; }
+    else { var last = this._s06mo; if (!this._s06moEnded && ((last === 'open' && fk) || (last === 'shut' && !fk))) mo = last; else this._s06mo = null; }
+    if (this._s06moEnded) mo = null;   /* a finished 聚焦 leaves no animation class behind (so scrubbing another motion never reopens or folds the band) */
     var pf = c.pf || { on: false };
     var editing = shown === 'profile-edit' && pf.on && !pf.saved;
     var rmUser = d.appearance.reduceMotion ? ' rm-user' : '';
     var scrubbing = !!(s.review && s.review.scrub != null), lm = this.lastMotion ? this.lastMotion.name : '';
     var sk = s.s06sk || (scrubbing && lm === '换光' ? this._s06lastL : null);
     var v = { editing: editing, reading: !editing, seam: seamShown };
-    v.cls = (fk ? ' s06-focus' : '') + (fkv ? ' s06-fv' : '') + (mo === 'open' ? ' s06-opening' : mo === 'shut' ? ' s06-closing' : '') + (editing ? ' s06-editing' : '') + (editing && pf.saving ? ' s06-saving' : '') + (sk ? ' s06-sw' + sk.n + ' s06-from-' + sk.from : '') + rmUser;
+    var mName = { '聚焦': 'focus', '写回': 'write', '换光': 'light' }[lm];
+    v.cls = (fk ? ' s06-focus' : '') + (fkv ? ' s06-fv' : '') + (mo === 'open' ? ' s06-opening' : mo === 'shut' ? ' s06-closing' : '') + (editing ? ' s06-editing' : '') + (editing && pf.saving ? ' s06-saving' : '') + (sk ? ' s06-sw' + sk.n + ' s06-from-' + sk.from : '') + (mName ? ' s06-m-' + mName : '') + rmUser;
     this._s06skNew = c.skinShown;
     /* pages */
     var setLeaving = rootAnim && leavingS && !S06_SEAM[leavingS], seamLeaving = rootAnim && leavingS && !!S06_SEAM[leavingS];
@@ -715,7 +742,7 @@ class Component extends DCLogic {
     var city = sum.cityLabel, rc = sum.recordCount, pend = sum.pendingRecords;
     var META = {
       'home': c.attCount ? c.attCount + ' 件事等你回应 · ' + city : city + ' · 没有要你处理的事',
-      'profile': you.email ? ((you.domain || '') + ' ' + you.emailLabel + (you.wx ? ' · 微信 ' + you.wx : '')) : '邮箱未填写',
+      'profile': you.email ? ((you.domain || '') + ' ' + you.emailLabel + (you.wx && you.wx.length <= 16 ? ' · 微信 ' + you.wx : '')) : '邮箱未填写',
       'profile-edit': '称呼 ' + (pf.nameCount || '') + ' · 邮箱可空',
       'city': city + ' · ' + c.city.cur.tzLabel, 'favorites': sum.favLabel, 'favorite-detail': sum.favLabel,
       'notify': sum.notifyLabel, 'appearance': sum.appearanceLabel + (c.skin.rmSys ? ' · 跟随系统减少动态' : ''),
@@ -752,18 +779,30 @@ class Component extends DCLogic {
     v.bc = {}; S06_GROUPS.forEach(function (g, i) { v.bc[g] = fi < 0 ? '' : i === fi ? ' is-f' : i < fi ? ' is-up' : ' is-dn'; });
     var ixKeys = S06_IX.map(function (x) { return x[0]; }), bandTop = bandS || shown;
     var ixAnchor = fkv === 'ix' ? (ixKeys.indexOf(bandTop) >= 0 ? bandTop : bandTop === 'feedback' ? 'help' : (vis[1] ? vis[1].s : topS)) : null;
-    v.ix = S06_IX.map(function (x, i) { return { k: x[0], label: x[1], dot: i < S06_IX.length - 1, cls: ixAnchor === x[0] ? 'on' : '', go: to(x[0], null, 'ix') }; });
+    var ixGo = function (surface) { return function (ev) { stop(ev); var cf = curF(), cur = top(); if (cf && cf !== 'ix') { fold('ix'); return; } if (cur === surface) return;
+      if (!cf) { self.motion('聚焦', function () { self.go(surface, {}, ev); }); return; }
+      if (S06_FORM[cur]) { self.back(); return; }   /* a draft is open: the unsaved question comes first */
+      var st = self.state.nav; if (st.phase !== 'idle') st = self._navSettle();
+      if (st.stack.length > 2) self.state.nav = Object.assign({}, st, { stack: [st.stack[0], st.stack[st.stack.length - 1]] });
+      if (self.state.nav.stack[self.state.nav.stack.length - 1].s === surface) return;
+      self.replace(surface, {}, ev); }; };
+    v.ix = S06_IX.map(function (x, i) { return { k: x[0], label: x[1], dot: i < S06_IX.length - 1, cls: ixAnchor === x[0] ? 'on' : '', go: ixGo(x[0]) }; });
     /* the paragraph's values */
     var P = {};
     var longCJK = function (t, n) { return Array.from(t || '').length > n; };
-    P.name = you.name || '还没填'; P.nameCls = longCJK(P.name, 8) ? ' s06-long' : '';
-    P.wx = you.wx || '还没填'; P.wxCls = (you.wx ? '' : ' s06-dim') + (longCJK(P.wx, 16) ? ' s06-long' : '');
-    P.email = you.email || '还没填'; P.emailCls = (you.email ? '' : ' s06-dim') + (longCJK(P.email, 16) ? ' s06-long' : '');
+    var full = fkv === 'id';   /* the identity group shows the full values only when it is the focused group (资料 / 编辑) */
+    var gr = function (t) { try { if (typeof Intl !== 'undefined' && Intl.Segmenter) return Array.from(new Intl.Segmenter('zh', { granularity: 'grapheme' }).segment(t), function (x) { return x.segment; }); } catch (e) { } return Array.from(t); };
+    var shortName = function (t) { var g = gr(t); if (g.length <= 8) return t; var o = g.slice(0, 6).join('') + '…'; if (/[（(]/.test(o) && !/[）)]/.test(o)) o += o.indexOf('（') >= 0 ? '）' : ')'; return o; };
+    var shortWx = function (t) { return t.length <= 14 ? t : t.slice(0, 12) + '…'; };
+    var shortMail = function (t) { if (t.length <= 18) return t; var i = t.indexOf('@'); if (i < 0) return t.slice(0, 16) + '…'; var lo = t.slice(0, i); return (lo.length > 7 ? lo.slice(0, 7) + '…' : lo) + t.slice(i); };
+    P.name = you.name ? (full ? you.name : shortName(you.name)) : '还没填'; P.nameCls = longCJK(P.name, 8) ? ' s06-long' : '';
+    P.wx = you.wx ? (full ? you.wx : shortWx(you.wx)) : '还没填'; P.wxCls = (you.wx ? '' : ' s06-dim') + (longCJK(P.wx, 16) ? ' s06-long' : '');
+    P.email = you.email ? (full ? you.email : shortMail(you.email)) : '还没填'; P.emailCls = (you.email ? '' : ' s06-dim') + (longCJK(P.email, 24) ? ' s06-long' : '');
     P.emailNote = you.email ? (you.verified ? '（已验证）' : '（未验证）') : '';
     P.nameParts = this.s06Words(P.name, !!P.nameCls); P.wxParts = this.s06Words(P.wx, P.wxCls.indexOf('long') >= 0); P.emailParts = this.s06Words(P.email, P.emailCls.indexOf('long') >= 0);
     P.city = sum.cityLabel;
     var favById = {}; c.fav.rows.forEach(function (r) { favById[r.id] = r; });
-    var order = d.favorites.map(function (f) { return favById[f.eventId]; }).filter(Boolean); var three = order.slice(0, 3);
+    var order = d.favorites.map(function (f) { return favById[f.eventId]; }).filter(Boolean); var three = order.length > 3 ? order.slice(0, 2) : order.slice(0, 3);
     var short = function (t) { var i = t.indexOf(' · '); return i > 1 ? t.slice(0, i) : t; };
     P.favs = three.map(function (r, i) { var lastI = i === three.length - 1, beforeLast = i === three.length - 2; var nm = short(r.title); var lg = longCJK(nm, 9); return { title: nm, parts: self.s06Words(nm, lg), cls: lg ? ' s06-long' : '', key: 'fav-' + r.id, sep: lastI ? '' : (beforeLast && order.length <= 3 ? '和' : '、'), open: function (ev) { stop(ev); if (fold('place')) return; if (!curF()) self.motion('聚焦', function () { r.open(ev); }); else r.open(ev); } }; });
     P.favAny = order.length > 0; P.favNone = !order.length; P.favMore = order.length > 3 ? order.length + ' 个局' : '';
@@ -776,7 +815,7 @@ class Component extends DCLogic {
     var rn = sum.reportCount, need = sum.needMore;
     var openReps = d.reports.filter(function (r) { return r.status !== 'resolved'; }).length;
     P.recPre = rc ? '我有' : '还没有'; P.recPhrase = rc ? rc + ' 条记录' : '记录';
-    P.pend = !!pend; P.pendPhrase = pend + ' 条待核实';
+    P.pend = !!pend; P.pendPhrase = pend + ' 条待核实'; P.pendCls = sum.pendingToAnswer ? ' s06-att' : '';
     P.repPre = rc ? (rn ? '；' : '；没有') : (rn ? '；有' : '，也没有'); P.repPhrase = rn ? rn + ' 条举报' : '举报';
     P.repPost = !rn ? '' : openReps === rn ? '在处理' : openReps ? '，' + openReps + ' 条在处理' : '都已处理';
     P.need = !!need; P.needPhrase = need + ' 条需要补充';
@@ -785,12 +824,21 @@ class Component extends DCLogic {
     var h1 = hp(P.nPost + P.pPre), h2 = hp(P.pPost), h3 = hp(P.repPre), h4 = hp(P.repPost);
     P.nHead = h1[0]; P.nTail = h1[1]; P.pHead = h2[0]; P.pTail = h2[1]; P.rpHead = h3[0]; P.rpTail = h3[1]; P.rqHead = h4[0]; P.rqTail = h4[1];
     v.P = P;
-    this._s06sigNew = { name: P.name, wx: P.wx, email: P.email + P.emailNote, city: P.city, fav: three.map(function (r) { return r.id; }).join(',') + '|' + order.length, n: P.nPhrase + P.nPost, p: P.pPhrase, skin: P.skin, motion: P.motion, rec: P.recPhrase, pend: P.pend ? P.pendPhrase : '', rep: P.repPhrase + P.repPost, need: P.need ? P.needPhrase : '' };
+    this._s06sigNew = { name: you.name || '', wx: you.wx || '', email: (you.email || '') + P.emailNote, city: P.city, fav: three.map(function (r) { return r.id; }).join(',') + '|' + order.length, n: P.nPhrase + P.nPost, p: P.pPhrase, skin: P.skin, motion: P.motion, rec: P.recPhrase, pend: P.pend ? P.pendPhrase : '', rep: P.repPhrase + P.repPost, need: P.need ? P.needPhrase : '' };
     var w = s.s06w || (scrubbing && lm === '写回' ? this._s06lastW : null), wk = w ? w.keys : [], wc = w ? ' s06-w-' + w.ab : '';
     v.wrote = {}; ['name', 'wx', 'email', 'city', 'fav', 'n', 'p', 'skin', 'motion', 'rec', 'pend', 'rep', 'need'].forEach(function (k) { v.wrote[k] = wk.indexOf(k) >= 0 ? wc : ''; });
     /* identity editing */
     var err = pf.err || {};
     v.inCls = { name: err.name ? ' is-err' : '', wx: err.wx ? ' is-err' : '', email: err.email ? ' is-err' : '' };
+    var CE_NEXT = { name: 'wx', wx: 'email' };
+    v.ce = {
+      input: function (ev) { var el = ev.currentTarget || ev.target; var f = el.getAttribute('data-field'); var val;
+        if (typeof el.value === 'string') { val = el.value; try { delete el.value; } catch (e2) { } el.textContent = val; } else val = el.textContent || '';
+        val = val.replace(/[\r\n]+/g, ''); var h = { name: pf.onName, wx: pf.onWx, email: pf.onEmail }[f]; if (h) h({ target: { value: val } }); },
+      key: function (ev) { if (ev.key !== 'Enter') return; ev.preventDefault(); var f = ev.currentTarget.getAttribute('data-field'); var root2 = self.s06Root(); var nx = CE_NEXT[f] && root2 ? root2.querySelector('.s06-ce[data-field="' + CE_NEXT[f] + '"]') : null; if (nx) nx.focus(); else ev.currentTarget.blur(); },
+      down: function () { self._s06ptr = Date.now(); },
+      focus: function (ev) { if (Date.now() - (self._s06ptr || 0) < 700) return; var el = ev.currentTarget; try { var rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); var rn = el.getRootNode(); var sel = rn.getSelection ? rn.getSelection() : window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e3) { } }
+    };
     v.pfNote = editing ? (pf.codeVerified ? '（已验证）' : pf.emailChanged && (pf.email || '').trim() ? '（待验证）' : you.email && (pf.email || '').trim() === you.email ? (you.verified ? '（已验证）' : '（未验证）') : '') : '';
     /* the question written into the band (unsaved changes / ending the demo session) */
     var sh = c.sheet;
@@ -811,16 +859,20 @@ class Component extends DCLogic {
     v.newEmail = (pf.email || '').trim();
     v.showCode = !!pf.needCode && (!err.email || err.email === JUS.COPY.profileErrors.mailUnverified);
     v.codeCls = err.code ? ' is-err' : ''; v.resendOff = pf.codeSent && pf.resendLeft > 0 ? true : null;
-    v.editNote = pf.emailChanged ? JUS.COPY.emailHint : JUS.COPY.snapshotNote;
+    v.editNote = v.showCode ? '' : pf.emailChanged && !pf.codeVerified ? JUS.COPY.emailHint : JUS.COPY.snapshotNote;
     v.edLead = editing && !errList.length && !v.showCode && !pf.failed && !pf.codeVerified && !(c.sheet.on);
     /* city: the other cities are written into the sentence; while searching, the sentence names what was found */
     var q = (c.city.q || '').trim(), cl = c.city.list, others = q ? cl : cl.filter(function (x) { return !x.on; }), seps = s06Seps(others.length, '或');
     v.ct = { any: cl.length > 0, pre: q ? '找到 ' : '也可以换成 ', post: q ? '。' : '。', list: others.map(function (x, i) { return { key: x.key, name: x.name + (q && x.on ? '（当前）' : ''), pick: x.pick, cls: x.on ? ' is-on' : '', pressed: x.on ? 'true' : 'false', sep: seps[i] }; }) };
     /* favourites: one 局 per line */
-    var favItem = function (r) { var st = r.joined || r.hosted ? r.relLabel : r.closed ? r.statusLabel : '未报名'; return { id: r.id, parts: self.s06Words(r.title, true), rest: '，' + r.when.zh.replace(' · ', ' ') + '，' + r.place.hood + (r.crossCity ? '（' + r.cityName + ' · 当地时间）' : '') + '，' + st + '。', open: r.open, remove: r.remove, removeAria: '拿出收藏：' + r.title }; };
+    var favItem = function (r, arch) { var st = r.joined || r.hosted ? r.relLabel : r.closed ? r.statusLabel : '未报名'; return { id: r.id, parts: self.s06Words(r.title, true), tm: arch ? r.when.md : r.when.time, cls: arch ? ' is-arch' : '', place: r.place.hood + (r.crossCity ? '（' + r.cityName + ' · 当地时间）' : ''), status: st, open: r.open, remove: r.remove, removeAria: '拿出收藏：' + r.title, day: r.when.wdZh + ' ' + r.when.md, t: JUS.t(r.event.iso) }; };
+    var byDay = function (rows) { var out = []; rows.forEach(function (it) { var g = out[out.length - 1]; if (!g || g.day !== it.day) out.push(g = { day: it.day, cls: out.length ? '' : ' is-first', items: [] }); g.items.push(it); }); return out; };
+    var actItems = c.fav.active.map(function (r) { return favItem(r, false); }).sort(function (a, b) { return a.t - b.t; });
+    var archItems = c.fav.archived.map(function (r) { return favItem(r, true); }).sort(function (a, b) { return b.t - a.t; });
+    var favDays = byDay(actItems); if (archItems.length) favDays.push({ day: '已经结束或取消的', cls: favDays.length ? '' : ' is-first', items: archItems });
     var joinedN = c.fav.rows.filter(function (r) { return r.joined || r.hosted; }).length, crossN = c.fav.rows.filter(function (r) { return r.crossCity; }).length;
-    v.favs = { active: c.fav.active.map(favItem), arch: c.fav.archived.map(favItem), archAny: c.fav.archived.length > 0,
-      lead: c.fav.empty ? '' : '收藏了 ' + c.fav.count + ' 个局' + (joinedN ? '，' + joinedN + ' 个已经报名' : '，都还没报名') + (crossN ? '，' + crossN + ' 个在别的城市' : '') + '。点局名看详情，「拿出」只取消收藏，不影响报名。' };
+    v.favs = { days: favDays,
+      lead: c.fav.empty ? '' : '收藏了 ' + c.fav.count + ' 个局，按日子排' + (joinedN ? '；' + joinedN + ' 个已经报名' : '；都还没报名') + (crossN ? '，' + crossN + ' 个在别的城市' : '') + '。「拿出」只取消收藏，不影响报名。' };
     v.ev = this.s06Event(c.favDetail);
     /* notify: the six categories as one sentence of switches */
     var cs = s06Seps(n.cats.length, '和'), lastCat = s.s06cat;
@@ -832,7 +884,7 @@ class Component extends DCLogic {
     var skl = c.skin.list, curSk = skl.filter(function (x) { return x.on; })[0], otherSk = skl.filter(function (x) { return !x.on; });
     v.sk = { list: [curSk].concat(otherSk).map(function (x, i) { return { key: x.key, name: x.name, pick: x.pick, pressed: x.shown ? 'true' : 'false', cls: x.shown && c.skin.previewing ? ' is-on' : '', pre: i === 0 ? '界面用 ' : i === 1 ? '；也可以看看 ' : ' 或 ' }; }),
       post: '——整个画面会先换给你看。', line: '：' + (skl.filter(function (x) { return x.shown; })[0] || {}).line + '。' };
-    v.rm = { offCls: '', word: c.skin.rmSys ? '跟随系统减少' : c.skin.rmUser ? '已减少' : '正常' };
+    v.rm = { offCls: '', word: c.skin.rmSys ? '跟随系统减少' : c.skin.rmUser ? '已减少' : '正常', line: (c.skin.rmSys || c.skin.rmUser) ? c.skin.rmLine : '' };
     /* records: one fact per line, grouped by kind */
     v.rc = { groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, items: g.rows.map(function (r) { var att2 = r.pendingReview && !r.appeals.length; return { id: r.id, label: r.label, open: r.open, attCls: att2 ? ' s06-att' : '', rest: ' · ' + r.title + '，' + r.when.md + '，' + r.statusLabel + '。' }; }) }; }) };
     var rec = c.rec;
@@ -862,12 +914,14 @@ class Component extends DCLogic {
     if (v.seamS === 'seam-report') { hm.label = '取消'; hm.act = 'cancel'; hm.fn = c.form.on ? c.form.cancel : c.nav.back; hm.chev = false; }
     else { hm.label = v.seamS === 'seam-feed-detail' ? '找局' : '我的局'; hm.act = 'back'; hm.fn = c.nav.back; hm.chev = true; }
     var mine = c.mine, actCount = mine.current.filter(function (r) { return r.group === '要你回应'; }).length;
-    hm.meta = { 'seam-feed': c.feed.city.name + ' · 收藏 ' + c.feed.favCount + ' 个', 'seam-feed-detail': c.feedDetail ? c.feedDetail.when.zh : '', 'seam-mine': mine.current.length + ' 个进行中' + (actCount ? ' · ' + actCount + ' 个要你回应' : ''), 'seam-report': c.seamReport ? c.seamReport.title : '' }[v.seamS] || '';
+    var favTotal = c.fav.count;
+    hm.meta = { 'seam-feed': c.feed.city.name + (c.feed.favCount === favTotal ? ' · 收藏 ' + favTotal + ' 个' : ' · 这座城市收藏了 ' + c.feed.favCount + ' 个（共 ' + favTotal + ' 个）'), 'seam-feed-detail': c.feedDetail ? c.feedDetail.when.zh : '', 'seam-mine': mine.current.length + ' 个进行中' + (actCount ? ' · ' + actCount + ' 个要你回应' : ''), 'seam-report': c.seamReport ? c.seamReport.title : '' }[v.seamS] || '';
     v.hm = hm;
     var allCount = c.feed.isFav ? JUS.derive.feed(d, 'all').count : c.feed.count;
     v.fd = { lead: c.feed.city.name + '这周有 ' + allCount + ' 个局可以报名' + (c.feed.isFav ? '，你收藏了其中 ' + c.feed.favCount + ' 个。' : '。'), allCls: c.feed.isAll ? 'on' : '', favCls: c.feed.isFav ? 'on' : '', any: !c.feed.empty,
       rows: c.feed.rows.map(function (r) { var wrong = r.cls.indexOf('is-wrong') >= 0; return { id: r.id, title: r.title, when: r.when, place: r.place, host: r.host, star: r.star, starCls: r.fav ? 'on' : '', style: r.style, cls: r.cls, down: r.down, move: r.move, up: r.up, cancel: r.cancel, key: r.key, open: r.open,
-        wCls: (r.dx < 0 ? 'to-l' : '') + (r.dx ? ' is-moving' : '') + (wrong ? ' is-wrong' : ''), under: r.hint || (r.fav ? JUS.FAV.copy.remove : JUS.FAV.copy.add), aria: r.title + (r.fav ? '，已收藏' : '，未收藏') + '。左右滑动收藏或拿出' }; }) };
+        wCls: (r.dx < 0 ? 'to-l' : '') + (r.dx ? ' is-moving' : '') + (wrong ? ' is-wrong' : ''), under: r.hint || (r.fav ? JUS.FAV.copy.remove : JUS.FAV.copy.add),
+        meta: wrong && r.hint ? r.hint + ' · ' + (r.fav ? '左滑拿出' : '右滑收进') : r.when.zh + ' · ' + r.place.hood + ' · 局主 ' + r.host, fmCls: wrong && r.hint ? ' is-hint' : '', aria: r.title + (r.fav ? '，已收藏' : '，未收藏') + '。左右滑动收藏或拿出' }; }) };
     v.fe = this.s06Event(c.feedDetail);
     var mineRow = function (r) { return { id: r.id, title: r.title, rest: '，' + r.label + '，' + r.when.zh.replace(' · ', ' ') + (r.receipt ? '；举报' + r.receipt : '') + '。', fav: r.fav ? 'true' : 'false', star: r.fav ? JUS.FAV.icon.on + ' 已收藏' : JUS.FAV.icon.off + ' 收藏', starCls: r.fav ? 'on' : '', favAria: (r.fav ? '拿出收藏：' : '收进收藏：') + r.title, toggleFav: r.toggleFav, report: r.report }; };
     v.mi = { lead: mine.current.length + ' 个局在进行' + (actCount ? '，' + actCount + ' 个要你回应。' : '。'), current: mine.current.map(mineRow), hosted: mine.hosted.map(mineRow), history: mine.history.map(mineRow), hostedAny: mine.hosted.length > 0, historyAny: mine.history.length > 0 };
