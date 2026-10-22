@@ -13,14 +13,9 @@
 body{margin:0}
 /* @panel-css */
 /* ===================== S08 横向分栏 =====================
-   One light, thin paper. The environment is ONE landscape behind every column (it slides at half the columns' speed);
-   columns are backlit paper standing in front of it, so each takes the colour of the light behind it. Headers and
-   column names live on the light; content lives on paper. No cast shadows, no blur on text, no glass.
-   Everything is a column: the home is a row of columns (the next peeks 64px, the previous 16px); a column expands into
-   its page (L1); deeper pages arrive as columns from the right (L2) while the page underneath folds into a 28px strip;
-   inside a page, groups are sub-columns under a name rail (field panes, kinds, skins, rule groups).
-   Progress numbers drive all geometry: --s08-pos (columns), --s08-q (home under a page), --s08-p (a page arriving),
-   --s08-u (a page under a deeper column), --s08-f (sub-columns). */
+   One landscape of light behind backlit paper columns (no shadows, no blur on text). Everything is a column: the home row
+   (next peeks 64px), pages that unfold into their own row, deeper columns arriving from the right over a 28px spine.
+   Geometry runs on registered numbers: --s08-pos (columns), --s08-q / --s08-p / --s08-u (depth), --s08-f (sub-columns). */
 @property --s08-pos{syntax:'<number>';inherits:true;initial-value:0}
 @property --s08-p{syntax:'<number>';inherits:true;initial-value:1}
 @property --s08-q{syntax:'<number>';inherits:true;initial-value:0}
@@ -692,11 +687,8 @@ body{margin:0}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* S08 横向分栏 — the settings home IS a row of full-height paper columns browsed sideways; each column's name rides above
-   its own left edge, the next column peeks 64px with its big value, the previous one shows a 16px sliver; one landscape of
-   environment light runs behind all of them. Depth runs sideways too: the current column expands into its page (L1),
-   deeper pages arrive as columns from the right (L2) while the page underneath folds into a 28px strip, and inside every
-   page the groups are sub-columns under a name rail. Behaviour is the shared controller JUS.ctl. */
+/* S08 横向分栏 — the settings home is a row of paper columns browsed sideways; depth runs sideways too.
+   Behaviour is the shared controller JUS.ctl. */
 const S08_COLS = [{ key: 'you', name: '你' }, { key: 'fav', name: '收藏' }, { key: 'notify', name: '提醒' }, { key: 'look', name: '外观' }, { key: 'rec', name: '记录与举报' }, { key: 'help', name: '帮助' }, { key: 'acct', name: '账户与关于' }];
 const S08_HOME_OF = { profile: 0, 'profile-edit': 0, privacy: 0, favorites: 1, 'favorite-detail': 1, city: 1, notify: 2, appearance: 3, records: 4, 'record-detail': 4,
   'record-supplement': 4, 'record-dispute': 4, 'record-appeal': 4, reports: 4, 'report-detail': 4, 'report-supplement': 4, help: 5, feedback: 5, rules: 5, account: 6, about: 6 };
@@ -971,8 +963,8 @@ class Component extends DCLogic {
     const dsf = c.nav.on['favorite-detail'] ? 'favorite-detail' : c.nav.on['seam-feed-detail'] ? 'seam-feed-detail' : null; const dv = c.favDetail || c.feedDetail;
     const conf = c.help.groups.filter(g => g.key === 'confirm')[0] || c.help.groups[0] || { rules: [] };
     x.dt = dsf && dv ? { on: true, s: dsf, lv: lvOf(dsf), cls: c.nav.cls[dsf], back: x.bk[dsf] || '返回', md: dv.when.md, wd1: dv.when.wdZh, wd2: dv.when.time, u: sub(dsf, [{ name: '局' }, { name: '报名之后', n: conf.rules.length }]), locked: !dv.canSeeHostWx,
-      steps: conf.rules.map(r => ({ n: r.n, t: r.title, b: r.body || '' })), nowLine: dv.joined ? '你现在：' + dv.joinedLabel : '你还没有报名这个局', title: dv.title, status: dv.status.label, stCls: dv.status.closed ? 's08-off' : '',
-      joinedLabel: dv.joined ? dv.joinedLabel : '未报名', jCls: dv.joined ? 's08-on' : '', place: dv.place.full, host: dv.host, cap: dv.cap, cross: dv.crossCity, cityLine: dv.city.name + ' · ' + dv.city.tzLabel, favAgo: dv.favAgo, note: dv.note,
+      steps: conf.rules.map(r => ({ n: r.n, t: r.title, b: r.body || '' })), nowLine: dv.joined ? '你现在：' + dv.joinedLabel : '你还没有报名这个局', title: dv.title, status: dv.status.label,
+      joinedLabel: dv.joined ? dv.joinedLabel : '未报名', place: dv.place.full, host: dv.host, cap: dv.cap, cross: dv.crossCity, cityLine: dv.city.name + ' · ' + dv.city.tzLabel, favAgo: dv.favAgo, note: dv.note,
       canSee: dv.canSeeHostWx, hostWx: dv.hostWx, copy: dv.copyHostWx, rule: dv.hostWxRule, favAct: dv.fav ? 'unfav' : 'fav', toggle: dv.toggleFav, favLabel: dv.favLabel, applyNote: dv.applyNote } : { on: false };
     /* record detail: 事实 · 你的说明 · 进度 */
     if (c.rec) {
