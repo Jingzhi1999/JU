@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S07 预览在上</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* ============ S07 预览在上 ============
+   One light source: the environment (top) is light; every object standing on it (the preview card, the white control sheet)
+   is a flat surface that only catches a 1px rim of that light. No drop shadows anywhere. Depth = stacking order only. */
+.app.s07{position:absolute;inset:0;overflow:clip;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;background:var(--e0);-webkit-font-smoothing:antialiased;--stage:40%;--k:1}
+.app.s07 *{box-sizing:border-box}
+.app.s07.rm *,.app.s07.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app.s07 button{font-family:inherit}
+.ju-phone.kb .app.s07{--stage:132px}
+
+/* ---- three environments (tokens) ---- */
+.app.s07[data-skin="cotton"]{--e0:#EFE3F2;--eink:#2B2341;--ehl:#F49BC4;--edot:#D9659A;--wash:#FCEEF5;--erim:rgba(255,201,228,.5);--echip:#F7C2DA;
+  --eava:linear-gradient(140deg,#F7B4D1 0%,#D2C6F4 52%,#A6DDEA 100%);
+  --env:radial-gradient(56% 44% at 50% 60%,rgba(255,255,255,.62) 0%,rgba(255,255,255,0) 74%),radial-gradient(84% 80% at -4% -6%,#EF9AC2 0%,rgba(239,154,194,0) 72%),radial-gradient(78% 86% at 104% 10%,#B9ACEF 0%,rgba(185,172,239,0) 74%),radial-gradient(98% 72% at 12% 104%,#92D2E8 0%,rgba(146,210,232,0) 76%),linear-gradient(180deg,#F0D0E6 0%,#E0D9F4 58%,#CFE9F3 100%)}
+.app.s07[data-skin="halo"]{--e0:#FFF4E8;--eink:#3A2517;--ehl:#FF8A3D;--edot:#EE6420;--wash:#FFF1E4;--erim:rgba(255,166,102,.55);--echip:#FFC498;
+  --eava:radial-gradient(circle at 32% 28%,#FFD9B0 0%,#FF7A2E 48%,#C7B1E6 100%);
+  --env:radial-gradient(ellipse 76% 70% at 50% 60%,#FFF7EE 0%,#FFF7EE 47%,rgba(255,108,28,.9) 59%,rgba(244,196,150,.95) 70%,rgba(206,184,232,.92) 83%,rgba(255,244,232,0) 100%),linear-gradient(180deg,#FFF1E2,#FFF6EC)}
+.app.s07[data-skin="sunset"]{--e0:#FFB03F;--eink:#14161F;--ehl:#FFC53D;--edot:#F2672A;--wash:#FFF1E1;--erim:rgba(255,196,120,.6);--echip:#FFC53D;
+  --eava:linear-gradient(165deg,#5AA2F2 0%,#FF8A47 58%,#FFC53D 100%);
+  --env:radial-gradient(66% 40% at 50% 104%,rgba(255,224,112,.98) 0%,rgba(255,197,61,0) 74%),linear-gradient(180deg,#3B8BEF 0%,#6CA4F0 22%,#B9A5CF 42%,#FF915A 64%,#FF7A33 80%,#FFAF3E 100%)}
+
+/* ---- environment field: the whole top band, continuing under the sheet's rounded corners ---- */
+.s07-env{position:absolute;left:0;right:0;top:0;height:calc(var(--stage) + 56px);background:var(--env);z-index:0}
+
+/* ---- STAGE: the live preview ---- */
+.s07-stage{position:absolute;left:0;right:0;top:0;height:var(--stage);z-index:1;overflow:clip;container-type:inline-size}
+.s07-mast{position:absolute;left:0;right:0;top:0;height:54px;display:flex;align-items:center;gap:12px;padding:8px 22px 0;color:var(--eink)}
+.s07-mark{font-family:"Archivo","Noto Sans SC",sans-serif;font-weight:700;font-size:20px;line-height:1;letter-spacing:.02em}
+.s07-caps{position:relative;flex:1 1 auto;min-width:0;height:22px}
+.s07-cap{position:absolute;left:0;right:0;top:0;font-size:15px;font-weight:500;line-height:22px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;transform:translateY(6px)}
+.s07-stage[data-pv=apply] .s07-cap[data-cap=apply],.s07-stage[data-pv=profile] .s07-cap[data-cap=profile],.s07-stage[data-pv=edit] .s07-cap[data-cap=edit]{opacity:1;transform:none}
+.s07-carousel{position:absolute;left:0;right:0;top:54px;bottom:16px;overflow:clip;--cw:min(320px,calc(100cqw - 88px));--x0:20px}
+.s07-stage[data-pv=apply] .s07-carousel{--x0:calc(50cqw - var(--cw) / 2)}
+.s07-track{position:absolute;top:0;bottom:0;left:0;width:calc(var(--cw) * 3 + 24px);display:flex;align-items:center;gap:12px;overflow:clip;transform:translateX(var(--x0)) translateX(calc(var(--aud,0) * -12px)) translateX(calc(var(--aud,0) * -1 * var(--cw)))}
+/* (three translates on purpose: Chromium mis-simplifies calc(a - 1 * (min(…cqw…) + b)) — the sum is never multiplied) */
+/* the applicant card: a real JU interface object, ink, lit only at its top rim */
+.s07-card{position:relative;flex:0 0 var(--cw);width:var(--cw);background:#14161F;color:#fff;border-radius:22px;padding:16px 18px 0;box-shadow:inset 0 1px 0 var(--erim);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color calc(120ms * var(--k,1)) ease}
+.s07-card:active{background:#1D202B}
+.s07-stage[data-pv=apply] .s07-card.c1,.s07-stage[data-pv=apply] .s07-card.c2{opacity:0;transform:translateX(64px);pointer-events:none}
+.s07-strip{position:relative;height:20px;font-size:13px;line-height:20px;color:rgba(255,255,255,.74)}
+.s07-strip > span{position:absolute;left:0;right:0;top:0;height:20px;display:flex;align-items:center;gap:8px;white-space:nowrap;opacity:0;transform:translateY(7px)}
+.s07-stage[data-pv=apply] .s07-s-app,.s07-stage[data-pv=profile] .s07-s-view,.s07-stage[data-pv=edit] .s07-s-view{opacity:1;transform:none}
+.s07-stage.is-flash .s07-strip > span,.s07-stage.is-unsaved .s07-strip > span{opacity:0;transform:translateY(-7px)}
+.s07-stage.is-flash .s07-strip > .s07-s-saved,.s07-stage.is-unsaved .s07-strip > .s07-s-unsaved{opacity:1;transform:none}
+.s07-s-t{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;color:#fff;font-weight:500}
+.s07-chip{flex:0 0 auto;margin-left:auto;font-style:normal;font-size:13px;font-weight:500;line-height:20px;padding:0 8px;border-radius:10px;background:var(--echip);color:#14161F}
+.s07-s-saved,.s07-s-unsaved{color:var(--ehl)!important;font-weight:500}
+.s07-id{display:flex;align-items:center;gap:12px;margin-top:14px;min-height:52px}
+.s07-ava{flex:0 0 52px;width:52px;height:52px;border-radius:50%;background:var(--eava);color:#14161F;font-size:22px;font-weight:600;line-height:52px;text-align:center}
+.s07-idt{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.s07-nm{max-width:100%;font-size:22px;font-weight:600;line-height:28px;color:#fff;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.s07-nm.is-empty{color:rgba(255,255,255,.42)}
+.s07-vf{display:flex;align-items:center;gap:5px;max-width:100%;font-size:14px;line-height:20px;color:rgba(255,255,255,.82);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s07-vf.is-wait{color:#FFD28A}
+.s07-vf.is-bad{color:#FF8E9D}
+.s07-vf.is-none{color:rgba(255,255,255,.74)}
+.s07-ic{flex:0 0 auto;width:15px;height:15px}
+.s07-vf.is-ok .s07-ic{color:#7FE3C4}
+.s07-note{margin-top:12px;height:32px;display:flex;align-items:center;padding:0 12px;border:1px dashed rgba(255,255,255,.3);border-radius:10px;font-size:14px;color:rgba(255,255,255,.74);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s07-low{display:flex;align-items:center;gap:8px;height:46px;margin:12px -18px 0;padding:0 18px;border-top:1px solid rgba(255,255,255,.12);font-size:14px;color:rgba(255,255,255,.74);white-space:nowrap}
+.s07-low-l{flex:0 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+.s07-low-v{flex:0 1 auto;min-width:0;margin-left:auto;text-align:right;font-size:15px;font-weight:500;line-height:22px;color:#fff;overflow:hidden;text-overflow:ellipsis}
+.s07-low.is-bad .s07-low-v{color:#FF8E9D}
+/* edit: the field you are in is underlined on the card, in the environment's light */
+.s07-nm,.s07-vf,.s07-low-v{transition:box-shadow calc(160ms * var(--k,1)) ease,background-color calc(160ms * var(--k,1)) ease}
+.s07-nm,.s07-vf,.s07-low-v{border-radius:4px;padding:0 4px;margin:0 -4px}
+.s07-low .s07-low-v{margin:0 -4px 0 auto}
+.s07-stage[data-focus=name] .s07-nm,.s07-stage[data-focus=email] .s07-card:not(.c2) .s07-vf,.s07-stage[data-focus=code] .s07-card:not(.c2) .s07-vf,.s07-stage[data-focus=wx] .c1 .s07-low-v{background:color-mix(in srgb,var(--ehl) 24%,transparent);box-shadow:inset 0 -2px 0 var(--ehl)}
+.s07-stage.is-flash .is-upd{box-shadow:inset 0 -2px 0 var(--ehl)}
+.s07-nm.is-bad,.s07-low.is-bad .s07-low-v{box-shadow:inset 0 -2px 0 #FF6B81}
+/* keyboard: the preview yields to a 132px strip and keeps updating */
+.ju-phone.kb .s07-mast{opacity:0;pointer-events:none}
+.ju-phone.kb .s07-carousel{top:14px;bottom:14px}
+.ju-phone.kb .s07-strip,.ju-phone.kb .s07-note{display:none}
+.ju-phone.kb .s07-card{padding-top:10px;border-radius:18px}
+.ju-phone.kb .s07-id{margin-top:0;min-height:44px}
+.ju-phone.kb .s07-ava{flex-basis:40px;width:40px;height:40px;line-height:40px;font-size:18px}
+.ju-phone.kb .s07-nm{font-size:18px;line-height:24px;-webkit-line-clamp:1}
+.ju-phone.kb .s07-vf{font-size:13px;line-height:18px}
+.ju-phone.kb .s07-low{margin-top:6px;height:38px}
+
+/* ---- SHEET: the white control surface; surfaces push horizontally inside it ---- */
+.s07-sheet{position:absolute;left:0;right:0;top:var(--stage);bottom:0;z-index:2;background:#fff;border-radius:28px 28px 0 0;overflow:clip}
+.s07-pg{position:absolute;inset:0;background:#fff;overflow:clip;--t0:52px;--hdh:122px}
+.s07-pg.s07-root{--t0:16px;--hdh:90px}
+.s07-pg.is-under.ph-idle{visibility:hidden}
+.s07-pg.is-top.dir-fwd.ph-enter,.s07-pg.is-top.dir-fwd.ph-in{animation:s07-push-in calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s07-pg.is-under.dir-fwd.ph-enter,.s07-pg.is-under.dir-fwd.ph-in{animation:s07-push-under calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s07-pg.is-top.ph-exit{animation:s07-pop-out calc(280ms * var(--k,1)) cubic-bezier(.32,.72,.3,1) both}
+.s07-pg.is-under.ph-exit{animation:s07-pop-under calc(280ms * var(--k,1)) cubic-bezier(.32,.72,.3,1) both}
+.s07-pg.is-top.dir-root.ph-enter,.s07-pg.is-top.dir-root.ph-in,.s07-pg.is-top.dir-swap.ph-enter,.s07-pg.is-top.dir-swap.ph-in{animation:s07-fade-in calc(300ms * var(--k,1)) ease both}
+.s07-pg.is-leaving{animation:s07-fade-out calc(300ms * var(--k,1)) ease both;pointer-events:none}
+.s07-pg.is-top.ph-enter,.s07-pg.is-top.ph-in{box-shadow:-1px 0 0 rgba(20,22,31,.08)}
+@keyframes s07-push-in{from{transform:translateX(100%)}to{transform:none}}
+@keyframes s07-push-under{from{transform:none;opacity:1}to{transform:translateX(-26%);opacity:0}}
+@keyframes s07-pop-out{from{transform:none}to{transform:translateX(100%)}}
+@keyframes s07-pop-under{from{transform:translateX(-26%);opacity:0}to{transform:none;opacity:1}}
+@keyframes s07-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes s07-fade-out{from{opacity:1}to{opacity:0}}
+.app.s07.scrub .s07-pg{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.s07.scrub .s07-pg.ph-exit,.app.s07.scrub .s07-pg.is-leaving,.app.s07.scrub .s07-pg.dir-root,.app.s07.scrub .s07-pg.dir-swap{animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
+/* header: 30 → 18 continuously (--hc from the controller), moving into the middle of the tool row */
+.s07-hd{position:absolute;left:0;right:0;top:0;height:var(--hdh);z-index:3;pointer-events:none}
+.s07-bar{position:absolute;left:0;right:0;top:0;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 6px;background:#fff;pointer-events:auto}
+.s07-bar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:rgba(20,22,31,.08);opacity:var(--hk,var(--hc,0))}
+.s07-t{position:absolute;z-index:1;margin:0;top:var(--t0);left:calc(20px + (50% - 20px) * var(--hk,var(--hc,0)));transform:translate(calc(-50% * var(--hk,var(--hc,0))),calc((13px - var(--t0)) * var(--hk,var(--hc,0))));font-size:calc(30px - 12px * var(--hk,var(--hc,0)));font-weight:500;line-height:1.25;letter-spacing:.01em;white-space:nowrap;color:#14161F}
+.s07-m{position:absolute;margin:0;left:20px;right:20px;top:calc(var(--t0) + 40px);font-size:14px;line-height:20px;color:#535b70;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:calc(1 - 2 * var(--hk,var(--hc,0)));transform:translateY(calc(-20px * var(--hk,var(--hc,0))))}
+.s07-back,.s07-act-r{all:unset;display:inline-flex;align-items:center;height:40px;padding:0 12px;border-radius:12px;font-size:16px;font-weight:500;line-height:22px;color:#14161F;cursor:pointer}
+.s07-back-i{width:9px;height:9px;margin:0 4px 0 4px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg)}
+.s07-back:focus-visible,.s07-act-r:focus-visible,.s07-row:focus-visible,.s07-seg-b:focus-visible{outline:2px solid #4A5AD6;outline-offset:-2px}
+.s07-sc{position:absolute;left:0;right:0;top:0;bottom:var(--kb,0px);overflow-y:auto;overflow-x:hidden;padding:var(--hdh) 0 96px;scrollbar-width:none;overscroll-behavior:contain}
+.s07-sc::-webkit-scrollbar{display:none}
+
+/* ---- control rows (17 / 15, 60px rhythm) ---- */
+.s07-gt{margin:22px 20px 2px;font-size:14px;font-weight:500;line-height:20px;color:#535b70}
+.s07-sc > .s07-gt:first-child{margin-top:4px}
+.s07-grp{margin:0 20px}
+.s07-row{all:unset;position:relative;display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:0 2px;border-bottom:1px solid rgba(20,22,31,.08);cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background-color calc(120ms * var(--k,1)) ease}
+.s07-row:last-child{border-bottom:0}
+.s07-row:active{background:rgba(20,22,31,.035)}
+.s07-rl{flex:0 0 auto;font-size:17px;font-weight:500;line-height:24px;color:#14161F;white-space:nowrap}
+.s07-rv{flex:1 1 auto;min-width:0;text-align:right;font-size:15px;line-height:22px;color:#535b70;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s07-tok{display:inline-block;vertical-align:-6px;margin-right:8px;border-radius:50%;font-style:normal}
+.s07-tok-ava{width:24px;height:24px;background:var(--eava);color:#14161F;font-size:13px;font-weight:600;line-height:24px;text-align:center}
+.s07-tok-sw{width:18px;height:18px;vertical-align:-4px;background:var(--env);box-shadow:inset 0 0 0 1px rgba(20,22,31,.08)}
+.s07-chev{flex:0 0 8px;width:8px;height:8px;margin:0 4px 0 -2px;border-top:1.5px solid #9097A8;border-right:1.5px solid #9097A8;transform:rotate(45deg)}
+/* what needs you: a band lit by the environment, the only tinted surface inside the white sheet */
+.s07-wash{margin:2px 12px 0;padding:0 10px;border-radius:20px;background:var(--wash)}
+.s07-wash .s07-row{border-bottom-color:rgba(20,22,31,.07)}
+.s07-wash .s07-rl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.s07-wash .s07-rv{flex:0 0 auto;color:#14161F;font-weight:500}
+.s07-dot{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:var(--edot)}
+.s07-foot{margin:28px 20px 0;font-size:13px;line-height:20px;color:#535b70}
+
+/* ---- profile ---- */
+.s07-seg{display:flex;gap:4px;margin:2px 20px 6px;padding:4px;border-radius:16px;background:#F1F2F6}
+.s07-seg-b{all:unset;flex:1 1 0;min-width:0;height:40px;display:flex;align-items:center;justify-content:center;border-radius:12px;font-size:14px;font-weight:500;line-height:20px;color:#535b70;white-space:nowrap;cursor:pointer;transition:background-color calc(160ms * var(--k,1)) ease,color calc(160ms * var(--k,1)) ease}
+.s07-seg-b.on{background:#14161F;color:#fff}
+.s07-row-f .s07-rv{color:#14161F;white-space:normal;word-break:break-all;padding:18px 0}
+.s07-tag{flex:0 0 auto;font-style:normal;font-size:13px;line-height:20px;padding:0 8px;border-radius:10px;background:#EEF0F5;color:#252b3a}
+.s07-tag.is-new{background:var(--wash);color:#14161F;font-weight:500}
+.s07-mini{all:unset;flex:0 0 auto;height:32px;padding:0 12px;border-radius:16px;background:#EEF0F5;color:#14161F;font-size:14px;font-weight:500;line-height:32px;cursor:pointer;white-space:nowrap}
+.s07-mini:active{background:#E2E5EE}
+.s07-mini[disabled]{color:#535b70;cursor:default}
+.s07-p{margin:14px 20px 0;font-size:14px;line-height:22px;color:#535b70}
+.s07-p.is-warn{color:#B03246}
+.s07-sec{all:unset;display:flex;align-items:center;justify-content:center;width:min(calc(100% - 40px),280px);height:48px;margin:22px auto 0;border-radius:24px;border:1.5px solid #14161F;font-size:16px;font-weight:500;color:#14161F;cursor:pointer;transition:transform calc(120ms * var(--k,1)) ease}
+.s07-sec:active{transform:scale(.958)}
+
+/* ---- edit ---- */
+.s07-fld{margin:0 20px;padding-top:12px}
+.s07-fh{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:14px;font-weight:500;line-height:20px;color:#535b70}
+.s07-fn{font-size:13px;font-weight:400;color:#535b70}
+.s07-fn.is-over{color:#DA3A52}
+.s07-inrow{display:flex;align-items:center;gap:8px;margin-top:6px;height:50px;padding:0 6px 0 14px;border-radius:14px;background:#F3F4F7;box-shadow:inset 0 0 0 1.5px transparent;transition:box-shadow calc(140ms * var(--k,1)) ease,background-color calc(140ms * var(--k,1)) ease}
+.s07-inrow:focus-within{background:#fff;box-shadow:inset 0 0 0 1.5px #4A5AD6}
+.s07-fld.is-err .s07-inrow{background:#fff;box-shadow:inset 0 0 0 1.5px #DA3A52}
+.s07-in{all:unset;flex:1 1 auto;min-width:0;height:48px;font-size:17px;line-height:24px;color:#14161F}
+.s07-in::placeholder{color:#8A90A2}
+.s07-in.s07-code{letter-spacing:.24em;font-feature-settings:"tnum" 1}
+.s07-err{margin:5px 20px 0;min-height:18px;font-size:13px;line-height:18px;color:#DA3A52}
+.s07-err:empty{min-height:6px}
+.s07-ok{margin:6px 20px 0;display:flex;align-items:center;gap:6px;font-size:14px;line-height:20px;color:#0E9B76;font-weight:500}
+.s07-ok .s07-ic{width:16px;height:16px}
+.s07-resend{display:flex;align-items:center;gap:12px;margin:2px 20px 0;font-size:13px;line-height:20px;color:#535b70;white-space:nowrap}
+.s07-resend span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.s07-link{all:unset;flex:0 0 auto;font-size:14px;font-weight:500;line-height:20px;color:#14161F;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.s07-link[disabled]{color:#535b70;text-decoration:none;cursor:default}
+.s07-hint{margin:12px 20px 0;font-size:13px;line-height:20px;color:#535b70}
+.s07-edit .s07-sc{bottom:calc(var(--kb,0px) + 75px);padding-bottom:24px}
+/* keyboard up: the edit header starts collapsed (18px in the tool row) so the fields get the room the preview gave up */
+.ju-phone.kb .s07-edit{--hdh:56px}
+.ju-phone.kb .s07-edit .s07-hd{--hk:1}
+.s07-act{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:4;display:flex;flex-direction:column;align-items:center;gap:6px;padding:10px 20px 16px;background:#fff;border-top:1px solid rgba(20,22,31,.07)}
+.s07-fail{margin:0;font-size:14px;line-height:20px;color:#DA3A52;text-align:center}
+/* the one JU-blue confirm: top highlight, pressed bottom */
+.s07-cta{all:unset;display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border-radius:24px;background:linear-gradient(180deg,#5462CF 0%,#4553BE 52%,#3C49AE 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 -1px 0 rgba(0,0,0,.2);color:#fff;font-size:16px;font-weight:600;letter-spacing:.04em;cursor:pointer;transition:transform calc(120ms * var(--k,1)) ease,opacity calc(160ms * var(--k,1)) ease}
+.s07-cta:active{transform:scale(.958)}
+.s07-cta.is-busy{opacity:.78;cursor:progress}
+.s07-cta.is-done{cursor:default}
+
+/* ---- root navigation ---- */
+.s07-nav{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:5;display:flex;align-items:stretch;padding:0 10px 6px;background:#fff;border-top:1px solid rgba(20,22,31,.08);transition:transform calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.app.s07-nonav .s07-nav{transform:translateY(100%)}
+.s07-nav-b{all:unset;position:relative;flex:1 1 0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:500;line-height:18px;color:#535b70;cursor:pointer}
+.s07-nav-b.on{color:#14161F;font-weight:700}
+.s07-nav-b.on::after{content:"";position:absolute;bottom:9px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:#14161F}
+.s07-nav-b.off{opacity:.55}
+
+/* ---- overlays ---- */
+.s07-cf{position:absolute;left:0;right:0;top:var(--stage);bottom:0;z-index:50}
+.s07-cf-scrim{position:absolute;inset:0;border-radius:28px 28px 0 0;background:rgba(20,22,31,.32);animation:s07-fade-in calc(200ms * var(--k,1)) ease both}
+.s07-cf-p{position:absolute;left:0;right:0;bottom:var(--kb,0px);padding:22px 20px 20px;border-radius:24px 24px 0 0;background:#fff;box-shadow:inset 0 1px 0 rgba(20,22,31,.06);animation:s07-rise calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes s07-rise{from{transform:translateY(100%)}to{transform:none}}
+.s07-cf-t{margin:0;font-size:17px;font-weight:600;line-height:24px}
+.s07-cf-b{margin:6px 0 18px;font-size:15px;line-height:22px;color:#252b3a}
+.s07-cf-a{display:flex;gap:10px}
+.s07-cf-a .s07-sec,.s07-cf-a .s07-danger{flex:1 1 0;margin:0;width:auto}
+.s07-danger{all:unset;display:flex;align-items:center;justify-content:center;height:48px;border-radius:24px;background:#FCEBEE;color:#B8243A;font-size:16px;font-weight:600;cursor:pointer;transition:transform calc(120ms * var(--k,1)) ease}
+.s07-danger:active{transform:scale(.958)}
+.s07-toast{position:absolute;left:50%;bottom:calc(78px + var(--kb,0px));z-index:40;max-width:calc(100% - 40px);transform:translateX(-50%);padding:10px 16px;border-radius:14px;background:#14161F;color:#fff;font-size:14px;line-height:20px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:s07-toast calc(220ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.app.s07-nonav .s07-toast{bottom:calc(96px + var(--kb,0px))}
+@keyframes s07-toast{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translateX(-50%)}}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s07{{panel.rootCls}}{{c.nav.rootCls}}{{appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+      <div class="s07-env" aria-hidden="true"></div>
+
+      <!-- STAGE · the live preview (persistent; content morphs by data-pv / data-aud / data-focus) -->
+      <div class="s07-stage{{pv.stageCls}}" data-pv="{{pv.mode}}" data-focus="{{pv.focus}}">
+        <div class="s07-mast">
+          <b class="s07-mark">JU</b>
+          <span class="s07-caps">
+            <span class="s07-cap" data-m data-cap="apply">{{pv.capApply}}</span>
+            <span class="s07-cap" data-m data-cap="profile">别人看到的你</span>
+            <span class="s07-cap" data-m data-cap="edit">改哪一项，卡上就变哪一项</span>
+          </span>
+        </div>
+        <div class="s07-carousel">
+          <div class="s07-track" data-m style="--aud:{{pv.aud}}">
+            <sc-for list="{{pv.cards}}" as="k" hint-placeholder-count="3">
+              <article class="s07-card{{k.cls}}" data-m role="button" tabindex="0" aria-label="{{k.label}}" onClick="{{k.tap}}">
+                <div class="s07-strip">
+                  <span class="s07-s-app" data-m><span class="s07-s-t">{{k.apply}}</span><sc-if value="{{k.status}}"><i class="s07-chip">{{k.status}}</i></sc-if></span>
+                  <span class="s07-s-view" data-m>{{k.label}}</span>
+                  <span class="s07-s-saved" data-m>已保存 · 之后的报名用新资料</span>
+                  <span class="s07-s-unsaved" data-m>改动还没保存</span>
+                </div>
+                <div class="s07-id">
+                  <span class="s07-ava" aria-hidden="true">{{pv.initial}}</span>
+                  <span class="s07-idt">
+                    <b class="s07-nm{{pv.nmCls}}">{{pv.name}}</b>
+                    <span class="s07-vf{{k.vfCls}}"><sc-if value="{{k.vfOk}}"><svg class="s07-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4l3 3 6.4-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></sc-if>{{k.vf}}</span>
+                  </span>
+                </div>
+                <div class="s07-note">{{k.note}}</div>
+                <div class="s07-low{{k.lowCls}}">
+                  <sc-if value="{{k.lock}}"><svg class="s07-ic" viewBox="0 0 16 16" aria-hidden="true"><rect x="3.4" y="7.2" width="9.2" height="6.4" rx="1.6" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M5.6 7.2V5.4a2.4 2.4 0 014.8 0v1.8" fill="none" stroke="currentColor" stroke-width="1.6"/></svg></sc-if>
+                  <span class="s07-low-l">{{k.low}}</span><span class="s07-low-v{{k.lowVCls}}">{{k.lowV}}</span>
+                </div>
+              </article>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <!-- SHEET · white control surface; every surface is a page pushed horizontally (classes from c.nav.cls) -->
+      <div class="s07-sheet">
+
+        <!-- HOME -->
+        <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+          <section class="s07-pg s07-root {{c.nav.cls.home}}" data-surface="home">
+            <header class="s07-hd" data-header>
+              <div class="s07-bar"></div>
+              <h1 class="s07-t">设置</h1>
+              <p class="s07-m">{{home.meta}}</p>
+            </header>
+            <div class="s07-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+              <sc-if value="{{c.attCount}}">
+                <div class="s07-wash">
+                  <sc-for list="{{c.att}}" as="a" hint-placeholder-count="2"><button type="button" class="s07-row" data-origin="{{a.key}}" onClick="{{a.open}}"><i class="s07-dot"></i><span class="s07-rl">{{a.title}}</span><span class="s07-rv">{{a.label}}</span><i class="s07-chev"></i></button></sc-for>
+                </div>
+              </sc-if>
+              <sc-for list="{{home.groups}}" as="g" hint-placeholder-count="5">
+                <h2 class="s07-gt">{{g.title}}</h2>
+                <div class="s07-grp">
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s07-row" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s07-rl">{{r.label}}</span><span class="s07-rv"><sc-if value="{{r.ava}}"><i class="s07-tok s07-tok-ava" aria-hidden="true">{{c.you.initial}}</i></sc-if><sc-if value="{{r.sw}}"><i class="s07-tok s07-tok-sw" aria-hidden="true"></i></sc-if>{{r.value}}</span><i class="s07-chev"></i></button></sc-for>
+                </div>
+              </sc-for>
+              <p class="s07-foot">{{c.demoNote}}</p>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- PROFILE · the card above answers「谁在看」; rows below are what you control -->
+        <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
+          <section class="s07-pg {{c.nav.cls.profile}}" data-surface="profile">
+            <header class="s07-hd" data-header>
+              <div class="s07-bar"><button type="button" class="s07-back" data-act="back" onClick="{{c.nav.back}}"><i class="s07-back-i"></i>设置</button><button type="button" class="s07-act-r" data-act="edit" onClick="{{prof.edit}}">编辑</button></div>
+              <h1 class="s07-t">个人资料</h1>
+              <p class="s07-m">{{prof.meta}}</p>
+            </header>
+            <div class="s07-sc" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+              <h2 class="s07-gt">谁在看</h2>
+              <div class="s07-seg" role="tablist" aria-label="谁在看">
+                <sc-for list="{{prof.auds}}" as="a" hint-placeholder-count="3"><button type="button" role="tab" class="s07-seg-b{{a.cls}}" aria-selected="{{a.sel}}" data-act="preview" onClick="{{a.pick}}">{{a.label}}</button></sc-for>
+              </div>
+              <h2 class="s07-gt">资料</h2>
+              <div class="s07-grp">
+                <button type="button" class="s07-row s07-row-f" data-origin="f-name" onClick="{{prof.editName}}"><span class="s07-rl">称呼</span><span class="s07-rv">{{c.you.name}}</span><sc-if value="{{c.you.savedName}}"><i class="s07-tag is-new">刚更新</i></sc-if><i class="s07-chev"></i></button>
+                <div class="s07-row s07-row-f" data-origin="f-wx" onClick="{{prof.editWx}}"><span class="s07-rl">微信号</span><span class="s07-rv">{{c.you.wxLabel}}</span><sc-if value="{{c.you.savedWx}}"><i class="s07-tag is-new">刚更新</i></sc-if><button type="button" class="s07-mini" data-act="copy" onClick="{{prof.copy}}">复制</button></div>
+                <button type="button" class="s07-row s07-row-f" data-origin="f-email" onClick="{{prof.editEmail}}"><span class="s07-rl">邮箱</span><span class="s07-rv">{{prof.email}}</span><sc-if value="{{prof.emailTag}}"><i class="s07-tag{{prof.emailTagCls}}">{{prof.emailTag}}</i></sc-if><i class="s07-chev"></i></button>
+              </div>
+              <sc-if value="{{c.you.copyFail}}"><p class="s07-p is-warn">长按复制：{{c.you.copyFail}}</p></sc-if>
+              <p class="s07-p">{{prof.snapshot}}</p>
+              <button type="button" class="s07-sec" data-act="edit" onClick="{{prof.edit}}">编辑资料</button>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- PROFILE EDIT · fields drive the card live; the one blue confirm sits above the keyboard -->
+        <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
+          <section class="s07-pg s07-edit {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
+            <header class="s07-hd" data-header>
+              <div class="s07-bar"><button type="button" class="s07-back" data-act="cancel" onClick="{{ed.cancel}}">取消</button></div>
+              <h1 class="s07-t">编辑资料</h1>
+              <p class="s07-m">保存后，之后的报名用新资料</p>
+            </header>
+            <div class="s07-sc" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+              <div class="s07-fld{{ed.nameCls}}">
+                <div class="s07-fh"><span>称呼</span><span class="s07-fn{{ed.countCls}}">{{ed.nameCount}}</span></div>
+                <div class="s07-inrow"><input class="s07-in" data-field="name" aria-label="称呼" value="{{ed.name}}" onInput="{{ed.onName}}" onFocus="{{ed.fName}}" placeholder="比如「阿禾」" autocomplete="off"></div>
+              </div>
+              <p class="s07-err" role="alert">{{ed.err.name}}</p>
+              <div class="s07-fld{{ed.wxCls}}">
+                <div class="s07-fh"><span>微信号</span><span class="s07-fn">成局后只给局主</span></div>
+                <div class="s07-inrow"><input class="s07-in" data-field="wx" aria-label="微信号" value="{{ed.wx}}" onInput="{{ed.onWx}}" onFocus="{{ed.fWx}}" placeholder="填写微信号，不是昵称" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+              </div>
+              <p class="s07-err" role="alert">{{ed.err.wx}}</p>
+              <div class="s07-fld{{ed.emailCls}}">
+                <div class="s07-fh"><span>工作 / 学校邮箱</span><span class="s07-fn">可空 · 只显示域名</span></div>
+                <div class="s07-inrow"><input class="s07-in" data-field="email" type="email" aria-label="工作或学校邮箱" value="{{ed.email}}" onInput="{{ed.onEmail}}" onFocus="{{ed.fEmail}}" placeholder="例如 you@nyu.edu" autocomplete="off" autocapitalize="off" spellcheck="false">
+                  <sc-if value="{{ed.showSend}}"><button type="button" class="s07-mini" data-act="send" onClick="{{ed.sendCode}}">发送验证码</button></sc-if></div>
+              </div>
+              <p class="s07-err" role="alert">{{ed.err.email}}</p>
+              <sc-if value="{{ed.showCode}}">
+                <div class="s07-fld{{ed.codeCls}}">
+                  <div class="s07-fh"><span>验证码</span><span class="s07-fn">{{ed.codeMeta}}</span></div>
+                  <div class="s07-inrow"><input class="s07-in s07-code" data-field="code" aria-label="邮箱验证码" inputmode="numeric" maxlength="6" value="{{ed.code}}" onInput="{{ed.onCode}}" onKeyDown="{{ed.onKeyCode}}" onFocus="{{ed.fCode}}" placeholder="6 位数字" autocomplete="one-time-code">
+                    <button type="button" class="s07-mini" data-act="verify" onClick="{{ed.verify}}">验证</button></div>
+                </div>
+                <p class="s07-err" role="alert">{{ed.err.code}}</p>
+                <div class="s07-resend"><button type="button" class="s07-link" data-act="resend" onClick="{{ed.resend}}" disabled="{{ed.resendOff}}">{{ed.resendLabel}}</button><span>本机演示 · 验证码不发邮件</span></div>
+              </sc-if>
+              <sc-if value="{{ed.codeVerified}}"><p class="s07-ok"><svg class="s07-ic" viewBox="0 0 16 16" aria-hidden="true"><path d="M3.2 8.4l3 3 6.4-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>{{ed.verifiedText}}</p></sc-if>
+              <sc-if value="{{ed.showHint}}"><p class="s07-hint">{{ed.emailHint}}</p></sc-if>
+            </div>
+            <div class="s07-act">
+              <sc-if value="{{ed.failed}}"><p class="s07-fail" role="alert">{{ed.failText}}</p></sc-if>
+              <button type="button" class="s07-cta{{ed.ctaCls}}" data-act="save" onClick="{{ed.save}}">{{ed.ctaLabel}}</button>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- STAGE 2 builds these surfaces in the S07 composition; until then they share the generic page (header + back) -->
+        <sc-for list="{{gen}}" as="g" hint-placeholder-count="0">
+          <section class="s07-pg {{g.cls}}{{g.rootCls}}" data-surface="{{g.key}}">
+            <header class="s07-hd" data-header>
+              <div class="s07-bar"><sc-if value="{{g.back}}"><button type="button" class="s07-back" data-act="back" onClick="{{c.nav.back}}"><i class="s07-back-i"></i>返回</button></sc-if></div>
+              <h1 class="s07-t">{{g.title}}</h1>
+            </header>
+            <div class="s07-sc" data-scroller="{{g.key}}" onScroll="{{c.nav.onScroll}}"></div>
+          </section>
+        </sc-for>
+      </div>
+
+      <nav class="s07-nav" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s07-nav-b {{t.cls}}" aria-current="{{t.cur}}" onClick="{{t.go}}">{{t.label}}</button></sc-for></nav>
+
+      <sc-if value="{{c.sheet.on}}">
+        <div class="s07-over s07-cf" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}">
+          <div class="s07-cf-scrim"></div>
+          <div class="s07-cf-p">
+            <h3 class="s07-cf-t">{{c.sheet.title}}</h3>
+            <p class="s07-cf-b">{{c.sheet.body}}</p>
+            <sc-if value="{{c.sheet.unsaved}}"><div class="s07-cf-a"><button type="button" class="s07-sec" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s07-danger" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></div></sc-if>
+            <sc-if value="{{c.sheet.accountEnd}}"><div class="s07-cf-a"><button type="button" class="s07-sec" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s07-danger" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s07-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* S07 预览在上 — the top 40% is a live preview standing on the environment; the bottom 60% is a white control sheet.
+   STAGE  persistent. data-pv = the preview mode of the effective surface (S07_PV). Every [data-m] element inside it is morphed by
+          morphCapture() (before a change) → render → morphRun() (after): WAAPI from the old computed transform/opacity to the new one,
+          so the morph honours speed, pause, keyframe scrub and the three reduced-motion sources. CSS holds every mode's end state.
+   SHEET  one white frame; each surface is a .s07-pg page pushed horizontally by the controller's nav classes (named keyframes).
+   Stage 1 builds home / profile / profile-edit; S07_LATER surfaces use the generic page until stage 2 gives each its preview mode. */
+const S07_PV = { home: 'apply', profile: 'profile', 'profile-edit': 'edit' };
+const S07_NONAV = { 'profile-edit': 1, 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'report-supplement': 1, feedback: 1, 'seam-report': 1 };
+const S07_LATER = ['favorites', 'favorite-detail', 'city', 'notify', 'appearance', 'records', 'record-detail', 'record-supplement', 'record-dispute', 'record-appeal', 'reports', 'report-detail', 'report-supplement', 'help', 'feedback', 'privacy', 'account', 'about', 'rules', 'seam-feed', 'seam-feed-detail', 'seam-mine', 'seam-report'];
+const S07_ROOTS = { 'seam-feed': 1, 'seam-mine': 1 };
+/* who is looking: the three audiences of the same profile (称呼 → host + members; 邮箱验证 / 留言 / 微信 → host only; 微信 only after 成局) */
+const S07_AUD = [{ key: 'review', label: '局主 · 审核时' }, { key: 'formed', label: '局主 · 成局后' }, { key: 'member', label: '同局成员' }];
+const S07_MORPH = { ms: 300, ease: 'cubic-bezier(.2,.8,.2,1)' };
+const S07_PERM = { default: '未申请系统权限', requesting: '请求中', granted: '已允许通知', denied: '通知已拒绝', unsupported: '暂不支持通知' };
+
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 320, back: 280, root: 300, swap: 280 };
+    this.headerRange = 96; this.saveMs = 360;
+    this._anims = []; this._first = null; this._lastPf = null;
+  }
+  initialState(v) { return Object.assign(JUS.baseState(v), { s07: { aud: 0, focus: '', flash: null } }); }
+  componentDidUpdate() {
+    if (this._first) this.morphRun(); this.syncAnims();
+    if (this._reveal) { const root = this.rootRef.current; const el = root && root.querySelector('.s07-edit ' + this._reveal); if (el) { this._reveal = null; try { el.scrollIntoView({ block: 'nearest' }); } catch (x) { } } }
+  }
+  _s07(patch) { this.setState(function (s) { return { s07: Object.assign({}, s.s07, patch) }; }); }
+  /* the surface the stage should show: during a back transition it is already the one being revealed */
+  effSurface() { const n = this.state.nav, st = n.stack; return n.phase === 'exit' && st.length > 1 ? st[st.length - 2].s : st[st.length - 1].s; }
+
+  /* ---------------- stage morph ---------------- */
+  morphCapture() {
+    if (this._first) return; const root = this.rootRef.current; if (!root) return;
+    const m = new Map(); root.querySelectorAll('.s07-stage [data-m]').forEach(function (el) { const cs = getComputedStyle(el); m.set(el, { t: cs.transform, o: cs.opacity }); });
+    this._first = m;
+  }
+  morphRun() {
+    const first = this._first; this._first = null; const self = this;
+    this._anims.forEach(function (a) { try { a.cancel(); } catch (e) { } }); this._anims = [];
+    if (!first || this.isRM()) return;
+    const k = this.state.review && this.state.review.speed === 0.5 ? 2 : 1;
+    const D = S07_MORPH.ms * k;
+    first.forEach(function (f, el) {
+      if (!el.isConnected) return; const cs = getComputedStyle(el); const t = cs.transform, o = cs.opacity;
+      if (f.t === t && f.o === o) return;
+      const out = +o < +f.o - .01, inn = +o > +f.o + .01;
+      const timing = out ? { duration: D * .5, easing: 'cubic-bezier(.4,0,1,1)' } : inn ? { duration: D * .62, delay: D * .38, easing: 'cubic-bezier(0,0,.2,1)' } : { duration: D, easing: S07_MORPH.ease };
+      timing.fill = 'backwards';
+      try { const a = el.animate([{ transform: f.t, opacity: f.o }, { transform: t, opacity: o }], timing); a.onfinish = function () { self._anims = self._anims.filter(function (x) { return x !== a; }); }; self._anims.push(a); } catch (e) { }
+    });
+    this.syncAnims();
+  }
+  /* review panel: 暂停 holds the morph; 关键帧 scrubs it (the sheet push is held by the .scrub rule in CSS) */
+  syncAnims() {
+    const r = this.state.review || {}; const list = this._anims; if (!list.length) return;
+    list.forEach(function (a) { try { if (r.scrub != null) { a.pause(); a.currentTime = a.effect.getComputedTiming().endTime * r.scrub / 100; } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } });
+  }
+
+  /* ---------------- controller hooks ---------------- */
+  onNav(type, s) { this.morphCapture(); if (type === 'go' && s === 'profile') this._s07({ aud: 0, focus: '' }); }
+  onProfileSaved(e) {
+    const self = this;
+    if (e.nothing) this.say('没有改动', 'info');
+    else { this.morphCapture(); this._s07({ flash: { fields: e.changed || [] } }); this.holdKey('s07-flash', 2600, function () { self.morphCapture(); self._s07({ flash: null }); }); }
+    this.afterKey('pf-back', 240, function () { self.back(true); });
+  }
+  beforeReplay(name) {
+    this._anims.forEach(function (a) { try { a.cancel(); } catch (e) { } }); this._anims = []; this._first = null;
+    if (name === 'preview-push') { this.home(); this._s07({ aud: 0, focus: '', flash: null }); }
+  }
+  applyJump(e) {
+    this._first = null; this.ctlJump(e); this._s07({ aud: 0, focus: '', flash: null });
+    const st = e.open && e.open.state; if (st === 'code' || st === 'code-expired') this._reveal = '.s07-resend';
+  }
+
+  /* ---------------- actions ---------------- */
+  openProfile(ev) { const self = this; this.motion('preview-push', function () { self.go('profile', {}, ev); }); }
+  cardTap(i, ev) { const m = S07_PV[this.effSurface()]; if (!m || m === 'apply') { this.openProfile(ev); return; } this.pickAud(i); }
+  pickAud(i) { if (((this.state.s07 || {}).aud || 0) === i) return; this.morphCapture(); this._s07({ aud: i }); }
+  /* focus follows the field into the card that shows it: 微信 → 局主 · 成局后; 邮箱 / 验证码 → 局主 · 审核时 */
+  setFocus(f) {
+    const self = this;
+    Promise.resolve().then(function () {
+      const cur = self.state.s07 || {}; let aud = cur.aud || 0;
+      if (f === 'wx') aud = 1; else if (f === 'email' || f === 'code') aud = 0;
+      if (cur.focus === f && (cur.aud || 0) === aud) return;
+      self.morphCapture(); self._s07({ focus: f, aud: aud });
+    });
+  }
+  editField(f, ev) { this._focusField = f; this.go('profile-edit', {}, ev); }
+
+  /* ---------------- view models ---------------- */
+  pendingApp(d) { const j = d.joined.filter(function (x) { return x.stage === 'pending'; })[0]; const e = j && d.events[j.eventId]; return e ? { title: e.title, host: JUS.derive.hostName(d, e), label: j.label } : null; }
+  pvVals(c, mode) {
+    const d = this.state.data, ui = this.state.s07 || {}, self = this;
+    const pf = mode === 'edit' && c.pf.on ? c.pf : null;
+    const name = pf ? (pf.name || '').trim() : (c.you.name || '');
+    const email = pf ? (pf.email || '').trim() : (c.you.email || '');
+    const wx = pf ? (pf.wx || '').trim() : (c.you.wx || '');
+    const dom = email.indexOf('@') > 0 ? email.split('@').pop() : '';
+    let vf, vk;
+    if (!email) { vf = '没有验证邮箱'; vk = 'none'; }
+    else if (pf && pf.emailChanged) { if (pf.codeVerified) { vf = dom + ' 邮箱已验证'; vk = 'ok'; } else if (JUS.validate.email(email)) { vf = JUS.validate.email(email) === JUS.COPY.profileErrors.mailFree ? dom + ' 不能用来验证' : '邮箱格式不正确'; vk = 'bad'; } else { vf = dom + ' 邮箱待验证'; vk = 'wait'; } }
+    else if (c.you.verified) { vf = dom + ' 邮箱已验证'; vk = 'ok'; }
+    else { vf = dom + ' 邮箱未验证'; vk = 'wait'; }
+    const app = this.pendingApp(d); const aud = mode === 'apply' ? 0 : (ui.aud || 0);
+    const fl = (ui.flash && ui.flash.fields) || []; const err = (pf && pf.err) || {};
+    return {
+      mode: mode, aud: aud, focus: mode === 'edit' ? (ui.focus || '') : '',
+      stageCls: (ui.flash ? ' is-flash' : '') + (c.sheet.unsaved ? ' is-unsaved' : ''),
+      name: name || '称呼', initial: Array.from(name || '·')[0],
+      nmCls: (name ? '' : ' is-empty') + (err.name ? ' is-bad' : '') + (fl.indexOf('name') >= 0 ? ' is-upd' : ''),
+      capApply: app ? app.host + '审核你的申请时看到的' : '局主审核你的申请时会看到',
+      cards: S07_AUD.map(function (a, i) {
+        const member = i === 2;
+        return {
+          label: a.label, cls: ' c' + i + (i === aud ? ' is-cur' : ''),
+          apply: i === 0 ? (app ? app.title : '还没有在审核的申请') : '', status: i === 0 && app ? app.label : '',
+          vf: member ? '只看到你的称呼' : vf, vfOk: !member && vk === 'ok', vfCls: ' is-' + (member ? 'none' : vk) + (!member && fl.indexOf('email') >= 0 ? ' is-upd' : ''),
+          note: member ? '留言只给局主看' : '捎句话 · 每次报名时单独写',
+          lock: i !== 1, low: i === 0 ? '成局后才交换微信' : i === 1 ? '微信' : '不向同局成员公开微信',
+          lowV: i === 1 ? (wx || '未填写') : '', lowCls: i === 1 && (!wx || err.wx) ? ' is-bad' : '', lowVCls: i === 1 && fl.indexOf('wx') >= 0 ? ' is-upd' : '',
+          tap: function (ev) { self.cardTap(i, ev); }
+        };
+      })
+    };
+  }
+  homeVals(c) {
+    const d = this.state.data, s = c.sum, self = this, go = c.nav.go, you = c.you, n = d.notify;
+    const fav = JUS.derive.favorites(d); const soon = fav.active.slice().sort(function (a, b) { return JUS.t(a.event.iso) - JUS.t(b.event.iso); })[0];
+    const favV = !fav.count ? '还没有收藏' : soon ? (fav.count > 1 ? soon.title + ' 等 ' + fav.count + ' 个' : soon.title) : fav.count + ' 个局';
+    const onN = JUS.NOTIFY_CATS.filter(function (x) { return n.prefs[x.key]; }).length;
+    const notifyV = onN + '/' + JUS.NOTIFY_CATS.length + ' 类 · ' + (n.permission === 'granted' && n.serviceConnected ? '可以送达' : S07_PERM[n.permission]);
+    const profV = (you.name || '') + ' · ' + (you.verified ? you.domain + ' 已验证' : you.email ? '邮箱未验证' : '没有验证邮箱');
+    const row = function (key, label, value, fn, tok) { return { key: key, label: label, value: value, go: fn || go[key], ava: tok === 'ava', sw: tok === 'sw' }; };
+    return {
+      meta: c.attCount ? c.attCount + ' 件事等你处理 · ' + s.cityLabel : s.cityLabel + ' · 本地演示',
+      groups: [
+        { title: '资料', rows: [row('profile', '个人资料', profV, function (ev) { self.openProfile(ev); }, 'ava'), row('privacy', '隐私与资料可见性', '谁能看见你的微信')] },
+        { title: '找局', rows: [row('favorites', '收藏的局', favV), row('city', '默认浏览城市', s.cityLabel)] },
+        { title: '提醒与外观', rows: [row('notify', '通知与提醒', notifyV), row('appearance', '外观与动态', s.appearanceLabel, null, 'sw')] },
+        { title: '记录', rows: [row('records', '我的记录', s.recordLabel), row('reports', '我的举报', s.reportLabel)] },
+        { title: '帮助与账户', rows: [row('help', '帮助与反馈', JUS.RULES.length + ' 条约定 · 反馈'), row('account', '账户与本机数据', '本地演示'), row('about', '关于与规则', '版本与规则全文')] }
+      ]
+    };
+  }
+  profVals(c) {
+    const you = c.you, aud = (this.state.s07 || {}).aud || 0, self = this;
+    return {
+      meta: you.verified ? you.domain + ' 邮箱已验证 · 只显示域名' : you.email ? '邮箱还没验证' : '还没有填写邮箱',
+      auds: S07_AUD.map(function (a, i) { return { label: a.label, cls: i === aud ? ' on' : '', sel: i === aud ? 'true' : 'false', pick: function () { self.pickAud(i); } }; }),
+      email: you.email || '未填写', emailTag: you.email ? (you.verified ? '已验证' : '未验证') : '', emailTagCls: you.savedEmail ? ' is-new' : '',
+      snapshot: JUS.COPY.snapshotNote,
+      edit: function (ev) { self.go('profile-edit', {}, ev); },
+      editName: function (ev) { self.editField('name', ev); }, editWx: function (ev) { self.editField('wx', ev); }, editEmail: function (ev) { self.editField('email', ev); },
+      copy: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); you.copyWx(); }
+    };
+  }
+  editVals(c) {
+    if (c.pf.on) this._lastPf = c.pf; const pf = c.pf.on ? c.pf : (this._lastPf || { err: {} }); const self = this; const err = pf.err || {};
+    const left = Math.max(0, pf.expiresIn || 0); const mmss = Math.floor(left / 60) + ':' + ('0' + (left % 60)).slice(-2);
+    return Object.assign({}, pf, {
+      err: err, nameCls: err.name ? ' is-err' : '', wxCls: err.wx ? ' is-err' : '', emailCls: err.email ? ' is-err' : '', codeCls: err.code ? ' is-err' : '',
+      countCls: pf.nameOver ? ' is-over' : '',
+      showSend: !!(pf.needCode && pf.codeNone && !err.email), showHint: !!(pf.emailChanged && pf.codeNone), showCode: !!(pf.needCode && !pf.codeNone), resendOff: !pf.canResend,
+      codeMeta: pf.codeExpired ? '已过期' : pf.codeSent && left > 0 ? mmss + ' 后过期' : '',
+      fName: function () { self.setFocus('name'); }, fWx: function () { self.setFocus('wx'); }, fEmail: function () { self.setFocus('email'); }, fCode: function () { self.setFocus('code'); },
+      ctaCls: pf.saving ? ' is-busy' : pf.saved ? ' is-done' : '', ctaLabel: pf.saved && !pf.saving ? '已保存' : pf.saveLabel
+    });
+  }
+  genVals(c) { return S07_LATER.filter(function (k) { return c.nav.on[k]; }).map(function (k) { return { key: k, cls: c.nav.cls[k], title: c.nav.title[k], back: !S07_ROOTS[k], rootCls: S07_ROOTS[k] ? ' s07-root' : '' }; }); }
+  renderVals() {
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals();
+    c.rootNav.forEach(function (t) { t.cur = t.on ? 'page' : 'false'; });
+    const eff = this.effSurface(); const mode = S07_PV[eff] || 'apply';
+    return {
+      panel: panel, rootRef: this.rootRef, c: c,
+      pv: this.pvVals(c, mode), home: this.homeVals(c), prof: this.profVals(c), ed: this.editVals(c), gen: this.genVals(c),
+      appCls: (this.state.data.appearance.reduceMotion ? ' rm-user' : '') + (S07_NONAV[eff] ? ' s07-nonav' : '')
+    };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>

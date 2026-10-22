@@ -2,238 +2,463 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>S02 侧栏目录</title>
+<title>S02 大字目录</title>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=DM+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@500;600;700&family=DM+Mono:wght@400;500&display=swap">
 <style>
 body{margin:0}
 /* @panel-css */
-/* ============ S02 侧栏目录 · 桌面级「目录在左、内容在右」压进手机 ============
-   光源 / 表面逻辑：左栏是一块不受光的墨（#14161F）；右侧内容面是一张受环境色光照亮的纸——
-   光（棉糖 / 光晕 / 落日）铺满整张纸，纸上的字被光微微染色（取各环境自己的 ink / secondary），
-   行与行之间只有 1px 墨线，没有卡片、没有阴影；唯一的“面”是主确认 CTA 的 JU 蓝。 */
-.app{position:absolute;inset:0;display:flex;overflow:hidden;--k:1;--s02-top:44px;--s02-bar:72px;--s02-cw:calc(var(--pw,390px) - var(--s02-bar));
-  font-family:"Noto Sans SC","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;color:var(--s02-ink);background:#14161F}
-.app[data-skin=cotton]{--s02-paper:#fbf7f8;--s02-ink:#263936;--s02-sec:#596851;--s02-rule:rgba(38,57,54,.17);--s02-a0:#fbe1ec;--s02-a2:#d3edf3;
-  --s02-env:radial-gradient(95% 58% at 100% 0%,#fbe1ec 0%,rgba(251,225,236,.75) 38%,rgba(251,225,236,0) 72%),radial-gradient(80% 52% at 0% 46%,#ececf4 0%,rgba(236,236,244,.8) 40%,rgba(236,236,244,0) 74%),radial-gradient(110% 60% at 68% 104%,#d3edf3 0%,rgba(211,237,243,.85) 42%,rgba(211,237,243,0) 76%),linear-gradient(#fbf7f8,#fbf7f8)}
-.app[data-skin=halo]{--s02-paper:#fff9ef;--s02-ink:#362e3c;--s02-sec:#655564;--s02-rule:rgba(54,46,60,.18);--s02-a0:#ff5005;--s02-a2:#d0bce1;
-  --s02-env:radial-gradient(128% 70% at 90% 12%,rgba(255,80,5,0) 15%,rgba(255,80,5,.62) 29%,rgba(219,186,149,.72) 44%,rgba(208,188,225,.78) 58%,rgba(208,188,225,0) 77%),linear-gradient(#fff9ef,#fff9ef)}
-.app[data-skin=sunset]{--s02-paper:#fffbf2;--s02-ink:#3b352d;--s02-sec:#6a5b4c;--s02-rule:rgba(59,53,45,.18);--s02-a0:#ff7a33;--s02-a2:#ffc53d;
-  --s02-env:linear-gradient(180deg,rgba(51,160,255,.58) 0%,rgba(51,160,255,.26) 30%,rgba(255,122,51,.52) 60%,rgba(255,197,61,.64) 100%),linear-gradient(#fffbf2,#fffbf2)}
-.app *{box-sizing:border-box}
-.app button{font-family:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
-.app h1,.app p{margin:0}
-/* ---------- 目录栏（墨） ---------- */
-.s02-bar{flex:0 0 var(--s02-bar);width:var(--s02-bar);position:relative;background:#14161F;color:#fff;display:flex;flex-direction:column;align-items:center;padding-top:var(--s02-top);user-select:none}
-.s02-ju{height:48px;display:flex;align-items:center;font-size:17px;font-weight:700;line-height:1;letter-spacing:.08em;color:#fff}
-.s02-me{width:40px;height:40px;margin-top:24px;border-radius:50%;border:0;padding:0;background:linear-gradient(160deg,var(--s02-a0),var(--s02-a2));color:#14161F;font-size:18px;font-weight:500;line-height:40px;text-align:center;transition:transform calc(120ms * var(--k,1)) ease}
-.s02-me:active{transform:scale(.94)}
-.s02-groups{margin-top:20px;display:flex;flex-direction:column}
-.s02-g{width:var(--s02-bar);height:56px;display:flex;align-items:center;justify-content:center;background:none;border:0;padding:0;color:rgba(255,255,255,.52);transition:color calc(160ms * var(--k,1)) ease}
-.s02-g span{writing-mode:vertical-rl;font-size:15px;font-weight:500;line-height:1;letter-spacing:.12em}
-.s02-g.on{color:#fff}
-.s02-ix{position:absolute;right:0;top:var(--s02-ixy,118px);width:4px;height:36px;border-radius:2px 0 0 2px;background:linear-gradient(180deg,var(--s02-a0),var(--s02-a2));transition:top calc(220ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
-.s02-root{margin-top:auto;padding-bottom:26px;display:flex;flex-direction:column;align-items:center;gap:10px}
-.s02-root::before{content:"";width:22px;height:1px;background:rgba(255,255,255,.2);margin-bottom:6px}
-.s02-r{background:none;border:0;padding:4px 0;color:rgba(255,255,255,.5)}
-.s02-r span{writing-mode:vertical-rl;font-size:13px;font-weight:400;line-height:1;letter-spacing:.12em}
-.s02-r.on{color:#fff}.s02-r.on span{font-weight:500}
-/* ---------- 内容面（受光的纸） ---------- */
-.s02-pane{flex:1 1 auto;min-width:0;position:relative;background:var(--s02-paper);overflow:hidden}
-.s02-env{position:absolute;inset:0;z-index:0;background-image:var(--s02-env);background-size:100% 100%;pointer-events:none}
-.s02-envm{position:absolute;inset:0;z-index:-1;background-color:var(--s02-paper);background-image:var(--s02-env);background-size:var(--s02-cw) var(--ph,844px);background-position:0 0;pointer-events:none}
-.s02-envm.b{background-position:0 calc(100% - var(--ph,844px) + var(--kb,0px))}
-.s02-ghost{position:absolute;inset:0;z-index:1;pointer-events:none}
-.s02-page{position:absolute;inset:0;z-index:2}
-.s02-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;--st:0px;--sp:0;padding-bottom:calc(48px + var(--kb,0px));scrollbar-width:none}
-.s02-scroll::-webkit-scrollbar{display:none}
-.s02-scroll.act{padding-bottom:calc(132px + var(--kb,0px))}
-.s02-tools{position:sticky;top:0;z-index:5;height:calc(var(--s02-top) + 48px);padding:var(--s02-top) 12px 0;display:flex;align-items:center;justify-content:space-between}
-.s02-tools::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--s02-rule);opacity:var(--sp)}
-.s02-tb{background:none;border:0;padding:8px 8px;min-width:44px;min-height:40px;font-size:15px;font-weight:400;line-height:1.2;color:var(--s02-ink);text-align:left;transition:opacity calc(120ms * var(--k,1)) ease}
-.s02-tb.r{text-align:right}
-.s02-tb:active{opacity:.5}
-.s02-head{padding:24px 20px 14px}
-.s02-headrow{height:38px}
-.s02-title{display:inline-flex;align-items:center;height:38px;max-width:100%;position:relative;z-index:6;font-weight:500;transform-origin:0 50%;
-  transform:translate(calc(var(--sp) * (var(--s02-cw) / 2 - 20px - 50%)),calc(max(0px,var(--st) - 56px) - 11px * var(--sp)))}
-.s02-title span{display:block;font-size:calc(30px - 12px * var(--sp));line-height:1.25;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(var(--s02-cw) - 40px)}
-.s02-status{margin-top:4px;font-size:14px;font-weight:400;line-height:1.5;color:var(--s02-sec);opacity:calc(1 - var(--sp) * 1.6);overflow-wrap:anywhere}
-.s02-status.ok{color:#0E9B76}
-/* 行：标签 16/500 左，值 15/400 右；1px 墨线分隔 */
-.s02-sec{padding:0 20px}
-.s02-lab{display:flex;align-items:center;gap:8px;padding:22px 0 6px;font-size:13px;font-weight:500;line-height:1.4;color:var(--s02-sec);letter-spacing:.02em}
-.s02-dot{width:7px;height:7px;border-radius:50%;background:#4553BE;flex:0 0 auto}
-.s02-row{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:9px 0;border:0;border-bottom:1px solid var(--s02-rule);background:none;text-align:left;color:inherit;font:inherit;transition:background-color calc(120ms * var(--k,1)) ease}
-button.s02-row:active{background-color:rgba(20,22,31,.06)}
-.s02-row.big{min-height:64px}
-.s02-k{flex:0 0 auto;font-size:16px;font-weight:500;line-height:1.3;color:var(--s02-ink)}
-.s02-row.big .s02-k{font-size:17px}
-.s02-v{flex:1 1 auto;min-width:0;text-align:right;font-size:15px;font-weight:400;line-height:1.45;color:var(--s02-ink);overflow-wrap:anywhere}
-.s02-v.sec{color:var(--s02-sec)}
-.s02-v .ok{color:#0E9B76;font-weight:400}
-.s02-v .warn{color:#DA3A52;font-weight:400}
-.s02-v.fresh{animation:s02-fresh calc(200ms * var(--k,1)) ease both}
-@keyframes s02-fresh{from{opacity:0}to{opacity:1}}
-.s02-ch{flex:0 0 auto;width:10px;font-size:16px;line-height:1;color:var(--s02-sec);opacity:.8}
-.s02-item{display:block;width:100%;padding:12px 0;border:0;border-bottom:1px solid var(--s02-rule);background:none;text-align:left;color:inherit;font:inherit}
-.s02-item .t{font-size:16px;font-weight:500;line-height:1.4;color:var(--s02-ink)}
-.s02-item .m{font-size:13px;line-height:1.5;color:var(--s02-sec);margin-top:2px}
-.s02-note{padding:14px 0 0;font-size:13px;line-height:1.6;color:var(--s02-sec)}
-.s02-empty{padding:28px 0 0;font-size:16px;line-height:1.5;color:var(--s02-ink)}
-.s02-empty small{display:block;font-size:14px;color:var(--s02-sec);margin-top:4px}
-.s02-sw{flex:0 0 auto;width:44px;height:26px;border-radius:13px;border:0;padding:0;position:relative;background:rgba(20,22,31,.18);transition:background-color calc(160ms * var(--k,1)) ease}
-.s02-sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2);transition:transform calc(160ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
-.s02-sw[aria-checked=true]{background:#14161F}.s02-sw[aria-checked=true]::after{transform:translateX(18px)}
-/* 编辑态：同一行结构，值位变成右对齐输入；聚焦 = 行底线变焦点色 */
-label.s02-row.ed{cursor:text}
-.s02-row.ed.focus{border-bottom-color:#4A5AD6;box-shadow:0 1px 0 #4A5AD6}
-.s02-row.ed.err{border-bottom-color:#DA3A52;box-shadow:0 1px 0 #DA3A52}
-.s02-in{flex:1 1 auto;min-width:0;width:100%;text-align:right;font-family:inherit;font-size:15px;font-weight:400;line-height:1.45;color:var(--s02-ink);background:none;border:0;outline:0;padding:0;margin:0;border-radius:0}
-.s02-in::placeholder{color:var(--s02-sec);opacity:.55}
-.s02-err{padding:6px 0 2px;font-size:13px;line-height:1.5;color:#DA3A52;text-align:right}
-.s02-mini{flex:0 0 auto;height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--s02-rule);background:none;color:var(--s02-ink);font-size:14px;font-weight:500}
-.s02-mini:active{background:rgba(20,22,31,.06)}
-.s02-sub{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:4px 14px;padding:8px 0 2px;font-size:13px;line-height:1.5;color:var(--s02-sec)}
-.s02-link{background:none;border:0;padding:0;font-size:13px;font-weight:500;color:#4553BE}
-/* 底部动作条：唯一的 JU 蓝面；键盘弹出时随 --kb 上移 */
-.s02-act{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:7;padding:10px 20px 22px;display:flex;flex-direction:column;align-items:center;gap:8px}
-.s02-act::before{content:"";position:absolute;left:0;right:0;top:0;height:1px;background:var(--s02-rule)}
-.s02-fail{font-size:13px;line-height:1.5;color:#DA3A52;text-align:center}
-.s02-cta{width:min(100%,280px);height:48px;border-radius:24px;border:0;color:#fff;font-size:16px;font-weight:500;line-height:48px;letter-spacing:.02em;
-  background:linear-gradient(180deg,#5765d2 0%,#4553BE 46%,#3b47a8 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -2px 0 rgba(0,0,0,.18),0 8px 16px -10px rgba(69,83,190,.65);transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1)) ease}
+/* ================= S02 大字目录 =================
+   One proposition: the whole settings module is an index. Home = a full-screen environment field carrying a giant
+   typographic contents list (9 words, 40/600). Tapping a word collapses the list into a 64px first-character rail
+   (the glyphs shrink in place: 40px → 20px) while a white content panel (28px top-left radius) slides in from the
+   right; the rail persists on every secondary page. x = depth (pages push inside the panel), y = siblings (rail
+   switching pages vertically). Light source: none — the environment is the only colour, the panel is plain white;
+   no shadows, no glass. */
+.app.s02{position:absolute;inset:0;overflow:hidden;background:#f1eff4;color:#14161F;-webkit-font-smoothing:antialiased;
+  font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+  --ink:#14161F;--body:#252b3a;--sub:#535b70;--ju:#4553BE;--focus:#4A5AD6;--err:#DA3A52;--ok:#0E9B76;--line:rgba(20,22,31,.12);
+  --sans:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;--num:"Archivo","Noto Sans SC",sans-serif;
+  --rail:64px;--mt:calc(var(--ph,844px) * .22);--top:44px;--sub-env:#4f566b;
+  --dcol:380ms;--dexp:340ms;--dpush:360ms;--dpop:300ms;--dswap:300ms;--droot:320ms;
+  --e-col:cubic-bezier(.2,.86,.2,1);--e-glyph:cubic-bezier(.32,.62,.2,1);--e-exp:cubic-bezier(.38,0,.22,1);--e-push:cubic-bezier(.22,.82,.24,1);
+  --g-cotton:radial-gradient(84% 44% at 0% 0%,rgba(236,140,186,.92),rgba(236,140,186,0) 100%),radial-gradient(72% 38% at 104% 34%,rgba(180,160,240,.95),rgba(180,160,240,0) 100%),radial-gradient(78% 34% at -4% 68%,rgba(242,170,206,.78),rgba(242,170,206,0) 100%),radial-gradient(104% 50% at 100% 104%,rgba(108,192,222,.98),rgba(108,192,222,0) 100%),linear-gradient(172deg,#f6c8dc 0%,#e1dbf4 46%,#bfe3ef 100%);
+  --g-halo:radial-gradient(circle at 86% 11%,rgba(255,246,236,0) 0px,rgba(255,246,236,0) 70px,rgba(255,80,5,.9) 118px,rgba(255,138,64,.72) 160px,rgba(219,186,149,.7) 214px,rgba(208,188,225,.74) 276px,rgba(208,188,225,0) 380px),radial-gradient(120% 58% at 0% 100%,rgba(208,188,225,.72),rgba(208,188,225,0) 100%),radial-gradient(90% 40% at 100% 86%,rgba(255,170,110,.42),rgba(255,170,110,0) 100%),linear-gradient(180deg,#fff9f2 0%,#fdf0e4 100%);
+  --g-sunset:radial-gradient(120% 34% at 50% 104%,rgba(255,214,96,.95),rgba(255,214,96,0) 100%),radial-gradient(60% 26% at 100% 58%,rgba(255,110,40,.5),rgba(255,110,40,0) 100%),linear-gradient(180deg,#3f8df2 0%,#6d9ff0 16%,#a99ce2 32%,#ef91a0 48%,#ff8250 62%,#ff9a3f 78%,#ffc53d 100%)}
+.app.s02[data-skin="cotton"]{--sub-env:#40475b}
+.app.s02[data-skin="halo"]{--sub-env:#4c3f49}
+.app.s02[data-skin="sunset"]{--sub-env:#1f1b27}
+.app.s02 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+
+/* ---- environment (the only colour; full screen) + slice replicas for the header / root bar ---- */
+.s02-env{position:absolute;inset:0;z-index:0;pointer-events:none}
+.s02-e,.s02-r{position:absolute;inset:0;background-repeat:no-repeat;background-size:100% var(--ph,844px);opacity:0}
+.s02-e{filter:blur(14px);transition:opacity calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1),filter calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s02-r{transition:opacity calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
+.s02-e-cotton,.s02-r-cotton{background-image:var(--g-cotton)}
+.s02-e-halo,.s02-r-halo{background-image:var(--g-halo)}
+.s02-e-sunset,.s02-r-sunset{background-image:var(--g-sunset)}
+.app[data-skin="cotton"] .s02-e-cotton,.app[data-skin="halo"] .s02-e-halo,.app[data-skin="sunset"] .s02-e-sunset{opacity:1;filter:none}
+.app[data-skin="cotton"] .s02-r-cotton,.app[data-skin="halo"] .s02-r-halo,.app[data-skin="sunset"] .s02-r-sunset{opacity:1}
+.s02-hdbg .s02-r{background-position:0 0}
+.s02-rootbg .s02-r{background-position:0 100%}
+
+/* ---- JU wordmark (persistent, top-left) ---- */
+.s02-ju{position:absolute;left:24px;top:12px;z-index:7;font:700 19px/28px var(--num);letter-spacing:.01em;color:var(--ink);pointer-events:none}
+
+/* ---- home: header + compact identity + the giant index ---- */
+.s02-home{position:absolute;inset:0;z-index:2}
+.s02-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;box-sizing:border-box;padding:var(--mt) 0 112px;overscroll-behavior:contain;scrollbar-width:none}
+.s02-sc::-webkit-scrollbar{display:none}
+.s02-hd{position:absolute;left:0;right:0;top:0;height:124px;z-index:3;pointer-events:none}
+.s02-hdbg{position:absolute;left:0;right:0;top:0;height:60px;opacity:var(--hc,0);-webkit-mask-image:linear-gradient(#000 72%,transparent);mask-image:linear-gradient(#000 72%,transparent)}
+.s02-ht{position:absolute;margin:0;top:58px;left:calc(24px + (50% - 24px) * var(--hc,0));transform:translate(calc(-50% * var(--hc,0)),calc(-44px * var(--hc,0)));font:500 calc(30px - 12px * var(--hc,0))/1.25 var(--sans);color:var(--ink);white-space:nowrap}
+.s02-hm{position:absolute;margin:0;top:98px;left:24px;right:50%;font:400 14px/20px var(--sans);color:var(--sub-env);opacity:calc(1 - var(--hc,0) * 2.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-mdot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--ju);margin-right:7px;vertical-align:1px}
+.s02-id{position:absolute;right:24px;top:62px;display:flex;align-items:center;gap:12px;max-width:52%;padding:0;border:0;background:none;color:inherit;text-align:right;cursor:pointer;pointer-events:auto;opacity:calc(1 - var(--hc,0) * 2.4);transform:translateY(calc(-14px * var(--hc,0)))}
+.s02-av{order:2;flex:0 0 44px;width:44px;height:44px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font:600 19px/1 var(--sans)}
+.s02-idt{display:flex;flex-direction:column;align-items:flex-end;min-width:0}
+.s02-nm{max-width:100%;font:600 22px/30px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-ac{max-width:100%;font:400 14px/20px var(--sans);color:var(--sub-env);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-ix{list-style:none;margin:0;padding:0}
+.s02-it{position:relative;height:60px}
+.s02-row{position:relative;display:flex;align-items:baseline;box-sizing:border-box;width:100%;height:60px;margin:0;padding:0 20px 0 24px;border:0;background:none;color:inherit;text-align:left;cursor:pointer;outline:none}
+.s02-w{display:flex;flex:0 0 auto;font:600 40px/60px var(--sans);color:var(--ink);transition:transform calc(110ms * var(--k,1)) ease}
+.s02-c1,.s02-c2{display:block;transform-origin:50% 50%}
+.s02-v{flex:1 1 auto;min-width:0;margin-left:18px;font:400 14px/20px var(--sans);color:var(--sub-env);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-v b{font-weight:500;color:var(--ink)}
+.s02-dot{position:absolute;left:107px;top:13px;width:8px;height:8px;border-radius:50%;background:var(--ju);transform-origin:0 0}
+.s02-row:active .s02-w{transform:translateX(3px)}
+.s02-row:focus-visible .s02-w{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:7px}
+.s02-reg{margin:60px 24px 0;border-top:1px solid var(--line)}
+.s02-rg{display:flex;align-items:baseline;justify-content:space-between;gap:12px;box-sizing:border-box;width:100%;min-height:56px;padding:16px 0 0;border:0;background:none;font:500 17px/24px var(--sans);color:var(--ink);text-align:left;cursor:pointer}
+.s02-rg small{font:400 14px/20px var(--sans);color:var(--sub-env);white-space:nowrap}
+
+/* ---- root navigation (home / seam roots only; folded away while the rail is out) ---- */
+.s02-root{position:absolute;left:0;right:0;bottom:0;height:64px;z-index:3;display:flex;padding:0 6px 4px;box-sizing:border-box}
+.s02-rootbg{position:absolute;left:0;right:0;bottom:0;top:-24px;pointer-events:none;-webkit-mask-image:linear-gradient(transparent,#000 24px);mask-image:linear-gradient(transparent,#000 24px)}
+.s02-root::before{content:"";position:absolute;left:24px;right:24px;top:0;height:1px;background:var(--line);z-index:1}
+.s02-tab{position:relative;z-index:1;flex:1 1 0;border:0;background:none;padding:0;font:500 15px/1 var(--sans);color:var(--sub-env);cursor:pointer}
+.s02-tab.on{color:var(--ink);font-weight:600}
+.s02-tab.on::after{content:"";position:absolute;left:50%;bottom:13px;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--ink)}
+.s02-tab.off{opacity:.55}
+
+/* ---- rail: the white tongue (under the glyphs) + hit targets (above everything) ---- */
+.s02-tl{position:absolute;left:0;top:0;bottom:0;width:calc(var(--rail) + 4px);z-index:1;pointer-events:none}
+.s02-tongue{position:absolute;left:10px;top:calc(var(--mt) + 6px);width:calc(var(--rail) - 8px);height:48px;background:#fff;border-radius:16px 0 0 16px;opacity:0;transform:translateY(calc(var(--g,0) * 60px));transform-origin:100% 50%}
+.s02-tongue::before,.s02-tongue::after{content:"";position:absolute;right:2px;width:14px;height:14px}
+.s02-tongue::before{top:-14px;background:radial-gradient(circle at 0 0,rgba(255,255,255,0) 13.5px,#fff 14px)}
+.s02-tongue::after{bottom:-14px;background:radial-gradient(circle at 0 100%,rgba(255,255,255,0) 13.5px,#fff 14px)}
+.s02-rail{position:absolute;left:0;top:0;bottom:0;width:var(--rail);z-index:6;visibility:hidden}
+.s02-rb{position:absolute;left:0;width:100%;height:60px;top:calc(var(--mt) + var(--i) * 60px);margin:0;padding:0;border:0;background:none;cursor:pointer}
+.s02-rb:focus-visible{outline:2px solid var(--focus);outline-offset:-6px;border-radius:14px}
+
+/* ---- the white content panel and its pages ---- */
+.s02-panel{position:absolute;left:var(--rail);right:0;top:var(--top);bottom:0;z-index:4;background:#fff;border-top-left-radius:28px;overflow:hidden;visibility:hidden;transform:translateX(calc(100% + 40px))}
+.s02-pg{position:absolute;inset:0;background:#fff;overflow:hidden}
+.s02-psc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;box-sizing:border-box;padding:136px 20px calc(var(--kb,0px) + 56px);overscroll-behavior:contain;scrollbar-width:none}
+.s02-psc::-webkit-scrollbar{display:none}
+.s02-ph{position:absolute;left:0;right:0;top:0;height:128px;z-index:2;pointer-events:none}
+.s02-ph::before{content:"";position:absolute;left:0;right:0;top:0;height:52px;background:#fff;box-shadow:0 1px 0 rgba(20,22,31,calc(.1 * var(--hc,0)))}
+.s02-tool{position:relative;display:flex;align-items:center;justify-content:space-between;height:52px;padding:0 12px 0 4px;pointer-events:auto}
+.s02-back{display:inline-flex;align-items:center;height:44px;padding:0 10px 0 6px;border:0;background:none;font:500 16px/1 var(--sans);color:var(--ink);cursor:pointer}
+.s02-chev{width:9px;height:9px;border-left:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(45deg);margin:0 6px 0 8px}
+.s02-act{height:34px;padding:0 16px;border-radius:17px;border:1.5px solid var(--ink);background:none;font:500 15px/1 var(--sans);color:var(--ink);cursor:pointer}
+.s02-pt{position:absolute;margin:0;top:60px;left:calc(20px + (50% - 20px) * var(--hc,0));transform:translate(calc(-50% * var(--hc,0)),calc(-45px * var(--hc,0)));font:500 calc(30px - 12px * var(--hc,0))/1.25 var(--sans);color:var(--ink);white-space:nowrap;pointer-events:none}
+.s02-pm{position:absolute;margin:0;top:100px;left:20px;right:20px;font:400 14px/20px var(--sans);color:var(--sub);opacity:calc(1 - var(--hc,0) * 2.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+
+/* profile (read) */
+.s02-hero{padding:2px 0 22px}
+.s02-name{margin:0;font:600 44px/1.18 var(--sans);color:var(--ink);letter-spacing:-.01em;overflow-wrap:anywhere}
+.s02-name.is-long{font-size:30px;line-height:1.3}
+.s02-new{display:inline-block;margin:10px 0 0;padding:3px 10px;border-radius:999px;background:rgba(69,83,190,.1);font:500 13px/18px var(--sans);color:var(--ju)}
+.s02-ver{margin:10px 0 0;font:500 14px/20px var(--sans);color:var(--ok)}
+.s02-ver.is-off{color:var(--sub)}
+.s02-facts{padding:4px 0 0}
+.s02-fact{display:flex;align-items:flex-start;gap:14px;min-height:60px;padding:14px 0 0;box-sizing:border-box}
+.s02-fk{flex:0 0 auto;width:62px;font:600 20px/30px var(--sans);color:var(--ink)}
+.s02-fv{flex:1 1 auto;min-width:0;font:400 18px/30px var(--sans);color:var(--body);overflow-wrap:anywhere}
+.s02-mini{flex:0 0 auto;height:30px;padding:0 12px;border-radius:15px;border:1.5px solid rgba(20,22,31,.7);background:none;font:500 14px/1 var(--sans);color:var(--ink);cursor:pointer}
+.s02-cf{margin:4px 0 0 76px;font:400 13px/1.5 var(--sans);color:var(--err)}
+.s02-cf span{color:var(--ink);user-select:all}
+.s02-note{margin:22px 0 0;font:400 13px/1.6 var(--sans);color:var(--sub)}
+.s02-snap{margin-top:22px}
+.s02-snaph{display:flex;align-items:baseline;gap:14px;margin:0 0 4px}
+.s02-snapn{font:400 14px/20px var(--sans);color:var(--sub)}
+.s02-snapr{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:52px;border-top:1px solid var(--line)}
+.s02-snapr:last-child{border-bottom:1px solid var(--line)}
+.s02-snapt{flex:1 1 auto;min-width:0;font:500 16px/22px var(--sans);color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-snapw{flex:0 0 auto;max-width:42%;font:400 14px/20px var(--sans);color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s02-link{display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;width:100%;min-height:56px;margin-top:16px;padding:0;border:0;border-top:1px solid var(--line);background:none;font:500 16px/1.3 var(--sans);color:var(--ink);cursor:pointer;text-align:left}
+.s02-chev-r{width:8px;height:8px;border-right:2px solid currentColor;border-top:2px solid currentColor;transform:rotate(45deg);margin-right:6px;flex:0 0 auto}
+
+/* profile edit: the same index grammar — big words, values written on a rule */
+.s02-edit .s02-psc{padding-bottom:calc(var(--kb,0px) + 150px)}
+.s02-f{padding:2px 0 14px}
+.s02-fl{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.s02-fw{font:600 40px/48px var(--sans);color:var(--ink);letter-spacing:-.01em}
+.s02-fc{font:400 13px/18px var(--sans);color:var(--sub);white-space:nowrap}
+.s02-fc.is-over{color:var(--err)}
+.s02-in{display:block;box-sizing:border-box;width:100%;margin:4px 0 0;padding:4px 0 9px;border:0;border-bottom:1.5px solid rgba(20,22,31,.82);border-radius:0;background:transparent;font:500 22px/30px var(--sans);color:var(--ink);outline:none;-webkit-appearance:none;appearance:none;caret-color:var(--focus)}
+.s02-in-name{font-size:28px;line-height:36px;font-weight:600}
+.s02-in:focus{border-bottom-color:var(--focus);box-shadow:0 1px 0 var(--focus)}
+.s02-f.is-err .s02-in{border-bottom-color:var(--err);box-shadow:0 1px 0 var(--err)}
+.s02-fe{margin:6px 0 0;font:400 13px/18px var(--sans);color:var(--err)}
+.s02-fe:empty{display:none}
+.s02-okline{margin:6px 0 0;font:500 14px/20px var(--sans);color:var(--ok)}
+.s02-code{margin:12px 0 4px;padding:16px 16px 14px;border-radius:18px;background:#f3f4f8}
+.s02-cl{margin:0 0 12px;font:400 13px/1.55 var(--sans);color:var(--sub)}
+.s02-cr{display:flex;align-items:flex-end;gap:12px}
+.s02-cin{flex:1 1 auto;min-width:0;box-sizing:border-box;height:46px;padding:0 0 6px;border:0;border-bottom:1.5px solid rgba(20,22,31,.82);border-radius:0;background:transparent;font:600 26px/1 var(--num);letter-spacing:.3em;color:var(--ink);outline:none}
+.s02-cin:focus{border-bottom-color:var(--focus)}
+.s02-cin::placeholder{color:#535b70}
+.s02-btn{flex:0 0 auto;height:40px;padding:0 18px;border-radius:20px;border:1.5px solid var(--ink);background:none;font:500 15px/1 var(--sans);color:var(--ink);cursor:pointer}
+.s02-btn-ink{background:var(--ink);color:#fff}
+.s02-cm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;font:400 13px/18px var(--sans);color:var(--sub)}
+.s02-resend{border:0;background:none;padding:6px 0;font:500 14px/1 var(--sans);color:var(--ju);cursor:pointer}
+.s02-resend:disabled{color:var(--sub);cursor:default}
+.s02-cn{margin:10px 0 0;font:400 13px/1.55 var(--sans);color:var(--sub)}
+.s02-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:3;display:flex;flex-direction:column;align-items:center;padding:28px 20px 22px;background:linear-gradient(to top,#fff 74%,rgba(255,255,255,0))}
+.s02-cta{width:min(100%,280px);height:48px;border:0;border-radius:24px;background:#4553BE;color:#fff;font:500 16px/1 var(--sans);letter-spacing:.04em;cursor:pointer;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -2px 0 rgba(10,14,60,.24);transition:transform calc(120ms * var(--k,1)) cubic-bezier(.3,.7,.4,1)}
 .s02-cta:active{transform:scale(.958)}
-.s02-cta[disabled]{opacity:.7;cursor:default}
-.s02-confirm{width:100%;display:flex;flex-direction:column;gap:2px}
-.s02-confirm b{font-size:16px;font-weight:500;line-height:1.4;color:var(--s02-ink)}
-.s02-confirm p{font-size:13px;line-height:1.5;color:var(--s02-sec)}
-.s02-confirm .s02-cbtns{display:flex;gap:10px;margin-top:10px}
-.s02-cbtn{flex:1 1 0;height:44px;border-radius:22px;border:1px solid var(--s02-ink);background:none;color:var(--s02-ink);font-size:15px;font-weight:500}
-.s02-cbtn.warn{border-color:#DA3A52;color:#DA3A52}
-.s02-cbtn:active{background:rgba(20,22,31,.06)}
-/* ---------- 运动：主语 = 内容面 ---------- */
-.s02-page.in-push{animation:s02-pushin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s02-page.in-push.alt{animation-name:s02-pushin2}
-.s02-page.in-pop{animation:s02-popin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s02-page.in-pop.alt{animation-name:s02-popin2}
-.s02-page.in-switch{animation:s02-switchin calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s02-page.in-switch.alt{animation-name:s02-switchin2}
-@keyframes s02-pushin{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes s02-pushin2{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes s02-popin{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes s02-popin2{from{transform:translateY(-40px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes s02-switchin{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes s02-switchin2{from{transform:translateY(24px);opacity:0}to{transform:translateY(0);opacity:1}}
-.s02-ghost .s02-page{animation:none;z-index:1}
-.s02-ghost .s02-page.go.push{animation:s02-pushout calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s02-ghost .s02-page.go.pop{animation:s02-popout calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s02-ghost .s02-page.go.switch{animation:s02-switchout calc(160ms * var(--k,1)) ease both}
-@keyframes s02-pushout{from{transform:translateY(0);opacity:1}to{transform:translateY(-40px);opacity:0}}
-@keyframes s02-popout{from{transform:translateY(0);opacity:1}to{transform:translateY(40px);opacity:0}}
-@keyframes s02-switchout{from{opacity:1}to{opacity:0}}
-/* 进入中的页：工具行镜像在收尾才出现（起点 scrollTop=0，没有东西经过工具行） */
-.s02-page.in-push .s02-tools .s02-envm,.s02-page.in-pop .s02-tools .s02-envm,.s02-page.in-switch .s02-tools .s02-envm{animation:s02-late calc(300ms * var(--k,1)) linear both}
-@keyframes s02-late{0%{opacity:0}85%{opacity:0}100%{opacity:1}}
-/* 环境切换 ≈ 650ms 透明度 + 模糊（只作用于光层，不碰文字） */
-.app.fx-a .s02-env,.app.fx-a .s02-envm{animation:s02-skin calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
-.app.fx-b .s02-env,.app.fx-b .s02-envm{animation:s02-skin2 calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
-@keyframes s02-skin{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
-@keyframes s02-skin2{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
-/* 评审：关键帧 / 暂停 / 减少动态（三源） */
-.app.scrub .s02-page[class*=in-],.app.scrub .s02-ghost .s02-page.go,.app.scrub .s02-env,.app.scrub .s02-envm{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
-.app.scrub .s02-ix{transition:none}
-.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.s02-cta.is-busy{cursor:progress;background:#5260c6}
+.s02-fail{margin:0 0 10px;font:400 13px/18px var(--sans);color:var(--err);text-align:center}
+
+/* stage-2 surfaces (rendered with the same header grammar until their own layouts land) */
+.s02-gl{margin:0;font:600 34px/1.25 var(--sans);color:var(--ink);overflow-wrap:anywhere}
+.s02-gs{margin:10px 0 0;font:400 15px/1.55 var(--sans);color:var(--sub)}
+.s02-seam{position:absolute;left:0;right:0;top:var(--top);bottom:64px;z-index:2;background:#fff;border-radius:28px 28px 0 0;overflow:hidden}
+
+/* ---- overlays: confirm sheet (an index of two choices), toast ---- */
+.s02-sheetw{position:absolute;inset:0;z-index:40}
+.s02-scrim{position:absolute;inset:0;background:rgba(20,22,31,.24);animation:s02-fade-in calc(220ms * var(--k,1)) ease both}
+.s02-sheet{position:absolute;left:var(--rail);right:0;bottom:var(--kb,0px);box-sizing:border-box;padding:26px 22px 18px;background:#fff;border-top-left-radius:28px;animation:s02-rise calc(300ms * var(--k,1)) var(--e-col) both}
+.app:not(.s02-deep) .s02-sheet{left:0;border-top-right-radius:28px}
+.s02-st{margin:0;font:600 24px/1.3 var(--sans);color:var(--ink)}
+.s02-sb{margin:8px 0 14px;font:400 15px/1.6 var(--sans);color:var(--sub)}
+.s02-opt{display:flex;align-items:center;justify-content:space-between;box-sizing:border-box;width:100%;min-height:60px;margin:0;padding:0 2px;border:0;border-top:1px solid var(--line);background:none;font:600 20px/1.2 var(--sans);color:var(--ink);text-align:left;cursor:pointer}
+.s02-opt-x{color:var(--err)}
+.s02-toast{position:absolute;z-index:50;left:calc(var(--rail) + 16px);right:16px;bottom:calc(var(--kb,0px) + 96px);box-sizing:border-box;padding:12px 16px;border-radius:16px;background:#14161F;color:#fff;font:500 14px/20px var(--sans);animation:s02-toast calc(240ms * var(--k,1)) var(--e-col) both}
+.s02-toast.at-home{left:24px;right:24px;bottom:74px}
+.s02-toast.is-gone{opacity:0!important;transition:opacity calc(160ms * var(--k,1)) ease}
+.s02-toast.k-ok::before{content:"";display:inline-block;width:5px;height:10px;margin:0 10px 2px 2px;border-right:2px solid #8fe3c6;border-bottom:2px solid #8fe3c6;transform:rotate(45deg)}
+.s02-toast.k-error{background:#4a1b26}
+
+/* ================= motion =================
+   Phase classes come from the controller (nav-enter|in|exit, dir-fwd|back|swap|root, at-*, over-*) plus three of
+   our own: s02-col (index → rail, phase in), s02-railm (rail at rest), s02-exp (rail → index, phase exit).
+   Every motion is ONE keyframe set per element with internal percentages, so pause / scrub (--frame) / 0.5× (--k)
+   hold the whole choreography; the last keyframe of each equals the resting state that follows it. */
+@keyframes s02-panel-in{from{transform:translateX(calc(100% + 40px))}to{transform:none}}
+@keyframes s02-panel-out{from{transform:none}to{transform:translateX(calc(100% + 40px))}}
+@keyframes s02-c1-in{from{transform:none}to{transform:translate(-12px,var(--st,0px)) scale(.5)}}
+@keyframes s02-c1-out{from{transform:translate(-12px,var(--st,0px)) scale(.5)}to{transform:none}}
+@keyframes s02-c2-in{0%{opacity:1;transform:none}40%,100%{opacity:0;transform:translate(-52px,var(--st,0px)) scale(.5)}}
+@keyframes s02-c2-out{0%,36%{opacity:0;transform:translate(-52px,var(--st,0px)) scale(.5)}100%{opacity:1;transform:none}}
+@keyframes s02-fo{0%{opacity:1;transform:none}22%,100%{opacity:0;transform:translateX(-16px)}}
+@keyframes s02-vo{0%{opacity:1;transform:none}20%,100%{opacity:0;transform:translateX(-24px)}}
+@keyframes s02-fi{0%,48%{opacity:0;transform:translateX(-16px)}100%{opacity:1;transform:none}}
+@keyframes s02-vi{0%,56%{opacity:0;transform:translateX(-24px)}100%{opacity:1;transform:none}}
+@keyframes s02-dot-in{from{transform:none}to{transform:translate(-66px,calc(var(--st,0px) + 4px)) scale(.75)}}
+@keyframes s02-dot-out{from{transform:translate(-66px,calc(var(--st,0px) + 4px)) scale(.75)}to{transform:none}}
+@keyframes s02-tg-in{0%,50%{opacity:0;transform:translateY(calc(var(--g,0) * 60px)) scaleX(.15)}100%{opacity:1;transform:translateY(calc(var(--g,0) * 60px)) scaleX(1)}}
+@keyframes s02-tg-out{0%{opacity:1;transform:translateY(calc(var(--g,0) * 60px)) scaleX(1)}32%,100%{opacity:0;transform:translateY(calc(var(--g,0) * 60px)) scaleX(.15)}}
+@keyframes s02-tg-sw{from{opacity:1;transform:translateY(calc(var(--gl,0) * 60px))}to{opacity:1;transform:translateY(calc(var(--g,0) * 60px))}}
+@keyframes s02-push-in{from{transform:translateX(100%)}to{transform:none}}
+@keyframes s02-push-under{from{transform:none;opacity:1}to{transform:translateX(-26%);opacity:.4}}
+@keyframes s02-pop-out{from{transform:none}to{transform:translateX(100%)}}
+@keyframes s02-pop-under{from{transform:translateX(-26%);opacity:.4}to{transform:none;opacity:1}}
+@keyframes s02-sw-in-f{0%,26%{opacity:0;transform:translateY(40px)}100%{opacity:1;transform:none}}
+@keyframes s02-sw-out-f{0%{opacity:1;transform:none}56%,100%{opacity:0;transform:translateY(-40px)}}
+@keyframes s02-sw-in-b{0%,26%{opacity:0;transform:translateY(-40px)}100%{opacity:1;transform:none}}
+@keyframes s02-sw-out-b{0%{opacity:1;transform:none}56%,100%{opacity:0;transform:translateY(40px)}}
+@keyframes s02-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes s02-fade-out{from{opacity:1}to{opacity:0}}
+@keyframes s02-rise{from{transform:translateY(100%)}to{transform:none}}
+@keyframes s02-toast{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+@keyframes s02-fresh{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+@keyframes s02-ink{0%,35%{color:var(--ju)}100%{color:var(--ink)}}
+
+/* rail at rest */
+.app.s02-railm .s02-c1{transform:translate(-12px,var(--st,0px)) scale(.5)}
+.app.s02-railm .s02-c2,.app.s02-railm .s02-v,.app.s02-railm .s02-id,.app.s02-railm .s02-hd,.app.s02-railm .s02-reg,.app.s02-railm .s02-root{opacity:0;visibility:hidden}
+.app.s02-railm .s02-dot{transform:translate(-66px,calc(var(--st,0px) + 4px)) scale(.75)}
+.app.s02-railm .s02-tongue{opacity:1}
+.app.s02-railm .s02-panel,.app.s02-col .s02-panel,.app.s02-exp .s02-panel{visibility:visible;transform:none}
+.app.s02-railm .s02-home,.app.s02-col .s02-home,.app.s02-exp .s02-home{pointer-events:none}
+.app.s02-railm .s02-rail{visibility:visible}
+/* index → rail (signature, fwd from home) */
+.app.s02-col{--ad:var(--dcol)}
+.app.s02-col .s02-panel{animation:s02-panel-in calc(var(--dcol) * var(--k,1)) var(--e-col) both}
+.app.s02-col .s02-c1{animation:s02-c1-in calc(var(--dcol) * var(--k,1)) var(--e-glyph) both}
+.app.s02-col .s02-c2{animation:s02-c2-in calc(var(--dcol) * var(--k,1)) var(--e-glyph) both}
+.app.s02-col .s02-id,.app.s02-col .s02-hd,.app.s02-col .s02-reg,.app.s02-col .s02-tab,.app.s02-col .s02-root::before{animation:s02-fo calc(var(--dcol) * var(--k,1)) linear both}
+.app.s02-col .s02-v{animation:s02-vo calc(var(--dcol) * var(--k,1)) linear both}
+.app.s02-col .s02-dot{animation:s02-dot-in calc(var(--dcol) * var(--k,1)) var(--e-glyph) both}
+.app.s02-col .s02-tongue{animation:s02-tg-in calc(var(--dcol) * var(--k,1)) var(--e-col) both}
+/* rail → index (back to home) */
+.app.s02-exp{--ad:var(--dexp)}
+.app.s02-exp .s02-panel{animation:s02-panel-out calc(var(--dexp) * var(--k,1)) var(--e-exp) both}
+.app.s02-exp .s02-c1{animation:s02-c1-out calc(var(--dexp) * var(--k,1)) var(--e-exp) both}
+.app.s02-exp .s02-c2{animation:s02-c2-out calc(var(--dexp) * var(--k,1)) var(--e-exp) both}
+.app.s02-exp .s02-id,.app.s02-exp .s02-hd,.app.s02-exp .s02-reg,.app.s02-exp .s02-tab,.app.s02-exp .s02-root::before{animation:s02-fi calc(var(--dexp) * var(--k,1)) linear both}
+.app.s02-exp .s02-v{animation:s02-vi calc(var(--dexp) * var(--k,1)) linear both}
+.app.s02-exp .s02-dot{animation:s02-dot-out calc(var(--dexp) * var(--k,1)) var(--e-exp) both}
+.app.s02-exp .s02-tongue{animation:s02-tg-out calc(var(--dexp) * var(--k,1)) var(--e-exp) both}
+/* x = depth: pages push inside the panel */
+.s02-pg.is-under.ph-idle{visibility:hidden}
+.app.nav-enter.dir-fwd:not(.over-home) .s02-pg.is-top{transform:translateX(100%)}
+.app.nav-in.dir-fwd:not(.over-home){--ad:var(--dpush)}
+.app.nav-in.dir-fwd:not(.over-home) .s02-pg.is-top{animation:s02-push-in calc(var(--dpush) * var(--k,1)) var(--e-push) both;box-shadow:-1px 0 0 rgba(20,22,31,.08)}
+.app.nav-in.dir-fwd:not(.over-home) .s02-pg.is-under{animation:s02-push-under calc(var(--dpush) * var(--k,1)) var(--e-push) both}
+.app.nav-exit:not(.over-home){--ad:var(--dpop)}
+.app.nav-exit:not(.over-home) .s02-pg.is-top{animation:s02-pop-out calc(var(--dpop) * var(--k,1)) var(--e-exp) both;box-shadow:-1px 0 0 rgba(20,22,31,.08)}
+.app.nav-exit:not(.over-home) .s02-pg.is-under{animation:s02-pop-under calc(var(--dpop) * var(--k,1)) var(--e-exp) both}
+/* y = siblings: rail switching pages vertically; the tongue slides to the new glyph */
+.app.dir-swap .s02-pg{background:transparent}
+.app.nav-enter.dir-swap .s02-pg.is-top{opacity:0}
+.app.nav-enter.dir-swap .s02-tongue{transform:translateY(calc(var(--gl,0) * 60px))}
+.app.nav-in.dir-swap{--ad:var(--dswap)}
+.app.nav-in.dir-swap .s02-tongue{animation:s02-tg-sw calc(var(--dswap) * var(--k,1)) var(--e-push) both}
+.app.nav-in.dir-swap.s02-sw-fwd .s02-pg.is-top{animation:s02-sw-in-f calc(var(--dswap) * var(--k,1)) var(--e-push) both}
+.app.nav-in.dir-swap.s02-sw-fwd .s02-pg.is-leaving{animation:s02-sw-out-f calc(var(--dswap) * var(--k,1)) var(--e-push) both}
+.app.nav-in.dir-swap.s02-sw-bwd .s02-pg.is-top{animation:s02-sw-in-b calc(var(--dswap) * var(--k,1)) var(--e-push) both}
+.app.nav-in.dir-swap.s02-sw-bwd .s02-pg.is-leaving{animation:s02-sw-out-b calc(var(--dswap) * var(--k,1)) var(--e-push) both}
+/* root switching (找局 / 我的局 / 设置): a plain cross-fade */
+.app.nav-enter.dir-root .is-top{opacity:0}
+.app.nav-in.dir-root{--ad:var(--droot)}
+.app.nav-in.dir-root .is-top{animation:s02-fade-in calc(var(--droot) * var(--k,1)) ease both}
+.app.nav-in.dir-root .is-leaving{animation:s02-fade-out calc(var(--droot) * var(--k,1)) ease both}
+/* value update: the new value settles in place */
+.s02-name.s02-fresh{animation:s02-fresh calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s02-nm.s02-fresh{animation:s02-ink calc(1100ms * var(--k,1)) ease both}
+/* review: reduced motion (three sources) = results only; the keyframe scrub is done in JS (Web Animations: every running animation in the phone is paused at frame × its own duration) */
+.app.s02.rm *,.app.s02.rm *::before,.app.s02.rm *::after,.app.s02.rm-user *,.app.s02.rm-user *::before,.app.s02.rm-user *::after{animation-duration:1ms!important;animation-delay:0ms!important;transition-duration:1ms!important;transition-delay:0ms!important}
+.app.s02.s02-instant *,.app.s02.s02-instant *::before,.app.s02.s02-instant *::after{transition:none!important}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s02{{panel.rootCls}}{{fxCls}}{{rmUser}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <aside class="s02-bar" aria-label="设置目录">
-        <div class="s02-ju">JU</div>
-        <button type="button" class="s02-me" aria-label="设置目录（首页）" onClick="{{bar.goHome}}">{{bar.initial}}</button>
-        <div class="s02-groups">
-          <sc-for list="{{bar.groups}}" as="g" hint-placeholder-count="6"><button type="button" class="s02-g {{g.cls}}" aria-current="{{g.cur}}" onClick="{{g.go}}"><span>{{g.name}}</span></button></sc-for>
-        </div>
-        <i class="s02-ix" style="--s02-ixy:{{bar.ixy}}px"></i>
-        <nav class="s02-root" aria-label="根导航">
-          <sc-for list="{{bar.roots}}" as="r" hint-placeholder-count="4"><button type="button" class="s02-r {{r.cls}}" onClick="{{r.go}}"><span>{{r.name}}</span></button></sc-for>
-        </nav>
-      </aside>
-      <div class="s02-pane">
-        <div class="s02-env"></div>
-        <div class="s02-ghost"></div>
-        <div class="s02-page {{page.cls}}" data-surface="{{page.surface}}">
-          <div class="s02-scroll {{page.scrollCls}}" onScroll="{{page.onScroll}}">
-            <div class="s02-tools"><i class="s02-envm"></i>
-              <sc-if value="{{page.back}}"><button type="button" class="s02-tb" data-act="back" onClick="{{page.onBack}}">← {{page.back}}</button></sc-if>
-              <sc-if value="{{page.noBack}}"><span class="s02-tb"></span></sc-if>
-              <sc-if value="{{page.action}}"><button type="button" class="s02-tb r" data-act="{{page.actionAct}}" onClick="{{page.onAction}}">{{page.action}}</button></sc-if>
-              <sc-if value="{{page.noAction}}"><span class="s02-tb"></span></sc-if>
+    <div class="app s02{{panel.rootCls}}{{c.nav.rootCls}}{{appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};--g:{{gi}};--gl:{{gl}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+      <div class="s02-env" aria-hidden="true"><i class="s02-e s02-e-cotton"></i><i class="s02-e s02-e-halo"></i><i class="s02-e s02-e-sunset"></i></div>
+      <div class="s02-tl" aria-hidden="true"><i class="s02-tongue"></i></div>
+
+      <!-- HOME = the giant index. It stays mounted under every settings page: its first characters ARE the rail. -->
+      <sc-if value="{{homeOn}}" hint-placeholder-val="{{true}}">
+        <section class="s02-home {{c.nav.cls.home}}" data-surface="home" aria-hidden="{{homeHidden}}">
+          <div class="s02-sc" data-scroller="home" onScroll="{{onHomeScroll}}">
+            <ol class="s02-ix" aria-label="设置目录">
+              <sc-for list="{{ix}}" as="it" hint-placeholder-count="9">
+                <li class="s02-it {{it.cls}}">
+                  <button type="button" class="s02-row" data-origin="{{it.k}}" data-ix="{{it.k}}" tabindex="{{homeTab}}" aria-label="{{it.aria}}" onClick="{{it.go}}">
+                    <span class="s02-w" aria-hidden="true"><span class="s02-c1">{{it.c1}}</span><span class="s02-c2">{{it.c2}}</span></span>
+                    <span class="s02-v" aria-hidden="true"><b>{{it.vb}}</b>{{it.vr}}</span>
+                    <sc-if value="{{it.dot}}"><i class="s02-dot" aria-hidden="true"></i></sc-if>
+                  </button>
+                </li>
+              </sc-for>
+            </ol>
+            <div class="s02-reg">
+              <button type="button" class="s02-rg" data-origin="privacy" tabindex="{{homeTab}}" onClick="{{goPrivacy}}"><span>隐私与资料可见性</span><small>{{privLine}}</small></button>
+              <button type="button" class="s02-rg" data-origin="about" tabindex="{{homeTab}}" onClick="{{goAbout}}"><span>关于与规则</span><small>{{c.about.rulesVersion}}</small></button>
             </div>
-            <div class="s02-head"><div class="s02-headrow"><h1 class="s02-title"><span>{{page.title}}</span></h1></div><p class="s02-status {{page.statusCls}}">{{page.status}}</p></div>
-            <sc-if value="{{home.on}}">
-              <section class="s02-sec">
-                <sc-if value="{{home.hasPending}}">
-                  <div class="s02-lab"><i class="s02-dot"></i>要你处理 · {{home.pendingCount}}</div>
-                  <sc-for list="{{home.pending}}" as="p" hint-placeholder-count="2"><button type="button" class="s02-item" data-rid="{{p.id}}" onClick="{{p.go}}"><div class="t">{{p.t}}</div><div class="m">{{p.m}}</div></button></sc-for>
+          </div>
+          <header class="s02-hd" data-header>
+            <div class="s02-hdbg" aria-hidden="true"><i class="s02-r s02-r-cotton"></i><i class="s02-r s02-r-halo"></i><i class="s02-r s02-r-sunset"></i></div>
+            <h1 class="s02-ht">设置</h1>
+            <p class="s02-hm"><sc-if value="{{c.attCount}}"><i class="s02-mdot"></i></sc-if>{{homeMeta}}</p>
+            <button type="button" class="s02-id" data-origin="you" tabindex="{{homeTab}}" onClick="{{goYou}}" aria-label="个人资料：{{c.you.name}}">
+              <span class="s02-av" aria-hidden="true">{{c.you.initial}}</span>
+              <span class="s02-idt"><span class="s02-nm {{homeFresh}}">{{c.you.name}}</span><span class="s02-ac">{{acct}}</span></span>
+            </button>
+          </header>
+        </section>
+      </sc-if>
+
+      <!-- rail hit targets (the glyphs themselves are the home index's first characters) -->
+      <nav class="s02-rail" aria-label="设置目录（竖栏）">
+        <sc-for list="{{ix}}" as="it" hint-placeholder-count="9"><button type="button" class="s02-rb {{it.rcls}}" style="{{it.style}}" data-rail="{{it.k}}" aria-label="{{it.w}}" aria-current="{{it.cur}}" tabindex="{{railTab}}" onClick="{{it.rail}}"></button></sc-for>
+      </nav>
+
+      <!-- THE PANEL: every secondary settings page lives here -->
+      <div class="s02-panel">
+        <!-- 资料 · read -->
+        <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
+          <section class="s02-pg {{c.nav.cls.profile}}" data-surface="profile">
+            <div class="s02-psc" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+              <div class="s02-hero">
+                <p class="s02-name {{nameCls}}">{{c.you.name}}</p>
+                <sc-if value="{{pfFresh}}"><p class="s02-new">刚更新</p></sc-if>
+                <p class="s02-ver {{verCls}}">{{verLine}}</p>
+              </div>
+              <div class="s02-facts">
+                <div class="s02-fact"><span class="s02-fk">微信号</span><span class="s02-fv">{{c.you.wxLabel}}</span><sc-if value="{{c.you.wx}}"><button type="button" class="s02-mini" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></div>
+                <sc-if value="{{c.you.copyFail}}"><p class="s02-cf">{{copyFailInline}}：<span>{{c.you.copyFail}}</span></p></sc-if>
+                <div class="s02-fact"><span class="s02-fk">邮箱</span><span class="s02-fv">{{emailShown}}</span></div>
+              </div>
+              <sc-if value="{{snapOn}}">
+                <div class="s02-snap">
+                  <p class="s02-snaph"><span class="s02-fk">已报名</span><span class="s02-snapn">{{snapCount}} 个局用报名时的资料</span></p>
+                  <sc-for list="{{snaps}}" as="r" hint-placeholder-count="3"><div class="s02-snapr"><span class="s02-snapt">{{r.title}}</span><span class="s02-snapw">{{r.who}}</span></div></sc-for>
+                </div>
+              </sc-if>
+              <p class="s02-note">{{snapshotNote}}</p>
+              <button type="button" class="s02-link" data-origin="privacy" onClick="{{c.nav.go.privacy}}"><span>谁能看见你的资料</span><i class="s02-chev-r"></i></button>
+            </div>
+            <header class="s02-ph" data-header>
+              <div class="s02-tool">
+                <button type="button" class="s02-back" data-act="back" onClick="{{c.nav.back}}"><i class="s02-chev"></i><span>{{bk.profile}}</span></button>
+                <button type="button" class="s02-act" data-act="edit" data-origin="edit" onClick="{{c.nav.go.profile-edit}}">编辑</button>
+              </div>
+              <h2 class="s02-pt">个人资料</h2>
+              <p class="s02-pm">称呼 · 微信号 · 邮箱</p>
+            </header>
+          </section>
+        </sc-if>
+
+        <!-- 资料 · edit (controller c.pf: validation, email code, save fail / retry, unsaved guard) -->
+        <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
+          <section class="s02-pg s02-edit {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
+            <div class="s02-psc" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+              <div class="s02-f {{fe.name}}">
+                <label class="s02-fl" for="s02-in-name"><span class="s02-fw">称呼</span><span class="s02-fc {{nameOverCls}}">{{c.pf.nameCount}}</span></label>
+                <input id="s02-in-name" class="s02-in s02-in-name" data-field="name" type="text" autocomplete="off" value="{{c.pf.name}}" onInput="{{c.pf.onName}}">
+                <p class="s02-fe" role="alert">{{c.pf.err.name}}</p>
+              </div>
+              <div class="s02-f {{fe.wx}}">
+                <label class="s02-fl" for="s02-in-wx"><span class="s02-fw">微信号</span><span class="s02-fc">必填</span></label>
+                <input id="s02-in-wx" class="s02-in" data-field="wx" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="{{c.pf.wx}}" onInput="{{c.pf.onWx}}">
+                <p class="s02-fe" role="alert">{{c.pf.err.wx}}</p>
+              </div>
+              <div class="s02-f {{fe.email}}">
+                <label class="s02-fl" for="s02-in-email"><span class="s02-fw">邮箱</span><span class="s02-fc">工作 / 学校 · 可空</span></label>
+                <input id="s02-in-email" class="s02-in" data-field="email" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" value="{{c.pf.email}}" onInput="{{c.pf.onEmail}}">
+                <p class="s02-fe" role="alert">{{c.pf.err.email}}</p>
+                <sc-if value="{{c.pf.codeVerified}}"><p class="s02-okline">✓ {{c.pf.verifiedText}}</p></sc-if>
+                <sc-if value="{{codeOn}}">
+                  <div class="s02-code">
+                    <sc-if value="{{c.pf.codeNone}}">
+                      <p class="s02-cl">{{c.pf.emailHint}}</p>
+                      <button type="button" class="s02-btn" data-act="send" onClick="{{c.pf.sendCode}}">发送验证码</button>
+                    </sc-if>
+                    <sc-if value="{{codeLive}}">
+                      <div class="s02-cr">
+                        <input class="s02-cin" data-field="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" aria-label="6 位验证码" value="{{c.pf.code}}" onInput="{{c.pf.onCode}}" onKeyDown="{{c.pf.onKeyCode}}">
+                        <button type="button" class="s02-btn s02-btn-ink" data-act="verify" onClick="{{c.pf.verify}}">验证</button>
+                      </div>
+                      <p class="s02-fe" role="alert">{{c.pf.err.code}}</p>
+                      <div class="s02-cm"><span>{{expLine}}</span><button type="button" class="s02-resend" data-act="resend" onClick="{{c.pf.resend}}" disabled="{{resendOff}}">{{c.pf.resendLabel}}</button></div>
+                    </sc-if>
+                    <p class="s02-cn">{{c.pf.codeNote}}</p>
+                  </div>
                 </sc-if>
-                <div class="s02-lab">目录</div>
-                <sc-for list="{{home.entries}}" as="e" hint-placeholder-count="6"><button type="button" class="s02-row big" onClick="{{e.go}}"><span class="s02-k">{{e.k}}</span><span class="s02-v">{{e.v}}</span><span class="s02-ch">›</span></button></sc-for>
-                <p class="s02-note">{{home.note}}</p>
-              </section>
+              </div>
+              <p class="s02-note">{{c.pf.snapshotNote}}</p>
+            </div>
+            <header class="s02-ph" data-header>
+              <div class="s02-tool"><button type="button" class="s02-back" data-act="cancel" onClick="{{c.pf.cancel}}"><span>取消</span></button></div>
+              <h2 class="s02-pt">编辑资料</h2>
+              <p class="s02-pm">{{editMeta}}</p>
+            </header>
+            <div class="s02-bar">
+              <sc-if value="{{c.pf.failed}}"><p class="s02-fail" role="alert">{{c.pf.failText}}</p></sc-if>
+              <button type="button" class="s02-cta {{ctaCls}}" data-act="save" disabled="{{c.pf.saving}}" onClick="{{c.pf.save}}">{{c.pf.saveLabel}}</button>
+            </div>
+          </section>
+        </sc-if>
+
+        <!-- stage-2 surfaces: same panel + header grammar, content lands in stage 2 -->
+        <sc-for list="{{gens}}" as="g" hint-placeholder-count="0">
+          <section class="s02-pg s02-gen {{g.cls}}" data-surface="{{g.s}}">
+            <div class="s02-psc" data-scroller="{{g.s}}" onScroll="{{c.nav.onScroll}}"><p class="s02-gl">{{g.lead}}</p><p class="s02-gs">{{g.sub}}</p></div>
+            <header class="s02-ph" data-header>
+              <div class="s02-tool"><button type="button" class="s02-back" data-act="back" onClick="{{c.nav.back}}"><i class="s02-chev"></i><span>{{g.back}}</span></button></div>
+              <h2 class="s02-pt">{{g.title}}</h2>
+              <p class="s02-pm">{{g.meta}}</p>
+            </header>
+          </section>
+        </sc-for>
+      </div>
+
+      <!-- seams (找局 / 我的局 roots) — stage 2 -->
+      <sc-for list="{{seams}}" as="g" hint-placeholder-count="0">
+        <section class="s02-seam {{g.cls}}" data-surface="{{g.s}}">
+          <div class="s02-psc" data-scroller="{{g.s}}" onScroll="{{c.nav.onScroll}}"><p class="s02-gl">{{g.lead}}</p></div>
+          <header class="s02-ph" data-header>
+            <div class="s02-tool"><sc-if value="{{g.hasBack}}"><button type="button" class="s02-back" data-act="back" onClick="{{c.nav.back}}"><i class="s02-chev"></i><span>{{g.back}}</span></button></sc-if></div>
+            <h2 class="s02-pt">{{g.title}}</h2>
+          </header>
+        </section>
+      </sc-for>
+
+      <nav class="s02-root" aria-label="JU">
+        <div class="s02-rootbg" aria-hidden="true"><i class="s02-r s02-r-cotton"></i><i class="s02-r s02-r-halo"></i><i class="s02-r s02-r-sunset"></i></div>
+        <sc-for list="{{rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s02-tab {{t.cls}}" aria-current="{{t.cur}}" aria-disabled="{{t.dis}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
+      </nav>
+      <div class="s02-ju">JU</div>
+
+      <sc-if value="{{c.sheet.on}}">
+        <div class="s02-over s02-sheetw">
+          <div class="s02-scrim"></div>
+          <div class="s02-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}">
+            <p class="s02-st">{{c.sheet.title}}</p>
+            <p class="s02-sb">{{c.sheet.body}}</p>
+            <sc-if value="{{c.sheet.unsaved}}">
+              <button type="button" class="s02-opt" data-act="keep" onClick="{{c.sheet.keep}}"><span>{{c.sheet.keepLabel}}</span><i class="s02-chev-r"></i></button>
+              <button type="button" class="s02-opt s02-opt-x" data-act="discard" onClick="{{c.sheet.discard}}"><span>{{c.sheet.discardLabel}}</span></button>
             </sc-if>
-            <sc-if value="{{prof.on}}">
-              <section class="s02-sec">
-                <div class="s02-row"><span class="s02-k">称呼</span><span class="s02-v {{prof.nameCls}}">{{prof.name}}</span></div>
-                <div class="s02-row"><span class="s02-k">微信号</span><span class="s02-v {{prof.wxCls}}">{{prof.wx}}</span></div>
-                <div class="s02-row"><span class="s02-k">邮箱</span><span class="s02-v {{prof.emailCls}}">{{prof.email}} <b class="{{prof.emailTagCls}}">{{prof.emailLabel}}</b></span></div>
-                <button type="button" class="s02-row" onClick="{{prof.goPrivacy}}"><span class="s02-k">谁能看见你</span><span class="s02-v sec">{{prof.privacyLine}}</span><span class="s02-ch">›</span></button>
-                <p class="s02-note">{{prof.note}}</p>
-              </section>
-            </sc-if>
-            <sc-if value="{{ed.on}}">
-              <section class="s02-sec">
-                <label class="s02-row ed {{ed.nameCls}}"><span class="s02-k">称呼</span><input class="s02-in" data-field="name" value="{{ed.name}}" placeholder="最多 10 个字" autocomplete="off" onInput="{{ed.inName}}" onFocus="{{ed.focusName}}" onBlur="{{ed.blur}}"></label>
-                <sc-if value="{{ed.errName}}"><p class="s02-err">{{ed.errName}}</p></sc-if>
-                <label class="s02-row ed {{ed.wxCls}}"><span class="s02-k">微信号</span><input class="s02-in" data-field="wx" value="{{ed.wx}}" placeholder="字母、数字、下划线或短横线" autocomplete="off" onInput="{{ed.inWx}}" onFocus="{{ed.focusWx}}" onBlur="{{ed.blur}}"></label>
-                <sc-if value="{{ed.errWx}}"><p class="s02-err">{{ed.errWx}}</p></sc-if>
-                <label class="s02-row ed {{ed.emailCls}}"><span class="s02-k">邮箱</span><input class="s02-in" data-field="email" type="email" value="{{ed.email}}" placeholder="工作或学校邮箱，可留空" autocomplete="off" onInput="{{ed.inEmail}}" onFocus="{{ed.focusEmail}}" onBlur="{{ed.blur}}"></label>
-                <sc-if value="{{ed.errEmail}}"><p class="s02-err">{{ed.errEmail}}</p></sc-if>
-                <sc-if value="{{ed.codeOn}}">
-                  <div class="s02-row ed {{ed.codeCls}}"><span class="s02-k">验证码</span><input class="s02-in" data-field="code" inputmode="numeric" maxlength="6" value="{{ed.code}}" placeholder="6 位" autocomplete="off" onInput="{{ed.inCode}}" onFocus="{{ed.focusCode}}" onBlur="{{ed.blur}}"><button type="button" class="s02-mini" data-act="verify" onClick="{{ed.verify}}">验证</button></div>
-                  <sc-if value="{{ed.errCode}}"><p class="s02-err">{{ed.errCode}}</p></sc-if>
-                  <div class="s02-sub"><span>{{ed.codeLine}}</span><sc-if value="{{ed.canSend}}"><button type="button" class="s02-link" data-act="request" onClick="{{ed.send}}">发送验证码</button></sc-if><sc-if value="{{ed.waiting}}"><span>{{ed.resendIn}} 秒后可重发</span></sc-if><sc-if value="{{ed.canResend}}"><button type="button" class="s02-link" data-act="resend" onClick="{{ed.send}}">重新发送</button></sc-if></div>
-                </sc-if>
-                <sc-if value="{{ed.verified}}"><p class="s02-sub"><span class="ok">{{ed.verifiedLine}}</span></p></sc-if>
-                <p class="s02-note">{{ed.hint}}</p>
-                <p class="s02-note">{{ed.note}}</p>
-              </section>
-            </sc-if>
-            <sc-if value="{{grp.on}}">
-              <section class="s02-sec">
-                <sc-if value="{{grp.lab}}"><div class="s02-lab">{{grp.lab}}</div></sc-if>
-                <sc-for list="{{grp.rows}}" as="r" hint-placeholder-count="4">
-                  <sc-if value="{{r.isRow}}"><button type="button" class="s02-row" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s02-k">{{r.k}}</span><span class="s02-v {{r.vcls}}">{{r.v}}</span><span class="s02-ch">›</span></button></sc-if>
-                  <sc-if value="{{r.isSwitch}}"><div class="s02-row"><span class="s02-k">{{r.k}}</span><span class="s02-v sec">{{r.v}}</span><button type="button" class="s02-sw" role="switch" aria-checked="{{r.checked}}" data-act="toggle" aria-label="{{r.k}}" onClick="{{r.go}}"></button></div></sc-if>
-                  <sc-if value="{{r.isItem}}"><button type="button" class="s02-item" data-rid="{{r.rid}}" onClick="{{r.go}}"><div class="t">{{r.t}}</div><div class="m">{{r.m}}</div></button></sc-if>
-                </sc-for>
-                <sc-if value="{{grp.empty}}"><p class="s02-empty">{{grp.emptyTitle}}<small>{{grp.emptyBody}}</small></p></sc-if>
-                <sc-if value="{{grp.note}}"><p class="s02-note">{{grp.note}}</p></sc-if>
-              </section>
+            <sc-if value="{{c.sheet.accountEnd}}">
+              <button type="button" class="s02-opt" data-act="cancel" onClick="{{c.sheet.cancel}}"><span>{{c.sheet.cancelLabel}}</span><i class="s02-chev-r"></i></button>
+              <button type="button" class="s02-opt s02-opt-x" data-act="confirm" onClick="{{c.sheet.confirm}}"><span>{{c.sheet.confirmLabel}}</span></button>
             </sc-if>
           </div>
-          <sc-if value="{{ed.on}}">
-            <div class="s02-act"><i class="s02-envm b"></i>
-              <sc-if value="{{ed.confirmOn}}"><div class="s02-confirm s02-over"><b>{{ed.confirmTitle}}</b><p>{{ed.confirmBody}}</p><div class="s02-cbtns"><button type="button" class="s02-cbtn" data-act="cancel" onClick="{{ed.keep}}">{{ed.confirmKeep}}</button><button type="button" class="s02-cbtn warn" data-act="confirm" onClick="{{ed.discard}}">{{ed.confirmDiscard}}</button></div></div></sc-if>
-              <sc-if value="{{ed.ctaOn}}"><sc-if value="{{ed.fail}}"><p class="s02-fail">{{ed.fail}}</p></sc-if><button type="button" class="s02-cta" data-act="{{ed.ctaAct}}" disabled="{{ed.saving}}" onClick="{{ed.save}}">{{ed.ctaLabel}}</button></sc-if>
-            </div>
-          </sc-if>
         </div>
-      </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s02-toast {{c.toast.cls}} {{toastCls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -242,228 +467,161 @@ label.s02-row.ed{cursor:text}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* S02 侧栏目录 — 目录栏常驻，内容面只换内容：换组 = 沿 y 滑 24px 淡入；进入详情 / 编辑 = 面内 y 推换 40px；返回反向并恢复滚动位置。 */
-var S02_GROUPS = [{ key: 'profile', name: '资料' }, { key: 'fav', name: '收藏' }, { key: 'prefs', name: '偏好' }, { key: 'records', name: '记录' }, { key: 'help', name: '帮助' }, { key: 'account', name: '账户' }];
-var S02_ROOTS = [{ key: 'feed', name: '找局' }, { key: 'create', name: '开局' }, { key: 'mine', name: '我的局' }, { key: 'settings', name: '设置' }];
-/* 索引的 52 个 surface → 所属目录组（阶段 2 逐个补上各自的详情页；现在先落到组页，不报错） */
-var S02_SURFACE_GROUP = { profile: 'profile', 'profile-edit': 'profile', privacy: 'profile', favorites: 'fav', 'favorite-detail': 'fav', city: 'prefs', notify: 'prefs', appearance: 'prefs', records: 'records', 'record-detail': 'records', 'record-dispute': 'records', 'record-appeal': 'records', 'record-supplement': 'records', reports: 'records', 'report-detail': 'records', 'report-supplement': 'records', help: 'help', feedback: 'help', about: 'help', rules: 'help', account: 'account' };
-var S02_IX_HOME = 118, S02_IX_TOP = 186, S02_IX_STEP = 56;
-function s02First(s) { var a = Array.from(s || ''); return a.length ? a[0] : '?'; }
-function s02EmailLine(you) { return you.email ? (you.emailDomain || you.email.split('@')[1] || '') + (you.emailVerified ? ' 已验证' : ' 未验证') : '邮箱未填写'; }
+/* S02 大字目录 — composition, type, surfaces and motion only; all behaviour is the shared controller (JUS.ctl). */
+var S02 = (function () {
+  var IX = [['profile', '资料'], ['favorites', '收藏'], ['city', '城市'], ['notify', '提醒'], ['appearance', '外观'], ['records', '记录'], ['reports', '举报'], ['help', '帮助'], ['account', '账户']];
+  /* every settings surface belongs to one index word: its first character carries the tongue while you are there */
+  var GROUP = { 'profile': 0, 'profile-edit': 0, 'privacy': 0, 'favorites': 1, 'favorite-detail': 1, 'city': 2, 'notify': 3, 'appearance': 4,
+    'records': 5, 'record-detail': 5, 'record-supplement': 5, 'record-dispute': 5, 'record-appeal': 5,
+    'reports': 6, 'report-detail': 6, 'report-supplement': 6, 'help': 7, 'feedback': 7, 'about': 7, 'rules': 7, 'account': 8 };
+  var SEAM = { 'seam-feed': 1, 'seam-feed-detail': 1, 'seam-mine': 1, 'seam-report': 1 };
+  var LATER = ['favorites', 'favorite-detail', 'city', 'notify', 'appearance', 'records', 'record-detail', 'record-supplement', 'record-dispute', 'record-appeal',
+    'reports', 'report-detail', 'report-supplement', 'help', 'feedback', 'privacy', 'account', 'about', 'rules'];
+  var M = { index: '目录 → 竖栏', rail: '竖栏换页', value: '值更新' };
+  function short(t) { return String(t || '').split(' · ')[0]; }
+  function mmss(s) { s = Math.max(0, Math.floor(s || 0)); var r = s % 60; return Math.floor(s / 60) + ':' + (r < 10 ? '0' : '') + r; }
+  function split2(label) { var p = String(label || '').split(' · '); return [p[0], p.length > 1 ? ' · ' + p.slice(1).join(' · ') : '']; }
+  return { IX: IX, GROUP: GROUP, SEAM: SEAM, LATER: LATER, M: M, short: short, mmss: mmss, split2: split2 };
+})();
+
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this._nav = null; }
-  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { view: { surface: 'home', group: null, id: null }, stack: [], form: null, enterN: 0, enterKind: '', fxN: 0, savedMark: false, tick: 0 }); }
-  /* ---------- navigation (the content pane is the subject; the TOC bar never moves) ---------- */
-  pageEl() { var r = this.rootRef.current; return r ? r.querySelector('.s02-pane > .s02-page') : null; }
-  scrollEl() { var p = this.pageEl(); return p ? p.querySelector('.s02-scroll') : null; }
-  syncScroll(sc) { if (!sc) return; var st = sc.scrollTop; sc.style.setProperty('--st', st + 'px'); sc.style.setProperty('--sp', String(Math.min(1, st / 56))); }
-  ghost(kind) {
-    var root = this.rootRef.current; var page = this.pageEl(); var wrap = root && root.querySelector('.s02-ghost'); if (!page || !wrap) return;
-    var g = page.cloneNode(true);
-    var a = page.querySelectorAll('input,textarea'), b = g.querySelectorAll('input,textarea'); for (var i = 0; i < a.length; i++) if (b[i]) b[i].value = a[i].value;
-    g.querySelectorAll('[data-act],[data-field],[data-rid],[data-surface],[role=switch]').forEach(function (el) { el.removeAttribute('data-act'); el.removeAttribute('data-field'); el.removeAttribute('data-rid'); el.removeAttribute('data-surface'); el.removeAttribute('role'); });
-    g.removeAttribute('data-surface'); g.className = 's02-page gh ' + kind;
-    wrap.innerHTML = ''; wrap.appendChild(g);
-    var sc = page.querySelector('.s02-scroll'), gs = g.querySelector('.s02-scroll'); if (sc && gs) gs.scrollTop = sc.scrollTop;
-    void g.offsetWidth; g.classList.add('go');
-    this.afterKey('ghost', 340, function () { wrap.innerHTML = ''; });
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 380, back: 340, root: 320, swap: 300 };
+    this.headerRange = 72;
   }
-  clearGhost() { var root = this.rootRef.current; var w = root && root.querySelector('.s02-ghost'); if (w) w.innerHTML = ''; this.cancelKey('ghost'); }
-  nav(view, kind, opts) {
-    opts = opts || {}; var sc = this.scrollEl(); var scroll = sc ? sc.scrollTop : 0;
-    if (kind !== 'none' && !this.isRM()) this.ghost(kind);
-    this._nav = { kind: kind, restore: opts.restore || 0 };
-    this.setState(function (s) {
-      var st = { view: view, enterN: s.enterN + 1, enterKind: kind === 'none' ? '' : kind, savedMark: !!opts.saved };
-      if (kind === 'push') st.stack = s.stack.concat([{ view: s.view, scroll: scroll, form: s.form }]);
-      else if (kind === 'pop') st.stack = s.stack.slice(0, -1);
-      else st.stack = opts.stack || [];
-      if ('form' in opts) st.form = opts.form;
-      return st;
-    });
-  }
-  goHome() { if (this.state.view.surface === 'home') return; var self = this; this.motion('switch-group', function () { self.nav({ surface: 'home', group: null, id: null }, 'switch', { form: null }); }); }
-  goGroup(key) { var v = this.state.view; if (v.surface === 'group' && v.group === key) return; var self = this; this.motion('switch-group', function () { self.nav({ surface: 'group', group: key, id: null }, 'switch', { form: null }); }); }
-  push(view, opts) { var self = this; this.motion('push-detail', function () { self.nav(view, 'push', opts || {}); }); }
-  pop(opts) {
-    var s = this.state; var top = s.stack[s.stack.length - 1];
-    if (!top) { if (s.view.surface === 'group') this.goHome(); return; }
-    this.nav(top.view, 'pop', Object.assign({ restore: top.scroll, form: top.form || null }, opts || {}));
-  }
+  initialState(variant) { return Object.assign(JUS.baseState(variant), { s02i: false }); }
+  componentDidMount() { this._s02st(); }
+  componentDidUpdate() { this._s02st(); }
+  /* the rail glyphs are the index's first characters; --st (home scrollTop) keeps them on their unscrolled slots */
+  _s02st() { var r = this.rootRef.current; if (!r) return; var sc = r.querySelector('[data-scroller="home"]'); if (sc) sc.style.setProperty('--st', sc.scrollTop + 'px'); }
+  /* index jumps land without replaying transitions */
+  applyJump(e) { var self = this; this.setState({ s02i: true }); this.ctlJump(e); this.holdKey('s02i', 140, function () { self.setState({ s02i: false }); }); }
   beforeReplay(name) {
-    if (name === 'switch-group') this.nav({ surface: 'home', group: null, id: null }, 'none', { form: null });
-    if (name === 'push-detail') this.nav({ surface: 'group', group: 'profile', id: null }, 'none', { form: null });
+    if (name === S02.M.index) { this.cancelKey('nav'); this.home(); }
+    if (name === S02.M.rail && this._railFrom) { var st = this.state.nav; var id = (st.seq || 1) + 1; this.cancelKey('nav'); this.setState({ nav: { stack: [st.stack[0], { s: this._railFrom, p: {}, from: null, key: null, id: id }], phase: 'idle', dir: 'swap', seq: id, leaving: null } }); }
   }
-  componentDidUpdate(pp, ps) {
-    var s = this.state;
-    if (ps.view !== s.view || ps.enterN !== s.enterN) {
-      var nav = this._nav; this._nav = null;
-      if (!nav || nav.kind === 'none') this.clearGhost();
-      var sc = this.scrollEl(); if (sc) { sc.scrollTop = nav ? nav.restore : 0; this.syncScroll(sc); }
-    }
-  }
-  /* ---------- profile edit ---------- */
-  blankForm(d) { return { name: d.you.name, wx: d.you.wx, email: d.you.email, code: '', errors: {}, focus: '', saving: false, fail: '', confirm: false }; }
-  setForm(patch) { this.setState(function (s) { return { form: Object.assign({}, s.form, patch) }; }); }
-  openEdit(opts) { var d = this.state.data; this.push({ surface: 'profile-edit', group: 'profile', id: null }, { form: Object.assign(this.blankForm(d), opts || {}) }); }
-  formDirty() { var f = this.state.form, y = this.state.data.you; return !!f && (f.name !== y.name || f.wx !== y.wx || f.email !== y.email); }
-  leaveEdit() { if (this.formDirty()) { this.setForm({ confirm: true }); return; } this.pop(); }
-  saveProfile() {
-    var self = this; var f = this.state.form; if (!f || f.saving) return;
-    var errors = { name: JUS.validate.name(f.name), wx: JUS.validate.wx(f.wx), email: JUS.validate.email(f.email) };
-    var d = this.state.data; var email = (f.email || '').trim();
-    if (!errors.email && email && email !== d.you.email && !(d.you.emailPending && d.you.emailPending.verified && d.you.emailPending.email === email)) errors.email = JUS.COPY.profileErrors.mailUnverified;
-    if (errors.name || errors.wx || errors.email) { this.setForm({ errors: errors, fail: '' }); return; }
-    this.setForm({ errors: {}, fail: '', saving: true, confirm: false });
-    this.holdKey('save', 320, function () {          /* 处理中 ≥ 300ms 可见（真实时间窗） */
-      var res = self.act('saveProfile', { name: f.name, wx: f.wx, email: f.email });
-      if (res.effect.type === 'invalid') { self.setForm({ saving: false, errors: res.effect.errors }); return; }
-      if (res.effect.type === 'error') { self.setForm({ saving: false, fail: res.effect.message }); return; }   /* 失败：保留输入，CTA 变「重试」 */
-      self.pop({ saved: true, form: null });
-      self.holdKey('saved', 2600, function () { self.setState({ savedMark: false }); });
+  /* index word → panel (signature) */
+  indexGo(k, ev) { this.motion(S02.M.index, function () { this.go(k, {}, ev); }); }
+  /* rail glyph → sibling page (vertical swap; collapses deeper stacks to the group page first, guard included) */
+  railGo(i, ev) {
+    var k = S02.IX[i][0];
+    var nav0 = this.state.nav; var top0 = nav0.stack[nav0.stack.length - 1]; this._railFrom = nav0.stack.length > 1 ? nav0.stack[1].s : null;
+    this.motion(S02.M.rail, function () {
+      var nav = this.state.nav; if (nav.phase !== 'idle') nav = this._navSettle();
+      var st = nav.stack, top = st[st.length - 1];
+      if (top.s === 'home') { this.go(k, {}, null); return; }
+      if (st.length <= 2) { if (top.s !== k) this.replace(k, {}, null); return; }
+      if (S02.GROUP[top.s] === i && st[1].s === k) { this.back(); return; }
+      if (this._guard(top)) return;
+      this._captureScroll(); this._leavePatchApply(top.s);
+      var id = (nav.seq || 1) + 1; var entry = { s: k, p: {}, from: null, key: null, id: id };
+      this.setState(Object.assign({ nav: { stack: [st[0], entry], phase: 'enter', dir: 'swap', seq: id, leaving: top }, sheet: null }, this._enterPatch(k, {})));
+      this._runPhases('swap');
     });
+    void top0;
   }
-  sendCode() {
-    var self = this; var f = this.state.form; var res = this.act('requestEmailCode', { email: f.email });
-    if (res.effect.type === 'invalid') { this.setForm({ errors: Object.assign({}, f.errors, res.effect.errors) }); return; }
-    if (res.effect.type === 'error') { this.setForm({ fail: res.effect.message }); return; }
-    this.setForm({ code: '', errors: Object.assign({}, f.errors, { email: '', code: '' }) });
-    var tickFn = function () { var p = JUS.derive.emailPending(self.state.data); self.setState({ tick: self.state.tick + 1 }); if (p && p.resendLeftS > 0 && !p.verified) self.holdKey('resend', 1000, tickFn); };
-    this.holdKey('resend', 1000, tickFn);
-  }
-  verifyCode() {
-    var f = this.state.form; var res = this.act('verifyEmailCode', { code: f.code });
-    if (res.effect.type === 'invalid') { this.setForm({ errors: Object.assign({}, f.errors, { code: res.effect.errors.code }) }); return; }
-    if (res.effect.type === 'error') { this.setForm({ fail: res.effect.message }); return; }
-    this.cancelKey('resend'); this.setForm({ errors: Object.assign({}, f.errors, { code: '', email: '' }) });
-  }
-  /* ---------- review index → surfaces (stage 1: home / profile / profile-edit; the rest land on their group page) ---------- */
-  applyJump(e) {
-    var o = e.open || {}; var st = o.state || ''; var d = this.state.data; var self = this;
-    var home = { surface: 'home', group: null, id: null }; var prof = { surface: 'group', group: 'profile', id: null };
-    if (o.surface === 'home') { this.nav(home, 'none', { form: null }); return; }
-    if (o.surface === 'profile') { this.nav(prof, 'none', { form: null, saved: st === 'saved' }); if (st === 'saved') this.holdKey('saved', 2600, function () { self.setState({ savedMark: false }); }); return; }
-    if (o.surface === 'profile-edit') {
-      var form = this.blankForm(d);
-      if (st === 'invalid') { form.name = ''; form.wx = '阿禾 ju'; form.errors = { name: JUS.validate.name(form.name), wx: JUS.validate.wx(form.wx), email: '' }; }
-      if (st === 'code' || st === 'code-expired') { form.email = 'ahe.zhang@columbia.edu'; }
-      if (st === 'fail') { form.name = d.you.name + '二'; form.fail = JUS.COPY.saveFail; }
-      if (st === 'unsaved') { form.name = d.you.name + '二'; form.confirm = true; }
-      this.nav({ surface: 'profile-edit', group: 'profile', id: null }, 'none', { form: form, stack: [{ view: prof, scroll: 0, form: null }] });
-      if (st === 'code' || st === 'code-expired') { this.after(40, function () { self.sendCode(); if (st === 'code-expired') self.after(40, function () { self.expireCode(); self.setForm({ code: '246810', errors: { code: JUS.COPY.profileErrors.codeExpired } }); }); }); }
-      if (st === 'kb' && !this.state.review.kb) this.toggleKb();
-      return;
-    }
-    var g = S02_SURFACE_GROUP[o.surface];
-    if (g) { this.nav({ surface: 'group', group: g, id: o.id || null }, 'none', { form: null }); return; }
-    this.nav(home, 'none', { form: null });
-  }
-  /* ---------- render ---------- */
   renderVals() {
-    var self = this; var s = this.state, d = s.data, v = s.view, f = s.form;
+    var self = this;
     var panel = this.panelVals(); panel.show = this.props.panel !== false;
-    var sum = JUS.derive.summary(d); var you = d.you;
-    var curGroup = v.surface === 'home' ? null : v.group;
-    var gi = curGroup ? S02_GROUPS.findIndex(function (g) { return g.key === curGroup; }) : -1;
-    var bar = {
-      initial: s02First(you.name), goHome: function () { self.goHome(); },
-      groups: S02_GROUPS.map(function (g) { return { name: g.name, cls: g.key === curGroup ? 'on' : '', cur: g.key === curGroup ? 'true' : null, go: function () { self.goGroup(g.key); } }; }),
-      ixy: gi < 0 ? S02_IX_HOME : S02_IX_TOP + gi * S02_IX_STEP,
-      roots: S02_ROOTS.map(function (r) { return { name: r.name, cls: r.key === 'settings' ? 'on' : '', go: function () { } }; })
+    var c = this.ctlVals();
+    var S = this.state, nav = S.nav, d = S.data;
+    var top = c.nav.cur, prev = c.nav.prev, ph = nav.phase, dir = nav.dir;
+    var leaving = nav.leaving ? nav.leaving.s : null;
+    var inSet = !S02.SEAM[top], deep = inSet && top !== 'home', fromHome = prev === 'home';
+    var col = deep && fromHome && dir === 'fwd' && ph === 'in';
+    var pre = deep && fromHome && dir === 'fwd' && ph === 'enter';
+    var exp = deep && fromHome && ph === 'exit';
+    var railm = deep && !col && !pre && !exp;
+    var gi = S02.GROUP[top] != null ? S02.GROUP[top] : 0;
+    var gl = leaving && S02.GROUP[leaving] != null ? S02.GROUP[leaving] : gi;
+    var rmUser = !!d.appearance.reduceMotion;
+    var appCls = (deep ? ' s02-deep' : '') + (railm ? ' s02-railm' : '') + (col ? ' s02-col' : '') + (exp ? ' s02-exp' : '') + (gi >= gl ? ' s02-sw-fwd' : ' s02-sw-bwd') + (S.s02i ? ' s02-instant' : '') + (rmUser ? ' rm-user' : '');
+
+    /* the index: nine words, each with its current value on the same baseline */
+    var sum = c.sum, you = c.you, favRows = c.fav.rows;
+    var feedAll = JUS.derive.feed(d, 'all').count;
+    var recAtt = c.att.filter(function (a) { return a.kind === 'record'; }), repAtt = c.att.filter(function (a) { return a.kind === 'report'; });
+    var mailLine = you.email ? (you.verified ? you.domain + ' 已验证' : '邮箱未验证') : '邮箱未填写';
+    var vals = [
+      [mailLine, ''],
+      favRows.length ? [favRows.slice(0, 2).map(function (r) { return S02.short(r.title); }).join('、'), favRows.length > 2 ? ' 等 ' + favRows.length + ' 个' : ''] : ['还没有收藏', ''],
+      [sum.cityLabel, ' · ' + feedAll + ' 个局可报名'],
+      S02.split2(sum.notifyLabel),
+      [c.skin.curName, rmUser ? ' · 减少动态' : ' · 正常动态'],
+      recAtt.length ? [S02.short(recAtt[0].title) + ' 待核实', ' · 共 ' + sum.recordCount + ' 条'] : S02.split2(sum.recordLabel),
+      repAtt.length ? [S02.short(repAtt[0].title) + ' 需补充', ' · 共 ' + sum.reportCount + ' 条'] : S02.split2(sum.reportLabel),
+      [JUS.RULES.length + ' 条约定', ' · 我的反馈 ' + sum.feedbackCount + ' 条'],
+      d.session.kind === 'demo' ? [c.acct.device || '本机浏览器', c.acct.startedText ? ' · ' + c.acct.startedText + ' 开始' : ''] : ['已退出', c.acct.endedText ? ' · ' + c.acct.endedText : '']
+    ];
+    var dots = [false, false, false, false, false, recAtt.length > 0, repAtt.length > 0, false, false];
+    var ix = S02.IX.map(function (g, i) {
+      var v = vals[i]; var cur = deep && i === gi;
+      return { i: i, k: g[0], w: g[1], c1: g[1].charAt(0), c2: g[1].slice(1), vb: v[0], vr: v[1], dot: dots[i], aria: g[1] + '：' + v[0] + v[1],
+        cls: (cur ? 'is-cur' : '') + (dots[i] ? ' has-dot' : ''), rcls: cur ? 'is-cur' : '', cur: cur ? 'page' : false, style: '--i:' + i,
+        go: function (ev) { self.indexGo(g[0], ev); }, rail: function (ev) { self.railGo(i, ev); } };
+    });
+
+    /* back labels per page (from the page's own place in the stack, so a page being revealed never relabels) */
+    var bk = {}; nav.stack.forEach(function (e, n) { if (n > 0) { var p = nav.stack[n - 1].s; bk[e.s] = p === 'home' ? '目录' : (c.nav.title[p] || '返回'); } });
+    if (leaving && !bk[leaving]) bk[leaving] = '目录';
+
+    /* profile + edit */
+    var lastAt = (you.lastSaved && you.lastSaved.at) || 0, recent = Date.now() - lastAt < 9000;
+    var pfFresh = !!(you.savedName && recent && (top === 'profile' || (top === 'profile-edit' && ph === 'exit')));
+    var nameLong = Array.from(you.name || '').length > 6;
+    var verLine = you.email ? (you.verified ? you.domain + ' · ' + (d.you.emailKind === 'work' ? '工作邮箱' : '学校邮箱') + ' · 已验证' : '邮箱未验证') : '还没有填写邮箱';
+    var pf = c.pf; var fe = { name: '', wx: '', email: '' };
+    if (pf.on) { fe.name = pf.err.name ? 'is-err' : ''; fe.wx = pf.err.wx ? 'is-err' : ''; fe.email = pf.err.email ? 'is-err' : ''; }
+
+    var cur = c.mine.current.filter(function (r) { return r.snapshot; });
+    var snaps = cur.slice(0, 3).map(function (r) { return { title: r.title, who: '报名时：' + r.snapshot.name }; });
+    var gens = S02.LATER.filter(function (x) { return c.nav.on[x]; }).map(function (x) {
+      var g = S02.GROUP[x] != null ? S02.GROUP[x] : 0; var v = vals[g];
+      return { s: x, cls: c.nav.cls[x], title: c.nav.title[x], back: bk[x] || '目录', lead: v[0], sub: String(v[1] || '').replace(/^ · /, '').replace(/^ /, ''), meta: S02.IX[g][1] };
+    });
+    var seams = ['seam-feed', 'seam-feed-detail', 'seam-mine', 'seam-report'].filter(function (x) { return c.nav.on[x]; }).map(function (x) {
+      return { s: x, cls: c.nav.cls[x], title: c.nav.title[x], hasBack: !!bk[x], back: bk[x] || '', lead: x.indexOf('seam-feed') === 0 ? c.feed.city.name + ' · ' + c.feed.count + ' 个局' : c.mine.current.length + ' 个进行中的局' };
+    });
+    var tst = S.toast; var tmemo = this._s02toast || (this._s02toast = {});
+    if (tst && tmemo.id !== tst.id) { tmemo.id = tst.id; tmemo.deep = deep; }
+    var toastCls = tst ? ((tmemo.deep ? '' : 'at-home') + (tmemo.deep !== deep ? ' is-gone' : '')) : '';
+    var rootNav = c.rootNav.map(function (t) { return { label: t.label, cls: t.cls, go: t.go, cur: t.on ? 'page' : false, dis: t.disabled ? 'true' : false }; });
+
+    return {
+      panel: panel, rootRef: this.rootRef, c: c, appCls: appCls, gi: gi, gl: gl,
+      homeOn: inSet || leaving === 'home', homeTab: deep ? '-1' : '0', railTab: railm ? '0' : '-1', homeHidden: deep ? 'true' : false,
+      onHomeScroll: function (ev) { c.nav.onScroll(ev); var el = ev.currentTarget; el.style.setProperty('--st', el.scrollTop + 'px'); },
+      goYou: function (ev) { self.indexGo('profile', ev); }, goPrivacy: function (ev) { self.indexGo('privacy', ev); }, goAbout: function (ev) { self.indexGo('about', ev); },
+      ix: ix, acct: you.wx ? you.wx : '微信号未填写', homeMeta: c.attCount ? c.attCount + ' 项需要处理 · ' + sum.cityLabel : sum.cityLabel + ' · ' + sum.favLabel,
+      homeFresh: you.savedName && recent && (top === 'home' || exp) ? 's02-fresh' : '', privLine: c.privacy.facts.length + ' 种情形',
+      bk: bk, pfFresh: pfFresh, nameCls: (nameLong ? 'is-long' : '') + (pfFresh ? ' s02-fresh' : ''), verLine: verLine, verCls: you.email && you.verified ? '' : 'is-off',
+      emailShown: you.email || '未填写', snapshotNote: JUS.COPY.snapshotNote, copyFailInline: JUS.COPY.copyFailInline,
+      codeOn: !!(pf.on && pf.needCode && !pf.err.email), fe: fe, nameOverCls: pf.on && pf.nameOver ? 'is-over' : '', codeLive: !!(pf.on && (pf.codeSent || pf.codeExpired)), resendOff: !!(pf.on && pf.codeSent && pf.resendLeft > 0),
+      expLine: pf.on && pf.codeSent ? '验证码 ' + S02.mmss(pf.expiresIn) + ' 后过期' : '', ctaCls: pf.on ? (pf.saving ? 'is-busy' : pf.failed ? 'is-retry' : '') : '',
+      editMeta: '称呼、微信号必填 · 邮箱可空',
+      snapOn: snaps.length > 0, snaps: snaps, snapCount: cur.length,
+      toastCls: toastCls,
+      gens: gens, seams: seams, rootNav: rootNav
     };
-    var enter = s.enterKind ? 'in-' + s.enterKind + (s.enterN % 2 ? ' alt' : '') : '';
-    var page = { cls: enter, surface: v.surface === 'group' ? v.group : v.surface, scrollCls: '', back: '', noBack: true, action: '', noAction: true, actionAct: '', title: '', status: '', statusCls: '',
-      onScroll: function (ev) { self.syncScroll(ev.currentTarget); }, onBack: function () { }, onAction: function () { } };
-    var home = { on: false }, prof = { on: false }, ed = { on: false }, grp = { on: false };
-    var idLine = you.name + ' · ' + (you.wx ? you.wx : '微信号未填写') + ' · ' + s02EmailLine(you);
-    if (v.surface === 'home') {
-      page.title = '设置'; page.status = idLine;
-      var pending = [];
-      d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; }).forEach(function (r) { var row = JUS.derive.record(d, r.id); pending.push({ id: r.id, t: row.title, m: row.label + ' · ' + row.statusLabel + ' · 可补充说明或提出异议', go: function () { self.goGroup('records'); } }); });
-      d.reports.filter(function (r) { return r.status === 'needs_info'; }).forEach(function (r) { var row = JUS.derive.report(d, r.id); pending.push({ id: r.id, t: row.title, m: '举报 · ' + row.statusLabel + (r.needsText ? ' · ' + r.needsText : ''), go: function () { self.goGroup('records'); } }); });
-      var skin = sum.skin; var nt = JUS.derive.notify(d);
-      home = { on: true, hasPending: pending.length > 0, pendingCount: pending.length, pending: pending, note: JUS.COPY.demoOnly,
-        entries: [
-          { k: '资料', v: you.name + ' · ' + s02EmailLine(you) },
-          { k: '收藏', v: sum.favLabel },
-          { k: '偏好', v: sum.cityLabel + ' · ' + nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类提醒 · ' + skin.name + (sum.reduceMotion ? ' · 减少动态' : '') },
-          { k: '记录', v: (sum.recordCount ? sum.recordCount + ' 条事实' : JUS.COPY.creditEmpty) + ' · ' + (sum.reportCount ? sum.reportCount + ' 条举报' : JUS.COPY.reportsEmpty) },
-          { k: '帮助', v: JUS.RULES.length + ' 条规则 · ' + (sum.feedbackCount ? sum.feedbackCount + ' 条反馈' : '反馈') },
-          { k: '账户', v: d.session.kind === 'demo' ? d.session.device + ' · 演示中' : '演示会话已结束' }
-        ].map(function (e, i) { e.go = function () { self.goGroup(S02_GROUPS[i].key); }; return e; }) };
-    } else if (v.surface === 'group' && v.group === 'profile') {
-      page.title = '资料'; page.status = s.savedMark ? '已保存 · 之后的报名默认填入新资料' : (you.wx ? you.wx : '微信号未填写') + ' · ' + s02EmailLine(you); page.statusCls = s.savedMark ? 'ok' : '';
-      page.back = '设置'; page.noBack = false; page.onBack = function () { self.goHome(); };
-      page.action = '编辑'; page.noAction = false; page.actionAct = 'edit'; page.onAction = function () { self.openEdit(); };
-      var pv = JUS.derive.privacy(d); var fresh = s.savedMark ? 'fresh' : '';
-      prof = { on: true, name: you.name, nameCls: fresh, wx: you.wx || '未填写', wxCls: fresh + (you.wx ? '' : ' sec'), email: you.email || '未填写', emailCls: fresh + (you.email ? '' : ' sec'),
-        emailLabel: you.email ? (you.emailVerified ? '已验证' : '未验证') : '', emailTagCls: you.emailVerified ? 'ok' : 'warn',
-        privacyLine: pv.facts.length ? pv.facts.length + ' 个局里按成局与票根状态' : '按成局与票根状态', goPrivacy: function () { }, note: JUS.COPY.snapshotNote };
-    } else if (v.surface === 'profile-edit' && f) {
-      page.title = '编辑资料'; page.status = '称呼、微信号、邮箱 · 只用于之后的报名'; page.scrollCls = 'act';
-      page.back = '资料'; page.noBack = false; page.onBack = function () { self.leaveEdit(); };
-      page.action = '取消'; page.noAction = false; page.actionAct = 'cancel'; page.onAction = function () { self.leaveEdit(); };
-      var pend = JUS.derive.emailPending(d); var emailChanged = (f.email || '').trim() !== '' && (f.email || '').trim() !== you.email;
-      var verifiedHere = !!(pend && pend.verified && pend.email === (f.email || '').trim());
-      var codeOn = emailChanged && !verifiedHere; var sent = !!(pend && !pend.verified && pend.email === (f.email || '').trim());
-      var cls = function (k) { return (f.focus === k ? 'focus' : '') + (f.errors[k] ? ' err' : ''); };
-      var inp = function (k) { return function (ev) { var p = {}; p[k] = ev.currentTarget.value; var er = Object.assign({}, self.state.form.errors); er[k] = ''; p.errors = er; p.fail = ''; self.setForm(p); }; };
-      var foc = function (k) { return function () { self.setForm({ focus: k }); }; };
-      ed = { on: true, name: f.name, wx: f.wx, email: f.email, code: f.code, nameCls: cls('name'), wxCls: cls('wx'), emailCls: cls('email'), codeCls: cls('code'),
-        errName: f.errors.name || '', errWx: f.errors.wx || '', errEmail: f.errors.email || '', errCode: f.errors.code || '',
-        inName: inp('name'), inWx: inp('wx'), inEmail: inp('email'), inCode: inp('code'), focusName: foc('name'), focusWx: foc('wx'), focusEmail: foc('email'), focusCode: foc('code'), blur: function () { self.setForm({ focus: '' }); },
-        codeOn: codeOn, canSend: codeOn && !sent, waiting: sent && pend.resendLeftS > 0 && !pend.expired, resendIn: sent ? pend.resendLeftS : 0, canResend: sent && (pend.resendLeftS <= 0 || pend.expired),
-        codeLine: sent ? (pend.expired ? '验证码已过期' : '验证码已发到 ' + pend.email + '（本机演示 · 不发邮件）') : '改了邮箱要先验证', send: function () { self.sendCode(); }, verify: function () { self.verifyCode(); },
-        verified: verifiedHere, verifiedLine: verifiedHere ? pend.email + ' 已验证，保存后生效' : '',
-        hint: JUS.COPY.emailHint, note: JUS.COPY.snapshotNote,
-        confirmOn: f.confirm, confirmTitle: JUS.COPY.unsaved.title, confirmBody: JUS.COPY.unsaved.body, confirmKeep: JUS.COPY.unsaved.keep, confirmDiscard: JUS.COPY.unsaved.discard,
-        keep: function () { self.setForm({ confirm: false }); }, discard: function () { self.pop({ form: null }); },
-        ctaOn: !f.confirm, fail: f.fail, saving: f.saving, ctaAct: f.fail ? 'retry' : 'save', ctaLabel: f.saving ? '保存中…' : f.fail ? '重试' : '保存', save: function () { self.saveProfile(); } };
-    } else if (v.surface === 'group') {
-      var g = S02_GROUPS.filter(function (x) { return x.key === v.group; })[0] || S02_GROUPS[0];
-      page.title = g.name; page.back = '设置'; page.noBack = false; page.onBack = function () { self.goHome(); };
-      grp = this.groupVals(g.key, sum);
-      page.status = grp.status;
-    }
-    return { panel: panel, rootRef: this.rootRef, skin: d.appearance.skin, fxCls: s.fxN ? (s.fxN % 2 ? ' fx-a' : ' fx-b') : '', rmUser: d.appearance.reduceMotion ? ' rm-user' : '',
-      bar: bar, page: page, home: home, prof: prof, ed: ed, grp: grp };
-  }
-  /* group pages (stage 1: real current values and lists; details come in stage 2 through the same push()) */
-  groupVals(key, sum) {
-    var self = this; var d = this.state.data; var g = { on: true, status: '', lab: '', rows: [], empty: false, emptyTitle: '', emptyBody: '', note: '' };
-    var row = function (k, v, go, vcls, rid) { return { isRow: true, k: k, v: v, vcls: vcls || '', go: go || function () { }, rid: rid || null }; };
-    if (key === 'fav') {
-      var fv = JUS.derive.favorites(d);
-      g.status = fv.count ? fv.count + ' 个局' + (fv.archived.length ? ' · ' + fv.archived.length + ' 个已结束' : '') + ' · 收藏不等于报名' : JUS.COPY.favEmpty.title;
-      g.rows = fv.all.map(function (r) { return { isItem: true, rid: r.id, t: r.title, m: r.when.zh + ' · ' + r.place.hood + (r.crossCity ? ' · ' + r.city.name : '') + ' · ' + r.relation.label + (r.archived ? ' · ' + r.status.label : ''), go: function () { } }; });
-      g.empty = fv.empty; g.emptyTitle = JUS.COPY.favEmpty.title; g.emptyBody = JUS.COPY.favEmpty.body;
-    } else if (key === 'prefs') {
-      var nt = JUS.derive.notify(d); var city = JUS.derive.city(d);
-      g.status = city.name + ' · ' + nt.onCount + '/' + JUS.NOTIFY_CATS.length + ' 类提醒 · ' + sum.skin.name;
-      g.rows = [row('默认浏览城市', city.name), row('通知与提醒', sum.notifyLabel), row('外观', sum.skin.name + ' · ' + sum.skin.line),
-        { isSwitch: true, k: '减少动态', v: d.appearance.reduceMotion ? '开' : '关', checked: d.appearance.reduceMotion ? 'true' : 'false', go: function () { self.act('setReduceMotion', { on: !self.state.data.appearance.reduceMotion }); } }];
-      g.note = JUS.COPY.cityScope;
-    } else if (key === 'records') {
-      g.status = sum.recordLabel + ' · ' + sum.reportLabel;
-      g.rows = [row('我的记录', sum.recordLabel), row('我的举报', sum.reportLabel)];
-      g.note = JUS.COPY.recordHelp;
-    } else if (key === 'help') {
-      var fb = JUS.derive.feedback(d);
-      g.status = JUS.RULES.length + ' 条规则 · ' + (fb.length ? fb.length + ' 条反馈' : '还没有反馈');
-      g.rows = [row('帮助与反馈', JUS.RULES.length + ' 条规则 · 常见问题'), row('我的反馈', fb.length ? fb.length + ' 条' : '还没有', null, fb.length ? '' : 'sec'), row('关于与规则', JUS.RULES_VERSION)];
-    } else if (key === 'account') {
-      var ab = JUS.derive.about(d);
-      g.status = (d.session.kind === 'demo' ? '演示中' : '演示会话已结束') + ' · ' + d.session.device;
-      g.rows = [row('本机演示数据', '只存在这台浏览器'), row('退出登录（本地演示）', '', null, 'sec')];
-      g.note = JUS.COPY.demoOnly + ' · ' + ab.version;
-    }
-    return g;
   }
 }
 JUS.mixin(Component);
-/* 环境切换：数据改变后让光层做一次 650ms 的透明度 + 模糊过渡（applySkin 经 this.act 调用；预览态阶段 2 加） */
-var s02Act = Component.prototype.act;
-Component.prototype.act = function (name, payload) { var res = s02Act.call(this, name, payload); if (name === 'applySkin' && res.effect && res.effect.type === 'skin' && res.effect.skin !== res.effect.prev) this.setState(function (s) { return { fxN: s.fxN + 1 }; }); return res; };
+/* review keyframe scrub: absolute positions for the whole choreography (CSS delay tricks drift once an animation has run) */
+(function (p) {
+  var base = p.scrubTo;
+  p.scrubTo = function (v) {
+    base.call(this, v);
+    var r = this.rootRef && this.rootRef.current; if (!r || !r.getAnimations) return;
+    r.getAnimations({ subtree: true }).forEach(function (a) {
+      try {
+        if (v == null) { a.play(); return; }
+        var d = a.effect && a.effect.getTiming ? a.effect.getTiming().duration : 0;
+        a.pause(); if (typeof d === 'number' && d > 0) a.currentTime = (+v / 100) * d;
+      } catch (e) { }
+    });
+  };
+})(Component.prototype);
 </script>
 </body>
 </html>

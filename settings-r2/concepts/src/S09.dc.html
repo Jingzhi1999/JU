@@ -12,365 +12,662 @@
 <style>
 body{margin:0}
 /* @panel-css */
-/* ---------- S09 夜灯：墨底 + 三团径向光（最底层）+ 居中单列；光跟着你看的地方聚拢 ---------- */
-.app.s09{position:absolute;inset:0;overflow:hidden;background:#0f1117;color:#fff;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;--k:1;
-  --s09-w92:rgba(255,255,255,.92);--s09-w72:rgba(255,255,255,.72);--s09-w50:rgba(255,255,255,.5);--s09-rule:rgba(255,255,255,.08);--s09-err:#ff8a9c;--s09-ok:#5fd3b0}
-.app.s09[data-skin=cotton]{--s09-l1:255 150 196;--s09-l2:171 160 255;--s09-l3:104 216 240;--s09-val:#ffbfd9}
-.app.s09[data-skin=halo]{--s09-l1:255 90 18;--s09-l2:242 180 101;--s09-l3:183 155 224;--s09-val:#f6c78a}
-.app.s09[data-skin=sunset]{--s09-l1:255 122 51;--s09-l2:51 160 255;--s09-l3:255 197 61;--s09-val:#ffc53d}
+/* ================= S09 夜灯 · v2 =================
+   One light logic. Three environment lamps (radial pools 340–460px, peak alpha .30–.45) lie UNDER everything and never drift:
+   they move (400–600ms) only when focus changes. Home content is "statements under the light" — a 13px label over a 30px value
+   tinted by the lamp above it, two columns, 36px gaps. A secondary page is an ink slab that rises from below; the lamps gather
+   behind its top edge (light leaks over the edge and down the 10px margins) and the slab carries one reading pool of its own
+   that follows focus inside it. JU blue appears twice only: the attention line, and the primary confirm (the only glow). */
+.app.s09{position:absolute;inset:0;overflow:hidden;background:#0E1016;color:#fff;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  --w70:rgba(255,255,255,.72);--w80:rgba(255,255,255,.82);--w92:rgba(255,255,255,.93);--ink:#14161F;
+  --ju-lit:#7685FF;--err:#FF8FA2;--err-line:#E8566F;--ok:#55DBB0;--slab-top:48px;--slab-in:12px;--gut:24px;
+  --ease-out:cubic-bezier(.22,1,.36,1);--ease-rise:cubic-bezier(.32,.72,0,1)}
+/* environments = the three lamp colours (l0 l1 l2, "r g b") and the value tints they cast (t0 t1 t2) */
+.app.s09[data-skin=cotton]{--l0:255 112 174;--l1:156 132 255;--l2:70 204 236;--t0:#FFB7D8;--t1:#D0C6FF;--t2:#A2E7F6}
+.app.s09[data-skin=halo]{--l0:255 94 20;--l1:236 172 100;--l2:184 144 236;--t0:#FFAA7A;--t1:#F4D3A8;--t2:#DCC9F8}
+.app.s09[data-skin=sunset]{--l0:255 176 48;--l1:255 104 34;--l2:48 146 255;--t0:#FFD67A;--t1:#FFAE82;--t2:#96CFFF}
 .app.s09 *{box-sizing:border-box}
-.app.s09 button{font-family:inherit;-webkit-tap-highlight-color:transparent}
-.s09-root{position:absolute;inset:0;--sp:clamp(0,calc(var(--s09-sy,0) / 56),1)}
-/* 光：径向渐变，不用滤镜；滚动视差 0.3×；点一行时最近的一团 400ms 移到其后并增亮 */
-.s09-lights{position:absolute;left:0;right:0;top:-200px;bottom:-200px;z-index:0;pointer-events:none;isolation:isolate;transform:translate3d(0,calc(var(--s09-sy,0) * -.3px),0)}
-.s09-light{position:absolute;left:0;top:200px;border-radius:50%;opacity:.86;mix-blend-mode:screen;transition:transform calc(400ms * var(--k,1)) cubic-bezier(.22,1,.36,1),opacity calc(400ms * var(--k,1)) ease;will-change:transform}
-.s09-light.bright{opacity:1}
-.s09-l0{background:radial-gradient(closest-side,rgb(var(--s09-l1) / .78) 0%,rgb(var(--s09-l1) / .56) 30%,rgb(var(--s09-l1) / .22) 66%,rgb(var(--s09-l1) / 0) 100%)}
-.s09-l1{background:radial-gradient(closest-side,rgb(var(--s09-l2) / .74) 0%,rgb(var(--s09-l2) / .5) 30%,rgb(var(--s09-l2) / .2) 66%,rgb(var(--s09-l2) / 0) 100%)}
-.s09-l2{background:radial-gradient(closest-side,rgb(var(--s09-l3) / .72) 0%,rgb(var(--s09-l3) / .48) 30%,rgb(var(--s09-l3) / .18) 66%,rgb(var(--s09-l3) / 0) 100%)}
-.s09-lights.fx{animation:s09-skin calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1) both}
-@keyframes s09-skin{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
-/* 首页 */
+:where(.app.s09) :where(p,h1,h2){margin:0;font-weight:inherit}
+:where(.app.s09) :where(button){font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;text-align:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+:where(.app.s09) :where(button,input):focus-visible{outline:none}
+:where(.app.s09) :where(button):focus-visible{box-shadow:0 0 0 2px var(--ju-lit);border-radius:8px}
+
+/* ---------- lamps (the motion subject) ---------- */
+.s09-lamps{position:absolute;inset:0;z-index:0;overflow:hidden;pointer-events:none;isolation:isolate}
+.s09-lamps.fx-a{animation:s09-skin-a calc(650ms * var(--k)) var(--ease-out) both}
+.s09-lamps.fx-b{animation:s09-skin-b calc(650ms * var(--k)) var(--ease-out) both}
+@keyframes s09-skin-a{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+@keyframes s09-skin-b{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+.s09-lamp{position:absolute;left:0;top:0;width:var(--d);height:var(--d);margin:calc(var(--d) / -2) 0 0 calc(var(--d) / -2);border-radius:50%;mix-blend-mode:screen;will-change:transform;
+  background:radial-gradient(closest-side,rgb(var(--lc) / var(--a)) 0%,rgb(var(--lc) / calc(var(--a) * .97)) 34%,rgb(var(--lc) / calc(var(--a) * .76)) 56%,rgb(var(--lc) / calc(var(--a) * .38)) 76%,rgb(var(--lc) / calc(var(--a) * .08)) 92%,rgb(var(--lc) / 0) 100%);
+  transform:translate3d(var(--x1),var(--y1),0) scale(var(--s1));opacity:var(--o1)}
+.s09-lamp-0{--lc:var(--l0)}.s09-lamp-1{--lc:var(--l1)}.s09-lamp-2{--lc:var(--l2)}
+@keyframes s09-lamp-a{from{transform:translate3d(var(--x0),var(--y0),0) scale(var(--s0));opacity:var(--o0)}to{transform:translate3d(var(--x1),var(--y1),0) scale(var(--s1));opacity:var(--o1)}}
+@keyframes s09-lamp-b{from{transform:translate3d(var(--x0),var(--y0),0) scale(var(--s0));opacity:var(--o0)}to{transform:translate3d(var(--x1),var(--y1),0) scale(var(--s1));opacity:var(--o1)}}
+
+/* ---------- shared header: 30 → 18 driven by --hc (written by the controller on scroll) ---------- */
+.s09-hd{position:absolute;left:0;right:0;top:0;height:132px;z-index:3;pointer-events:none}
+.s09-hd button{pointer-events:auto}
+.s09-tools{position:absolute;left:8px;right:8px;top:8px;height:44px;display:flex;align-items:center;justify-content:space-between}
+.s09-ju{padding-left:16px;font-size:16px;font-weight:700;letter-spacing:.14em;line-height:1}
+.s09-title{position:absolute;left:calc(var(--gx) + (50% - var(--gx)) * var(--hc,0));top:calc(var(--ty) - (var(--ty) - 19px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));
+  max-width:calc(100% - 2 * var(--gx) - 72px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s09-meta{position:absolute;left:var(--gx);right:var(--gx);top:calc(var(--ty) + 42px);font-size:14px;line-height:1.5;color:var(--w70);opacity:calc(1 - 2.2 * var(--hc,0));transform:translateY(calc(-10px * var(--hc,0)))}
+.s09-hd-home{--gx:24px;--ty:58px}
+.s09-shd{--gx:20px;--ty:56px}
+.s09-shd::before{content:"";position:absolute;left:0;right:0;top:0;height:60px;background:var(--ink);opacity:var(--hc,0)}
+.s09-back{position:relative;width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:22px;color:#fff}
+.s09-back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.s09-tbtn{position:relative;height:44px;padding:0 12px;border-radius:22px;font-size:16px;font-weight:500;color:var(--w92)}
+.s09-back:active,.s09-tbtn:active{background:rgba(255,255,255,.08)}
+
+/* ---------- scrollers ---------- */
+.s09-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;overscroll-behavior:contain}
+.s09-sc::-webkit-scrollbar{display:none}
+.s09-sc-home{bottom:80px;padding:146px var(--gut) 40px;
+  -webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 54px,#000 116px,#000 calc(100% - 44px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,transparent 54px,#000 116px,#000 calc(100% - 44px),transparent 100%)}
+.s09-sc-slab{padding:172px 20px calc(28px + var(--kb,0px));-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 50px,#000 102px);mask-image:linear-gradient(to bottom,transparent 0,transparent 50px,#000 102px)}
+.s09-sc-form{padding-bottom:calc(120px + var(--kb,0px));-webkit-mask-image:linear-gradient(to bottom,transparent 0,transparent 50px,#000 102px,#000 calc(100% - 134px - var(--kb,0px)),transparent calc(100% - 98px - var(--kb,0px)));mask-image:linear-gradient(to bottom,transparent 0,transparent 50px,#000 102px,#000 calc(100% - 134px - var(--kb,0px)),transparent calc(100% - 98px - var(--kb,0px)))}
+.s09-fill{display:flex;flex-direction:column;min-height:100%}
+.s09-fill-end{margin-top:auto;padding-top:36px}
+
+/* ---------- home ---------- */
 .s09-home{position:absolute;inset:0;z-index:1}
-.s09-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:200px 24px calc(104px + var(--kb,0px));transition:opacity calc(300ms * var(--k,1)) ease;overscroll-behavior:contain;scrollbar-width:none}
-.s09-scroll::-webkit-scrollbar{display:none}
-.ju-phone.kb .s09-scroll{bottom:var(--kb,0px)}
-.s09-home.under .s09-scroll{opacity:0;pointer-events:none}
-.s09-home.under .s09-hd{--sp:1}
-.s09-home.under .s09-title,.s09-home.under .s09-meta{transition:top calc(300ms * var(--k,1)) ease,left calc(300ms * var(--k,1)) ease,transform calc(300ms * var(--k,1)) ease,font-size calc(300ms * var(--k,1)) ease,opacity calc(200ms * var(--k,1)) ease}
-/* 页头：30 → 18 连续收拢进工具行中部（--sp 由滚动驱动） */
-.s09-hd{position:absolute;left:0;right:0;top:0;height:96px;z-index:3;--s09-t:52px}
-.s09-hd::before{content:"";position:absolute;inset:0;background:rgba(15,17,23,calc(.94 * var(--sp)))}
-.s09-tools{position:absolute;left:24px;right:24px;top:var(--s09-t);height:44px;display:flex;align-items:center;justify-content:space-between}
-.s09-ju{font-weight:700;font-size:16px;letter-spacing:.08em;line-height:1}
-.s09-title{position:absolute;margin:0;top:calc(var(--s09-t) + 52px - 41px * var(--sp));left:calc(24px + (50% - 24px) * var(--sp));transform:translateX(calc(-50% * var(--sp)));font-size:calc(30px - 12px * var(--sp));font-weight:500;line-height:1.25;white-space:nowrap;color:#fff;max-width:calc(100% - 48px);overflow:hidden;text-overflow:ellipsis}
-.s09-meta{position:absolute;margin:0;left:24px;right:24px;top:calc(var(--s09-t) + 94px);font-size:14px;line-height:1.5;color:var(--s09-w72);opacity:clamp(0,calc(1 - 2.2 * var(--sp)),1);transform:translateY(calc(-8px * var(--sp)));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s09-back{width:44px;height:44px;margin-left:-12px;display:flex;align-items:center;justify-content:center;background:none;border:0;color:#fff;cursor:pointer}
-.s09-back svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.s09-tbtn{background:none;border:0;padding:0 4px;height:44px;color:var(--s09-val);font-size:15px;font-weight:500;cursor:pointer}
-.s09-tbtn[disabled]{color:var(--s09-w50);cursor:default}
-/* 身份与行 */
-.s09-id{display:block;width:100%;padding:0;background:none;border:0;color:#fff;text-align:left;cursor:pointer;transition:opacity 120ms}
-.s09-id:active{opacity:.7}
-.s09-name{margin:0;font-size:32px;font-weight:500;line-height:1.2;overflow-wrap:anywhere}
-.s09-idline{margin:10px 0 0;font-size:15px;line-height:1.5;color:rgba(255,255,255,.84);display:flex;flex-wrap:wrap;gap:2px 12px}
-.s09-chip{color:var(--s09-val);font-weight:500}
-.s09-group{margin-top:32px}
-.s09-gname{margin:0 0 4px;font-size:13px;font-weight:500;line-height:1.5;color:var(--s09-w50)}
-.s09-row{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:56px;padding:10px 0;background:none;border:0;border-top:1px solid var(--s09-rule);border-radius:0;color:var(--s09-w92);font-size:16px;font-weight:400;line-height:1.4;text-align:left;cursor:pointer;transition:background 120ms}
-.s09-row:first-of-type{border-top:0}
-.s09-row:active{background:rgba(255,255,255,.05)}
-.s09-rl{flex:0 1 auto}
-.s09-rv{flex:0 1 auto;max-width:66%;display:flex;align-items:center;justify-content:flex-end;gap:8px;text-align:right;font-weight:500;color:var(--s09-val)}
-.s09-rv i{font-style:normal;color:var(--s09-w50);font-size:20px;line-height:1;font-weight:400}
-.s09-rv.off{color:var(--s09-w72)}
-/* 根导航 */
-.s09-nav{position:absolute;left:0;right:0;bottom:0;height:84px;z-index:3;display:flex;align-items:flex-start;padding:10px 8px 0;background:linear-gradient(to top,rgba(15,17,23,.97) 50%,rgba(15,17,23,0))}
-.s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;gap:4px;background:none;border:0;color:var(--s09-w50);font-size:12px;font-weight:500;line-height:1.2;padding:4px 0;cursor:pointer}
-.s09-tab svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-.s09-tab.on{color:#fff}
-.s09-tab.on svg{color:var(--s09-val)}
-/* 详情面：从下升起 300ms，光团聚到面后（面是半透明墨，光从面后透出并在上缘溢出） */
-.s09-sheet{position:absolute;left:0;right:0;top:100px;bottom:0;z-index:5;background:rgba(19,22,31,.82);border-radius:28px 28px 0 0;box-shadow:0 -1px 0 rgba(255,255,255,.14),0 -24px 48px -24px rgba(0,0,0,.6);overflow:hidden;--sp:clamp(0,calc(var(--s09-ssy,0) / 56),1);transition:opacity calc(300ms * var(--k,1)) ease}
-.s09-sheet.in{animation:s09-rise calc(300ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
-.s09-sheet.out{animation:s09-fall calc(300ms * var(--k,1)) cubic-bezier(.4,0,.9,.5) both;pointer-events:none}
-.s09-sheet.under{opacity:.6;pointer-events:none}
-.s09-sheet.under .s09-sheet-scroll,.s09-sheet.under .s09-hd{opacity:0;transition:opacity calc(200ms * var(--k,1)) ease}
-.s09-sheet-scroll,.s09-sheet .s09-hd{transition:opacity calc(200ms * var(--k,1)) ease}
-.s09-d1{top:114px}.s09-d2{top:128px}.s09-d3{top:142px}
-@keyframes s09-rise{from{transform:translateY(100%)}to{transform:translateY(0)}}
-@keyframes s09-fall{from{transform:translateY(0)}to{transform:translateY(100%)}}
-.scrub .s09-sheet.in{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
-.s09-sheet-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:150px 24px calc(140px + var(--kb,0px));scrollbar-width:none;overscroll-behavior:contain}
-.s09-sheet-scroll::-webkit-scrollbar{display:none}
-.ju-phone.kb .s09-sheet-scroll{bottom:var(--kb,0px)}
-.s09-hd-sheet{--s09-t:10px}
-.s09-hd-fixed{--sp:1!important}
-.s09-sheet-scroll.tight{padding-top:84px}
-.s09-hd-sheet::before{background:rgba(19,22,31,calc(.96 * var(--sp)))}
-.s09-hero{display:block;width:100%;background:none;border:0;color:#fff;text-align:left;padding:0;cursor:pointer;transition:opacity 120ms}
-.s09-hero:active{opacity:.7}
-.s09-bigname{margin:0 0 20px;font-size:32px;font-weight:500;line-height:1.2;overflow-wrap:anywhere}
-.s09-note{margin:20px 0 0;font-size:13px;line-height:1.6;color:var(--s09-w50)}
-.s09-pill{display:flex;align-items:center;justify-content:center;height:48px;padding:0 24px;border-radius:24px;border:1px solid rgba(255,255,255,.26);background:rgba(255,255,255,.04);color:#fff;font-size:15px;font-weight:500;cursor:pointer;transition:transform 120ms cubic-bezier(.2,.8,.2,1),background 120ms}
-.s09-pill:active{transform:scale(.958);background:rgba(255,255,255,.1)}
-.s09-pill-main{width:min(100%,280px);margin:28px auto 0}
-.s09-pill-sm{height:40px;padding:0 18px;font-size:14px;display:inline-flex}
-.s09-pill[disabled]{opacity:.45;pointer-events:none}
-em.s09-saved{font-style:normal;font-size:13px;font-weight:500;color:var(--s09-ok);animation:s09-fade calc(200ms * var(--k,1)) ease both}
-@keyframes s09-fade{from{opacity:0}to{opacity:1}}
-/* 编辑面：同一行语法，值位变成输入；聚焦的字段把最近的光团叫到背后 */
-.s09-field{padding:14px 0;border-top:1px solid var(--s09-rule)}
-.s09-field:first-child{border-top:0;padding-top:4px}
-.s09-fl{display:block;font-size:13px;font-weight:500;line-height:1.5;color:var(--s09-w50)}
-.s09-in{display:block;width:100%;margin-top:2px;padding:6px 0 8px;background:none;border:0;border-bottom:1px solid rgba(255,255,255,.16);border-radius:0;color:#fff;font-family:inherit;font-size:18px;font-weight:500;line-height:1.4;outline:0;caret-color:var(--s09-val);transition:border-color 160ms}
-.s09-in::placeholder{color:rgba(255,255,255,.28);font-weight:400}
-.s09-in:focus{border-bottom-color:var(--s09-val)}
-.s09-in.err{border-bottom-color:#DA3A52}
-.s09-ferr{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--s09-err)}
-.s09-fnote{margin:8px 0 0;font-size:13px;line-height:1.5;color:var(--s09-w50)}
-.s09-verify{margin-top:4px;padding:14px 0 0;border-top:1px solid var(--s09-rule)}
-.s09-vrow{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
-.s09-vrow .s09-in{flex:1 1 120px;width:auto;letter-spacing:.14em;margin:0}
-.s09-vline{margin:10px 0 0;font-size:13px;line-height:1.5;color:var(--s09-w50)}
-.s09-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:4;padding:14px 24px 22px;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(to top,rgba(19,22,31,.98) 72%,rgba(19,22,31,0));transition:bottom 200ms ease}
-.s09-barmsg{margin:0;font-size:13px;line-height:1.5;color:var(--s09-err);text-align:center}
-.s09-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border:0;border-radius:24px;color:#fff;font-size:16px;font-weight:500;cursor:pointer;background:linear-gradient(180deg,#5c6ad9 0%,#4553BE 56%,#3a47a6 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -2px 0 rgba(0,0,0,.24),0 0 30px rgba(84,100,224,.55),0 12px 26px -12px rgba(0,0,0,.8);transition:transform 120ms cubic-bezier(.2,.8,.2,1),box-shadow 200ms ease,opacity 200ms}
+.s09-home.is-under{pointer-events:none}
+.s09-home.is-under.ph-idle{visibility:hidden}
+.s09-home.is-leaving{animation:s09-fade-out calc(240ms * var(--k)) ease both}
+.s09-home.is-top.ph-enter.dir-root{opacity:0}
+.s09-home.is-top.ph-in.dir-root{animation:s09-fade-in calc(320ms * var(--k)) ease both}
+.s09-dim{transition:opacity calc(360ms * var(--k)) ease}
+.s09-home.has-focus .s09-dim:not(.is-focus){opacity:.64}
+.s09-home.is-under.ph-enter .s09-dim:not(.is-focus),.s09-home.is-under.ph-in .s09-dim:not(.is-focus){opacity:.14}
+.s09-id{display:block;width:100%;text-align:left;border-radius:14px}
+.s09-name{display:block;font-size:52px;font-weight:500;line-height:1.1;letter-spacing:-.005em;overflow-wrap:anywhere}
+.s09-idl{display:block;margin-top:12px;font-size:15px;line-height:1.5;color:var(--w80);overflow-wrap:anywhere}
+.s09-idl i{font-style:normal;padding:0 7px;color:var(--w70)}
+.s09-idl b{margin-left:8px;font-weight:500;color:var(--t0);white-space:nowrap}
+.s09-new{display:inline-block;margin-left:10px;font-size:13px;line-height:1.4;font-weight:500;color:var(--ok);vertical-align:middle;white-space:nowrap;letter-spacing:0}
+/* what needs you: one JU-blue line + a sentence, then the two real items */
+.s09-att{position:relative;margin-top:30px;padding-left:18px}
+.s09-att::before{content:"";position:absolute;left:0;top:4px;bottom:8px;width:3px;border-radius:3px;background:var(--ju-lit)}
+.s09-att-h{font-size:17px;font-weight:500;line-height:1.45}
+.s09-att-i{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 0;font-size:15px;line-height:1.45;color:var(--w92);text-align:left;transition:opacity calc(120ms * var(--k)) ease}
+.s09-att-i:active{opacity:.6}
+.s09-att-i .t{flex:1 1 auto;min-width:0}
+.s09-att-i .t b{font-weight:500;color:#fff}
+.s09-att-i .t span{color:var(--w70)}
+.s09-att-i .c{flex:0 0 auto;font-size:20px;line-height:1;color:var(--ju-lit)}
+/* statements under the light */
+.s09-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:36px;margin-top:40px;align-items:start}
+.s09-st{display:block;min-width:0;text-align:left;border-radius:12px}
+.s09-st-l{display:block;font-size:13px;line-height:18px;color:var(--w70)}
+.s09-st-v{display:block;margin-top:6px;font-size:30px;font-weight:500;line-height:1.2;color:var(--tv,#fff);overflow-wrap:anywhere;transition:opacity calc(120ms * var(--k)) ease}
+.s09-st-s{display:block;margin-top:6px;font-size:15px;line-height:1.45;color:var(--w80);overflow-wrap:anywhere}
+.s09-st-ts{display:block;margin-top:8px}
+.s09-st-ts span{display:block;font-size:15px;line-height:22px;color:var(--w92);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-name{opacity:.7}
+.s09-grid-sm{gap:20px 36px;margin-top:48px}
+.s09-grid-sm .s09-st{min-height:56px}
+.s09-grid-sm .s09-st-v{margin-top:4px;font-size:17px;line-height:1.4;color:var(--w92)}
+.s09-st-x{margin-top:2px;font-size:13px;line-height:1.5;color:var(--w70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s09-foot{margin-top:40px;font-size:13px;line-height:1.6;color:var(--w70)}
+/* root navigation */
+.s09-nav{position:absolute;left:0;right:0;bottom:0;height:80px;z-index:4;display:flex;padding:10px 8px 22px}
+.s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;line-height:1;color:var(--w70);text-align:center;border-radius:14px}
+.s09-tab::after{content:"";width:4px;height:4px;border-radius:50%;background:transparent}
+.s09-tab.on{color:#fff;font-weight:500}
+.s09-tab.on::after{background:var(--t0)}
+
+/* ---------- the ink slab (every secondary page) ---------- */
+.s09-slab{position:absolute;left:var(--slab-in);right:var(--slab-in);top:var(--slab-top);bottom:0;z-index:6;border-radius:28px 28px 0 0;background:var(--ink);overflow:hidden;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.14)}
+.s09-slab.sl-enter{transform:translateY(calc(100% + 24px))}
+.s09-slab.sl-in{animation:s09-rise calc(420ms * var(--k)) var(--ease-rise) calc(90ms * var(--k)) both}
+.s09-slab.sl-exit{animation:s09-sink calc(300ms * var(--k)) cubic-bezier(.45,0,.8,.45) both}
+@keyframes s09-rise{from{transform:translateY(calc(100% + 24px))}to{transform:translateY(0)}}
+@keyframes s09-sink{from{transform:translateY(0)}to{transform:translateY(calc(100% + 24px))}}
+/* the slab's own reading pool: follows focus inside the slab */
+.s09-flamp{position:absolute;left:0;top:0;width:460px;height:420px;margin:-210px 0 0 -230px;z-index:0;pointer-events:none;
+  background:radial-gradient(closest-side at 42% 50%,rgb(var(--l0) / .44) 0%,rgb(var(--l0) / .4) 32%,rgb(var(--l0) / .22) 60%,rgb(var(--l0) / .05) 86%,rgb(var(--l0) / 0) 100%),
+             radial-gradient(closest-side at 76% 40%,rgb(var(--l1) / .28) 0%,rgb(var(--l1) / .16) 48%,rgb(var(--l1) / 0) 100%);
+  transform:translate3d(var(--fx,150px),var(--fy,190px),0);transition:transform calc(480ms * var(--k)) var(--ease-out)}
+.s09-pg{position:absolute;inset:0;z-index:1}
+.s09-pg.is-under{pointer-events:none}
+.s09-pg.is-under.ph-idle{visibility:hidden}
+.s09-slab.deep .s09-pg.is-top.ph-enter{opacity:0;transform:translateY(16px)}
+.s09-slab.deep .s09-pg.is-top.ph-in{animation:s09-pg-in calc(280ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(130ms * var(--k)) both}
+.s09-slab.deep .s09-pg.is-under.ph-enter,.s09-slab.deep .s09-pg.is-under.ph-in{animation:s09-pg-under calc(140ms * var(--k)) ease-in both}
+.s09-slab.deep .s09-pg.is-top.ph-exit{animation:s09-pg-out calc(140ms * var(--k)) ease-in both}
+.s09-slab.deep .s09-pg.is-under.ph-exit{animation:s09-pg-back calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(110ms * var(--k)) both}
+.s09-slab .s09-pg.is-top.ph-enter.dir-swap{opacity:0}
+.s09-slab .s09-pg.is-top.ph-in.dir-swap{animation:s09-fade-in calc(280ms * var(--k)) ease both}
+.s09-slab .s09-pg.is-leaving{animation:s09-fade-out calc(240ms * var(--k)) ease both}
+@keyframes s09-pg-in{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+@keyframes s09-pg-under{from{opacity:1}to{opacity:0}}
+@keyframes s09-pg-out{from{opacity:1}to{opacity:0}}
+@keyframes s09-pg-back{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes s09-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes s09-fade-out{from{opacity:1}to{opacity:0}}
+
+/* ---------- profile (statements, read) ---------- */
+.s09-pf .s09-st+.s09-st{margin-top:36px}
+.s09-hero{display:block;margin-top:6px;font-size:52px;font-weight:500;line-height:1.1;overflow-wrap:anywhere}
+.s09-st-hit{display:block;width:100%;text-align:left;border-radius:12px}
+.s09-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:15px;font-weight:500;color:var(--w92);border-radius:10px}
+.s09-link::after{content:"›";font-size:19px;line-height:1;color:var(--w70)}
+.s09-link[disabled]{color:var(--w70);cursor:default}
+.s09-link[disabled]::after{content:""}
+.s09-say{font-size:15px;line-height:1.7;color:var(--w80)}
+.s09-ghost{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;margin-top:20px;border-radius:24px;font-size:16px;font-weight:500;color:#fff;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);transition:transform calc(120ms * var(--k)) cubic-bezier(.2,.8,.2,1),background calc(120ms * var(--k)) ease}
+.s09-ghost:active{transform:scale(.97);background:rgba(255,255,255,.06)}
+
+/* ---------- profile edit (the same statements, now writable; the pool follows the focused field) ---------- */
+.s09-form .s09-fld+.s09-fld{margin-top:34px}
+.s09-fld{position:relative;display:block}
+.s09-fld-l{display:flex;justify-content:space-between;gap:12px;font-size:13px;line-height:18px;color:var(--w70)}
+.s09-fld-l b{font-weight:400;font-feature-settings:"tnum"}
+.s09-in{display:block;width:100%;margin-top:8px;padding:2px 0 10px;background:none;border:0;border-radius:0;border-bottom:1px solid rgba(255,255,255,.28);color:#fff;
+  font:500 30px/1.25 "Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;outline:0;caret-color:var(--t0);-webkit-appearance:none;appearance:none;
+  transition:border-color calc(200ms * var(--k)) ease,box-shadow calc(200ms * var(--k)) ease}
+.s09-in::placeholder{color:rgba(255,255,255,.42);font-weight:400}
+.s09-form.has-focus .s09-fld:not(.is-focus) .s09-in{color:rgba(255,255,255,.8)}
+.s09-fld.is-focus .s09-in{border-bottom-color:var(--t0);box-shadow:0 1px 0 var(--t0)}
+.s09-in-hero{font-size:40px;line-height:1.2}
+.s09-fld.is-err .s09-in{border-bottom-color:var(--err-line);box-shadow:0 1px 0 var(--err-line)}
+.s09-err{margin-top:8px;font-size:13px;line-height:1.5;color:var(--err)}
+.s09-hint{margin-top:10px;font-size:13px;line-height:1.6;color:var(--w70)}
+.s09-ok{margin-top:10px;font-size:15px;font-weight:500;line-height:1.4;color:var(--ok)}
+.s09-code{margin-top:22px}
+.s09-code-row{display:flex;align-items:flex-end;gap:14px}
+.s09-code-row .s09-in{flex:1 1 auto;width:auto;min-width:0;letter-spacing:.18em;font-feature-settings:"tnum"}
+.s09-pill{flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;height:44px;padding:0 18px;border-radius:22px;font-size:15px;font-weight:500;color:#fff;box-shadow:inset 0 0 0 1px rgba(255,255,255,.32);transition:transform calc(120ms * var(--k)) ease}
+.s09-pill:active{transform:scale(.96)}
+.s09-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px;padding:16px 20px 22px}
+.s09-bar-msg{font-size:13px;line-height:1.5;color:var(--err);text-align:center}
+/* the primary confirm — JU blue, the only glow on screen */
+.s09-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border-radius:24px;color:#fff;font-size:16px;font-weight:500;letter-spacing:.02em;
+  background:linear-gradient(180deg,#5866D6 0%,#4553BE 54%,#3B48AA 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -2px 0 rgba(0,0,0,.24),0 0 26px rgba(86,102,236,.5);
+  transition:transform calc(120ms * var(--k)) cubic-bezier(.2,.8,.2,1),box-shadow calc(240ms * var(--k)) ease,opacity calc(240ms * var(--k)) ease}
 .s09-cta:active{transform:scale(.958)}
-.s09-cta[disabled]{opacity:.7;box-shadow:inset 0 1px 0 rgba(255,255,255,.2);cursor:default}
-/* 确认层 / 提示 */
-.s09-dim{position:absolute;inset:0;z-index:20;background:rgba(8,9,13,.5);animation:s09-fade calc(200ms * var(--k,1)) ease both}
-.s09-confirm{position:absolute;left:16px;right:16px;bottom:calc(16px + var(--kb,0px));z-index:21;padding:22px 22px 14px;border-radius:24px;background:#1b1f2b;box-shadow:0 -1px 0 rgba(255,255,255,.12),0 24px 48px -24px rgba(0,0,0,.8);animation:s09-rise calc(260ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
-.s09-confirm h3{margin:0;font-size:18px;font-weight:500;line-height:1.3}
-.s09-confirm p{margin:6px 0 16px;font-size:14px;line-height:1.5;color:var(--s09-w72)}
-.s09-confirm-acts{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.s09-danger{color:var(--s09-err)}
-.s09-toast{position:absolute;left:24px;right:24px;bottom:calc(104px + var(--kb,0px));z-index:30;padding:12px 18px;border-radius:12px;background:rgba(28,32,46,.96);color:#F8F9FF;font-size:13px;line-height:1.5;box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),0 20px 44px rgba(0,0,0,.6);animation:s09-toast calc(300ms * var(--k,1)) ease both}
-@keyframes s09-toast{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.s09-cta.is-busy{opacity:.84;cursor:progress;box-shadow:inset 0 1px 0 rgba(255,255,255,.22),inset 0 -2px 0 rgba(0,0,0,.24),0 0 10px rgba(86,102,236,.22)}
+
+/* ---------- placeholder rooms (filled in stage 2) ---------- */
+.s09-room{position:absolute;inset:0;z-index:2}
+.s09-room.is-under.ph-idle{visibility:hidden}
+.s09-room.is-top.ph-enter.dir-root{opacity:0}
+.s09-room.is-top.ph-in.dir-root{animation:s09-fade-in calc(320ms * var(--k)) ease both}
+.s09-room.is-leaving{animation:s09-fade-out calc(240ms * var(--k)) ease both}
+.s09-gen .s09-st-s{max-width:34em}
+
+/* ---------- overlays ---------- */
+.s09-over{position:absolute;inset:0;z-index:20}
+.s09-veil{position:absolute;inset:0;background:rgba(6,7,11,.6);animation:s09-fade-in calc(220ms * var(--k)) ease both}
+.s09-sheet{position:absolute;left:var(--slab-in);right:var(--slab-in);bottom:calc(10px + var(--kb,0px));padding:26px 22px 18px;border-radius:28px;
+  background:radial-gradient(130% 100% at 30% 0%,rgb(var(--l0) / .26) 0%,rgb(var(--l0) / 0) 62%),#191C27;box-shadow:inset 0 1px 0 rgba(255,255,255,.14);
+  animation:s09-sheet-in calc(320ms * var(--k)) var(--ease-rise) both}
+@keyframes s09-sheet-in{from{transform:translateY(calc(100% + 24px))}to{transform:translateY(0)}}
+.s09-sheet-t{font-size:22px;font-weight:500;line-height:1.35}
+.s09-sheet-b{margin-top:8px;font-size:15px;line-height:1.6;color:var(--w80)}
+.s09-sheet-acts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
+.s09-sheet-acts .s09-ghost{margin:0;flex:1 1 auto;width:auto;max-width:210px}
+.s09-danger{color:var(--err)!important}
+.s09-toast{position:absolute;left:50%;bottom:calc(104px + var(--kb,0px));z-index:30;max-width:calc(100% - 48px);padding:12px 18px;border-radius:16px;background:#242838;color:#fff;font-size:14px;line-height:1.45;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);transform:translateX(-50%);animation:s09-toast calc(260ms * var(--k)) var(--ease-out) both}
+@keyframes s09-toast{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+.app.s09.slab-up .s09-toast{top:6px;bottom:auto;padding:8px 16px;font-size:14px;line-height:20px;background:#1E2230;animation-name:s09-toast-top}
+@keyframes s09-toast-top{from{opacity:0;transform:translate(-50%,-8px)}to{opacity:1;transform:translate(-50%,0)}}
+.s09-toast.k-ok::before,.s09-toast.k-error::before{content:"";display:inline-block;width:7px;height:7px;margin:0 9px 1px 0;border-radius:50%;background:var(--ok);vertical-align:middle}
+.s09-toast.k-error::before{background:var(--err)}
+
+/* ---------- review: reduced motion (three sources), pause, keyframe scrub ---------- */
+.app.s09.rm *,.app.s09.rm *::before,.app.s09.rm *::after,.app.s09.rm-user *,.app.s09.rm-user *::before,.app.s09.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app.s09.paused .s09-lamp,.app.s09.paused .s09-lamps,.app.s09.paused .s09-slab,.app.s09.paused .s09-pg{animation-play-state:paused!important}
+.app.s09.scrub .s09-lamp{animation-play-state:paused!important;animation-delay:calc(var(--frame,0) * var(--dur) * var(--k) * -1)!important}
+.app.s09.scrub .s09-slab.sl-in{animation-play-state:paused!important;animation-delay:calc(90ms * var(--k) - var(--frame,0) * 510ms * var(--k))!important}
+.app.s09.scrub .s09-slab.sl-exit,.app.s09.scrub .s09-pg{animation-play-state:paused!important;animation-delay:calc(var(--frame,0) * -300ms * var(--k))!important}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s09{{panel.rootCls}}{{rmUser}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <div class="s09-root" ref="{{wrapRef}}">
-        <div class="s09-lights{{lightsCls}}">
-          <sc-for list="{{lights}}" as="l" hint-placeholder-count="3"><div class="s09-light s09-l{{l.i}}{{l.cls}}" style="{{l.style}}"></div></sc-for>
-        </div>
-        <div class="s09-home{{homeCls}}" data-surface="home">
-          <div class="s09-scroll" onScroll="{{onHomeScroll}}">
-            <button type="button" class="s09-id" onClick="{{goProfile}}">
-              <h1 class="s09-name">{{sum.you.name}}</h1>
-              <p class="s09-idline"><span>{{idWx}}</span><span class="s09-chip">{{idMail}}</span></p>
+    <div class="app s09{{panel.rootCls}}{{c.nav.rootCls}}{{v.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{v.skin}}">
+
+      <div class="s09-lamps{{v.lampsCls}}" aria-hidden="true">
+        <sc-for list="{{v.lamps}}" as="l" hint-placeholder-count="3"><div class="s09-lamp s09-lamp-{{l.i}}" style="{{l.style}}"></div></sc-for>
+      </div>
+
+      <!-- ================= HOME · 设置 ================= -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="s09-home {{c.nav.cls.home}}{{v.home.cls}}" data-surface="home">
+          <div class="s09-sc s09-sc-home" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+            <button type="button" class="s09-id s09-dim{{v.home.fc.profile}}" data-origin="profile" onClick="{{v.open.profile}}">
+              <span class="s09-name">{{c.you.name}}<sc-if value="{{c.you.savedName}}" hint-placeholder-val="{{false}}"><span class="s09-new">刚更新</span></sc-if></span>
+              <span class="s09-idl">{{v.home.wx}}<i>·</i>{{v.home.mail}}<sc-if value="{{v.home.mailState}}" hint-placeholder-val="{{true}}"><b>{{v.home.mailState}}</b></sc-if></span>
             </button>
-            <sc-for list="{{groups}}" as="g" hint-placeholder-count="5">
-              <section class="s09-group">
-                <h2 class="s09-gname">{{g.name}}</h2>
-                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
-                  <button type="button" class="s09-row" data-rid="{{r.rid}}" onClick="{{r.go}}"><span class="s09-rl">{{r.label}}</span><span class="s09-rv{{r.vcls}}"><span>{{r.value}}</span><i>›</i></span></button>
+            <sc-if value="{{c.attCount}}" hint-placeholder-val="{{true}}">
+              <div class="s09-att s09-dim{{v.home.fc.att}}">
+                <p class="s09-att-h">{{v.home.attLine}}</p>
+                <sc-for list="{{v.att}}" as="a" hint-placeholder-count="2">
+                  <button type="button" class="s09-att-i" data-origin="{{a.key}}" data-rid="{{a.rid}}" onClick="{{a.go}}"><span class="t"><b>{{a.title}}</b><span> · {{a.label}}</span></span><span class="c" aria-hidden="true">›</span></button>
                 </sc-for>
-              </section>
-            </sc-for>
-          </div>
-          <header class="s09-hd">
-            <div class="s09-tools"><span class="s09-ju">JU</span></div>
-            <h1 class="s09-title">设置</h1>
-            <p class="s09-meta">{{homeMeta}}</p>
-          </header>
-          <nav class="s09-nav" aria-label="根导航">
-            <button type="button" class="s09-tab" onClick="{{nav.find}}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M15.5 8.5l-2.2 5-5 2.2 2.2-5z"/></svg>找局</button>
-            <button type="button" class="s09-tab" onClick="{{nav.create}}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>开局</button>
-            <button type="button" class="s09-tab" onClick="{{nav.mine}}"><svg viewBox="0 0 24 24"><path d="M4 8.5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2V10a2 2 0 0 0 0 4v1.5a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V14a2 2 0 0 0 0-4z"/><path d="M14 6.5v11" stroke-dasharray="2 2"/></svg>我的局</button>
-            <button type="button" class="s09-tab on" aria-current="page"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="9" cy="7" r="2" fill="#0f1117"/><circle cx="15" cy="12" r="2" fill="#0f1117"/><circle cx="8" cy="17" r="2" fill="#0f1117"/></svg>设置</button>
-          </nav>
-        </div>
-        <sc-for list="{{sheets}}" as="sh" hint-placeholder-count="1">
-          <section class="s09-sheet s09-over{{sh.cls}}" data-surface="{{sh.surface}}">
-            <div class="s09-sheet-scroll{{sh.scrollCls}}" onScroll="{{onSheetScroll}}">
-              <sc-if value="{{sh.isProfile}}">
-                <button type="button" class="s09-hero" onClick="{{sh.p.editName}}"><h2 class="s09-bigname">{{sh.p.name}}<sc-if value="{{sh.p.savedName}}"> <em class="s09-saved">已保存</em></sc-if></h2></button>
-                <div class="s09-rows">
-                  <button type="button" class="s09-row" onClick="{{sh.p.editWx}}"><span class="s09-rl">微信号</span><span class="s09-rv"><sc-if value="{{sh.p.savedWx}}"><em class="s09-saved">已保存</em></sc-if><span>{{sh.p.wx}}</span><i>›</i></span></button>
-                  <button type="button" class="s09-row" onClick="{{sh.p.editEmail}}"><span class="s09-rl">邮箱</span><span class="s09-rv"><sc-if value="{{sh.p.savedEmail}}"><em class="s09-saved">已保存</em></sc-if><span>{{sh.p.email}}</span><i>›</i></span></button>
-                  <div class="s09-row" role="status"><span class="s09-rl">邮箱验证</span><span class="s09-rv{{sh.p.verifyCls}}"><span>{{sh.p.verify}}</span></span></div>
-                </div>
-                <p class="s09-note">{{sh.p.note}}</p>
-                <button type="button" class="s09-pill s09-pill-main" data-act="edit" onClick="{{sh.p.edit}}">编辑资料</button>
-              </sc-if>
-              <sc-if value="{{sh.isEdit}}">
-                <div class="s09-fields">
-                  <sc-for list="{{sh.e.fields}}" as="f" hint-placeholder-count="3">
-                    <div class="s09-field">
-                      <label class="s09-fl" for="{{f.id}}">{{f.label}}</label>
-                      <input id="{{f.id}}" class="s09-in{{f.cls}}" data-field="{{f.key}}" type="{{f.type}}" value="{{f.value}}" placeholder="{{f.ph}}" autocomplete="off" onInput="{{f.onInput}}" onFocus="{{f.onFocus}}">
-                      <sc-if value="{{f.err}}"><p class="s09-ferr">{{f.err}}</p></sc-if>
-                      <sc-if value="{{f.note}}"><p class="s09-fnote">{{f.note}}</p></sc-if>
-                    </div>
-                  </sc-for>
-                  <sc-if value="{{sh.e.verify.on}}">
-                    <div class="s09-verify">
-                      <sc-if value="{{sh.e.verify.verified}}"><p class="s09-vline"><span class="s09-chip">{{sh.e.verify.email}} 已验证</span></p></sc-if>
-                      <sc-if value="{{sh.e.verify.idle}}"><div class="s09-vrow"><button type="button" class="s09-pill s09-pill-sm" data-act="request" onClick="{{sh.e.verify.request}}">发送验证码</button><span class="s09-vline" style="margin:0">{{sh.e.verify.demoLine}}</span></div></sc-if>
-                      <sc-if value="{{sh.e.verify.entering}}">
-                        <label class="s09-fl" for="s09-f-code">验证码</label>
-                        <div class="s09-vrow"><input id="s09-f-code" class="s09-in{{sh.e.verify.codeCls}}" data-field="code" type="text" inputmode="numeric" maxlength="6" value="{{sh.e.verify.code}}" placeholder="6 位数字" autocomplete="off" onInput="{{sh.e.verify.onCode}}" onFocus="{{sh.e.verify.onCodeFocus}}"><button type="button" class="s09-pill s09-pill-sm" data-act="verify" onClick="{{sh.e.verify.verify}}">验证</button></div>
-                        <sc-if value="{{sh.e.verify.codeErr}}"><p class="s09-ferr">{{sh.e.verify.codeErr}}</p></sc-if>
-                        <p class="s09-vline"><button type="button" class="s09-tbtn" style="height:auto;padding:0" data-act="resend" disabled="{{sh.e.verify.resendOff}}" onClick="{{sh.e.verify.request}}">{{sh.e.verify.resendLabel}}</button> · {{sh.e.verify.demoLine}}</p>
-                      </sc-if>
-                    </div>
-                  </sc-if>
-                </div>
-                <p class="s09-note">{{sh.e.note}}</p>
-              </sc-if>
-              <sc-if value="{{sh.isGeneric}}"><p class="s09-note" style="margin-top:0">{{sh.g.line}}</p></sc-if>
-            </div>
-            <header class="s09-hd s09-hd-sheet{{sh.hdCls}}">
-              <div class="s09-tools"><button type="button" class="s09-back" data-act="back" aria-label="返回" onClick="{{sh.back}}"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><sc-if value="{{sh.right}}"><button type="button" class="s09-tbtn" data-act="{{sh.rightAct}}" onClick="{{sh.rightGo}}">{{sh.right}}</button></sc-if></div>
-              <h1 class="s09-title">{{sh.title}}</h1>
-              <p class="s09-meta">{{sh.meta}}</p>
-            </header>
-            <sc-if value="{{sh.isEdit}}">
-              <div class="s09-bar">
-                <sc-if value="{{sh.e.failMsg}}"><p class="s09-barmsg">{{sh.e.failMsg}}</p></sc-if>
-                <button type="button" class="s09-cta" data-act="{{sh.e.ctaAct}}" disabled="{{sh.e.busy}}" onClick="{{sh.e.save}}">{{sh.e.ctaLabel}}</button>
               </div>
             </sc-if>
-          </section>
-        </sc-for>
-        <sc-if value="{{confirm.on}}">
-          <div class="s09-dim s09-over" onClick="{{confirm.keep}}"></div>
-          <div class="s09-confirm s09-over" role="dialog">
-            <h3>{{confirm.title}}</h3><p>{{confirm.body}}</p>
-            <div class="s09-confirm-acts"><button type="button" class="s09-pill" data-act="cancel" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button><button type="button" class="s09-tbtn s09-danger" data-act="confirm" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button></div>
+            <div class="s09-grid">
+              <button type="button" class="s09-st s09-dim{{v.home.fc.favorites}}" style="--tv:{{v.tint.fav}}" data-origin="favorites" onClick="{{v.open.favorites}}">
+                <span class="s09-st-l">收藏的局</span>
+                <span class="s09-st-v">{{v.home.fav.value}}</span>
+                <span class="s09-st-ts"><sc-for list="{{v.home.fav.titles}}" as="t" hint-placeholder-count="3"><span>{{t}}</span></sc-for></span>
+                <sc-if value="{{v.home.fav.sub}}" hint-placeholder-val="{{false}}"><span class="s09-st-s">{{v.home.fav.sub}}</span></sc-if>
+              </button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.city}}" style="--tv:{{v.tint.city}}" data-origin="city" onClick="{{v.open.city}}">
+                <span class="s09-st-l">默认浏览城市</span>
+                <span class="s09-st-v">{{v.home.city.value}}</span>
+                <span class="s09-st-s">{{v.home.city.sub}}</span>
+              </button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.notify}}" style="--tv:{{v.tint.notify}}" data-origin="notify" onClick="{{v.open.notify}}">
+                <span class="s09-st-l">通知与提醒</span>
+                <span class="s09-st-v">{{v.home.notify.value}}</span>
+                <span class="s09-st-s">{{v.home.notify.sub}}</span>
+              </button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.appearance}}" style="--tv:{{v.tint.appearance}}" data-origin="appearance" onClick="{{v.open.appearance}}">
+                <span class="s09-st-l">外观与动态</span>
+                <span class="s09-st-v">{{v.home.appearance.value}}</span>
+                <span class="s09-st-s">{{v.home.appearance.sub}}</span>
+              </button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.records}}" style="--tv:{{v.tint.records}}" data-origin="records" onClick="{{v.open.records}}">
+                <span class="s09-st-l">我的记录</span>
+                <span class="s09-st-v">{{v.home.records.value}}</span>
+                <sc-if value="{{v.home.records.sub}}" hint-placeholder-val="{{true}}"><span class="s09-st-s">{{v.home.records.sub}}</span></sc-if>
+              </button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.reports}}" style="--tv:{{v.tint.reports}}" data-origin="reports" onClick="{{v.open.reports}}">
+                <span class="s09-st-l">我的举报</span>
+                <span class="s09-st-v">{{v.home.reports.value}}</span>
+                <sc-if value="{{v.home.reports.sub}}" hint-placeholder-val="{{true}}"><span class="s09-st-s">{{v.home.reports.sub}}</span></sc-if>
+              </button>
+            </div>
+            <div class="s09-grid s09-grid-sm">
+              <button type="button" class="s09-st s09-dim{{v.home.fc.help}}" data-origin="help" onClick="{{v.open.help}}"><span class="s09-st-l">帮助与反馈</span><span class="s09-st-v">{{v.home.help}}</span></button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.privacy}}" data-origin="privacy" onClick="{{v.open.privacy}}"><span class="s09-st-l">隐私与资料可见性</span><span class="s09-st-v">{{v.home.privacy}}</span></button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.account}}" data-origin="account" onClick="{{v.open.account}}"><span class="s09-st-l">账户与本机数据</span><span class="s09-st-v">{{v.home.account}}</span></button>
+              <button type="button" class="s09-st s09-dim{{v.home.fc.about}}" data-origin="about" onClick="{{v.open.about}}"><span class="s09-st-l">关于与规则</span><span class="s09-st-v">{{v.home.about}}</span><span class="s09-st-s s09-st-x">{{v.home.aboutSub}}</span></button>
+            </div>
+            <p class="s09-foot s09-dim">{{v.home.foot}}</p>
           </div>
-        </sc-if>
-        <sc-if value="{{toast}}"><div class="s09-toast s09-over" role="status">{{toast}}</div></sc-if>
-      </div>
-      <!-- @fx-svg -->
+          <header class="s09-hd s09-hd-home s09-dim" data-header>
+            <div class="s09-tools"><span class="s09-ju">JU</span></div>
+            <h1 class="s09-title">设置</h1>
+            <p class="s09-meta">{{c.demoNote}}</p>
+          </header>
+        </section>
+      </sc-if>
+
+      <!-- ================= other roots (seams) — stage 2 builds their rooms ================= -->
+      <sc-for list="{{v.rooms}}" as="g" hint-placeholder-count="0">
+        <section class="s09-room {{g.cls}}" data-surface="{{g.s}}">
+          <div class="s09-sc s09-sc-home" data-scroller="{{g.s}}" onScroll="{{c.nav.onScroll}}">
+            <div class="s09-st s09-gen" style="--tv:var(--t0)"><span class="s09-st-l">{{g.label}}</span><span class="s09-st-v">{{g.value}}</span><span class="s09-st-s">{{g.sub}}</span></div>
+          </div>
+          <header class="s09-hd s09-hd-home" data-header>
+            <div class="s09-tools"><sc-if value="{{g.back}}" hint-placeholder-val="{{false}}"><button type="button" class="s09-back" data-act="back" aria-label="返回" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button></sc-if><sc-if value="{{g.ju}}" hint-placeholder-val="{{true}}"><span class="s09-ju">JU</span></sc-if></div>
+            <h1 class="s09-title">{{g.title}}</h1>
+            <p class="s09-meta">{{g.meta}}</p>
+          </header>
+        </section>
+      </sc-for>
+
+      <nav class="s09-nav" aria-label="JU">
+        <sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s09-tab {{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
+      </nav>
+
+      <!-- ================= the ink slab: every secondary page of 设置 ================= -->
+      <sc-if value="{{v.slab.on}}" hint-placeholder-val="{{false}}">
+        <div class="s09-slab{{v.slab.cls}}">
+          <div class="s09-flamp" style="{{v.slab.flamp}}" aria-hidden="true"></div>
+
+          <!-- 个人资料 -->
+          <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
+            <section class="s09-pg {{c.nav.cls.profile}}" data-surface="profile">
+              <div class="s09-sc s09-sc-slab" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+                <div class="s09-pf s09-fill">
+                  <button type="button" class="s09-st s09-st-hit" data-lamp data-origin="pf-name" onClick="{{v.pf.editName}}">
+                    <span class="s09-st-l">称呼</span>
+                    <span class="s09-hero">{{c.you.name}}<sc-if value="{{c.you.savedName}}" hint-placeholder-val="{{false}}"><span class="s09-new">刚更新</span></sc-if></span>
+                  </button>
+                  <div class="s09-st" style="--tv:{{v.tint.p1}}">
+                    <button type="button" class="s09-st-hit" data-origin="pf-wx" onClick="{{v.pf.editWx}}"><span class="s09-st-l">微信号</span><span class="s09-st-v">{{c.you.wxLabel}}<sc-if value="{{c.you.savedWx}}" hint-placeholder-val="{{false}}"><span class="s09-new">刚更新</span></sc-if></span></button>
+                    <sc-if value="{{c.you.wx}}" hint-placeholder-val="{{true}}"><button type="button" class="s09-link" data-act="copy" onClick="{{c.you.copyWx}}">复制微信号</button></sc-if>
+                    <sc-if value="{{c.you.copyFail}}" hint-placeholder-val="{{false}}"><p class="s09-st-s">{{v.pf.copyFail}}</p></sc-if>
+                  </div>
+                  <div class="s09-st" style="--tv:{{v.tint.p2}}">
+                    <button type="button" class="s09-st-hit" data-origin="pf-email" onClick="{{v.pf.editEmail}}"><span class="s09-st-l">工作 / 学校邮箱</span><span class="s09-st-v">{{v.pf.email}}<sc-if value="{{c.you.savedEmail}}" hint-placeholder-val="{{false}}"><span class="s09-new">刚更新</span></sc-if></span></button>
+                    <sc-if value="{{v.pf.emailSub}}" hint-placeholder-val="{{true}}"><p class="s09-st-s">{{v.pf.emailSub}}</p></sc-if>
+                  </div>
+                  <div class="s09-fill-end">
+                    <p class="s09-say">{{v.pf.policy}}</p>
+                    <button type="button" class="s09-link" data-origin="pf-privacy" onClick="{{v.pf.goPrivacy}}">谁能看见我的资料</button>
+                    <button type="button" class="s09-ghost" data-act="edit" data-origin="edit" onClick="{{v.pf.edit}}">编辑资料</button>
+                  </div>
+                </div>
+              </div>
+              <header class="s09-hd s09-shd" data-header>
+                <div class="s09-tools"><button type="button" class="s09-back" data-act="back" aria-label="返回" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button></div>
+                <h2 class="s09-title">个人资料</h2>
+                <p class="s09-meta">{{v.pf.meta}}</p>
+              </header>
+            </section>
+          </sc-if>
+
+          <!-- 编辑资料 -->
+          <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
+            <section class="s09-pg {{c.nav.cls.profile-edit}}" data-surface="profile-edit">
+              <div class="s09-sc s09-sc-slab s09-sc-form" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+                <div class="s09-form s09-fill{{v.ed.formCls}}">
+                  <div class="s09-fld{{v.ed.name}}" data-fw="name" data-lamp>
+                    <label class="s09-fld-l" for="s09-f-name"><span>称呼</span><b>{{v.pfv.nameCount}}</b></label>
+                    <input id="s09-f-name" class="s09-in s09-in-hero" data-field="name" type="text" autocomplete="off" value="{{v.pfv.name}}" onInput="{{v.pfv.onName}}" onFocus="{{v.onFocus}}" onBlur="{{v.onBlur}}">
+                    <sc-if value="{{v.err.name}}" hint-placeholder-val="{{false}}"><p class="s09-err" role="alert">{{v.err.name}}</p></sc-if>
+                  </div>
+                  <div class="s09-fld{{v.ed.wx}}" data-fw="wx">
+                    <label class="s09-fld-l" for="s09-f-wx"><span>微信号</span></label>
+                    <input id="s09-f-wx" class="s09-in" data-field="wx" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" value="{{v.pfv.wx}}" onInput="{{v.pfv.onWx}}" onFocus="{{v.onFocus}}" onBlur="{{v.onBlur}}">
+                    <sc-if value="{{v.err.wx}}" hint-placeholder-val="{{false}}"><p class="s09-err" role="alert">{{v.err.wx}}</p></sc-if>
+                  </div>
+                  <div class="s09-fld{{v.ed.email}}" data-fw="email">
+                    <label class="s09-fld-l" for="s09-f-email"><span>工作 / 学校邮箱（可空）</span></label>
+                    <input id="s09-f-email" class="s09-in" data-field="email" type="email" autocomplete="off" autocapitalize="off" spellcheck="false" value="{{v.pfv.email}}" onInput="{{v.pfv.onEmail}}" onFocus="{{v.onFocus}}" onBlur="{{v.onBlur}}">
+                    <sc-if value="{{v.err.email}}" hint-placeholder-val="{{false}}"><p class="s09-err" role="alert">{{v.err.email}}</p></sc-if>
+                    <sc-if value="{{v.pfv.codeVerified}}" hint-placeholder-val="{{false}}"><p class="s09-ok">{{v.pfv.verifiedText}}</p></sc-if>
+                  </div>
+                  <sc-if value="{{v.pfv.needCode}}" hint-placeholder-val="{{false}}">
+                    <div class="s09-code">
+                      <sc-if value="{{v.pfv.codeNone}}" hint-placeholder-val="{{true}}">
+                        <div class="s09-code-row"><button type="button" class="s09-pill" data-act="send" onClick="{{v.pfv.sendCode}}">发送验证码</button></div>
+                      </sc-if>
+                      <sc-if value="{{v.ed.codeOpen}}" hint-placeholder-val="{{false}}">
+                        <div class="s09-fld{{v.ed.code}}" data-fw="code">
+                          <label class="s09-fld-l" for="s09-f-code"><span>邮箱验证码</span><b>{{v.ed.expiry}}</b></label>
+                          <div class="s09-code-row">
+                            <input id="s09-f-code" class="s09-in" data-field="code" type="text" inputmode="numeric" maxlength="6" autocomplete="one-time-code" placeholder="6 位数字" value="{{v.pfv.code}}" onInput="{{v.pfv.onCode}}" onKeyDown="{{v.pfv.onKeyCode}}" onFocus="{{v.onFocus}}" onBlur="{{v.onBlur}}">
+                            <button type="button" class="s09-pill" data-act="verify" onClick="{{v.pfv.verify}}">验证</button>
+                          </div>
+                          <sc-if value="{{v.err.code}}" hint-placeholder-val="{{false}}"><p class="s09-err" role="alert">{{v.err.code}}</p></sc-if>
+                          <button type="button" class="s09-link" data-act="resend" disabled="{{v.ed.resendOff}}" onClick="{{v.pfv.resend}}">{{v.pfv.resendLabel}}</button>
+                        </div>
+                      </sc-if>
+                      <p class="s09-hint">{{v.pfv.codeNote}}</p>
+                    </div>
+                  </sc-if>
+                  <p class="s09-say s09-fill-end">{{v.pf.meta}}</p>
+                </div>
+              </div>
+              <header class="s09-hd s09-shd" data-header>
+                <div class="s09-tools"><button type="button" class="s09-tbtn" data-act="cancel" onClick="{{v.pfv.cancel}}">取消</button></div>
+                <h2 class="s09-title">编辑资料</h2>
+                <p class="s09-meta">{{v.pfv.emailHint}}</p>
+              </header>
+              <div class="s09-bar">
+                <sc-if value="{{v.pfv.failed}}" hint-placeholder-val="{{false}}"><p class="s09-bar-msg" role="alert">{{v.pfv.failText}}</p></sc-if>
+                <button type="button" class="s09-cta{{v.ed.cta}}" data-act="save" onClick="{{v.pfv.save}}">{{v.pfv.saveLabel}}</button>
+              </div>
+            </section>
+          </sc-if>
+
+          <!-- every other secondary page: one statement under the pool (stage 2 composes each surface) -->
+          <sc-for list="{{v.gen}}" as="g" hint-placeholder-count="0">
+            <section class="s09-pg {{g.cls}}" data-surface="{{g.s}}">
+              <div class="s09-sc s09-sc-slab" data-scroller="{{g.s}}" onScroll="{{c.nav.onScroll}}">
+                <div class="s09-st s09-gen" data-lamp style="--tv:var(--t0)"><span class="s09-st-l">{{g.label}}</span><span class="s09-st-v">{{g.value}}</span><span class="s09-st-s">{{g.sub}}</span></div>
+              </div>
+              <header class="s09-hd s09-shd" data-header>
+                <div class="s09-tools"><button type="button" class="s09-back" data-act="back" aria-label="返回" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24"><path d="M14.5 5.5 8 12l6.5 6.5"/></svg></button></div>
+                <h2 class="s09-title">{{g.title}}</h2>
+                <p class="s09-meta">{{g.meta}}</p>
+              </header>
+            </section>
+          </sc-for>
+        </div>
+      </sc-if>
+
+      <!-- ================= overlays ================= -->
+      <sc-if value="{{c.sheet.on}}" hint-placeholder-val="{{false}}">
+        <div class="s09-over">
+          <div class="s09-veil" onClick="{{v.sheetDismiss}}"></div>
+          <div class="s09-sheet" role="dialog" aria-modal="true">
+            <p class="s09-sheet-t">{{c.sheet.title}}</p>
+            <p class="s09-sheet-b">{{c.sheet.body}}</p>
+            <sc-if value="{{c.sheet.unsaved}}" hint-placeholder-val="{{true}}"><div class="s09-sheet-acts"><button type="button" class="s09-ghost" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s09-tbtn s09-danger" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></div></sc-if>
+            <sc-if value="{{c.sheet.accountEnd}}" hint-placeholder-val="{{false}}"><div class="s09-sheet-acts"><button type="button" class="s09-ghost" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s09-tbtn s09-danger" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s09-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
-    <!-- @panel -->
+    <!-- @fx-svg -->
   </div>
+  <!-- @panel -->
 </div>
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* S09 夜灯 — surfaces are sheets on a stack (state.stack); data only changes through this.act() → JUS.engine; views derive from JUS.derive. */
-var S09_TITLES = { favorites: '收藏的局', city: '默认浏览城市', notify: '通知与提醒', appearance: '外观与动态', records: '我的记录', reports: '我的举报', help: '帮助与反馈', feedback: '产品反馈', privacy: '隐私与资料可见性', account: '账户与本机数据', about: '关于与规则', rules: '规则全文', 'record-detail': '记录详情', 'record-dispute': '出席异议', 'record-appeal': '信用申诉', 'record-supplement': '补充记录', 'report-detail': '举报详情', 'report-supplement': '举报补充', 'seam-feed': '找局', 'seam-feed-detail': '活动详情', 'seam-mine': '我的局', 'seam-report': '举报' };
+/* ---------- S09 geometry: where the three lamps rest in each environment (x = share of width, y = px from top) ---------- */
+var S09 = {
+  TOP: 48, EASE: 'cubic-bezier(.22,1,.36,1)',
+  REST: {
+    cotton: [{ x: .40, y: 222, d: 460, a: .45 }, { x: .94, y: 486, d: 400, a: .36 }, { x: .06, y: 690, d: 360, a: .32 }],
+    halo:   [{ x: .90, y: 158, d: 460, a: .45 }, { x: .64, y: 586, d: 400, a: .36 }, { x: .02, y: 330, d: 420, a: .40 }],
+    sunset: [{ x: .36, y: .962, d: 460, a: .44 }, { x: .98, y: 590, d: 400, a: .40 }, { x: .12, y: 150, d: 420, a: .40 }]
+  },
+  /* which lamp tints each statement's value (the lamp it sits under) */
+  TINT: {
+    cotton: { fav: 0, city: 1, notify: 2, appearance: 1, records: 2, reports: 1, p1: 1, p2: 2 },
+    halo:   { fav: 2, city: 0, notify: 1, appearance: 1, records: 1, reports: 0, p1: 1, p2: 2 },
+    sunset: { fav: 2, city: 2, notify: 0, appearance: 1, records: 0, reports: 1, p1: 1, p2: 2 }
+  },
+  OWN: { home: 1, profile: 1, 'profile-edit': 1 }
+};
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this.wrapRef = { current: null }; this._sy = 0; this._seq = 0; this._lastSkin = this.state.data.appearance.skin; }
-  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { stack: [], focus: null, edit: null, confirm: null, toast: '', saved: null, previewSkin: null, skinFx: false, tick: 0 }); }
-  componentDidUpdate() { var s = this.state; var skin = s.previewSkin || s.data.appearance.skin; if (skin !== this._lastSkin) { this._lastSkin = skin; if (!this.isRM()) { this.setState({ skinFx: true }); this.afterKey('skinfx', 720, () => this.setState({ skinFx: false })); } } }
-  beforeReplay() { this.cancelKey('saved'); this.setState({ stack: [], edit: null, confirm: null, focus: null, saved: null }); this.setScrollVar(0); }
-  /* ---------- geometry / lights ---------- */
-  dims() { var r = this.rootRef.current, rv = this.state.review || {}; return { W: r ? r.clientWidth : (rv.pw || 390), H: r ? r.clientHeight : (rv.ph || 844) }; }
-  topSheet() { var st = this.state.stack; for (var i = st.length - 1; i >= 0; i--) if (st[i].phase !== 'out') return st[i]; return null; }
-  viewKey() { var t = this.topSheet(); return t ? t.surface + ':' + t.key : 'home'; }
-  setScrollVar(y) { this._sy = y; var w = this.wrapRef.current; if (w) w.style.setProperty('--s09-sy', String(y)); }
-  /* rest positions of the three lights for the current view (app px; sheets compensate the 0.3× parallax offset) */
-  lightBase() {
-    var d = this.dims(), W = d.W, H = d.H, t = this.topSheet(), py = 0.3 * this._sy;
-    if (!t) return [{ x: .3 * W, y: .26 * H, d: 440 }, { x: .94 * W, y: .55 * H, d: 360 }, { x: .12 * W, y: .8 * H, d: 320 }];
-    var top = 100 + py;
-    if (t.surface === 'profile') return [{ x: .32 * W, y: top + 90, d: 440 }, { x: .94 * W, y: top + 300, d: 360 }, { x: .16 * W, y: top + 520, d: 320 }];
-    if (t.surface === 'profile-edit') return [{ x: .3 * W, y: top + 120, d: 420 }, { x: .92 * W, y: top + 290, d: 360 }, { x: .3 * W, y: top + 470, d: 320 }];
-    return [{ x: .32 * W, y: top + 100, d: 440 }, { x: .94 * W, y: top + 360, d: 360 }, { x: .14 * W, y: top + 580, d: 320 }];
+  constructor(p) {
+    super(p);
+    this.reviewInit(CONCEPT);
+    /* fwd = 90ms pre-roll while the lamps find the tapped statement + 420ms slab rise; back = 300ms sink */
+    this.motionSpec = { fwd: 520, back: 300, root: 320, swap: 300 };
+    this.headerRange = 96; this.saveMs = 380;
   }
-  lightsNow() { var base = this.lightBase(), f = this.state.focus; if (f && f.view === this.viewKey()) base[f.i] = Object.assign({}, base[f.i], { x: f.x, y: f.y, bright: true }); return base; }
-  /* the light nearest to an element moves behind it (400ms, CSS transition) and brightens */
-  lightTo(el) {
-    var root = this.rootRef.current; if (!root || !el) return;
-    var r = JU.fx.rectIn(el, root), cx = r.x + r.w / 2, cy = r.y + r.h / 2, py = 0.3 * this._sy;
-    var ls = this.lightsNow(), best = 0, bd = Infinity;
-    ls.forEach(function (l, i) { var dx = l.x - cx, dy = (l.y - py) - cy, dd = dx * dx + dy * dy; if (dd < bd) { bd = dd; best = i; } });
-    this.setState({ focus: { i: best, x: cx, y: cy + py, view: this.viewKey() } });
+  initialState(vk) {
+    return Object.assign(JUS.baseState(vk), { lamp: { seq: 0, mode: 'rest', rect: null, fy: null, from: null, dur: 1, delay: 0, ease: 'linear' }, skinSeq: 0, focusKey: null, focusField: null, lampField: null, flamp: null });
   }
-  /* ---------- sheets ---------- */
-  openSheet(surface, extra) { var sh = Object.assign({ surface: surface, id: null, st: null, phase: 'in', key: ++this._seq }, extra || {}); this.setState(function (s) { return { stack: s.stack.filter(function (x) { return x.phase !== 'out'; }).concat([sh]) }; }); return sh; }
-  closeTop() {
-    var top = this.topSheet(); if (!top) return;
-    this.setState(function (s) { return { stack: s.stack.map(function (x) { return x.key === top.key ? Object.assign({}, x, { phase: 'out' }) : x; }), focus: null }; });
-    this.after(320, () => this.setState(function (s) { return { stack: s.stack.filter(function (x) { return x.key !== top.key; }) }; }));
-  }
-  goSurface(ev, surface, extra) { var el = ev && ev.currentTarget; this.motion('light-follow', () => { if (el) this.lightTo(el); this.after(120, () => this.openSheet(surface, extra)); }); }
-  say(msg) { this.setState({ toast: msg }); this.holdKey('toast', 2600, () => this.setState({ toast: '' })); }
-  /* ---------- profile edit ---------- */
-  setEdit(patch) { this.setState(function (s) { return { edit: Object.assign({}, s.edit, patch) }; }); }
-  openEdit(field) { var y = this.state.data.you; this.setState({ edit: { draft: { name: y.name, wx: y.wx, email: y.email }, errors: {}, status: 'idle', fail: '', code: '', codeErr: '' } }); this.openSheet('profile-edit'); if (field) this.after(340, () => this.focusField(field)); }
-  startEdit(ev, field) { var el = ev && ev.currentTarget; this.motion('sheet-rise', () => { if (el) this.lightTo(el); this.after(120, () => this.openEdit(field)); }); }
-  focusField(key) { var root = this.rootRef.current; if (!root) return; var all = root.querySelectorAll('.s09-sheet[data-surface="profile-edit"] [data-field="' + key + '"]'); var el = all[all.length - 1]; if (el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } } }
-  isDirty() { var e = this.state.edit, y = this.state.data.you; return !!e && (e.draft.name !== y.name || e.draft.wx !== y.wx || e.draft.email !== y.email); }
-  askUnsaved() { this.setState({ confirm: { kind: 'unsaved' } }); }
-  editBack() { if (!this.state.edit) { this.closeTop(); return; } if (this.isDirty()) this.askUnsaved(); else this.closeEdit(); }
-  closeEdit() { this.setState({ confirm: null }); this.cancelKey('resend'); if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.closeTop(); this.after(330, () => this.setState({ edit: null })); }
-  trySave() {
-    var e = this.state.edit; if (!e || e.status === 'saving') return;
-    var p = { name: e.draft.name, wx: e.draft.wx, email: e.draft.email };
-    var pre = JUS.engine.saveProfile(this.state.data, p);           /* validation only: invalid never writes */
-    if (pre.effect.type === 'invalid') { var errs = pre.effect.errors; this.setEdit({ errors: errs, status: 'idle', fail: '' }); var k = ['name', 'wx', 'email'].filter(function (x) { return errs[x]; })[0]; this.after(30, () => { var root = this.rootRef.current; var el = root && root.querySelector('.s09-sheet[data-surface="profile-edit"] [data-field="' + k + '"]'); if (el) this.lightTo(el); }); return; }
-    this.setEdit({ status: 'saving', errors: {}, fail: '' });
-    this.after(300, () => {                                           /* 处理中 ≥ 300ms 可见 */
-      var res = this.act('saveProfile', p);
-      if (res.effect.type === 'error') { this.setEdit({ status: 'failed', fail: res.effect.message }); return; }
-      if (res.effect.type === 'invalid') { this.setEdit({ status: 'idle', errors: res.effect.errors }); return; }
-      this.cancelKey('resend');
-      this.setState({ saved: { fields: res.effect.changed, key: Date.now() } }); this.holdKey('saved', 2600, () => this.setState({ saved: null }));
-      this.closeTop(); this.after(330, () => this.setState({ edit: null }));
-    });
-  }
-  requestCode() { var e = this.state.edit; if (!e) return; var res = this.act('requestEmailCode', { email: e.draft.email }); if (res.effect.type === 'invalid') { this.setEdit({ errors: Object.assign({}, e.errors, res.effect.errors) }); return; } if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.setEdit({ code: '', codeErr: '' }); this.startTick(); }
-  startTick() { var tick = () => { this.setState(function (s) { return { tick: s.tick + 1 }; }); var pnd = JUS.derive.emailPending(this.state.data); if (pnd && !pnd.verified && this.state.edit) this.holdKey('resend', 1000, tick); }; this.holdKey('resend', 1000, tick); }
-  verifyCode() { var e = this.state.edit; if (!e) return; var res = this.act('verifyEmailCode', { code: e.code }); if (res.effect.type === 'invalid') { this.setEdit({ codeErr: res.effect.errors.code }); return; } if (res.effect.type === 'error') { this.say(res.effect.message); return; } this.cancelKey('resend'); this.setEdit({ codeErr: '', errors: Object.assign({}, e.errors, { email: '' }) }); }
-  /* ---------- review index → surfaces ---------- */
-  applyJump(e) {
-    var o = e.open || {}, sf = o.surface; this.setScrollVar(0); var root = this.rootRef.current; var sc = root && root.querySelector('.s09-scroll'); if (sc) sc.scrollTop = 0;
-    if (sf === 'home') return;
-    if (sf === 'profile') { this.openSheet('profile'); if (o.state === 'saved') { this.setState({ saved: { fields: ['name', 'wx'], key: Date.now() } }); this.holdKey('saved', 2600, () => this.setState({ saved: null })); } return; }
-    if (sf === 'profile-edit') {
-      this.openSheet('profile'); this.openEdit(null); var st = o.state, y = this.state.data.you;
-      if (st === 'invalid') this.after(60, () => { this.setEdit({ draft: { name: '', wx: 'ahe ju', email: y.email } }); this.after(40, () => this.trySave()); });
-      else if (st === 'code' || st === 'code-expired') this.after(60, () => { this.setEdit({ draft: { name: y.name, wx: y.wx, email: 'ahe.new@stern.nyu.edu' } }); this.after(40, () => { this.requestCode(); if (st === 'code-expired') this.after(40, () => this.expireCode()); }); });
-      else if (st === 'fail') this.after(60, () => { this.armFail(); this.setEdit({ draft: { name: '阿禾二', wx: y.wx, email: y.email } }); this.after(60, () => this.trySave()); });
-      else if (st === 'unsaved') this.after(60, () => { this.setEdit({ draft: { name: '阿禾二', wx: y.wx, email: y.email } }); this.after(40, () => this.askUnsaved()); });
-      else if (st === 'kb') { if (!this.state.review.kb) this.toggleKb(); this.after(380, () => this.focusField('name')); }
-      return;
+  /* ---------- lamps ---------- */
+  lampTargets(mode, L, W, H, skin) {
+    var R = S09.REST[skin] || S09.REST.cotton, top = S09.TOP;
+    var cl = function (v, a, b) { return Math.max(a, Math.min(b, v)); };
+    if (mode === 'focus' && L.rect) {
+      var r = L.rect, cx = cl(r.x + Math.min(r.w, 260) / 2, 30, W - 30), cy = r.y + Math.min(r.h, 120) / 2;
+      return [{ x: cx, y: cy, s: 1, o: 1 }, { x: cl(cx + W * .46, W * .55, W * 1.06), y: cy + 84, s: .94, o: 1 }, { x: cl(cx - W * .42, -W * .08, W * .45), y: cy + 150, s: .94, o: 1 }];
     }
-    this.openSheet(sf, { id: o.id, st: o.state });
+    if (mode === 'gather') return [{ x: W * .46, y: top + 48, s: 1, o: 1 }, { x: W * .0, y: top + 230, s: .96, o: 1 }, { x: W * 1.0, y: top + 400, s: .96, o: 1 }];
+    if (mode === 'field' && L.fy != null) return [{ x: W * .46, y: top + 30, s: .9, o: .42 }, { x: -W * .02, y: L.fy, s: .96, o: .8 }, { x: W * 1.02, y: L.fy + 30, s: .96, o: .8 }];
+    return R.map(function (l) { return { x: l.x * W, y: l.y <= 1.5 ? l.y * H : l.y, s: 1, o: 1 }; });
   }
-  /* ---------- render ---------- */
-  renderVals() {
-    var self = this, s = this.state, d = s.data; var panel = this.panelVals(); panel.show = this.props.panel !== false;
-    var sum = JUS.derive.summary(d), you = d.you; var skin = s.previewSkin || d.appearance.skin;
-    var liveTop = this.topSheet();
-    var lights = this.lightsNow().map(function (l, i) { return { i: i, cls: l.bright ? ' bright' : '', style: 'width:' + l.d + 'px;height:' + l.d + 'px;transform:translate(' + (l.x - l.d / 2).toFixed(1) + 'px,' + (l.y - l.d / 2).toFixed(1) + 'px)' }; });
-    var domain = you.email ? (you.emailDomain || you.email.split('@')[1] || '') : '';
-    var recPending = d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; })[0];
-    var repNeed = d.reports.filter(function (r) { return r.status === 'needs_info'; })[0];
-    var row = function (label, value, surface, extra, vcls) { return { label: label, value: value, rid: extra && extra.id || '', vcls: vcls || '', go: function (ev) { self.goSurface(ev, surface, extra); } }; };
-    var groups = [];
-    var att = [];
-    if (recPending) att.push(row('未出席记录 · 待核实', sum.pendingRecords + ' 条', 'record-detail', { id: recPending.id }));
-    if (repNeed) att.push(row('举报需补充', sum.needMore + ' 条', 'report-detail', { id: repNeed.id }));
-    if (att.length) groups.push({ name: '需要处理', rows: att });
-    groups.push({ name: '收藏与城市', rows: [row('收藏的局', sum.favLabel, 'favorites', null, sum.favCount ? '' : ' off'), row('默认浏览城市', sum.cityLabel, 'city')] });
-    groups.push({ name: '通知与外观', rows: [row('通知与提醒', sum.notifyLabel, 'notify'), row('外观与动态', sum.appearanceLabel, 'appearance')] });
-    groups.push({ name: '记录与举报', rows: [row('我的记录', sum.recordLabel, 'records', null, sum.recordCount ? '' : ' off'), row('我的举报', sum.reportLabel, 'reports', null, sum.reportCount ? '' : ' off')] });
-    groups.push({ name: '帮助与账户', rows: [row('帮助与反馈', sum.feedbackCount ? sum.feedbackCount + ' 条反馈' : '', 'help'), row('隐私与资料可见性', '', 'privacy'), row('账户与本机数据', d.session.kind === 'demo' ? '本地演示' : '演示已结束', 'account'), row('关于与规则', JUS.RULES.length + ' 条规则', 'about')] });
-    var sheets = []; var depth = 0;
-    s.stack.forEach(function (sh) {
-      var isTop = liveTop && sh.key === liveTop.key; var dIdx = sh.phase === 'out' ? depth : depth++;
-      var o = { key: sh.key, surface: sh.surface, scrollCls: sh.surface === 'profile' ? ' tight' : '', hdCls: sh.surface === 'profile' ? ' s09-hd-fixed' : '', cls: (sh.phase === 'out' ? ' out' : ' in') + (!isTop && sh.phase !== 'out' ? ' under' : '') + ' s09-d' + Math.min(dIdx, 3), isProfile: sh.surface === 'profile', isEdit: sh.surface === 'profile-edit', isGeneric: false, right: '', rightAct: '', rightGo: null, back: function () { self.closeTop(); } };
-      if (o.isProfile) {
-        var sv = s.saved || { fields: [] };
-        o.title = '资料'; o.meta = you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写';
-        o.p = { name: you.name, wx: you.wx || '未填写', email: you.email || '未填写', verify: you.email ? sum.emailLabel : '未填写', verifyCls: you.email && you.emailVerified ? '' : ' off', savedName: sv.fields.indexOf('name') >= 0, savedWx: sv.fields.indexOf('wx') >= 0, savedEmail: sv.fields.indexOf('email') >= 0, note: JUS.COPY.snapshotNote,
-          editName: function (ev) { self.startEdit(ev, 'name'); }, editWx: function (ev) { self.startEdit(ev, 'wx'); }, editEmail: function (ev) { self.startEdit(ev, 'email'); }, edit: function (ev) { self.startEdit(ev, null); } };
-      } else if (o.isEdit) {
-        var e = s.edit || { draft: { name: you.name, wx: you.wx, email: you.email }, errors: {}, status: 'idle', fail: '', code: '', codeErr: '' };
-        var emailDraft = (e.draft.email || '').trim(); var emailChanged = emailDraft !== you.email; var pnd = JUS.derive.emailPending(d);
-        var sent = !!(pnd && pnd.email === emailDraft); var verified = !!(sent && pnd.verified);
-        o.title = '编辑资料'; o.meta = you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写'; o.right = '取消'; o.rightAct = 'cancel'; o.rightGo = function () { self.editBack(); }; o.back = function () { self.editBack(); };
-        var field = function (key, label, ph, type, note) { return { key: key, id: 's09-f-' + key, label: label, ph: ph, type: type, value: e.draft[key] || '', err: e.errors[key] || '', cls: e.errors[key] ? ' err' : '', note: note || '',
-          onInput: function (ev) { var v = ev.currentTarget.value; self.setState(function (st) { var ed = st.edit; if (!ed) return null; var er = Object.assign({}, ed.errors); er[key] = ''; return { edit: Object.assign({}, ed, { draft: Object.assign({}, ed.draft, (function () { var oo = {}; oo[key] = v; return oo; })()), errors: er }) }; }); },
-          onFocus: function (ev) { self.lightTo(ev.currentTarget); } }; };
-        o.e = { fields: [field('name', '称呼', '称呼', 'text'), field('wx', '微信号', '微信号', 'text'), field('email', '邮箱', '工作或学校邮箱', 'email', emailChanged ? JUS.COPY.emailHint : '')],
-          verify: { on: emailChanged && !!emailDraft && !JUS.validate.email(emailDraft), email: emailDraft, verified: verified, idle: !sent, entering: sent && !verified, code: e.code, codeErr: e.codeErr || (sent && !verified && pnd.expired ? JUS.COPY.profileErrors.codeExpired : ''), codeCls: e.codeErr ? ' err' : '', resendOff: !!(pnd && pnd.resendLeftS > 0), resendLabel: pnd && pnd.resendLeftS > 0 ? JUS.COPY.profileErrors.codeResend + '（' + pnd.resendLeftS + 's）' : JUS.COPY.profileErrors.codeResend, demoLine: '本机演示 · 验证码不发邮件',
-            request: function () { self.requestCode(); }, verify: function () { self.verifyCode(); }, onCode: function (ev) { self.setEdit({ code: ev.currentTarget.value, codeErr: '' }); }, onCodeFocus: function (ev) { self.lightTo(ev.currentTarget); } },
-          note: JUS.COPY.snapshotNote, failMsg: e.status === 'failed' ? e.fail : '', busy: e.status === 'saving', ctaAct: e.status === 'failed' ? 'retry' : 'save', ctaLabel: e.status === 'saving' ? '保存中…' : e.status === 'failed' ? '重试' : '保存', save: function () { self.trySave(); } };
-      } else { o.isGeneric = true; o.title = S09_TITLES[sh.surface] || sh.surface; o.meta = sh.id ? String(sh.id) : ''; o.g = { line: '这一页在阶段 2 构建。' }; }
-      sheets.push(o);
+  lampNow() {
+    var root = this.rootRef.current; if (!root) return null;
+    var els = root.querySelectorAll('.s09-lamp'); if (els.length !== 3) return null;
+    return Array.prototype.map.call(els, function (el) {
+      var cs = getComputedStyle(el), t = cs.transform, x = 0, y = 0, s = 1;
+      var m3 = /matrix3d\(([^)]+)\)/.exec(t), m2 = /matrix\(([^)]+)\)/.exec(t);
+      if (m3) { var a = m3[1].split(',').map(Number); s = a[0]; x = a[12]; y = a[13]; } else if (m2) { var b = m2[1].split(',').map(Number); s = b[0]; x = b[4]; y = b[5]; }
+      return { x: x, y: y, s: s, o: +cs.opacity };
     });
-    var cf = s.confirm ? { on: true, title: JUS.COPY.unsaved.title, body: JUS.COPY.unsaved.body, keepLabel: JUS.COPY.unsaved.keep, discardLabel: JUS.COPY.unsaved.discard, keep: function () { self.setState({ confirm: null }); }, discard: function () { self.closeEdit(); } } : { on: false };
-    return {
-      panel: panel, rootRef: this.rootRef, wrapRef: this.wrapRef, skin: skin, rmUser: d.appearance.reduceMotion ? ' rm-user' : '',
-      lights: lights, lightsCls: s.skinFx ? ' fx' : '', homeCls: liveTop ? ' under' : '',
-      sum: sum, idWx: you.wx ? '微信 ' + you.wx : '微信号未填写', idMail: you.email ? domain + ' · ' + sum.emailLabel : '邮箱未填写',
-      homeMeta: sum.attention ? sum.attention + ' 项需要处理 · ' + sum.cityLabel : sum.cityLabel + ' · ' + JUS.COPY.demoOnly,
-      groups: groups, sheets: sheets, confirm: cf, toast: s.toast,
-      goProfile: function (ev) { self.goSurface(ev, 'profile'); },
-      onHomeScroll: function (ev) { self.setScrollVar(ev.currentTarget.scrollTop); },
-      onSheetScroll: function (ev) { var el = ev.currentTarget, sh = el.parentElement; if (sh) sh.style.setProperty('--s09-ssy', String(el.scrollTop)); },
-      nav: { find: function () { self.openSheet('seam-feed'); }, create: function () { self.say('开局不在本演示范围'); }, mine: function () { self.openSheet('seam-mine'); } }
-    };
+  }
+  lampTo(mode, o) {
+    o = o || {}; var instant = !o.dur || o.dur <= 1; var from = instant ? null : this.lampNow();
+    this.setState(function (st) { var p = st.lamp || {}; return { lamp: { seq: (p.seq || 0) + 1, mode: mode, rect: o.rect !== undefined ? o.rect : p.rect, fy: o.fy !== undefined ? o.fy : p.fy, from: from, dur: instant ? 1 : o.dur, delay: o.delay || 0, ease: o.ease || S09.EASE } }; });
+  }
+  /* signature, part 1: the lamps find the tapped statement, then gather behind the ink slab as it rises */
+  rise(surface, key, params) {
+    var root = this.rootRef.current; var el = root ? root.querySelector('[data-origin="' + key + '"]') : null;
+    var rect = el ? JU.fx.rectIn(el, root) : null; var self = this;
+    this.cancelKey('lamp');
+    this.setState({ focusKey: key, focusField: null });
+    this.lampTo('focus', { rect: rect, dur: 480 });
+    this.go(surface, params || {}, el ? { currentTarget: el } : null);
+    this.afterKey('lamp', 170, function () { self.lampTo('gather', { dur: 560 }); });
+  }
+  /* signature, last part: the slab sinks, the light lands on the statement we came from, holds, then relaxes */
+  lampReturn(entry) {
+    var self = this; this.cancelKey('lamp');
+    this.setState({ focusKey: entry && entry.from ? entry.key : null, focusField: null });
+    if (entry && entry.from) { this.lampTo('focus', { rect: entry.from, dur: 420 }); this.afterKey('lamp', 760, function () { self.setState({ focusKey: null }); self.lampTo('rest', { dur: 620 }); }); }
+    else this.lampTo('rest', { dur: 520 });
+  }
+  /* the slab's reading pool sits behind the page's lamp anchor (or the focused field) */
+  placeFlamp(el) {
+    var root = this.rootRef.current; if (!root) return null; var slab = root.querySelector('.s09-slab'); if (!slab) return null;
+    var st = this.state, top = st.nav.stack[st.nav.stack.length - 1].s;
+    if (!el) { var pg = slab.querySelector('[data-surface="' + top + '"]'); if (!pg) return null; var fk = st.focusField || st.lampField; el = (top === 'profile-edit' && fk && pg.querySelector('[data-fw="' + fk + '"]')) || pg.querySelector('[data-lamp]'); }
+    if (!el) return null;
+    var layer = el.closest('.s09-pg') || slab; var a = el.getBoundingClientRect(), b = layer.getBoundingClientRect(); var k = layer.offsetWidth ? b.width / layer.offsetWidth : 1;
+    var x = Math.round((a.left - b.left) / k + Math.min(a.width / k, 240) * .5), y = Math.round((a.top - b.top) / k + Math.min(a.height / k, 140) * .5);
+    var f = st.flamp; if (!f || Math.abs(f.x - x) > 1 || Math.abs(f.y - y) > 1) this.setState({ flamp: { x: x, y: y } });
+    return y;
+  }
+  alignFieldLamps(instant) {
+    var y = this.placeFlamp(); if (y == null) return;
+    this.lampTo('field', { fy: S09.TOP + y, dur: instant ? 1 : 520 });
+  }
+  fieldFocus(ev) {
+    var w = ev && ev.currentTarget && ev.currentTarget.closest ? ev.currentTarget.closest('[data-fw]') : null; if (!w) return;
+    var key = w.getAttribute('data-fw'); if (this.state.focusField !== key || this.state.lampField !== key) this.setState({ focusField: key, lampField: key });
+    var y = this.placeFlamp(w); if (y != null) this.lampTo('field', { fy: S09.TOP + y, dur: 520 });
+  }
+  toEdit(field) {
+    var self = this; this.setState({ focusField: null, lampField: field || null });
+    this.go('profile-edit', {}, null);
+    if (field) this.afterKey('focus', 400, function () { var r = self.rootRef.current; var el = r && r.querySelector('[data-field="' + field + '"]'); if (el) { try { el.focus({ preventScroll: true }); } catch (e) { } } });
+  }
+  onProfileSaved(e) {
+    var self = this; this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
+    this.afterKey('pf-back', 240, function () { self.back(true); });
+    this.holdKey('saved-mark', 9000, function () { self.setState(function (s) { return { ui: Object.assign({}, s.ui, { lastSaved: null }) }; }); });
+  }
+  applyJump(e) {
+    this.ctlJump(e); this.cancelKey('lamp');
+    var o = e.open || {}; var deep = !!o.surface && o.surface !== 'home' && !/^seam-/.test(o.surface); var self = this;
+    this.setState(function (s) { return { focusKey: null, focusField: o.state === 'kb' ? 'name' : null, lampField: null, flamp: null, lamp: { seq: (s.lamp.seq || 0) + 1, mode: deep ? 'gather' : 'rest', rect: null, fy: null, from: null, dur: 1, delay: 0, ease: 'linear' } }; });
+    this.afterKey('flamp', 60, function () { if (o.surface === 'profile-edit') self.alignFieldLamps(true); else self.placeFlamp(); });
+  }
+  beforeReplay(name) {
+    this.cancelKey('lamp'); this.cancelKey('pf-back');
+    if (name === 'edit') { this.ctlJump({ open: { surface: 'profile' } }); this.setState({ focusField: null, lampField: null, focusKey: null }); this.lampTo('gather', { dur: 1 }); return; }
+    this.home(); this.setState({ focusKey: null, focusField: null, lampField: null, flamp: null }); this.lampTo('rest', { dur: 1 });
+  }
+  componentDidUpdate(pp, ps) {
+    var root = this.rootRef.current; if (root && (root.scrollTop || root.scrollLeft)) { root.scrollTop = 0; root.scrollLeft = 0; }
+    var s = this.state; if (!ps || !ps.nav) return;
+    if (ps.nav !== s.nav) this.navMoved(ps.nav, s.nav);
+    var skA = (ps.ui && ps.ui.skinPreview) || ps.data.appearance.skin, skB = (s.ui && s.ui.skinPreview) || s.data.appearance.skin;
+    if (skA !== skB) { this.setState(function (x) { return { skinSeq: (x.skinSeq || 0) + 1 }; }); this.lampTo(s.lamp.mode, { dur: 650 }); }
+    if (ps.review.pw !== s.review.pw || ps.review.ph !== s.review.ph) { this.lampTo(s.lamp.mode, { dur: 1 }); this.afterKey('flamp', 40, this.placeFlamp.bind(this, null)); }
+  }
+  navMoved(A, B) {
+    var self = this, da = A.stack.length, db = B.stack.length, topA = A.stack[da - 1], topB = B.stack[db - 1];
+    /* a forward push into the slab that did not come through rise() (controller-driven) */
+    if (da === 1 && db === 2 && B.phase === 'enter' && B.dir === 'fwd' && this.state.lamp.mode === 'rest') {
+      this.cancelKey('lamp'); this.setState({ focusKey: topB.key || null }); this.lampTo('focus', { rect: topB.from, dur: 480 }); this.afterKey('lamp', 170, function () { self.lampTo('gather', { dur: 560 }); });
+    }
+    if (B.phase === 'exit' && A.phase !== 'exit' && db === 2) this.lampReturn(topB);
+    if (B.dir === 'root' && B.phase === 'enter' && A.phase !== 'enter') { this.cancelKey('lamp'); this.setState({ focusKey: null }); this.lampTo('rest', { dur: 520 }); }
+    if (topA.s === 'profile-edit' && topB.s !== 'profile-edit' && db >= 2 && B.phase !== 'exit') { this.setState({ focusField: null, lampField: null }); this.lampTo('gather', { dur: 480 }); }
+    if (db >= 2 && (topA.id !== topB.id || (B.phase === 'idle' && A.phase !== 'idle'))) this.afterKey('flamp', 30, function () { if (self.state.nav.stack[self.state.nav.stack.length - 1].s === 'profile-edit' && self.state.lamp.mode !== 'field' && self.state.nav.phase !== 'exit') self.alignFieldLamps(false); else self.placeFlamp(); });
+  }
+  /* ---------- placeholder surfaces (stage 2 composes each of them) ---------- */
+  genPage(sf, c) {
+    var t = c.nav.title[sf] || '', g = { s: sf, title: t, meta: '', label: t, value: '', sub: '', back: true, ju: false };
+    var sum = c.sum;
+    if (sf === 'favorites') { g.value = sum.favLabel; g.sub = c.fav.rows.map(function (r) { return r.title; }).join(' · '); }
+    else if (sf === 'city') { g.value = sum.cityLabel; g.sub = JUS.COPY.cityScope; }
+    else if (sf === 'notify') { g.value = c.notify.onCount + ' 类提醒'; g.sub = c.notify.deliverLabel; }
+    else if (sf === 'appearance') { g.value = c.skin.curName; g.sub = c.skin.rmLine; }
+    else if (sf === 'records') { g.value = c.recs.count + ' 条事实'; g.sub = c.recs.help; }
+    else if (sf === 'reports') { g.value = c.reps.count + ' 条举报'; g.sub = c.reps.note; }
+    else if (sf === 'help') { g.value = JUS.RULES.length + ' 条约定'; g.sub = JUS.RULE_GROUPS.map(function (x) { return x.name + '：' + x.line; }).join(' '); }
+    else if (sf === 'privacy') { g.value = c.privacy.facts.length + ' 种情形'; g.sub = c.privacy.lead; }
+    else if (sf === 'account') { g.value = c.acct.demo ? '本机演示' : '演示已结束'; g.sub = c.acct.storageNote; }
+    else if (sf === 'about') { g.value = c.about.rulesVersion; g.sub = c.about.version; }
+    else if (sf === 'favorite-detail' && c.favDetail) { g.value = c.favDetail.title; g.sub = c.favDetail.when.zh + ' · ' + c.favDetail.place.full; }
+    else if (sf === 'record-detail' && c.rec) { g.label = c.rec.label; g.value = c.rec.title; g.sub = c.rec.statusLabel; }
+    else if (sf === 'report-detail' && c.rep) { g.label = c.rep.statusLabel; g.value = c.rep.title; g.sub = c.rep.text; }
+    else if (sf === 'seam-feed') { g.title = '找局'; g.label = '默认浏览城市'; g.value = c.feed.city.name; g.sub = c.feed.count + ' 个局可报名 · 收藏 ' + c.feed.favCount; g.back = false; g.ju = true; }
+    else if (sf === 'seam-mine') { g.title = '我的局'; g.label = '进行中'; g.value = c.mine.current.length + ' 个局'; g.sub = c.mine.current.map(function (r) { return r.title; }).slice(0, 3).join(' · '); g.back = false; g.ju = true; }
+    else if (c.form && c.form.on && c.nav.cur === sf) { g.label = c.form.label; g.value = c.form.title; }
+    return g;
+  }
+  renderVals() {
+    var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var c = this.ctlVals(); var self = this, s = this.state, d = s.data, nav = c.nav;
+    var skin = S09.REST[c.skinShown] ? c.skinShown : 'cotton';
+    var W = s.review.pw || 390, H = s.review.ph || 844, R = S09.REST[skin], T = S09.TINT[skin];
+    /* lamps: keyframes from the position they had when focus changed to the new target (scrubbable, pausable) */
+    var L = s.lamp || {}, to = this.lampTargets(L.mode || 'rest', L, W, H, skin), from = L.from || to;
+    var anim = (L.seq || 0) % 2 ? 's09-lamp-a' : 's09-lamp-b', dur = L.dur || 1;
+    var n1 = function (v) { return Math.round(v * 10) / 10; };
+    var lamps = R.map(function (r, i) { var t = to[i], f = from[i] || t; return { i: i, style: '--d:' + r.d + 'px;--a:' + r.a + ';--x0:' + n1(f.x) + 'px;--y0:' + n1(f.y) + 'px;--s0:' + n1(f.s || 1) + ';--o0:' + (f.o == null ? 1 : f.o) + ';--x1:' + n1(t.x) + 'px;--y1:' + n1(t.y) + 'px;--s1:' + (t.s || 1) + ';--o1:' + (t.o == null ? 1 : t.o) + ';--dur:' + dur + 'ms;animation:' + anim + ' calc(' + dur + 'ms * var(--k)) ' + (L.ease || 'linear') + ' calc(' + (L.delay || 0) + 'ms * var(--k)) both' }; });
+    var tint = {}; Object.keys(T).forEach(function (k) { tint[k] = 'var(--t' + T[k] + ')'; });
+    /* home */
+    var sum = c.sum, you = c.you, fk = s.focusKey;
+    var fc = {}; ['profile', 'att', 'favorites', 'city', 'notify', 'appearance', 'records', 'reports', 'help', 'privacy', 'account', 'about'].forEach(function (k) { fc[k] = fk === k ? ' is-focus' : ''; });
+    if (fk && /^re[cp]-/.test(fk)) fc.att = ' is-focus';
+    var permShort = String(sum.notifyLabel || '').split(' · ').slice(1).join(' · ');
+    var openReps = c.reps.rows.filter(function (r) { return r.open; }).length;
+    var home = { cls: fk ? ' has-focus' : '', fc: fc,
+      wx: you.wx ? you.wx : '微信号未填写', mail: you.email ? you.email : '邮箱未填写', mailState: you.email ? you.emailLabel : '',
+      attLine: c.attCount + ' 件事等你回应',
+      fav: { value: sum.favLabel, titles: c.fav.rows.slice(0, 3).map(function (r) { return r.title; }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.body : '') },
+      city: { value: sum.cityLabel, sub: c.feed.count ? c.feed.count + ' 个局可报名' : '暂时没有可报名的局' },
+      notify: { value: c.notify.onCount + ' 类提醒', sub: permShort },
+      appearance: { value: c.skin.curName, sub: c.skin.rmOn ? '减少动态' : '正常动态' },
+      records: { value: c.recs.count + ' 条事实', sub: c.recs.count ? (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '') : JUS.COPY.creditEmpty },
+      reports: { value: c.reps.count + ' 条举报', sub: c.reps.count ? (sum.needMore ? sum.needMore + ' 条需补充' : openReps ? openReps + ' 条处理中' : '均已处理') : JUS.COPY.reportsEmpty },
+      help: JUS.RULES.length + ' 条约定', privacy: c.privacy.facts.length + ' 种情形', account: c.acct.demo ? '本机演示' : '演示已结束', about: String(c.about.version).split(' · ')[0], aboutSub: c.about.rulesVersion,
+      foot: JUS.COPY.demoOnly + ' · ' + c.acct.device };
+    var open = {};
+    [['profile', 'profile'], ['favorites', 'favorites'], ['city', 'city'], ['notify', 'notify'], ['appearance', 'appearance'], ['records', 'records'], ['reports', 'reports'], ['help', 'help'], ['privacy', 'privacy'], ['account', 'account'], ['about', 'about']].forEach(function (p) {
+      open[p[0]] = function () { self.motion('rise', function () { this.rise(p[1], p[0]); }); };
+    });
+    var att = c.att.map(function (a) { var id = a.key.replace(/^re[cp]-/, ''), sf = a.kind === 'record' ? 'record-detail' : 'report-detail';
+      return { key: a.key, rid: id, title: a.title, label: a.label, go: function () { self.motion('rise', function () { this.rise(sf, a.key, { id: id }); }); } }; });
+    /* slab */
+    var seamTop = /^seam-/.test(nav.cur), depth = nav.depth, slabOn = !seamTop && depth >= 2, slabCls = '';
+    if (slabOn) {
+      if (depth === 2 && nav.dir === 'fwd' && nav.phase === 'enter') slabCls = ' sl-enter';
+      else if (depth === 2 && nav.dir === 'fwd' && nav.phase === 'in') slabCls = ' sl-in';
+      else if (depth === 2 && nav.phase === 'exit') slabCls = ' sl-exit';
+      else slabCls = ' sl-up';
+      if (depth >= 3) slabCls += ' deep';
+    }
+    var fl = s.flamp; var flamp = fl ? '--fx:' + fl.x + 'px;--fy:' + fl.y + 'px' : '--fx:' + Math.round((W - 20) * .34) + 'px;--fy:196px';
+    /* profile */
+    var kind = d.you.emailKind === 'school' ? '学校邮箱' : d.you.emailKind === 'work' ? '工作邮箱' : '';
+    var pf = { email: you.email || '未填写', emailSub: you.email ? [you.emailLabel, you.domain, kind].filter(Boolean).join(' · ') : '',
+      meta: JUS.COPY.snapshotNote, policy: JUS.COPY.wxPolicy, copyFail: JUS.COPY.copyFailInline + '：' + (you.copyFail || ''),
+      edit: function () { self.motion('edit', function () { this.toEdit(null); }); },
+      editName: function () { self.motion('edit', function () { this.toEdit('name'); }); },
+      editWx: function () { self.motion('edit', function () { this.toEdit('wx'); }); },
+      editEmail: function () { self.motion('edit', function () { this.toEdit('email'); }); },
+      goPrivacy: function (ev) { self.go('privacy', {}, ev); } };
+    /* edit: keep the last form while the layer leaves (after discard the controller clears pf) */
+    if (c.pf.on) this._pfLast = c.pf; var P = c.pf.on ? c.pf : (this._pfLast || c.pf); var err = P.err || {};
+    var ff = function (k) { return (err[k] ? ' is-err' : '') + (s.focusField === k ? ' is-focus' : ''); };
+    var ed = { name: ff('name'), wx: ff('wx'), email: ff('email'), code: ff('code'), codeOpen: !!(P.codeSent || P.codeExpired), resendOff: !!(P.codeSent && P.resendLeft > 0),
+      expiry: P.codeSent && P.expiresIn > 0 ? Math.floor(P.expiresIn / 60) + ':' + String(P.expiresIn % 60).padStart(2, '0') + ' 后过期' : (P.codeExpired ? '已过期' : ''), cta: P.saving ? ' is-busy' : '', formCls: s.focusField ? ' has-focus' : '' };
+    /* every other surface that is mounted right now */
+    var gen = [], rooms = [];
+    JUS.SURFACES.forEach(function (sf) { if (!nav.on[sf] || S09.OWN[sf]) return; var g = self.genPage(sf, c); g.cls = nav.cls[sf]; (/^seam-/.test(sf) ? rooms : gen).push(g); });
+    var v = { skin: skin, rootCls: (d.appearance.reduceMotion ? ' rm-user' : '') + (slabOn && !(depth === 2 && nav.phase === 'exit') ? ' slab-up' : ''), lamps: lamps, lampsCls: s.skinSeq ? (s.skinSeq % 2 ? ' fx-a' : ' fx-b') : '', tint: tint,
+      home: home, open: open, att: att, slab: { on: slabOn, cls: slabCls, flamp: flamp }, pf: pf, pfv: P, err: err, ed: ed, gen: gen, rooms: rooms,
+      onFocus: function (ev) { self.fieldFocus(ev); }, onBlur: function () { self.setState({ focusField: null }); },
+      sheetDismiss: function () { if (c.sheet.unsaved) c.sheet.keep(); else c.sheet.cancel(); } };
+    return { panel: panel, rootRef: this.rootRef, c: c, v: v };
   }
 }
 JUS.mixin(Component);

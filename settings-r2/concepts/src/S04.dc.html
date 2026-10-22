@@ -2,424 +2,662 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>S04 海报块</title>
+<title>S04 海报拼块</title>
 <script src="./support.js"></script>
 </head>
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,500..800&family=Noto+Sans+SC:wght@400;500;700;900&display=swap">
 <style>
 body{margin:0}
 /* @panel-css */
-/* ---------- S04 海报块：每个分组是一整幅通栏平涂色块；块既是入口也是页面。一个光源（无）、一种表面（平涂）、一种边（20px 圆角）。 ---------- */
-.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;background:var(--ground);--k:1;--ink:#14161F;--body:#252b3a;--sec:#535b70;--blue:#4553BE;--err:#DA3A52;--ok:#0E9B76;line-height:1.4;-webkit-font-smoothing:antialiased;font-synthesis:none;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.app *{box-sizing:border-box}
-.app button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:inherit}
-.app input{font:inherit;color:inherit}
-/* ---- scroll container + collapsing header (30 → 18 continuous, driven by --st / --sp set on scroll) ---- */
-.s04-scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;--st:0px;--sp:0;--tx:0px;scrollbar-width:none;overscroll-behavior:contain}
-.s04-scroll::-webkit-scrollbar{display:none}
-.s04-tools{position:sticky;top:0;z-index:3;height:48px;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--pbg);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.s04-ju{font-weight:700;font-size:18px;letter-spacing:.04em}
-.s04-tb{font-size:15px;font-weight:500;height:36px;display:inline-flex;align-items:center;gap:4px;padding:0 4px;border-radius:10px}
-.s04-tb.r{padding:0 12px;background:rgba(20,22,31,.08)}
-.s04-page.white .s04-tb.r{background:rgba(255,255,255,.16)}
-.s04-ctitle{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:18px;font-weight:500;white-space:nowrap;max-width:54%;overflow:hidden;text-overflow:ellipsis;opacity:clamp(0,calc((var(--sp) - .72) / .28),1);pointer-events:none}
-.s04-page .s04-ctitle{font-weight:700}
-.s04-h1{position:relative;z-index:4;margin:4px 20px 0;font-size:30px;font-weight:500;line-height:1.25;transform-origin:0 0;transform:translate(calc(var(--sp) * var(--tx)),calc(var(--st) - var(--sp) * 39.25px)) scale(calc(1 - .4 * var(--sp)));opacity:clamp(0,calc(1 - (var(--sp) - .72) / .28),1);overflow-wrap:anywhere;pointer-events:none}
-.s04-page .s04-h1{font-weight:700;letter-spacing:-.005em}
-.s04-meta{margin:2px 20px 0;font-size:14px;line-height:1.5;color:var(--psec);opacity:clamp(0,calc(1 - var(--sp) * 1.8),1);overflow-wrap:anywhere}
-/* ---- home: poster blocks ---- */
-.s04-blocks{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:16px 12px calc(80px + var(--kb,0px))}
-.s04-block{grid-column:span 6;position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:120px;padding:18px 20px 18px;border-radius:20px;background:var(--bc);color:var(--fg);cursor:pointer;-webkit-user-select:none;user-select:none;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1),transform calc(120ms * var(--k,1)) ease,filter calc(120ms * var(--k,1)) ease}
-.s04-block:active{transform:scale(.985);filter:brightness(.95)}
-.s04-block.hero{min-height:192px;padding-top:20px}
-.s04-block.small{grid-column:span 2;min-height:96px;padding:14px 16px 14px}
-.s04-bt{font-size:26px;font-weight:700;line-height:1.2;letter-spacing:-.005em;overflow-wrap:anywhere}
-.s04-block.hero .s04-bt{font-size:32px;line-height:1.2;padding-right:72px}
-.s04-block.small .s04-bt{font-size:22px}
-.s04-bl{position:absolute;right:20px;top:20px;font-size:13px;font-weight:500;color:var(--fg2)}
-.s04-bv{margin-top:16px;font-size:16px;font-weight:500;line-height:1.45;overflow-wrap:anywhere}
-.s04-block.small .s04-bv{font-size:13px;margin-top:8px;color:var(--fg2)}
-/* ---- root nav (bottom, flat) ---- */
-.s04-nav{position:absolute;left:0;right:0;bottom:0;z-index:4;height:64px;padding:6px 12px 18px;display:flex;gap:6px;background:var(--ground);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.s04-nav button{flex:1 1 0;height:40px;border-radius:12px;font-size:14px;font-weight:500;color:var(--sec);display:flex;align-items:center;justify-content:center}
-.s04-nav button.on{background:var(--ink);color:#fff}
-/* ---- page = the block grown to full screen (shared element: clip-path inset from the block rect; text never scales non-uniformly) ---- */
-.s04-page{position:absolute;inset:0;z-index:10;background:var(--pc);color:var(--pfg);--pbg:var(--pc);--psec:var(--pfg2);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.s04-page.flash{transition:background-color calc(160ms * var(--k,1)) ease}
-.s04-page.in{animation:s04-grow calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s04-page.out{animation:s04-shrink calc(260ms * var(--k,1)) cubic-bezier(.4,0,.7,1) both}
-.s04-page.out.nofx{animation:s04-fadeout calc(200ms * var(--k,1)) ease both}
-@keyframes s04-grow{from{clip-path:inset(var(--cy) var(--cr) var(--cb) var(--cl) round 20px)}to{clip-path:inset(0px 0px 0px 0px round 0px)}}
-@keyframes s04-shrink{from{clip-path:inset(0px 0px 0px 0px round 0px)}to{clip-path:inset(var(--cy) var(--cr) var(--cb) var(--cl) round 20px)}}
-.s04-page.in .s04-h1{animation:s04-tin calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-.s04-page.out .s04-h1{animation:s04-tout calc(260ms * var(--k,1)) cubic-bezier(.4,0,.7,1) both}
-.s04-page.out.scrolled .s04-h1,.s04-page.out.nofx .s04-h1{animation:s04-fadeout calc(120ms * var(--k,1)) ease both}
-@keyframes s04-tin{from{transform:translate(var(--ttx),var(--tty)) scale(var(--tts))}to{transform:translate(0px,0px) scale(1)}}
-@keyframes s04-tout{from{transform:translate(0px,0px) scale(1)}to{transform:translate(var(--ttx),var(--tty)) scale(var(--tts))}}
-.s04-page.in .s04-tools,.s04-page.in .s04-meta,.s04-page.in .s04-body,.s04-page.in .s04-bar{animation:s04-fadein calc(200ms * var(--k,1)) ease calc(120ms * var(--k,1)) both}
-.s04-page.in .s04-ghost{animation:s04-fadeout calc(120ms * var(--k,1)) ease both}
-.s04-page.out .s04-tools,.s04-page.out .s04-meta,.s04-page.out .s04-body,.s04-page.out .s04-bar{animation:s04-fadeout calc(110ms * var(--k,1)) ease both}
-.s04-page.out .s04-ghost{animation:s04-fadein calc(140ms * var(--k,1)) ease calc(100ms * var(--k,1)) both}
-.s04-page.settled .s04-ghost{display:none}
-@keyframes s04-fadein{from{opacity:0}to{opacity:1}}
-@keyframes s04-fadeout{from{opacity:1}to{opacity:0}}
-.s04-ghost{position:absolute;left:var(--gx);top:var(--gy);width:var(--gw);height:var(--gh);padding:var(--gpt) var(--gpx) var(--gpb);display:flex;flex-direction:column;justify-content:flex-end;font-size:var(--gfs,16px);font-weight:500;line-height:1.45;color:var(--gc,var(--pfg));pointer-events:none;z-index:6;overflow-wrap:anywhere}
-.s04-ghost .s04-bl{top:var(--gpt);right:var(--gpx);color:var(--pfg2)}
-/* review scrub: hold the grow / shrink at --frame */
-.scrub .s04-page.in,.scrub .s04-page.in .s04-h1,.scrub .s04-page.in .s04-tools,.scrub .s04-page.in .s04-meta,.scrub .s04-page.in .s04-body,.scrub .s04-page.in .s04-bar{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
-/* ---- page body: paper sub-blocks on the block colour ---- */
-.s04-body{padding:18px 12px calc(40px + var(--kb,0px))}
-.s04-body.withbar{padding-bottom:calc(120px + var(--kb,0px))}
-.s04-sub{position:relative;background:var(--paper);color:var(--ink);border-radius:18px;padding:14px 18px 16px;margin-bottom:8px;transition:box-shadow calc(120ms * var(--k,1)) ease,background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.s04-sub.tap{cursor:pointer}
-.s04-sl{font-size:13px;font-weight:500;color:var(--sec)}
-.s04-sv{font-size:20px;font-weight:500;line-height:1.35;margin-top:4px;overflow-wrap:anywhere;padding-right:4px}
-.s04-sv.fresh{animation:s04-fadein calc(200ms * var(--k,1)) ease both}
-.s04-sv.empty{color:var(--sec)}
-.s04-ss{font-size:13px;color:var(--sec);margin-top:4px;line-height:1.5}
-.s04-ss.ok{color:var(--ok);font-weight:500}
-.s04-in{display:block;width:100%;margin-top:4px;font-size:20px;font-weight:500;line-height:1.35;background:transparent;border:0;outline:0;padding:0;color:var(--ink);border-radius:0}
-.s04-in::placeholder{color:#9aa0b0}
-.s04-sub.editing:focus-within{box-shadow:inset 0 0 0 2px var(--ink)}
-.s04-sub.err{box-shadow:inset 0 0 0 2px var(--err)}
-.s04-sub.err:focus-within{box-shadow:inset 0 0 0 2px var(--err)}
-.s04-errline{font-size:13px;font-weight:500;color:var(--err);margin-top:6px}
-.s04-mini{position:absolute;right:12px;top:12px;font-size:13px;font-weight:500;height:32px;padding:0 12px;border-radius:10px;background:var(--ground);color:var(--ink)}
-.s04-pill{display:inline-flex;align-items:center;justify-content:center;height:40px;padding:0 16px;border-radius:12px;background:var(--ink);color:#fff;font-size:14px;font-weight:500;margin-top:10px;transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1))}
-.s04-pill:active{transform:scale(.97)}
-.s04-pill.ghost{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink);color:var(--ink)}
-.s04-pill[disabled]{opacity:.45;cursor:default}
-.s04-coderow{display:flex;gap:8px;align-items:flex-end;margin-top:2px}
-.s04-coderow .s04-in{letter-spacing:.12em;font-size:24px;line-height:1.3}
-.s04-coderow .s04-pill{margin-top:0;flex:0 0 auto}
-.s04-note{font-size:13px;color:var(--psec);margin:14px 8px 0;line-height:1.55}
-.s04-page.white .s04-note{color:var(--pfg2)}
-.s04-edit-btn{display:flex;align-items:center;justify-content:center;width:100%;height:48px;border-radius:16px;background:var(--ink);color:#fff;font-size:16px;font-weight:500;margin-top:8px;transition:transform calc(120ms * var(--k,1)) ease}
-.s04-edit-btn:active{transform:scale(.985)}
-.s04-failbar{display:flex;align-items:center;justify-content:space-between;gap:10px;background:var(--paper);border-radius:18px;padding:12px 12px 12px 18px;margin-bottom:8px;box-shadow:inset 0 0 0 2px var(--err)}
-.s04-failbar span{font-size:14px;font-weight:500;color:var(--err)}
-.s04-failbar .s04-pill{margin-top:0;height:36px}
-/* ---- primary confirm CTA (JU blue, only for the main confirmation) ---- */
-.s04-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:5;padding:10px 20px 22px;background:var(--pc);display:flex;justify-content:center;transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1)}
-.s04-cta{width:min(100%,280px);height:48px;border-radius:24px;background:var(--blue);color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.26),inset 0 -2px 0 rgba(0,0,0,.2);transition:transform calc(120ms * var(--k,1)) ease,opacity calc(120ms * var(--k,1)) ease}
+/* ================= S04 海报拼块 =================
+   命题：满版拼块。块与块之间 3px 纸色缝，无圆角（只有手机外框），环境决定高饱和配色；每块构图不同、大字、真实局名。
+   表面：平涂纸印——块是印在纸上的色面，缝与页脚是纸；无投影、无光泽（外观块的块面就是环境本身）。
+   运动主语 = 块：点块，块原位长成整页（块色成为页底色，块标题走到页头），其余块被推出画面；返回时页缩回块位、其余块推回原位。 */
+@property --s04-c1{syntax:'<color>';inherits:true;initial-value:#F4B6CF}
+@property --s04-c2{syntax:'<color>';inherits:true;initial-value:#CFC6F2}
+@property --s04-c3{syntax:'<color>';inherits:true;initial-value:#A9DEEA}
+@property --s04-e1{syntax:'<color>';inherits:true;initial-value:#fbe1ec}
+@property --s04-e2{syntax:'<color>';inherits:true;initial-value:#ececf4}
+@property --s04-e3{syntax:'<color>';inherits:true;initial-value:#d3edf3}
+@property --s04-o{syntax:'<number>';inherits:true;initial-value:1}
+@property --s04-p{syntax:'<number>';inherits:true;initial-value:0}
+.app.s04{position:absolute;inset:0;overflow:hidden;container-type:size;
+  --ink:#14161F;--paper:#FBF8F2;--blue:#4553BE;--focus:#4A5AD6;--err:#DA3A52;--ok:#0E9B76;--sec:#535b70;--w2:rgba(255,255,255,.76);
+  --seam:3px;--navH:64px;--barH:88px;--tr:52px;
+  --d-fwd:320ms;--d-back:300ms;--eg:cubic-bezier(.2,.75,.15,1);--es:cubic-bezier(.45,0,.2,1);--sk:cubic-bezier(.22,1,.36,1);
+  background:var(--paper);color:var(--ink);font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;line-height:1.45;
+  -webkit-font-smoothing:antialiased;font-synthesis:none;
+  transition:--s04-c1 calc(650ms*var(--k,1)) var(--sk),--s04-c2 calc(650ms*var(--k,1)) var(--sk),--s04-c3 calc(650ms*var(--k,1)) var(--sk),--s04-e1 calc(650ms*var(--k,1)) var(--sk),--s04-e2 calc(650ms*var(--k,1)) var(--sk),--s04-e3 calc(650ms*var(--k,1)) var(--sk)}
+/* three environments = three saturated palettes for the whole mosaic (c1 hero · c2 · c3 · ink); --f* = secondary text on that colour (≥ 4.5:1) */
+.app.s04[data-skin="cotton"]{--s04-c1:#F4B6CF;--s04-c2:#CFC6F2;--s04-c3:#A9DEEA;--f1:rgba(20,22,31,.8);--f2:rgba(20,22,31,.8);--f3:rgba(20,22,31,.8);--s04-e1:#fbe1ec;--s04-e2:#ececf4;--s04-e3:#d3edf3}
+.app.s04[data-skin="halo"]{--s04-c1:#FF6A1A;--s04-c2:#CDB9E8;--s04-c3:#F3C79B;--f1:#14161F;--f2:rgba(20,22,31,.8);--f3:rgba(20,22,31,.8);--s04-e1:#ff5005;--s04-e2:#dbba95;--s04-e3:#d0bce1}
+.app.s04[data-skin="sunset"]{--s04-c1:#FFC53D;--s04-c2:#FF7A33;--s04-c3:#3D8FF0;--f1:rgba(20,22,31,.8);--f2:#14161F;--f3:#14161F;--s04-e1:#33a0ff;--s04-e2:#ff7a33;--s04-e3:#ffc53d}
+.app.s04 *{box-sizing:border-box}
+:where(.app.s04 button){font:inherit;color:inherit;background:none;border:0;border-radius:0;margin:0;padding:0;cursor:pointer;text-align:inherit;-webkit-tap-highlight-color:transparent}
+:where(.app.s04 input){font:inherit;color:inherit;border-radius:0;-webkit-appearance:none;appearance:none}
+:where(.app.s04 h1,.app.s04 p){margin:0}
+.s04-num{font-family:"Archivo","Noto Sans SC",sans-serif;font-feature-settings:"tnum" 1}
+.s04-x{position:relative}
+
+/* ---------- root navigation: the paper strip under the poster; the current root is a hero-coloured block ---------- */
+.s04-nav{position:absolute;left:0;right:0;bottom:0;height:var(--navH);display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--seam);padding-top:var(--seam);background:var(--paper)}
+.s04-nv{position:relative;display:flex;justify-content:center;padding-top:13px;font-size:13px;font-weight:500;line-height:1.3;color:var(--sec);background:var(--paper)}
+.s04-nv.on{background:var(--s04-c1);color:var(--ink);font-weight:700}
+.s04-nv.off{color:#6b7286}
+
+/* ---------- surfaces ---------- */
+.s04-pg{position:absolute;left:0;right:0;top:0;bottom:var(--navH);--pc:var(--s04-c1)}
+.s04-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;scroll-padding-top:calc(var(--tr) + 12px)}
+.s04-sc::-webkit-scrollbar{display:none}
+
+/* ---------- header: tool row + 30px title + 14px meta; --hc (0→1) shrinks the title to 18px into the middle of the tool row ---------- */
+.s04-hd{position:absolute;left:0;right:0;top:0;height:0;pointer-events:none}
+.s04-tr{position:absolute;left:0;right:0;top:0;height:var(--tr);background:var(--pc);box-shadow:0 var(--seam) 0 rgba(251,248,242,var(--hc,0))}
+.s04-trc{position:absolute;left:8px;right:8px;top:8px;height:44px;display:flex;align-items:center;justify-content:space-between;pointer-events:auto}
+.s04-ju{font-family:"Archivo",sans-serif;font-weight:800;font-size:20px;line-height:44px;letter-spacing:.02em;padding:0 12px}
+.s04-tb{position:relative;height:44px;padding:0 12px;display:inline-flex;align-items:center;gap:6px;font-size:15px;font-weight:500;line-height:1}
+.s04-tb::after{content:"";position:absolute;inset:4px 0;background:currentColor;opacity:0;transition:opacity calc(120ms*var(--k,1)) ease}
+.s04-tb:active::after{opacity:.1}
+.s04-t{position:absolute;top:calc(58px - 39.25px * var(--hc,0));left:calc(20px + (50% - 20px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(100% - 40px - 150px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:visible}
+.s04-tt{display:inline-block;transform-origin:0 0;white-space:nowrap}
+.s04-m{position:absolute;left:20px;right:20px;top:97px;font-size:14px;line-height:1.5;color:var(--f1);opacity:calc(1 - 1.7 * var(--hc,0));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ---------- home: the poster mosaic (20-column grid, 3px paper seams, no radius) ---------- */
+.s04-grid{display:grid;grid-template-columns:repeat(20,minmax(0,1fr));gap:var(--seam);background:var(--paper);min-height:100%;align-content:start}
+.s04-b{position:relative;display:block;width:100%;min-width:0;overflow:hidden;color:var(--ink);background:var(--bc,var(--s04-c1));text-align:left}
+.s04-b::after{content:"";position:absolute;inset:0;background:var(--ink);opacity:0;pointer-events:none;transition:opacity calc(120ms*var(--k,1)) ease}
+.s04-b:active::after{opacity:.08}
+.s04-bx{position:relative;display:flex;flex-direction:column;height:100%;padding:14px 16px 16px}
+.s04-lab{position:relative;display:block;font-size:15px;font-weight:500;line-height:1.25;white-space:nowrap}
+/* identity = the biggest block: the header is printed on it; monogram + 52px name */
+.s04-id{grid-column:1/-1;--bc:var(--s04-c1);min-height:34cqh}
+.s04-id .s04-bx,.s04-band{padding:max(136px,calc(34cqh - 114px)) 20px 20px}
+.s04-id .s04-bx{overflow:hidden}
+.s04-mono{position:absolute;right:-20px;top:max(104px,calc(34cqh - 196px));font-size:204px;font-weight:900;line-height:1;color:color-mix(in srgb,var(--s04-c1) 86%,var(--ink));pointer-events:none;user-select:none}
+.s04-idtag{position:absolute;right:20px;top:67px;display:flex;align-items:baseline;gap:6px}
+.s04-arr{font-size:17px;line-height:1;font-weight:500}
+.s04-nm{position:relative;display:block;font-size:52px;font-weight:700;line-height:1.12;letter-spacing:-.01em;overflow-wrap:anywhere}
+.s04-nm.is-long{font-size:40px;line-height:1.15}
+.s04-acc{position:relative;display:block;margin-top:8px;font-size:15px;line-height:1.45;color:var(--f1);overflow-wrap:anywhere}
+.s04-id.is-flash{animation:s04-flash calc(380ms*var(--k,1)) ease calc(var(--d-back)*var(--k,1)) both}
+/* favourites (60%): a giant count in the hero colour on ink + the three real 局 names */
+.s04-fav{grid-column:span 12;--bc:var(--ink);color:#fff;height:46.2cqw}
+.s04-fav .s04-bx{padding:10px 16px 14px}
+.s04-favhd{display:flex;align-items:flex-start;gap:10px}
+.s04-big{display:block;font-size:88px;font-weight:700;font-stretch:88%;line-height:.86;letter-spacing:-.03em;color:var(--s04-c1);margin-top:4px}
+.s04-fav .s04-lab{margin-top:6px}
+.s04-favls{display:flex;flex-direction:column;gap:2px;margin-top:auto;min-width:0}
+.s04-favls span{display:block;font-size:13px;line-height:1.42;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s04-favnone{display:block;margin-top:auto;font-size:15px;font-weight:500;line-height:1.4}
+/* city (40%): the city name set vertically, like a cover spine */
+.s04-city{grid-column:span 8;--bc:var(--s04-c3);height:46.2cqw}
+.s04-city .s04-lab{white-space:normal}
+.s04-vert{position:absolute;right:14px;bottom:14px;writing-mode:vertical-rl;font-size:34px;font-weight:700;line-height:1;letter-spacing:.06em}
+.s04-cityen{margin-top:auto;font-size:13px;font-weight:600;line-height:1.3;color:var(--f3);max-width:calc(100% - 46px)}
+/* notifications (100% × 120): the fraction is the headline */
+.s04-ntf{grid-column:1/-1;--bc:var(--s04-c2);height:108px}
+.s04-ntf .s04-bx{flex-direction:row;align-items:center;gap:18px;padding:12px 20px}
+.s04-frac{display:block;font-size:64px;font-weight:700;font-stretch:88%;line-height:1;letter-spacing:-.02em}
+.s04-ntfr{display:flex;flex-direction:column;gap:8px;min-width:0}
+.s04-st{position:relative;display:flex;align-items:flex-start;gap:8px;font-size:15px;font-weight:600;line-height:1.4}
+.s04-st::before{content:"";flex:0 0 9px;height:9px;margin-top:6px;background:currentColor}
+/* appearance (50%): the block face IS the current environment */
+.s04-ap{grid-column:span 10;grid-row:span 2;--bc:transparent;background:linear-gradient(172deg,var(--s04-e1) 0%,var(--s04-e2) 56%,var(--s04-e3) 100%)}
+.s04-apnm{display:block;margin-top:auto;font-size:34px;font-weight:700;line-height:1.1}
+.s04-apen{display:block;margin-top:4px;font-size:13px;font-weight:600;line-height:1.3}
+/* records (50% top) and reports (50% strip) */
+.s04-rec{grid-column:span 10;--bc:var(--s04-c1);height:24cqw}
+.s04-rec .s04-bx{flex-direction:row;align-items:flex-start;gap:10px;padding:10px 14px 12px}
+.s04-mid{display:block;font-size:60px;font-weight:700;font-stretch:88%;line-height:.86;letter-spacing:-.02em;margin-top:2px}
+.s04-recr{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-width:0;padding-top:4px}
+.s04-tag{position:relative;display:inline-flex;align-items:center;height:24px;padding:0 8px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;line-height:1;white-space:nowrap}
+.s04-rep{grid-column:span 10;--bc:var(--ink);color:#fff;height:54px}
+.s04-rep .s04-bx{flex-direction:row;align-items:center;justify-content:space-between;gap:8px;padding:0 14px}
+.s04-rep .s04-lab{font-size:15px}
+.s04-rep em{position:relative;font-style:normal;font-size:14px;font-weight:600;line-height:1.3;color:var(--s04-c1);white-space:nowrap}
+/* the four small index blocks */
+.s04-sm{grid-column:span 5;--bc:var(--ink);color:#fff;height:80px}
+.s04-sm .s04-bx{justify-content:flex-start;padding:12px 12px}
+.s04-sm .s04-lab{font-size:15px;font-weight:600}
+.s04-foot{grid-column:1/-1;padding:14px 20px 22px;font-size:13px;line-height:1.5;color:var(--sec);background:var(--paper)}
+
+/* ---------- pages = blocks grown to full size ---------- */
+.s04-page{--pc:var(--s04-c1)}
+.s04-pgbg,.s04-pgfg{position:absolute;inset:0}
+.s04-pgbg{background:var(--pc)}
+.s04-page.tone-c2{--pc:var(--s04-c2)}
+.s04-page.tone-c3{--pc:var(--s04-c3);--f1:var(--f3)}
+.s04-page.tone-ink{--pc:var(--ink);color:#fff;--f1:var(--w2)}
+.s04-page.tone-env{--pc:linear-gradient(172deg,var(--s04-e1) 0%,var(--s04-e2) 56%,var(--s04-e3) 100%)}
+.s04-page.tone-paper{--pc:var(--paper);--f1:var(--sec)}
+.s04-col{display:flex;flex-direction:column;min-height:100%}
+.s04-band{position:relative;overflow:hidden;flex:0 0 auto;min-height:34cqh;background:var(--pc)}
+.s04-stack{display:flex;flex-direction:column;gap:var(--seam);flex:1 0 auto;padding-top:var(--seam);background:var(--paper)}
+.s04-tile{position:relative;flex:0 0 auto;padding:14px 20px 18px;background:var(--bc);color:var(--fg,var(--ink))}
+.s04-tile.ink,.s04-ft.ink{--bc:var(--ink);--fg:#fff;--fg2:var(--w2)}
+.s04-tile.c1,.s04-ft.c1{--bc:var(--s04-c1);--fg2:var(--f1)}
+.s04-tile.c2,.s04-ft.c2{--bc:var(--s04-c2);--fg2:var(--f2)}
+.s04-tile.c3,.s04-ft.c3{--bc:var(--s04-c3);--fg2:var(--f3)}
+.s04-tl{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:22px;font-size:13px;line-height:1.4;color:var(--fg2)}
+.s04-new{display:inline-flex;align-items:center;height:22px;margin-left:8px;padding:0 7px;background:var(--ink);color:#fff;font-size:13px;font-weight:500;line-height:1;vertical-align:4px;animation:s04-in0 calc(220ms*var(--k,1)) ease both}
+.s04-tile.ink .s04-new{background:var(--s04-c1);color:var(--ink)}
+.s04-nm .s04-new{vertical-align:14px}
+/* profile */
+.s04-wxv{display:block;margin-top:12px;font-size:34px;font-weight:600;line-height:1.12;overflow-wrap:anywhere;color:#fff}
+.s04-wxv.is-long{font-size:24px;line-height:1.2}
+.s04-wxv.is-empty,.s04-mlv.is-empty{font-family:"Noto Sans SC",sans-serif;font-size:20px;font-weight:500;color:var(--fg2)}
+.s04-copy{position:relative;height:32px;padding:0 12px;background:var(--s04-c1);color:var(--ink);font-size:14px;font-weight:600;line-height:1}
+.s04-copy:active{filter:brightness(.92)}
+.s04-cf{position:relative;display:block;margin-top:8px;font-size:13px;line-height:1.45;color:var(--w2);user-select:all}
+.s04-cf b{color:#fff;font-weight:600}
+.s04-mlv{display:block;margin-top:12px;font-size:22px;font-weight:600;line-height:1.25;overflow-wrap:anywhere}
+.s04-mlv.is-long{font-size:18px}
+.s04-mk{position:relative;display:inline-flex;align-items:center;gap:7px;color:var(--ink);font-weight:500}
+.s04-mk::before{content:"";width:9px;height:9px;background:var(--ink)}
+.s04-mk.ok::before{background:var(--ok)}
+.s04-edit{--bc:var(--s04-c2);flex:1 0 156px}
+.s04-edit .s04-bx{justify-content:space-between;gap:18px;padding:14px 20px 18px}
+.s04-ednote{position:relative;display:block;max-width:24em;font-size:14px;font-weight:500;line-height:1.55;white-space:normal}
+.s04-edrow{display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.s04-go{position:relative;display:block;font-size:48px;font-weight:600;line-height:.9}
+.s04-edit .s04-lab{font-size:30px}
+/* edit: the field blocks keep the colours they had on the profile page; inputs are big type on an underline */
+.s04-page.s04-ed{bottom:0}
+.s04-ed .s04-sc{bottom:calc(var(--barH) + var(--kb,0px))}
+.s04-ed.is-failed{--barH:126px}
+.s04-band-ed{min-height:0;padding:104px 20px 18px}
+.s04-band-ed .s04-ednote{font-size:13px;font-weight:400;color:var(--f2)}
+.s04-edstack .s04-ft{display:flex;flex-direction:column;justify-content:space-between;gap:10px}
+.s04-edstack .s04-ftn{flex:1.3 0 auto;min-height:140px}
+.s04-edstack .s04-ftw{flex:1 0 auto;min-height:122px}
+.s04-edstack .s04-ftm{flex:1 0 auto;min-height:126px}
+.s04-fin{display:block}
+.s04-ft{position:relative;display:block;flex:0 0 auto;padding:14px 20px 18px;background:var(--bc);color:var(--fg,var(--ink))}
+.s04-in{display:block;width:100%;margin:6px 0 0;padding:4px 0 8px;border:0;background:transparent;outline:none;box-shadow:inset 0 -3px 0 currentColor;caret-color:currentColor;color:inherit;transition:box-shadow calc(120ms*var(--k,1)) ease}
+.s04-in:focus{box-shadow:inset 0 -6px 0 currentColor}
+.s04-in::placeholder{color:currentColor;opacity:.38}
+.s04-in.nm{font-size:52px;font-weight:700;line-height:1.16;letter-spacing:-.01em}
+.s04-in.nm.is-long{font-size:40px}
+.s04-in.wx{font-family:"Archivo","Noto Sans SC",sans-serif;font-size:30px;font-weight:600;line-height:1.2}
+.s04-in.ml{font-family:"Archivo","Noto Sans SC",sans-serif;font-size:22px;font-weight:600;line-height:1.3}
+.s04-in.cd{width:7.4em;flex:0 0 auto;margin:0;font-family:"Archivo",sans-serif;font-size:22px;font-weight:600;letter-spacing:.24em;line-height:1.2}
+.is-err .s04-in:not(.cd),.s04-in.cd.is-err{box-shadow:inset 0 -3px 0 var(--err)}
+.is-err .s04-in:not(.cd):focus,.s04-in.cd.is-err:focus{box-shadow:inset 0 -6px 0 var(--err)}
+.s04-cnt{font-family:"Archivo",sans-serif;font-weight:600}
+.s04-cnt.is-over{color:var(--fg);font-weight:800}
+.s04-er{position:relative;display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-size:13px;font-weight:500;line-height:1.45}
+.s04-er::before{content:"";flex:0 0 10px;height:10px;margin-top:4px;background:var(--err)}
+.s04-okl{position:relative;display:flex;align-items:flex-start;gap:8px;margin-top:10px;font-size:14px;font-weight:600;line-height:1.45}
+.s04-okl::before{content:"";flex:0 0 10px;height:10px;margin-top:5px;background:var(--ok)}
+.s04-code{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 12px;margin-top:14px}
+.s04-btn{position:relative;height:40px;padding:0 14px;display:inline-flex;align-items:center;background:var(--ink);color:#fff;font-size:15px;font-weight:600;line-height:1}
+.s04-btn:active{filter:brightness(1.3)}
+.s04-link{position:relative;height:40px;padding:0 2px;font-size:14px;font-weight:600;line-height:1;text-decoration:underline;text-underline-offset:4px;text-decoration-thickness:2px}
+.s04-link:disabled{text-decoration:none;font-weight:500;color:var(--fg2);cursor:default}
+.s04-link.is-strong{padding:0 14px;background:var(--ink);color:#fff;text-decoration:none}
+.s04-note{display:block;margin-top:10px;font-size:13px;line-height:1.5;color:var(--fg2)}
+.s04-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);min-height:var(--barH);padding:12px 20px 24px;background:var(--paper)}
+.s04-fail{position:relative;display:flex;align-items:flex-start;gap:8px;margin:0 0 12px;font-size:14px;font-weight:500;line-height:1.45;color:var(--ink)}
+.s04-fail::before{content:"";flex:0 0 10px;height:10px;margin-top:5px;background:var(--err)}
+/* the one JU-blue primary action: flat rectangle (this direction has no radius), top highlight + bottom press shade */
+.s04-cta{display:block;width:min(100%,280px);height:48px;margin:0 auto;background:var(--blue);color:#fff;font-size:16px;font-weight:600;line-height:48px;text-align:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.32),inset 0 -3px 0 rgba(0,0,0,.22);transition:transform calc(120ms*var(--k,1)) ease,filter calc(120ms*var(--k,1)) ease}
 .s04-cta:active{transform:scale(.958)}
-.s04-cta[disabled]{opacity:.62;cursor:default}
-/* ---- appearance page rows (environment = the whole screen; rows are the three hue sets) ---- */
-.s04-env{display:flex;align-items:flex-end;justify-content:space-between;min-height:104px;border-radius:18px;padding:16px 18px;margin-bottom:8px;cursor:pointer;background:var(--ec);color:var(--efg);transition:background-color calc(650ms * var(--k,1)) cubic-bezier(.22,1,.36,1),transform calc(120ms * var(--k,1)) ease}
-.s04-env:active{transform:scale(.985)}
-.s04-env .n{font-size:22px;font-weight:700;line-height:1.2}
-.s04-env .l{font-size:13px;font-weight:500;margin-top:4px;opacity:.8}
-.s04-env .st{font-size:13px;font-weight:500;padding:5px 10px;border-radius:10px;background:rgba(20,22,31,.1)}
-.s04-env.white .st{background:rgba(255,255,255,.2)}
-.s04-env .bands{display:flex;gap:4px;margin-bottom:8px}
-.s04-env .bands i{display:block;width:18px;height:18px;border-radius:6px;background:var(--b)}
-.s04-switch{display:flex;align-items:center;justify-content:space-between;gap:12px}
-.s04-sw{flex:0 0 auto;width:52px;height:32px;border-radius:16px;background:rgba(20,22,31,.18);position:relative;transition:background-color calc(120ms * var(--k,1)) ease}
-.s04-sw::after{content:"";position:absolute;top:4px;left:4px;width:24px;height:24px;border-radius:12px;background:#fff;transition:transform calc(120ms * var(--k,1)) ease}
-.s04-sw[aria-checked="true"]{background:var(--ink)}
-.s04-sw[aria-checked="true"]::after{transform:translateX(20px)}
-/* ---- confirm sheet (ink block rising from the bottom) + toast ---- */
-.s04-over{position:absolute;inset:0;z-index:20;background:rgba(20,22,31,.34);display:flex;align-items:flex-end;animation:s04-fadein calc(160ms * var(--k,1)) ease both}
-.s04-sheet{width:100%;background:var(--ink);color:#fff;border-radius:24px 24px 0 0;padding:22px 20px calc(26px + var(--kb,0px));animation:s04-up calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-@keyframes s04-up{from{transform:translateY(40px);opacity:0}to{transform:translateY(0);opacity:1}}
-.s04-sheet h2{margin:0;font-size:22px;font-weight:700;line-height:1.25}
-.s04-sheet p{margin:6px 0 18px;font-size:14px;color:rgba(255,255,255,.76)}
-.s04-sheet .row{display:flex;gap:8px}
-.s04-sheet .row button{flex:1 1 0;height:48px;border-radius:14px;font-size:16px;font-weight:500;display:flex;align-items:center;justify-content:center}
-.s04-sheet .keep{background:#fff;color:var(--ink)}
-.s04-sheet .discard{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6);color:#fff}
-.s04-toast{position:absolute;left:50%;bottom:calc(80px + var(--kb,0px));transform:translateX(-50%);z-index:30;background:var(--ink);color:#fff;font-size:14px;font-weight:500;padding:10px 16px;border-radius:14px;white-space:nowrap;max-width:calc(100% - 40px);overflow:hidden;text-overflow:ellipsis;animation:s04-up calc(200ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
-/* ---- reduced motion (panel .rm / system .rm-sys / user .rm-user): everything settles instantly, results identical ---- */
-.app.rm *,.app.rm *::before,.app.rm *::after,.app.rm-user *,.app.rm-user *::before,.app.rm-user *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.s04-cta.is-busy{filter:saturate(.75) brightness(.92);cursor:progress}
+/* stage-2 shells (other surfaces open with the same grow; their bodies arrive in stage 2) */
+.s04-shero{position:relative;display:block;font-size:64px;font-weight:700;font-stretch:88%;line-height:1;letter-spacing:-.02em}
+
+/* ---------- overlays ---------- */
+.s04-over{position:absolute;inset:0;z-index:60}
+.s04-scrim{position:absolute;inset:0;background:rgba(20,22,31,.4);animation:s04-in0 calc(200ms*var(--k,1)) ease both}
+.s04-shb{position:absolute;left:0;right:0;bottom:var(--kb,0px);display:grid;grid-template-columns:1fr 1fr;gap:var(--seam);background:var(--paper);animation:s04-up calc(280ms*var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s04-sht{grid-column:1/-1;padding:22px 20px 18px;background:var(--paper)}
+.s04-sht b{display:block;font-size:26px;font-weight:700;line-height:1.25}
+.s04-sht p{margin-top:8px;font-size:15px;line-height:1.55;color:var(--sec)}
+.s04-shbtn{position:relative;height:76px;padding:0 20px 8px;display:flex;align-items:center;font-size:17px;font-weight:600}
+.s04-shbtn.keep{background:var(--ink);color:#fff}
+.s04-shbtn.drop{background:var(--s04-c1);color:var(--ink)}
+.s04-shbtn:active{filter:brightness(.92)}
+.s04-toast{position:absolute;left:0;right:0;bottom:var(--navH);z-index:50;display:flex;align-items:center;gap:10px;padding:14px 20px;background:var(--ink);color:#fff;font-size:15px;font-weight:500;line-height:1.4;animation:s04-up calc(220ms*var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.s04-toast::before{content:"";flex:0 0 10px;height:10px;background:var(--s04-c1)}
+.s04-toast.k-ok::before{background:var(--ok)}
+.s04-toast.k-error::before{background:var(--err)}
+.app.at-profile-edit .s04-toast{bottom:calc(var(--barH) + var(--kb,0px))}
+
+/* ---------- motion: block → page (grow), page → block (shrink), the rest of the mosaic pushed out / back ----------
+   One registered number per side drives every moving edge on the main thread, so the page edge, the pushed blocks and the
+   travelling title stay locked together: --s04-o (page openness 0 = the block, 1 = the page) and --s04-p (push 0 → 1). */
+@keyframes s04-open{from{--s04-o:0}to{--s04-o:1}}
+@keyframes s04-close{from{--s04-o:1}to{--s04-o:0}}
+@keyframes s04-pushout{from{--s04-p:0}to{--s04-p:1}}
+@keyframes s04-pushin{from{--s04-p:1}to{--s04-p:0}}
+@keyframes s04-in{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0px)}}
+@keyframes s04-in0{from{opacity:0}to{opacity:1}}
+@keyframes s04-out{from{opacity:1}to{opacity:0}}
+@keyframes s04-up{from{transform:translateY(100%)}to{transform:translateY(0%)}}
+@keyframes s04-pagein{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0px)}}
+@keyframes s04-pageout{from{opacity:1;transform:translateY(0px)}to{opacity:0;transform:translateY(28px)}}
+@keyframes s04-flash{0%,100%{background-color:var(--s04-c1)}38%{background-color:color-mix(in srgb,var(--s04-c1) 78%,var(--ink))}}
+/* the page: geometry of the block it opens from (enter) and lands in (exit) */
+.s04-page.has-origin{--cT:var(--ct0);--cR:var(--cr0);--cB:var(--cb0);--cL:var(--cl0);--tX:var(--tx,0px);--tY:var(--ty,0px);--tS:var(--ts,1);--bY:var(--by0,0px)}
+.s04-page.has-origin.ph-exit{--cT:var(--ct1);--cR:var(--cr1);--cB:var(--cb1);--cL:var(--cl1);--tX:var(--bx,0px);--tY:var(--by,0px);--tS:var(--bs,1);--bY:var(--by1,0px)}
+.s04-page.has-origin.is-top:is(.ph-enter,.ph-in,.ph-exit) .s04-band.is-shared{transform:translateY(calc(var(--bY) * (1 - var(--s04-o))))}
+.s04-page.has-origin.is-top.ph-enter{--s04-o:0}
+.s04-page.has-origin.is-top.ph-in.dir-fwd{animation:s04-open calc(var(--d-fwd)*var(--k,1)) var(--eg) both}
+.s04-page.has-origin.is-top.ph-exit{animation:s04-close calc(var(--d-back)*var(--k,1)) var(--es) both}
+.s04-page.has-origin.is-top:is(.ph-enter,.ph-in,.ph-exit) :is(.s04-pgbg,.s04-pgfg){clip-path:inset(calc(var(--cT) * (1 - var(--s04-o))) calc(var(--cR) * (1 - var(--s04-o))) calc(var(--cB) * (1 - var(--s04-o))) calc(var(--cL) * (1 - var(--s04-o))))}
+/* the block title travels to (and back from) the header position */
+.s04-page.has-ttl.is-top:is(.ph-enter,.ph-in) .s04-tt,.s04-page.has-bttl.is-top.ph-exit .s04-tt{transform:translate(calc(var(--tX) * (1 - var(--s04-o))),calc(var(--tY) * (1 - var(--s04-o)))) scale(calc(1 + (var(--tS) - 1) * (1 - var(--s04-o))))}
+.s04-page.is-top.ph-enter:not(.has-ttl) .s04-tt{opacity:0}
+.s04-page.is-top.ph-in.dir-fwd:not(.has-ttl) .s04-tt{animation:s04-in0 calc(180ms*var(--k,1)) ease-out calc(110ms*var(--k,1)) both}
+.s04-page.has-origin.is-top.ph-exit:not(.has-bttl) .s04-tt{animation:s04-out calc(140ms*var(--k,1)) ease-in both}
+/* the page's own words arrive 110ms after the edge starts moving, and leave first on the way back */
+.s04-page.is-top.ph-enter .s04-fade{opacity:0}
+.s04-page.is-top.ph-in.dir-fwd .s04-fade{animation:s04-in calc(210ms*var(--k,1)) cubic-bezier(.2,.7,.2,1) calc(110ms*var(--k,1)) both}
+.s04-page.is-top.ph-exit :is(.s04-fade,.s04-new){animation:s04-out calc(130ms*var(--k,1)) ease-in both}
+/* no origin (index jump / programmatic): the page rises and sinks as one block */
+.s04-page.no-origin.is-top.ph-enter.dir-fwd{opacity:0}
+.s04-page.no-origin.is-top.ph-in.dir-fwd{animation:s04-pagein calc(var(--d-fwd)*var(--k,1)) var(--eg) both}
+.s04-page.no-origin.is-top.ph-exit{animation:s04-pageout calc(var(--d-back)*var(--k,1)) var(--es) both}
+/* root switches and swaps: plain cross-fade of whole surfaces */
+.s04-pg.is-top.ph-enter:is(.dir-root,.dir-swap){opacity:0}
+.s04-pg.is-top.ph-in:is(.dir-root,.dir-swap){animation:s04-in0 calc(280ms*var(--k,1)) ease-out both}
+.s04-pg.is-leaving{animation:s04-out calc(200ms*var(--k,1)) ease-in both;pointer-events:none}
+/* the surface underneath: blocks are pushed off-screen, away from the growing block, and pushed back on return */
+.s04-pg.is-under.ph-in{animation:s04-pushout calc(var(--d-fwd)*var(--k,1)) var(--eg) both}
+.s04-pg.is-under.ph-idle{--s04-p:1;visibility:hidden}
+.s04-pg.is-under.ph-exit{animation:s04-pushin calc(var(--d-back)*var(--k,1)) var(--es) both}
+.s04-pg.is-under [data-push]:not(.is-origin){transform:translate(calc(var(--px,0px) * var(--s04-p)),calc(var(--py,0px) * var(--s04-p)))}
+.s04-pg.is-under{pointer-events:none}
+/* the origin block's own words sit above the growing page and hand over to it (fade out going in, fade back in at the end of the return) */
+.s04-pg.is-under .is-origin .s04-x{z-index:30}
+.s04-pg.is-under:is(.ph-enter,.ph-in) .is-origin .s04-x{animation:s04-out calc(130ms*var(--k,1)) ease-out both}
+.s04-pg.is-under.ph-exit .is-origin .s04-x{animation:s04-in0 calc(130ms*var(--k,1)) ease-in calc(var(--d-back)*var(--k,1) - 130ms*var(--k,1)) both}
+.s04-pg.is-under .is-origin [data-ttl]{opacity:0}
+
+/* ---------- reduced motion (panel / system / user preference): results without travel ---------- */
+.app.s04.rm,.app.s04.rm-user{transition-duration:1ms!important}
+.app.rm *,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+/* keyframe scrub (review panel): hold every running animation at --frame of its 320ms core */
+.app.s04.scrub *{animation-play-state:paused!important;animation-delay:calc(var(--frame,0) * -320ms * var(--k,1))!important}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s04{{panel.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};{{palStyle}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <div class="s04-scroll s04-home" data-surface="home" onScroll="{{onScroll}}">
-        <div class="s04-tools"><span class="s04-ju">JU</span><span class="s04-ctitle">设置</span><span></span></div>
-        <h1 class="s04-h1"><span>设置</span></h1>
-        <p class="s04-meta">{{homeMeta}}</p>
-        <div class="s04-blocks">
-          <sc-for list="{{blocks}}" as="b" hint-placeholder-count="5">
-            <div class="s04-block {{b.cls}}" style="{{b.style}}" data-block="{{b.key}}" role="button" tabindex="0" onClick="{{b.open}}">
-              <div class="s04-bt">{{b.title}}</div>
-              <sc-if value="{{b.label}}" hint-placeholder-val="{{false}}"><div class="s04-bl">{{b.label}}</div></sc-if>
-              <div class="s04-bv"><sc-for list="{{b.values}}" as="v" hint-placeholder-count="2"><div>{{v.t}}</div></sc-for></div>
-            </div>
-          </sc-for>
-        </div>
-      </div>
-      <nav class="s04-nav" aria-label="根导航">
-        <button type="button">找局</button><button type="button">开局</button><button type="button">我的局</button><button type="button" class="on" aria-current="page">设置</button>
+    <div class="app s04{{panel.rootCls}}{{c.nav.rootCls}}{{v.rmUser}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+
+      <nav class="s04-nav" aria-label="JU">
+        <sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="s04-nv {{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
       </nav>
-      <sc-if value="{{page.on}}" hint-placeholder-val="{{false}}">
-        <div class="s04-page {{page.cls}}" style="{{page.style}}" data-surface="{{page.surface}}">
-          <div class="s04-scroll" onScroll="{{onScroll}}">
-            <div class="s04-tools">
-              <button type="button" class="s04-tb" data-act="back" onClick="{{page.back}}">← 返回</button>
-              <span class="s04-ctitle">{{page.title}}</span>
-              <sc-if value="{{page.action}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-tb r" data-act="{{page.actionAct}}" onClick="{{page.onAction}}">{{page.action}}</button></sc-if>
-              <sc-if value="{{page.noAction}}" hint-placeholder-val="{{false}}"><span></span></sc-if>
+
+      <!-- ========== HOME: the poster mosaic ========== -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="s04-pg s04-home {{c.nav.cls.home}}" data-surface="home">
+          <div class="s04-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+            <div class="s04-grid">
+              <button type="button" class="s04-b s04-id{{v.oc.profile}}{{v.flashCls}}" data-origin="profile" data-push="profile" style="{{v.ps.profile}}" onClick="{{v.open.profile}}">
+                <span class="s04-bx">
+                  <span class="s04-mono" aria-hidden="true">{{c.you.initial}}</span>
+                  <span class="s04-idtag s04-x"><span class="s04-lab" data-ttl>个人资料</span><span class="s04-arr">›</span></span>
+                  <span class="s04-nm{{v.nmCls}}">{{c.you.name}}</span>
+                  <span class="s04-acc s04-x">{{v.accLine}}</span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-fav{{v.oc.favorites}}" data-origin="favorites" data-push="favorites" style="{{v.ps.favorites}}" onClick="{{v.open.favorites}}">
+                <span class="s04-bx">
+                  <span class="s04-favhd"><span class="s04-big s04-num s04-x">{{c.fav.count}}</span><span class="s04-lab" data-ttl>收藏的局</span></span>
+                  <sc-if value="{{v.favZero}}"><span class="s04-favnone s04-x">{{c.fav.emptyCopy.title}}</span></sc-if>
+                  <span class="s04-favls s04-x"><sc-for list="{{v.favNames}}" as="n" hint-placeholder-count="3"><span>{{n}}</span></sc-for></span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-city{{v.oc.city}}" data-origin="city" data-push="city" style="{{v.ps.city}}" onClick="{{v.open.city}}">
+                <span class="s04-bx">
+                  <span class="s04-lab" data-ttl>默认浏览城市</span>
+                  <span class="s04-vert s04-x">{{c.city.cur.name}}</span>
+                  <span class="s04-cityen s04-num s04-x">{{c.city.cur.en}}</span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-ntf{{v.oc.notify}}" data-origin="notify" data-push="notify" style="{{v.ps.notify}}" onClick="{{v.open.notify}}">
+                <span class="s04-bx">
+                  <span class="s04-frac s04-num s04-x">{{v.ntfN}}</span>
+                  <span class="s04-ntfr"><span class="s04-lab" data-ttl>通知与提醒</span><span class="s04-st s04-x">{{v.ntfLine}} ›</span></span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-ap{{v.oc.appearance}}" data-origin="appearance" data-push="appearance" style="{{v.ps.appearance}}" onClick="{{v.open.appearance}}">
+                <span class="s04-bx">
+                  <span class="s04-lab" data-ttl>外观与动态</span>
+                  <span class="s04-apnm s04-x">{{c.skin.shownName}}</span>
+                  <span class="s04-apen s04-num s04-x">{{v.skinLine}}</span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-rec{{v.oc.records}}" data-origin="records" data-push="records" style="{{v.ps.records}}" onClick="{{v.open.records}}">
+                <span class="s04-bx">
+                  <span class="s04-mid s04-num s04-x">{{c.sum.recordCount}}</span>
+                  <span class="s04-recr"><span class="s04-lab" data-ttl>我的记录</span><sc-if value="{{v.recPend}}"><span class="s04-tag s04-x">{{v.recPend}}</span></sc-if></span>
+                </span>
+              </button>
+              <button type="button" class="s04-b s04-rep{{v.oc.reports}}" data-origin="reports" data-push="reports" style="{{v.ps.reports}}" onClick="{{v.open.reports}}">
+                <span class="s04-bx"><span class="s04-lab" data-ttl>我的举报</span><em class="s04-x">{{v.repLine}}</em></span>
+              </button>
+              <button type="button" class="s04-b s04-sm{{v.oc.help}}" data-origin="help" data-push="help" style="{{v.ps.help}}" onClick="{{v.open.help}}"><span class="s04-bx"><span class="s04-lab s04-x">帮助</span></span></button>
+              <button type="button" class="s04-b s04-sm{{v.oc.privacy}}" data-origin="privacy" data-push="privacy" style="{{v.ps.privacy}}" onClick="{{v.open.privacy}}"><span class="s04-bx"><span class="s04-lab s04-x">隐私</span></span></button>
+              <button type="button" class="s04-b s04-sm{{v.oc.account}}" data-origin="account" data-push="account" style="{{v.ps.account}}" onClick="{{v.open.account}}"><span class="s04-bx"><span class="s04-lab s04-x">账户</span></span></button>
+              <button type="button" class="s04-b s04-sm{{v.oc.about}}" data-origin="about" data-push="about" style="{{v.ps.about}}" onClick="{{v.open.about}}"><span class="s04-bx"><span class="s04-lab s04-x">关于</span></span></button>
+              <p class="s04-foot" data-push="foot" style="{{v.ps.foot}}">{{c.demoNote}}</p>
             </div>
-            <h1 class="s04-h1"><span>{{page.title}}</span></h1>
-            <p class="s04-meta">{{page.meta}}</p>
-            <div class="s04-body {{page.bodyCls}}">
-              <sc-if value="{{prof.on}}" hint-placeholder-val="{{false}}">
-                <sc-if value="{{prof.fail}}" hint-placeholder-val="{{false}}"><div class="s04-failbar"><span>{{prof.fail}}</span><button type="button" class="s04-pill" data-act="retry" onClick="{{prof.retry}}">重试</button></div></sc-if>
-                <sc-for list="{{prof.fields}}" as="f" hint-placeholder-count="3">
-                  <div class="s04-sub {{f.cls}}">
-                    <div class="s04-sl">{{f.label}}</div>
-                    <sc-if value="{{f.input}}" hint-placeholder-val="{{false}}"><input class="s04-in" type="text" data-field="{{f.key}}" value="{{f.value}}" placeholder="{{f.ph}}" inputmode="{{f.mode}}" autocomplete="off" autocapitalize="off" spellcheck="false" onInput="{{f.onInput}}" onFocus="{{onFocus}}"></sc-if>
-                    <sc-if value="{{f.text}}" hint-placeholder-val="{{false}}"><div class="s04-sv {{f.vcls}}">{{f.value}}</div></sc-if>
-                    <sc-if value="{{f.sub}}" hint-placeholder-val="{{false}}"><div class="s04-ss {{f.scls}}">{{f.sub}}</div></sc-if>
-                    <sc-if value="{{f.err}}" hint-placeholder-val="{{false}}"><div class="s04-errline">{{f.err}}</div></sc-if>
-                    <sc-if value="{{f.copy}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-mini" data-act="copy" onClick="{{f.onCopy}}">复制</button></sc-if>
+          </div>
+          <div class="s04-hd{{v.oc.hd}}" data-header data-push="hd" style="{{v.ps.hd}}">
+            <div class="s04-tr"></div>
+            <div class="s04-trc s04-x"><span class="s04-ju">JU</span></div>
+            <h1 class="s04-t s04-x"><span class="s04-tt">设置</span></h1>
+            <p class="s04-m s04-x">{{v.homeMeta}}</p>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ========== PROFILE: the identity block grown to the whole page ========== -->
+      <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
+        <section class="s04-pg s04-page s04-pf {{c.nav.cls.profile}}{{v.pg.profile}}" data-surface="profile" style="{{v.pv.profile}}">
+          <div class="s04-pgbg"></div>
+          <div class="s04-pgfg">
+            <div class="s04-sc" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
+              <div class="s04-col">
+                <div class="s04-band is-shared" data-push="pband" style="{{v.ps.pband}}">
+                  <span class="s04-mono" aria-hidden="true">{{c.you.initial}}</span>
+                  <span class="s04-nm{{v.nmCls}}">{{c.you.name}}<sc-if value="{{v.fresh.name}}"><span class="s04-new">刚更新</span></sc-if></span>
+                  <span class="s04-acc s04-fade">{{v.nameRule}}</span>
+                </div>
+                <div class="s04-stack s04-fade">
+                  <div class="s04-tile ink" data-push="pwx" style="{{v.ps.pwx}}">
+                    <span class="s04-tl"><span>微信号<sc-if value="{{v.fresh.wx}}"><span class="s04-new">刚更新</span></sc-if></span><sc-if value="{{c.you.wx}}"><button type="button" class="s04-copy" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></span>
+                    <span class="s04-wxv s04-num{{v.wxCls}}">{{v.wxBig}}</span>
+                    <sc-if value="{{c.you.copyFail}}"><span class="s04-cf">{{v.copyFailText}}：<b>{{c.you.copyFail}}</b></span></sc-if>
                   </div>
-                </sc-for>
-                <sc-if value="{{ver.on}}" hint-placeholder-val="{{false}}">
-                  <div class="s04-sub s04-ver {{ver.cls}}">
-                    <div class="s04-sl">邮箱验证</div>
-                    <sc-if value="{{ver.idle}}" hint-placeholder-val="{{false}}"><div class="s04-sv">{{ver.line}}</div><button type="button" class="s04-pill" data-act="request" onClick="{{ver.send}}">发送验证码</button></sc-if>
-                    <sc-if value="{{ver.sent}}" hint-placeholder-val="{{false}}">
-                      <div class="s04-ss">{{ver.line}}</div>
-                      <div class="s04-coderow"><input class="s04-in" type="text" data-field="code" value="{{ver.code}}" placeholder="6 位验证码" inputmode="numeric" maxlength="6" autocomplete="one-time-code" onInput="{{ver.onCode}}" onFocus="{{onFocus}}"><button type="button" class="s04-pill" data-act="verify" onClick="{{ver.verify}}">验证</button></div>
-                      <sc-if value="{{ver.err}}" hint-placeholder-val="{{false}}"><div class="s04-errline">{{ver.err}}</div></sc-if>
-                      <div class="s04-ss">{{ver.resendLine}}</div>
-                      <button type="button" class="s04-pill ghost" data-act="resend" disabled="{{ver.resendDisabled}}" onClick="{{ver.resend}}">重新发送</button>
+                  <div class="s04-tile c3" data-push="pmail" style="{{v.ps.pmail}}">
+                    <span class="s04-tl"><span>工作 / 学校邮箱<sc-if value="{{v.fresh.email}}"><span class="s04-new">刚更新</span></sc-if></span><span class="s04-mk{{v.mailMk}}">{{v.mailState}}</span></span>
+                    <span class="s04-mlv s04-num{{v.mailCls}}">{{v.mailBig}}</span>
+                  </div>
+                  <button type="button" class="s04-b s04-edit{{v.oc.edit}}" data-origin="edit" data-push="edit" data-act="edit" aria-label="编辑资料" style="{{v.ps.edit}}" onClick="{{v.open.edit}}">
+                    <span class="s04-bx">
+                      <span class="s04-ednote s04-x">{{v.snapNote}}</span>
+                      <span class="s04-edrow"><span class="s04-lab" data-ttl>编辑资料</span><span class="s04-go s04-num s04-x" aria-hidden="true">→</span></span>
+                    </span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <div class="s04-hd" data-header data-push="phd" style="{{v.ps.phd}}">
+              <div class="s04-tr"></div>
+              <div class="s04-trc s04-fade"><button type="button" class="s04-tb" data-act="back" onClick="{{c.nav.back}}">‹ {{v.back.profile}}</button></div>
+              <h1 class="s04-t"><span class="s04-tt">个人资料</span></h1>
+              <p class="s04-m s04-fade">{{v.pfMeta}}</p>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ========== PROFILE EDIT: the 编辑资料 block grown to the page; each field keeps its block colour ========== -->
+      <sc-if value="{{c.nav.on.profile-edit}}" hint-placeholder-val="{{false}}">
+        <section class="s04-pg s04-page s04-ed tone-c2 {{c.nav.cls.profile-edit}}{{v.pg.profile-edit}}{{v.edCls}}" data-surface="profile-edit" style="{{v.pv.profile-edit}}">
+          <div class="s04-pgbg"></div>
+          <div class="s04-pgfg">
+            <div class="s04-sc" data-scroller="profile-edit" onScroll="{{c.nav.onScroll}}">
+              <div class="s04-col">
+                <div class="s04-band s04-band-ed"><p class="s04-ednote s04-fade">{{v.snapNote}}</p></div>
+                <div class="s04-stack s04-edstack s04-fade">
+                  <label class="s04-ft c1 s04-ftn{{v.pfe.name}}">
+                    <span class="s04-tl"><span>怎么称呼</span><span class="s04-cnt{{v.cntCls}}">{{v.pf.nameCount}}</span></span>
+                    <span class="s04-fin"><input class="s04-in nm{{v.nmInCls}}" data-field="name" value="{{v.pf.name}}" onInput="{{v.pf.onName}}" placeholder="称呼" autocomplete="off" spellcheck="false" enterkeyhint="next">
+                    <sc-if value="{{v.pf.err.name}}"><span class="s04-er" role="alert">{{v.pf.err.name}}</span></sc-if></span>
+                  </label>
+                  <label class="s04-ft ink s04-ftw{{v.pfe.wx}}">
+                    <span class="s04-tl"><span>微信号</span></span>
+                    <span class="s04-fin"><input class="s04-in wx" data-field="wx" value="{{v.pf.wx}}" onInput="{{v.pf.onWx}}" placeholder="微信号" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
+                    <sc-if value="{{v.pf.err.wx}}"><span class="s04-er" role="alert">{{v.pf.err.wx}}</span></sc-if></span>
+                  </label>
+                  <div class="s04-ft c3 s04-ftm{{v.pfe.email}}">
+                    <label class="s04-tl"><span>工作 / 学校邮箱（可空）</span></label>
+                    <div class="s04-fin"><input class="s04-in ml" data-field="email" type="email" inputmode="email" value="{{v.pf.email}}" onInput="{{v.pf.onEmail}}" placeholder="name@school.edu" autocomplete="off" autocapitalize="off" spellcheck="false">
+                    <sc-if value="{{v.pf.err.email}}"><span class="s04-er" role="alert">{{v.pf.err.email}}</span></sc-if>
+                    <sc-if value="{{v.pf.needCode}}">
+                      <div class="s04-code">
+                        <sc-if value="{{v.canSend}}"><button type="button" class="s04-btn" data-act="send" onClick="{{v.pf.sendCode}}">发送验证码</button></sc-if>
+                        <sc-if value="{{v.codeRow}}">
+                          <input class="s04-in cd{{v.codeErr}}" data-field="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="······" aria-label="6 位验证码" value="{{v.pf.code}}" onInput="{{v.pf.onCode}}" onKeyDown="{{v.pf.onKeyCode}}">
+                          <sc-if value="{{v.pf.codeSent}}"><button type="button" class="s04-btn" data-act="verify" onClick="{{v.pf.verify}}">验证</button></sc-if>
+                          <button type="button" class="s04-link{{v.resendCls}}" data-act="resend" onClick="{{v.pf.resend}}" disabled="{{v.resendOff}}">{{v.pf.resendLabel}}</button>
+                        </sc-if>
+                      </div>
+                      <sc-if value="{{v.pf.err.code}}"><span class="s04-er" role="alert">{{v.pf.err.code}}</span></sc-if>
+                      <sc-if value="{{v.showCodeNote}}"><span class="s04-note">{{v.pf.codeNote}}</span></sc-if>
                     </sc-if>
-                    <sc-if value="{{ver.ok}}" hint-placeholder-val="{{false}}"><div class="s04-sv">{{ver.line}}</div><div class="s04-ss ok">已验证 · 保存后生效</div></sc-if>
-                    <div class="s04-ss">{{ver.hint}}</div>
+                    <sc-if value="{{v.pf.codeVerified}}"><span class="s04-okl">{{v.pf.verifiedText}}</span></sc-if>
+                    <sc-if value="{{v.showHint}}"><span class="s04-note">{{v.pf.emailHint}}</span></sc-if></div>
                   </div>
-                </sc-if>
-                <sc-if value="{{prof.editBtn}}" hint-placeholder-val="{{false}}"><button type="button" class="s04-edit-btn" data-act="edit" onClick="{{prof.startEdit}}">编辑资料</button></sc-if>
-                <p class="s04-note">{{prof.note}}</p>
-              </sc-if>
-              <sc-if value="{{appear.on}}" hint-placeholder-val="{{false}}">
-                <sc-for list="{{appear.envs}}" as="e" hint-placeholder-count="3">
-                  <div class="s04-env {{e.cls}}" style="{{e.style}}" data-act="preview" data-rid="{{e.key}}" role="button" onClick="{{e.pick}}">
-                    <div><div class="bands"><i style="{{e.b1}}"></i><i style="{{e.b2}}"></i><i style="{{e.b3}}"></i></div><div class="n">{{e.name}}</div><div class="l">{{e.line}}</div></div>
-                    <sc-if value="{{e.st}}" hint-placeholder-val="{{false}}"><span class="st">{{e.st}}</span></sc-if>
-                  </div>
-                </sc-for>
-                <div class="s04-sub s04-switch"><div><div class="s04-sv">减少动态</div><div class="s04-ss">{{appear.rmLine}}</div></div><button type="button" class="s04-sw" role="switch" aria-checked="{{appear.rmOn}}" data-act="toggle" onClick="{{appear.toggleRm}}" aria-label="减少动态"></button></div>
-                <p class="s04-note">{{appear.note}}</p>
-              </sc-if>
-              <sc-if value="{{generic.on}}" hint-placeholder-val="{{false}}">
-                <sc-for list="{{generic.rows}}" as="g" hint-placeholder-count="2"><div class="s04-sub"><div class="s04-sv">{{g.t}}</div></div></sc-for>
-              </sc-if>
+                </div>
+              </div>
+            </div>
+            <div class="s04-bar s04-fade">
+              <sc-if value="{{v.pf.failed}}"><p class="s04-fail" role="alert">{{v.pf.failText}}</p></sc-if>
+              <button type="button" class="s04-cta{{v.ctaCls}}" data-act="save" aria-busy="{{v.busy}}" onClick="{{v.save}}">{{v.pf.saveLabel}}</button>
+            </div>
+            <div class="s04-hd" data-header>
+              <div class="s04-tr"></div>
+              <div class="s04-trc s04-fade"><button type="button" class="s04-tb" data-act="cancel" onClick="{{v.pf.cancel}}">取消</button></div>
+              <h1 class="s04-t"><span class="s04-tt">编辑资料</span></h1>
             </div>
           </div>
-          <sc-if value="{{page.ghost}}" hint-placeholder-val="{{false}}"><div class="s04-ghost" style="{{page.ghostStyle}}"><sc-if value="{{page.ghostLabel}}" hint-placeholder-val="{{false}}"><div class="s04-bl">{{page.ghostLabel}}</div></sc-if><sc-for list="{{page.ghostRows}}" as="v" hint-placeholder-count="2"><div>{{v.t}}</div></sc-for></div></sc-if>
-          <sc-if value="{{bar.on}}" hint-placeholder-val="{{false}}"><div class="s04-bar"><button type="button" class="s04-cta" data-act="{{bar.act}}" disabled="{{bar.disabled}}" onClick="{{bar.go}}">{{bar.label}}</button></div></sc-if>
-        </div>
+        </section>
       </sc-if>
-      <sc-if value="{{confirm.on}}" hint-placeholder-val="{{false}}">
-        <div class="s04-over" onClick="{{confirm.keep}}">
-          <div class="s04-sheet" onClick="{{confirm.stop}}">
-            <h2>{{confirm.title}}</h2><p>{{confirm.body}}</p>
-            <div class="row"><button type="button" class="keep" data-act="cancel" onClick="{{confirm.keep}}">{{confirm.keepLabel}}</button><button type="button" class="discard" data-act="confirm" onClick="{{confirm.discard}}">{{confirm.discardLabel}}</button></div>
+
+      <!-- ========== other surfaces: same grow; bodies are built in stage 2 ========== -->
+      <sc-for list="{{v.shells}}" as="x" hint-placeholder-count="0">
+        <sc-if value="{{x.on}}">
+          <section class="s04-pg s04-page {{x.tone}} {{x.cls}}{{x.pcls}}" data-surface="{{x.s}}" style="{{x.style}}">
+            <div class="s04-pgbg"></div>
+            <div class="s04-pgfg">
+              <div class="s04-sc" data-scroller="{{x.s}}" onScroll="{{c.nav.onScroll}}">
+                <div class="s04-col"><div class="s04-band"><span class="s04-shero s04-num s04-fade">{{x.hero}}</span><span class="s04-acc s04-fade">{{x.sub}}</span></div></div>
+              </div>
+              <div class="s04-hd" data-header>
+                <div class="s04-tr"></div>
+                <div class="s04-trc s04-fade"><sc-if value="{{x.canBack}}"><button type="button" class="s04-tb" data-act="back" onClick="{{c.nav.back}}">‹ {{x.backLabel}}</button></sc-if></div>
+                <h1 class="s04-t"><span class="s04-tt">{{x.title}}</span></h1>
+              </div>
+            </div>
+          </section>
+        </sc-if>
+      </sc-for>
+
+      <!-- ========== overlays ========== -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="s04-over s04-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}">
+          <div class="s04-scrim" onClick="{{v.scrim}}"></div>
+          <div class="s04-shb">
+            <div class="s04-sht"><b>{{c.sheet.title}}</b><p>{{c.sheet.body}}</p></div>
+            <sc-if value="{{c.sheet.unsaved}}">
+              <button type="button" class="s04-shbtn keep" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button>
+              <button type="button" class="s04-shbtn drop" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button>
+            </sc-if>
+            <sc-if value="{{c.sheet.accountEnd}}">
+              <button type="button" class="s04-shbtn keep" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+              <button type="button" class="s04-shbtn drop" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button>
+            </sc-if>
           </div>
         </div>
       </sc-if>
-      <sc-if value="{{toast}}" hint-placeholder-val="{{false}}"><div class="s04-toast" role="status">{{toast}}</div></sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s04-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
   <!-- @panel -->
 </div>
 </x-dc>
-<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["home","dense"],"default":"home"},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* ---------- S04 海报块 · 方案代码 ----------
-   结构：首页 = 海报块堆叠（home）；任何块 → 同一个 .s04-page 层（块的共享元素生长）；页内容按 page.surface 切换。
-   数据只经 this.act(name, p) → JUS.engine，派生只用 JUS.derive.*；编辑态、预览、确认层是视图态。 */
-var INK = '#14161F', SEC = '#535b70';
-/* 三种环境 → 整页配色（三个色相 + 纸白 + 底色）；平涂，无渐变 */
-var PAL = {
-  cotton: { h1: '#f3a9c6', h2: '#dedaf3', h3: '#a8d6e4', paper: '#fffdf7', ground: '#e9e7ee' },
-  halo:   { h1: '#ff5a14', h2: '#ecd3b1', h3: '#c9b3dd', paper: '#fff9ef', ground: '#efe6d9' },
-  sunset: { h1: '#66b3ff', h2: '#ff7a33', h3: '#ffc53d', paper: '#fffbf2', ground: '#f0e5d5' }
-};
-function lum(hex) { var c = hex.replace('#', ''); var f = function (i) { var v = parseInt(c.substr(i, 2), 16) / 255; return v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4); }; return .2126 * f(0) + .7152 * f(2) + .0722 * f(4); }
-/* 块内文字按块色自动取墨或白（对比 ≥ 4.5） */
-function fgFor(hex) { var L = lum(hex); var cInk = (L + .05) / (lum(INK) + .05), cW = 1.05 / (L + .05); return cInk >= cW ? { fg: INK, fg2: SEC, white: false } : { fg: '#ffffff', fg2: 'rgba(255,255,255,.74)', white: true }; }
-function darken(hex, k) { var c = hex.replace('#', ''); var o = '#'; for (var i = 0; i < 6; i += 2) { var v = Math.round(parseInt(c.substr(i, 2), 16) * (1 - k)); o += (v < 16 ? '0' : '') + v.toString(16); } return o; }
-/* 索引 surface → 块与子页（阶段 2 逐个补内容；结构已定） */
-var SURF = {
-  profile: { block: 'profile' }, 'profile-edit': { block: 'profile', edit: true },
-  favorites: { block: 'fav' }, 'favorite-detail': { block: 'fav', sub: 'detail' }, city: { block: 'fav', sub: 'city' },
-  notify: { block: 'notify' }, appearance: { block: 'appearance' },
-  records: { block: 'records' }, 'record-detail': { block: 'records', sub: 'detail' }, 'record-dispute': { block: 'records', sub: 'dispute' }, 'record-appeal': { block: 'records', sub: 'appeal' }, 'record-supplement': { block: 'records', sub: 'supplement' },
-  reports: { block: 'records', sub: 'reports' }, 'report-detail': { block: 'records', sub: 'report' }, 'report-supplement': { block: 'records', sub: 'report-supplement' },
-  help: { block: 'help' }, feedback: { block: 'help', sub: 'feedback' }, privacy: { block: 'privacy' }, account: { block: 'account' }, about: { block: 'about' }, rules: { block: 'about', sub: 'rules' },
-  'seam-feed': { block: 'seam', sub: 'feed' }, 'seam-feed-detail': { block: 'seam', sub: 'feed-detail' }, 'seam-mine': { block: 'seam', sub: 'mine' }, 'seam-report': { block: 'seam', sub: 'report' }
-};
-var BLOCK_SURF = { profile: 'profile', fav: 'favorites', notify: 'notify', appearance: 'appearance', records: 'records', help: 'help', privacy: 'privacy', account: 'account', about: 'about' };
-var HEAD_Y = 52, TOOLS_H = 48;
+/* S04 海报拼块 — composition, type, surfaces and motion only; all behaviour comes from the shared controller (JUS.ctl).
+   Geometry for the signature motion is measured once per navigation:
+     enter (go)  → componentDidUpdate at phase 'enter': origin block rect → --clip0, block title → page title (--tx/--ty/--ts),
+                   every other [data-push] block of the surface underneath → push vector away from the origin (--px/--py)
+     exit (back) → onNav('back') before the exit render: the origin block's CURRENT rect → --clip1 and title landing (--bx/--by/--bs) */
+var S04_KEYS = ['profile', 'favorites', 'city', 'notify', 'appearance', 'records', 'reports', 'help', 'privacy', 'account', 'about', 'foot', 'hd', 'pband', 'pwx', 'pmail', 'pnote', 'edit', 'phd'];
+var S04_PAGES = ['profile', 'profile-edit', 'favorites', 'city', 'notify', 'appearance', 'records', 'reports', 'help', 'privacy', 'account', 'about', 'seam-feed', 'seam-mine'];
+var S04_SHELLS = [
+  { s: 'favorites', tone: 'tone-ink' }, { s: 'city', tone: 'tone-c3' }, { s: 'notify', tone: 'tone-c2' }, { s: 'appearance', tone: 'tone-env' },
+  { s: 'records', tone: 'tone-c1' }, { s: 'reports', tone: 'tone-ink' }, { s: 'help', tone: 'tone-ink' }, { s: 'privacy', tone: 'tone-ink' },
+  { s: 'account', tone: 'tone-ink' }, { s: 'about', tone: 'tone-ink' }, { s: 'seam-feed', tone: 'tone-paper', root: true }, { s: 'seam-mine', tone: 'tone-paper', root: true }
+];
+function s04px(n) { return (Math.round(n * 10) / 10) + 'px'; }
+/* long addresses break after @ and dots, never inside a word */
+function s04brk(t) { return String(t || '').replace(/([@._-])/g, '$1\u200b'); }
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this.onScroll = this.onScroll.bind(this); this.onFocus = this.onFocus.bind(this); }
-  initialState(variant) { return Object.assign({}, JUS.baseState(variant), { page: null, edit: null, preview: null, confirm: null, toast: '', savedAt: 0, flash: false, tick: 0 }); }
-  componentDidMount() { this.measure(); }
-  componentDidUpdate() { this.measure(); }
-  /* collapsed title must land in the middle of the tool row: measure each title's width once per render */
-  measure() { var root = this.rootRef.current; if (!root) return; var W = root.clientWidth || 390; var scs = root.querySelectorAll('.s04-scroll'); for (var i = 0; i < scs.length; i++) { var sp = scs[i].querySelector('.s04-h1 > span'); if (!sp) continue; var tw = sp.offsetWidth; scs[i].style.setProperty('--tx', (((W - .6 * tw) / 2) - 20).toFixed(1) + 'px'); } }
-  onScroll(ev) { var el = ev.currentTarget; var st = el.scrollTop; el.style.setProperty('--st', st + 'px'); el.style.setProperty('--sp', String(Math.max(0, Math.min(1, st / 56)))); }
-  /* keyboard: keep the focused field above the simulated keyboard (--kb on .ju-phone) */
-  onFocus(ev) { var el = ev.currentTarget; var self = this; setTimeout(function () { var root = self.rootRef.current; if (!root || !el.isConnected) return; var phone = root.parentElement; var kb = phone ? parseFloat(getComputedStyle(phone).getPropertyValue('--kb')) || 0 : 0; var sc = el.closest('.s04-scroll'); if (!sc) return; var H = root.clientHeight; var r = el.getBoundingClientRect(), pr = root.getBoundingClientRect(); var bottom = r.bottom - pr.top; var limit = H - kb - 96; if (bottom > limit) sc.scrollTop += (bottom - limit); }, 20); }
-  say(msg) { var self = this; this.setState({ toast: msg }); this.holdKey('toast', 2600, function () { self.setState({ toast: '' }); }); }
-  skinNow() { return this.state.preview || this.state.data.appearance.skin; }
-  /* ---- index jumps (review panel): every surface opens settled, no animation ---- */
-  applyJump(e) {
-    var o = e.open || {}; var surf = o.surface || 'home'; var self = this;
-    if (surf === 'home') { this.setState({ page: null, edit: null, preview: null, confirm: null }); return; }
-    var m = SURF[surf]; if (!m) return;
-    var st = { page: { surface: surf, block: m.block, sub: m.sub || null, id: o.id || null, phase: 'settled', rect: null }, edit: null, preview: null, confirm: null };
-    if (m.edit) st.edit = this.freshEdit();
-    if (surf === 'appearance' && o.state === 'preview') st.preview = o.id || 'sunset';
-    if (surf === 'profile' && o.state === 'saved') { st.savedAt = Date.now(); this.holdKey('saved', 2600, function () { self.setState({ savedAt: 0 }); }); }
-    this.setState(st);
-    if (m.edit && o.state) this.after(20, function () { self.editState(o.state); });
-  }
-  editState(state) {
-    var self = this; var e = this.state.edit || this.freshEdit();
-    if (state === 'invalid') { e = Object.assign({}, e, { name: '', wx: '阿禾 ju', touched: true }); e.errors = this.errsFor(e); this.setState({ edit: e }); }
-    else if (state === 'code' || state === 'code-expired') { e = Object.assign({}, e, { email: 'ahe.zhang@stern.nyu.edu' }); this.setState({ edit: e }); this.after(10, function () { self.sendCode(); if (state === 'code-expired') self.after(10, function () { self.expireCode(); }); }); }
-    else if (state === 'fail') { e = Object.assign({}, e, { name: e.name === '阿禾二' ? '阿禾三' : '阿禾二' }); this.setState({ edit: e }); this.armFail(); this.after(10, function () { self.save(); }); }
-    else if (state === 'unsaved') { e = Object.assign({}, e, { name: '阿禾二' }); this.setState({ edit: e, confirm: 'unsaved' }); }
-    else if (state === 'kb') { this.setReview({ kb: true }); this.after(10, function () { var i = self.rootRef.current.querySelector('[data-field=name]'); if (i) i.focus(); }); }
-  }
-  /* ---- block → page (core motion: the block grows into the page; title travels to the header; content fades in after 120ms) ---- */
-  openBlock(key, ev) {
-    var self = this; var root = this.rootRef.current; var el = (ev && ev.currentTarget) || root.querySelector('[data-block="' + key + '"]');
-    var rect = el ? JU.fx.rectIn(el, root) : null; var surf = BLOCK_SURF[key];
-    this.motion('grow', function () {
-      self.setState({ page: { surface: surf, block: key, sub: null, id: null, phase: rect ? 'in' : 'settled', rect: rect }, edit: null, preview: null, confirm: null });
-      if (rect) self.after(300, function () { self.setState(function (s) { return s.page && s.page.phase === 'in' ? { page: Object.assign({}, s.page, { phase: 'settled' }) } : null; }); });
-    });
-  }
-  beforeReplay(name) { if (name === 'grow') this.setState({ page: null, edit: null, preview: null, confirm: null }); }
-  closePage() {
-    var s = this.state, self = this; if (!s.page) return;
-    if (s.edit && this.editDirty()) { this.setState({ confirm: 'unsaved' }); return; }
-    var root = this.rootRef.current; var el = root.querySelector('[data-block="' + s.page.block + '"]');
-    var rect = el ? JU.fx.rectIn(el, root) : null; var sc = root.querySelector('.s04-page .s04-scroll'); var scrolled = !!(sc && sc.scrollTop > 4);
-    if (s.edit && s.data.you.emailPending) this.act('clearEmailPending', {});
-    this.setState({ page: Object.assign({}, s.page, { phase: 'out', rect: rect, scrolled: scrolled }), edit: null, preview: null, confirm: null });
-    this.after(rect ? 260 : 200, function () { self.setState({ page: null }); });
-  }
-  /* ---- profile edit (explicit save model) ---- */
-  freshEdit() { var y = this.state.data.you; return { name: y.name, wx: y.wx, email: y.email, errors: {}, touched: false, code: '', codeErr: '', saving: false, fail: '' }; }
-  startEdit(focusKey) { var self = this; this.setState({ edit: this.freshEdit(), savedAt: 0 }); if (focusKey) this.after(30, function () { var i = self.rootRef.current.querySelector('[data-field=' + focusKey + ']'); if (i) i.focus(); }); }
-  editDirty() { var e = this.state.edit, y = this.state.data.you; return !!e && (e.name.trim() !== y.name || e.wx.trim() !== y.wx || e.email.trim() !== y.email); }
-  errsFor(e) { return { name: JUS.validate.name(e.name), wx: JUS.validate.wx(e.wx), email: JUS.validate.email(e.email) }; }
-  setEdit(patch) { var self = this; this.setState(function (s) { if (!s.edit) return null; var e = Object.assign({}, s.edit, patch); if (e.touched) { var x = self.errsFor(e); var o = Object.assign({}, e.errors); Object.keys(patch).forEach(function (k) { if (k in x) o[k] = x[k]; }); e.errors = o; } return { edit: e }; }); }
-  cancelEdit() { if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.setState({ edit: null, confirm: null }); }
-  discardAndBack() { if (this.state.data.you.emailPending) this.act('clearEmailPending', {}); this.setState({ edit: null, confirm: null }); var self = this; this.after(10, function () { self.closePage(); }); }
-  save() {
-    var e = this.state.edit, self = this; if (!e || e.saving) return;
-    var errors = this.errsFor(e); var email = e.email.trim(); var pnd = this.state.data.you.emailPending;
-    if (!errors.email && email && email !== this.state.data.you.email && !(pnd && pnd.verified && pnd.email === email)) errors.email = JUS.COPY.profileErrors.mailUnverified;
-    if (errors.name || errors.wx || errors.email) { this.setState({ edit: Object.assign({}, e, { errors: errors, touched: true }) }); return; }
-    this.setState({ edit: Object.assign({}, e, { saving: true, fail: '', errors: {} }) });
-    this.hold(320, function () {
-      var cur = self.state.edit; if (!cur) return;
-      var res = self.act('saveProfile', { name: cur.name, wx: cur.wx, email: cur.email });
-      if (res.effect.type === 'invalid') { self.setState({ edit: Object.assign({}, cur, { saving: false, errors: res.effect.errors, touched: true }) }); return; }
-      if (res.effect.type === 'error') { self.setState({ edit: Object.assign({}, cur, { saving: false, fail: res.effect.message }) }); return; }
-      self.motion('save', function () {
-        self.cancelKey('resend');
-        self.setState({ edit: null, savedAt: Date.now(), flash: true, confirm: null });
-        self.after(160, function () { self.setState({ flash: false }); });
-        self.holdKey('saved', 2600, function () { self.setState({ savedAt: 0 }); });
-      });
-    });
-  }
-  /* email code: local 6-digit test code (shown only in the review panel); 59s resend window and 5-minute expiry run on the real clock */
-  sendCode() { var e = this.state.edit; if (!e) return; var res = this.act('requestEmailCode', { email: e.email.trim() }); if (res.effect.type === 'invalid') { this.setEdit({ errors: Object.assign({}, e.errors, res.effect.errors), touched: true }); return; } this.setEdit({ code: '', codeErr: '' }); this.startTick(); }
-  startTick() { var self = this; this.holdKey('resend', 1000, function () { var p = JUS.derive.emailPending(self.state.data); self.setState({ tick: Date.now() }); if (p && !p.verified && (p.resendLeftS > 0 || !p.expired)) self.startTick(); }); }
-  verifyCode() { var e = this.state.edit; if (!e) return; var res = this.act('verifyEmailCode', { code: e.code }); if (res.effect.type === 'invalid') { this.setEdit({ codeErr: res.effect.errors.code }); return; } if (res.effect.type === 'error') { this.setEdit({ codeErr: res.effect.message }); return; } this.cancelKey('resend'); this.setEdit({ codeErr: '' }); }
-  copyWx() { var self = this; var v = this.state.data.you.wx; var done = function (ok) { var res = self.act('copyResult', { ok: ok, value: v }); self.say(res.effect.message); }; try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(function () { done(true); }, function () { done(false); }); else done(false); } catch (err) { done(false); } }
-  /* ---- render ---- */
-  renderVals() {
-    var s = this.state, d = s.data, self = this; var panel = this.panelVals(); panel.show = this.props.panel !== false;
-    if (d.appearance.reduceMotion) panel.rootCls += ' rm-user';
-    var skin = this.skinNow(); var P = PAL[skin] || PAL.cotton; var sum = JUS.derive.summary(d); var y = d.you;
-    var palStyle = '--h1:' + P.h1 + ';--h2:' + P.h2 + ';--h3:' + P.h3 + ';--paper:' + P.paper + ';--ground:' + P.ground + ';--pbg:' + P.ground + ';--psec:' + SEC;
-    var root = this.rootRef.current; var W = root ? root.clientWidth : 390, H = root ? root.clientHeight : 844;
-    /* home blocks: seven rows, three hues + paper + ink */
-    var wxLine = y.wx ? y.wx : '微信号未填写'; var emailLine = y.email ? y.email + ' · ' + sum.emailLabel : '邮箱未填写';
-    var privacyFacts = JUS.derive.privacy(d).facts.length;
-    var defs = [
-      { key: 'profile', bg: P.h1, cls: 'hero', title: y.name, label: '个人资料', values: [wxLine, emailLine], titlePx: 32 },
-      { key: 'fav', bg: P.h2, title: '收藏', values: [sum.favLabel, '找局默认 · ' + sum.cityLabel] },
-      { key: 'notify', bg: P.paper, title: '提醒', values: [sum.notifyLabel] },
-      { key: 'appearance', bg: P.h3, title: '外观', values: [sum.appearanceLabel] },
-      { key: 'records', bg: INK, title: '记录与举报', label: sum.attention ? sum.attention + ' 件待处理' : '', values: [sum.recordLabel, sum.reportLabel] },
-      { key: 'help', bg: P.paper, cls: 'small', title: '帮助', values: [JUS.RULES.length + ' 条规则'] },
-      { key: 'privacy', bg: P.paper, cls: 'small', title: '隐私', values: [privacyFacts ? privacyFacts + ' 个局可见' : '按活动决定'] },
-      { key: 'account', bg: P.paper, cls: 'small', title: '账户', values: [d.session.kind === 'demo' ? '本地演示' : '已退出'] },
-      { key: 'about', bg: P.paper, title: '关于', values: ['JU 原型 · 规则 ' + JUS.RULES_VERSION] }
-    ];
-    var byKey = {};
-    var blocks = defs.map(function (b) { var c = fgFor(b.bg); byKey[b.key] = Object.assign({}, b, c); return { key: b.key, cls: b.cls || '', title: b.title, label: b.label || '', values: b.values.map(function (t) { return { t: t }; }), style: '--bc:' + b.bg + ';--fg:' + c.fg + ';--fg2:' + c.fg2, open: function (ev) { self.openBlock(b.key, ev); } }; });
-    var homeMeta = sum.attention ? sum.attention + ' 件待处理 · 本地演示' : JUS.COPY.demoOnly;
-    /* page */
-    var page = { on: false }, prof = { on: false }, ver = { on: false }, appear = { on: false }, generic = { on: false }, bar = { on: false };
-    if (s.page) {
-      var pg = s.page; var bd = byKey[pg.block] || { bg: P.ground, fg: INK, fg2: SEC, title: '', values: [], label: '' };
-      var pc = s.flash ? darken(bd.bg, .1) : bd.bg; var fgc = fgFor(bd.bg);
-      var style = '--pc:' + pc + ';--pfg:' + fgc.fg + ';--pfg2:' + fgc.fg2;
-      var r = pg.rect; var cls = pg.phase + (fgc.white ? ' white' : '') + (s.flash ? ' flash' : '') + (pg.scrolled ? ' scrolled' : '') + (!r && pg.phase === 'out' ? ' nofx' : '');
-      if (r) { var pad = bd.cls === 'small' ? 16 : 20; style += ';--cy:' + r.y.toFixed(1) + 'px;--cr:' + (W - r.x - r.w).toFixed(1) + 'px;--cb:' + (H - r.y - r.h).toFixed(1) + 'px;--cl:' + r.x.toFixed(1) + 'px;--ttx:' + (r.x + pad - 20).toFixed(1) + 'px;--tty:' + (r.y + (bd.cls === 'hero' ? 20 : bd.cls === 'small' ? 14 : 18) - HEAD_Y).toFixed(1) + 'px;--tts:' + ((bd.titlePx || (bd.cls === 'small' ? 22 : 26)) / 30).toFixed(4); }
-      var editing = !!s.edit;
-      page = { on: true, surface: editing ? 'profile-edit' : pg.surface, cls: cls, style: style, title: bd.title, meta: '', back: function () { self.closePage(); }, action: '', actionAct: '', noAction: true, onAction: null, bodyCls: '', ghost: false };
-      if (r && pg.phase !== 'settled') { var small = bd.cls === 'small'; page.ghost = true; page.ghostRows = (bd.values || []).map(function (t) { return { t: t }; }); page.ghostLabel = bd.label || ''; page.ghostStyle = '--gx:' + r.x.toFixed(1) + 'px;--gy:' + r.y.toFixed(1) + 'px;--gw:' + r.w.toFixed(1) + 'px;--gh:' + r.h.toFixed(1) + 'px;--gpt:' + (small ? 14 : bd.cls === 'hero' ? 20 : 18) + 'px;--gpx:' + (small ? 16 : 20) + 'px;--gpb:' + (small ? 14 : 18) + 'px' + (small ? ';--gfs:13px;--gc:var(--pfg2)' : ''); }
-      if (pg.block === 'profile') {
-        var e = s.edit;
-        page.meta = editing ? '编辑资料' + (e.saving ? ' · 保存中…' : '') : '个人资料' + (s.savedAt ? ' · 已保存' : '');
-        if (editing) { page.action = '取消'; page.actionAct = 'cancel'; page.noAction = false; page.onAction = function () { self.cancelEdit(); }; page.bodyCls = 'withbar'; }
-        var kind = y.emailKind === 'school' ? '学校邮箱' : y.emailKind === 'work' ? '工作邮箱' : '';
-        var fresh = s.savedAt ? 'fresh' : '';
-        if (!editing) {
-          prof = { on: true, fail: '', editBtn: true, startEdit: function () { self.startEdit('name'); }, note: JUS.COPY.snapshotNote, fields: [
-            { key: 'name', label: '称呼', text: true, value: y.name, vcls: fresh, cls: '' },
-            { key: 'wx', label: '微信号', text: true, value: y.wx || '未填写', vcls: (y.wx ? '' : 'empty ') + fresh, copy: !!y.wx, onCopy: function () { self.copyWx(); }, cls: '' },
-            { key: 'email', label: '邮箱', text: true, value: y.email || '未填写', vcls: (y.email ? '' : 'empty ') + fresh, sub: y.email ? (y.emailVerified ? '已验证' + (kind ? ' · ' + kind + ' ' + y.emailDomain : '') : '未验证') : '', scls: y.email && y.emailVerified ? 'ok' : '', cls: '' } ] };
-        } else {
-          var er = e.touched ? e.errors : {};
-          prof = { on: true, fail: e.fail, retry: function () { self.save(); }, editBtn: false, note: JUS.COPY.emailHint, fields: [
-            { key: 'name', label: '称呼（最多 10 个字）', input: true, value: e.name, ph: '怎么称呼你', mode: 'text', err: er.name || '', cls: 'editing' + (er.name ? ' err' : ''), onInput: function (ev) { self.setEdit({ name: ev.target.value }); } },
-            { key: 'wx', label: '微信号', input: true, value: e.wx, ph: '字母、数字、下划线或短横线', mode: 'text', err: er.wx || '', cls: 'editing' + (er.wx ? ' err' : ''), onInput: function (ev) { self.setEdit({ wx: ev.target.value }); } },
-            { key: 'email', label: '邮箱（工作或学校邮箱，可留空）', input: true, value: e.email, ph: 'name@school.edu', mode: 'email', err: er.email || '', cls: 'editing' + (er.email ? ' err' : ''), sub: e.email.trim() === y.email && y.email ? (y.emailVerified ? '已验证 · ' + y.emailDomain : '未验证') : '', scls: e.email.trim() === y.email && y.emailVerified ? 'ok' : '', onInput: function (ev) { self.setEdit({ email: ev.target.value, codeErr: '' }); } } ] };
-          var em = e.email.trim(); var pnd = JUS.derive.emailPending(d);
-          if (em && em !== y.email && !JUS.validate.email(em)) {
-            var mine = pnd && pnd.email === em ? pnd : null;
-            ver = { on: true, cls: 'editing', hint: '本机演示 · 验证码不发邮件', code: e.code, onCode: function (ev) { self.setEdit({ code: ev.target.value.replace(/\D/g, '').slice(0, 6), codeErr: '' }); }, send: function () { self.sendCode(); }, verify: function () { self.verifyCode(); }, resend: function () { self.sendCode(); } };
-            if (!mine) { ver.idle = true; ver.line = '改了邮箱，保存前先验证 ' + em; }
-            else if (mine.verified) { ver.ok = true; ver.line = em; }
-            else { ver.sent = true; ver.line = '验证码已发到 ' + em; ver.err = mine.expired ? JUS.COPY.profileErrors.codeExpired : e.codeErr; ver.resendDisabled = mine.resendLeftS > 0; ver.resendLine = mine.expired ? '这个验证码已失效' : mine.resendLeftS > 0 ? mine.resendLeftS + ' 秒后可以重新发送' : '可以重新发送'; }
-          }
-          bar = { on: true, act: 'save', label: e.saving ? '保存中…' : '保存', disabled: e.saving, go: function () { self.save(); } };
-        }
-      } else if (pg.block === 'appearance') {
-        page.meta = s.preview && s.preview !== d.appearance.skin ? '预览中 · 未应用' : '当前 ' + sum.appearanceLabel;
-        appear = { on: true, rmOn: d.appearance.reduceMotion ? 'true' : 'false', rmLine: d.appearance.reduceMotion ? '已开启 · 动效瞬切到结果' : (s.review.rmSys ? '系统已要求减少动态 · 已跟随' : '跟随系统 · 当前关闭'), toggleRm: function () { var res = self.act('setReduceMotion', { on: !d.appearance.reduceMotion }); if (res.effect.type === 'error') self.say(res.effect.message); }, note: '预览只改变这块屏幕；点「应用」才保存。',
-          envs: JUS.SKINS.map(function (sk) { var Q = PAL[sk.key]; var c = fgFor(Q.h1); var cur = d.appearance.skin === sk.key, pv = skin === sk.key; return { key: sk.key, name: sk.name, line: sk.line, cls: c.white ? 'white' : '', style: '--ec:' + Q.h1 + ';--efg:' + c.fg, b1: '--b:' + Q.h1, b2: '--b:' + Q.h2, b3: '--b:' + Q.h3, st: cur && pv ? '当前' : pv ? '预览中' : cur ? '已保存' : '', pick: function () { self.setState({ preview: sk.key }); } }; }) };
-        if (s.preview && s.preview !== d.appearance.skin) { page.action = '取消预览'; page.actionAct = 'cancel'; page.noAction = false; page.onAction = function () { self.setState({ preview: null }); }; page.bodyCls = 'withbar'; bar = { on: true, act: 'apply', label: '应用' + (JUS.SKINS.filter(function (k) { return k.key === s.preview; })[0] || {}).name, disabled: false, go: function () { var k = s.preview; self.motion('skin', function () { var res = self.act('applySkin', { skin: k }); if (res.effect.type === 'error') { self.say(res.effect.message); return; } self.setState({ preview: null }); }); } }; }
-      } else {
-        page.meta = (bd.values || []).join(' · ');
-        generic = { on: true, rows: (bd.values || []).map(function (t) { return { t: t }; }) };
-      }
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 320, back: 300, root: 280, swap: 280 }; this.headerRange = 72; }
+  initialState(variant) { var st = JUS.baseState(variant); st.s04 = { geo: {}, fresh: null, flash: 0 }; return st; }
+  componentDidMount() { this.s04Sync(); }
+  componentDidUpdate() { this.s04Sync(); }
+  /* ---------- geometry ---------- */
+  s04Sync() {
+    var root = this.rootRef.current; var nav = this.state.nav; if (!root || !nav) return;
+    var st = nav.stack, top = st[st.length - 1], under = st.length > 1 ? st[st.length - 2] : null;
+    if (under) this.s04RestoreUnder(root, under);
+    var g = this.state.s04 || { geo: {} };
+    if (under && top.key && nav.phase === 'enter' && nav.dir === 'fwd' && !(g.geo && g.geo[top.id])) {
+      var m = this.s04Measure(root, under.s, top.key, top.s, false) || { none: true }; var id = top.id;
+      this.setState(function (s) { var geo = Object.assign({}, s.s04.geo); geo[id] = m; return { s04: Object.assign({}, s.s04, { geo: geo }) }; });
     }
-    var confirm = { on: false };
-    if (s.confirm === 'unsaved') { var U = JUS.COPY.unsaved; confirm = { on: true, title: U.title, body: U.body, keepLabel: U.keep, discardLabel: U.discard, keep: function () { self.setState({ confirm: null }); }, discard: function () { self.discardAndBack(); }, stop: function (ev) { ev.stopPropagation(); } }; }
-    return { panel: panel, rootRef: this.rootRef, skin: skin, palStyle: palStyle, homeMeta: homeMeta, blocks: blocks, page: page, prof: prof, ver: ver, appear: appear, generic: generic, bar: bar, confirm: confirm, toast: s.toast, onScroll: this.onScroll, onFocus: this.onFocus };
+  }
+  /* a surface that re-mounts underneath (e.g. home after returning from 编辑) gets its remembered scroll back BEFORE it is revealed */
+  s04RestoreUnder(root, under) {
+    var sec = root.querySelector('[data-surface="' + under.s + '"]'); if (!sec) return;
+    var sc = sec.querySelector('[data-scroller]'); if (!sc || sc.__s04u === under.id) return;
+    sc.__s04u = under.id; var memo = (this._scrollMemo || {})[under.id]; var name = sc.getAttribute('data-scroller');
+    if (memo && memo[name] != null && Math.abs(sc.scrollTop - memo[name]) > 1) { sc.scrollTop = memo[name]; this._applyHc(sc); }
+  }
+  s04Measure(root, underS, key, pageS, back) {
+    var us = root.querySelector('[data-surface="' + underS + '"]'), ps = root.querySelector('[data-surface="' + pageS + '"]');
+    if (!us || !ps || !(global_JU())) return null;
+    var o = us.querySelector('[data-origin="' + key + '"]'); if (!o) return null;
+    var fx = function (el) { return JU.fx.rectIn(el, root); };
+    var R = fx(o), P = fx(ps); var W = P.w, H = P.h, x0 = R.x - P.x, y0 = R.y - P.y;
+    var clip = [s04px(y0), s04px(W - x0 - R.w), s04px(H - y0 - R.h), s04px(x0)];
+    var lab = o.querySelector('[data-ttl]'), tt = ps.querySelector('.s04-hd .s04-tt'); var ttl = null;
+    if (lab && tt) { var a = fx(lab), b = fx(tt); var fa = parseFloat(getComputedStyle(lab).fontSize) || 15, fb = parseFloat(getComputedStyle(tt).fontSize) || 30; ttl = [Math.round((a.x - b.x) * 10) / 10, Math.round((a.y - b.y) * 10) / 10, Math.round(fa / fb * 1000) / 1000]; }
+    var bY = key === 'profile' ? Math.round(y0) : 0;
+    if (back) return { clip1: clip, bttl: ttl, by1: bY };
+    var push = {};
+    /* a full-width block pushes the rows above / below off-screen; a narrower block only shoves its row-mates sideways and
+       grows over the other rows (rigid blocks moving in two directions would open paper holes in the mosaic) */
+    var full = R.w >= W - 2;
+    us.querySelectorAll('[data-push]').forEach(function (el) {
+      var k = el.getAttribute('data-push'); if (k === key) return; var b = fx(el); var dx = 0, dy = 0;
+      var above = b.y + b.h <= R.y + 1, below = b.y >= R.y + R.h - 1;
+      if (full) { if (above) dy = -(R.y - P.y); else if (below) dy = (P.y + H) - (R.y + R.h); }
+      else if (!above && !below) { if (b.x + b.w <= R.x + 1) dx = -(R.x - P.x); else if (b.x >= R.x + R.w - 1) dx = (P.x + W) - (R.x + R.w); }
+      if (dx || dy) push[k] = [Math.round(dx), Math.round(dy)];
+    });
+    return { clip0: clip, ttl: ttl, push: push, by0: bY };
+  }
+  /* back(): measure where the page must land (the block may have changed, e.g. a longer name) and flash the identity after a save */
+  onNav(type) {
+    if (type !== 'back') return;
+    var root = this.rootRef.current; var nav = this.state.nav; if (!root || !nav || nav.stack.length < 2) return;
+    var top = nav.stack[nav.stack.length - 1], under = nav.stack[nav.stack.length - 2]; var g = this.state.s04 || { geo: {} };
+    var cur = g.geo && g.geo[top.id]; var m = cur && cur.clip0 && top.key ? this.s04Measure(root, under.s, top.key, top.s, true) : null;
+    var flash = top.s === 'profile' && under.s === 'home' && g.fresh && g.fresh.length ? Date.now() : 0; var id = top.id;
+    if (m || flash) this.setState(function (s) { var geo = Object.assign({}, s.s04.geo); if (m) geo[id] = Object.assign({}, geo[id], m); return { s04: Object.assign({}, s.s04, { geo: geo, flash: flash || s.s04.flash }) }; });
+    if (flash) { var self = this; this.afterKey('s04-flash', this.navMs('back') + 460, function () { self.setState(function (s) { return { s04: Object.assign({}, s.s04, { flash: 0 }) }; }); }); }
+  }
+  /* save success: the controller's default (toast → back) plus a short-lived 刚更新 mark on the fields that changed */
+  onProfileSaved(e) {
+    var self = this;
+    this.setState(function (s) { return { s04: Object.assign({}, s.s04, { fresh: e.nothing ? null : (e.changed || []).slice() }) }; });
+    this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
+    this.afterKey('pf-back', 240, function () { self.back(true); });
+    this.holdKey('s04-fresh', 9000, function () { self.setState(function (s) { return { s04: Object.assign({}, s.s04, { fresh: null }) }; }); });
+  }
+  /* a block opens its page; registered as the replayable core motion */
+  s04Open(surface, key, ev) {
+    var self = this; var el0 = ev && ev.currentTarget; var nav = this.state.nav; var from = nav.stack[nav.stack.length - 1].s;
+    this._s04From = from;
+    this.motion('grow', function () {
+      var root = self.rootRef.current; var el = el0 && el0.isConnected ? el0 : null;
+      if (!el && root) el = root.querySelector('[data-surface="' + from + '"] [data-origin="' + key + '"]');
+      self.go(surface, {}, el ? { currentTarget: el } : null);
+    });
+  }
+  beforeReplay(name) { if (name === 'grow' && this._s04From) this.ctlJump({ open: { surface: this._s04From } }); }
+  /* ---------- view model ---------- */
+  s04Vals(c) {
+    var self = this, s = this.state, d = s.data, nav = s.nav, g = s.s04 || { geo: {} };
+    var st = nav.stack, top = st[st.length - 1], under = st.length > 1 ? st[st.length - 2] : null;
+    var moving = nav.phase !== 'idle' && (nav.dir === 'fwd' || nav.dir === 'back');
+    var geo = (g.geo || {})[top.id] || null;
+    var oc = {}, ps = {}, pg = {}, pv = {};
+    S04_KEYS.forEach(function (k) { oc[k] = ''; ps[k] = ''; });
+    S04_PAGES.forEach(function (k) { pg[k] = ' no-origin'; pv[k] = ''; });
+    if (under && top.key && moving) { oc[top.key] = ' is-origin'; if (top.key === 'profile') oc.hd = ' is-origin'; }
+    if (geo && geo.push) Object.keys(geo.push).forEach(function (k) { var p = geo.push[k]; ps[k] = '--px:' + p[0] + 'px;--py:' + p[1] + 'px'; });
+    if (geo && geo.clip0) {
+      var css = '--ct0:' + geo.clip0[0] + ';--cr0:' + geo.clip0[1] + ';--cb0:' + geo.clip0[2] + ';--cl0:' + geo.clip0[3] + ';', cls = ' has-origin';
+      if (geo.ttl) { css += '--tx:' + geo.ttl[0] + 'px;--ty:' + geo.ttl[1] + 'px;--ts:' + geo.ttl[2] + ';'; cls += ' has-ttl'; }
+      var c1 = geo.clip1 || geo.clip0; css += '--ct1:' + c1[0] + ';--cr1:' + c1[1] + ';--cb1:' + c1[2] + ';--cl1:' + c1[3] + ';--by0:' + (geo.by0 || 0) + 'px;--by1:' + (geo.by1 != null ? geo.by1 : (geo.by0 || 0)) + 'px;';
+      if (geo.bttl) { css += '--bx:' + geo.bttl[0] + 'px;--by:' + geo.bttl[1] + 'px;--bs:' + geo.bttl[2] + ';'; cls += ' has-bttl'; }
+      pv[top.s] = css; pg[top.s] = cls;
+    }
+    var backOf = function (surf) { for (var i = st.length - 1; i > 0; i--) if (st[i].s === surf) return c.nav.title[st[i - 1].s] || '返回'; return '设置'; };
+    var you = c.you, sum = c.sum; var nameLen = Array.from(you.name || '').length;
+    var fresh = g.fresh || [];
+    var skin = JUS.SKINS.filter(function (k) { return k.key === c.skin.shown; })[0] || JUS.SKINS[0];
+    var pf = c.pf.on ? (this._s04pf = c.pf) : (this._s04pf || c.pf); var err = pf.err || {};
+    var open = {}; ['profile', 'favorites', 'city', 'notify', 'appearance', 'records', 'reports', 'help', 'privacy', 'account', 'about'].forEach(function (k) { open[k] = function (ev) { self.s04Open(k, k, ev); }; });
+    open.edit = function (ev) { self.s04Open('profile-edit', 'edit', ev); };
+    var heroOf = { favorites: String(c.fav.count), city: c.city.cur.name, notify: c.notify.onCount + '/' + c.notify.total, appearance: c.skin.curName, records: String(sum.recordCount), reports: String(sum.reportCount), help: String(JUS.RULES.length), privacy: String((c.privacy.facts || []).length), account: '本机', about: JUS.RULES_VERSION, 'seam-feed': c.feed.city.name, 'seam-mine': String(c.mine.current.length) };
+    var subOf = { favorites: sum.favLabel, city: c.city.scope, notify: c.notify.deliverLabel, appearance: c.skin.rmLine, records: sum.recordLabel, reports: sum.reportLabel, help: '条参加约定 · 帮助与反馈', privacy: c.privacy.lead, account: c.demoNote, about: c.about.version, 'seam-feed': '收藏 ' + c.feed.favCount + ' · ' + c.feed.hintIdle, 'seam-mine': c.mine.snapshotNote };
+    return {
+      rmUser: d.appearance.reduceMotion ? ' rm-user' : '',
+      oc: oc, ps: ps, pg: pg, pv: pv, open: open,
+      flashCls: g.flash ? ' is-flash' : '',
+      homeMeta: c.attCount ? c.attCount + ' 件事等你回应 · 本地演示' : JUS.COPY.demoOnly,
+      nmCls: nameLen > 6 ? ' is-long' : '',
+      accLine: (you.wx ? you.wx : '微信号未填写') + ' · ' + (you.email ? s04brk(you.email) + ' · ' + sum.emailLabel : '邮箱未填写'),
+      favNames: c.fav.rows.slice(0, 3).map(function (r) { return r.title; }), favZero: c.fav.count === 0,
+      ntfN: c.notify.onCount + '/' + c.notify.total, ntfLine: sum.notifyLabel.split(' · ').slice(1).join(' · '),
+      skinLine: skin.en + (d.appearance.reduceMotion ? ' · 减少动态' : ''),
+      recPend: sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '',
+      repLine: sum.needMore ? sum.needMore + ' 条需补充 ›' : sum.reportLabel,
+      /* profile */
+      back: { profile: backOf('profile') },
+      nameRule: (JUS.derive.privacy(d).general || [])[0] || '',
+      pfMeta: you.verified ? you.domain + ' 已验证 · ' + (d.you.emailKind === 'work' ? '工作邮箱' : '学校邮箱') : you.email ? '邮箱未验证' : '邮箱未填写',
+      wxBig: you.wx ? s04brk(you.wx) : '未填写', wxCls: !you.wx ? ' is-empty' : you.wx.length > 13 ? ' is-long' : '',
+      mailBig: you.email ? s04brk(you.email) : '未填写', mailCls: !you.email ? ' is-empty' : you.email.length > 24 ? ' is-long' : '',
+      mailState: you.email ? (you.verified ? '已验证 ' + you.domain : '未验证') : '可不填',
+      mailMk: you.email && you.verified ? ' ok' : '',
+      fresh: { name: fresh.indexOf('name') >= 0, wx: fresh.indexOf('wx') >= 0, email: fresh.indexOf('email') >= 0 },
+      copyFailText: JUS.COPY.copyFailInline, snapNote: JUS.COPY.snapshotNote,
+      /* edit */
+      pf: pf,
+      pfe: { name: err.name ? ' is-err' : '', wx: err.wx ? ' is-err' : '', email: err.email ? ' is-err' : '' }, codeErr: err.code ? ' is-err' : '',
+      canSend: !!(pf.codeNone && !(err.email && err.email !== JUS.COPY.profileErrors.mailUnverified)),
+      cntCls: pf.nameOver ? ' is-over' : '', nmInCls: Array.from(pf.name || '').length > 6 ? ' is-long' : '',
+      codeRow: !!(pf.codeSent || pf.codeExpired), showCodeNote: !!(pf.codeSent || pf.codeExpired || (pf.codeNone && !(err.email && err.email !== JUS.COPY.profileErrors.mailUnverified))), resendOff: !!(pf.codeSent && pf.resendLeft > 0), resendCls: pf.codeExpired ? ' is-strong' : '',
+      showHint: !!(pf.emailChanged && !pf.needCode && !pf.codeVerified) || !pf.emailChanged,
+      ctaCls: pf.saving ? ' is-busy' : '', busy: pf.saving ? 'true' : 'false', edCls: pf.failed ? ' is-failed' : '',
+      save: function () { if (self.state.pf) self.pfSave(); },
+      scrim: function () { if (c.sheet.unsaved) self.sheetKeep(); else self.closeSheet(); },
+      /* stage-2 shells */
+      shells: S04_SHELLS.map(function (x) { return { s: x.s, on: !!c.nav.on[x.s], cls: c.nav.cls[x.s] || '', pcls: pg[x.s] || ' no-origin', style: pv[x.s] || '', tone: x.tone, title: c.nav.title[x.s], hero: heroOf[x.s], sub: subOf[x.s], canBack: !x.root, backLabel: backOf(x.s) }; })
+    };
+  }
+  renderVals() {
+    var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var c = this.ctlVals();
+    return { panel: panel, rootRef: this.rootRef, c: c, v: this.s04Vals(c) };
   }
 }
+function global_JU() { return typeof JU !== 'undefined' && JU.fx && JU.fx.rectIn; }
 JUS.mixin(Component);
 </script>
 </body>
