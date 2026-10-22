@@ -6,13 +6,13 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-22 05:0x UTC（时刻以提交时间为准） |
+| 最后更新 | 2026-10-22 09:xx UTC（时刻以提交时间为准） |
 | 分支 / 提交 | `claude/eager-brahmagupta-ct0owo`（本次更新后推送；`git log -1` 为准） |
 | 任务书 | `settings-r2/brief/R2-PROMPT.txt`（用户上传的 `JU-SETTINGS-FABLO51-REDESIGN-R2-PROMPT.txt` 原文；附带的审查页 `JU-SETTINGS-R2-REVIEW-AND-PROMPT.html` 的逐套诊断已读） |
 | 用户本轮原话（要点） | 旧十套全部重新构思，不选任何一套继续修，不拼接旧构图，不换皮交付；十套各有独立、成熟的艺术指导；共有的 JU 身份与关键行为保持稳定，正文构图 / 空间比例 / 中文排版 / 色彩面积 / 表面层次 / 运动编排充分开放；视觉吸引力是独立且必要的门槛；一次性交付十套完整、可体验、可离线打开的方案；用实际画面和真实操作证明 |
-| 主要交付 | `JU-SETTINGS-R2-TEN-DIRECTIONS.html`（尚未生成；构建脚本已就位：`node settings-r2/src/build.js`） |
-| 当前步骤 | 阶段 2（全部 52 个状态 + 接缝）：S10 已交付、独立复核进行中；S01–S09 构建进行中。公共评审工具（暂停 / 关键帧 / 重播）已在 `2cbe419` 修正。之后：逐套独立复核 → 修复轮 → 同流程并排 → 组装离线交付并在导出文件上复跑全部检查。历史步骤见 §A.1。 |
-| 恢复方法 | 代理完成后其汇报到达主会话；若会话中断：读本文 §E 各套状态 → 看 `settings-r2/evidence/SNN/stage1/` → 用 `settings-r2/tools/lead-sheet.cjs .build/lead-home s-home --gray` 生成十套同状态并排（需要各套私有构建 `.build/SNN.html`：`JU_STANDALONE=.build/SNN.html JUS_ONLY=SNN node settings-r2/src/build.js`）|
+| 主要交付 | **`JU-SETTINGS-R2-TEN-DIRECTIONS.html`**（仓库根，4.8 MB，单文件离线，字体内嵌；由 `JU_FONTS_CSS=.build/fonts-embed.css node settings-r2/src/build.js` 生成，字体子集由 `settings-r2/tools/embed-fonts.py` 生成）。另有画板版本 `settings-r2/concepts/project/`（官方画布渲染未核对） |
+| 当前步骤 | **十套全部通过并已组装交付文件**：每套经主负责人复看 + 独立复核 + 修复轮（S08 两轮修复 + 二次复核）；交付文件上的全部自动验收通过（`settings-r2/spec/verification.md` §4）；最后一位独立复核者正在交付文件上逐套人工操作（`settings-r2/evidence/final/review.md`）。之后：交给用户审阅。 |
+| 恢复方法 | 交付文件已提交；重跑全部验收：`bash settings-r2/tools/final-check.sh`（结果 `settings-r2/evidence/final/summary.json`）；单套私有构建：`JU_STANDALONE=.build/SNN.html JUS_ONLY=SNN node settings-r2/src/build.js`；各套状态见 §E，验收见 `verification.md` |
 | 用户已认可 | **无**（截至本文，用户未审阅本阶段任何内容） |
 
 
@@ -41,6 +41,10 @@
 
 - 06:1x–06:3x UTC：十套独立复核全部返回（汇总见 `settings-r2/spec/verification.md` §2.2）：S08 不通过（1 个视觉 blocker：详情页读成通用卡片）；S03、S06 各 1 blocker；其余 0 blocker。全部修复轮已下达；S02 修复轮已完成并经主负责人复看视觉通过。复核者提出的共享问题均已在核心修复（`aed3207`、`8581e72`、`4585eb1`、`799e450`、`082e2c6`、`c2f9acc`、`d1116d1`）。
 
+- 07:0x–08:0x UTC：S01、S06、S07、S08、S09 修复轮完成；S08 二次复核：视觉 blocker 已解，但栏名被屏幕边切断与「详情页按页面记栏位」未过，第二轮修复后主负责人复看通过——**十套全部通过**。最终差异矩阵 `settings-r2/spec/matrix.md`（按建成结果写八个字段、仍可能失败的判断、最接近的几对）；限制文档更新。
+- 08:3x UTC：用重新生成的字体子集（1047 字符）组装交付文件 `JU-SETTINGS-R2-TEN-DIRECTIONS.html`（4.8 MB），`final-check.sh` 在交付文件上全部通过（`verification.md` §4）。
+- 09:0x UTC：容器重启，最后一位交付文件复核者中断；已重新派出（`settings-r2/evidence/final/review.md`）。
+
 ## B. 输入与基线（实际核对）
 
 | 输入 | 状态 | 处理 |
@@ -66,7 +70,7 @@
 ## D. 研究
 - 第一次研究代理录入 5 条（Instrument–Oura、Work & Co–Aesop、ustwo–The Body Coach、BUCK–Headspace、Ann Demeulemeester SS26，含证据图）后被 429 中止；Opus 研究代理接续（先核对这 5 条）。目标：`settings-r2/research/ledger.md|json`（≥50 案，含七个指定入口；类别配额 UI ≥16 其中设置屏 ≥10、动态 ≥12、编辑 ≥8 含中文 ≥3、设计师作品 ≥10、获奖 ≥4）；失败项 `failures.md`。完成前本节为空。
 
-## E. 十套状态（阶段 1 全部通过；阶段 2 进行中）
+## E. 十套状态（阶段 1、阶段 2、独立复核与修复轮全部完成）
 
 阶段 1 意见见 `settings-r2/spec/verification.md` §2.1；阶段 2 = 全部 52 个索引状态 + 接缝 + 12 页接触表自审（`settings-r2/spec/stage2-brief.md`）。
 
@@ -83,11 +87,13 @@
 | S09 夜灯 | 墨底 + 光下的陈述 | 通过 | **代理自报完成**（05:2x；52/52、宽度 / 键盘（逐状态）/ 减少动态无问题、自写对比度审计 1929 个文字元素最低 4.62:1；`settings-r2/evidence/S09/ad-12/`） | 12 页接触表已看：暗屋 + 三团色光，值染灯色，二级页是升起的墨板，成立；待判：二级页光较弱是否读成通用深色模式、375 / 430 下的对比度、构建者自列三处小问题 | **0 blocker / 2 major / 8 minor**（`settings-r2/evidence/S09/verify.md`）；**修复轮已完成，主负责人复看视觉通过** |
 | S10 叠层 | 整宽纸层叠放、露 72px 边、天光在上 | 通过 | **代理自报完成**（04:2x；52/52 状态、0 错误；`settings-r2/evidence/S10/ad-12/`） | 12 页接触表已看：首页叠层与二级页「抽起一层」成立；待判：根导航「开局」偏浅、资料页下半空白、底部五条 24px 边的可读性 | **0 blocker / 5 major / 12 minor**（`settings-r2/evidence/S10/verify.md`）；**修复轮已完成，主负责人复看视觉通过** |
 
-## F. 验证（见 `settings-r2/spec/verification.md`，三栏）
-- 已完成的「实际观察 / 操作」：旧十套 11 页截图与 6 个同状态并排；S00 管线各项。
-- 尚未验证：十套本身（任何一套）；与 V27 / R8 真实画面的并排衔接；真机。
+## F. 验证（详见 `settings-r2/spec/verification.md`，分「实际观察 / 实际操作」「源码检查」「尚未验证」三栏）
+- 十套逐套：主负责人复看接触表 → 独立复核（真实点击 / 输入，视觉先判）→ 修复轮 → 主负责人复看（§2.2）。复核共发现 3 个 blocker（S03 回执被截断、S06 减少动态返回后光场下沉、S08 详情页读成通用卡片）与 46 个 major（S01 4、S02 3、S03 5、S04 6、S05 5、S06 5、S07 5、S08 6、S09 2、S10 5），均在修复轮处理；S08 另经二次复核与第二轮修复。
+- 差异检查：交付前十套首屏隐名并排（三环境 + 灰度）与同一流程正常速度并排（§3）。
+- 交付文件：外壳、离线（阻断网络、字体内嵌）、52 状态 × 十套、三宽度、键盘、系统减少动态、同流程真实点击，全部通过（§4）。
+- 尚未验证：真机与真实软键盘、真实系统设置、帧率；用户机器上双击打开；与 V27 / R8 真实画面的并排衔接（两份基准文件未上传，见 `settings-r2/spec/limits.md`）。
 
 ## G. 下一步
-1. 收齐十个阶段 1 汇报 → `lead-sheet.cjs` 生成 s-home（三环境）/ s-profile-edit 的隐名并排与灰度 → 逐套判断「成立 / 调整 / 推翻」→ 用 SendMessage 下达阶段 2 或重做。
-2. 研究代理汇报 → 核对七个入口与配额 → 写 `settings-r2/spec/concept-refs.md`（每套 5–8 条，五件事）。
-3. 阶段 2 完成后：独立复核代理逐套复操作 → 修复轮 → 共享构建 → 在最终导出文件上复跑 coverage / widths / kb / rm / standalone → 填写 `verification.md` → 更新本文 → 提交推送。
+1. 收到最后一位独立复核者的交付文件结论，若有 blocker 立即修复并重建、重跑 `final-check.sh`。
+2. 交给用户审阅（用户尚未认可任何一套）；按用户意见进入下一轮。
+3. 项目完成后删除每小时的自动续跑定时任务（「JU 设置 R2 · 额度重置后自动续跑」）。
