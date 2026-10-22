@@ -65,13 +65,30 @@ const sharedCssPresent = fs.existsSync(path.join(ROOT, 'my-r2/src/shared')) && /
 if (sharedCssPresent) { const t3 = SRC.T03; const i3 = t3.indexOf('.app{position:absolute;inset:0}'); const sharedBanner = '/* ---- my-r2/src/shared/'; ok('T03: shared css lands at @shared-css (after .app rule position check)', t3.indexOf(sharedBanner) > 0 && t3.indexOf(sharedBanner) < i3 && t3.indexOf('/* @shared-css */') < 0); ok('T01: shared css merged into @panel-css', t1.indexOf(sharedBanner) > 0); }
 const idx = /window\.__JU_INDEX=(\[.*?\]);window\.__JU_COVERAGE=/s.exec(html); const INDEX = idx ? JSON.parse(idx[1]) : [];
 ok('__JU_INDEX has 50 states', INDEX.length === 50, INDEX.length);
+/* shared JS once: the shell carries the bundle, the sources do not (JU_CANVAS=1 puts it back into every artboard) */
+const bm = /window\.__JU_SHARED_BUNDLE=(\{.*?\});window\.__JU_BUILT=/s.exec(html); const BUNDLE = bm ? JSON.parse(bm[1]) : null;
+ok('__JU_SHARED_BUNDLE recorded (shell-once)', !!BUNDLE && BUNDLE.mode === 'shell-once' && Array.isArray(BUNDLE.js), BUNDLE);
+if (BUNDLE && BUNDLE.js.length) {
+  const banner = '/* ---- ' + BUNDLE.js[0] + ' ---- */';
+  ok('shell sources carry no shared JS', Object.values(SRC).every(s => s.indexOf(banner) < 0));
+  ok('shared JS occurs exactly once in the standalone', html.split(banner).length - 1 === 1, html.split(banner).length - 1);
+  ok('once-only guard wraps each module', html.indexOf('window.__JU_SHARED = window.__JU_SHARED || {}') > 0);
+  const mb = /window\.__JU_META=(\[.*?\]);window\.__JU_META_ALL=/s.exec(html); const META = mb ? JSON.parse(mb[1]) : [];
+  ok('__JU_META carries srcBytes', META.length && META.every(c => typeof c.srcBytes === 'number'), META.map(c => c.srcBytes));
+  r = build({ JU_STANDALONE: path.join(T, 'canvas.html'), JU_CONCEPTS: path.join(T, 'concepts.json'), JU_CONCEPTS_DIR: T, JU_CORE_DIR: coreDir, JU_CANVAS: '1' });
+  const h2 = fs.readFileSync(path.join(T, 'canvas.html'), 'utf8'); const m2 = /window\.__JU_SOURCES=(\{.*?\});window\.__JU_META=/s.exec(h2); const SRC2 = m2 ? JSON.parse(m2[1]) : {};
+  ok('JU_CANVAS=1: every artboard carries the shared JS', Object.values(SRC2).length && Object.values(SRC2).every(s => s.indexOf(banner) >= 0));
+  ok('JU_CANVAS=1: the shell carries no bundle', /\/\*@shared-js\*\/|JU_CANVAS: shared JS travels inside each artboard/.test(h2) && h2.split(banner).length - 1 === Object.keys(SRC2).length);
+}
+if (BUNDLE && BUNDLE.svgReference.length) ok('reference svg sits hidden in the shell once', /<div id="ju-shared-svg" hidden/.test(html) && Object.values(SRC).every(s => s.indexOf('<!-- ' + BUNDLE.svgReference[0] + ' -->') < 0));
+ok('__JU_FONTS present (not embedded without JU_FONTS_CSS)', /window\.__JU_FONTS=\{"embedded":false/.test(html));
 ok('data script has no raw </script', !/<\/script/i.test((/<script>window\.__JU_SOURCES=[\s\S]*?window\.__JU_BUILT=.*?;/.exec(html) || [''])[0]));
 ok('shell routes + stats present', /window\.JUShell = \{/.test(html) && /stats: stats/.test(html));
 /* JU_ONLY with the internal one named */
 r = build({ JU_STANDALONE: path.join(T, 'only.html'), JU_CONCEPTS: path.join(T, 'concepts.json'), JU_CONCEPTS_DIR: T, JU_CORE_DIR: coreDir, JU_ONLY: 'T00,T03' });
-ok('JU_ONLY builds the named internal concept', /built 2 concepts \(T00, T03\)/.test(r.out), r.out);
+ok('JU_ONLY builds the named internal concept', /built 2 concepts \(T00 \d+ KB, T03 \d+ KB\)/.test(r.out), r.out.split('\n').filter(l => /^built/.test(l)));
 /* fonts: JU_FONTS_CSS inlines and strips the Google Fonts links */
 fs.writeFileSync(path.join(T, 'fonts.css'), "@font-face{font-family:'Fixture';src:url(data:font/woff2;base64,AAAA) format('woff2')}");
 r = build({ JU_STANDALONE: path.join(T, 'fonts.html'), JU_CONCEPTS: path.join(T, 'concepts.json'), JU_CONCEPTS_DIR: T, JU_CORE_DIR: coreDir, JU_FONTS_CSS: path.join(T, 'fonts.css') });
-{ const h = fs.readFileSync(path.join(T, 'fonts.html'), 'utf8'); ok('fonts css inlined', /font-family:'Fixture'/.test(h)); ok('google links stripped from the shell', !/<link[^>]+fonts\.googleapis/.test(h.split('<script>window.__JU_SOURCES')[0])); }
+{ const h = fs.readFileSync(path.join(T, 'fonts.html'), 'utf8'); ok('fonts css inlined', /font-family:'Fixture'/.test(h)); ok('google links stripped from the shell', !/<link[^>]+fonts\.googleapis/.test(h.split('<script>window.__JU_SOURCES')[0])); const fm = /window\.__JU_FONTS=(\{.*?\});window\.__JU_SHARED_BUNDLE=/s.exec(h); const F = fm ? JSON.parse(fm[1]) : null; ok('__JU_FONTS lists the embedded family with its licence', !!F && F.embedded && F.families.some(f => f.family === 'Fixture' && /SIL/.test(f.license)), F); }
 console.log(fails ? `build-test FAILED ${fails}` : 'build-test OK'); process.exit(fails ? 1 : 0);

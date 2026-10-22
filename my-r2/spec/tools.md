@@ -16,7 +16,9 @@
 
 交付文件注入：`__JU_SOURCES / __JU_META / __JU_META_ALL / __JU_DOCS / __JU_INDEX（vm 跑 ju-data.js 取 INDEX，比较控件在它之后建立） / __JU_COVERAGE（解析 coverage.md 的 "### CNN" 五栏表） / __JU_EVIDENCE（index.json 的缩略图 data URI） / __JU_SCOPE / __JU_BUILT`。附录映射：matrix（`spec/matrix.md` 否则 `directions.md`）、refs（`concept-refs.md`）、research（`research/ledger.md`）、motion（`motion-record.md` 否则 `motion-specs.md`）、coverage、verification、limits、observations（`baseline-old10.md`）——缺的显示「尚未生成」。
 
-字体：`JU_FONTS_CACHE=.build/fonts-cache .build/fontenv/bin/python my-r2/tools/embed-fonts.py [out.css] <sources…> --common`（默认输出 `my-r2/.fonts/fonts-embed.css`，缓存 `my-r2/.fonts/cache`；`JU_FONTS_CACHE` 可复用 Phase B 的下载）。
+**共享 JS 只注入一次**：离线交付与 `JU_STANDALONE` 私有构建里，全部共享 JS（three.js r185、backgrounds / skins-r9 / skins、rituals 引擎）作为一个 window 级 bundle 放在外壳（`<!--@shared-svg-->` / `/*@shared-js*/` 槽，在 shell.js 之前），每个模块包在 `window.__JU_SHARED[<file>]` 一次性守卫里（模块自带的 `window.JU_THREE` / `customElements.get` / `JU.shared.skins` 守卫也保留），重复执行无害；方案源的 `/* @core */` 只保留 ju-fx + ju-data + ju-ctl + ju-review + CONCEPT。共享 CSS 仍按方案注入（shadow 内需要）；共享 SVG 只含 `<defs>` 的按方案注入到 `@fx-svg`（shadow 内 `url(#id)` 需要），其余（如 `rituals/burn.svg` 参考图）放外壳一次、隐藏。Design 画布的 `concepts/project/*.dc.html` 仍自包含（每个画板带全部共享 JS）；`JU_CANVAS=1` 让私有构建也走自包含。构建输出 `window.__JU_SHARED_BUNDLE`（mode / js / css / svgDefs / svgReference / skipped / bytes）。
+
+字体：`JU_FONTS_CACHE=.build/fonts-cache .build/fontenv/bin/python my-r2/tools/embed-fonts.py [out.css] <sources…> --common [--offline] [--require "<spec>"] [--no-required]`（默认输出 `my-r2/.fonts/fonts-embed.css`，缓存 `my-r2/.fonts/cache`；`JU_FONTS_CACHE` 可复用 Phase B 的下载）。除源文件里的 Google Fonts 链接外，默认总是加上必需家族（`v27/fonts.md` + `baseline-rituals.md` §1）：Noto Sans SC 400/500/700、Space Mono 400/700、Archivo 400/500/700、Noto Serif SC 900（只子集「出席未」）、Libre Caslon Text 700；`--offline` 只用缓存（缺的列入 missing，不联网）；旁车报告 `<out>.json`（家族 / 字重 / 子集字数 / KB / 许可 SIL OFL 1.1 / missing）由 build 读成 `window.__JU_FONTS`，外壳在附录「限制与未验证项」末尾渲染成「字体与共享资源」表。
 
 ## 外壳（`my-r2/src/shell/`）
 
@@ -37,7 +39,7 @@
 | `motion-specs.cjs` | `node my-r2/tools/motion-specs.cjs [--out]` | 汇总 `spec/motion/CNN.md` → `spec/motion-specs.md` |
 | `evidence-index.py` | `python3 -I my-r2/tools/evidence-index.py [--root] [--codes] [--width 260]` | 扫 `evidence/CNN/*.png` 与 `CNN/<flow>/sheet.*`，缩略图到 `evidence/_thumbs/`，写 `evidence/index.json`（`notes.json` 的说明并入） |
 | `shrink-evidence.py` / `shrink-verify.py` / `review-sheet.py` | 同 Phase B，根目录 `my-r2/evidence`，`--root` 可改 | — |
-| `offline-check.cjs` | `node my-r2/tools/offline-check.cjs <file> <outdir>` | 断网：直开 `#compare` 先有索引；换三次组合后当前之外动画 / 定时器为 0；总览每套四台到位；字体无回退；覆盖表页存在且五栏；各套打开无错误 |
+| `offline-check.cjs` | `node my-r2/tools/offline-check.cjs <file> <outdir>` | 断网：直开 `#compare` 先有索引；换三次组合后当前之外动画 / 定时器为 0、live 环境 ≤ 1 且只在当前舞台；总览每套四台到位；字体无回退；覆盖表页存在且五栏；各套打开无错误；**体积**：交付文件 ≤ 40 MB、每套源 ≤ 200 KB（`__JU_META[].srcBytes`）、每个共享 JS 模块在文件里恰好出现一次 |
 | `final-check.sh` | `bash my-r2/tools/final-check.sh [C01 …]` | 对交付文件跑 standalone / offline / coverage / widths / kb / rm / flow，汇总 `evidence/final/summary.json` |
 | `test/standalone.cjs` | `JU_STANDALONE=<file> node my-r2/tools/test/standalone.cjs [--shots dir]` | 外壳冒烟：无 console error、四视图路由与 back/forward、预览四台、比较初始化 + 同步点击 + 换组合卸载、附录页 |
 | `test/build.cjs` | `node my-r2/tools/test/build.cjs` | 缺核心 / 缺列表不崩；标记齐全时注入正确；缺标记跳过；`JU_ONLY` 与 internal；`@shared-css`；索引 50；字体内嵌 |

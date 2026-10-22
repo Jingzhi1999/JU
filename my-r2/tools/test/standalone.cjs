@@ -30,6 +30,19 @@ const L = require('../_lib.cjs'); const fs = L.fs, path = L.path;
     ok('panel outside the phone', out.concept.panelOutsidePhone);
     ok('previews asleep while a concept is open', out.concept.stats.timersOutsideCurrent === 0 && out.concept.stats.runningOutsideCurrent === 0, out.concept.stats);
     if (shots) await p.screenshot({ path: path.join(shots, 'sa-concept.jpg'), type: 'jpeg', quality: 70 });
+    /* 3b. environment engines: a live skin mounted on the current stage is counted, paused when the view leaves, live again on return
+       (skipped where headless WebGL cannot go live — the wrapper then mounts a static palette and nothing is live) */
+    out.env = await p.evaluate(() => { const S = window.JU && window.JU.shared && window.JU.shared.skins; if (!S) return { skipped: 'no JU.shared.skins in the bundle' }; const m = window.JUShell.stage(); const host = document.createElement('div'); host.style.cssText = 'position:absolute;inset:0'; m.root.appendChild(host); window.__juEnvHost = host; const st = S.mount(host, 'cotton', { live: true }); return { canLive: S.canLive('cotton'), state: st, live: window.JUShell.stats().liveEnv, outside: window.JUShell.stats().liveEnvOutsideCurrent }; });
+    if (!out.env.skipped && out.env.canLive) {
+      ok('a live environment on the current stage counts as 1', out.env.live === 1 && out.env.outside === 0, out.env);
+      await p.click('.tab[data-view="overview"]'); await p.waitForTimeout(400);
+      out.envAway = await p.evaluate(() => { const S = window.JU.shared.skins; return { state: S.state(window.__juEnvHost), stats: window.JUShell.stats() }; });
+      ok('leaving the concept pauses its environment (none live outside the view)', out.envAway.state.paused && out.envAway.stats.liveEnvOutsideCurrent === 0, out.envAway);
+      await p.goBack(); await p.waitForTimeout(500);
+      out.envBack = await p.evaluate(() => { const S = window.JU.shared.skins; const st = S.state(window.__juEnvHost); S.unmount(window.__juEnvHost); window.__juEnvHost.remove(); return st; });
+      ok('returning resumes the environment on the stage', out.envBack.live && !out.envBack.paused, out.envBack);
+      await p.goForward(); await p.waitForTimeout(300); await p.evaluate(() => { location.hash = '#concept/' + window.JUShell.current().code; }); await p.waitForTimeout(300);
+    } else { await p.evaluate(() => { if (window.__juEnvHost) { window.JU.shared.skins.unmount(window.__juEnvHost); window.__juEnvHost.remove(); } }); }
     /* 4. back → overview (popstate), forward → concept */
     await p.goBack(); await p.waitForTimeout(400); out.back = await p.evaluate(() => document.querySelector('.view.on').id); ok('popstate back to overview', out.back === 'v-overview', out.back);
     await p.goForward(); await p.waitForTimeout(400); out.fwd = await p.evaluate(() => document.querySelector('.view.on').id); ok('forward to concept', out.fwd === 'v-concept', out.fwd);
@@ -52,6 +65,7 @@ const L = require('../_lib.cjs'); const fs = L.fs, path = L.path;
     out.compareAll = await p.evaluate((before) => ({ hosts: document.querySelectorAll('.cmp-host').length, mounted: Object.keys(window.JUShell.mounts.compare).length, oldKeysGone: before.every(k => !window.JUShell.mounts.compare[k]), stats: window.JUShell.stats() }), before);
     ok('all-ten combination replaces the old mounts', out.compareAll.hosts === META.length && out.compareAll.mounted === META.length, out.compareAll);
     ok('nothing outside compare runs', out.compareAll.stats.timersOutsideCurrent === 0 && out.compareAll.stats.runningOutsideCurrent === 0, out.compareAll.stats);
+    ok('stats report environment engines (≤ 1 live, none outside the current view)', typeof out.compareAll.stats.liveEnv === 'number' && out.compareAll.stats.liveEnv <= 1 && out.compareAll.stats.liveEnvOutsideCurrent === 0, out.compareAll.stats);
   }
   /* 7. appendix: coverage table page + a doc tab + direct #appendix/<doc> */
   await p.click('.tab[data-view="appendix"]'); await p.waitForTimeout(500);

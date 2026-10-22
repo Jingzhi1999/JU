@@ -48,6 +48,10 @@
   function hitem(d, id) { return d.hosted.filter(function (x) { return x.eventId === id; })[0] || null; }
   function mask(name) { return name ? String(name).slice(0, 1) + '**' : ''; }
   function isoOf(date, time) { return date && time ? date + 'T' + time : ''; }
+  /* the shared ritual modules (my-r2/src/shared/rituals/*, window.JURitual) own print / tear / burn timing when present; without them the
+     controller's own timers (printMs / burnMs) stand in so every flow still completes */
+  function ritual(name) { var R = global.JURitual; return !!(R && R[name]); }
+  JU.hasRitual = ritual;
 
   JU.ctlState = function () {
     return {
@@ -181,7 +185,7 @@
         var needPrint = hasTicket && key && !this.state.ui.ticket.printed[key] && !(it.ticket && it.ticket.torn && s !== 'reply');
         this._uiIn('ticket', { printing: needPrint ? key : null, tear: { progress: 0, active: false, done: false, error: '' }, contactOpen: !!(params.contact) });
         this._ui({ result: null });
-        if (needPrint) this.afterKey('print', this.printMs || 2300, function () { self.ticketPrinted(key); });
+        if (needPrint && !ritual('print')) this.afterKey('print', this.printMs || 2300, function () { self.ticketPrinted(key); });
       }
       if (s === 'read') { this._uiIn('read', { eventId: params.eventId, progress: 0, done: false, doneAt: 0 }); this._ui({ result: null }); }
       if (s === 'detail' || s === 'waitlist') this._ui({ result: null });
@@ -189,7 +193,7 @@
         var hi = jitem(d, params.eventId); var burnable = !!(hi && (hi.stage === 'cancelled' || hi.stage === 'exited' || hi.stage === 'declined') && hi.ticket);
         var play = burnable && !this.state.ui.burned[params.eventId];
         this._ui({ burn: play ? { eventId: params.eventId, playing: true } : null, result: null });
-        if (play) this.afterKey('burn', this.burnMs || 6600, function () { self.burnDone(params.eventId); });
+        if (play && !ritual('burn')) this.afterKey('burn', this.burnMs || 6600, function () { self.burnDone(params.eventId); });
       }
       if (s === 'manage') {
         this.settleNow();
@@ -198,7 +202,7 @@
       }
     };
     p._leaveApply = function (s) {
-      if (s === 'ticket' || s === 'reply') { this.cancelKey('print'); this.cancelKey('contact'); this.cancelKey('tear-burn'); this._uiIn('ticket', { printing: null, contactOpen: false, tear: { progress: 0, active: false, done: false, error: '' } }); }
+      if (s === 'ticket' || s === 'reply') { this.cancelKey('print'); this.cancelKey('contact'); this.cancelKey('tear-burn'); this._tearRig = null; this._uiIn('ticket', { printing: null, contactOpen: false, tear: { progress: 0, active: false, done: false, error: '' } }); }
       if (s === 'history') { this.cancelKey('burn'); }
       this._ui({ result: null, busy: {}, errors: {} });
     };
@@ -282,15 +286,28 @@
 
     /* ---------------- feedback ---------------- */
     p.say = function (text, kind) { var self = this; var id = (this._toastSeq = (this._toastSeq || 0) + 1); this.setState({ toast: { text: text, kind: kind || 'info', id: id } }); this.holdKey('toast', kind === 'error' ? 3600 : 2600, function () { self.setState(function (s) { return s.toast && s.toast.id === id ? { toast: null } : null; }); }); };
+    p._copyDone = function (key, text, ok, okText, armed) {
+      var self = this;
+      if (armed) { this.setState(function (s) { return { data: JU.engine.setCopyFailNext(s.data, { on: false }).data }; }); ok = false; }
+      this._ui({ copy: { key: key, text: text, ok: ok, at: Date.now() } });
+      if (ok) { this.say(okText || '已复制', 'ok'); this.holdKey('copy:' + key, 2600, function () { self._clearCopy(key); }); }
+      else { this.say('未能复制，长按手动复制', 'error'); this.holdKey('copy:' + key, 8000, function () { self._clearCopy(key); }); }
+      return ok;
+    };
     p.copy = function (text, key, okText) {
       var self = this; key = key || 'copy'; var armed = !!(this.state.data.flags && this.state.data.flags.copyFailNext);
-      var done = function (ok) {
-        if (armed) { self.setState(function (s) { return { data: JU.engine.setCopyFailNext(s.data, { on: false }).data }; }); ok = false; }
-        self._ui({ copy: { key: key, text: text, ok: ok, at: Date.now() } });
-        if (ok) { self.say(okText || '已复制', 'ok'); self.holdKey('copy:' + key, 2600, function () { self._clearCopy(key); }); }
-        else { self.say('未能复制，长按手动复制', 'error'); self.holdKey('copy:' + key, 8000, function () { self._clearCopy(key); }); }
-      };
+      var done = function (ok) { self._copyDone(key, text, ok, okText, armed); };
       try { if (global.navigator && navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(function () { done(true); }, function () { done(false); }); else done(false); } catch (e) { done(false); }
+    };
+    /* copyVia(run): the clipboard call belongs to a shared module (JURitual.contact handle.copy → Promise<boolean>); the panel's
+       「下一次复制失败」 is honoured by letting exactly that one writeText reject, so the module shows its own failure line too */
+    p.copyVia = function (run, key, text, okText) {
+      var self = this; key = key || 'copy'; var armed = !!(this.state.data.flags && this.state.data.flags.copyFailNext);
+      var clip = global.navigator && navigator.clipboard; var patched = false;
+      if (armed && clip) { try { Object.defineProperty(clip, 'writeText', { configurable: true, writable: true, value: function () { return Promise.reject(new Error('armed copy failure')); } }); patched = true; } catch (e) { } }
+      var restore = function () { if (patched) { patched = false; try { delete clip.writeText; } catch (e) { } } };
+      var pr; try { pr = Promise.resolve(run()); } catch (e) { pr = Promise.resolve(false); }
+      return pr.then(function (ok) { restore(); return self._copyDone(key, text, !!ok, okText, armed); }, function () { restore(); return self._copyDone(key, text, false, okText, armed); });
     };
     p._clearCopy = function (key) { this.setState(function (s) { return s.ui.copy && s.ui.copy.key === key ? { ui: assign(s.ui, { copy: null }) } : null; }); };
     p.copyState = function (key) { var self = this; var c = this.state.ui.copy; var mine = c && c.key === key; return { copied: !!(mine && c.ok), failed: !!(mine && !c.ok), text: mine ? c.text : '', label: mine ? (c.ok ? '已复制' : '未能复制 · 重试') : '复制', retry: function () { if (mine) self.copy(c.text, key); } }; };
@@ -325,7 +342,7 @@
           var t = titles[sh.sub]; var burn = !!e.burn && !self.state.ui.burned[sh.eventId];
           self._ui({ result: { eventId: sh.eventId, kind: e.type, sub: sh.sub, title: t[0], body: t[1], burn: burn, burning: burn } });
           self.closeSheet(true);
-          if (burn) self.afterKey('tear-burn', self.burnMs || 6600, function () { self.burnDone(sh.eventId); });
+          if (burn && !ritual('burn')) self.afterKey('tear-burn', self.burnMs || 6600, function () { self.burnDone(sh.eventId); });
         });
         return;
       }
@@ -380,17 +397,28 @@
       if (!cancel && tk.tear.progress >= threshold) { this._suppressClick = true; this.tearNow(); return; }
       this._uiIn('ticket', { tear: assign(tk.tear, { active: false, progress: 0 }) });
     };
-    /* the keyboard / button equivalent of the gesture (Enter / Space on the stub, or a 撕开票根 button): same write, same fall */
-    p.tearNow = function () {
-      var self = this; var top = this._top(); var d = this.state.data; var it = jitem(d, top.p.eventId); var tk = this.state.ui.ticket;
-      if (!it || tk.tear.done || tk.printing) return; var reply = top.s === 'reply' || it.stage === 'reschedule';
+    /* the WRITE of a tear (撕裂前沿到右端 = detach): synchronous, returns true on success, false when the engine refused (the stub then
+       snaps back and the error line shows). The shared tear rig calls this from its onDetach; the plain path calls it from tearNow(). */
+    p.tearCommit = function () {
+      var top = this._top(); var d = this.state.data; var it = jitem(d, top.p.eventId); var tk = this.state.ui.ticket;
+      if (!it || tk.printing) return false; var reply = top.s === 'reply' || it.stage === 'reschedule';
+      if (tk.tear.done || (it.ticket && it.ticket.torn && !reply) || (reply && it.reschedule && it.reschedule.answered)) return true;   /* already torn: a replayed fall writes nothing */
       var name = reply ? 'acceptReschedule' : 'tearTicket';
-      if (!reply && it.stage !== 'tear') return;
-      this._uiIn('ticket', { tear: { progress: 1, active: false, done: true, error: '' } });
+      if (!reply && it.stage !== 'tear') return false;
       var res = this.act(name, { eventId: it.eventId });
-      if (res.effect.type === 'error') { this._uiIn('ticket', { tear: { progress: 0, active: false, done: false, error: reply ? '新时间未保存，请重新撕下副券' : '未能保存，请重新撕下副券' } }); return; }
+      if (res.effect.type === 'error') { this._uiIn('ticket', { tear: { progress: 0, active: false, done: false, error: reply ? '新时间未保存，请重新撕下副券' : '未能保存，请重新撕下副券' } }); return false; }
+      this._uiIn('ticket', { tear: { progress: 1, active: false, done: true, error: '' } });
       this._emit({ type: 'torn', eventId: it.eventId, reply: reply });
       if (reply) this.say('已接受改期 · 按新票根的时间见', 'ok');
+      return true;
+    };
+    /* the shared rig (JURitual.tear handle) registers here; tearNow() then runs its keyboard path (trigger) instead of the plain write */
+    p.registerTear = function (handle) { this._tearRig = handle || null; };
+    /* the keyboard / button equivalent of the gesture (Enter / Space on the stub, or a 撕开票根 button): same write, same fall */
+    p.tearNow = function () {
+      var self = this; var tk = this.state.ui.ticket; if (tk.tear.done || tk.printing) return;
+      var rig = this._tearRig; if (rig && rig.trigger && !rig.done) { rig.trigger(); return; }
+      if (!this.tearCommit()) return;
       this.afterKey('contact', 300, function () { self._uiIn('ticket', { contactOpen: true }); });
     };
     p.tearKey = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); this.tearNow(); } };
@@ -527,7 +555,7 @@
       var out = { nav: navV, role: role, section: section, prevRole: ui.prevRole, prevSection: ui.prevSection, setRole: function (k) { self.setRole(k); }, setSection: function (k) { self.setSection(k); }, roleTabs: roleTabs, sectionTabs: sectionTabs, joined: joined, hosted: hosted,
         home: { cls: 'role-' + role + ' sec-' + section + ' ' + (nav.dir === 'role' || nav.dir === 'swap' ? ph : ''), isJoined: role === 'joined', isHosted: role === 'hosted', isCurrent: section === 'current', isHistory: section === 'history', isDrafts: section === 'drafts' },
         rootNav: [{ k: 'find', label: '找局' }, { k: 'create', label: '开局' }, { k: 'mine', label: '我的局' }, { k: 'settings', label: '设置' }].map(function (r) { return assign(r, { on: r.k === 'mine', inert: r.k !== 'mine', cls: r.k === 'mine' ? 'on' : 'off', go: function () { if (r.k !== 'mine') inert(); else self.home(); } }); }),
-        skin: rv.skin || 'cotton', rm: this.isRM ? this.isRM() : false, kb: !!rv.kb, safe: !!rv.safe, zoom: !!rv.zoom, fx: ui.fx, fail: { armed: !!(d.flags && d.flags.failNext), copyArmed: !!(d.flags && d.flags.copyFailNext) },
+        skin: rv.skin || 'cotton', ritual: { print: ritual('print'), tear: ritual('tear'), contact: ritual('contact'), burn: ritual('burn'), stamp: ritual('stamp'), skins: !!(JU.shared && JU.shared.skins) }, rm: this.isRM ? this.isRM() : false, kb: !!rv.kb, safe: !!rv.safe, zoom: !!rv.zoom, fx: ui.fx, fail: { armed: !!(d.flags && d.flags.failNext), copyArmed: !!(d.flags && d.flags.copyFailNext) },
         clock: { now: now, nowText: JU.fmt.nowText(), offsetMin: Math.round((now - JU.NOW) / 60000), demoNote: '演示日期 2026-12-17，不冒充实时', next: JU.nextDeadline(d) },
         toast: s.toast ? assign(s.toast, { on: true, cls: 'k-' + s.toast.kind }) : { on: false, text: '', kind: '', cls: '' },
         copy: function (text, key, okText) { self.copy(text, key, okText); }, copyState: function (key) { return self.copyState(key); }, say: function (t, k) { self.say(t, k); }, inert: inert, rules: JU.RULES, COPY: JU.COPY };
@@ -609,15 +637,17 @@
         if (state === 'void' && !tres) { var ux = st1 === 'cancelled' ? ['这局已取消，原票根不再有效。', '查看取消结果', 'history'] : st1 === 'ended' ? ['这次活动已结束，记录已归档。', '查看散场记录', 'history'] : st1 === 'reschedule' && !reply ? ['局主调整了时间，请确认新安排。', '确认新时间', 'reply'] : (st1 === 'pending' || st1 === 'invited' || st1 === 'invited_queue' || st1 === 'waitlist') ? ['确认入局后，才会为你保留票根。', '查看参加状态', 'detail'] : st1 === 'gathering' ? ['还有成员待确认，全员到齐后出票。', '查看成员', 'detail'] : ['你已退出，原票根和联系方式已失效。', '查看退出结果', 'history'];
           unavailable = { on: true, text: ux[0], label: ux[1], act: function (ev) { self.replace(ux[2], { eventId: tid }, ev); } }; }
         var contactOpenWin = tkRow.contactOpen || (torn && st1 === 'reschedule');
-        var cs = self.copyState('ticket:' + tid);
+        var cs = self.copyState('ticket:' + tid); var ck = 'ticket:' + tid;
+        var rOld = reply && it1.reschedule ? JU.fmt.when(it1.reschedule.oldIso) : null;
+        var ritualData = { key: key, title: ev2.title, time: faceWhen.time, md: faceWhen.md, loc: tkRow.place.hood, meeting: ev2.status === 'open' ? faceWhen.meeting : '待局主确认', host: ev2.host.name, previous: rOld ? rOld.wdEn + ' ' + rOld.md + ' ' + rOld.time : '', mark: reply ? '时间已改' : '', reissued: !!reply, account: ev2.host.wx, added: !!it1.contactAdded };
         var contact = { on: !!tk.contactOpen && state === 'torn', available: state === 'torn', wx: contactOpenWin ? ev2.host.wx : '', hostName: ev2.host.name, hostLabel: '局主 · ' + ev2.host.name, note: it1.contactAdded ? JU.COPY.contactedNote : JU.COPY.contactNote, closed: torn && !contactOpenWin, closedText: '联系方式已关闭', done: !!it1.contactAdded, busy: !!ui.busy.contacted, error: ui.errors.contacted || '',
-          copy: function () { if (contactOpenWin) self.copy(ev2.host.wx, 'ticket:' + tid); else self.say('联系方式已关闭', 'error'); }, copied: cs.copied, copyFail: cs.failed, copyLabel: cs.label, retryCopy: cs.retry, markContacted: function () { if (!it1.contactAdded) self.markContacted(tid); }, ctaLabel: it1.contactAdded ? '待赴约' : (ui.busy.contacted ? '处理中…' : ui.errors.contacted ? '重试' : '已加微信'), ctaDisabled: !!it1.contactAdded || !!ui.busy.contacted,
+          copy: function () { if (contactOpenWin) self.copy(ev2.host.wx, ck); else self.say('联系方式已关闭', 'error'); }, copyWith: function (run) { if (!contactOpenWin) { self.say('联系方式已关闭', 'error'); return Promise.resolve(false); } return self.copyVia(run, ck, ev2.host.wx); }, copied: cs.copied, copyFail: cs.failed, copyLabel: cs.label, retryCopy: cs.retry, markContacted: function () { if (!it1.contactAdded) self.markContacted(tid); }, ctaLabel: it1.contactAdded ? '待赴约' : (ui.busy.contacted ? '处理中…' : ui.errors.contacted ? '重试' : '已加微信'), ctaDisabled: !!it1.contactAdded || !!ui.busy.contacted,
           open: function () { self._uiIn('ticket', { contactOpen: true }); }, close: function () { self._uiIn('ticket', { contactOpen: false }); }, toggle: function () { self._uiIn('ticket', { contactOpen: !self.state.ui.ticket.contactOpen }); }, openSheet: function (ev) { self.openSheet({ kind: 'contact', eventId: tid }, ev); } };
         var canTear = state === 'printed' && (reply ? st1 === 'reschedule' : st1 === 'tear');
         var tear = { progress: tk.tear.progress, active: tk.tear.active, done: tk.tear.done || state === 'torn', error: tk.tear.error, threshold: this.tearThreshold || 0.5, canTear: canTear, style: '--tear:' + tk.tear.progress.toFixed(3), cls: (tk.tear.active ? 'is-drag' : '') + (tk.tear.done || state === 'torn' ? ' is-torn' : ''),
           onDown: function (ev) { if (canTear) self.tearDown(ev); }, onMove: function (ev) { self.tearMove(ev); }, onUp: function (ev) { self.tearUp(ev, false); }, onCancel: function (ev) { self.tearUp(ev, true); }, onKey: function (ev) { if (canTear) self.tearKey(ev); }, tearNow: function () { if (canTear) self.tearNow(); }, label: reply ? '撕下，确认新时间 →' : '撕下，联系局主 →', hint: canTear ? '拖动副券撕开，或按 Enter' : '' };
         var title = tres ? tres.title : state === 'void' ? (unavailable ? '票根不可用' : tkRow.detailTitle) : reply ? (torn ? (it1.contactAdded ? '待赴约' : '新时间已确认') : '局主改时间') : st1 === 'tear' ? '撕开，联系局主' : st1 === 'contact' ? '联系局主' : st1 === 'going' ? '待赴约' : tkRow.detailTitle;
-        out.ticket = { on: true, eventId: tid, row: tkRow, title: title, stage: st1, face: face, state: state, printing: state === 'printing', printed: function () { self.ticketPrinted(key); }, printKey: key, tear: tear, contact: contact, unavailable: unavailable, result: tres ? assign(tres, { label: '查看退出结果', act: function (ev) { self.replace('history', { eventId: tid }, ev); }, burn: tres.burn, burning: !!tres.burning, burnDone: function () { self.burnDone(tid); } }) : null,
+        out.ticket = { on: true, eventId: tid, row: tkRow, title: title, stage: st1, face: face, ritual: ritualData, state: state, printing: state === 'printing', printed: function () { self.ticketPrinted(key); }, printKey: key, registerTear: function (h) { self.registerTear(h); }, tearCommit: function () { return self.tearCommit(); }, tear: tear, contact: contact, unavailable: unavailable, result: tres ? assign(tres, { label: '查看退出结果', act: function (ev) { self.replace('history', { eventId: tid }, ev); }, burn: tres.burn, burning: !!tres.burning, reason: tres.sub === 'decline' ? 'reschedule-declined' : 'withdrawn', burnDone: function () { self.burnDone(tid); } }) : null,
           exit: function (ev) { self.openConfirm(st1 === 'reschedule' ? 'decline' : 'exit', tid, ev); }, exitLabel: '去不了了', canExit: !tres && state !== 'void' && (st1 === 'tear' || st1 === 'contact' || st1 === 'going' || st1 === 'reschedule'), back: function () { self.back(); }, isReply: reply, hostWx: contactOpenWin ? ev2.host.wx : '', originKey: 'row-' + tid, rules: JU.RULES,
           reply: reply && it1.reschedule ? { oldWhen: JU.fmt.when(it1.reschedule.oldIso), newWhen: JU.fmt.when(it1.reschedule.newIso), oldText: '原定 ' + JU.fmt.when(it1.reschedule.oldIso).zh, newText: '改到 ' + faceWhen.wdZh + ' ' + faceWhen.meeting, answered: it1.reschedule.answered || null, accept: function () { if (canTear) self.tearNow(); }, decline: function (ev) { self.openConfirm('decline', tid, ev); }, oldTorn: !!(it1.ticket && it1.ticket.torn), contactAdded: !!it1.contactAdded } : null };
       } else out.ticket = { on: false, state: 'off', tear: { progress: 0 }, contact: { on: false } };
@@ -631,8 +661,13 @@
         var recs = (ith.records || []).slice().reverse().map(function (x) { return assign(x, { atText: JU.fmt.abs(x.at), kindLabel: x.kind === 'attendance' ? '出席记录' : x.kind === 'exit' ? '退出' : x.kind === 'report' ? '你的补充' : '记录' }); });
         var hsh = s.sheet && s.sheet.kind === 'record' && s.sheet.eventId === hid ? s.sheet : null; var hcs = self.copyState('history:' + hid);
         var reason = hRow.stage === 'cancelled' ? '局主取消 · 票根作废，不计你的退出' : hRow.need;
+        var burnReason = hRow.stage === 'cancelled' ? 'cancelled' : hRow.stage === 'declined' ? 'reschedule-declined' : 'withdrawn';
+        var stampEvent = function (r) { var e = r.event, w = r.when; return { id: 'NYC|' + (e.pack || 'invite') + '|' + e.title, city: 'NYC', pack: e.pack || 'invite', title: e.title, en: e.en || '', wd: w.wdEn, date: w.md, dateNum: w.month + '-' + w.day + '-2026', time: w.time, loc: r.place.hood, host: r.host.name, capacity: e.capacity, seats: Math.max(0, e.capacity - r.counts.confirmed), version: e.version || 1 }; };
+        var stampData = hRow.stage === 'ended' ? { event: stampEvent(hRow), mode: ith.attendance || 'pending', history: jhist.filter(function (r) { return r.stage === 'ended' && r.id !== hid; }).map(function (r) { return { id: 'NYC|' + (r.event.pack || 'invite') + '|' + r.event.title, event: stampEvent(r), attendance: r.attendance || 'none', endedAt: r.endedAt || 0 }; }) } : null;
+        var hOld = hRow.stage === 'declined' && ith.reschedule ? JU.fmt.when(ith.reschedule.oldIso) : null;
+        var hRitual = ith.ticket ? { key: hid + ':' + (ith.ticket.version || 1), title: evh.title, time: hRow.when.time, md: hRow.when.md, loc: hRow.place.hood, meeting: '待局主确认', host: hRow.host.name, previous: hOld ? hOld.wdEn + ' ' + hOld.md + ' ' + hOld.time : '', mark: hRow.stage === 'declined' ? '时间已改' : '', reissued: hRow.stage === 'declined', torn: !!ith.ticket.torn } : null;
         out.history = { on: true, eventId: hid, row: hRow, title: hRow.detailTitle, stage: hRow.stage, label: hRow.label, event: evh, when: hRow.when, oldWhen: hRow.stage === 'cancelled' && ith.reschedule ? JU.fmt.when(ith.reschedule.oldIso) : null, place: hRow.place, host: hRow.host, stamp: stamp, stampText: { present: '出席', absent: '未出席', pending: '待定', none: '' }[stamp], attendanceText: hRow.attendanceText || '', reason: reason, closedNote: hRow.stage === 'cancelled' ? '不计为未出席，也不影响成局信用。' : '', records: recs, members: memberRows(hRow),
-          ticket: ith.ticket ? { torn: !!ith.ticket.torn, void: !!ith.ticket.void, version: ith.ticket.version } : null, ashes: burnable && !playing, burn: { play: playing, done: !playing, burnDone: function () { self.burnDone(hid); } }, burnOnce: burnable, contactOpen: !!hRow.contactOpen, hostWx: hRow.hostWx, copyWx: function () { if (hRow.contactOpen) self.copy(hRow.hostWx, 'history:' + hid); }, copied: hcs.copied, copyFail: hcs.failed, copyLabel: hcs.label, retryCopy: hcs.retry, contactClosedText: hRow.stage === 'ended' && !hRow.contactOpen ? '散场已超过 24 小时，联系方式已关闭' : '',
+          ticket: ith.ticket ? { torn: !!ith.ticket.torn, void: !!ith.ticket.void, version: ith.ticket.version } : null, ritual: hRitual, ashes: burnable && !playing, burn: { play: playing, done: !playing, reason: burnReason, burnDone: function () { self.burnDone(hid); } }, burnOnce: burnable, stampData: stampData, hasStamp: hRow.stage === 'ended', contactOpen: !!hRow.contactOpen, hostWx: hRow.hostWx, copyWx: function () { if (hRow.contactOpen) self.copy(hRow.hostWx, 'history:' + hid); }, copied: hcs.copied, copyFail: hcs.failed, copyLabel: hcs.label, retryCopy: hcs.retry, contactClosedText: hRow.stage === 'ended' && !hRow.contactOpen ? '散场已超过 24 小时，联系方式已关闭' : '',
           report: { open: function (ev) { self.openRecord(hid, ev); }, on: !!hsh, text: hsh ? hsh.text || '' : '', onInput: out.sheet.onInput, count: hsh ? (hsh.text || '').trim().length : 0, max: 120, min: 4, submit: function () { self.sheetOk(); }, done: !!(hsh && hsh.done), busy: !!(hsh && hsh.busy), error: hsh ? hsh.error : '', close: function () { self.sheetCancel(); }, label: '不对劲？举报', doneText: '已受理 · 可在“设置 → 帮助与反馈”查询进度。' },
           back: function () { self.back(); }, originKey: 'row-' + hid, footer: JU.COPY.historyFooter };
       } else out.history = { on: false, burn: { play: false } };
