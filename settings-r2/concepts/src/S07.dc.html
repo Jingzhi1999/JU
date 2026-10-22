@@ -143,7 +143,6 @@ body{margin:0}
 .s07-wash .s07-rl{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
 .s07-wash .s07-rv{flex:0 0 auto;color:#14161F;font-weight:500}
 .s07-dot{flex:0 0 8px;width:8px;height:8px;border-radius:50%;background:var(--edot)}
-.s07-foot{margin:28px 20px 0;font-size:13px;line-height:20px;color:#535b70}
 
 /* ---- profile ---- */
 .s07-seg{display:flex;gap:4px;margin:2px 20px 6px;padding:4px;border-radius:16px;background:#F1F2F6}
@@ -282,7 +281,6 @@ body{margin:0}
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s07-row" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s07-rl">{{r.label}}</span><span class="s07-rv"><sc-if value="{{r.ava}}"><i class="s07-tok s07-tok-ava" aria-hidden="true">{{c.you.initial}}</i></sc-if><sc-if value="{{r.sw}}"><i class="s07-tok s07-tok-sw" aria-hidden="true"></i></sc-if>{{r.value}}</span><i class="s07-chev"></i></button></sc-for>
                 </div>
               </sc-for>
-              <p class="s07-foot">{{c.demoNote}}</p>
             </div>
           </section>
         </sc-if>
@@ -416,7 +414,7 @@ class Component extends DCLogic {
   initialState(v) { return Object.assign(JUS.baseState(v), { s07: { aud: 0, focus: '', flash: null } }); }
   componentDidUpdate() {
     if (this._first) this.morphRun(); this.syncAnims();
-    if (this._reveal) { const root = this.rootRef.current; const el = root && root.querySelector('.s07-edit ' + this._reveal); if (el) { this._reveal = null; try { el.scrollIntoView({ block: 'nearest' }); } catch (x) { } } }
+    if (this._revealSel) { const root = this.rootRef.current; const el = root && root.querySelector('.s07-edit ' + this._revealSel); if (el) { this._revealSel = null; this.reveal(el); } }
   }
   _s07(patch) { this.setState(function (s) { return { s07: Object.assign({}, s.s07, patch) }; }); }
   /* the surface the stage should show: during a back transition it is already the one being revealed */
@@ -464,7 +462,7 @@ class Component extends DCLogic {
   }
   applyJump(e) {
     this._first = null; this.ctlJump(e); this._s07({ aud: 0, focus: '', flash: null });
-    const st = e.open && e.open.state; if (st === 'code' || st === 'code-expired') this._reveal = '.s07-resend';
+    const st = e.open && e.open.state; if (st === 'code' || st === 'code-expired') this._revealSel = '.s07-resend';
   }
 
   /* ---------------- actions ---------------- */
@@ -528,13 +526,13 @@ class Component extends DCLogic {
     const profV = (you.name || '') + ' · ' + (you.verified ? you.domain + ' 已验证' : you.email ? '邮箱未验证' : '没有验证邮箱');
     const row = function (key, label, value, fn, tok) { return { key: key, label: label, value: value, go: fn || go[key], ava: tok === 'ava', sw: tok === 'sw' }; };
     return {
-      meta: c.attCount ? c.attCount + ' 件事等你处理 · ' + s.cityLabel : s.cityLabel + ' · 本地演示',
+      meta: (c.attCount ? c.attCount + ' 件事等你处理' : '没有要你处理的事') + ' · ' + s.cityLabel,
       groups: [
         { title: '资料', rows: [row('profile', '个人资料', profV, function (ev) { self.openProfile(ev); }, 'ava'), row('privacy', '隐私与资料可见性', '谁能看见你的微信')] },
         { title: '找局', rows: [row('favorites', '收藏的局', favV), row('city', '默认浏览城市', s.cityLabel)] },
         { title: '提醒与外观', rows: [row('notify', '通知与提醒', notifyV), row('appearance', '外观与动态', s.appearanceLabel, null, 'sw')] },
         { title: '记录', rows: [row('records', '我的记录', s.recordLabel), row('reports', '我的举报', s.reportLabel)] },
-        { title: '帮助与账户', rows: [row('help', '帮助与反馈', JUS.RULES.length + ' 条约定 · 反馈'), row('account', '账户与本机数据', '本地演示'), row('about', '关于与规则', '版本与规则全文')] }
+        { title: '帮助与账户', rows: [row('help', '帮助与反馈', JUS.RULES.length + ' 条约定 · 反馈'), row('account', '账户与本机数据', d.session.kind === 'demo' ? d.session.device : '已退出本机会话'), row('about', '关于与规则', '版本与规则全文')] }
       ]
     };
   }
