@@ -101,6 +101,7 @@
     appealSaved: '申诉说明已保存本机，尚未提交审核服务。', appealFail: '申诉未保存，内容已保留，请重试。',
     supplementFail: '补充未提交，内容已保留，请重试。',
     recordHelp: '未出席是待核实的事实，不等于故意缺席，也不会自动处罚；可随时补充说明或提出异议，补充会留下记录。',
+    recordHelpDisputed: '未出席是待核实的事实，不等于故意缺席，也不会自动处罚；你已提出异议，正在等待核实，仍可随时补充说明。',
     creditSettings: '记录、核实、认定、处理与更正分别显示。举报不等于违规；主动告知轻于未告知后经核实的缺席。 同一账户每年共4次票根主动退出机会，跨活动、未撕和已撕票共用，接受改期后再退出也计入。确认前放弃预留或预留到期、纯候补退队、拒绝改期、局主取消不消耗。不凭举报或计时自动处罚。',
     quotaRule: '同一账户每年共4次票根主动退出机会，跨活动、未撕和已撕票共用，接受改期后再退出也计入。',
     quotaNoCount: '当前年度配置仍为空，自动处罚关闭；没有完整账户数据与已批准年度口径时，不展示年度余额。',
@@ -284,7 +285,7 @@
       d.records.push(fact('rec-boardgame-abs', 'absence_reported', 'pottery', t('2026-12-10T19:00'), { status: 'verified' }));
     }
     if (variant === 'long') {
-      d.you.name = '阿禾（周末只想睡到十一点）'; d.you.email = 'hehe.zhang.weekend.brunch.2026@stern.nyu.edu'; d.you.wx = 'ahe_weekend_brunch_club_2026';
+      d.you.name = '阿禾·周末睡到十一点'; d.you.email = 'hehe.zhang.weekend.brunch.2026@stern.nyu.edu'; d.you.wx = 'ahe_weekend_brunch_club_2026';
       d.events.hotpot.title = '深夜救急火锅局 · 不吃辣的也有清汤锅 · 吃完一起去对面买汤圆'; d.events.hotpot.loc = 'Queens-法拉盛缅街与 39 大道交口那家门口有红灯笼的店 B1';
       d.events.sketch.title = '周末速写 · 画人不画景 · 自带本子画完互相看 · 新手也欢迎来坐坐';
     }
@@ -339,14 +340,19 @@
       label: JUS.creditLabel(r), statusLabel: JUS.creditStatus(r), kindLabel: JUS.RECORD_KINDS[r.type] || '记录', isCredit: r.type !== 'attended',
       quotaLabel: r.type === 'attended' ? '' : r.eligible ? '占年度主动退出机会' : '不占机会 · 不记失约',
       canDispute: r.type === 'absence_reported' && !r.appeals.some(function (a) { return a.kind === 'dispute'; }), canAppeal: r.type === 'active_withdrawal' && !r.appeals.some(function (a) { return a.kind === 'appeal'; }), canSupplement: true,
-      appealCount: r.appeals.length, openAppeals: open.length, appealLine: open.length ? '已保存 ' + open.length + ' 条说明 · 待核实（本机）' : '', pendingReview: r.status === 'pending_review' });
+      appealCount: r.appeals.length, openAppeals: open.length, appealLine: open.length ? '已保存 ' + open.length + ' 条说明 · 待核实（本机）' : '', pendingReview: r.status === 'pending_review',
+      helpText: r.type !== 'absence_reported' ? '' : (r.appeals.some(function (a) { return a.kind === 'dispute'; }) ? JUS.COPY.recordHelpDisputed : JUS.COPY.recordHelp),
+      supplementRows: (r.supplements || []).map(function (x) { return Object.assign({}, x, { atText: fmt.dateTime(x.at), materialsText: materialsText(x.materials) }); }) });
   }
   function reportRow(d, r) {
     var e = eventOf(d, r.eventId);
     return Object.assign({}, r, { event: e, title: e.title, when: fmt.when(e.iso), host: hostName(d, e), atText: fmt.dateTime(r.createdAt), updatedText: fmt.dateTime(r.updatedAt), statusLabel: JUS.REPORT_LABELS[r.status] || r.status, needsMore: r.status === 'needs_info', open: r.status !== 'resolved', shotCount: r.shots.length,
       timelineRows: (r.timeline || []).map(function (x) { return { status: x.status, label: JUS.REPORT_LABELS[x.status] || x.status, atText: fmt.dateTime(x.at), text: x.status === 'needs_info' && r.needsText ? r.needsText : '' }; }),
-      supplementRows: (r.supplements || []).map(function (x) { return Object.assign({}, x, { atText: fmt.dateTime(x.at) }); }) });
+      supplementRows: (r.supplements || []).map(function (x) { return Object.assign({}, x, { atText: fmt.dateTime(x.at), materialsText: materialsText(x.materials) }); }) });
   }
+  /* attached local files (name + size only, never uploaded): 「截图.jpg · 402 KB、时间线.png · 1.2 MB」 */
+  function sizeText(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round((n || 0) / 1024)) + ' KB'; }
+  function materialsText(list) { return (list || []).map(function (m) { return m.name + (m.size ? ' · ' + sizeText(m.size) : ''); }).join('、'); }
   JUS.derive = {
     event: eventOf, eventStatus: eventStatus, isFav: isFav, joinedRow: joinedRow, hostedRow: hostedRow, hostName: hostName,
     city: function (d) { return JUS.cityByKey(d.prefs.city); },
