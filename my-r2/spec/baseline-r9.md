@@ -41,7 +41,7 @@
 - 参加者侧行（`joinedPhase`，一律进 s07）：pending `申请已递交 · 等局主处理 / 查看申请安排`；confirmed `你已确认参加 / 查看赴约安排`；invited `已收到邀请 · 等你回应 / 查看邀请安排`；reschedule_pending `时间有变化 · 原确认已失效 / 查看新安排`；cancelled `约定已取消 / 查看原定安排`；ended `这次见面已结束 / 回看约定`；exited `你已退出本场 / 回看原安排`。没有候补、待撕票、待联系、改期答复等更细的参加者阶段。
 - 页底 `nav.r5-overview-bottom`：`→ 找局`（→ s01 发现页）与 `+ 开一局`（→ 开局表单 s02）。空态：局主 `先定下一个好主意 / 从活动、时间和地点开始，把想做的事约起来。` + 主 CTA `开一局`；参加者 `一起做点什么 / 找一场想参加的活动，给这一天添个安排。` + 主 CTA `看看有什么局` + `确认参加后，安排会留在这里。`——两个空态都靠范围外入口成立。
 - 返回落点：`back()` 弹出 `navigationStack`（记录来源路由、活动、名单筛选、角色、滚动位置、焦点），所以从管理页返回会回到原角色、原滚动位置并把标题飞回原行（`identityFlight` 380ms）；**栈空时在 s00 按返回 → 进入 s01 看见局（发现页，范围外）**，见 `s00-back-lands-on-s01-discovery.png`；在其他页栈空 → s00。
-- 草稿：R9 只有一份开局表单草稿（`state.draft`，s02），我的局里没有草稿分区、没有草稿摘要 / 删除 / 撤销；`s02-draft-form-limits-sample.png`、`s02-draft-form-blank.png` 只是开局编辑器画面。
+- 草稿：R9 只有一份开局表单草稿（`state.draft`，s02 标题 `开一局 / 从一个好主意，到一次见面。`），我的局里没有草稿分区、没有草稿摘要 / 删除 / 撤销；`s02-draft-form-limits-sample.png`（R9 专项样本"合规上限 · 上海 / 2027 草稿"）、`s02-draft-form-blank.png` 只是开局编辑器画面。
 - 历史被拆成三处：s00 `之前的安排`（含取消）、`局主归档` s09b（只含已归档的 ended）、s06 的只读 `本场记录`。
 
 ### A.2 赴约安排（s07，参加者）
@@ -52,7 +52,12 @@
 - 返回：`回到我参加的` 与系统返回都走 `back()`，回到 s00 并保持 `我参加的` 角色。
 
 ### A.3 注入参加记录后的观察（本文为看清 s07 自行写入 `joinedEvents`，不属于 R9 自带数据）
-【待补：shots3 结果】
+截图：`s00-joined-injected-rows.png`、`s00-joined-injected-rows-bottom.png`、`s07-joined-invited.png`、`s07-joined-pending.png`、`s07-joined-confirmed.png`、`s07-joined-reschedule-pending.png`、`s07-joined-cancelled.png`、`s07-joined-ended.png`、`s07-back-lands-joined-list.png`。
+
+- 写入 7 条 `joinedEvents`（status：invited / pending / confirmed / reschedule_pending / cancelled / ended / exited）后，`我参加的` 用与局主侧完全相同的行模板渲染：第一条大卡（`深夜救急火锅局 / 海底捞 / Queens-法拉盛 / 11 / 10 2026 · 周二 / 19:30 纽约当地时间 / 已收到邀请 · 等你回应 / 查看邀请安排`），其余紧凑行；cancelled / ended / exited 落到 `之前的安排`。参加者行不显示人数、席位、票根、候补位次或截止倒计时。
+- s07 各状态只换一句状态词和边界块：invited → `已收到邀请 · 等你回应` + `这份邀请等你决定` + `邀请回应尚未接入`；pending → `申请已递交 · 等局主处理`，无边界块；confirmed → `你已确认参加`，无票根 / 联系 / 撕票；reschedule_pending → `时间有变化 · 原确认已失效` + `原确认已失效` + `重新确认尚未接入`（画面里只有新时间，没有旧时间）；cancelled → `约定已取消` + `本场已经取消，原参加确认仅作记录。`；ended → `这次见面已结束`，无出席记录、无票根。费用行 `共同 AA · 预计 $30–45/人`。
+- `回到我参加的` / 返回 → s00 并保持 `我参加的` 角色（`s07-back-lands-joined-list.png`）。
+- 结论：R9 的参加者侧是只读说明页；本轮 A 组（待审核 … 已散场、撤回 / 退出 / 候补 / 撕票 / 联系 / 答复）的动作与对象在 R9 里没有前例。
 
 ### A.4 管理这局（s06，路由名"能确认"）
 截图：`s06-manage-pending.png`、`s06-manage-invited-empty.png`、`s06-manage-invited.png`、`s06-manage-confirmed.png`、`s06-manage-pending-after-invite.png`、`s06-manage-pending-after-decline.png`、`s06-manage-confirmed-after-response.png`、`s06-person-pending-sheet.png`、`s06-person-invited-sheet.png`、`s06-person-confirmed-sheet.png`、`s06-handled-sheet.png`、`s06-handled-sheet-open.png`、`s06-tools-menu-open.png`、`s06-event-detail-sheet-meet/join/fee.png`、`s06-manage-scrolled-header.png`、`s06-manage-reconfirm-pending.png`、`s06-person-reconfirm-sheet.png`、`s06-manage-reconfirm-after-one-accept.png`、`s06-r9-reconfirm-sample*.png`、`s06-manage-cancelled.png`、`s06-manage-ended-unrecorded*.png`、`s06-manage-recording-twelve.png`、`s06-manage-ended-readonly.png`、`s06-person-ended-sheet.png`、`s06-manage-no-applicants*.png`、`s06-manage-pending-long-intro.png`、`s06-person-long-intro-sheet*.png`。
@@ -78,7 +83,7 @@
 截图：`s08-plan-active.png`、`s08-plan-future.png`、`s08-time-editor-date/time/duration.png`、`s08-reschedule-confirm-sheet.png`、`s08-plan-after-reschedule-saved-note.png`、`s08-plan-after-reschedule.png`、`s08-plan-history-open.png`、`s08-reschedule-confirm-sheet-last-quota.png`、`s08-plan-quota-exhausted.png`、`s08-reschedule-confirm-disabled-no-quota.png`、`s08-cancel-confirm-sheet.png`、`s08-plan-cancelled-locked.png`、`s08-plan-ended-locked.png`、`s08-plan-ended-unrecorded-locked.png`、`s08-plan-r9-reconfirm-sample.png`。
 
 - 进入：s06 `安排 ˅ → 计划有变`、s00 已取消行、s09a 门控页 `查看现在的安排`。返回：栈。
-- 结构：活动卡（时钟图标、局名、地点 · 街区）→ 单节点时间轴（`现在的约定` / `11 月 5 日 周四` / 大字 `19:30` / `纽约当地时间 · UTC-5` / `预计留出 时长待定`）→ `换个时间见 / 日期、时刻与时长 →` → `本年度改期额度 / 2026 年 · 全年 2 次 / 当前剩余 N 次` → `这次见不成了？ / 取消后，报名与邀请都会关闭。 / 取消本场 →`（红）→ `之前改过的时间 N 次 ˅`（展开：新时间、时长、`第 N 版`）。
+- 结构：活动卡（时钟图标、局名、地点 · 街区）→ 单节点时间轴（`现在的约定` / `11 月 5 日 周四` / 大字 `19:30` / `纽约当地时间 · UTC-5`（按活动当天时区算，10 月的样本显示 `UTC-4`）/ `预计留出 时长待定`）→ `换个时间见 / 日期、时刻与时长 →` → `本年度改期额度 / 2026 年 · 全年 2 次 / 当前剩余 N 次` → `这次见不成了？ / 取消后，报名与邀请都会关闭。 / 取消本场 →`（红）→ `之前改过的时间 N 次 ˅`（展开：新时间、时长、`第 N 版`）。
 - 改时间 = `editTime` 抽屉 `约在什么时候`（tab `日期 / 开始 / 时长`；日历 + 直接输入；24 小时制时分 + 常用分钟；时长 1 / 1.5 / 2 / 3 小时、自定（≤30 字，计数校验）、暂不设时长；CTA `定下这个时间`）→ `把约定改到这里` 确认抽屉（逐项 `原来 → 新`、新约定摘要、后果 `N 位需要重新确认 / 原参加确认与票件暂时失效，等本人确认新安排。` + `另有 N 份未确认邀请将到期释放。`、额度预测 `本次使用 1 次。确认本次改期成功后，还剩 N 次。`、`继续修改` / `确认这次修改`）→ 回到 s08，`现在的约定` 块高亮 520ms 并出现 `新约定已保存` 2.4 s。可提交 / 不可提交：时间未变 → `未作修改，原约定保持不变`；过去时间 → `选择未来的见面日期`；额度 0 → CTA 禁用 + `本年度额度已用完，超额处理暂不可用。`。
 - 改期答复（局主视角）只在 s06 `待确认` tab 看回复状态；接受 → 落入 `已确认`（新版票 id），拒绝 → 落入 `已处理的申请`（`已退出`）。
 - 取消 = `取消这次约定` 抽屉（`这次约定` 卡、`取消以后，不能撤销。` + 三条后果、`本年度取消额度 全年 1 次` + 预测、`保留这场活动` / 危险按钮 `确认取消活动`）→ 回 s06 `这场已取消`；此后 s08 锁定 `本场已经取消 / 上方保留本场原定安排。 / ← 返回本场`。其他锁定句：`已归档，保留这份约定`、`这场已经结束 / 实际结束后，不能再改期或取消。`、`计划已经固定 / 出席记录开始后，名册和时间不再修改。`。
@@ -99,7 +104,7 @@
 截图：`s09b-archive-wall-after-archive.png`、`s09b-archive-wall-intro-settled.png`、`s09b-archive-wall-next.png`、`s09b-archive-people-sheet.png`、`s09b-archive-empty-product.png`。
 
 - 进入：s00 `局主归档`、s06 `安排 ˅ → 历史归档`、s09a 归档确认、s05 `看看这场的归档`。
-- V27 三维票根墙（`profile:'archive'`）：从 s00 进入时播放 1.9 s intro 再进入浏览；归档刚完成进入时跳过 intro；左右拖 / 方向键换场，点按 / 空格翻面。下方事实块：局名、`2026.10.20 19:30 纽约当地时间`、`海底捞 · 纽约`、`N 人出席 N 人未出席`（历史演示样本显示 `历史演示 · 无逐人记录`；空名册 `归档时没有应到参加者`），`查看本场出席记录 →` 抽屉 `本场出席记录 只读`。
+- V27 三维票根墙（`profile:'archive'`）：本次会话首次进入播放 1.9 s intro（`INTRO_DUR`）再进入浏览；之后 `renderArchive.selectedEventId` 已被 `onIndex` 记住，再进入（含归档刚完成）都 `skipIntro`；左右拖 / 方向键换场，点按 / 空格翻面。下方事实块：局名、`2026.10.20 19:30 纽约当地时间`、`海底捞 · 纽约`、`N 人出席 N 人未出席`（历史演示样本显示 `历史演示 · 无逐人记录`；空名册 `归档时没有应到参加者`），`查看本场出席记录 →` 抽屉 `本场出席记录 只读`。
 - 空态：`还没有结束的活动 / 由你发起、主动结束的活动，会把安排和出席记录留在这里。` + 当前活动卡 + `回到这场活动 / 查看我的局`。
 - 墙里只有局主自己归档的局；参加者的历史票根不存在。
 
@@ -132,7 +137,7 @@
 | s00 页底 | `+ 开一局` | `startCreate()` → `s02 想开局` | 开局编辑器 | 惰性入口，文案保留 `开一局`。 |
 | s00 局主空态主 CTA | `开一局`（`先定下一个好主意 / 从活动、时间和地点开始，把想做的事约起来。`） | `s02` | 开局编辑器 | 空态不能依赖它成立（§09.D）；保留位置、不可点。 |
 | s00 参加者空态主 CTA | `看看有什么局`（`一起做点什么 / 找一场想参加的活动，给这一天添个安排。` / `确认参加后，安排会留在这里。`） | `s01` | 发现 | 同上。 |
-| s06 页脚 / 各 tab 空态 / s00 "约定已保存"行 | `导出与分享 →`、`分享这次约定` | `s05 发出去`（`导出分享图` 真实下载 PNG、`复制活动编号` 真实剪贴板、`核对赴约安排`、`报名管理`） | 发布 / 分享流程（开局后段） | 惰性；`s05` 整页不进入本轮。 |
+| s06 页脚 / 各 tab 空态（无申请时空态主 CTA 就是 `导出与分享`，见 `s06-manage-no-applicants.png`）/ s00 "约定已保存"行 | `导出与分享 →`、`分享这次约定` | `s05 发出去`（`导出分享图` 真实下载 PNG、`复制活动编号` 真实剪贴板、`核对赴约安排`、`报名管理`） | 发布 / 分享流程（开局后段） | 惰性；`s05` 整页不进入本轮。 |
 | s05 | `报名管理` / `看看这场的归档` | `s06` / `s09b` | 范围内回流 | 随 s05 一起不渲染。 |
 | s01 主导航 | `找局 / 开局 / 我的局 / 设置` | s01 / s02 / s00 / 背景抽屉 | 发现、开局、设置 | 整页范围外；`设置` 在 R9 只是背景选择（`Cotton Candy 棉糖 / Halo 光晕 / Sunset 落日`）。 |
 | s01 / s02 | `切换城市`、`时间城市`、编辑区域 | `openCity` / `openArea` 抽屉 | 城市选择 | 范围外。 |
@@ -165,7 +170,7 @@
 【待补：motion2 帧清单】
 
 ### D.4 散场 / 归档序列
-- R9 没有燃烧、撕券、打印：`结束并归档本场` → 确认抽屉 → `H.archive()` → `go('s09b', true, {kind:'save'})`。归档墙在 `selectedEventId` 已设时 `skipIntro`，直接显示刚归档的票卡；从 `局主归档` 入口进入则先播 1.9 s 的 V27 intro（`INTRO_DUR`）再可浏览。取消后也没有票件作废动画，只是票面文字 `活动已取消`。
+- R9 没有燃烧、撕券、打印：`结束并归档本场` → 确认抽屉 → `H.archive()` → `go('s09b', true, {kind:'save'})`。归档墙在 `selectedEventId` 已设时 `skipIntro`，直接显示刚归档的票卡；只有本次会话第一次进入归档墙才播 1.9 s 的 V27 intro（`INTRO_DUR`）。取消后也没有票件作废动画，只是票面文字 `活动已取消`。
 - 归档后不可再更正（抽屉原句 `归档后，出席记录变为只读，不能再修正。`）。
 
 ## E. 不应继承的东西（观察，不写方案）
@@ -173,7 +178,7 @@
 按任务书 §03 诊断口径的六条逐一对照：① 物件世界挤占构图、JU 内容退成道具上的小内容；② 换材质 / 放大不等于成熟；③ 机关、编号、英文、盖印、厚边反复消耗资源；④ 仪式动作替代日常查看质感；⑤ 业务规则与旧表现决定混淆；⑥ 未实测不得写成已实测。R9 不是"未通过的十套"，但下列组织 / 布局决定同样没有获得认可：
 
 1. **总览首条大卡 + 其余压成列表**（`s00-host-multi.png`）：第一条被拆成两块表面（白卡 + 下移的日期块），其他局缩成文字行；"哪场要处理 / 哪次见面将至"的主次只靠排序位置（口径 ①②）。
-2. **吸顶 rail 与正文冲突**（`s00-host-multi-scrolled.png`、`s00-host-multi-bottom-past.png`）：滚动时大卡的 `3 份申请等你看 / 看看谁想来` 画在 `我参加的 / 我发起的` rail 上面，正文没有被 rail 裁掉——这是实测看到的层级错误（口径 ⑥，已实测）。
+2. **吸顶 rail 与正文冲突**（`s00-host-multi-scrolled.png`、`s00-host-multi-bottom-past.png`、`s00-joined-injected-rows-bottom.png`）：滚动时大卡的 `3 份申请等你看 / 看看谁想来`、紧凑行 `摆烂咖啡两小时` 都画在 `我参加的 / 我发起的` rail 上面，正文没有被 rail 裁掉，外层标题又被裁成 `…的局`——这是实测看到的层级错误（口径 ⑥，已实测）。
 3. **标题收拢后的裁切留白**（`s06-manage-scrolled-header.png`）：短名单页滚动后标题进入工具行，正文顶部被 `clip-path` 裁掉但占位仍在，出现约 260px 空白（口径 ⑥，已实测）。
 4. **"我的局"没有当前 / 历史 / 草稿分区，历史拆在三处**（s00 `之前的安排`、s09b `局主归档`、s06 `本场记录`），草稿根本不出现；参加者侧只有空态（口径 ⑤：这是 R9 的组织决定，不是业务事实）。
 5. **空态依赖范围外按钮**（`开一局` / `看看有什么局`），与 §09.D "空态和单项态仍有完整构图，不依靠范围外入口成立"相反。
@@ -182,7 +187,7 @@
 8. **人员详情 = 深蓝横幅 + 聊天气泡**（`s06-person-*-sheet.png`）：留言被做成气泡、人形图标与蓝底占据首屏一半，活动与联系信息退到下方（口径 ①）。
 9. **计划有变页的单节点"时间轴"与超大时刻**（`s08-plan-future.png`）：一个圆点和一条竖线只承载一个节点，`19:30` 约 60px，`本年度改期额度 / 全年 2 次`、`取消额度 / 全年 1 次` 这些未确认的演示政策占据正文重要位置（口径 ②⑤）。
 10. **出席票卡的英文主导与票号条**（`s09a-record-ready-person1.png`）：`HOTPOT RESCUE`、`SEATS / WHERE / TIME`、`REAL PLANS ONLY`、`WE WERE HERE`、参加者名下的 34 位票号 slug 都比中文局名更抢眼；章面环文也是英文（口径 ①③）。
-11. **序列不可打断、每位必须看完 ≈1.7 s 的三段动画**，且归档墙每次从入口进入都重播 1.9 s intro（口径 ④：频繁任务被仪式占用）。
+11. **序列不可打断、每位必须看完 ≈1.7 s 的三段动画**（12 人就是 20 s 以上的强制表演），归档墙首次进入另有 1.9 s intro（口径 ④：频繁任务被仪式占用）。
 12. **结果页两列姓名网格**（`s09a-complete-result.png`）与归档墙下方的纯文本事实块：首页精致、深层回到通用面板（§07 "外面精致，点进去是通用后台"）。
 13. **分享页（s05）在取消 / 结束后仍保留可用的导出与复制**，`报名管理 / 6 位已确认参加` 继续按确认数计（`s05-published-cancelled.png`）。
 14. **R9 路由命名**（`能确认 / 会出现 / 留下这一局 / 计划有变 / 谁想来`）和页内标题随状态改名（`谁想来 → 这场见面 → 本场记录 → 这场已取消`）是 R9 的文案决定，不是已确认的产品语言。

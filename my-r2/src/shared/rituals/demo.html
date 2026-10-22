@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>JU 票根仪式 · 基线演示</title>
+<!-- demo.html — 独立离线演示：390×844 容器里依次 打印 → 撕 → 联系展开 → 作废燃烧 → 出席印记 → 改期（新票打印 + 接受撕 / 拒绝烧）
+     每个仪式有按钮触发、可重放、尊重 prefers-reduced-motion（直接到终态），另有评审开关（等价于系统设置，经 matchMedia 代理生效）。
+     屏幕结构按 V27 s06 / s11 / s08 复刻：内容区 padding 66px 22px；吸顶头部 145px + 13px；舞台顶 231px；纸顶 315px（主线）。
+     背景为中性占位（不是 Cotton Candy / Halo / Sunset 环境）；主按钮为 V27 blueCta(true) 原材质（第 1863-1869 行）。 -->
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<link rel="stylesheet" href="ticket.css">
+<link rel="stylesheet" href="print.css">
+<link rel="stylesheet" href="tear.css">
+<link rel="stylesheet" href="burn.css">
+<link rel="stylesheet" href="stamp.css">
+<style>
+  body{margin:0;background:#101320;color:#dfe3f3;font:13px/1.6 system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{display:flex;gap:40px;padding:36px 40px;align-items:flex-start}
+  .phone-wrap{width:390px;height:844px;position:relative;flex-shrink:0}
+  .phone{width:390px;height:844px;background:#000;border-radius:52px;padding:7px;box-sizing:border-box;box-shadow:0 70px 130px -30px rgba(0,0,0,.85),inset 0 0 0 2px #1B1E2B;position:relative}
+  .screen{position:relative;width:100%;height:100%;border-radius:45px;overflow:hidden;background:#F3F4FA;color:#14161f;font-family:var(--ju-font-ui)}
+  .screen[hidden]{display:none}
+  .scroll{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:66px 22px 128px;box-sizing:border-box;z-index:2;overscroll-behavior-y:contain}
+  .after-scroll{position:absolute;inset:0;overflow:clip;padding:66px 22px calc(88px + 46px);box-sizing:border-box;display:flex;flex-direction:column;z-index:2}
+  .header{position:sticky;top:0;z-index:12;display:flex;flex-direction:column;height:145px;min-height:145px;margin-bottom:13px;box-sizing:border-box}
+  .back{width:44px;height:44px;border-radius:50%;background:rgba(255,255,255,.35);display:flex;align-items:center;justify-content:center;color:#14161F;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.4)}
+  .title{font:500 30px/1.25 var(--ju-font-ui);color:#14161f;margin-top:20px;overflow-wrap:anywhere}
+  .sub{font:400 14px/1.5 var(--ju-font-ui);color:#535b70;margin-top:4px}
+  .footer{position:absolute;left:0;right:0;bottom:0;z-index:24;pointer-events:none;display:flex;flex-direction:column;padding:0 22px 46px;box-sizing:border-box}
+  /* V27 blueCta(true)（第 1863-1869 行）+ ctaGlossStyle（第 2519 行）+ ctaTextStyle（第 4317 行）：原材质，不改 */
+  .cta{align-self:center;width:min(100%,280px);position:relative;height:48px;border-radius:999px;overflow:hidden;cursor:pointer;display:flex;align-items:center;justify-content:center;color:#FFFFFF;pointer-events:auto;
+    background-color:#8DB1F2;
+    background-image:radial-gradient(58% 44% at 31% 99%,rgba(211,246,253,0.97) 0%,rgba(196,238,252,0.58) 36%,rgba(178,224,250,0) 66%),radial-gradient(50% 42% at 55% 102%,rgba(183,236,253,0.86) 0%,rgba(178,226,251,0.4) 42%,rgba(176,228,251,0) 70%),radial-gradient(54% 44% at 85% 100%,rgba(166,213,252,0.88) 0%,rgba(158,204,250,0.46) 40%,rgba(152,198,250,0) 70%),radial-gradient(50% 62% at 20% 4%,rgba(163,195,253,0.92) 0%,rgba(150,184,248,0.44) 44%,rgba(146,182,246,0) 78%),radial-gradient(52% 58% at 55% 2%,rgba(150,188,251,0.9) 0%,rgba(140,178,248,0.42) 46%,rgba(138,178,246,0) 80%),radial-gradient(54% 66% at 87% 4%,rgba(129,172,252,0.96) 0%,rgba(124,166,246,0.48) 44%,rgba(132,174,248,0) 78%),radial-gradient(46% 70% at 6% 54%,rgba(158,198,248,0.6) 0%,rgba(158,198,248,0) 74%),linear-gradient(178deg,rgba(150,186,252,1) 0%,rgba(126,166,240,1) 30%,rgba(122,166,232,1) 56%,rgba(176,226,250,1) 86%,rgba(181,238,253,1) 100%);
+    box-shadow:inset 0 0 18px 9px rgba(58,104,178,0.2),inset 0 0 0 1px rgba(255,255,255,0.62),inset 0 1px 0 rgba(240,248,255,0.72),inset 0 -6px 12px -8px rgba(209,246,255,0.8),0 0 0 1px rgba(172,204,252,0.62),0 8px 20px -12px rgba(146,186,238,0.4);
+    transition:transform .48s cubic-bezier(.18,1.5,.36,1),box-shadow .48s cubic-bezier(.18,1.5,.36,1)}
+  .cta[aria-disabled="true"]{cursor:not-allowed;color:#626777;background:rgba(20,22,31,0.055);box-shadow:inset 0 0 0 1px rgba(20,22,31,0.1)}
+  .cta:active{transform:scale(.958)}
+  .gloss{position:absolute;left:14px;right:14px;top:3px;height:13px;border-radius:999px;background:linear-gradient(180deg,rgba(255,255,255,0.62),rgba(255,255,255,0));pointer-events:none}
+  .cta-text{position:relative;font-family:var(--ju-font-ui);font-size:15px;font-weight:500;letter-spacing:0;color:#fff;line-height:1.5;white-space:nowrap}
+  .cta[aria-disabled="true"] .cta-text{color:#626777}
+  .ju-rule-entry23{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 0;margin:8px 0 0;border:0;border-top:1px solid #c4cbdc;background:none;color:#46549e;font:500 14px var(--ju-font-ui);cursor:pointer;text-align:left;width:100%}
+  .ju-rule-entry23>span:last-child{margin-left:auto}
+  /* 控制面板（手机外） */
+  .panel{width:420px;color:#cfd5ec}
+  .panel h1{font:500 16px/1.4 system-ui;margin:0 0 4px;color:#eef1ff}
+  .panel .lead{color:#8d95b5;font-size:12px;margin:0 0 16px}
+  .group{border:1px solid #2a2f45;border-radius:14px;padding:12px 14px;margin-bottom:10px;background:#151928}
+  .group h2{font:600 12px/1.4 'Space Mono',monospace;letter-spacing:.12em;color:#98A4E6;margin:0 0 8px}
+  .group .btns{display:flex;flex-wrap:wrap;gap:6px}
+  button.b{min-height:34px;border:1px solid #686579;border-radius:18px;background:#ffffff08;color:#d4d9ed;font:12px system-ui;padding:7px 12px;cursor:pointer}
+  button.b.primary{background:#d6dcff;color:#252b42;border-color:#d6dcff}
+  button.b:disabled{opacity:.35;cursor:default}
+  select,label.sw{font:12px system-ui;color:#d4d9ed}
+  select{background:#0f1220;border:1px solid #686579;border-radius:10px;color:#d4d9ed;padding:6px 8px}
+  .status{font:12px/1.6 'Space Mono',monospace;color:#b8f3d7;min-height:20px;margin-top:6px;white-space:pre-wrap}
+  .log{font:11px/1.5 'Space Mono',monospace;color:#8d95b5;max-height:220px;overflow:auto;margin-top:8px;white-space:pre-wrap}
+  .geo{font:11px/1.6 'Space Mono',monospace;color:#9aa1ba;white-space:pre-wrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="phone-wrap"><div class="phone">
+    <!-- 票根屏（V27 s06 / s11 的结构） -->
+    <div class="screen" data-screen="ticket" id="ticketScreen">
+      <div class="scroll" id="ticketScroll">
+        <div class="header" id="ticketHeader">
+          <div class="back" role="button" tabindex="0" aria-label="返回">←</div>
+          <span class="title" id="hTitle">票根</span>
+          <span class="sub" id="hSub">FRI 12.18 · 19:30 · 法拉盛</span>
+        </div>
+        <div data-ticket-content24="">
+          <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+          <div class="ju-ticket-stage" data-print-stage="demo" data-state="idle" id="stage">
+            <div class="ju-print-mouth"></div>
+            <div class="ju-print-lip"></div>
+            <div class="ju-ticket" data-paper="demo">
+              <div class="ju-ticket-shadow" data-paper-shadow="demo" data-raster="skip"><div></div></div>
+              <div class="ju-ticket-shell" data-paper-shell="demo">
+                <div class="ju-ticket-surface" data-paper-surface="demo">
+                  <div class="ju-ticket-body">
+                    <div class="ju-ticket-face">
+                      <div class="ju-ticket-brand">JU. / 票根</div>
+                      <div class="ju-ticket-title" data-slot="title">深夜救急火锅局</div>
+                      <div class="ju-ticket-when"><span data-slot="time">19:30</span><span data-slot="md">12.18</span></div>
+                      <div class="ju-ticket-previous" data-slot="previous" hidden></div>
+                      <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">法拉盛</strong></div>
+                      <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">待局主确认</strong></div>
+                      <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">老杨</strong></div>
+                    </div>
+                    <div class="ju-ticket-wet" data-wet="demo" data-raster="skip"></div>
+                  </div>
+                  <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden>时间已改</div>
+                  <div class="ju-ticket-stub" data-tear="demo"><div class="ju-ticket-bend" data-bend="demo" data-raster="skip"></div></div>
+                </div>
+              </div>
+              <div class="ju-ticket-burn" data-burn="demo" data-raster="skip"></div>
+            </div>
+          </div>
+          <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true" id="contactWrap">
+            <div class="ju-contact-row"><span class="ju-contact-name">局主 · 老杨</span><span class="ju-contact-account">laoyang.ju</span><button class="ju-contact-copy" type="button" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+            <p class="ju-contact-note23">撕券后8小时内联系局主。此处为示例微信。</p>
+            <p class="ju-form-error"></p>
+          </div>
+          <button class="ju-rule-entry23" type="button" aria-label="参加约定"><svg aria-hidden="true" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 3h12v18l-6-3-6 3V3zM9 7h6M9 11h6"/></svg><span>参加约定</span><span aria-hidden="true">›</span></button>
+        </div>
+      </div>
+      <div class="ju-ash-wrap" data-ash id="ash">
+        <div class="ju-ash-title" data-slot="ashTitle">局主取消了</div>
+        <div class="ju-ash-sub" data-slot="ashSub">不计为未出席，也不影响成局信用。</div>
+        <button class="ju-ash-sec" data-slot="ashSec" type="button">知道了</button>
+      </div>
+      <div class="footer">
+        <div class="cta ju-contact-action" data-contact-action role="button" tabindex="0" aria-disabled="true" id="contactCta"><span class="gloss"></span><span class="cta-text" data-slot="actionLabel">已加微信</span></div>
+      </div>
+    </div>
+    <!-- 散场屏（V27 s08 的结构） -->
+    <div class="screen" data-screen="after" id="afterScreen" hidden>
+      <div class="after-scroll">
+        <div style="display:flex;align-items:center;gap:13px;flex-shrink:0"><div class="back" role="button" tabindex="0" aria-label="返回">←</div></div>
+        <div class="ju-t08-title"><span class="title" style="margin-top:0">散场</span><span class="sub" style="margin-top:0">FRI 12.18 · 19:30 · 法拉盛</span></div>
+        <div data-t08-scope="1" id="t08scope" class="ju-t08-root"></div>
+      </div>
+    </div>
+  </div></div>
+
+  <div class="panel">
+    <h1>JU 票根仪式 · 基线演示（V27 / R9 原件复用）</h1>
+    <p class="lead">390×844 · 每个仪式按钮触发、可重放；系统减少动态或右侧开关打开时直接到终态。</p>
+    <div class="group"><h2>00 · 控制</h2><div class="btns">
+      <label class="sw"><input type="checkbox" id="reduced"> 减少动态（评审开关 = prefers-reduced-motion）</label>
+      <button class="b" id="resetAll">全部重置</button>
+      <button class="b" id="geoBtn">测量票根几何</button>
+    </div><div class="geo" id="geo"></div></div>
+    <div class="group"><h2>01 · 打印 PRINT</h2><div class="btns">
+      <button class="b primary" id="print">出票 · 打印</button><button class="b" id="reprint">重播出纸</button>
+    </div></div>
+    <div class="group"><h2>02 · 撕副券 TEAR</h2><div class="btns">
+      <button class="b primary" id="tear">撕下副券（按钮等价 = 键盘 Enter）</button><button class="b" id="tearFocus">聚焦副券（键盘 Enter / Space）</button><button class="b" id="tearReset">副券回位</button>
+    </div><div style="color:#8d95b5;font-size:11px;margin-top:6px">也可在手机里横向拖动副券：过半松手自动撕完，不过半回位。</div></div>
+    <div class="group"><h2>03 · 联系展开 CONTACT</h2><div class="btns">
+      <button class="b primary" id="contact">展开联系信息</button><button class="b" id="copy">复制微信</button><button class="b" id="contactHide">收起</button>
+    </div></div>
+    <div class="group"><h2>04 · 作废燃烧 BURN</h2><div class="btns">
+      <select id="variant"><option value="cancelled">C · 局主取消 / 主动退出</option><option value="reschedule-declined">B · 改期拒绝</option><option value="A">A · 右下角起燃（V27 未用）</option></select>
+      <button class="b primary" id="burn">燃烧作废</button><button class="b" id="burnReplay">重播（重新出票后再烧）</button>
+    </div></div>
+    <div class="group"><h2>05 · 出席印记 STAMP（08 散场）</h2><div class="btns">
+      <button class="b primary" id="stampPresent">出席 · 盖章</button><button class="b" id="stampAbsent">未出席 · 盖章</button><button class="b" id="stampReplay">重播盖章</button><button class="b" id="stampPending">等章（不盖）</button><button class="b" id="backToTicket">回到票根屏</button>
+    </div><div style="color:#8d95b5;font-size:11px;margin-top:6px">浏览态键盘：↑↓←→ 翻阅、Home/End、Enter/Space 翻面（引擎自带）。</div></div>
+    <div class="group"><h2>06 · 改期 RESCHEDULE</h2><div class="btns">
+      <button class="b primary" id="reissue">局主改时间 → 打印新票</button><button class="b" id="accept">接受新时间（撕）</button><button class="b" id="decline">去不了了（烧 B）</button><button class="b" id="restoreOriginal">恢复原票</button>
+    </div></div>
+    <div class="status" id="status" role="status" aria-live="polite"></div>
+    <div class="log" id="log"></div>
+  </div>
+</div>
+
+<script>
+/* 评审开关：代理 matchMedia('(prefers-reduced-motion: reduce)')，让原件引擎（JuPrint / JUTear / JuTickets）与 CSS 同时得到“减少动态”。
+   只在 demo 里存在；共享模块不含此代理。 */
+(function () {
+  const native = window.matchMedia.bind(window); let forced = false; const listeners = new Set();
+  window.__juForceReduced = v => { forced = !!v; document.documentElement.dataset.juReduced = forced ? 'true' : 'false'; const ev = { matches: forced || native('(prefers-reduced-motion: reduce)').matches, media: '(prefers-reduced-motion: reduce)' }; listeners.forEach(fn => { try { fn(ev); } catch (e) { } }); };
+  window.matchMedia = q => { const m = native(q); if (!/prefers-reduced-motion/.test(q)) return m;
+    return { media: q, get matches() { return forced || m.matches; }, onchange: null,
+      addEventListener: (t, fn) => { listeners.add(fn); m.addEventListener(t, fn); }, removeEventListener: (t, fn) => { listeners.delete(fn); m.removeEventListener(t, fn); },
+      addListener: fn => { listeners.add(fn); m.addListener(fn); }, removeListener: fn => { listeners.delete(fn); m.removeListener(fn); }, dispatchEvent: () => true }; };
+})();
+</script>
+<script src="print.js"></script>
+<script src="tear.js"></script>
+<script src="burn.js"></script>
+<script src="contact.js"></script>
+<script src="assets/original/v27/ju-paper-film.js"></script>
+<script src="assets/original/v27/ju-envelope.js"></script>
+<script src="assets/original/v27/ju-stamp.js"></script>
+<script src="assets/original/v27/ju-tickets2.js"></script>
+<script src="stamp.js"></script>
+<script>
+(function () {
+  const $ = id => document.getElementById(id);
+  const stage = $('stage'), status = $('status'), logEl = $('log');
+  const EVENT = { id: 'NYC|invite|深夜救急火锅局', city: 'NYC', pack: 'invite', title: '深夜救急火锅局', en: 'HOTPOT RESCUE', wd: 'FRI', date: '12.18', dateNum: '12-18-2026', time: '19:30', loc: '法拉盛', host: '老杨', capacity: 4, seats: 1, joinMode: 'application' };
+  const TICKET = { key: 'v1', title: EVENT.title, time: '19:30', md: '12.18', loc: '法拉盛', meeting: '待局主确认', host: '老杨', previous: '', mark: '' };
+  const REISSUED = { key: 'v2', title: EVENT.title, time: '20:00', md: '12.19', loc: '法拉盛', meeting: '待局主确认', host: '老杨', previous: 'FRI 12.18 19:30', mark: '时间已改', reissued: true };
+  const ASH = { cancelled: { ashTitle: '局主取消了', ashSub: '不计为未出席，也不影响成局信用。', ashSec: '知道了' }, 'reschedule-declined': { ashTitle: '已退出改期活动', ashSub: '改期后退出，不影响成局信用。', ashSec: '知道了' }, A: { ashTitle: '票已作废', ashSub: '（variant A · V27 未使用）', ashSec: '知道了' } };
+  const HISTORY = [
+    { id: 'NYC|invite|漂亮饭，只拍不吃派', event: { id: 'NYC|invite|漂亮饭，只拍不吃派', city: 'NYC', pack: 'invite', title: '漂亮饭，只拍不吃派', en: 'PRETTY PLATES', wd: 'SAT', date: '11.28', dateNum: '11-28-2026', time: '12:30', loc: '东村', host: '小面', capacity: 4, seats: 0, version: 1 }, attendance: 'present', endedAt: Date.now() - 20 * 864e5 },
+    { id: 'NYC|invite|川菜辣度分级评审团', event: { id: 'NYC|invite|川菜辣度分级评审团', city: 'NYC', pack: 'invite', title: '川菜辣度分级评审团', en: 'SPICE PANEL', wd: 'SAT', date: '11.14', dateNum: '11-14-2026', time: '18:30', loc: '八大道', host: '麻酱', capacity: 5, seats: 0, version: 1 }, attendance: 'absent', endedAt: Date.now() - 34 * 864e5 },
+  ];
+  let current = TICKET, tearHandle = null, contactHandle = null, burnHandle = null, stampHandle = null, stampMounting = null;
+  const t0 = performance.now();
+  const log = m => { const line = ((performance.now() - t0) / 1000).toFixed(2) + 's  ' + m; logEl.textContent = line + '\n' + logEl.textContent; };
+  const say = m => { status.textContent = m; log(m); };
+  window.JU_DEMO = { log: [], state: () => ({ stage: stage.dataset.state, print: stage.dataset.print, tear: tearHandle && { p: tearHandle.p, done: tearHandle.done }, contact: $('contactWrap').dataset.revealed, stamp: stampHandle && stampHandle.diag() }) };
+
+  const contact = () => contactHandle || (contactHandle = window.JURitual.contact($('ticketScreen'), { host: '老杨', account: 'laoyang.ju' }, { onCopy: ok => say(ok ? '复制成功（真实剪贴板）' : '复制失败 → 提示“复制失败，请长按账号复制”'), onAdd: () => say('已加微信 → 待赴约（写入在动画前：V27 addContact18 → JuLedger.contact）') }));
+  const tearOpts = () => ({ onDetach: () => { say('撕裂到右端 → 先写入“已撕”（V27 onDetach → JuLedger.torn），写入成功后副券坠落'); return true; }, onDone: () => { say('副券落定 → data-state=torn → 300ms 后联系层、850ms 后主按钮'); contact().reveal(); } });
+
+  async function doPrint(data, label) {
+    current = data; $('contactWrap').dataset.revealed = 'false'; $('contactCta').dataset.shown = 'false'; $('ash').dataset.shown = 'false';
+    if (burnHandle) { window.JURitual.burn.reset(stage); burnHandle = null; }
+    $('hTitle').textContent = data.reissued ? '时间挪了一下' : '票根'; $('hSub').textContent = data.reissued ? 'SAT 12.19 · 20:00 · 法拉盛 · 原定 FRI 12.18' : 'FRI 12.18 · 19:30 · 法拉盛';
+    if (data.reissued) stage.style.setProperty('--ju-ticket-top', '24px'); else stage.style.removeProperty('--ju-ticket-top');
+    $('ticketHeader').classList.add('ju-print-sticky-printing');
+    say((label || '出票') + '：打印中（2300ms · WebGL 卷纸）…');
+    const r = await window.JURitual.print(stage, data, { final: 'ready', tear: tearOpts(), onState: s => { if (s !== 'printing') $('ticketHeader').classList.remove('ju-print-sticky-printing'); } });
+    tearHandle = stage.querySelector('[data-tear]').__juritual || null;
+    say(r.ok ? '出票完成 → ready（副券可撕；主按钮此时不出现）' : '出票未完成：' + (r.message || r.reason));
+    return r;
+  }
+  $('print').onclick = () => doPrint(TICKET);
+  $('reprint').onclick = () => { window.JURitual.print.reset(stage); setTimeout(() => doPrint(current, '重播出纸'), 120); };
+  $('tear').onclick = () => { if (!tearHandle) return say('先出票'); say(tearHandle.trigger() ? '按钮触发撕票（= Enter/Space：auto rate 2.8/s，约 357ms 撕完 + 1080ms 坠落）' : '副券当前不可撕（未就绪 / 已撕）'); };
+  $('tearFocus').onclick = () => { const g = stage.querySelector('[data-tear] [role=button]'); if (g) { g.focus(); say('副券抓手已聚焦：按 Enter / Space 撕下'); } };
+  $('tearReset').onclick = () => { if (tearHandle) { tearHandle.reset(); tearHandle.enable(true); contact().hide(); say('副券回位（rig.reset）'); } };
+  $('contact').onclick = () => { contact().reveal().then(r => say('联系层：' + r.revealedAt + 'ms 出现，' + r.actionAt + 'ms 主按钮')); };
+  $('copy').onclick = () => contact().copy();
+  $('contactHide').onclick = () => contact().hide();
+  $('burn').onclick = () => {
+    if (stage.dataset.state !== 'ready' && stage.dataset.state !== 'torn') return say('先出票（燃烧作用于原票件）');
+    const v = $('variant').value; const data = Object.assign({ reason: v === 'A' ? 'cancelled' : v }, ASH[v]);
+    say('写入作废事实（V27：先 JuLedger.cancel / choose(false)，成功才点火）→ 燃烧 variant ' + (v === 'A' ? 'A' : v === 'cancelled' ? 'C' : 'B') + '，6.6s');
+    burnHandle = window.JURitual.burn(stage, data, { variant: v === 'A' ? 'A' : undefined, onDone: () => say('燃尽 → data-state=void，作废文案落定') });
+  };
+  $('burnReplay').onclick = async () => { window.JURitual.burn.reset(stage); burnHandle = null; await doPrint(current, '重新出票'); $('burn').click(); };
+  async function mountStamp(mode) {
+    $('ticketScreen').hidden = true; $('afterScreen').hidden = false;
+    if (!stampHandle) {
+      if (!stampMounting) { say('挂载 08 散场引擎（WebGL2 橡皮章 + 720×900 局卡贴图）…'); stampMounting = window.JURitual.stamp($('t08scope'), { event: EVENT, mode: 'pending', history: HISTORY }, { active: () => !$('afterScreen').hidden, onPhase: p => log('stamp phase → ' + p) }); }
+      stampHandle = await stampMounting;
+    }
+    if (mode) { say('出席事实先写（V27：JuLedger.attend）→ setMode(' + mode + ') 播章：enter .18→1.05s · press →1.34 · ink 1.40→1.52 · lift →2.20 · exit →2.85 · 归档 1.9s'); stampHandle.setMode(mode); }
+    return stampHandle;
+  }
+  $('stampPresent').onclick = () => mountStamp('present');
+  $('stampAbsent').onclick = () => mountStamp('absent');
+  $('stampPending').onclick = () => mountStamp().then(h => { h.setMode('pending'); say('等章：静止未盖章票根 → 直接浏览'); });
+  $('stampReplay').onclick = () => mountStamp().then(h => { h.replay(); say('重播盖章（replay）'); });
+  $('backToTicket').onclick = () => { $('afterScreen').hidden = true; $('ticketScreen').hidden = false; };
+  $('reissue').onclick = () => { say('局主改时间（V27 reschedule18 → JuLedger.propose）→ 旧票不再展示，新票打印：原定划线 + 「时间已改」章 + 副券“撕下，确认新时间”'); doPrint(REISSUED, '新票出票'); };
+  $('accept').onclick = () => { if (!tearHandle || !current.reissued) return say('先打印新票'); say('接受新时间 = 撕下副券（V27 s10 onDetach → JuLedger.choose(true)）'); tearHandle.trigger(); };
+  $('decline').onclick = () => { if (!current.reissued || stage.dataset.state !== 'ready') return say('先打印新票（且未撕）'); $('variant').value = 'reschedule-declined'; $('burn').click(); };
+  $('restoreOriginal').onclick = () => doPrint(TICKET, '恢复原票');
+  $('resetAll').onclick = () => { window.JURitual.burn.reset(stage); burnHandle = null; if (tearHandle) { tearHandle.destroy(); tearHandle = null; } window.JURitual.print.reset(stage); contact().hide(); $('ash').dataset.shown = 'false'; $('ticketScreen').hidden = false; $('afterScreen').hidden = true; current = TICKET; window.JURitual.fillTicket(stage, TICKET); stage.style.removeProperty('--ju-ticket-top'); $('hTitle').textContent = '票根'; $('hSub').textContent = 'FRI 12.18 · 19:30 · 法拉盛'; say('已重置（idle）'); };
+  $('reduced').onchange = e => { window.__juForceReduced(e.target.checked); say('减少动态：' + (e.target.checked ? '开（出纸 1ms · 撕票直接落定 · 燃烧 seek 终态 · 盖章跳过动作）' : '关')); };
+  $('geoBtn').onclick = () => {
+    const q = s => stage.querySelector(s), r = e => { if (!e) return '—'; const b = e.getBoundingClientRect(), p = $('ticketScreen').getBoundingClientRect(); return [Math.round(b.left - p.left), Math.round(b.top - p.top), Math.round(b.width * 100) / 100, Math.round(b.height * 100) / 100].join(' / '); };
+    $('geo').textContent = ['舞台 x/y/w/h（屏内）: ' + r(stage), '纸: ' + r(q('[data-paper]')), '票面: ' + r(q('.ju-ticket-face')), '副券宿主: ' + r(q('[data-tear]')), '副券画布: ' + r(q('[data-tear] canvas')), '章: ' + r(q('[data-raster=stamp]')), '燃烧画布: ' + r(q('[data-burn] canvas')), '--ju-paper-height: ' + stage.style.getPropertyValue('--ju-paper-height'), 'state: ' + stage.dataset.state].join('\n');
+  };
+  window.JU_DEMO.print = doPrint; window.JU_DEMO.tear = () => tearHandle; window.JU_DEMO.contact = contact; window.JU_DEMO.stamp = mountStamp; window.JU_DEMO.burn = () => burnHandle;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) $('reduced').checked = true;
+  say('就绪：按 01 → 06 依次触发；每步可重放。');
+})();
+</script>
+</body>
+</html>
