@@ -570,6 +570,7 @@ class Component extends DCLogic {
   /* replay of 聚焦 starts again from the closed paragraph */
   beforeReplay(name) { if (name === '聚焦') { this.cancelKey('nav'); this.home(); } }
   s06Root() { return this.rootRef && this.rootRef.current; }
+  s06Caret(el) { try { var rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); var rn = el.getRootNode(); var sel = rn.getSelection ? rn.getSelection() : window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e) { } }
   s06After() {
     var root = this.s06Root(); if (!root) return;
     if (this._s06top) { this._s06top = false; var self0 = this; root.querySelectorAll('[data-scroller]').forEach(function (sc) { sc.scrollTop = 0; self0._applyHc(sc); }); }
@@ -591,7 +592,8 @@ class Component extends DCLogic {
     }
     /* editable phrases carry their own text (the template gives them no children): state → DOM only when the field is not being typed in */
     var pf0 = this.state.pf;
-    if (pf0) { var act = root.getRootNode && root.getRootNode().activeElement; root.querySelectorAll('.s06-ce[data-field]').forEach(function (el) { var want = pf0[el.getAttribute('data-field')] || ''; if (el !== act && el.textContent !== want) el.textContent = want; }); }
+    /* (a field focused on arrival — 修改资料, 继续编辑 — is filled once too, with the caret put after its text) */
+    if (pf0) { var act = root.getRootNode && root.getRootNode().activeElement; root.querySelectorAll('.s06-ce[data-field]').forEach(function (el) { var want = pf0[el.getAttribute('data-field')] || ''; if ((el !== act || !el.__s06init) && el.textContent !== want) { el.textContent = want; if (el === act) self.s06Caret(el); } el.__s06init = true; }); }
     /* 暂停 also holds CSS transitions (the band height when a deeper page swaps in) */
     var pz = !!(this.state.review && (this.state.review.paused || this.state.review.scrub != null));
     if (pz !== this._s06pz) { this._s06pz = pz; try { root.getAnimations({ subtree: true }).forEach(function (a) { if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition) { if (pz) a.pause(); else a.play(); } }); } catch (e) { } }
@@ -844,7 +846,7 @@ class Component extends DCLogic {
         val = val.replace(/[\r\n]+/g, ''); var h = { name: pf.onName, wx: pf.onWx, email: pf.onEmail }[f]; if (h) h({ target: { value: val } }); },
       key: function (ev) { if (ev.key !== 'Enter') return; ev.preventDefault(); var f = ev.currentTarget.getAttribute('data-field'); var root2 = self.s06Root(); var nx = CE_NEXT[f] && root2 ? root2.querySelector('.s06-ce[data-field="' + CE_NEXT[f] + '"]') : null; if (nx) nx.focus(); else ev.currentTarget.blur(); },
       down: function () { self._s06ptr = Date.now(); },
-      focus: function (ev) { if (Date.now() - (self._s06ptr || 0) < 700) return; var el = ev.currentTarget; try { var rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); var rn = el.getRootNode(); var sel = rn.getSelection ? rn.getSelection() : window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e3) { } }
+      focus: function (ev) { if (Date.now() - (self._s06ptr || 0) < 700) return; self.s06Caret(ev.currentTarget); }
     };
     v.pfNote = editing ? (pf.codeVerified ? '（已验证）' : pf.emailChanged && (pf.email || '').trim() ? '（待验证）' : you.email && (pf.email || '').trim() === you.email ? (you.verified ? '（已验证）' : '（未验证）') : '') : '';
     /* the question written into the band (unsaved changes / ending the demo session) */

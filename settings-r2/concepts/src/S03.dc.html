@@ -38,7 +38,7 @@ body{margin:0}
 .app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 
 /* ---------- core motion 1 · the ink sheet: one progress w (0→1) for every navigation; keyframes so 暂停 holds and 关键帧 scrubs ---------- */
-.s03-world{position:absolute;inset:0;--s03-w:1;--s03-w0:1;--s03-d:0px;--s03-lu:1;--s03-lt:1;--s03-hu:0;--s03-ht:0;--s03-sky:388px;--s03-bp:150px;--s03-bf:124px;--s03-bs:256px}
+.s03-world{position:absolute;inset:0;--s03-w:1;--s03-w0:1;--s03-d:0px;--s03-dr:0px;--s03-lu:1;--s03-lt:1;--s03-hu:0;--s03-ht:0;--s03-sky:388px;--s03-bp:150px;--s03-bf:124px;--s03-bs:256px}
 @keyframes s03-w-in{from{--s03-w:0}to{--s03-w:1}}
 @keyframes s03-w-out{from{--s03-w:var(--s03-w0,1)}to{--s03-w:0}}
 .app.nav-enter .s03-world{--s03-w:0}
@@ -87,7 +87,8 @@ body{margin:0}
 .s03-pg.is-leaving{z-index:3;opacity:calc(1 - var(--s03-w));pointer-events:none}
 .s03-pg.is-leaving.dir-root,.s03-pg.is-leaving.dir-swap{opacity:clamp(0,1 - var(--s03-w) * 2.6,1)}
 .s03-pg.is-under.ph-idle{visibility:hidden}
-.s03-pg.is-top.dir-root,.s03-pg.is-top.dir-swap{opacity:clamp(0,(var(--s03-w) - .3) / .7,1)}
+.s03-pg.is-top.dir-root .s03-fo,.s03-pg.is-top.dir-swap .s03-fo{opacity:clamp(0,(var(--s03-w) - .35) / .45,1)}
+.s03-pg.is-top.dir-root .s03-fh,.s03-pg.is-top.dir-swap .s03-fh{opacity:clamp(0,(var(--s03-w) - .38) / .5,1)}
 /* the arriving page rides on the under page's moving sheet: its own sheet stays transparent until w lands at 1 */
 .s03-pg.is-top:not(.dir-root):not(.dir-swap){--s03-a:clamp(0,(var(--s03-w) - .996) * 300,1)}
 .s03-pg.is-under .s03-fo{opacity:clamp(0,1 - var(--s03-w) * 3,1)}
@@ -132,7 +133,7 @@ body{margin:0}
   background:radial-gradient(40% 100% at var(--s03-lx) 50%,color-mix(in srgb,var(--s03-e1) 70%,#fff) 0%,color-mix(in srgb,var(--s03-e1) 45%,transparent) 42%,transparent 100%)}
 .s03-pg.is-under .s03-sheet{transform:translateY(calc(var(--s03-d) * var(--s03-w)))}
 .s03-pg.is-top .s03-sheet{transform:translateY(calc(var(--s03-d) * (var(--s03-w) - 1)))}
-.s03-pg.is-top.dir-root .s03-sheet,.s03-pg.is-top.dir-swap .s03-sheet{transform:translateY(calc((1 - var(--s03-w)) * 28px))}
+.s03-pg.is-top.dir-root .s03-sheet,.s03-pg.is-top.dir-swap .s03-sheet{transform:translateY(calc(var(--s03-dr) * (var(--s03-w) - 1)))}
 
 /* ---------- home: identity floats in the light (sticky, the ink slides over it) ---------- */
 .s03-p-home .s03-gap{position:sticky;top:0;z-index:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 24px 26px}
@@ -183,6 +184,7 @@ body{margin:0}
 .s03-strip .s03-tag:active{transform:none;background:rgba(255,255,255,.06)}
 .s03-strip-none{background:transparent;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
 .s03-strip .s03-tag-go{background:linear-gradient(180deg,color-mix(in srgb,var(--s03-e2) 26%,#14161F) 0%,color-mix(in srgb,var(--s03-e2) 10%,#14161F) 100%);box-shadow:inset 0 2px 0 color-mix(in srgb,var(--s03-e2) 85%,#fff)}
+.s03-strip .s03-tag-go .s03-tag-d{white-space:pre-line}
 .s03-strip .s03-tag-ghost{position:relative;box-shadow:inset 1px 0 0 rgba(255,255,255,.08)}
 .s03-strip .s03-tag-ghost::before,.s03-strip .s03-tag-ghost::after{content:"";position:absolute;left:12px;height:10px;border-radius:5px;background:rgba(255,255,255,.06)}
 .s03-strip .s03-tag-ghost::before{top:18px;width:58%;height:14px}
@@ -900,7 +902,7 @@ div.s03-row2:active{background:transparent}
 /* @core */
 /* S03 上光下墨 · behaviour = the shared controller (JUS.ctl); this file only composes, types, surfaces and moves it.
    Geometry: tool row 56px; the home / appearance light field is 46% of the phone; statement pages keep a 256px light band carrying
-   the page's key statement, the profile 168px, forms 124px. Each surface's sheet top = its band − its scroll. During a push the under
+   the page's key statement, the profile 150px, forms 124px. Each surface's sheet top = its band − its scroll. During a push the under
    page's sheet (opaque, carrying its content) travels to the new page's band while the new page's content rides on it. */
 const S03 = {
   TOOL: 56, BAND_ST: 256, BAND_PAGE: 150, BAND_FORM: 124, SKY: 0.46, FRESH_MS: 6000,
@@ -964,9 +966,11 @@ class Component extends DCLogic {
     const sky = this.sky(), bt = this.band(top), bo = other ? this.band(other) : bt;
     const tT = Math.max(S03.TOOL, bt - (this._mem[top] || 0)), uT = under ? bo - (this._mem[under] || 0) : tT;
     const k = (b) => +((b + 32) / (sky + 32)).toFixed(4);
-    return { sky, top, under, d: Math.round(tT - uT), lu: k(bo), lt: k(bt), hu: other ? this.navHide(other) : this.navHide(top), ht: this.navHide(top) };
+    /* a root switch moves the ink between the two pages' bands too: the arriving sheet starts where the leaving one stands */
+    const lv = nav.leaving && (nav.dir === 'root' || nav.dir === 'swap') ? nav.leaving.s : null, lT = lv ? Math.max(S03.TOOL, this.band(lv) - (this._mem[lv] || 0)) : tT;
+    return { sky, top, under, d: Math.round(tT - uT), dr: Math.round(tT - lT), lu: k(bo), lt: k(bt), hu: other ? this.navHide(other) : this.navHide(top), ht: this.navHide(top) };
   }
-  worldStyle(g) { return '--s03-sky:' + g.sky + 'px;--s03-bp:' + S03.BAND_PAGE + 'px;--s03-bf:' + S03.BAND_FORM + 'px;--s03-bs:' + S03.BAND_ST + 'px;--s03-be:' + Math.round(g.sky * 0.82) + 'px;--s03-d:' + g.d + 'px;--s03-lu:' + g.lu + ';--s03-lt:' + g.lt + ';--s03-hu:' + g.hu + ';--s03-ht:' + g.ht + ';--s03-w0:' + this._w0; }
+  worldStyle(g) { return '--s03-sky:' + g.sky + 'px;--s03-bp:' + S03.BAND_PAGE + 'px;--s03-bf:' + S03.BAND_FORM + 'px;--s03-bs:' + S03.BAND_ST + 'px;--s03-be:' + Math.round(g.sky * 0.82) + 'px;--s03-d:' + g.d + 'px;--s03-dr:' + g.dr + 'px;--s03-lu:' + g.lu + ';--s03-lt:' + g.lt + ';--s03-hu:' + g.hu + ';--s03-ht:' + g.ht + ';--s03-w0:' + this._w0; }
   /* scroll memory: restore a page's scroll when it is re-mounted under another page; keep the moving sheet aligned live */
   s03Sync() {
     const root = this.rootRef.current; if (!root) return;
@@ -980,7 +984,7 @@ class Component extends DCLogic {
     if (this._zeroScroll) { this._zeroScroll = false; root.querySelectorAll('[data-scroller]').forEach((el) => { if (el.scrollTop) { el.scrollTop = 0; this._applyHc(el); } }); }
     if (this._skinPending) { this._skinPending = false; const seq = this._skinSeq; this.afterKey('s03-skin', 680, () => { if (this._skinSeq === seq) { this._skinPrev = null; this.setState({ s03tick: Date.now() }); } }); }
   }
-  s03Live() { const root = this.rootRef.current; const w = root && root.querySelector('.s03-world'); if (w) w.style.setProperty('--s03-d', this.geo().d + 'px'); }
+  s03Live() { const root = this.rootRef.current; const w = root && root.querySelector('.s03-world'); if (w) { const g = this.geo(); w.style.setProperty('--s03-d', g.d + 'px'); w.style.setProperty('--s03-dr', g.dr + 'px'); } }
   s03Scroll(ev) { const el = ev.currentTarget; this._applyHc(el); this._mem[el.getAttribute('data-scroller')] = el.scrollTop; this.s03Live(); }
   /* bring a chapter / group of the top page to the top of its scroller (instant under reduced motion) */
   s03To(key) {
@@ -1064,7 +1068,7 @@ class Component extends DCLogic {
       name: you.name, acct: (you.wx || '微信号未填写') + ' · ' + (you.email || '邮箱未填写') + (you.verified ? ' · 已验证' : ''),
       fresh: this.isFresh() && (you.savedName || you.savedWx || you.savedEmail),
       att, hasAtt: att.length > 0, waitLabel: (c.attCount || att.length) + ' 件事等你回应',
-      favs, favCount: c.fav.count, favEmpty: c.fav.empty, favMore: '全部 ' + c.fav.count + ' 个', favEmptyCopy: c.fav.emptyCopy, goFind: c.fav.goFind, goFav: go('favorites'),
+      favs, favCount: c.fav.count, favEmpty: c.fav.empty, favMore: '全部 ' + c.fav.count + ' 个', favEmptyCopy: Object.assign({}, c.fav.emptyCopy, { body: S03.wrapComma(c.fav.emptyCopy.body) }), goFind: c.fav.goFind, goFav: go('favorites'),
       notifyN: n.onCount + '/' + n.total, notifyK: '类提醒开着', notifyT: n.permCopy.title, goNotify: go('notify'),
       city: sum.cityLabel, cityTz: c.city.cur.tzLabel, goCity: go('city'),
       skins: c.skin.list.map((k) => ({ key: k.key, name: k.name, cls: k.on ? ' s03-cur' : '', go: (ev) => this.openSkin(k.key, ev) })), skinName: c.skin.curName + (this.state.data.appearance.reduceMotion ? ' · 减少动态' : ''),
