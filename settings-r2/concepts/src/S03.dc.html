@@ -13,11 +13,11 @@
 body{margin:0}
 /* @panel-css */
 /* ======================================================================================================
-   S03 上光下墨 —— 一屏两种材料。上面是环境的光场（身份浮在光里），下面是一整张墨面（所有操作在墨上以亮字出现）。
-   光源只有一个：上方的光场。墨面哑光，朝上的边缘接光（顶缘 1px 高光），墨上的亮块 / 局签是被光照亮的地方。
+   S03 上光下墨 —— 一屏两种材料。上面是环境的光场（身份 / 本页的关键陈述浮在光里），下面是一整张墨面（所有操作在墨上以亮字出现）。
+   光源只有一个：上方的光场。墨面哑光，朝上的边缘接光（顶缘高光、光源正下方最亮），墨上的亮块 / 局签是被光照亮的地方。
    运动主语 = 墨面整张：进入二级页时墨面整张抽起、光场压成顶带；返回时落回。
-   一个注册变量 --s03-w（0→1）驱动整段导航运动（墨面位移、光场压缩、内容交叉、页头、根导航、确认条），
-   因此可中断（过渡从当前值继续）、可关键帧（--frame 直接写入 w）、减少动态下瞬切到结果。
+   导航运动由一个注册变量 --s03-w（0→1）驱动：@keyframes 推进（可暂停、可关键帧），所有几何、交叉、页头、根导航都从它取值；
+   中途返回从当前 w 起落（--s03-w0）；减少动态时瞬切到结果。
    ====================================================================================================== */
 @property --s03-w{syntax:'<number>';inherits:true;initial-value:1}
 @property --s03-e1{syntax:'<color>';inherits:true;initial-value:#f6aecd}
@@ -28,8 +28,8 @@ body{margin:0}
 .app.s03{position:absolute;inset:0;overflow:clip;font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;background:#14161F;-webkit-font-smoothing:antialiased;
   --s03-on:#14161F;--s03-on2:#4f566a;--s03-e1:#f6aecd;--s03-e2:#c8bdf3;--s03-e3:#96d6e8;--s03-val:#f2bfd6;
   --s03-slab:linear-gradient(160deg,#f9d3e3 0%,#e8ddf4 52%,#d0e9f2 100%);--s03-toast:#fbe6ef;
-  --s03-fwd:calc(340ms * var(--k,1));--s03-back:calc(300ms * var(--k,1));--s03-env:calc(650ms * var(--k,1));
-  --s03-up:cubic-bezier(.3,.8,.25,1);--s03-lx:66%;--s03-down:cubic-bezier(.32,.72,.24,1);
+  --s03-fwd:calc(340ms * var(--k,1));--s03-back:calc(300ms * var(--k,1));--s03-rootd:calc(320ms * var(--k,1));--s03-env:calc(650ms * var(--k,1));
+  --s03-up:cubic-bezier(.3,.8,.25,1);--s03-down:cubic-bezier(.32,.72,.24,1);--s03-lx:66%;
   transition:--s03-e1 var(--s03-env) cubic-bezier(.22,1,.36,1),--s03-e2 var(--s03-env) cubic-bezier(.22,1,.36,1),--s03-e3 var(--s03-env) cubic-bezier(.22,1,.36,1),--s03-val var(--s03-env) cubic-bezier(.22,1,.36,1),--s03-on2 var(--s03-env) cubic-bezier(.22,1,.36,1)}
 .app.s03[data-skin=halo]{--s03-lx:88%;--s03-on2:#584a51;--s03-e1:#ff8d50;--s03-e2:#eac39b;--s03-e3:#cbb3ec;--s03-val:#ffb68a;--s03-slab:linear-gradient(160deg,#fff4e6 0%,#f7d9c0 50%,#e2d2ee 100%);--s03-toast:#fff0e2}
 .app.s03[data-skin=sunset]{--s03-lx:74%;--s03-on2:#2a2731;--s03-e1:#ff8a47;--s03-e2:#ffc53d;--s03-e3:#69b2ff;--s03-val:#ffcd57;--s03-slab:linear-gradient(170deg,#9cc6f4 0%,#ffbf92 55%,#ffd56e 100%);--s03-toast:#ffe7c9}
@@ -37,21 +37,31 @@ body{margin:0}
 .app.s03 button{font-family:inherit;-webkit-tap-highlight-color:transparent;cursor:pointer}
 .app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 
-/* ---------- the world: one progress variable for every navigation motion ---------- */
-.s03-world{position:absolute;inset:0;--s03-w:1;--s03-d:0px;--s03-lu:1;--s03-lt:1;--s03-hu:0;--s03-ht:0;--s03-sky:388px;--s03-bp:168px;--s03-bf:124px}
+/* ---------- core motion 1 · the ink sheet: one progress w (0→1) for every navigation; keyframes so 暂停 holds and 关键帧 scrubs ---------- */
+.s03-world{position:absolute;inset:0;--s03-w:1;--s03-w0:1;--s03-d:0px;--s03-lu:1;--s03-lt:1;--s03-hu:0;--s03-ht:0;--s03-sky:388px;--s03-bp:168px;--s03-bf:124px;--s03-bs:256px}
+@keyframes s03-w-in{from{--s03-w:0}to{--s03-w:1}}
+@keyframes s03-w-out{from{--s03-w:var(--s03-w0,1)}to{--s03-w:0}}
 .app.nav-enter .s03-world{--s03-w:0}
-.app.nav-in .s03-world{--s03-w:1;transition:--s03-w var(--s03-fwd) var(--s03-up)}
-.app.nav-exit .s03-world{--s03-w:0;transition:--s03-w var(--s03-back) var(--s03-down)}
-.app.nav-in.dir-root .s03-world,.app.nav-in.dir-swap .s03-world{transition-duration:calc(320ms * var(--k,1))}
-.app.scrub.nav-in .s03-world{--s03-w:var(--frame);transition:none}
-.app.scrub.nav-exit .s03-world{--s03-w:calc(1 - var(--frame));transition:none}
+.app.nav-in .s03-world{animation:s03-w-in var(--s03-fwd) var(--s03-up) both}
+.app.nav-in.dir-root .s03-world,.app.nav-in.dir-swap .s03-world{animation-duration:var(--s03-rootd)}
+.app.nav-exit .s03-world{animation:s03-w-out var(--s03-back) var(--s03-down) both}
+.app.paused .s03-world{animation-play-state:paused!important}
+.app.scrub.nav-in .s03-world{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
+.app.scrub.nav-in.dir-root .s03-world,.app.scrub.nav-in.dir-swap .s03-world{animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.scrub.nav-exit .s03-world{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
 
 /* ---------- the light field: three environments as real, large colour; compressed (never the text) when the ink rises ---------- */
 .s03-sky{position:absolute;left:0;right:0;top:0;height:calc(var(--s03-sky) + 32px);overflow:hidden;pointer-events:none;transform-origin:50% 0;
   transform:scaleY(calc(var(--s03-lu) + (var(--s03-lt) - var(--s03-lu)) * var(--s03-w)))}
-.s03-sky i{position:absolute;inset:-24px;opacity:0;filter:blur(14px);transition:opacity var(--s03-env) cubic-bezier(.22,1,.36,1),filter var(--s03-env) cubic-bezier(.22,1,.36,1)}
-.app[data-skin=cotton] .s03-l-cotton,.app[data-skin=halo] .s03-l-halo,.app[data-skin=sunset] .s03-l-sunset{opacity:1;filter:blur(0)}
-.s03-l-cotton{background:
+.s03-sky i{position:absolute;inset:-24px;opacity:0}
+.s03-sky i.s03-prev{opacity:1;z-index:1}
+.s03-sky i.s03-cur{opacity:1;z-index:2}
+/* core motion 3 · environment change: the new light dissolves in over the old (650ms opacity + blur), the ink stays */
+@keyframes s03-env{from{opacity:0;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+.s03-sky i.s03-cur.s03-in{animation:s03-env var(--s03-env) cubic-bezier(.22,1,.36,1) both}
+.app.paused .s03-sky i.s03-in{animation-play-state:paused!important}
+.app.scrub .s03-sky i.s03-in{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
+.s03-l-cotton,.s03-sl-cotton{background:
   radial-gradient(44% 8% at 66% 63%,rgba(255,255,255,.95) 0%,rgba(255,255,255,.4) 50%,rgba(255,255,255,0) 100%),
   linear-gradient(180deg,rgba(255,255,255,0) 52%,rgba(255,255,255,.34) 62%,rgba(255,255,255,0) 72%),
   radial-gradient(74% 46% at 0% 26%,rgba(204,186,246,.92) 0%,rgba(204,186,246,0) 72%),
@@ -64,21 +74,25 @@ body{margin:0}
   radial-gradient(132px 132px at 74% 96%,#fff3c2 0%,#ffd862 26%,#ffc53d 44%,rgba(255,197,61,.55) 64%,rgba(255,197,61,0) 100%),
   radial-gradient(95% 56% at 100% 0%,rgba(51,160,255,.78) 0%,rgba(51,160,255,0) 72%),
   linear-gradient(180deg,#5aa6f4 0%,#8cb8ec 27%,#ffb583 60%,#ff7f3a 84%,#ff6a26 100%)}
+/* the same three lights as small slabs (home, appearance) */
+.s03-sl-halo{background:radial-gradient(circle at 78% 34%,#fffbf6 0,#fff2e2 24%,#ffb27a 36%,#ff5005 44%,#e7b48a 56%,#d0bce1 70%,#fdf0e3 92%),#fdf0e3}
+.s03-sl-sunset{background:radial-gradient(42% 30% at 70% 100%,#ffe9a8 0%,#ffc53d 40%,rgba(255,197,61,0) 100%),linear-gradient(180deg,#5aa6f4 0%,#9ab9e8 34%,#ffb583 64%,#ff7a33 100%)}
 
-/* ---------- surfaces: each is header (on the light) + scroller (gap + ink sheet) ---------- */
-.s03-pg{position:absolute;inset:0;--s03-a:1;--s03-band:var(--s03-bp)}
+/* ---------- surfaces: header (on the light) + scroller (gap with the page's statement + the ink sheet) ---------- */
+.s03-pg{position:absolute;inset:0;--s03-a:1;--s03-band:var(--s03-bs)}
 .s03-pg.is-under{z-index:1}
 .s03-pg.is-top{z-index:2}
 .s03-pg.is-leaving{z-index:3;opacity:calc(1 - var(--s03-w));pointer-events:none}
 .s03-pg.is-under.ph-idle{visibility:hidden}
 .s03-pg.is-top.dir-root,.s03-pg.is-top.dir-swap{opacity:var(--s03-w)}
-/* the arriving page rides on the under page's moving sheet: its own sheet stays transparent until the motion lands */
+/* the arriving page rides on the under page's moving sheet: its own sheet stays transparent until w lands at 1 */
 .s03-pg.is-top:not(.dir-root):not(.dir-swap){--s03-a:clamp(0,(var(--s03-w) - .996) * 300,1)}
 .s03-pg.is-under .s03-fo{opacity:clamp(0,1 - var(--s03-w) * 3,1)}
 .s03-pg.is-top:not(.dir-root):not(.dir-swap) .s03-fo{opacity:clamp(0,(var(--s03-w) - .4) / .4,1)}
 .s03-pg.is-under .s03-fh{opacity:clamp(0,1 - var(--s03-w) * 3,1)}
 .s03-pg.is-top:not(.dir-root):not(.dir-swap) .s03-fh{opacity:clamp(0,(var(--s03-w) - .38) / .5,1);transform:translateY(calc((1 - var(--s03-w)) * 10px))}
-.s03-p-home{--s03-band:var(--s03-sky)}
+.s03-p-home,.s03-p-env{--s03-band:var(--s03-sky)}
+.s03-p-prof{--s03-band:var(--s03-bp)}
 .s03-p-form{--s03-band:var(--s03-bf)}
 
 .s03-hd{position:absolute;left:0;right:0;top:0;height:132px;z-index:0;pointer-events:none;color:var(--s03-on)}
@@ -97,6 +111,16 @@ body{margin:0}
 .s03-sc{position:absolute;left:0;right:0;top:56px;bottom:0;z-index:1;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;border-radius:28px 28px 0 0}
 .s03-sc::-webkit-scrollbar{display:none}
 .s03-gap{height:calc(var(--s03-band) - 56px)}
+/* the page's key statement stands in the light and is covered by the ink when the page scrolls (like the home identity) */
+.s03-stg{position:sticky;top:0;z-index:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 24px 22px}
+.s03-st{color:var(--s03-on)}
+.s03-st-big{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:10px;margin:0}
+.s03-st-n{font:600 56px/62px "Noto Sans SC",sans-serif;letter-spacing:-.02em;white-space:nowrap}
+.s03-st-u{font:500 20px/28px "Noto Sans SC",sans-serif}
+.s03-st-q{margin:0;font:600 34px/42px "Noto Sans SC",sans-serif;letter-spacing:-.01em;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.s03-st-s{margin:6px 0 0;font:400 15px/22px "Noto Sans SC",sans-serif;color:var(--s03-on2);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-all}
+.s03-st.s03-flash .s03-st-big{animation:s03-flash calc(420ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+@keyframes s03-flash{from{opacity:.25;transform:translateY(8px)}to{opacity:1;transform:none}}
 .s03-sheet{position:relative;z-index:1;min-height:calc(100% - var(--s03-band) + 56px);padding:22px 20px 108px;border-radius:28px 28px 0 0;color:#fff;
   background:rgba(20,22,31,var(--s03-a));
   box-shadow:inset 0 1px 0 rgba(255,255,255,calc(.12 * var(--s03-a))),0 320px 0 0 rgba(20,22,31,var(--s03-a)),0 640px 0 0 rgba(20,22,31,var(--s03-a))}
@@ -104,6 +128,7 @@ body{margin:0}
   background:radial-gradient(40% 100% at var(--s03-lx) 50%,color-mix(in srgb,var(--s03-e1) 70%,#fff) 0%,color-mix(in srgb,var(--s03-e1) 45%,transparent) 42%,transparent 100%)}
 .s03-pg.is-under .s03-sheet{transform:translateY(calc(var(--s03-d) * var(--s03-w)))}
 .s03-pg.is-top .s03-sheet{transform:translateY(calc(var(--s03-d) * (var(--s03-w) - 1)))}
+.s03-pg.is-top.dir-root .s03-sheet,.s03-pg.is-top.dir-swap .s03-sheet{transform:translateY(calc((1 - var(--s03-w)) * 28px))}
 
 /* ---------- home: identity floats in the light (sticky, the ink slides over it) ---------- */
 .s03-p-home .s03-gap{position:sticky;top:0;z-index:0;display:flex;flex-direction:column;justify-content:flex-end;padding:0 24px 26px}
@@ -111,24 +136,26 @@ body{margin:0}
 .s03-id:active{opacity:.68}
 .s03-id-n{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font:600 48px/54px "Noto Sans SC",sans-serif;letter-spacing:-.01em;word-break:break-all}
 .s03-id-a{display:block;margin-top:8px;font:400 15px/22px "Noto Sans SC",sans-serif;color:var(--s03-on2);word-break:break-all}
-.s03-id-a i{font-style:normal}
-.s03-id-new{display:inline-block;margin-left:8px;padding:0 8px;border-radius:10px;background:#14161F;color:#fff;font:500 13px/20px "Noto Sans SC",sans-serif;vertical-align:1px}
+.s03-id-new{display:inline-block;margin-left:8px;padding:0 8px;border-radius:10px;background:#14161F;color:#fff;font:500 13px/20px "Noto Sans SC",sans-serif;font-style:normal;vertical-align:1px}
 
-/* lit blocks: the two things waiting for you, lit from the light above */
+/* lit blocks: what waits for you, lit from the light above — one step below the name in contrast */
 .s03-att{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .s03-att.s03-n1{grid-template-columns:1fr}
 .s03-blk{--e:var(--s03-e1);position:relative;min-width:0;min-height:96px;margin:0;padding:14px 14px 30px;border:0;border-radius:18px;text-align:left;color:#fff;
-  background:linear-gradient(180deg,color-mix(in srgb,var(--e) 31%,#14161F) 0%,color-mix(in srgb,var(--e) 12%,#14161F) 100%);
-  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--e) 60%,transparent);transition:transform 120ms ease}
+  background:linear-gradient(180deg,color-mix(in srgb,var(--e) 25%,#14161F) 0%,color-mix(in srgb,var(--e) 10%,#14161F) 100%);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--e) 58%,transparent);transition:transform 120ms ease}
 .s03-blk:active{transform:scale(.97)}
-.s03-blk.s03-t3{--e:var(--s03-e3)}
+.s03-blk.s03-t3,.s03-lit.s03-t3,.s03-tag.s03-t3,.s03-date.s03-t3{--e:var(--s03-e3)}
+.s03-blk.s03-t2,.s03-lit.s03-t2,.s03-tag.s03-t2,.s03-date.s03-t2{--e:var(--s03-e2)}
+.s03-blk.s03-quiet{background:linear-gradient(180deg,color-mix(in srgb,var(--e) 13%,#14161F) 0%,color-mix(in srgb,var(--e) 5%,#14161F) 100%);box-shadow:inset 0 1px 0 color-mix(in srgb,var(--e) 36%,transparent)}
+.s03-blk-n{display:block;font:600 30px/36px "Noto Sans SC",sans-serif;color:var(--e)}
 .s03-blk-k{display:block;font:600 15px/22px "Noto Sans SC",sans-serif;color:var(--e)}
+.s03-quiet .s03-blk-k{color:#fff}
 .s03-blk-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:4px;font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.78);word-break:break-all}
 .s03-blk-go{position:absolute;right:16px;bottom:15px;width:8px;height:8px;border-top:1.5px solid var(--e);border-right:1.5px solid var(--e);transform:rotate(45deg)}
 
-/* favourites band: three event tags, each lit by one of the environment's colours */
+/* favourites band: event tags, each lit by one of the environment's colours */
 .s03-favs{margin-top:28px}
-.s03-att + .s03-favs{margin-top:28px}
 .s03-favs:first-child{margin-top:4px}
 .s03-sh{display:flex;align-items:center;justify-content:space-between;min-height:24px}
 .s03-gl{margin:0;font:500 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.72)}
@@ -138,23 +165,163 @@ body{margin:0}
 .s03-tag{--e:var(--s03-e1);flex:0 0 calc((100% - 16px) / 3);min-width:0;min-height:88px;margin:0;padding:13px 11px 12px;border:0;border-radius:3px 3px 14px 14px;overflow:hidden;scroll-snap-align:start;text-align:left;color:#fff;
   background:linear-gradient(180deg,color-mix(in srgb,var(--e) 12%,rgba(255,255,255,.04)) 0%,rgba(255,255,255,.03) 100%);box-shadow:inset 0 2px 0 var(--e);transition:transform 120ms ease}
 .s03-tag:active{transform:scale(.97)}
-.s03-tag.s03-t2{--e:var(--s03-e2)}
-.s03-tag.s03-t3{--e:var(--s03-e3)}
 .s03-tag-n{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font:500 15px/21px "Noto Sans SC",sans-serif;white-space:pre-line;word-break:break-all}
 .s03-tag-d{display:block;margin-top:6px;font:400 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76)}
 .s03-favnone{margin-top:10px;padding:16px 0 4px}
 .s03-favnone b{display:block;font:500 17px/24px "Noto Sans SC",sans-serif}
-.s03-favnone span{display:block;margin-top:4px;font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.74)}
+.s03-favnone span{display:block;margin-top:4px;font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76)}
+/* below the band: a lit statement (提醒), two quiet tiles (城市 / 外观 as three small lights), lit counts, a quiet index */
+.s03-lit-row{display:flex!important;align-items:center;gap:16px;margin-top:28px!important;padding:16px 40px 16px 18px!important}
+.s03-lit-row .s03-lit-n{flex:0 0 auto;margin:0}
+.s03-lit-c{display:flex;flex-direction:column;min-width:0}
+.s03-lit-row .s03-lit-k{color:#fff}
+.s03-lit-row .s03-blk-go{top:50%;bottom:auto;margin-top:-4px}
+.s03-duo{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.s03-q{display:flex;flex-direction:column;align-items:flex-start;gap:6px;min-width:0;min-height:116px;margin:0;padding:14px;border:0;border-radius:18px;background:rgba(255,255,255,.035);box-shadow:inset 0 0 0 1px rgba(255,255,255,.09);color:#fff;text-align:left;transition:transform 120ms ease}
+button.s03-q:active{transform:scale(.97)}
+.s03-q b{font:600 24px/30px "Noto Sans SC",sans-serif;word-break:break-all}
+.s03-q > span:last-child{font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76)}
+.s03-minis{display:flex;gap:6px;margin:2px 0 0}
+.s03-mini-sk{width:34px;height:42px;margin:0;padding:0;border:0;border-radius:10px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.18);transition:transform 120ms ease}
+.s03-mini-sk:active{transform:scale(.94)}
+.s03-mini-sk.s03-cur{box-shadow:0 0 0 2px #14161F,0 0 0 3.5px #fff}
+.s03-cnts{margin-top:10px}
+.s03-idx{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;margin-top:26px;border-top:1px solid rgba(255,255,255,.08)}
+.s03-idx button{min-height:54px;margin:0;padding:0;border:0;border-bottom:1px solid rgba(255,255,255,.08);background:transparent;color:rgba(255,255,255,.8);font:400 15px/22px "Noto Sans SC",sans-serif;text-align:left;transition:color 120ms ease}
+.s03-idx button:active{color:#fff}
 
-/* the remaining groups: real lists only (preferences, records, help) */
-.s03-grp{margin-top:30px}
-.s03-grp .s03-gl{margin-bottom:2px}
+/* ---------- the shared ink language for every other page ---------- */
+.s03-bh{display:flex;align-items:center;justify-content:space-between;margin:30px 0 6px}
+.s03-ink-t{margin:0 0 4px;font:600 24px/32px "Noto Sans SC",sans-serif;color:#fff;word-break:break-all}
+.s03-lit{--e:var(--s03-e1);position:relative;display:block;width:100%;margin:0 0 10px;padding:16px 36px 18px 16px;border:0;border-radius:18px;text-align:left;color:#fff;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--e) 24%,#14161F) 0%,color-mix(in srgb,var(--e) 10%,#14161F) 100%);
+  box-shadow:inset 0 1px 0 color-mix(in srgb,var(--e) 56%,transparent);transition:transform 120ms ease}
+div.s03-lit{padding-right:16px}
+button.s03-lit:active{transform:scale(.98)}
+.s03-lit-n{display:block;margin-bottom:2px;font:600 32px/38px "Noto Sans SC",sans-serif;color:var(--e)}
+.s03-lit-k{display:block;font:600 15px/22px "Noto Sans SC",sans-serif;color:var(--e);word-break:break-all}
+.s03-lit-t{display:block;margin-top:4px;font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.8)}
+.s03-lit .s03-cta{display:block;margin:16px 0 0}
 .s03-row{position:relative;display:flex;align-items:center;gap:12px;width:calc(100% + 24px);min-height:64px;margin:0 -12px;padding:0 12px;border:0;border-radius:14px;background:transparent;color:#fff;text-align:left;transition:background-color 120ms ease}
 .s03-row:active{background:rgba(255,255,255,.07)}
-.s03-row + .s03-row::before{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;background:rgba(255,255,255,.08)}
-.s03-row-l{flex:0 0 auto;font:500 17px/24px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.95)}
-.s03-row-v{flex:1 1 auto;min-width:0;text-align:right;font:400 15px/21px "Noto Sans SC",sans-serif;color:var(--s03-val);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s03-row + .s03-row::before,.s03-mr + .s03-mr::before,.s03-cityr + .s03-cityr::before{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;background:rgba(255,255,255,.08)}
+.s03-row2{min-height:70px;padding-top:12px;padding-bottom:12px}
+div.s03-row2:active{background:transparent}
+.s03-row-m{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:3px}
+.s03-row-m b{font:500 17px/24px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.96);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;word-break:break-all}
+.s03-row-m span{font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76);word-break:break-all}
+.s03-row-v{flex:0 1 auto;min-width:0;text-align:right;font:400 15px/21px "Noto Sans SC",sans-serif;color:var(--s03-val);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s03-chev{flex:0 0 auto;width:8px;height:8px;margin:0 2px 0 0;border-top:1.5px solid rgba(255,255,255,.55);border-right:1.5px solid rgba(255,255,255,.55);transform:rotate(45deg)}
+.s03-dl{margin:6px 0 0;display:flex;flex-direction:column}
+.s03-dlr{display:grid;grid-template-columns:80px minmax(0,1fr);column-gap:14px;align-items:baseline;padding:13px 0;border-top:1px solid rgba(255,255,255,.08)}
+.s03-dlr:first-child{border-top:0}
+.s03-dlr dt{font:500 13px/20px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.72)}
+.s03-dlr dd{margin:0;display:flex;align-items:center;justify-content:space-between;gap:10px;font:500 17px/24px "Noto Sans SC",sans-serif;color:#fff;word-break:break-all}
+.s03-dlr dd.s03-soft{font-weight:400;font-size:15px;line-height:22px;color:rgba(255,255,255,.86)}
+.s03-mini2{flex:0 0 auto;height:32px;padding:0 14px;border:1px solid rgba(255,255,255,.32);border-radius:16px;background:transparent;color:#fff;font:500 14px/30px "Noto Sans SC",sans-serif}
+.s03-note{margin:16px 0 0;font:400 13px/20px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.74)}
+.s03-note.s03-note-top{margin-top:30px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+.s03-note.s03-dot{position:relative;padding-left:16px;font-size:14px;line-height:21px;color:rgba(255,255,255,.82)}
+.s03-note.s03-dot::before{content:"";position:absolute;left:0;top:7px;width:7px;height:7px;border-radius:4px;background:rgba(255,255,255,.4)}
+.s03-note.s03-dot-on::before{background:var(--s03-e3)}
+.s03-quote{margin:22px 0 0;padding:0 0 0 14px;border-left:2px solid var(--s03-e1)}
+.s03-quote p{margin:6px 0 0;font:400 17px/28px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.94)}
+.s03-tl{list-style:none;position:relative;margin:4px 0 0;padding:0 0 0 22px}
+.s03-tl::before{content:"";position:absolute;left:5px;top:16px;bottom:16px;width:1px;background:rgba(255,255,255,.22)}
+.s03-tl li{position:relative;padding:9px 0}
+.s03-tl li::before{content:"";position:absolute;left:-21px;top:16px;width:11px;height:11px;border-radius:6px;background:#14161F;box-shadow:inset 0 0 0 2px rgba(255,255,255,.5)}
+.s03-tl li.s03-cur::before{background:var(--s03-e1);box-shadow:none}
+.s03-tl b{font:500 15px/24px "Noto Sans SC",sans-serif;color:#fff}
+.s03-tl span{margin-left:10px;font:400 13px/24px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.74)}
+.s03-tl em{display:block;margin-top:2px;font:400 13px/19px "Noto Sans SC",sans-serif;font-style:normal;color:var(--s03-val)}
+.s03-acts{display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:24px}
+.s03-acts .s03-sec,.s03-acts .s03-cta{margin:0}
+.s03-sec-warn{color:#ffb7c2!important;border-color:rgba(255,140,158,.55)!important}
+.s03-who{margin:12px 0 0;padding-left:14px;position:relative;font:400 14px/21px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.8)}
+.s03-who::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:3px;background:var(--s03-e3)}
+.s03-whos .s03-who{margin:0;padding:12px 0 12px 16px;border-top:1px solid rgba(255,255,255,.08);font-size:15px;line-height:23px;color:rgba(255,255,255,.9)}
+.s03-whos .s03-who:first-child{border-top:0;padding-top:2px}
+.s03-whos .s03-who::before{top:21px}
+.s03-whos .s03-who:first-child::before{top:11px}
+.s03-empty{padding:6px 0 4px}
+.s03-empty b{display:block;font:500 17px/24px "Noto Sans SC",sans-serif}
+.s03-empty span{display:block;margin-top:6px;font:400 15px/23px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.8)}
+.s03-empty .s03-sec,.s03-empty .s03-more{margin:18px 0 0}
+/* switches (提醒类别 / 减少动态) — core motion 2: the knob travels 160ms, the row presses 120ms */
+.s03-swr{position:relative;display:flex;align-items:center;gap:14px;width:calc(100% + 24px);min-height:72px;margin:0 -12px;padding:12px;border:0;border-radius:14px;background:transparent;color:#fff;text-align:left;transition:background-color 120ms ease}
+.s03-swr:active{background:rgba(255,255,255,.08)}
+.s03-swr + .s03-swr::before{content:"";position:absolute;left:12px;right:12px;top:0;height:1px;background:rgba(255,255,255,.08)}
+.s03-sw{flex:0 0 auto;position:relative;width:50px;height:30px;border-radius:15px;background:rgba(255,255,255,.16);box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);transition:background-color 160ms ease}
+.s03-sw i{position:absolute;left:3px;top:3px;width:24px;height:24px;border-radius:12px;background:#fff;transition:transform 160ms cubic-bezier(.3,.8,.25,1)}
+.s03-swr[aria-checked=true] .s03-sw{background:color-mix(in srgb,var(--s03-e1) 78%,#14161F)}
+.s03-swr[aria-checked=true] .s03-sw i{transform:translateX(20px)}
+@keyframes s03-knob-on{0%{transform:translateX(0)}55%{transform:translateX(13px) scaleX(1.18)}100%{transform:translateX(20px)}}
+@keyframes s03-knob-off{0%{transform:translateX(20px)}55%{transform:translateX(7px) scaleX(1.18)}100%{transform:translateX(0)}}
+.s03-swr.s03-just .s03-sw i{transition:none;animation:s03-knob-off calc(160ms * var(--k,1)) cubic-bezier(.3,.8,.25,1) both}
+.s03-swr.s03-just[aria-checked=true] .s03-sw i{animation-name:s03-knob-on}
+.app.paused .s03-just .s03-sw i{animation-play-state:paused!important}
+.app.scrub .s03-just .s03-sw i{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 160ms * var(--k,1))!important}
+/* environments as three slabs of light on the ink (appearance) */
+.s03-skins{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:2px}
+.s03-skin{display:flex;flex-direction:column;gap:5px;min-width:0;margin:0;padding:0;border:0;background:transparent;color:#fff;text-align:left}
+.s03-skin i{display:block;height:118px;border-radius:16px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);transition:transform 120ms ease,box-shadow 160ms ease}
+.s03-skin:active i{transform:scale(.97)}
+.s03-skin.s03-shown i{box-shadow:0 0 0 2px #14161F,0 0 0 4px #fff}
+.s03-skin b{margin-top:6px;font:500 17px/24px "Noto Sans SC",sans-serif}
+.s03-skin span{font:400 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76)}
+.s03-skin.s03-cur span{color:var(--s03-val)}
+/* city search + list */
+.s03-ul-search{margin:0 0 12px}
+.s03-cityr{position:relative;display:flex;align-items:center;gap:12px;width:calc(100% + 24px);min-height:64px;margin:0 -12px;padding:10px 12px;border:0;border-radius:14px;background:transparent;color:#fff;text-align:left;transition:background-color 120ms ease}
+.s03-cityr:active{background:rgba(255,255,255,.07)}
+.s03-radio{flex:0 0 auto;width:20px;height:20px;border-radius:10px;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.5);transition:box-shadow 160ms ease}
+.s03-cityr[aria-checked=true] .s03-radio{box-shadow:inset 0 0 0 6px var(--s03-e1)}
+.s03-cityr[aria-checked=true] .s03-row-m b{color:var(--s03-val)}
+/* event cards (favourites, 找局): a lit date stub + the event */
+.s03-evs{display:flex;flex-direction:column}
+.s03-ev{position:relative;padding:14px 0;border-top:1px solid rgba(255,255,255,.08)}
+.s03-ev:first-child{border-top:0;padding-top:2px}
+.s03-ev-main{display:flex;align-items:flex-start;gap:14px;width:100%;margin:0;padding:0;border:0;background:transparent;color:#fff;text-align:left}
+.s03-date{--e:var(--s03-e1);flex:0 0 auto;width:60px;padding:9px 0 8px;border-radius:3px 3px 12px 12px;text-align:center;background:linear-gradient(180deg,color-mix(in srgb,var(--e) 18%,rgba(255,255,255,.04)),rgba(255,255,255,.03));box-shadow:inset 0 2px 0 var(--e)}
+.s03-date b{display:block;font:600 17px/22px "Noto Sans SC",sans-serif}
+.s03-date span{display:block;font:400 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.78)}
+.s03-ev-f{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:10px 0 0 74px}
+.s03-chip{display:inline-block;max-width:100%;padding:3px 10px;border-radius:11px;font:500 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.86);background:rgba(255,255,255,.08);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s03-chip.s03-chip-on{color:var(--s03-val);background:color-mix(in srgb,var(--s03-val) 15%,transparent)}
+.s03-ev.s03-arch .s03-date{box-shadow:inset 0 2px 0 rgba(255,255,255,.32);background:rgba(255,255,255,.03)}
+.s03-ev.s03-arch .s03-row-m b{color:rgba(255,255,255,.78)}
+.s03-feed{display:flex;flex-direction:column;gap:10px}
+.s03-fc{position:relative;display:flex;align-items:center;gap:14px;min-height:84px;padding:12px 14px;border-radius:18px;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.035));box-shadow:inset 0 1px 0 rgba(255,255,255,.1);touch-action:pan-y;user-select:none;cursor:grab;outline:0;
+  transition:transform calc(500ms * var(--k,1)) cubic-bezier(.2,.9,.3,1.04),box-shadow 160ms ease,background-color 160ms ease}
+.s03-fc.is-drag{transition:none;cursor:grabbing}
+.s03-fc:focus-visible{box-shadow:inset 0 0 0 2px var(--s03-e1)}
+.s03-fc.is-armed{box-shadow:inset 0 0 0 1.5px var(--s03-e1),inset 0 1px 0 rgba(255,255,255,.1)}
+.s03-fc.is-wrong{background:rgba(255,255,255,.04)}
+.s03-star{flex:0 0 auto;width:28px;text-align:center;font:400 22px/28px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.72)}
+.s03-fc.is-fav .s03-star{color:var(--s03-e2)}
+.s03-fc-hint{position:absolute;right:14px;top:-11px;padding:1px 10px;border-radius:10px;background:var(--s03-toast);color:#14161F;font:500 13px/20px "Noto Sans SC",sans-serif;white-space:nowrap}
+.s03-fc.is-wrong .s03-fc-hint{background:rgba(255,255,255,.86)}
+.s03-pills{display:flex;gap:8px;margin:0 0 16px}
+.s03-pl{height:36px;padding:0 16px;border:1px solid rgba(255,255,255,.3);border-radius:18px;background:transparent;color:rgba(255,255,255,.86);font:500 14px/34px "Noto Sans SC",sans-serif;transition:background-color 120ms ease,color 120ms ease}
+.s03-pl.s03-on{background:#fff;border-color:#fff;color:#14161F}
+.s03-mr{position:relative;display:flex;align-items:center;gap:8px;min-height:70px;padding:10px 0}
+.s03-mr + .s03-mr::before{left:0;right:0}
+.s03-starb{flex:0 0 auto;width:44px;height:44px;margin:0 -8px 0 0;padding:0;border:0;border-radius:22px;background:transparent;color:rgba(255,255,255,.72);font:400 21px/44px "Noto Sans SC",sans-serif;transition:background-color 120ms ease,color 160ms ease}
+.s03-starb:active{background:rgba(255,255,255,.08)}
+.s03-starb.s03-on{color:var(--s03-e2)}
+/* the reading path (约定全文 / 常见问题) */
+.s03-read{display:flex;flex-direction:column}
+.s03-rg{margin-top:28px}
+.s03-rg:first-child{margin-top:2px}
+.s03-rg h2{margin:0 0 4px;font:600 20px/28px "Noto Sans SC",sans-serif;color:#fff}
+.s03-rg h2 span{display:block;margin-top:2px;font:400 14px/21px "Noto Sans SC",sans-serif;color:var(--s03-val)}
+.s03-rule{position:relative;padding:14px 0 14px 38px;border-top:1px solid rgba(255,255,255,.08)}
+.s03-rg h2:empty + .s03-rule{border-top:0}
+.s03-rule i{position:absolute;left:0;top:14px;font:600 15px/24px "Noto Sans SC",sans-serif;font-style:normal;color:var(--s03-e1)}
+.s03-rule b{display:block;font:500 17px/24px "Noto Sans SC",sans-serif;color:#fff}
+.s03-rule p{margin:6px 0 0;font:400 15px/25px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.86)}
+.s03-tiles{display:flex;gap:8px}
+.s03-tiles .s03-tag{flex:1 1 0}
 
 /* ---------- profile & edit: the same facts, read → editable in place on the ink ---------- */
 .s03-facts{display:flex;flex-direction:column}
@@ -166,24 +333,21 @@ body{margin:0}
 .s03-fv{margin-top:8px;min-height:28px;padding-right:76px;font:500 20px/28px "Noto Sans SC",sans-serif;color:#fff;word-break:break-all}
 .s03-fv.s03-none{color:rgba(255,255,255,.7);font-weight:400}
 .s03-fv-name{min-height:42px;padding-right:0;font:600 34px/42px "Noto Sans SC",sans-serif;letter-spacing:-.005em}
-.s03-who{margin:12px 0 0;padding-left:14px;position:relative;font:400 14px/21px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.78)}
-.s03-who::before{content:"";position:absolute;left:0;top:7px;width:6px;height:6px;border-radius:3px;background:var(--s03-e3)}
 .s03-ftag{display:block;margin-top:8px;font:500 13px/18px "Noto Sans SC",sans-serif;color:var(--s03-val)}
 .s03-mini{position:absolute;right:0;top:44px;height:34px;padding:0 15px;border:1px solid rgba(255,255,255,.32);border-radius:17px;background:transparent;color:#fff;font:500 14px/32px "Noto Sans SC",sans-serif;transition:background-color 120ms ease,transform 120ms ease}
 .s03-mini:active{background:rgba(255,255,255,.1);transform:scale(.96)}
 .s03-copyfail{margin:10px 0 0;font:500 13px/19px "Noto Sans SC",sans-serif;color:#ffb0bc;user-select:all}
-.s03-note{margin:16px 0 0;font:400 13px/20px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.74)}
 .s03-sec{display:block;width:min(100%,280px);height:48px;margin:26px auto 0;border:1px solid rgba(255,255,255,.34);border-radius:24px;background:transparent;color:#fff;font:500 16px/46px "Noto Sans SC",sans-serif;transition:background-color 120ms ease,transform 120ms ease}
 .s03-sec:active{background:rgba(255,255,255,.08);transform:scale(.97)}
-
 .s03-ul{position:relative;display:block;margin-top:8px}
 .s03-ul::after{content:"";position:absolute;left:0;right:0;bottom:-7px;height:1px;background:rgba(255,255,255,.5);transform-origin:0 50%;transition:background-color 160ms ease,height 160ms ease}
 .s03-pg.is-top .s03-ul::after{transform:scaleX(clamp(0,(var(--s03-w) - .3) / .7,1))}
 .s03-ul:focus-within::after{height:2px;background:var(--s03-e1)}
-.s03-f.s03-err .s03-ul::after{height:2px;background:#ff8c9e}
+.s03-f.s03-err .s03-ul::after,.s03-form.s03-err .s03-ul-ta::after{height:2px;background:#ff8c9e}
 .s03-inp{display:block;width:100%;height:28px;margin:0;padding:0;border:0;border-radius:0;background:transparent;outline:0;color:#fff;font:500 20px/28px "Noto Sans SC",sans-serif;caret-color:var(--s03-e1);-webkit-appearance:none;appearance:none}
-.s03-inp::placeholder{color:rgba(255,255,255,.42);font-weight:400}
+.s03-inp::placeholder,.s03-ta::placeholder{color:rgba(255,255,255,.42);font-weight:400}
 .s03-inp-name{height:42px;font:600 34px/42px "Noto Sans SC",sans-serif;letter-spacing:-.005em}
+.s03-inp-s{font-weight:400;font-size:17px}
 .s03-cnt{margin-left:auto;font-feature-settings:"tnum"}
 .s03-cnt.s03-cnt-over{color:#ff8c9e}
 .s03-fe{margin:16px 0 0;font:500 13px/18px "Noto Sans SC",sans-serif;color:#ff8c9e}
@@ -196,22 +360,37 @@ body{margin:0}
 .s03-inp-code::placeholder{font-size:15px;letter-spacing:0;font-weight:400}
 .s03-codeln{flex:1 0 100%;margin:4px 0 0;font:400 13px/19px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.74)}
 .s03-ok{display:block;margin-top:16px;font:500 15px/22px "Noto Sans SC",sans-serif;color:var(--s03-val)}
+/* text forms: one large underlined page of writing on the ink */
+.s03-form{margin-top:18px}
+.s03-chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 20px}
+.s03-ch{height:36px;padding:0 14px;border:1px solid rgba(255,255,255,.32);border-radius:18px;background:transparent;color:#fff;font:500 14px/34px "Noto Sans SC",sans-serif;transition:background-color 120ms ease,border-color 120ms ease}
+.s03-ch.s03-on{border-color:var(--s03-e1);background:color-mix(in srgb,var(--s03-e1) 28%,#14161F)}
+.s03-ul-ta{margin-top:10px}
+.s03-ta{display:block;width:100%;min-height:168px;margin:0;padding:0;border:0;background:transparent;outline:0;resize:none;color:#fff;font:400 17px/28px "Noto Sans SC",sans-serif;caret-color:var(--s03-e1)}
+.s03-files{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-top:24px}
+.s03-addf{position:relative;overflow:hidden;display:inline-flex;align-items:center;cursor:pointer}
+.s03-addf input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.s03-file{display:inline-flex;align-items:center;gap:6px;max-width:100%;height:34px;padding:0 4px 0 12px;border-radius:17px;background:rgba(255,255,255,.08);font:400 13px/18px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.88)}
+.s03-file span{overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.s03-file button{flex:0 0 auto;height:30px;padding:0 8px;border:0;border-radius:15px;background:transparent;color:var(--s03-val);font:500 13px/30px "Noto Sans SC",sans-serif}
 
 .s03-p-form .s03-sheet{padding-bottom:32px}
 .s03-p-form .s03-sc{bottom:calc(var(--kb,0px) + 84px)}
 .s03-p-form.s03-failed .s03-sc{bottom:calc(var(--kb,0px) + 112px)}
+.s03-p-env.s03-barred .s03-sheet{padding-bottom:200px}
 .s03-bar{position:absolute;left:0;right:0;bottom:var(--kb,0px);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 20px 22px;background:#14161F;box-shadow:inset 0 1px 0 rgba(255,255,255,.08);
   transform:translateY(calc((1 - var(--s03-w)) * 130%))}
 .s03-pg.is-under .s03-bar{transform:translateY(calc(var(--s03-w) * 130%))}
-.s03-bar-fail{margin:0;font:500 13px/18px "Noto Sans SC",sans-serif;color:#ffb0bc}
+.s03-p-env .s03-bar{bottom:76px;padding-bottom:14px;transform:none;animation:s03-barin calc(240ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+@keyframes s03-barin{from{transform:translateY(24px);opacity:0}to{transform:none;opacity:1}}
+.s03-bar-b{display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.s03-bar-b .s03-sec{flex:0 1 auto;width:auto;margin:0;padding:0 18px}
+.s03-bar-fail{margin:0;font:500 13px/18px "Noto Sans SC",sans-serif;color:#ffb0bc;text-align:center}
 .s03-cta{width:min(100%,280px);height:48px;border:0;border-radius:24px;color:#fff;font:600 16px/48px "Noto Sans SC",sans-serif;letter-spacing:.06em;
   background:linear-gradient(180deg,#5664d2 0%,#4553BE 54%,#3c49ac 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.36),inset 0 -1px 0 rgba(0,0,0,.3),0 -1px 0 rgba(255,255,255,.06);transition:transform 120ms ease,filter 160ms ease}
 .s03-cta:active{transform:scale(.958)}
 .s03-cta[disabled]{filter:saturate(.75) brightness(.9);cursor:default}
-
-/* generic ink page (surfaces composed in stage 2) */
-.s03-genv{margin:2px 0 0;font:500 24px/34px "Noto Sans SC",sans-serif;color:#fff;word-break:break-all}
-.s03-genl{margin:10px 0 0;font:400 15px/23px "Noto Sans SC",sans-serif;color:rgba(255,255,255,.76)}
+.s03-bar-b .s03-cta{flex:0 1 220px}
 
 /* ---------- root navigation: the last strip of the ink ---------- */
 .s03-nav{position:absolute;left:0;right:0;bottom:0;height:76px;z-index:5;display:grid;grid-template-columns:repeat(4,1fr);padding:0 6px 14px;background:#14161F;box-shadow:inset 0 1px 0 rgba(255,255,255,.07);
@@ -220,31 +399,41 @@ body{margin:0}
 .s03-nav button.on{color:#fff}
 .s03-nav button.on::before{content:"";position:absolute;left:50%;top:13px;width:18px;height:3px;margin-left:-9px;border-radius:2px;background:var(--s03-e1)}
 
-/* ---------- overlays: the confirm layer is a slab of the light rising over the ink (the inverse material) ---------- */
+/* ---------- overlays: confirm layers / system prompt / toast are slabs of the light over the ink (the inverse material) ---------- */
 .s03-over{position:absolute;inset:0;z-index:20}
 .s03-dim{position:absolute;inset:0;background:rgba(8,9,14,.52);animation:s03-fade calc(220ms * var(--k,1)) ease both}
 .s03-slab{position:absolute;left:0;right:0;bottom:0;padding:28px 24px calc(26px + var(--kb,0px));border-radius:28px 28px 0 0;color:#14161F;background:var(--s03-slab);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);animation:s03-rise calc(320ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 .s03-slab h3{margin:0;font:600 22px/30px "Noto Sans SC",sans-serif}
 .s03-slab p{margin:8px 0 22px;font:400 15px/23px "Noto Sans SC",sans-serif;color:#363b4a}
 .s03-slab-b{display:flex;gap:10px}
-.s03-slab-b button{flex:1 1 0;height:48px;border-radius:24px;font:500 16px/1 "Noto Sans SC",sans-serif;transition:transform 120ms ease}
-.s03-slab-b button:active{transform:scale(.97)}
+.s03-slab-b button,.s03-sys-b button{flex:1 1 0;height:48px;border-radius:24px;font:500 16px/1 "Noto Sans SC",sans-serif;transition:transform 120ms ease}
+.s03-slab-b button:active,.s03-sys-b button:active{transform:scale(.97)}
 .s03-keep{border:0;background:#14161F;color:#fff}
 .s03-drop{border:1.5px solid rgba(20,22,31,.6);background:transparent;color:#14161F}
+.s03-sys{position:absolute;left:50%;top:50%;width:min(304px,calc(100% - 48px));padding:24px 20px 18px;border-radius:24px;color:#14161F;background:var(--s03-slab);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);text-align:center;transform:translate(-50%,-50%);animation:s03-pop calc(260ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.s03-sys b{display:block;font:600 18px/26px "Noto Sans SC",sans-serif}
+.s03-sys p{margin:8px 0 18px;font:400 14px/21px "Noto Sans SC",sans-serif;color:#363b4a}
+.s03-sys-b{display:flex;gap:8px}
+.s03-sys-b button{height:46px}
 .s03-toast{position:absolute;left:50%;bottom:calc(var(--kb,0px) + 100px);z-index:30;max-width:calc(100% - 40px);padding:10px 18px;border-radius:20px;background:var(--s03-toast);color:#14161F;font:500 14px/20px "Noto Sans SC",sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transform:translateX(-50%);box-shadow:inset 0 1px 0 rgba(255,255,255,.7);animation:s03-toast calc(220ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 .s03-toast.k-error{color:#a3192f}
+.s03-undo{position:absolute;left:16px;right:16px;bottom:calc(var(--kb,0px) + 92px);z-index:30;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:6px 6px 6px 18px;border-radius:26px;background:var(--s03-toast);color:#14161F;font:500 14px/20px "Noto Sans SC",sans-serif;box-shadow:inset 0 1px 0 rgba(255,255,255,.7);animation:s03-toast2 calc(220ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
+.s03-undo span{min-width:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.s03-undo button{flex:0 0 auto;height:40px;padding:0 18px;border:0;border-radius:20px;background:#14161F;color:#fff;font:500 14px/40px "Noto Sans SC",sans-serif}
 @keyframes s03-rise{from{transform:translateY(100%)}to{transform:none}}
 @keyframes s03-fade{from{opacity:0}to{opacity:1}}
+@keyframes s03-pop{from{opacity:0;transform:translate(-50%,-46%) scale(.96)}to{opacity:1;transform:translate(-50%,-50%)}}
 @keyframes s03-toast{from{opacity:0;transform:translate(-50%,8px)}to{opacity:1;transform:translate(-50%,0)}}
+@keyframes s03-toast2{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
     <div class="app s03{{panel.rootCls}}{{c.nav.rootCls}}{{x.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
       <div class="s03-world" style="{{x.worldStyle}}">
-        <div class="s03-sky" aria-hidden="true"><i class="s03-l-cotton"></i><i class="s03-l-halo"></i><i class="s03-l-sunset"></i></div>
+        <div class="s03-sky" aria-hidden="true"><i class="s03-l-cotton{{x.sky.cotton}}"></i><i class="s03-l-halo{{x.sky.halo}}"></i><i class="s03-l-sunset{{x.sky.sunset}}"></i></div>
 
-        <!-- HOME · the light holds the identity; the ink holds what to do, the favourites and the lists -->
+        <!-- HOME · the light holds the identity; the ink holds what to do, the favourites, the preferences as statements -->
         <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
           <section class="s03-pg s03-p-home {{c.nav.cls.home}}" data-surface="home">
             <header class="s03-hd s03-fh" data-header>
@@ -281,20 +470,23 @@ body{margin:0}
                       </div>
                     </sc-if>
                   </div>
-                  <sc-for list="{{x.home.groups}}" as="g" hint-placeholder-count="3">
-                    <div class="s03-grp"><h2 class="s03-gl">{{g.name}}</h2>
-                      <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
-                        <button type="button" class="s03-row" data-origin="{{r.key}}" onClick="{{r.go}}"><span class="s03-row-l">{{r.label}}</span><span class="s03-row-v">{{r.value}}</span><i class="s03-chev"></i></button>
-                      </sc-for>
-                    </div>
-                  </sc-for>
+                  <button type="button" class="s03-lit s03-t2 s03-lit-row" data-origin="notify" onClick="{{x.home.goNotify}}"><span class="s03-lit-n">{{x.home.notifyN}}</span><span class="s03-lit-c"><span class="s03-lit-k">{{x.home.notifyK}}</span><span class="s03-lit-t">{{x.home.notifyT}}</span></span><i class="s03-blk-go"></i></button>
+                  <div class="s03-duo">
+                    <button type="button" class="s03-q" data-origin="city" onClick="{{x.home.goCity}}"><span class="s03-gl">默认浏览城市</span><b>{{x.home.city}}</b><span>{{x.home.cityTz}}</span></button>
+                    <div class="s03-q"><span class="s03-gl">外观</span><span class="s03-minis"><sc-for list="{{x.home.skins}}" as="k" hint-placeholder-count="3"><button type="button" class="s03-mini-sk s03-sl-{{k.key}}{{k.cls}}" data-act="skin" data-rid="{{k.key}}" aria-label="{{k.name}}" onClick="{{k.go}}"></button></sc-for></span><span>{{x.home.skinName}}</span></div>
+                  </div>
+                  <div class="s03-att s03-cnts">
+                    <button type="button" class="s03-blk s03-quiet s03-t1" data-origin="records" onClick="{{x.home.goRecords}}"><span class="s03-blk-n">{{x.home.rec.n}}</span><span class="s03-blk-k">{{x.home.rec.k}}</span><span class="s03-blk-t">{{x.home.rec.t}}</span><i class="s03-blk-go"></i></button>
+                    <button type="button" class="s03-blk s03-quiet s03-t3" data-origin="reports" onClick="{{x.home.goReports}}"><span class="s03-blk-n">{{x.home.rep.n}}</span><span class="s03-blk-k">{{x.home.rep.k}}</span><span class="s03-blk-t">{{x.home.rep.t}}</span><i class="s03-blk-go"></i></button>
+                  </div>
+                  <nav class="s03-idx" aria-label="帮助与账户"><sc-for list="{{x.home.index}}" as="r" hint-placeholder-count="4"><button type="button" data-origin="{{r.key}}" onClick="{{r.go}}">{{r.label}}</button></sc-for></nav>
                 </div>
               </div>
             </div>
           </section>
         </sc-if>
 
-        <!-- PROFILE · the ink pulled up; the facts in large type on the ink -->
+        <!-- PROFILE · the ink pulled up; the facts in large type on the ink, each with who can see it -->
         <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
           <section class="s03-pg s03-p-prof {{c.nav.cls.profile}}" data-surface="profile">
             <header class="s03-hd s03-fh" data-header>
@@ -378,20 +570,71 @@ body{margin:0}
           </section>
         </sc-if>
 
-        <!-- every other surface: the same light/ink page; composed in stage 2 -->
-        <sc-for list="{{x.gens}}" as="g" hint-placeholder-count="1">
-          <section class="s03-pg {{g.formCls}} {{g.cls}}" data-surface="{{g.s}}">
-            <header class="s03-hd s03-fh" data-header>
-              <sc-if value="{{g.hasBack}}" hint-placeholder-val="{{true}}"><button type="button" class="s03-back" data-act="back" aria-label="返回" onClick="{{c.nav.back}}"><i></i></button></sc-if>
-              <sc-if value="{{g.isRoot}}" hint-placeholder-val="{{false}}"><span class="s03-mark">JU</span></sc-if>
-              <h1 class="s03-t">{{g.title}}</h1>
-              <p class="s03-m">{{g.meta}}</p>
-            </header>
-            <div class="s03-sc" data-scroller="{{g.s}}" onScroll="{{x.onScroll}}">
-              <div class="s03-gap"></div>
-              <div class="s03-sheet"><div class="s03-fo"><p class="s03-genv">{{g.value}}</p><p class="s03-genl">{{g.line}}</p></div></div>
-            </div>
-          </section>
+        <!-- EVERY OTHER SURFACE · the same two materials: the light band carries the page's key statement, the ink carries the content -->
+        <sc-for list="{{x.pages}}" as="p" hint-placeholder-count="1">
+          <sc-if value="{{p.on}}" hint-placeholder-val="{{false}}">
+            <section class="s03-pg {{p.kcls}} {{p.cls}}" data-surface="{{p.s}}">
+              <header class="s03-hd s03-fh" data-header>
+                <sc-if value="{{p.back}}" hint-placeholder-val="{{true}}"><button type="button" class="s03-back" data-act="back" aria-label="返回" onClick="{{c.nav.back}}"><i></i></button></sc-if>
+                <sc-if value="{{p.cancel}}" hint-placeholder-val="{{false}}"><button type="button" class="s03-tx" data-act="cancel" onClick="{{c.nav.back}}">取消</button></sc-if>
+                <sc-if value="{{p.root}}" hint-placeholder-val="{{false}}"><span class="s03-mark">JU</span></sc-if>
+                <h1 class="s03-t">{{p.title}}</h1>
+                <p class="s03-m">{{p.meta}}</p>
+              </header>
+              <div class="s03-sc" data-scroller="{{p.s}}" onScroll="{{x.onScroll}}">
+                <div class="s03-gap{{p.gapCls}}">
+                  <sc-if value="{{p.st.on}}" hint-placeholder-val="{{true}}">
+                    <div class="s03-st s03-fo{{p.st.cls}}">
+                      <sc-if value="{{p.st.n}}" hint-placeholder-val="{{true}}"><p class="s03-st-big"><span class="s03-st-n">{{p.st.n}}</span><span class="s03-st-u">{{p.st.u}}</span></p></sc-if>
+                      <sc-if value="{{p.st.q}}" hint-placeholder-val="{{false}}"><p class="s03-st-q">{{p.st.q}}</p></sc-if>
+                      <sc-if value="{{p.st.s}}" hint-placeholder-val="{{true}}"><p class="s03-st-s">{{p.st.s}}</p></sc-if>
+                    </div>
+                  </sc-if>
+                </div>
+                <div class="s03-sheet"><div class="s03-fo">
+                  <sc-for list="{{p.blocks}}" as="b" hint-placeholder-count="2">
+                    <sc-if value="{{b.isH}}"><div class="s03-bh"><h2 class="s03-gl">{{b.text}}</h2><sc-if value="{{b.more}}"><button type="button" class="s03-more" onClick="{{b.go}}">{{b.more}}</button></sc-if></div></sc-if>
+                    <sc-if value="{{b.isTitle}}"><h2 class="s03-ink-t">{{b.text}}</h2></sc-if>
+                    <sc-if value="{{b.isLit}}"><button type="button" class="s03-lit {{b.tone}}" data-rid="{{b.rid}}" data-origin="{{b.origin}}" onClick="{{b.go}}"><sc-if value="{{b.n}}"><span class="s03-lit-n">{{b.n}}</span></sc-if><span class="s03-lit-k">{{b.k}}</span><sc-if value="{{b.t}}"><span class="s03-lit-t">{{b.t}}</span></sc-if><i class="s03-blk-go"></i></button></sc-if>
+                    <sc-if value="{{b.isLitS}}"><div class="s03-lit {{b.tone}}"><sc-if value="{{b.n}}"><span class="s03-lit-n">{{b.n}}</span></sc-if><span class="s03-lit-k">{{b.k}}</span><sc-if value="{{b.t}}"><span class="s03-lit-t">{{b.t}}</span></sc-if><sc-if value="{{b.cta}}"><button type="button" class="s03-cta" data-act="{{b.ctaAct}}" disabled="{{b.ctaOff}}" onClick="{{b.ctaGo}}">{{b.cta}}</button></sc-if></div></sc-if>
+                    <sc-if value="{{b.isRows}}"><div class="s03-rows"><sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-row s03-row2" data-rid="{{r.rid}}" data-origin="{{r.origin}}" onClick="{{r.go}}"><span class="s03-row-m"><b>{{r.main}}</b><sc-if value="{{r.sub}}"><span>{{r.sub}}</span></sc-if></span><sc-if value="{{r.val}}"><span class="s03-row-v">{{r.val}}</span></sc-if><i class="s03-chev"></i></button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isRowsS}}"><div class="s03-rows"><sc-for list="{{b.rows}}" as="r"><div class="s03-row s03-row2"><span class="s03-row-m"><b>{{r.main}}</b><sc-if value="{{r.sub}}"><span>{{r.sub}}</span></sc-if></span><sc-if value="{{r.val}}"><span class="s03-row-v">{{r.val}}</span></sc-if></div></sc-for></div></sc-if>
+                    <sc-if value="{{b.isFacts}}"><dl class="s03-dl"><sc-for list="{{b.rows}}" as="r"><div class="s03-dlr"><dt>{{r.l}}</dt><dd class="{{r.cls}}"><span>{{r.v}}</span><sc-if value="{{r.btn}}"><button type="button" class="s03-mini2" data-act="{{r.act}}" onClick="{{r.go}}">{{r.btn}}</button></sc-if></dd></div></sc-for></dl></sc-if>
+                    <sc-if value="{{b.isNote}}"><p class="s03-note {{b.cls}}">{{b.text}}</p></sc-if>
+                    <sc-if value="{{b.isWho}}"><div class="s03-whos"><sc-for list="{{b.rows}}" as="w"><p class="s03-who">{{w}}</p></sc-for></div></sc-if>
+                    <sc-if value="{{b.isQuote}}"><blockquote class="s03-quote"><span class="s03-gl">{{b.l}}</span><p>{{b.text}}</p></blockquote></sc-if>
+                    <sc-if value="{{b.isTl}}"><ol class="s03-tl"><sc-for list="{{b.rows}}" as="r"><li class="{{r.cls}}"><b>{{r.label}}</b><span>{{r.at}}</span><sc-if value="{{r.text}}"><em>{{r.text}}</em></sc-if></li></sc-for></ol></sc-if>
+                    <sc-if value="{{b.isActs}}"><div class="s03-acts"><sc-for list="{{b.rows}}" as="r"><button type="button" class="{{r.cls}}" data-act="{{r.act}}" data-origin="{{r.origin}}" onClick="{{r.go}}">{{r.label}}</button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isSw}}"><div class="s03-sws"><sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-swr {{r.cls}}" role="switch" aria-checked="{{r.aria}}" data-act="toggle" data-rid="{{r.key}}" onClick="{{r.go}}"><span class="s03-row-m"><b>{{r.label}}</b><span>{{r.sub}}</span></span><i class="s03-sw"><i></i></i></button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isSkins}}"><div class="s03-skins"><sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-skin {{r.cls}}" data-act="preview" data-rid="{{r.key}}" aria-pressed="{{r.shown}}" onClick="{{r.go}}"><i class="s03-sl-{{r.key}}"></i><b>{{r.name}}</b><span>{{r.tag}}</span></button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isCity}}"><div class="s03-cities">
+                      <span class="s03-ul s03-ul-search"><input class="s03-inp s03-inp-s" data-field="search" value="{{b.q}}" placeholder="搜索城市：中文、英文或代码" autocomplete="off" spellcheck="false" onInput="{{b.onQ}}"></span>
+                      <sc-if value="{{b.none}}"><div class="s03-empty"><b>{{b.noResult}}</b><button type="button" class="s03-more" style="padding-left:0" onClick="{{b.clearQ}}">{{b.retry}} ›</button></div></sc-if>
+                      <sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-cityr" role="radio" aria-checked="{{r.aria}}" data-rid="{{r.key}}" onClick="{{r.go}}"><span class="s03-row-m"><b>{{r.name}}</b><span>{{r.sub}}</span></span><i class="s03-radio"></i></button></sc-for>
+                    </div></sc-if>
+                    <sc-if value="{{b.isEvents}}"><div class="s03-evs"><sc-for list="{{b.rows}}" as="r"><div class="s03-ev {{r.cls}}" data-rid="{{r.id}}"><button type="button" class="s03-ev-main" data-origin="{{r.origin}}" onClick="{{r.open}}"><span class="s03-date {{r.tone}}"><b>{{r.md}}</b><span>{{r.wd}}</span></span><span class="s03-row-m"><b>{{r.title}}</b><span>{{r.line}}</span></span></button><div class="s03-ev-f"><span class="s03-chip{{r.chipCls}}">{{r.rel}}</span><button type="button" class="s03-pill" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出收藏</button></div></div></sc-for></div></sc-if>
+                    <sc-if value="{{b.isPills}}"><div class="s03-pills" role="tablist"><sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-pl {{r.cls}}" role="tab" aria-selected="{{r.on}}" data-act="{{r.act}}" onClick="{{r.go}}">{{r.label}}</button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isFeed}}"><div class="s03-feed"><sc-for list="{{b.rows}}" as="r"><div class="s03-fc {{r.cls}}" data-rid="{{r.id}}" tabindex="0" role="button" aria-label="{{r.title}}" style="{{r.style}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}"><span class="s03-date {{r.tone}}"><b>{{r.md}}</b><span>{{r.wd}}</span></span><span class="s03-row-m"><b>{{r.title}}</b><span>{{r.line}}</span></span><span class="s03-star">{{r.star}}</span><sc-if value="{{r.hint}}"><span class="s03-fc-hint">{{r.hint}}</span></sc-if></div></sc-for></div></sc-if>
+                    <sc-if value="{{b.isMine}}"><div class="s03-rows"><sc-for list="{{b.rows}}" as="r"><div class="s03-mr" data-rid="{{r.id}}"><span class="s03-row-m"><b>{{r.title}}</b><span>{{r.line}}</span></span><sc-if value="{{r.receipt}}"><span class="s03-chip s03-chip-on">{{r.receipt}}</span></sc-if><sc-if value="{{r.canReport}}"><button type="button" class="s03-pill" data-act="report" data-rid="{{r.id}}" data-origin="rep-{{r.id}}" onClick="{{r.report}}">举报</button></sc-if><button type="button" class="s03-starb{{r.favCls}}" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.fav}}" aria-label="{{r.favAria}}" onClick="{{r.toggleFav}}">{{r.star}}</button></div></sc-for></div></sc-if>
+                    <sc-if value="{{b.isForm}}"><div class="s03-form{{b.cls}}">
+                      <sc-if value="{{b.needWho}}"><span class="s03-fl">举报对象</span><div class="s03-chips"><sc-for list="{{b.who}}" as="w"><button type="button" class="s03-ch{{w.cls}}" aria-pressed="{{w.aria}}" onClick="{{w.toggle}}">{{w.label}}</button></sc-for></div><sc-if value="{{b.errWho}}"><p class="s03-fe" style="margin:-8px 0 16px">{{b.errWho}}</p></sc-if></sc-if>
+                      <label class="s03-fl" for="s03-ta-{{b.kind}}">{{b.label}}<span class="s03-cnt">{{b.count}}</span></label>
+                      <span class="s03-ul s03-ul-ta"><textarea id="s03-ta-{{b.kind}}" class="s03-ta" data-field="text" rows="6" placeholder="{{b.placeholder}}" value="{{b.text}}" onInput="{{b.onInput}}"></textarea></span>
+                      <sc-if value="{{b.errText}}"><p class="s03-fe">{{b.errText}}</p></sc-if>
+                      <sc-if value="{{b.canFiles}}"><div class="s03-files"><label class="s03-pill s03-addf">添加材料<input type="file" multiple onChange="{{b.onFiles}}"></label><sc-for list="{{b.files}}" as="f"><span class="s03-file"><span>{{f.name}} · {{f.sizeText}}</span><button type="button" onClick="{{f.remove}}">移除</button></span></sc-for><p class="s03-codeln">{{b.fileNote}}</p></div></sc-if>
+                    </div></sc-if>
+                    <sc-if value="{{b.isRead}}"><div class="s03-read"><sc-for list="{{b.groups}}" as="g"><section class="s03-rg"><h2>{{g.name}}<sc-if value="{{g.line}}"><span>{{g.line}}</span></sc-if></h2><sc-for list="{{g.rules}}" as="r"><article class="s03-rule"><i>{{r.n}}</i><b>{{r.title}}</b><sc-if value="{{r.body}}"><p>{{r.body}}</p></sc-if></article></sc-for></section></sc-for></div></sc-if>
+                    <sc-if value="{{b.isTiles}}"><div class="s03-tiles"><sc-for list="{{b.rows}}" as="r"><button type="button" class="s03-tag {{r.tone}}" data-origin="{{r.origin}}" onClick="{{r.go}}"><span class="s03-tag-n">{{r.name}}</span><span class="s03-tag-d">{{r.line}}</span></button></sc-for></div></sc-if>
+                    <sc-if value="{{b.isEmpty}}"><div class="s03-empty"><sc-if value="{{b.title}}"><b>{{b.title}}</b></sc-if><sc-if value="{{b.body}}"><span>{{b.body}}</span></sc-if><sc-if value="{{b.cta}}"><button type="button" class="s03-sec" style="margin-left:0" onClick="{{b.go}}">{{b.cta}}</button></sc-if></div></sc-if>
+                  </sc-for>
+                </div></div>
+              </div>
+              <sc-if value="{{p.bar.on}}" hint-placeholder-val="{{false}}"><div class="s03-bar">
+                <sc-if value="{{p.bar.fail}}"><p class="s03-bar-fail" role="alert">{{p.bar.fail}}</p></sc-if>
+                <div class="s03-bar-b"><sc-if value="{{p.bar.alt}}"><button type="button" class="s03-sec" data-act="{{p.bar.altAct}}" onClick="{{p.bar.altGo}}">{{p.bar.alt}}</button></sc-if><button type="button" class="s03-cta" data-act="{{p.bar.act}}" disabled="{{p.bar.off}}" onClick="{{p.bar.go}}">{{p.bar.label}}</button></div>
+              </div></sc-if>
+            </section>
+          </sc-if>
         </sc-for>
 
         <nav class="s03-nav" aria-label="JU">
@@ -399,6 +642,11 @@ body{margin:0}
         </nav>
       </div>
 
+      <sc-if value="{{c.notify.sys.on}}" hint-placeholder-val="{{false}}">
+        <div class="s03-over"><div class="s03-dim"></div>
+          <div class="s03-sys" role="alertdialog" aria-modal="true"><b>{{c.notify.sys.title}}</b><p>{{c.notify.sys.body}}</p><div class="s03-sys-b"><button type="button" class="s03-drop" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button><button type="button" class="s03-keep" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button></div></div>
+        </div>
+      </sc-if>
       <sc-if value="{{c.sheet.on}}" hint-placeholder-val="{{false}}">
         <div class="s03-over">
           <div class="s03-dim" onClick="{{x.sheetDim}}"></div>
@@ -409,7 +657,8 @@ body{margin:0}
           </div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s03-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{c.fav.undo.on}}" hint-placeholder-val="{{false}}"><div class="s03-undo" role="status"><span>{{c.fav.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.fav.undo.act}}">{{c.fav.undo.label}}</button></div></sc-if>
+      <sc-if value="{{x.toastOn}}" hint-placeholder-val="{{false}}"><div class="s03-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -419,14 +668,14 @@ body{margin:0}
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
 /* S03 上光下墨 · behaviour = the shared controller (JUS.ctl); this file only composes, types, surfaces and moves it.
-   Geometry: tool row 56px; the light field is 46% of the phone; secondary pages keep a 168px light band, forms 124px.
-   Each surface's sheet top = its band − its scroll. During a push the under page's sheet (opaque, carrying its content) travels to the
-   new page's band while the new page's content rides on it (its own sheet stays transparent until w lands at 1). */
+   Geometry: tool row 56px; the home / appearance light field is 46% of the phone; statement pages keep a 256px light band carrying
+   the page's key statement, the profile 168px, forms 124px. Each surface's sheet top = its band − its scroll. During a push the under
+   page's sheet (opaque, carrying its content) travels to the new page's band while the new page's content rides on it. */
 const S03 = {
-  TOOL: 56, BAND_PAGE: 168, BAND_FORM: 124, SKY: 0.46, FRESH_MS: 6000,
+  TOOL: 56, BAND_ST: 256, BAND_PAGE: 168, BAND_FORM: 124, SKY: 0.46, FRESH_MS: 6000,
   FORMS: { 'profile-edit': 1, 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'report-supplement': 1, 'feedback': 1, 'seam-report': 1 },
-  OWN: { home: 1, profile: 1, 'profile-edit': 1 },   /* surfaces composed so far; the rest render as the generic light/ink page */
   ROOTS: { home: 1, 'seam-feed': 1, 'seam-mine': 1 },
+  GEN: ['favorites', 'favorite-detail', 'city', 'notify', 'appearance', 'records', 'record-detail', 'record-supplement', 'record-dispute', 'record-appeal', 'reports', 'report-detail', 'report-supplement', 'help', 'feedback', 'privacy', 'account', 'about', 'rules', 'seam-feed', 'seam-feed-detail', 'seam-mine', 'seam-report'],
   TONES: ['s03-t1', 's03-t2', 's03-t3'],
   seg: (typeof Intl !== 'undefined' && Intl.Segmenter) ? new Intl.Segmenter('zh', { granularity: 'word' }) : null,
   /* a short Chinese title in a narrow tag: break once, at the word boundary nearest the middle (first line ≥ second); ' · ' wins */
@@ -441,22 +690,29 @@ const S03 = {
     return best > 0 ? head.slice(0, best) + '\n' + head.slice(best) + tail : t;
   }
 };
+/* ink blocks: one vocabulary for every secondary page */
+const H = (text, more, go) => ({ isH: true, text, more: more || '', go: go || null });
+const LIT = (o) => Object.assign({ tone: 's03-t1', n: '', k: '', t: '', rid: '', origin: '', cta: '', ctaAct: '', ctaOff: false, ctaGo: null }, o, { isLit: !!o.go, isLitS: !o.go });
+const ROWS = (rows, stat) => ({ isRows: !stat, isRowsS: !!stat, rows: rows.map((r) => Object.assign({ main: '', sub: '', val: '', rid: '', origin: '', go: null }, r)) });
+const FACTS = (rows) => ({ isFacts: true, rows: rows.filter(Boolean).map((r) => Object.assign({ cls: '', btn: '', act: '', go: null }, r)) });
+const NOTE = (text, cls) => (text ? { isNote: true, text, cls: cls || '' } : null);
+const ACTS = (rows) => ({ isActs: true, rows: rows.filter(Boolean).map((r) => Object.assign({ act: '', origin: '' }, r, { cls: r.primary ? 's03-cta' : 's03-sec' + (r.warn ? ' s03-sec-warn' : '') })) });
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
     this.motionSpec = { fwd: 340, back: 300, root: 320, swap: 280 };
     this.headerRange = 72; this.saveMs = 360;
-    this._seen = new WeakSet(); this._pfLast = null;
+    this._seen = new WeakSet(); this._pfLast = null; this._w0 = 1; this._phase = 'idle';
     this.onScrollS03 = (ev) => this.s03Scroll(ev);
     this.sheetDim = () => { const sh = this.state.sheet; if (sh && sh.kind === 'unsaved') this.sheetKeep(); else this.closeSheet(); };
   }
-  initialState(v) { this._mem = {}; return Object.assign(JUS.baseState(v), { s03fresh: 0 }); }
+  initialState(v) { this._mem = {}; return Object.assign(JUS.baseState(v), { s03fresh: 0, s03just: null, s03tick: 0 }); }
   componentDidMount() { this.s03Sync(); }
   componentDidUpdate() { this.s03Sync(); }
 
   /* ---------- geometry ---------- */
   sky() { const r = this.state.review || {}; return Math.round((r.ph || 844) * S03.SKY); }
-  band(s) { if (!s) return 0; if (s === 'home') return this.sky(); return S03.FORMS[s] ? S03.BAND_FORM : S03.BAND_PAGE; }
+  band(s) { if (!s) return 0; if (s === 'home' || s === 'appearance') return this.sky(); if (S03.FORMS[s]) return S03.BAND_FORM; return s === 'profile' ? S03.BAND_PAGE : S03.BAND_ST; }
   navHide(s) { return S03.FORMS[s] ? 1 : 0; }
   geo() {
     const nav = this.state.nav, st = nav.stack, top = st[st.length - 1].s;
@@ -466,7 +722,7 @@ class Component extends DCLogic {
     const k = (b) => +((b + 32) / (sky + 32)).toFixed(4);
     return { sky, top, under, d: Math.round(tT - uT), lu: k(bo), lt: k(bt), hu: other ? this.navHide(other) : this.navHide(top), ht: this.navHide(top) };
   }
-  worldStyle(g) { return '--s03-sky:' + g.sky + 'px;--s03-bp:' + S03.BAND_PAGE + 'px;--s03-bf:' + S03.BAND_FORM + 'px;--s03-d:' + g.d + 'px;--s03-lu:' + g.lu + ';--s03-lt:' + g.lt + ';--s03-hu:' + g.hu + ';--s03-ht:' + g.ht; }
+  worldStyle(g) { return '--s03-sky:' + g.sky + 'px;--s03-bp:' + S03.BAND_PAGE + 'px;--s03-bf:' + S03.BAND_FORM + 'px;--s03-bs:' + S03.BAND_ST + 'px;--s03-d:' + g.d + 'px;--s03-lu:' + g.lu + ';--s03-lt:' + g.lt + ';--s03-hu:' + g.hu + ';--s03-ht:' + g.ht + ';--s03-w0:' + this._w0; }
   /* scroll memory: restore a page's scroll when it is re-mounted under another page; keep the moving sheet aligned live */
   s03Sync() {
     const root = this.rootRef.current; if (!root) return;
@@ -476,48 +732,68 @@ class Component extends DCLogic {
       if (v > 0 && Math.abs(el.scrollTop - v) > 1) { el.scrollTop = v; this._applyHc(el); }
     });
     this.s03Live();
+    if (this._skinPending) { this._skinPending = false; const seq = this._skinSeq; this.afterKey('s03-skin', 680, () => { if (this._skinSeq === seq) { this._skinPrev = null; this.setState({ s03tick: Date.now() }); } }); }
   }
   s03Live() { const root = this.rootRef.current; const w = root && root.querySelector('.s03-world'); if (w) w.style.setProperty('--s03-d', this.geo().d + 'px'); }
   s03Scroll(ev) { const el = ev.currentTarget; this._applyHc(el); this._mem[el.getAttribute('data-scroller')] = el.scrollTop; this.s03Live(); }
-  onNav(type, s) { if (type === 'go' || type === 'replace') this._mem[s] = 0; }
+  onNav(type, s) {
+    if (type === 'go' || type === 'replace') this._mem[s] = 0;
+    /* a return that interrupts a rise starts its fall from where the sheet is now */
+    if (type === 'back') {
+      let w = 1; const root = this.rootRef.current; const el = root && root.querySelector('.s03-world');
+      if (el && (this._phase === 'in' || this._phase === 'enter')) { const v = parseFloat(getComputedStyle(el).getPropertyValue('--s03-w')); if (v >= 0 && v <= 1) w = v; }
+      this._w0 = +w.toFixed(3);
+    }
+  }
 
-  /* ---------- core motions (registered for 重播) ---------- */
+  /* ---------- the three core motions (registered for 重播 / 暂停 / 关键帧) ---------- */
   open(s, params, ev) { this.motion('sheet-rise', () => this.go(s, params || {}, ev)); }
   pull(ev) { this.motion('sheet-pull', () => this.go('profile-edit', {}, ev)); }
   settle() { this.motion('sheet-settle', () => this.pfSave()); }
+  toggleCat(key) { this.motion('toggle', () => { this.setState({ s03just: key }); this.holdKey('s03just', 700, () => this.setState({ s03just: null })); if (key === 'rm') this.rmToggle(); else this.notifyToggle(key); }); }
+  pickSkin(key) { this.motion('skin', () => this.skinPick(key)); }
+  openSkin(key, ev) { this.motion('skin', () => { const st = this.state.nav.stack; if (st[st.length - 1].s !== 'appearance') this.go('appearance', {}, ev); this.skinPick(key); }); }
   beforeReplay(name) {
     if (name === 'sheet-rise') this.home();
     if (name === 'sheet-pull') { this._mem = {}; this.ctlJump({ key: 's-profile', open: { surface: 'profile' } }); }
     if (name === 'sheet-settle') { this._mem = {}; this.ctlJump({ key: 's-profile-edit', open: { surface: 'profile-edit' } }); this.setState((s) => ({ pf: s.pf ? Object.assign({}, s.pf, { name: s.data.you.name === '阿禾' ? '阿禾二' : '阿禾' }) : s.pf })); }
+    if (name === 'skin') this.skinCancel();
   }
   onProfileSaved(e) {
     this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
     if (!e.nothing) this.markFresh();
     this.afterKey('pf-back', 140, () => this.back(true));   /* the ink settles back to the profile with the new values in place */
   }
+  /* a submitted form settles back first; its draft is cleared only after the sheet has landed (no empty page during the fall) */
+  onFormDone(kind, id, e) {
+    const spec = JUS.CTL_FORMS[kind] || {}; this.say(spec.ok || (kind === 'appeal' ? JUS.COPY.appealSaved : '已保存'), 'ok');
+    this.afterKey('tf-back', 160, () => { this.back(true); this.afterKey('tf-clear', 420, () => this.setState((st) => { const tf = Object.assign({}, st.tf); delete tf[kind + ':' + id]; return { tf }; })); });
+  }
   markFresh() { this.setState({ s03fresh: Date.now() }); this.holdKey('s03fresh', S03.FRESH_MS, () => this.setState({ s03fresh: 0 })); }
   isFresh() { const t = this.state.s03fresh; return !!t && Date.now() - t < S03.FRESH_MS; }
   applyJump(e) { this._mem = {}; this.ctlJump(e); if (e.key === 's-profile-saved') this.markFresh(); }
 
-  /* ---------- view models ---------- */
+  /* ---------- view models: home / profile / edit ---------- */
   homeVals(c) {
-    const you = c.you, sum = c.sum;
+    const you = c.you, sum = c.sum, n = c.notify, recs = c.recs, reps = c.reps;
     const att = c.att.slice(0, 2).map((a, i) => ({ key: a.key, rid: a.key.replace(/^re[cp]-/, ''), label: a.label, title: a.title, tone: i ? 's03-t3' : 's03-t1', open: (ev) => this.open(a.kind === 'record' ? 'record-detail' : 'report-detail', { id: a.key.replace(/^re[cp]-/, '') }, ev) }));
     const src = c.fav.active.length ? c.fav.active : c.fav.rows;
     const favs = src.slice(0, 8).map((r, i) => ({ id: r.id, origin: 'fav-' + r.id, title: S03.wrap2(r.title), date: r.when.wdZh + ' ' + r.when.md, tone: S03.TONES[i % 3], open: (ev) => this.open('favorite-detail', { id: r.id }, ev) }));
-    const row = (key, label, value) => ({ key, label, value, go: (ev) => this.open(key, {}, ev) });
-    const groups = [
-      { name: '偏好', rows: [row('city', '默认浏览城市', sum.cityLabel), row('notify', '通知与提醒', sum.notifyLabel), row('appearance', '外观与动态', sum.appearanceLabel)] },
-      { name: '记录与举报', rows: [row('records', '我的记录', sum.recordLabel), row('reports', '我的举报', sum.reportLabel)] },
-      { name: '帮助与账户', rows: [row('help', '帮助与反馈', c.help.feedback.length ? '我的反馈 ' + c.help.feedback.length + ' 条' : '常见问题'), row('privacy', '隐私与资料可见性', c.privacy.facts.length ? c.privacy.facts.length + ' 种情形' : ''), row('account', '账户与本机数据', c.acct.ended ? '会话已结束' : c.acct.device), row('about', '关于与规则', JUS.RULES.length + ' 条约定')] }
-    ];
+    const openReps = reps.rows.filter((r) => r.status !== 'resolved').length, need = reps.rows.filter((r) => r.needsMore).length;
+    const go = (k) => (ev) => this.open(k, {}, ev);
     return {
       meta: (c.attCount ? c.attCount + ' 项需要处理 · ' : '') + sum.cityLabel,
       name: you.name, acct: (you.wx || '微信号未填写') + ' · ' + (you.email || '邮箱未填写') + (you.verified ? ' · 已验证' : ''),
       fresh: this.isFresh() && (you.savedName || you.savedWx || you.savedEmail),
       att, hasAtt: att.length > 0, attCls: att.length === 1 ? ' s03-n1' : '',
-      favs, favCount: c.fav.count, favEmpty: c.fav.empty, favMore: '全部 ' + c.fav.count + ' 个', favEmptyCopy: c.fav.emptyCopy, goFind: c.fav.goFind, goFav: (ev) => this.open('favorites', {}, ev),
-      groups, goProfile: (ev) => this.open('profile', {}, ev)
+      favs, favCount: c.fav.count, favEmpty: c.fav.empty, favMore: '全部 ' + c.fav.count + ' 个', favEmptyCopy: c.fav.emptyCopy, goFind: c.fav.goFind, goFav: go('favorites'),
+      notifyN: n.onCount + '/' + n.total, notifyK: '类提醒开着', notifyT: n.permCopy.title, goNotify: go('notify'),
+      city: sum.cityLabel, cityTz: c.city.cur.tzLabel, goCity: go('city'),
+      skins: c.skin.list.map((k) => ({ key: k.key, name: k.name, cls: k.on ? ' s03-cur' : '', go: (ev) => this.openSkin(k.key, ev) })), skinName: c.skin.curName + (this.state.data.appearance.reduceMotion ? ' · 减少动态' : ''),
+      rec: recs.count ? { n: recs.count, k: '条事实', t: sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '我的记录' } : { n: '', k: recs.emptyText, t: '我的记录' }, goRecords: go('records'),
+      rep: reps.count ? (openReps ? { n: openReps, k: '条举报处理中', t: need ? need + ' 条需补充' : '我的举报' } : { n: reps.count, k: '条举报 · 均已处理', t: '我的举报' }) : { n: '', k: reps.emptyText, t: '我的举报' }, goReports: go('reports'),
+      index: [['help', '帮助与反馈'], ['privacy', '隐私与资料可见性'], ['account', '账户与本机数据'], ['about', '关于与规则']].map((r) => ({ key: r[0], label: r[1], go: go(r[0]) })),
+      goProfile: go('profile')
     };
   }
   profVals(c) {
@@ -525,7 +801,8 @@ class Component extends DCLogic {
     const kind = y.emailKind === 'school' ? '学校邮箱' : y.emailKind === 'work' ? '工作邮箱' : '';
     return {
       meta: c.sum.joinedCount ? c.sum.joinedCount + ' 个已报名的局沿用报名时的资料' : (y.verified ? '邮箱已验证' + (kind ? ' · ' + kind : '') : y.email ? '邮箱未验证' : '邮箱未填写'), name: y.name,
-      whoName: c.privacy.general[0], whoWx: c.privacy.general[1], whoEmail: c.privacy.general[2], wx: y.wx || '未填写', wxCls: y.wx ? '' : ' s03-none', hasWx: !!y.wx, email: y.email || '未填写', emailCls: y.email ? '' : ' s03-none',
+      whoName: c.privacy.general[0], whoWx: c.privacy.general[1], whoEmail: c.privacy.general[2],
+      wx: y.wx || '未填写', wxCls: y.wx ? '' : ' s03-none', hasWx: !!y.wx, email: y.email || '未填写', emailCls: y.email ? '' : ' s03-none',
       emailTag: y.email ? (y.verified ? '已验证' + (kind ? ' · ' + kind : '') : '未验证') : '',
       freshName: fresh && y.savedName, freshWx: fresh && y.savedWx, freshEmail: fresh && y.savedEmail,
       copyFail: y.copyFail ? JUS.COPY.copyFailInline : '',
@@ -551,26 +828,158 @@ class Component extends DCLogic {
       sendCode: live ? f.sendCode : nop, verify: live ? f.verify : nop, resend: live ? f.resend : nop, save: live ? () => this.settle() : nop, cancel: live ? f.cancel : () => this.back()
     };
   }
-  genVals(c) {
-    const nav = this.state.nav, st = nav.stack, out = [];
-    const value = (s) => ({ favorites: c.sum.favLabel, 'favorite-detail': c.favDetail && c.favDetail.title, city: c.sum.cityLabel, notify: c.sum.notifyLabel, appearance: c.sum.appearanceLabel,
-      records: c.sum.recordLabel, 'record-detail': c.rec && c.rec.title, reports: c.sum.reportLabel, 'report-detail': c.rep && c.rep.title, help: JUS.RULES.length + ' 条约定', privacy: c.privacy.facts.length + ' 种情形',
-      account: c.acct.ended ? '会话已结束' : c.acct.device, about: c.about.version, rules: JUS.RULES_VERSION, 'seam-feed': c.feed.city.name + ' · ' + c.feed.count + ' 个局', 'seam-feed-detail': c.feedDetail && c.feedDetail.title,
-      'seam-mine': c.mine.current.length + ' 个进行中的局', 'seam-report': c.seamReport && c.seamReport.title }[s] || (c.form.on ? c.form.title : ''));
-    const add = (e, role) => { if (S03.OWN[e.s]) return; out.push({ s: e.s, cls: c.nav.cls[e.s], formCls: S03.FORMS[e.s] ? 's03-p-form' : '', title: c.nav.title[e.s] || '', meta: e.s === 'seam-feed' ? c.feed.hintIdle : e.s === 'seam-mine' ? c.mine.current.length + ' 个局进行中' : '', value: value(e.s) || '', line: '', hasBack: role !== 'leaving' && st.length > 1 && !S03.ROOTS[e.s], isRoot: !!S03.ROOTS[e.s] }); };
-    if (st.length > 1) add(st[st.length - 2], 'under');
-    if (nav.leaving) add(nav.leaving, 'leaving');
-    add(st[st.length - 1], 'top');
-    return out;
+
+  /* ---------- every other surface: { title, meta, st (statement in the light), blocks (ink), bar } ---------- */
+  build(c, s) {
+    const d = this.state.data, toRec = (r) => (ev) => this.open('record-detail', { id: r.id }, ev), toRep = (r) => (ev) => this.open('report-detail', { id: r.id }, ev);
+    const evLine = (r) => r.when.time + ' · ' + r.place.hood;
+    switch (s) {
+      case 'favorites': {
+        const f = c.fav;
+        if (f.empty) return { st: { q: f.emptyCopy.title, s: f.emptyCopy.body }, blocks: [{ isEmpty: true, title: '', body: '', cta: f.emptyCopy.cta, go: f.goFind }] };
+        const at = (r) => JUS.t(d.events[r.id].iso), next = f.active.slice().sort((a, b) => at(a) - at(b))[0];
+        const card = (r, i) => ({ id: r.id, origin: 'fav-' + r.id, md: r.when.md, wd: r.when.wdZh, tone: S03.TONES[i % 3], title: r.title, line: evLine(r) + (r.crossCity ? ' · ' + r.city.tzLabel : ''), rel: r.closed ? r.statusLabel : r.relLabel, chipCls: !r.closed && (r.joined || r.hosted) ? ' s03-chip-on' : '', cls: r.closed ? 's03-arch' : '', open: r.open, remove: r.remove });
+        const blocks = [{ isEvents: true, rows: f.active.map(card) }];
+        if (f.archived.length) blocks.push(H('已结束或取消 · ' + f.archived.length), { isEvents: true, rows: f.archived.map(card) });
+        return { st: { n: f.count, u: '个局', s: next ? '最近 · ' + next.when.wdZh + ' ' + next.when.md + ' ' + next.title : '' }, blocks };
+      }
+      case 'favorite-detail': case 'seam-feed-detail': {
+        const v = s === 'favorite-detail' ? c.favDetail : c.feedDetail; if (!v) return {};
+        return { st: { n: v.when.md, u: v.when.wdZh + ' ' + v.when.time, s: v.place.full + (v.crossCity ? ' · ' + v.city.tzLabel : '') },
+          blocks: [{ isTitle: true, text: v.title }, FACTS([{ l: '状态', v: v.status.label }, { l: '你的报名', v: v.joinedLabel }, { l: '局主', v: v.host }, { l: '人数', v: v.cap },
+            { l: '局主微信', v: v.canSeeHostWx ? v.hostWx : v.hostWxRule, cls: v.canSeeHostWx ? '' : 's03-soft', btn: v.canSeeHostWx ? '复制' : '', act: 'copy', go: v.copyHostWx }, v.favAgo ? { l: '收藏于', v: v.favAgo } : null]),
+            NOTE(v.note), ACTS([{ label: v.fav ? '拿出收藏' : '收进收藏', act: v.fav ? 'unfav' : 'fav', go: v.toggleFav }]), NOTE(v.applyNote)].filter(Boolean) };
+      }
+      case 'city': {
+        const v = c.city;
+        return { st: { n: v.cur.name, u: v.cur.en, s: v.cur.tzLabel, cls: v.flash ? ' s03-flash' : '' },
+          blocks: [{ isCity: true, q: v.q, onQ: v.onQ, clearQ: v.clearQ, none: v.none, noResult: v.noResult, retry: v.retry, rows: v.list.map((r) => ({ key: r.key, name: r.name, sub: r.en + ' · ' + r.tzLabel, aria: r.on ? 'true' : 'false', go: r.pick })) }, NOTE(v.scope, 's03-note-top'), NOTE(v.note)].filter(Boolean) };
+      }
+      case 'notify': {
+        const n = c.notify, pc = n.permCopy;
+        const lit = LIT({ tone: n.isGranted ? 's03-t3' : n.isDefault || n.isRequesting ? 's03-t1' : 's03-t2', k: pc.title, t: pc.body, cta: n.isDefault ? pc.cta : n.isRequesting ? pc.label : '', ctaAct: 'request', ctaOff: n.isRequesting, ctaGo: n.isDefault ? n.request : null });
+        return { st: { n: n.onCount + '/' + n.total, u: '类提醒开着', s: n.deliverLabel },
+          blocks: [lit, NOTE(n.serviceCopy, n.serviceConnected ? 's03-dot s03-dot-on' : 's03-dot'), H('提醒类别'),
+            { isSw: true, rows: n.cats.map((x) => ({ key: x.key, label: x.label, sub: x.sub, aria: x.aria, cls: this.state.s03just === x.key ? 's03-just' : '', go: () => this.toggleCat(x.key) })) }, NOTE(n.prefHint)].filter(Boolean) };
+      }
+      case 'appearance': {
+        const k = c.skin, shown = k.list.filter((x) => x.shown)[0];
+        return { kcls: 's03-p-env' + (k.previewing ? ' s03-barred' : ''), st: { n: shown.name, u: shown.en, s: shown.line },
+          blocks: [{ isSkins: true, rows: k.list.map((x) => ({ key: x.key, name: x.name, tag: x.on ? '当前' : x.shown ? '预览中' : x.en, cls: (x.on ? 's03-cur ' : '') + (x.shown ? 's03-shown' : ''), shown: x.shown ? 'true' : 'false', go: () => this.pickSkin(x.key) })) },
+            H('动态'), { isSw: true, rows: [{ key: 'rm', label: '减少动态', sub: k.rmLine, aria: k.rmAria, cls: this.state.s03just === 'rm' ? 's03-just' : '', go: () => this.toggleCat('rm') }] }],
+          bar: k.previewing ? { on: true, label: k.applyLabel, act: 'apply', go: k.apply, alt: '取消预览', altAct: 'cancel', altGo: k.cancel } : { on: false } };
+      }
+      case 'records': {
+        const v = c.recs, pend = v.rows.filter((r) => r.pendingReview && !r.appeals.length);
+        if (v.empty) return { st: { q: v.emptyText, s: '记录是只有你能看到的事实' }, blocks: [NOTE(v.help), NOTE(v.quotaRule), NOTE(v.quotaNo)].filter(Boolean) };
+        const blocks = pend.map((r) => LIT({ k: r.label + ' · ' + r.statusLabel, t: r.title + ' · ' + r.when.md, rid: r.id, origin: 'rec-' + r.id, go: toRec(r) }));
+        v.groups.forEach((g) => { blocks.push(H(g.title + ' · ' + g.count)); blocks.push(ROWS(g.rows.map((r) => ({ main: r.title, sub: r.label + ' · ' + r.statusLabel, val: r.when.md, rid: r.id, origin: 'rec-' + r.id, go: toRec(r) })))); });
+        blocks.push(NOTE(v.help, 's03-note-top'), NOTE(v.quotaRule), NOTE(v.quotaNo));
+        return { st: { n: v.count, u: '条事实', s: pend.length ? pend.length + ' 条待核实 · 不展示年度余额' : '不展示年度余额' }, blocks: blocks.filter(Boolean) };
+      }
+      case 'record-detail': {
+        const r = c.rec; if (!r) return {};
+        const blocks = [LIT({ tone: r.pendingReview ? 's03-t1' : 's03-t3', k: r.label, t: r.statusLabel + (r.quotaLabel ? ' · ' + r.quotaLabel : '') }),
+          FACTS([{ l: '活动', v: r.title }, { l: '时间', v: r.when.zh }, { l: '地点', v: r.place.full }, { l: '局主', v: r.host }, { l: '记录于', v: r.atText }])];
+        if (r.supplementRows.length) blocks.push(H('已补充 · ' + r.supplementRows.length), ROWS(r.supplementRows.map((x) => ({ main: x.text, sub: x.atText + (x.materialsText ? ' · ' + x.materialsText : '') })), true));
+        if (r.appealRows.length) blocks.push(H('异议与申诉'), ROWS(r.appealRows.map((x) => ({ main: x.kindLabel + '：' + x.reason, sub: x.atText + ' · ' + x.statusLabel })), true));
+        blocks.push(ACTS([{ label: '补充说明', act: 'supplement', go: r.goSupplement }, r.goDispute ? { label: '提出出席异议', act: 'dispute', go: r.goDispute } : null, r.goAppeal ? { label: JUS.COPY.appealEntry, act: 'appeal', go: r.goAppeal } : null]));
+        blocks.push(NOTE(r.type === 'absence_reported' ? JUS.COPY.recordHelp : r.type === 'active_withdrawal' ? JUS.COPY.quotaRule : ''));
+        return { st: { n: r.when.md, u: r.when.wdZh + ' ' + r.when.time, s: r.title + ' · ' + r.place.hood }, blocks: blocks.filter(Boolean) };
+      }
+      case 'reports': {
+        const v = c.reps;
+        if (v.empty) return { st: { q: v.emptyText, s: v.note }, blocks: [NOTE(v.mock)].filter(Boolean) };
+        const open = v.rows.filter((r) => r.status !== 'resolved').length, need = v.rows.filter((r) => r.needsMore);
+        const blocks = need.map((r) => LIT({ k: r.statusLabel + ' · ' + r.title, t: r.needsText || '', rid: r.id, origin: 'rep-' + r.id, go: toRep(r) }));
+        blocks.push(H('全部举报 · ' + v.count), ROWS(v.rows.map((r) => ({ main: r.title, sub: '更新于 ' + r.updatedText, val: r.statusLabel, rid: r.id, origin: 'rep-' + r.id, go: toRep(r) }))), NOTE(v.note, 's03-note-top'), NOTE(v.mock));
+        return { st: open ? { n: open, u: '条处理中', s: need.length ? need.length + ' 条需补充' : v.note } : { q: '均已处理', s: v.note }, blocks: blocks.filter(Boolean) };
+      }
+      case 'report-detail': {
+        const r = c.rep; if (!r) return {};
+        const blocks = [LIT({ tone: r.needsMore ? 's03-t1' : 's03-t3', k: r.statusLabel, t: r.needsText || '更新于 ' + r.updatedText }),
+          FACTS([{ l: '举报对象', v: r.whoName }, { l: '本地编号', v: r.id }, { l: '提交于', v: r.atText }, { l: '更新于', v: r.updatedText }]),
+          { isQuote: true, l: '你写的', text: r.text }];
+        if (r.shotRows.length) blocks.push(H('材料 · ' + r.shotRows.length), ROWS(r.shotRows.map((x) => ({ main: x.name, sub: x.sizeText })), true));
+        blocks.push(H('进度'), { isTl: true, rows: r.timelineRows.map((x, i, a) => ({ label: x.label, at: x.atText, text: x.text, cls: i === a.length - 1 ? 's03-cur' : '' })) });
+        if (r.supplementRows.length) blocks.push(H('已补充 · ' + r.supplementRows.length), ROWS(r.supplementRows.map((x) => ({ main: x.text, sub: x.atText })), true));
+        if (r.goSupplement) blocks.push(ACTS([{ label: JUS.COPY.reportSupplementLabel, act: 'supplement', go: r.goSupplement }]));
+        blocks.push(NOTE(JUS.COPY.reportMock, 's03-note-top'));
+        return { st: { n: r.when.md, u: r.when.wdZh + ' ' + r.when.time, s: r.title }, blocks: blocks.filter(Boolean) };
+      }
+      case 'record-supplement': case 'record-dispute': case 'record-appeal': case 'report-supplement': case 'feedback': case 'seam-report': {
+        const f = c.form; if (!f.on) return {};
+        const ctx = s === 'report-supplement' ? (c.rep ? LIT({ k: c.rep.statusLabel + ' · ' + c.rep.title, t: c.rep.needsText || '' }) : null)
+          : s === 'seam-report' ? (c.seamReport ? LIT({ tone: 's03-t2', k: c.seamReport.title, t: c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host }) : null)
+          : s === 'feedback' ? null : (c.rec ? LIT({ tone: c.rec.pendingReview ? 's03-t1' : 's03-t3', k: c.rec.label + ' · ' + c.rec.statusLabel, t: c.rec.title + ' · ' + c.rec.when.md }) : null);
+        const form = { isForm: true, kind: f.kind, label: f.label, placeholder: f.placeholder, text: f.text, count: f.count + ' 字', onInput: f.onInput, errText: f.err.text || '', errWho: f.err.who || '', needWho: f.needWho,
+          who: f.who.map((w) => Object.assign({}, w, { cls: w.on ? ' s03-on' : '', aria: w.on ? 'true' : 'false' })), canFiles: f.canFiles, files: f.files, onFiles: f.onFiles, fileNote: f.fileNote, cls: f.err.text ? ' s03-err' : '' };
+        const ex = s === 'seam-report' && c.seamReport && c.seamReport.existing.length ? NOTE('这场已有 ' + c.seamReport.existing.length + ' 条举报：' + c.seamReport.existing.map((x) => x.statusLabel).join('、')) : null;
+        return { title: f.title, blocks: [ctx, form, ex].filter(Boolean), kcls: 's03-p-form' + (f.failed ? ' s03-failed' : ''),
+          bar: { on: true, label: f.done ? '已保存' : f.submitLabel, act: 'submit', go: f.submit, off: f.saving, fail: f.failed ? f.failText : '' } };
+      }
+      case 'help': {
+        const h = c.help;
+        const blocks = [{ isTiles: true, rows: h.groups.map((g, i) => ({ name: g.name + ' · ' + g.rules.length + ' 条', line: g.line, tone: S03.TONES[i % 3], origin: 'rules-' + g.key, go: h.goRules })) },
+          H('常见问题'), { isRead: true, groups: [{ name: '', line: '', rules: h.faq }] },
+          ACTS([{ label: '写反馈', act: 'feedback', go: h.goFeedback }, { label: '我的举报', act: 'reports', go: h.goReports }, { label: '全部约定', act: 'rules', go: h.goRules }])];
+        if (h.feedback.length) blocks.push(H('我的反馈 · ' + h.feedback.length), ROWS(h.feedback.map((x) => ({ main: x.text, sub: x.statusLabel + ' · ' + x.localNo + ' · ' + x.atText })), true));
+        return { st: { n: JUS.RULES.length, u: '条约定', s: h.groups.map((g) => g.name).join(' · ') }, blocks };
+      }
+      case 'privacy': {
+        const v = c.privacy, blocks = [{ isWho: true, rows: v.general }];
+        if (v.facts.length) blocks.push(H('你的局 · ' + v.facts.length), ROWS(v.facts.map((x) => ({ main: x.title, sub: x.rule, val: x.role })), true));
+        blocks.push(NOTE(v.noToggles, 's03-note-top'));
+        return { st: v.facts.length ? { n: v.facts.length, u: '种情形', s: v.lead } : { q: v.lead }, blocks: blocks.filter(Boolean) };
+      }
+      case 'account': {
+        const a = c.acct;
+        return { st: { q: a.demo ? '演示会话进行中' : '演示会话已结束', s: c.demoNote },
+          blocks: [FACTS([{ l: '设备', v: a.device }, { l: '开始于', v: a.startedText }, a.ended ? { l: '结束于', v: a.endedText } : null]), NOTE(a.storageNote, 's03-note-top'), NOTE(a.noAccount),
+            ACTS([a.demo ? { label: '退出登录（本地演示）', act: 'end', go: a.end, warn: true } : { label: '重新开始', act: 'restart', go: a.restart, primary: true }])].filter(Boolean) };
+      }
+      case 'about': {
+        const a = c.about;
+        return { st: { q: a.version, s: a.rulesVersion },
+          blocks: [FACTS([{ l: '约定版本', v: a.rulesVersion }, { l: '约定', v: JUS.RULES.length + ' 条 · ' + a.groups.map((g) => g.name).join(' / ') }, { l: '城市', v: a.cities + ' 座可选' }]), NOTE(a.policyNote, 's03-note-top'), NOTE(a.demo), ACTS([{ label: '参加约定全文', act: 'rules', go: a.goRules }])].filter(Boolean) };
+      }
+      case 'rules':
+        return { st: { n: JUS.RULES.length, u: '条约定', s: JUS.RULES_VERSION }, blocks: [{ isRead: true, groups: c.help.groups.map((g) => ({ name: g.name, line: g.line, rules: g.rules })) }, NOTE(JUS.POLICY_NOTE, 's03-note-top')].filter(Boolean) };
+      case 'seam-feed': {
+        const f = c.feed;
+        const rows = f.rows.map((r, i) => Object.assign({}, r, { tone: S03.TONES[i % 3], md: r.when.md, wd: r.when.wdZh, line: evLine(r) + (r.joinedLabel ? ' · ' + r.joinedLabel : '') }));
+        return { meta: f.hintIdle, st: { n: f.city.name, u: f.count + ' 个局', s: JUS.FAV.copy.pillFavs + ' ' + f.favCount + ' · ' + f.city.tzLabel },
+          blocks: [{ isPills: true, rows: [{ label: JUS.FAV.copy.pillAll, act: 'all', on: f.isAll ? 'true' : 'false', cls: f.isAll ? 's03-on' : '', go: f.setAll }, { label: '只看' + JUS.FAV.copy.pillFavs + ' · ' + f.favCount, act: 'favs', on: f.isFav ? 'true' : 'false', cls: f.isFav ? 's03-on' : '', go: f.setFav }] },
+            f.empty ? { isEmpty: true, title: f.emptyText, body: '', cta: '' } : { isFeed: true, rows }] };
+      }
+      case 'seam-mine': {
+        const m = c.mine;
+        const mr = (r) => ({ id: r.id, title: r.title, line: r.label + ' · ' + r.when.md, receipt: r.receipt ? '举报 · ' + r.receipt : '', canReport: !!r.canReport, report: r.report || null, fav: r.fav ? 'true' : 'false', favCls: r.fav ? ' s03-on' : '', favAria: r.fav ? '拿出收藏' : '收进收藏', star: r.star, toggleFav: r.toggleFav });
+        return { st: { n: m.current.length, u: '个局进行中', s: '你发起的 ' + m.hosted.length + ' 个 · 历史 ' + m.history.length + ' 个' },
+          blocks: [H('进行中'), { isMine: true, rows: m.current.map(mr) }, H('你发起的'), { isMine: true, rows: m.hosted.map(mr) }, H('历史'), { isMine: true, rows: m.history.map(mr) }, NOTE(m.snapshotNote, 's03-note-top')].filter(Boolean) };
+      }
+    }
+    return {};
+  }
+  pageVals(c, s) {
+    const b = this.build(c, s) || {}, form = !!S03.FORMS[s], root = !!S03.ROOTS[s];
+    const st = Object.assign({ n: '', u: '', q: '', s: '', cls: '' }, b.st || {}); st.on = !!(st.n !== '' || st.q);
+    return { s, on: true, cls: c.nav.cls[s], kcls: b.kcls || (form ? 's03-p-form' : 's03-p-st'), title: b.title || c.nav.title[s] || '', meta: b.meta || '',
+      back: !form && !root, cancel: form, root, st, gapCls: st.on ? ' s03-stg' : '', blocks: b.blocks || [], bar: b.bar || { on: false } };
   }
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
     const c = this.ctlVals(); if (c.pf.on) this._pfLast = c.pf;
-    const g = this.geo();
+    const g = this.geo(); const ph = this.state.nav.phase; if (ph !== 'exit') this._w0 = 1; this._phase = ph;
+    /* environment change: keep the old light under the new one while the new one dissolves in */
+    const shown = c.skinShown; if (this._skinNow !== shown) { this._skinPrev = this._skinNow || null; this._skinNow = shown; this._skinSeq = (this._skinSeq || 0) + 1; this._skinPending = !!this._skinPrev; }
+    const sk = (k) => (k === shown ? ' s03-cur' + (this._skinPrev ? ' s03-in' : '') : k === this._skinPrev ? ' s03-prev' : '');
     const x = {
       rootCls: (this.state.data.appearance.reduceMotion ? ' rm-user' : '') + (S03.FORMS[g.top] ? ' s03-at-form' : '') + ' s03-at-' + g.top,
-      worldStyle: this.worldStyle(g), onScroll: this.onScrollS03, sheetDim: this.sheetDim,
-      home: this.homeVals(c), pr: this.profVals(c), ed: this.editVals(c), gens: this.genVals(c)
+      worldStyle: this.worldStyle(g), onScroll: this.onScrollS03, sheetDim: this.sheetDim, toastOn: c.toast.on && !c.fav.undo.on,
+      sky: { cotton: sk('cotton'), halo: sk('halo'), sunset: sk('sunset') },
+      home: this.homeVals(c), pr: this.profVals(c), ed: this.editVals(c),
+      pages: S03.GEN.map((s) => (c.nav.on[s] ? this.pageVals(c, s) : { s, on: false }))
     };
     return { panel, rootRef: this.rootRef, c, x };
   }
