@@ -74,9 +74,14 @@
       var memo = {}; root.querySelectorAll('[data-scroller]').forEach(function (el) { memo[el.getAttribute('data-scroller')] = el.scrollTop; });
       (this._scrollMemo = this._scrollMemo || {})[this._top().id] = memo;
     };
-    p._originOf = function (ev) {
-      var root = this.rootRef && this.rootRef.current; if (!ev || !ev.currentTarget || !root || !global.JU || !JU.fx) return { from: null, key: null };
-      var t = ev.currentTarget; var el = (t.closest && t.closest('[data-origin]')) || t;
+    p._originOf = function (ev, s) {
+      var root = this.rootRef && this.rootRef.current; if (!ev || !root || !global.JU || !JU.fx) return { from: null, key: null };
+      var t = ev.currentTarget || ev.target; var el = t && t.closest ? (t.closest('[data-origin]') || t) : null;
+      /* 重播 re-runs a motion with its original event: by then currentTarget is null and the tapped element may have been
+         re-rendered, so fall back to the element that currently marks this surface as its origin (only when an event was given;
+         programmatic navigation without an event keeps from = null as before) */
+      if ((!el || !el.isConnected || !root.contains(el)) && s) el = root.querySelector('[data-origin="' + s + '"]');
+      if (!el) return { from: null, key: null };
       return { from: JU.fx.rectIn(el, root), key: el.getAttribute ? el.getAttribute('data-origin') : null };
     };
     /* finish any running transition immediately (used when a new navigation interrupts the current one) */
@@ -98,7 +103,7 @@
     p.go = function (s, params, ev) {
       var nav = this.state.nav; if (!nav) return;
       if (nav.phase !== 'idle') nav = this._navSettle();
-      var o = this._originOf(ev); this._captureScroll();
+      var o = this._originOf(ev, s); this._captureScroll();
       var id = (nav.seq || 1) + 1; var entry = { s: s, p: params || {}, from: o.from, key: o.key, id: id };
       var patch = { nav: { stack: nav.stack.concat([entry]), phase: 'enter', dir: 'fwd', seq: id, leaving: null }, sheet: null };
       patch = assign(patch, this._enterPatch(s, entry.p));
@@ -109,7 +114,7 @@
       var nav = this.state.nav; if (!nav) return;
       if (nav.phase !== 'idle') nav = this._navSettle();
       var top = nav.stack[nav.stack.length - 1]; if (top.s === s && JSON.stringify(top.p) === JSON.stringify(params || {})) return;
-      var o = this._originOf(ev); this._captureScroll(); this._leavePatchApply(top.s);
+      var o = this._originOf(ev, s); this._captureScroll(); this._leavePatchApply(top.s);
       var id = (nav.seq || 1) + 1; var entry = { s: s, p: params || {}, from: o.from, key: o.key, id: id };
       var patch = { nav: { stack: nav.stack.slice(0, -1).concat([entry]), phase: 'enter', dir: 'swap', seq: id, leaving: top.s !== s ? top : null }, sheet: null };
       patch = assign(patch, this._enterPatch(s, entry.p));
