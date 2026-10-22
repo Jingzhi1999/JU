@@ -1,50 +1,176 @@
-# 共享控制器 `JU.ctl`（`my-r2/src/core/ju-ctl.js`）· 接口要求 v0（主负责人）→ 核心构建者实现后把本文改为 v1 定稿
+# 共享控制器 `JU.ctl`（`my-r2/src/core/ju-ctl.js`）· 接口定稿 v1（核心 1 · 2026-10-22）
 
-控制器只负责**行为**：角色 / 分区、导航栈、页头收拢变量、详情与局内动作、票根仪式的触发与数据写入、管理 H1 十二个表面、草稿删除撤销、弹层与焦点、toast、复制、时钟。**不含任何标记与样式**。每套方案用自己的构图、排版、表面和运动去渲染 `this.ctlVals()`。模式与 Phase B 的 `settings-r2/src/core/jus-ctl.js` 一致（导航相位、`--hc`、`holdKey`、`ctlJump`），语义以 `spec/state-inventory.md` A–G 与 `src/core/ju-data.js` 为准。
+控制器只负责**行为**：角色 / 分区、导航栈、页头收拢变量、详情与局内动作、票根仪式的触发与数据写入、管理 H1 十二个表面、草稿删除撤销、弹层与焦点、toast、复制、时钟。**不含任何标记与样式**。每套方案用自己的构图、排版、表面和运动去渲染 `this.ctlVals()`。字段以本文为准（已按实现改写；v0 的要求没有删减，差异见 §13）。语义以 `spec/state-inventory.md` A–G 与 `my-r2/src/core/ju-data.js` 为准。接线参考：`my-r2/concepts/src/C00.dc.html`（每个绑定都在里面，视觉故意朴素）。
 
-## 用法
+## 1. 用法
 ```js
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 360, back: 300, swap: 280, role: 300 }; }
-  initialState(variant) { return JU.baseState(variant); }     // 已含控制器状态（nav / ui / sheet / toast / ticket / forms）
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 360, back: 300, swap: 280, role: 300 };   // 1× 毫秒；控制器按速度放大、减少动态归零
+    this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.tearSpec = { dist: 160, kx: -1, ky: 1.2 };                     // 拖拽 → progress = clamp((dx·kx + dy·ky) / dist, 0, 1)
+  }
+  initialState(variant) { return JU.baseState(variant); }              // 已含控制器状态 nav / sheet / toast / ui
+  onEffect(fx) { /* 数据已写好；在这里登记 / 启动自己的运动或调用 JU.ritual.* */ }
   renderVals() { const panel = this.panelVals(); panel.show = this.props.panel !== false; const c = this.ctlVals(); return { panel, rootRef: this.rootRef, c }; }
 }
 JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ctlJump（50 条索引全部映射）
 ```
-可覆盖：`motionSpec`、`headerRange`（默认 96px）、`processMs`（处理中可见时长，默认 360ms）、`paths`、钩子 `onEffect(effect)`（引擎效果到达时，概念登记 / 启动自己的运动）、`beforeReplay(name)`。
+可覆盖：`motionSpec`、`headerRange`（默认 96px）、`processMs`（处理中可见时长，默认 360ms，真实时间，减少动态不压缩）、`printMs`（出票占位时长 2300ms，共享仪式接入后由仪式回调 `c.ticket.printed()` 结束，先到先算）、`burnMs`（燃烧占位 6600ms，同理 `burnDone()`）、`deleteMs`（草稿收起 / 展开 260ms）、`tearSpec`、`tearThreshold`（0.5）、`paths`、钩子 `onEffect(effect)`、`onNav(kind, surface, params)`、`beforeReplay(name)`。
 
-## 表面（surface）与栈
-`home`（角色 × 分区在 state 里，不入栈）→ `detail`（参加者局内详情；含成员视图）/ `read`（阅读并确认层，detail 之上）/ `waitlist`（候补门口 + 回执）/ `ticket`（票根面：打印 / 撕 / 联系层 / 待赴约）/ `reply`（改期答复：新票）/ `history`（历史展开：票墙卡 + 出席记录 + 局内记录）/ `manage`（H1，params `{eventId, intent}`）/ `draft`（草稿摘要）。弹层不是表面，是 `c.sheet`（kind ∈ `confirm / reschedule / cancel / end / card / record / contact`）。默认路径（`ctlJump` 用）：`detail: ['home','detail']`，`read: ['home','detail','read']`，`ticket: ['home','ticket']`，`reply: ['home','reply']`，`history: ['home','history']`，`manage: ['home','manage']`，`draft: ['home','draft']`，`waitlist: ['home','waitlist']`。
+## 2. 状态（`JU.ctlState()`，合并进 `JU.baseState`）
+| 键 | 内容 |
+|---|---|
+| `nav` | `{ stack:[{s,p,from,key,id}], phase:'idle'∣'enter'∣'in'∣'exit', dir:'fwd'∣'back'∣'swap'∣'role', seq, leaving }` |
+| `role` / `section` | `joined∣hosted` / `current∣history∣drafts`（来自 `JU.baseState`；home 不入栈） |
+| `sheet` | `null` 或 `{ kind, sub, eventId, id, busy, error, done, date, time, text }` |
+| `toast` | `null` 或 `{ text, kind, id }` |
+| `ui` | `memo{joined,hosted}`（各角色分区记忆）、`prevRole/prevSection`、`landKey`（返回落点 1.1s）、`read{eventId,progress,done,doneAt}`、`ticket{printed{key:true}, printing:key∣null, tear{progress,active,done,error}, contactOpen}`、`burned{eventId:true}`、`burn{eventId,playing}`、`result{eventId,kind,sub,title,body,formed,burn,burning}`、`copy{key,text,ok,at}`、`undo{draftId,title,index,at}`、`ghost{draftId,index,draft}`、`restored`、`manage{open{sec:bool},editing{memberId:bool},fresh{memberId:seq},focus,next}`、`busy{key:true}`、`errors{key:msg}`、`fx`（最近一个效果）、`tick`、`settled` |
 
-`c.nav`：`on.<surface>` / `cls.<surface>`（`is-top / is-under / is-leaving` + `ph-enter / ph-in / ph-idle / ph-exit` + `dir-fwd / dir-back / dir-swap / dir-role`）/ `is.<surface>` / `back()` / `home()` / `from / fromStyle / fromKey`（起点矩形取 `ev.currentTarget.closest('[data-origin]')`，返回时落回同 key 的元素并写 `--fx-*`）/ `cur / prev / depth / phase / dir / params / rootCls`；`onScroll` 绑在每个 `[data-scroller]` 上写 `--hc`（0→1）到滚动容器、`[data-surface]` 祖先与其 `[data-header]`，返回时恢复滚动位置；`go()` 忽略栈顶相同的重复推入；`back()` 在动画中可连续调用。
+## 3. 表面（surface）与栈
+`home`（角色 × 分区在 state 里，不入栈）→ `detail`（参加者局内详情；含成员视图）/ `read`（阅读并确认层，detail 之上）/ `waitlist`（候补门口 + 回执）/ `ticket`（票根面：打印 / 撕 / 联系层 / 待赴约 / 不可用说明 / 退出结果）/ `reply`（改期答复：新票）/ `history`（历史展开）/ `manage`（H1，params `{eventId, intent}`）/ `draft`（草稿摘要，params `{draftId}`）。弹层不是表面，是 `c.sheet`。
 
-## 角色与分区
-`c.role`（`joined | hosted`）、`c.setRole(k)`、`c.roleTabs[{k,label,on,badge,go}]`；`c.section`（`current | history | drafts`）、`c.setSection(k)`、`c.sectionTabs[{k,label,count,on,go}]`（局主多一个 `drafts`）；各角色记忆分区与滚动；切换写 `dir-role` / `dir-swap` 相位供运动。
+默认路径 `JU.CTL_PATHS`：`detail:['home','detail']`，`read:['home','detail','read']`，`ticket:['home','ticket']`，`reply:['home','reply']`，`history:['home','history']`，`manage:['home','manage']`，`draft:['home','draft']`，`waitlist:['home','waitlist']`。`go('read')` 从 home 直接推入时会把缺失的父级 `detail` 插到它下面（返回永远有去处）；`go()` 忽略与栈顶相同（同 surface + 同 params）的重复推入；`back()` 在 exit 动画中可连续调用（先结算上一个）；`replace()`（dir `swap`）用于「查看退出结果 → history」「查看票根（成局后）」这类不该再返回中间态的切换。
 
-## 列表视图模型
-- `c.joined`：`groups.{act,soon,wait}` 与 `current`（每行：`id, stage, label, need, cta, detailTitle, when{zh,md,time,wdZh,…}, place{area,hood,full}, counts, seats, host, members, deadline, left{text,ratio,tone}（读 JU.now()）, old/newWhen, attendanceText, open(ev), act(ev)（主动作：按 stage 进入 read / ticket / reply / detail）, secondary(ev)（撤回 / 去不了了 / 退出候补 → 确认层）`）；`history`（`kept` 散场 + `closed` 未成行，`monthTitle` 供分月）；`lead`、`badge`、`counts`、`empty{kind,title,body,action{label,inert:true}}`。
-- `c.hosted`：`sections.{todo,resched,recruit,formed}` 与 `current`（每行：`id, key, life, label, status, cta, pending, unanswered, unrecorded, seats, counts, when, place, open(ev)（进入 manage，intent 按 key）, act(ev)`）；`drafts[{id,title,untitled,whenText,placeText,missingText,ready,agoText,sourceText,open(ev),del(ev)}]`；`history`；`undo{on,text,act(),left}`；`badge`、`counts`、`empty{…}`。
-- 两角色的空态文案用 `JU.COPY.empty*`；`去找局 / 去开局 / 接着改草稿`：前两者 `inert:true`，后者 `go` 到草稿分区。
+### `c.nav`
+| 字段 | 说明 |
+|---|---|
+| `on.<s>` / `is.<s>` / `cls.<s>` | 该 surface 是否要渲染（top / under / leaving 三者都 on）/ 是否栈顶 / 类名：`is-top∣is-under∣is-leaving` + `ph-enter∣ph-in∣ph-idle∣ph-exit` + `dir-fwd∣dir-back∣dir-swap∣dir-role` |
+| `cur / prev / depth / phase / dir / moving / params` | 栈顶 surface、下层 surface、深度、相位、方向、是否在动、栈顶 params |
+| `from / fromStyle / fromKey` | 起点矩形（`ev.currentTarget.closest('[data-origin]')`，`JU.fx.rectIn`）/ `--fx-x/--fx-y/--fx-w/--fx-h` 样式串 / 起点 key。**返回时控制器重新测量同 key 的元素**（已移组时先滚进视口），元素不存在则 `from=null`（概念改为淡出） |
+| `landKey` | 返回完成后 1.1s 内等于起点 key（行上 `row.landing` 同步为 true）供落点标记 |
+| `back() / home()` | 返回 / 回到根（清栈） |
+| `onScroll(ev)` | 绑在每个 `[data-scroller]` 上：写 `--hc`（0→1，`scrollTop / headerRange`）到滚动容器、`[data-surface]` 祖先及其 `[data-header]`；返回时按 (surface id) 或 (home × role × section) 恢复滚动位置 |
+| `rootCls` | `' nav-<phase> dir-<dir> at-<cur> over-<prev> leaving-<s> role-<role> sec-<section> has-sheet has-toast'`（拼在 `.app` 类名上） |
+| `title / curTitle / leavingFrom` | 表面中文名表 / 当前名 / 离开中的起点矩形 |
 
-## 参加者局内
-- `c.detail`（栈顶 ∈ detail/read 时 `on`）：`row`（同列表行）、`title`（`detailTitle`）、`members[{name,status,statusText,you,leftText}]`、`seats`、`countdown{text,ratio,tone,expired}`、`rules[{key,title,lines}]`（`JU.RULES`）、`primary{label,act,disabled,busy}`、`secondary{label,act}`、`openRead()`、`read{on, progress, done, onScroll, hint, confirm(), release()}`（滚到底才允许确认；写阅读回执）、`waitlist{pos,total,entered[],queue[],hint,leave()}`、`error`（失败在发生处）。
-- `c.ticket`（栈顶 ticket/reply）：`face{title,time,md,wdZh,wdEn,place,meeting,host,version,stamp}`、`state ∈ fresh | printing | printed | torn | void`（本版未打印过 → 进入时 `printing`，打印由 `JU.ritual.print` 驱动，完成回调 `c.ticket.printed()`；离开不清除已印记忆）、`tear{progress, active, onDown/onMove/onUp/onCancel, tearNow()（键盘 / 按钮等价，视觉走同一撕裂动画的快进）, threshold:0.5}`、`contact{open, wx, hostName, note, copy(), copied, copyFail, retryCopy(), markContacted(), done}`、`exit(ev)`（→ 确认层）、`reply{oldWhen,newWhen,accept()（= 撕新票）,decline()（→ 确认层 → 燃烧）}`。
-- `c.history`：`row`、`stamp ∈ present | absent | pending | none`、`records[]`、`report{open(), text, onInput, count, max, submit(), done}`、`burnOnce`（取消 / 退出 / 拒绝改期的票：第一次打开播放一次，之后静态灰烬；记忆在 state）。
+## 4. 角色与分区
+`c.role`、`c.section`、`c.prevRole`、`c.prevSection`、`c.setRole(k)`、`c.setSection(k)`、`c.roleTabs[{k,label,badge,badgeText,on,cls,go}]`、`c.sectionTabs[{k,label,count,countText,on,cls,go}]`（局主多一个 `drafts`）、`c.home{cls:'role-x sec-y ph-… dir-…', isJoined,isHosted,isCurrent,isHistory,isDrafts}`。切换时 home 留在栈上，`nav.phase/dir` 走 `enter → in → idle` + `dir-role` / `dir-swap`，各角色记忆分区与滚动（切换前捕获、切换后恢复）。选择器：`data-role-tab="joined|hosted"`、`data-section-tab="current|history|drafts"`。
 
-## 管理 H1
-`c.manage`（栈顶 manage）：`intent ∈ review | attendance | manage`、`head{title,status,meta,progress{confirmed,cap,reserved,available,seats[],attendance{rec,total,present,absent}}, formedLine}`、`order[]`（区块顺序按 intent）、`apps{count,handled,rows[{…,approve(ev),reject(ev),busy,result,resultText}],help,empty}`、`roster{line,rows[{…stateText,ticketText,tone,leftText,showWx,copyWx(),copied}]}`、`queue{rows,help}`、`leaves{rows,count,open,toggle()}`、`replies{answered,total,rows,help}`、`attendance{rows[{…,value,set(v),editing,correct(),trail[],stampFresh}],rec,total,help,focusNext}`、`arrange{reschedule(),end(),cancel(),canEnd,endHint,reopenInert}`、`card{open()}`、`error`。所有写入失败在发生处原位 alert；成功不出横幅（例外：改时间、复制 toast）。
+## 5. 列表视图模型
+**`c.joined`**（= `JU.derive.joined` 全部字段 + 包装）：`groups.{act,soon,wait,kept,closed}`、`current`、`history`、`lead`、`sections[{key,title,note,count,rows}]`（当前三意图，空组不出现）、`sectionsHistory`（散场 / 未成行）、`months[{key,title,rows}]`（历史按月）、`badge`、`badgeText`、`counts{current,history}`、`empty{on,kind,title,body,action{label,inert,go}}`（去找局 inert；历史空态 → 回到当前）。
+每行 = derive 行（`id,stage,label,group,tone,need,cta,detailTitle,when{zh,md,time,wdZh,wdEn,…},place{area,hood,full},counts,seats[],host,ticket,contactAdded,attendance,records,queuePos,deadline,left,leftText,leftRatio,leftTone,contactOpen,hostWx,oldWhen,newWhen,attendanceText,…`）+ `key,title,en,pack,hostName,left{text,ratio,tone:'green∣amber∣red∣expired',on,expired}（读 JU.now()）,deadlineText（请在 今天/明天 HH:MM 前…）,open(ev),act(ev),secondary(ev)∣null,secondaryLabel,secondaryKey('withdraw∣release∣exit∣decline∣leave-queue'),ctaLabel,isLead,landing,originKey('row-<id>'),whenText,placeText,seatText,monthTitle`。
+`open`：按 stage 进 detail / waitlist / ticket / reply / history；`act`（主动作）：invited → `read`、contact → `ticket`+联系层、其余同 open；`secondary` → 确认层。行内按钮的点击不会冒泡成 open（控制器的 act / secondary / del 都 `stopPropagation`，`open` 又忽略来自内部 `[data-act]` 的点击）。
 
-## 弹层 `c.sheet`
-`on, kind, title, body, irreversible, identity{title,when,place}, affected[{label,n}], fields{date,time,onDate,onTime,sameHint,consequence}, canOk, okLabel, cancelLabel, ok(), cancel(), busy, error, focusRef, onKeyDown`（Tab 循环、Esc 关闭、关闭后焦点回触发元素）。kind：`confirm`（withdraw / release / exit / decline / leaveQueue，文案 `JU.COPY.*`）、`reschedule`（C7）、`cancel`（C9）、`end`（C10）、`card`（C12）、`record`（局内记录输入：`text, onInput, count, max=120, min=4, submit`）、`contact`（可选：联系层做成弹层的方案）。
+**`c.hosted`**：`rows`、`sections[{key:todo∣resched∣recruit∣formed,…}]`、`sectionsHistory[{ended,cancelled}]`、`current`、`history`、`lead`、`drafts`、`badge`、`badgeText`、`counts{current,drafts,history}`、`undo{on,draftId,text,label,act(),left}`、`empty{…}`（有草稿 → 接着改草稿 `go` 到草稿分区；去开局 inert）。
+局主行 = `JU.derive.hostRow` 全部字段（`key,todo,life,label,status,cta,section,pending,unanswered,unrecorded,present,nonHost,formed,contactOpen,formedLine,counts,seats,seatText,seatMore,when,oldWhen,place,canReschedule,canEnd,canCancel,…`）+ `title,en,pack,open(ev),act(ev),intent('review∣attendance∣manage'),ctaLabel,isLead,landing,originKey,whenText,placeText,roster`。
+草稿行 = derive（`id,title,untitled,whenText,placeText,ready,missingText,agoText,source,seats,capacity,pack`）+ `key,cls('is-deleting'∣'is-restored'∣'')、ghost、sourceText、open(ev)、del(ev)、continueInert:true、continueLabel、originKey、landing`。删除：引擎立刻写入 → 原槽位保留 `ghost` 行 `deleteMs` 供收起 → 撤销条 10s（`holdKey('undo')`）→ `undo.act()` 原槽位恢复并带 `is-restored` 260ms；到期 `commitUndo`。
 
-## 效果与仪式
-引擎 `effect` 到达时控制器：① 写数据 ② 设置 `c.fx = {seq, type, id, …}` ③ 调用概念的 `onEffect(effect)`。类型：`formed`（成局 → 打印）、`torn`、`contacted`、`reschedule-accepted`（新票撕下）、`reschedule-declined`（燃烧 B）、`exited`（燃烧 C）、`cancelled`（局主取消：抽色 + 余烬）、`approved / rejected`（计数与席位）、`proposed`（日期重印）、`ended`（进入出席）、`attended{fresh}`（盖章）、`draft-deleted / draft-restored`、`released / withdrawn / queue_left`、`error`。仪式模块 `JU.ritual.*` 由概念在自己的 DOM 上调用（签名见 `baseline-rituals.md`），控制器保证**数据先写、动画后播**，失败不播。
+## 6. 参加者局内
+**`c.detail`**（栈顶 ∈ detail / read 时 `on`）：`eventId,row,title,stage,label,need,event,when,place,host,members[{id,name('你'),status,statusText('局主∣已确认∣已确认 · 等成局出票∣已预留 · 剩 N 小时∣位置已释放'),you,leftText,tone}],seats,counts,seatText,countdown{text,ratio,tone,on,expired},rules(JU.RULES),primary{key,label,act,disabled,busy},secondary{key,label,act}∣null,openRead(ev),result,error,back(),receipt(候补轮到的回执),originKey`。
+`primary.key`：`read`（阅读并确认）/ `ticket` / `reply` / `waitlist` / `history` / `members` / `home`（回到列表：到期或已有结果）/ `none`（禁用：等局主审核 / 等待确认）。到期中途：`countdown.expired` → 标题「预留已到期」、primary 回到列表。
 
-## 其它
-`c.toast{on,text,kind}`、`c.copy(text, key)`（真实剪贴板结果）、`c.rootNav[{k,label,on,inert,go}]`（找局 / 开局 / 设置 inert，我的局 on）、`c.skin`（`cotton | halo | sunset`，面板切换）、`c.rm`、`c.kb`、`c.safe`、`c.zoom`、`c.clock{nowText,demoNote}`、`c.fail{armed}`。
+**`c.read`**（栈顶 read）：`eventId,row,title,progress(0..1),done,state('reading∣busy∣failed∣confirmed∣expired∣released'),busy,failed,confirmed,expired,error,rules,countdown,members,hint('请读到末尾，再确认入局'→'已读完，可以确认'),endMark,onScroll(ev)（**绑在阅读层自己的 `[data-scroller="read"]` 上**，既写 `--hc` 也记进度；内容不足一屏时自动算读完）,confirm(),retry(),release(ev),primary{key:'confirm∣retry∣ticket∣members∣home',label,act,disabled},secondary,back(),result{title,body,formed}`。确认：处理中 ≥ `processMs` → 引擎 → 失败原位 + 重试 / 成功 → `result`（成局 → 「查看票根」`replace('ticket')`，否则「查看成员」返回 detail）。
 
-## 索引映射 `ctlJump(e)`
-50 条 `JU.INDEX`：`open.surface ∈ detail | ticket | contact | reschedule-reply | withdraw | history | manage(tab) | draft`。映射：`contact` → `ticket` + `contact.open`；`reschedule-reply` → `reply`；`withdraw` → `ticket`（theater）+ `sheet confirm(exit)`；`manage` tab → `manage` intent（applications → review；attendance → attendance；其余 manage）+ 该区块展开 + `arrange` 弹层（reschedule / cancel / end / card 直接打开对应 sheet）；`draft` → `draft`。跳转后栈完整（返回可用）。
+**`c.waitlist`**（栈顶 waitlist）：`eventId,row,title,stage,pos,total,counts,seats,seatLine,entered[],queue[{pos,name('X**'∣'你'),you}],hint,receipt{title('已加入候补∣位置已预留∣邀请已到期∣已退出候补'),field,body,note},countdown,turn(轮到),result,viewInvite(ev)（→ read）,leave(ev)（→ 确认层）,ok(),back(),primary{label,act},secondary`。
 
-## 测试
-`my-r2/tools/test/ctl-regress.cjs`：在 jsdom 或 vm 里跑 C00：50 条 jump 全部到达且 `renderVals()` 不抛错；九条真实流程（详情返回、阅读确认成局出票、撕票联系复制、改期接受 / 拒绝、候补退出、审核通过 / 谢绝到计数、改时间到答复、取消燃烧到历史、散场出席更正、草稿删除撤销）断言数据与 `c` 视图；时钟推进到期结算。
+**`c.ticket`**（栈顶 ticket / reply；`c.reply` = `c.ticket.reply`）：
+| 字段 | 说明 |
+|---|---|
+| `face` | `title,en,pack,time,md,wdZh,wdEn,date,when,place,meeting('HH:MM 门口'∣'待局主确认'),host,version,versionText,stamp('时间已改'∣''),code,seat,torn,tornText` |
+| `state` | `fresh`（本版未印、仪式未启动）→ `printing` → `printed` → `torn`；`void`（取消 / 散场 / 退出 / 未出票 / 改期待答复时打开 ticket 面） |
+| `printing / printed() / printKey` | 本版（`eventId:version`）未打印过 → 进入时 `printing` 并由控制器 `afterKey('print', printMs)` 兜底；共享仪式 `JU.ritual.print(el,{onDone:c.ticket.printed})` 先完成就先结束；离开不清除已印记忆 |
+| `tear` | `progress,active,done,error,threshold,canTear,style('--tear:0.42'),cls('is-drag'∣'is-torn'),onDown/onMove/onUp/onCancel,onKey(Enter/Space),tearNow(),label,hint`。拖拽映射 `tearSpec`；未过阈值回弹（不写数据）；过阈值或 `tearNow()` → **先写** `tearTicket` / `acceptReschedule` → 成功才 `fx torn`、副券落下，失败 `error`「未能保存，请重新撕下副券」+ 重试（副券复位）；撕开 300ms 后联系层自动打开 |
+| `contact` | `on,available,wx,hostName,hostLabel,note,closed,closedText,done,busy,error,copy(),copied,copyFail,copyLabel,retryCopy(),markContacted(),ctaLabel('已加微信∣处理中…∣重试∣待赴约'),ctaDisabled,open(),close(),toggle(),openSheet(ev)`（做成弹层的方案用 sheet kind `contact`） |
+| `unavailable` | `{on,text,label,act}` 票不可用六种说明（取消 / 散场 / 改期待答复 / 未确认 / 待成局 / 已退出）各自一句 + 一个去处 |
+| `result` | 退出 / 拒绝改期后：`{title,body,label:'查看退出结果',act,burn,burning,burnDone()}` |
+| `exit(ev) / exitLabel / canExit` | 去不了了 → 确认层（reply 面是 `decline`） |
+| `reply` | `oldWhen,newWhen,oldText('原定 …'),newText('改到 周x HH:MM 门口'),answered,accept()(= tearNow),decline(ev),oldTorn,contactAdded` |
+| `back(), isReply, hostWx, originKey, rules, title, stage, row` | |
+
+**`c.history`**（栈顶 history）：`eventId,row,title,stage,label,event,when,oldWhen,place,host,stamp('present∣absent∣pending∣none'),stampText,attendanceText,reason,closedNote,records[{kind,text,at,atText,kindLabel}],members,ticket{torn,void,version}∣null,ashes,burn{play,done,burnDone()},burnOnce,contactOpen,hostWx,copyWx(),copied,copyFail,copyLabel,retryCopy(),contactClosedText,report{open(ev),on,text,onInput,count,max:120,min:4,submit(),done,busy,error,close(),label,doneText},back(),originKey,footer`。取消 / 退出 / 拒绝改期的票：第一次真实打开 `burn.play=true`（控制器 `burnMs` 兜底，仪式 `onDone` 先到先算），之后 `ashes`（记忆在 `ui.burned`）；索引跳转直接落在灰烬态。
+
+## 7. 管理 H1（`c.manage`，栈顶 manage）
+`on, missing, eventId, intent('review∣attendance∣manage'), m（JU.derive.manage 原样）, event, head{title,status,life,meta,when,oldWhen,place,formedLine,progress{confirmed,cap,reserved,available,seats[],text,more,attendance{rec,total,present,absent,text,sub}∣null,hidden},cancelled,ended,formed,contactOpen,cardLink,dimmed}, order[]（按 intent 的区块顺序，`arrange` 永远最后）, show{apps,replies,members,queue,leaves,attendance,arrange}, apps, roster, queue, leaves, replies, attendance, arrange, card{open(ev),label}, error, back(), backLabel('返回我的局'), focus, originKey`。
+每个区块共有：`key, on（显示条件）, order（在 order[] 里的位置，供 CSS order）, open, cls('is-open∣is-closed' + ' is-focus'), toggle()`。显示条件：申请 = 有待审或本次已处理（未取消未散场）；改期答复 = 有 proposal 且 open；成员 = 未散场（已取消时 void）；候补 = waiting>0；离开记录 = N>0（默认收起）；出席 = 已散场且有已确认成员。
+- `apps{title,titleHandled,sub,count,handled,help,empty,rows[{…app 字段,nickText('未填称呼'),initial,verifiedLabel,agoText,note,busy,error,result,resultText,tone,approve(ev),reject(ev),retry()}]}`：处理中 ≥ processMs → `invited` / `rejected` 效果 → 结果原位（行不移位；本次处理过的行留在列表）。
+- `roster{title,line,rows[{…member,name('你'),initial,stateText,ticketText,tone,left{text,ratio,tone,on},showWx,wx,wxText,copyWx(),copied,copyFail,copyLabel,retryCopy(),contactText('已自报加微信')}],openSeats,openText,openRows[{key,text:'等人'}],voidNote}`。
+- `queue{title,sub,count,rows[{no,nick,agoText,initial}],help}`、`leaves{title,count,rows[{nick,text,at,atText}]}`、`replies{title,sub,answered,total,oldWhen,newWhen,rows[{id,name,answerText,tone,ticketLine}],help}`。
+- `attendance{title,sub,rec,total,present,absent,undecided,rows[{id,name,initial,value,label,recorded,editing,choosing,stampFresh,stamp,trail[],showTrail,error,isNext,set(v),setPresent(),setAbsent(),setPending(),correct(),isPresent,isAbsent,isPending,showWx,wx,wxText,copyWx(),copied,copyFail,copyLabel,retryCopy()}],help,contactLine,focusNext,allRecorded,doneText}`：点选**当帧写入**（无处理中）→ `attended` 效果 → `stampFresh` 2.5s（`holdKey`）→ 焦点移到下一位（控制器在下一次渲染后 focus `[data-rid=next] [data-act="attend-present"]`，不自动翻页）；`correct()` 重开三段；轨迹 ≥2 条显示。
+- `arrange{title,canReschedule,canEnd,canCancel,notFormedHint,endHint,unansweredHint,reschedule(ev),end(ev),cancel(ev),card(ev),rescheduleLabel/Note,endLabel/Note,cancelLabel/Note,showReopen,reopenInert:true,reopenLabel,reopenNote,reopen()}`。
+进入 manage 时控制器先 `settleNow()`（每次渲染先结算到期），`params.focus` 区块在渲染后滚到可见。记为散场成功后同一栈条目的 `intent` 改为 `attendance`（`setTopParams`，不重放进入动画）。
+
+## 8. 草稿摘要 `c.draft`
+栈顶 draft：`on, draftId, row（= 草稿行）, title, whenText, placeText, missingText, ready, agoText, sourceText, capacity, continueInert:true, back(), del(ev)（删除并返回，撤销条在列表）`；草稿已删 → `missing:true`。
+
+## 9. 弹层 `c.sheet`
+`on, kind, sub, eventId, cls('kind-x sub-y'), title, body, irreversible, identity{title,when,place,pack}, affected[{label,n}], affectedTitle, fields, canOk, okLabel, cancelLabel, ok(), cancel(), busy, error, done, danger, hint, card, text, onInput, count, max, min, doneTitle, doneBody, focusRef, onKeyDown`。
+| kind | 打开方式 | ok() | 备注 |
+|---|---|---|---|
+| `confirm` sub `withdraw∣release∣exit∣decline∣leaveQueue` | 行 / 详情 / 票根的次要动作，`ctl.openConfirm(sub,id,ev)` | 处理中 → `withdrawApplication∣releaseReservation∣exitEvent∣declineReschedule∣leaveWaitlist` → 关闭 → 发生处显示 `result` | 文案 `JU.COPY.<sub>`；exit / decline `danger` |
+| `reschedule` | `c.manage.arrange.reschedule(ev)` | `propose` → 关闭 → toast「已改时间 · 等 N 位成员答复」→ 答复区展开、滚到顶 | `fields{date,time,onDate,onTime,valid,same,sameHint,placeholder,oldWhen,newWhen,newText,consequence,tz:'纽约时间',minStep:15}`；`canOk` = 日期时间有效 ∧ ≠ 原时间 ∧ 无未答复 |
+| `cancel` | `arrange.cancel(ev)` | `cancel` → 关闭 → `cancelled` 效果（概念：抽色 + 余烬） | `affected` 0 项省略，`irreversible` 条 |
+| `end` | `arrange.end(ev)` | `end` → 关闭 → intent attendance、出席区展开 | 不可散场时 `hint` |
+| `card` | `c.manage.card.open(ev)` | 关闭 | `card{title,en,pack,when,place,host,statusLabel,caption,note}` |
+| `record` | `c.history.report.open(ev)` | `addRecord` → `done` → 「已受理」 | `text/onInput/count`，< 4 字拒绝 |
+| `contact` | `c.ticket.contact.openSheet(ev)` | 关闭 | 可选 |
+焦点：打开后进入弹层根（`ref="{{c.sheet.focusRef}}"`，优先 `[data-autofocus]`，否则第一个可聚焦元素）；`onKeyDown` 绑在覆盖层或对话框根：Tab 在弹层内循环、Esc = cancel；关闭后焦点回到触发元素（打开时的 `ev.currentTarget`）。处理中不能关闭（`cancel()` 无效）。
+
+## 10. 效果与仪式（`this.act` → `c.fx` → `onEffect`）
+顺序永远是：① 引擎写数据（`setState({data})`）② `ui.fx = {…effect, seq, at}` ③ `onEffect(fx)`。失败（`type:'error'`）不发效果、不播动画。`replay`（面板「重播上一动效」）= 用同一个 effect（加 `replay:true`）再调一次 `onEffect`；导航的重播 = 返回再进入。
+| type | 载荷 | 何时 |
+|---|---|---|
+| `confirmed` | `formed, eventId` | 阅读确认成功；随后 `formed`（`eventId`）单独再发一次用于打印 |
+| `printed` | `key` | 出票结束（仪式或 printMs）；不登记重播 |
+| `torn` | `eventId, reply` | 撕票 / 接受改期（新票撕下） |
+| `contacted` | `eventId` | 已加微信 |
+| `released / withdrawn / queue_left` | `eventId, promoted[]` | 放弃预留 / 撤回 / 退出候补 |
+| `exited` | `eventId, burn, promoted[]` | 主动退出（燃烧 C） |
+| `reschedule-accepted` | `eventId, stage` | （引擎同时产生；控制器以 `torn{reply:true}` 为准） |
+| `reschedule-declined` | `eventId, burn, promoted[]` | 拒绝改期（燃烧 B） |
+| `invited` | `eventId, appId, nick, slot` | 审核通过（**v0 写的 `approved`，引擎实际是 `invited`**） |
+| `rejected` | `eventId, appId, nick` | 谢绝 |
+| `proposed` | `eventId, asked, oldIso, newIso` | 改时间（日期重印） |
+| `cancelled` | `eventId, affected, burn` | 取消（抽色 + 余烬） |
+| `ended` | `eventId, toRecord` | 记为散场 |
+| `attended` | `eventId, memberId, value, correction` | 出席记录 / 更正（盖章） |
+| `draft-deleted / draft-restored / undo-expired` | `draftId, title, index` | 草稿 |
+| `record-added` | `eventId` | 局内记录 |
+| `expired` | `side:'joined'∣'host', eventId, name∣nick, memberId, slot, other, at` | 时钟结算：预留到期 |
+| `queue-invited / queue-turn / queue-moved` | `side, eventId, name∣nick, slot, deadline, from, pos` | 时钟结算 / 释放席位后的候补顺位 |
+`promoted[]` 里的效果也会逐个 `onEffect`。仪式模块就绪后：`JU.ritual.print / tear / burn / stamp` 由概念在自己的 DOM 上调用（C00 写法：`JU.ritual && JU.ritual.print ? JU.ritual.print(el, {onDone: c.ticket.printed}) : fallback`），控制器只保证数据先写、动画后播、失败不播。
+
+## 11. 其它
+`c.toast{on,text,kind,cls:'k-ok∣k-error∣k-info'}`（2600ms / 错误 3600ms，一次一条）、`c.copy(text, key, okText)` / `this.copy(...)`（真实 `navigator.clipboard.writeText`；只有 resolve 才给成功；失败或面板武装 → toast「未能复制，长按手动复制」+ `c.copyState(key){copied,failed,text,label,retry()}` 8s）、`c.say(text,kind)`、`c.inert(ev)`（范围外入口统一提示）、`c.rootNav[{k,label,on,inert,cls,go}]`（找局 / 开局 / 设置 inert，我的局 on）、`c.skin`（`cotton∣halo∣sunset`，面板切换，概念写 `data-skin`）、`c.rm`、`c.kb`、`c.safe`、`c.zoom`、`c.fx`、`c.fail{armed,copyArmed}`、`c.clock{now,nowText,offsetMin,demoNote,next}`、`c.rules`、`c.COPY`、`c.surfaceTitle`。
+时钟：倒计时逐秒 `holdKey('tick',1000)` **只在有 deadline 的行可见时运行**（列表当前区有预留行 / 详情·阅读·候补面的该局有预留 / 管理面有已预留成员），每秒 `JU.dueCount` > 0 才 `settleNow()`；面板 +5 分钟 / +1 小时 / 到最近到期 / +24 小时 / 回到演示时刻 → `advanceClock` → `settleNow` → 效果逐个到达，概念只画变化。
+
+## 12. 索引映射 `ctlJump(e, data)`
+50 条 `JU.INDEX` 全部可达，跳转后栈完整（返回可用），**同一帧应用**（`jumpTo` → 新数据集 + `ctlJump` 一次渲染，无 home 闪现；概念若覆盖 `applyJump` 则仍延迟 30ms）。映射：列表条目 → role + section；`detail` → `home>detail`；`ticket` → `home>ticket`（本版记为已印，撕票可直接操作）；`contact` → ticket + 联系层打开；`reschedule-reply` → `home>reply`（新票已印）；`withdraw` → ticket + 确认层（按 stage：pending=withdraw、invited=release、reschedule=decline、waitlist=leaveQueue、其余 exit；索引里的 theater 是 going → `exit`）；`history` → `home>history` 且该票记为已烧（静态灰烬；燃烧只在真实首次打开播放）；`manage` tab → intent（applications → review、attendance → attendance、其余 manage）+ 区块展开与聚焦（contact → 成员区，leaves → 展开）+ `reschedule / cancel / end / card` 直接打开对应 sheet；`draft` → `home>draft`。
+
+## 13. 与 v0 的差异
+1. 效果名以引擎为准：审核通过是 `invited`（非 `approved`）；确认入局是 `confirmed` + 单独的 `formed`；新增 `printed`、`expired`、`queue-invited`、`queue-turn`、`queue-moved`、`record-added`，效果带 `seq/at`，重播带 `replay:true`。
+2. `c.read`、`c.waitlist` 是顶层对象（v0 写在 `c.detail` 下）；`c.reply` = `c.ticket.reply`。
+3. 行动作带 `key`（`primary.key / secondary.key / secondaryKey`）供 `data-act` 绑定；`c.manage.<sec>.order/show/toggle`；`c.nav.landKey` / `row.landing`。
+4. 弹层关闭选择器是 `data-act="close"`（`cancel` 留给「取消这局」）；弹层 primary 是 `data-act="ok"`；撕票手势元素 `data-act="tear"`（需 `tabindex="0"`，Enter / Space），按钮等价 `data-act="tear-now"`（reply 面为 `accept`）；行主动作 `data-act="cta"`。
+5. 草稿删除：数据立刻写，`ghost` 行留 `deleteMs` 供收起；`undo.left` 秒数。
+6. `copy(text, key, okText)`：第三参数（局主侧「微信号已复制」）。
+7. 退出候补走确认层（v0 要求；`state-inventory` §D 说原型无二次确认——见汇报的语义矛盾）。
+8. 不做本机持久化（Phase B 的 `JUS.store`）：契约要求各套运行时数据隔离、评审工具要求确定性状态；每次打开都是数据集初态。
+9. 新增可覆盖 `printMs / burnMs / deleteMs / tearSpec / tearThreshold`。
+
+## 14. 坑（已验证的）
+- **Preact 的 setState 在渲染时才落地**：`setState` 之后在同一 tick 里再读 `this.state` 得到的是旧值。控制器已全部改用返回的 `res.data` / 函数式 setState（`closeSheet` 曾因此关不掉、出席「下一位」曾算到刚记录的人、同步 `ctlJump` 曾读到上一个变体）。概念的 `onEffect` 里同样只用 `fx` 载荷，不读 `this.state.data`。
+- **收拢页头不能改变滚动容器高度**：页头缩短 → 容器变高 → 页底 `scrollTop` 被重新钳制 → `--hc` 变化 → 页头再变……肉眼可见的抖动（Playwright 报 "element is not stable"）。用恒定高度的页头（标题保留 30px 行框、辅助行只变透明度）或覆盖式页头（绝对定位 + 容器 padding-top）。
+- 行内按钮必须带 `data-act`，否则行的 `open` 分不清内部点击（控制器以 `[data-act]` 判断）。
+- 倒计时进度条若用 `transition: width 900ms`，它每秒重启、在 `getAnimations()` 里永远 running；减少动态靠 `.app.rm *` 把它压到 1ms（rm-check 按此统计）。
+- 跳转一次渲染中位 40ms、峰值 ~160ms（50 条）；评审脚本每次跳转仍应等 ≥ 300ms。
+- `file://` 页面拿不到剪贴板权限；回归测试用本机 http 服务 + `grantPermissions`。交付文件里真实点击（用户手势）即可写入，失败路径已处理。
+- Shadow DOM 里查焦点用 `root.getRootNode().activeElement`；弹层 `ref` 放对话框根、`onKeyDown` 放覆盖层。
+- 减少动态下 `after()` 为 0：出票 / 燃烧瞬间到终态，`hold`（处理中、toast、撤销、tick）不压缩。
+- `go('read')` 会把 `detail` 插在下层：详情必须在 `is-under` 时也能渲染（`c.detail.on` 在 read 为栈顶时同样为 true）。
+- `c.nav.fromStyle` 只在点击元素有 `[data-origin]` 祖先时非空；为空时概念走普通过渡。
+
+## 15. 已验证（核心 1 · 2026-10-22）
+构建：`node <scratchpad>/core1/build-c00.js` → `/home/user/JU/.build/C00.html`（外壳 294 KB，含 preact + runtime + C00 源 256 KB；`src/build.js` 由核心 2 移植，标记同 contract §2）。
+| 检查 | 结果 |
+|---|---|
+| `my-r2/tools/test/ctl-regress.cjs`（Playwright / chromium，真实点击） | **74/74 通过**：50 条 jump 全部到达目标 surface、`renderVals()` 无错、栈深 ≥2、contact 层 / sheet 到位、console 0 错误、50 个画面文本无禁用词；九条流程：详情返回（--hc 写入、起点 key、滚动恢复 120px、落点 landKey）、阅读确认（滚到底才可确认 → 武装失败原位重试 → 成局 → 查看票根 → 出票中无按钮 → 2.3s 后已印）、撕票（Enter 等价 → 联系层 → 真实剪贴板 `readText()==='ameng.nyc'` → 已加微信 → 待赴约）、改期接受（撕新票 → going + toast）/ 拒绝（确认层 → declined → 燃烧结果 → 查看退出结果到 history）、候补退出（门口 `L**` → 退出 → 回执）、审核通过 / 谢绝（待审 −1 · 预留 +1 · 成员 +1 · 原位结果；谢绝不动席位、头部 status 与徽标重算）、改时间（同时间禁用 → 新时间 → 答复区 4 人 · 时间重印 · toast）、取消（受影响名单 → 已取消 · void 成员 · 历史归位）、散场出席更正（intent attendance · 当帧写入 · 新鲜章 · 焦点下一位 · 更正留轨迹）、草稿删除撤销（ghost → 空态 + 撤销条 → 原槽位恢复） |
+| 时钟 | tick 只在有预留行时运行、每秒变化、切到历史停止；+65min 花卷到期 → Leon 获邀 → 我从第 2 位到第 1 位；+5h05 我的 brunch 预留到期 → 未成行 00:00:00；到最近到期 → 轮到我（invited_queue）；局主侧 Leon「预留到期」入离开记录、候补按顺位获邀 |
+| 复制失败分支 | 武装 → toast「未能复制，长按手动复制」+ 手动提示 + 重试，标志消费；重试真实写入成功 |
+| 撕票手势 | 拖半程回弹且不写数据；拖过阈值写入后落券；键盘 Enter 等价 |
+| 弹层焦点 | 打开进入对话框首控件、Tab 循环、Esc 关闭并回到触发元素 |
+| 减少动态（`reducedMotion:'reduce'`） | `rmSys=true`；阅读→确认→出票（瞬印）→撕→联系层完整；无 >1ms 动画在跑；取消到稳定终态 |
+| `settings-r2/tools/widths.cjs C00`（360/375/390/430 × 8 态） | overflow []，字号随宽度不变，`.app` 无 transform，minFont 12 |
+| 头less 冒烟 `<scratchpad>/core1/ctl-smoke.cjs` | 通过（引擎 / 视图模型 / 50 跳 / 禁用词） |
+禁用词（扣分 / 信用分 / 处罚 / 等级 / 剩余次数）：核心四文件 + C00 = 0（数据里两句「不会自动处罚」改为「不会自动带来任何后果」，语义不变）。

@@ -75,7 +75,7 @@
 - **撕后：** 舞台高过渡 `height .5s cubic-bezier(.2,.9,.3,1)`：493 → 371（宿主收 0、`visibility:hidden`，`--ju-shadow-stub25` 0；`v27-tear-4-settled` 里主票下方的空隙是尚未显示、但已占位的联系层）；s10：311。
 - **减少动态：** 自动撕直接 `detach`（无过程），回位直接 p=0，坠落按 1081 ms 终态立即隐藏，圆点提示动画停止。
 - **错误态：** 写入失败 → `.ju-tear-error24`「未能保存，请重新撕下副券」（改期票：「新时间未保存，请重新撕下副券」），副券回位、可再撕。
-- **证据：** `v27-tear-1…4`（鼠标拖到 p≈.28 再过半松手）、`demo-tear-1…4`、`demo-reduced-2-tear-endstate`。
+- **证据：** `v27-tear-1…4`（鼠标拖到 p≈.28 再过半松手）、`demo-tear-1…4`、`demo-tear-keyboard-1…3`（复用件：聚焦抓手 → Enter，180 ms 时 p = .54，落定后舞台 371 / 宿主 0，与原页 torn 态数值一致）、`demo-reduced-2-tear-endstate`。
 
 ## 4 · 联系信息展开（CONTACT）
 
