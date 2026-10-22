@@ -103,6 +103,8 @@
     p.go = function (s, params, ev) {
       var nav = this.state.nav; if (!nav) return;
       if (nav.phase !== 'idle') nav = this._navSettle();
+      /* a double tap must not push the same page twice (the first 返回 would land on the same page) */
+      var cur = nav.stack[nav.stack.length - 1]; if (cur && cur.s === s && JSON.stringify(cur.p || {}) === JSON.stringify(params || {})) return;
       var o = this._originOf(ev, s); this._captureScroll();
       var id = (nav.seq || 1) + 1; var entry = { s: s, p: params || {}, from: o.from, key: o.key, id: id };
       var patch = { nav: { stack: nav.stack.concat([entry]), phase: 'enter', dir: 'fwd', seq: id, leaving: null }, sheet: null };

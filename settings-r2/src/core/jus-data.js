@@ -285,7 +285,7 @@
       d.records.push(fact('rec-boardgame-abs', 'absence_reported', 'pottery', t('2026-12-10T19:00'), { status: 'verified' }));
     }
     if (variant === 'long') {
-      d.you.name = '阿禾·周末睡到十一点'; d.you.email = 'hehe.zhang.weekend.brunch.2026@stern.nyu.edu'; d.you.wx = 'ahe_weekend_brunch_club_2026';
+      d.you.name = '阿禾·周末睡到十一点'; d.you.email = 'hehe.zhang.weekend.brunch.2026@stern.nyu.edu'; d.you.emailDomain = 'stern.nyu.edu'; d.you.wx = 'ahe_weekend_brunch_club_2026';
       d.events.hotpot.title = '深夜救急火锅局 · 不吃辣的也有清汤锅 · 吃完一起去对面买汤圆'; d.events.hotpot.loc = 'Queens-法拉盛缅街与 39 大道交口那家门口有红灯笼的店 B1';
       d.events.sketch.title = '周末速写 · 画人不画景 · 自带本子画完互相看 · 新手也欢迎来坐坐';
     }
@@ -422,7 +422,7 @@
       d.joined.forEach(function (j) { var e = eventOf(d, j.eventId); if (j.group === '历史') return; facts.push({ eventId: e.id, title: e.title, role: '你是参加者', rule: j.ticket ? '已成局 · 只有局主可见你的微信' : j.stage === 'pending' ? '申请中 · 局主可见你的申请资料（称呼、邮箱验证状态）' : '未成局 · 只有局主可见你的称呼', open: true }); });
       return { lead: JUS.COPY.privacyLead, policy: JUS.COPY.wxPolicy, general: ['称呼对局主与同局成员可见。', JUS.COPY.wxPolicy, '邮箱只用于验证标记（显示域名，如 nyu.edu）；任何人看不到地址本身。', '退出、拒绝改期或局主取消后，票和联系入口失效；正常散场24小时后关闭联系查看。'], facts: facts, demo: JUS.COPY.demoOnly, noToggles: '这里没有开关：谁能看见你，由活动的成局、票根与散场状态决定。' };
     },
-    about: function (d) { return { version: 'JU 原型 · 设置 · 本地演示', rulesVersion: JUS.RULES_VERSION, built: global.__JUS_BUILT || '', rules: JUS.RULES, groups: JUS.RULE_GROUPS, policyNote: JUS.POLICY_NOTE, cities: JUS.CITIES.length, demo: JUS.COPY.demoOnly, storageKey: 'jus2:<方案编号>:v1' }; },
+    about: function (d) { return { version: 'JU 原型 · 设置 · 本地演示', rulesVersion: JUS.RULES_VERSION, built: global.__JUS_BUILT || '', rules: JUS.RULES, groups: JUS.RULE_GROUPS, policyNote: JUS.POLICY_NOTE, cities: JUS.CITIES.length, demo: JUS.COPY.demoOnly }; }, /* no storage key here: engineering detail stays outside the phone */
     emailPending: function (d) { var pnd = d.you.emailPending; if (!pnd) return null; var now = JUS.now(); return Object.assign({}, pnd, { resendLeftMs: Math.max(0, pnd.resendAt - now), resendLeftS: Math.ceil(Math.max(0, pnd.resendAt - now) / 1000), expiresInMs: Math.max(0, pnd.expiresAt - now), expired: now > pnd.expiresAt }); }
   };
 

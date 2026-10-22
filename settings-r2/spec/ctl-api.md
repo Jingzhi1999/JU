@@ -69,3 +69,4 @@ JUS.mixin(Component);   // 同时安装评审 mixin 与控制器；applyJump 默
 - 手机内文案（S03 复核后）：`codeNote` 不再提「评审面板」；`acct.storageNote` 不再显示存储键（键名改由 `acct.storageKey` 提供，只用于手机外的说明）；通知「已允许 + 已连接」时 `permCopy` 不再说「消息提醒暂未开通」。
 - 数据补充（S05 复核后）：举报与记录的 `supplementRows[i].materialsText`（「截图.jpg · 402 KB、…」，只有本机文件名与大小）；记录的 `helpText`（未出席记录在提出异议之后改为「你已提出异议，正在等待核实，仍可随时补充说明」——请用它代替固定的 `JUS.COPY.recordHelp`）；「长称呼」变体改为 10 个字以内（称呼规则上限）。
 - 举报计数（S01 复核后）：`c.sum.reportLabel` 现在逐阶段各说一次（「1 条需补充 · 1 条处理中 · 1 条已提交」，已提交不再算「处理中」）；另有 `reportOpen`（未结束）、`reportProcessing`（已受理 + 处理中）、`reportSubmitted`、`needMore`。请用这些字段，不要自己数 `reps` 里的函数属性。
+- S07 复核后：`go()` 在栈顶已经是同一 surface + 同一参数时直接忽略（双击不再压两层）；`about` 不再提供 `storageKey`（手机内不显示存储键）；「长称呼」变体的 `emailDomain` 与邮箱一致（stern.nyu.edu）。
