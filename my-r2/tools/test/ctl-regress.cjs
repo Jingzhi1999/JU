@@ -9,9 +9,10 @@ let fails = 0, passes = 0; const ok = (n, c, extra) => { if (c) passes++; else {
 const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 (async () => {
   const html = fs.readFileSync(FILE, 'utf8');
-  const server = http.createServer((req, res) => { res.setHeader('content-type', 'text/html; charset=utf-8'); res.end(html); }); await new Promise(r => server.listen(0, '127.0.0.1', r)); const url = 'http://127.0.0.1:' + server.address().port + '/' + path.basename(FILE) + '#concept/' + CODE;
+  const MIME = { '.js': 'text/javascript', '.css': 'text/css', '.woff2': 'font/woff2', '.woff': 'font/woff', '.svg': 'image/svg+xml', '.png': 'image/png', '.json': 'application/json' };
+  const server = http.createServer((req, res) => { const u = decodeURIComponent((req.url || '/').split('?')[0]); const fp = path.join(path.dirname(FILE), u); if (u !== '/' && u !== '/' + path.basename(FILE) && fs.existsSync(fp) && fs.statSync(fp).isFile()) { res.setHeader('content-type', MIME[path.extname(fp)] || 'application/octet-stream'); fs.createReadStream(fp).pipe(res); return; } res.setHeader('content-type', 'text/html; charset=utf-8'); res.end(html); }); await new Promise(r => server.listen(0, '127.0.0.1', r)); const url = 'http://127.0.0.1:' + server.address().port + '/' + path.basename(FILE) + '#concept/' + CODE;
   const b = await chromium.launch();
-  const run = async (opts, fn) => { const ctx = await b.newContext(Object.assign({ viewport: { width: 1000, height: 1000 } }, opts)); try { await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: url.split('/').slice(0, 3).join('/') }); } catch (e) { } const p = await ctx.newPage(); const errors = []; p.on('pageerror', e => errors.push('page: ' + e.message)); p.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); }); await p.goto(url); await p.waitForTimeout(700); await fn(p, errors); await ctx.close(); return errors; };
+  const run = async (opts, fn) => { const ctx = await b.newContext(Object.assign({ viewport: { width: 1000, height: 1000 } }, opts)); try { await ctx.grantPermissions(['clipboard-read', 'clipboard-write'], { origin: url.split('/').slice(0, 3).join('/') }); } catch (e) { } const p = await ctx.newPage(); const errors = []; p.on('pageerror', e => errors.push('page: ' + e.message)); p.on('console', m => { if (m.type() === 'error') errors.push('console: ' + m.text()); }); await p.goto(url); await p.waitForTimeout(700); await p.evaluate(() => { const m = window.JUShell.mounts.stage[Object.keys(window.JUShell.mounts.stage)[0]]; const i = m && m.instance; const S = window.JU && window.JU.shared && window.JU.shared.skins; if (S && i && i.envRef && i.envRef.current) S.pause(i.envRef.current); }); /* headless SwiftShader: the live skin engine would drop the page to ~7 rAF/s and stall every rAF-driven ritual (see ctl-api §14) */ await fn(p, errors); await ctx.close(); return errors; };
   const inst = (p, js, arg) => p.evaluate(([js, arg]) => { const m = window.JUShell.mounts.stage['stage:' + (window.__JU_META[0].code) + ':']; const inst = m.instance, root = m.root; return new Function('inst', 'root', 'arg', 'JU', js)(inst, root, arg, window.JU); }, [js, arg]);
   const phone = (p) => p.locator('.stage-host.on .ju-phone');
   const click = async (p, sel, opts) => { const l = phone(p).locator(sel).first(); await l.scrollIntoViewIfNeeded().catch(() => { }); await l.click(Object.assign({ timeout: 4000 }, opts || {})); await p.waitForTimeout((opts && opts.after) || 120); };
@@ -22,6 +23,9 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const text = (p) => phone(p).evaluate(el => el.textContent);
   const settled = (p, ms) => p.waitForTimeout(ms || 450);
   const banned = /扣分|信用分|信用等级|剩余次数|(?<!不会自动|不自动|不)处罚/;  /* 「不会自动处罚」是 V27 原文的否定句，允许 */
+  /* wait until a condition holds (the shared rituals are async: fonts.ready + rig.ready + rAF + the real 2.3s print) */
+  const until = async (p, js, ms, step) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 4000)) { if (await inst(p, js)) return true; await p.waitForTimeout(step || 100); } return false; };
+  const GRAB = '[data-tear] [role="button"]';
 
   /* ---------------- 1. index: 50 jumps, renderVals, surfaces, console, banned words ---------------- */
   let errs = await run({}, async (p) => {
@@ -58,27 +62,28 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const disabledBefore = await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled(); ok('confirm disabled before reading to the end', disabledBefore);
     await inst(p, `var s = root.querySelector('[data-scroller="read"]'); s.scrollTop = s.scrollHeight; s.dispatchEvent(new Event('scroll'));`); await p.waitForTimeout(80);
     ok('reading to the end enables confirm', !(await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled()));
-    await inst(p, `inst.armFail()`); await click(p, '[data-surface="read"] [data-act="confirm"]'); await p.waitForTimeout(120); ok('处理中 visible', (await text(p)).indexOf('处理中') >= 0); await settled(p, 500);
+    await inst(p, `inst.armFail()`); await click(p, '[data-surface="read"] [data-act="confirm"]', { after: 10 }); ok('处理中 visible (busy ≥ processMs before the engine runs)', await until(p, `return !!inst.state.ui.busy.confirm`, 500, 20) && (await text(p)).indexOf('处理中') >= 0); await settled(p, 600);
     ok('armed failure lands in place with 重试', (await phone(p).locator('[data-surface="read"] [data-act="retry"]').count()) === 1 && await stage(p, 'brunch') === 'invited');
     await click(p, '[data-surface="read"] [data-act="retry"]'); await settled(p, 600); ok('retry confirms → formed → tear', await stage(p, 'brunch') === 'tear' && (await inst(p, `return inst.state.ui.fx.type`)) === 'formed');
     await click(p, '[data-surface="read"] [data-act="ticket"]'); await settled(p); ok('查看票根 → ticket printing', await surface(p) === 'ticket' && (await inst(p, `return inst.ctlVals().ticket.state`)) === 'printing');
     const noStubBtn = await phone(p).locator('[data-act="tear-now"]').count(); ok('no tear button while printing', noStubBtn === 0);
-    await p.waitForTimeout(2600); ok('printed after printMs', (await inst(p, `return inst.ctlVals().ticket.state`)) === 'printed');
+    ok('printed after the shared print ritual (≈2.3s + rig ready)', await until(p, `return inst.ctlVals().ticket.state === 'printed'`, 7000)); ok('stub rig mounted + grab layer focusable', (await phone(p).locator(GRAB).count()) === 1);
     // (c) tear by keyboard (Enter on the stub) → contact → copy (real clipboard) → 已加微信
-    await phone(p).locator('[data-act="tear"]').first().focus(); await p.keyboard.press('Enter'); await settled(p, 500);
-    ok('Enter on the stub tears (write first)', await stage(p, 'brunch') === 'contact' && (await inst(p, `return inst.ctlVals().ticket.state`)) === 'torn');
-    ok('contact layer opens after tearing', (await phone(p).locator('[data-act="contacted"]').count()) === 1);
-    await click(p, '.c00-contact [data-act="copy"]'); await p.waitForTimeout(250);
+    await phone(p).locator(GRAB).first().focus(); await p.keyboard.press('Enter');
+    ok('Enter on the grab layer tears: the write happens at detach (≈360ms), before the fall', await until(p, `return inst.state.data.joined[0].stage === 'contact'`, 2500) && (await inst(p, `return inst.ctlVals().ticket.state`)) === 'torn');
+    ok('contact layer revealed by the module after the fall (1080ms + 300ms)', await until(p, `return !!root.querySelector('[data-contact-reveal][data-revealed="true"]')`, 4000));
+    ok('action button shown 850ms after the fall', await until(p, `return !!root.querySelector('[data-contact-action][data-shown="true"]')`, 3000));
+    await click(p, '[data-contact-reveal] [data-act="copy"]'); await p.waitForTimeout(300);
     const clip = await p.evaluate(() => navigator.clipboard.readText().catch(() => '')); const copyOk = await inst(p, `return inst.state.ui.copy && inst.state.ui.copy.ok`);
     ok('copy reports success only after the real clipboard write', copyOk === true && clip === 'ameng.nyc', { copyOk, clip });
-    await click(p, '[data-act="contacted"]'); await settled(p, 500); ok('已加微信 → going', await stage(p, 'brunch') === 'going' && (await text(p)).indexOf('待赴约') >= 0);
+    await click(p, '[data-contact-action]'); await settled(p, 500); ok('已加微信 → going (write first, the module paints 待赴约 after)', await stage(p, 'brunch') === 'going' && (await inst(p, `return root.querySelector('[data-contact-action] [data-slot="actionLabel"]').textContent`)) === '待赴约');
     // (d) reschedule accept (livehouse) + decline (fresh)
     await inst(p, `inst.reset('default')`); await p.waitForTimeout(150);
-    await click(p, '[data-rid="livehouse"]'); await settled(p); ok('reschedule row → reply', await surface(p) === 'reply'); await p.waitForTimeout(2600);
-    await click(p, '[data-act="accept"]'); await settled(p, 500); ok('accept = tear new ticket → going (微信沿用) + toast', await stage(p, 'livehouse') === 'going' && (await text(p)).indexOf('已接受改期') >= 0);
-    await inst(p, `inst.reset('default')`); await p.waitForTimeout(150); await click(p, '[data-rid="livehouse"]'); await settled(p); await p.waitForTimeout(2600);
+    await click(p, '[data-rid="livehouse"]'); await settled(p); ok('reschedule row → reply', await surface(p) === 'reply'); ok('reissued ticket printed (原定 line + 时间已改 mark)', await until(p, `return inst.ctlVals().ticket.state === 'printed'`, 7000) && (await inst(p, `return !root.querySelector('[data-surface="reply"] [data-slot="previous"]').hidden && !root.querySelector('[data-surface="reply"] [data-slot="mark"]').hidden`)));
+    await click(p, '[data-act="accept"]'); ok('accept = tear new ticket → going (微信沿用) + toast', await until(p, `return inst.state.data.joined[1].stage === 'going'`, 2500) && (await text(p)).indexOf('已接受改期') >= 0);
+    await inst(p, `inst.reset('default')`); await p.waitForTimeout(150); await click(p, '[data-rid="livehouse"]'); await settled(p); await until(p, `return inst.ctlVals().ticket.state === 'printed'`, 7000);
     await click(p, '[data-surface="reply"] [data-act="decline"]'); await p.waitForTimeout(150); ok('decline → confirm sheet', (await phone(p).locator('.c00-over [data-act="ok"]').count()) === 1);
-    await click(p, '.c00-over [data-act="ok"]'); await settled(p, 600); ok('declined → burn result on the ticket', await stage(p, 'livehouse') === 'declined' && (await inst(p, `return inst.ctlVals().ticket.result && inst.ctlVals().ticket.result.burn`)) === true);
+    await click(p, '.c00-over [data-act="ok"]'); await settled(p, 600); ok('declined → burn result on the ticket (JURitual.burn B running on the stage)', await stage(p, 'livehouse') === 'declined' && (await inst(p, `return inst.ctlVals().ticket.result && inst.ctlVals().ticket.result.burn`)) === true && (await inst(p, `var st = root.querySelector('[data-surface="reply"] .c00-stage'); return st && st.dataset.state === 'burning' && !!st.querySelector('[data-burn] canvas')`)) === true);
     await click(p, '[data-surface="reply"] [data-act="ok"]'); await settled(p); ok('查看退出结果 → history', await surface(p) === 'history');
     // (e) waitlist leave
     await inst(p, `inst.reset('default')`); await p.waitForTimeout(150); await click(p, '[data-rid="vintage"]'); await settled(p); ok('waitlist door', await surface(p) === 'waitlist' && (await text(p)).indexOf('L**') >= 0);
@@ -153,24 +158,24 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
 
   /* ---------------- 4. copy failure branch (armed) + retry ---------------- */
   errs = await run({}, async (p) => {
-    await inst(p, `inst.jumpTo('j-d-contact')`); await p.waitForTimeout(300); await inst(p, `inst.armCopyFail()`);
-    await click(p, '.c00-contact [data-act="copy"]'); await p.waitForTimeout(250);
-    const f = await inst(p, `return { fail: inst.state.ui.copy && inst.state.ui.copy.ok === false, toast: inst.state.toast && inst.state.toast.text, armed: inst.state.data.flags.copyFailNext, retry: !!root.querySelector('.c00-contact [data-act="retry"]'), hint: root.querySelector('.c00-contact').textContent.indexOf('长按') >= 0 }`);
-    ok('armed copy failure → 未能复制 + manual hint + 重试, flag consumed', f.fail && f.toast === '未能复制，长按手动复制' && !f.armed && f.retry && f.hint, f);
-    await click(p, '.c00-contact [data-act="retry"]'); await p.waitForTimeout(250);
+    await inst(p, `inst.jumpTo('j-d-contact')`); ok('jumped contact layer revealed', await until(p, `return !!root.querySelector('[data-contact-reveal][data-revealed="true"]')`, 3000)); await inst(p, `inst.armCopyFail()`);
+    await click(p, '[data-contact-reveal] [data-act="copy"]'); await p.waitForTimeout(300);
+    const f = await inst(p, `return { fail: inst.state.ui.copy && inst.state.ui.copy.ok === false, toast: inst.state.toast && inst.state.toast.text, armed: inst.state.data.flags.copyFailNext, retry: !!root.querySelector('.c00-copyfail [data-act="retry"]'), hint: root.querySelector('[data-surface="ticket"]').textContent.indexOf('长按') >= 0, moduleErr: root.querySelector('[data-contact-reveal] .ju-form-error').textContent }`);
+    ok('armed copy failure → the module shows its own error, the controller 未能复制 + manual hint + 重试, flag consumed', f.fail && f.toast === '未能复制，长按手动复制' && !f.armed && f.retry && f.hint && f.moduleErr === '复制失败，请长按账号复制', f);
+    await click(p, '.c00-copyfail [data-act="retry"]'); await p.waitForTimeout(300);
     ok('retry copies for real', (await inst(p, `return inst.state.ui.copy && inst.state.ui.copy.ok`)) === true && (await p.evaluate(() => navigator.clipboard.readText())) === 'dantat.coffee');
   });
   ok('no errors during copy checks', errs.length === 0, errs.slice(0, 4));
 
   /* ---------------- 5. tear gesture: half drag snaps back, full drag tears; sheet focus (Tab cycle / Esc / return) ---------------- */
   errs = await run({}, async (p) => {
-    await inst(p, `inst.jumpTo('j-d-tear')`); await p.waitForTimeout(300);
-    const stub = phone(p).locator('[data-act="tear"]').first(); const bb = await stub.boundingBox();
-    await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.mouse.move(bb.x + bb.width / 2 - 20, bb.y + bb.height / 2 + 20, { steps: 4 }); await p.waitForTimeout(50);
-    const mid = await inst(p, `return inst.state.ui.ticket.tear.progress`); ok('drag maps to progress (below threshold)', mid > 0.1 && mid < 0.5, mid);
-    await p.mouse.up(); await p.waitForTimeout(100); ok('release below threshold snaps back, nothing written', (await inst(p, `return inst.state.ui.ticket.tear.progress`)) === 0 && await stage(p, 'run3k') === 'tear');
-    await p.mouse.move(bb.x + bb.width / 2, bb.y + bb.height / 2); await p.mouse.down(); await p.mouse.move(bb.x + bb.width / 2 - 90, bb.y + bb.height / 2 + 90, { steps: 6 }); await p.mouse.up(); await settled(p, 500);
-    ok('drag past threshold tears (write first, stub falls)', await stage(p, 'run3k') === 'contact' && (await inst(p, `return inst.ctlVals().ticket.state`)) === 'torn');
+    await inst(p, `inst.jumpTo('j-d-tear')`); ok('jumped ticket: settled paper + stub rig', await until(p, `var g = root.querySelector('[data-tear] [role="button"]'); return !!g && root.querySelector('[data-surface="ticket"] .c00-stage').dataset.state === 'ready'`, 4000));
+    const grab = phone(p).locator(GRAB).first(); const bb = await grab.boundingBox(); const y = bb.y + bb.height * 0.55;
+    await p.mouse.move(bb.x + 24, y); await p.mouse.down(); await p.mouse.move(bb.x + 24 + 60, y, { steps: 6 }); await p.waitForTimeout(60);
+    const mid = await inst(p, `return inst._tearRig ? inst._tearRig.p : -1`); ok('drag maps to the rig progress (below SNAP .5)', mid > 0.1 && mid < 0.5, mid);
+    await p.mouse.up(); await p.waitForTimeout(500); ok('release below threshold retracts, nothing written', (await inst(p, `return inst._tearRig ? inst._tearRig.p : -1`)) < 0.1 && await stage(p, 'run3k') === 'tear');
+    await p.mouse.move(bb.x + 24, y); await p.mouse.down(); await p.mouse.move(bb.x + 24 + 200, y, { steps: 10 }); await p.mouse.up();
+    ok('drag past SNAP auto-completes: detach writes first, then the stub falls', await until(p, `return inst.state.data.joined.filter(function(x){return x.eventId==='run3k'})[0].stage === 'contact'`, 2500) && (await inst(p, `return inst.ctlVals().ticket.state`)) === 'torn');
     // sheet focus: open exit sheet from the header link
     await inst(p, `inst.jumpTo('j-d-going')`); await p.waitForTimeout(300);
     await click(p, '[data-surface="ticket"] [data-act="exit"]'); await p.waitForTimeout(150);
@@ -189,9 +194,9 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await click(p, '[data-rid="brunch"] [data-act="cta"]'); await p.waitForTimeout(120); ok('rm: read reached instantly', await surface(p) === 'read');
     await inst(p, `var s = root.querySelector('[data-scroller="read"]'); s.scrollTop = s.scrollHeight; s.dispatchEvent(new Event('scroll'));`); await p.waitForTimeout(60);
     await click(p, '[data-surface="read"] [data-act="confirm"]'); await settled(p, 600); ok('rm: 处理中 still real time, then formed', await stage(p, 'brunch') === 'tear');
-    await click(p, '[data-surface="read"] [data-act="ticket"]'); await p.waitForTimeout(200); ok('rm: printed at once (no 2.3s print)', (await inst(p, `return inst.ctlVals().ticket.state`)) === 'printed');
-    await phone(p).locator('[data-act="tear"]').first().focus(); await p.keyboard.press('Enter'); await p.waitForTimeout(120);
-    ok('rm: torn + contact layer visible', await stage(p, 'brunch') === 'contact' && (await phone(p).locator('[data-act="contacted"]').count()) === 1);
+    await click(p, '[data-surface="read"] [data-act="ticket"]'); ok('rm: printed at once (JuPrint 1ms, no 2.3s print)', await until(p, `return inst.ctlVals().ticket.state === 'printed'`, 1500));
+    await phone(p).locator(GRAB).first().focus(); await p.keyboard.press('Enter');
+    ok('rm: Enter tears at once (direct detach) + contact layer at 0ms', await until(p, `return inst.state.data.joined[0].stage === 'contact' && !!root.querySelector('[data-contact-reveal][data-revealed="true"]')`, 1500)); await p.waitForTimeout(250);
     const anims = await inst(p, `var ph = root.querySelector('.ju-phone'); var long = []; (ph.getAnimations ? ph.getAnimations({ subtree: true }) : []).forEach(function (a) { var t = a.effect && a.effect.getTiming ? a.effect.getTiming() : null; if (t && t.duration > 1 && a.playState === 'running') long.push((a.animationName || 'transition') + ':' + t.duration); }); return long;`);
     ok('rm: no animation longer than 1ms is running', anims.length === 0, anims);
     await inst(p, `inst.jumpTo('h-m-cancel')`); await p.waitForTimeout(200); await click(p, '.c00-over [data-act="ok"]'); await settled(p, 600);

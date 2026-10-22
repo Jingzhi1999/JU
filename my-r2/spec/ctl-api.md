@@ -77,9 +77,13 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 | `result` | 退出 / 拒绝改期后：`{title,body,label:'查看退出结果',act,burn,burning,burnDone()}` |
 | `exit(ev) / exitLabel / canExit` | 去不了了 → 确认层（reply 面是 `decline`） |
 | `reply` | `oldWhen,newWhen,oldText('原定 …'),newText('改到 周x HH:MM 门口'),answered,accept()(= tearNow),decline(ev),oldTorn,contactAdded` |
+| `ritual` | 给共享原件的文字槽位（`JURitual.fillTicket / print / tear` 的 data）：`{key, title, time, md, loc, meeting('HH:MM 门口'∣'待局主确认'), host, previous('FRI 12.18 19:30'，改期票才有), mark('时间已改'∣''), reissued, account(局主微信), added}`；概念把同一份值绑进 `data-slot` 文字，脚本再交给原件 |
+| `registerTear(h)` / `tearCommit()` | 共享撕票 rig 的接入点：`JURitual.tear` 的 handle 注册后 `tear.tearNow()` 走它的 `trigger()`（键盘路径）；rig 的 `onDetach` 调 `tearCommit()`（同步写入，返回布尔：失败副券回位 + 错误行，成功才坠落、才发 `torn`）。没有 rig 时 `tearNow()` 自己写入并 300ms 后打开联系层 |
+| `contact.copyWith(run)` | 剪贴板调用属于共享联系层时（`handle.copy()` → `Promise<boolean>`）用它：真实结果进 `copyState`，面板「下一次复制失败」让这一次 `writeText` 被拒（原件也显示自己的「复制失败，请长按账号复制」） |
+| `result.reason` | 作废原因给 `JURitual.burn`：`withdrawn`（主动退出，C）∣ `reschedule-declined`（B） |
 | `back(), isReply, hostWx, originKey, rules, title, stage, row` | |
 
-**`c.history`**（栈顶 history）：`eventId,row,title,stage,label,event,when,oldWhen,place,host,stamp('present∣absent∣pending∣none'),stampText,attendanceText,reason,closedNote,records[{kind,text,at,atText,kindLabel}],members,ticket{torn,void,version}∣null,ashes,burn{play,done,burnDone()},burnOnce,contactOpen,hostWx,copyWx(),copied,copyFail,copyLabel,retryCopy(),contactClosedText,report{open(ev),on,text,onInput,count,max:120,min:4,submit(),done,busy,error,close(),label,doneText},back(),originKey,footer`。取消 / 退出 / 拒绝改期的票：第一次真实打开 `burn.play=true`（控制器 `burnMs` 兜底，仪式 `onDone` 先到先算），之后 `ashes`（记忆在 `ui.burned`）；索引跳转直接落在灰烬态。
+**`c.history`**（栈顶 history）：`eventId,row,title,stage,label,event,when,oldWhen,place,host,stamp('present∣absent∣pending∣none'),stampText,attendanceText,reason,closedNote,records[{kind,text,at,atText,kindLabel}],members,ticket{torn,void,version}∣null,ashes,burn{play,done,burnDone()},burnOnce,contactOpen,hostWx,copyWx(),copied,copyFail,copyLabel,retryCopy(),contactClosedText,report{open(ev),on,text,onInput,count,max:120,min:4,submit(),done,busy,error,close(),label,doneText},back(),originKey,footer`；给原件的：`ritual`（票根快照槽位，同 `c.ticket.ritual` + `torn`，仅 cancelled / exited / declined 且有票）、`burn.reason`（`cancelled∣withdrawn∣reschedule-declined`）、`hasStamp`（散场）、`stampData{event{id,city,pack,title,en,wd,date,dateNum,time,loc,host,capacity,seats,version}, mode:'pending∣present∣absent', history[{id,event,attendance,endedAt}]}`（V27 08 散场场景 `JURitual.stamp` 的 data）。取消 / 退出 / 拒绝改期的票：第一次真实打开 `burn.play=true`（控制器 `burnMs` 兜底，仪式 `onDone` 先到先算），之后 `ashes`（记忆在 `ui.burned`）；索引跳转直接落在灰烬态。
 
 ## 7. 管理 H1（`c.manage`，栈顶 manage）
 `on, missing, eventId, intent('review∣attendance∣manage'), m（JU.derive.manage 原样）, event, head{title,status,life,meta,when,oldWhen,place,formedLine,progress{confirmed,cap,reserved,available,seats[],text,more,attendance{rec,total,present,absent,text,sub}∣null,hidden},cancelled,ended,formed,contactOpen,cardLink,dimmed}, order[]（按 intent 的区块顺序，`arrange` 永远最后）, show{apps,replies,members,queue,leaves,attendance,arrange}, apps, roster, queue, leaves, replies, attendance, arrange, card{open(ev),label}, error, back(), backLabel('返回我的局'), focus, originKey`。
@@ -129,10 +133,22 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 | `record-added` | `eventId` | 局内记录 |
 | `expired` | `side:'joined'∣'host', eventId, name∣nick, memberId, slot, other, at` | 时钟结算：预留到期 |
 | `queue-invited / queue-turn / queue-moved` | `side, eventId, name∣nick, slot, deadline, from, pos` | 时钟结算 / 释放席位后的候补顺位 |
-`promoted[]` 里的效果也会逐个 `onEffect`。仪式模块就绪后：`JU.ritual.print / tear / burn / stamp` 由概念在自己的 DOM 上调用（C00 写法：`JU.ritual && JU.ritual.print ? JU.ritual.print(el, {onDone: c.ticket.printed}) : fallback`），控制器只保证数据先写、动画后播、失败不播。
+`promoted[]` 里的效果也会逐个 `onEffect`。
+
+### 10.1 共享原件接入（`window.JURitual.*`、`JU.shared.skins`；C00 的调用点 = 参考写法）
+原件由概念在自己的 DOM 上调用（DOM 契约 `my-r2/src/shared/rituals/ticket.html`：258 宽、主票 268、副券 84，不缩放；`data-print-stage / data-paper / data-paper-shadow / data-paper-shell / data-paper-surface / data-tear / data-burn / data-raster / data-wet / data-bend / data-slot` 原样保留）。控制器只给数据与写入点，**数据先写、动画后播、失败不播**：
+| 仪式 | C00 调用点 | 控制器一侧 |
+|---|---|---|
+| 出票 `JURitual.print(stage, c.ticket.ritual, {final:'ready', tear:{onDetach,onDone}})` | `_mountTicket`：票面 DOM 出现且 `c.ticket.state==='printing'` 时；promise 落定 → `c.ticket.printed()`（`!ok` 时 toast `r.message`，流程仍继续）；已印过的票（跳转 / 再进入）走 `_settleTicket`（`fillTicket` + 纸直接落定 + ready 态挂 `JURitual.tear.mount`，torn 态 `measureTicket(stage,true)`） | 有 `JURitual.print` 时不再武装 `printMs` 兜底计时器；`ui.ticket.printed[key]` 由 `printed()` 写 |
+| 撕 `JURitual.tear`（print 内部挂好，`stage.querySelector('[data-tear]').__juritual`） | `onDetach: () => this.tearCommit()`（同步布尔）、`onDone: () => _uiIn('ticket',{contactOpen:true})`；handle 交给 `registerTear(h)`；手势在 rig 的抓手层（`[data-tear] [role=button]`，拖过 SNAP .5 自动撕完；Enter / Space 同 `trigger()`）；按钮 `data-act="tear-now"` / `accept` → `c.ticket.tear.tearNow()` → `rig.trigger()` | `tearCommit()` 写 `tearTicket` / `acceptReschedule`，失败返回 false（副券回位 + 原件错误行「未能保存，请重新撕下副券」），成功发 `torn` |
+| 联系 `JURitual.contact(section, {host, account, added}, {})` | 票面出现后 `_contact()` 创建；`c.ticket.contact.on` 变化 → `reveal()` / `hide()`（原件 300 / 850ms）；原件的复制按钮改接 `c.ticket.contact.copyWith(() => h.copy())`，页脚 `[data-contact-action]` 改接 `markContacted()`；效果 `contacted` 到达后才 `h.add()`（原件把主按钮涂成「待赴约」） | `copyVia` / `markContacted` |
+| 燃烧 `JURitual.burn(stage, {reason}, {onDone})` | 票根面：`c.ticket.result.burning` 为真时一次（reason = `result.reason`），`onDone → c.ticket.result.burnDone()`；历史：首次真实打开 cancelled / exited / declined 的票（`c.history.burn.play`），`onDone → c.history.burn.burnDone()`，之后 `ashes`（舞台 `void`） | 有 `JURitual.burn` 时不武装 `burnMs` 兜底；`burned[eventId]` 记忆 |
+| 出席章 `JURitual.stamp(host, c.history.stampData, {adapter:'v27', active})` | 历史 · 散场的 `.c00-t08[data-t08-scope]`（整块 520px）；引擎脚本 `assets/original/v27/*` 由 stamp.js 按页面相对路径按需加载，失败 → 普通章占位 | — |
+| 环境 `JU.shared.skins.mount(envEl, c.skin, {live})` | `.ju-env` 是 `.app` 第一个孩子；`componentDidMount` mount（live = 面板实例且非预览 / 比较）、面板切环境 `setSkin`、暂停 `pause` / `resume`、卸载 `unmount` | `c.skin`、`review.paused` |
+重播（面板「重播上一动效」）：出票 `JURitual.print.reset(stage)` 后再 print；撕 `h.reset(); h.enable(true); h.trigger()`（`tearCommit` 对已撕的票返回 true 不再写）；燃烧 `JURitual.burn.reset(stage)` → 重新落定 → burn；出席章 `h.replay()`。**登记重播要直接赋 `this.lastMotion = {name, fn}`**——`this.motion(name, fn)` 会立刻执行 fn（见 §14）。
 
 ## 11. 其它
-`c.toast{on,text,kind,cls:'k-ok∣k-error∣k-info'}`（2600ms / 错误 3600ms，一次一条）、`c.copy(text, key, okText)` / `this.copy(...)`（真实 `navigator.clipboard.writeText`；只有 resolve 才给成功；失败或面板武装 → toast「未能复制，长按手动复制」+ `c.copyState(key){copied,failed,text,label,retry()}` 8s）、`c.say(text,kind)`、`c.inert(ev)`（范围外入口统一提示）、`c.rootNav[{k,label,on,inert,cls,go}]`（找局 / 开局 / 设置 inert，我的局 on）、`c.skin`（`cotton∣halo∣sunset`，面板切换，概念写 `data-skin`）、`c.rm`、`c.kb`、`c.safe`、`c.zoom`、`c.fx`、`c.fail{armed,copyArmed}`、`c.clock{now,nowText,offsetMin,demoNote,next}`、`c.rules`、`c.COPY`、`c.surfaceTitle`。
+`c.toast{on,text,kind,cls:'k-ok∣k-error∣k-info'}`（2600ms / 错误 3600ms，一次一条）、`c.copy(text, key, okText)` / `this.copy(...)`（真实 `navigator.clipboard.writeText`；只有 resolve 才给成功；失败或面板武装 → toast「未能复制，长按手动复制」+ `c.copyState(key){copied,failed,text,label,retry()}` 8s）、`c.say(text,kind)`、`c.inert(ev)`（范围外入口统一提示）、`c.rootNav[{k,label,on,inert,cls,go}]`（找局 / 开局 / 设置 inert，我的局 on）、`c.skin`（`cotton∣halo∣sunset`，面板切换，概念写 `data-skin`）、`c.ritual{print,tear,contact,burn,stamp,skins}`（共享模块是否在场；没有时控制器的 printMs / burnMs 兜底计时器接管，概念画占位）、`c.rm`、`c.kb`、`c.safe`、`c.zoom`、`c.fx`、`c.fail{armed,copyArmed}`、`c.clock{now,nowText,offsetMin,demoNote,next}`、`c.rules`、`c.COPY`、`c.surfaceTitle`。
 时钟：倒计时逐秒 `holdKey('tick',1000)` **只在有 deadline 的行可见时运行**（列表当前区有预留行 / 详情·阅读·候补面的该局有预留 / 管理面有已预留成员），每秒 `JU.dueCount` > 0 才 `settleNow()`；面板 +5 分钟 / +1 小时 / 到最近到期 / +24 小时 / 回到演示时刻 → `advanceClock` → `settleNow` → 效果逐个到达，概念只画变化。
 
 ## 12. 索引映射 `ctlJump(e, data)`
@@ -147,7 +163,9 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 6. `copy(text, key, okText)`：第三参数（局主侧「微信号已复制」）。
 7. 退出候补走确认层（v0 要求；`state-inventory` §D 说原型无二次确认——见汇报的语义矛盾）。
 8. 不做本机持久化（Phase B 的 `JUS.store`）：契约要求各套运行时数据隔离、评审工具要求确定性状态；每次打开都是数据集初态。
-9. 新增可覆盖 `printMs / burnMs / deleteMs / tearSpec / tearThreshold`。
+9. 新增可覆盖 `printMs / burnMs / deleteMs / tearSpec / tearThreshold`（接了原件后只作兜底）。
+10. 原件接入后的选择器：`data-act="tear"` 标在副券宿主 `[data-tear]` 上，手势 / 键盘的真实目标是 rig 生成的抓手层 `[data-tear] [role="button"]`（tabindex=0）；联系层按原件 DOM（`[data-contact-reveal]` 内 `.ju-contact-copy[data-act=copy]`，页脚 `[data-contact-action][data-act=contacted]`）；复制失败的重试按钮在 `.c00-copyfail [data-act=retry]`。
+11. 新增 `tearCommit() / registerTear(h) / copyVia(run) / c.ticket.ritual / c.history.ritual / c.history.stampData / c.history.burn.reason / c.ticket.result.reason / c.ritual`；`JU.hasRitual(name)`。
 
 ## 14. 坑（已验证的）
 - **Preact 的 setState 在渲染时才落地**：`setState` 之后在同一 tick 里再读 `this.state` 得到的是旧值。控制器已全部改用返回的 `res.data` / 函数式 setState（`closeSheet` 曾因此关不掉、出席「下一位」曾算到刚记录的人、同步 `ctlJump` 曾读到上一个变体）。概念的 `onEffect` 里同样只用 `fx` 载荷，不读 `this.state.data`。
@@ -160,12 +178,20 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - 减少动态下 `after()` 为 0：出票 / 燃烧瞬间到终态，`hold`（处理中、toast、撤销、tick）不压缩。
 - `go('read')` 会把 `detail` 插在下层：详情必须在 `is-under` 时也能渲染（`c.detail.on` 在 read 为栈顶时同样为 true）。
 - `c.nav.fromStyle` 只在点击元素有 `[data-origin]` 祖先时非空；为空时概念走普通过渡。
+- **`this.motion(name, fn)` 会立刻执行 fn**（评审 mixin：运行并登记）。给仪式登记重播只能 `this.lastMotion = {name, fn}`；C00 曾因此在出票一开始就 reset + 重印，第一个 print promise 被 superseded、票面瞬间变「已印」。
+- **引擎拥有的 DOM 不能被模板绑定**：`data-state / data-print`、舞台 `style`（`--ju-paper-height`）、纸的内联样式、`[data-tear]` / `[data-burn]` 里的画布、联系层的 `data-revealed` 与按钮文案都由原件写；模板里只绑静态属性（Preact 只在 vnode 值变化时才写 DOM）与同一份 `data-slot` 文字。`[data-tear]` / `[data-burn]` 不放 vnode 子节点，引擎追加的节点 Preact 不会动。
+- **无头环境的 WebGL**：headless Chromium 走 SwiftShader（`ANGLE / Vulkan / SwiftShader`，WebGL1+2 可用但慢）。live 的 Cotton Candy（three.js 水面）把整页压到 ≈7 rAF/s，所有 rAF 驱动的原件都随之爬行（键盘撕票 357ms → 2s，坠落 1080ms 在 5s 内完不成）；引擎暂停（`JU.shared.skins.pause`）后回到 60 fps。回归与帧序列采集都先 pause 环境引擎（= 面板「暂停」），三环境首屏单独 live 截。真机 / 有 GPU 的浏览器无此问题。出票的 32×128 网格在 SwiftShader 上 ≈2.5–3.5s 完成（原件 2300ms）。
+- `JURitual.stamp` 的引擎脚本（`assets/original/v27/ju-paper-film / ju-envelope / ju-stamp / ju-tickets2.js`）不在 bundle 里，stamp.js 用 `document.currentScript` 的目录（bundle 内为空 → 页面相对路径）按需加载：私有构建靠 `.build/assets → my-r2/src/shared/rituals/assets` 软链；交付单文件里会失败 → C00 退回普通章并显示原因（需要构建把四个引擎并入，或 stamp.js 内联它们）。字体同理（`assets/fonts/fonts.css`，采集时用改写了 url 的副本作 `JU_FONTS_CSS`）。
+- 08 散场引擎没有「已盖章的静态态」：传 `mode` 就播一次盖章；再次进入历史会重播（规格「进入历史不重放盖章」需要引擎加 settled 选项，已列给主负责人）。
+- 原件读 `prefers-reduced-motion` 或 `html[data-ju-reduced]`（页面级）：C00 只在面板实例把 `review.rm` 镜像到它，比较视图里多实例会互相影响。
+- 关键帧滑杆只能 seek 燃烧（`handle.seek`）；出票 / 撕 / 盖章是 rAF 引擎，用「重播」看。
+- `file://` 下 `navigator.clipboard.writeText` 被拒：capture 的联系流程落在失败分支（原件「复制失败，请长按账号复制」+ 控制器 toast），成功路径由回归在 http 上证明。
 
 ## 15. 已验证（核心 1 · 2026-10-22）
 构建：`node <scratchpad>/core1/build-c00.js` → `/home/user/JU/.build/C00.html`（外壳 294 KB，含 preact + runtime + C00 源 256 KB；`src/build.js` 由核心 2 移植，标记同 contract §2）。
 | 检查 | 结果 |
 |---|---|
-| `my-r2/tools/test/ctl-regress.cjs`（Playwright / chromium，真实点击） | **74/74 通过**：50 条 jump 全部到达目标 surface、`renderVals()` 无错、栈深 ≥2、contact 层 / sheet 到位、console 0 错误、50 个画面文本无禁用词；九条流程：详情返回（--hc 写入、起点 key、滚动恢复 120px、落点 landKey）、阅读确认（滚到底才可确认 → 武装失败原位重试 → 成局 → 查看票根 → 出票中无按钮 → 2.3s 后已印）、撕票（Enter 等价 → 联系层 → 真实剪贴板 `readText()==='ameng.nyc'` → 已加微信 → 待赴约）、改期接受（撕新票 → going + toast）/ 拒绝（确认层 → declined → 燃烧结果 → 查看退出结果到 history）、候补退出（门口 `L**` → 退出 → 回执）、审核通过 / 谢绝（待审 −1 · 预留 +1 · 成员 +1 · 原位结果；谢绝不动席位、头部 status 与徽标重算）、改时间（同时间禁用 → 新时间 → 答复区 4 人 · 时间重印 · toast）、取消（受影响名单 → 已取消 · void 成员 · 历史归位）、散场出席更正（intent attendance · 当帧写入 · 新鲜章 · 焦点下一位 · 更正留轨迹）、草稿删除撤销（ghost → 空态 + 撤销条 → 原槽位恢复） |
+| `my-r2/tools/test/ctl-regress.cjs`（Playwright / chromium，真实点击；原件接入后 **79/79 通过**，环境引擎 pause） | 原 74 项 +5：出票由 `JURitual.print` 真实完成（≈2.3s+）后才有撕票按钮、抓手层可聚焦；Enter 在抓手层撕开 → 写入在 detach 时、坠落后联系层 / 850ms 主按钮由原件出现；改期新票带原定行 + 时间已改章，接受 = rig.trigger；拒绝改期后舞台 `burning` 且 `[data-burn] canvas` 在跑；手势：拖 60px 回位不写、拖 200px 自动撕完先写后落；减少动态下 JuPrint 1ms、直接 detach、联系层 0ms。原 74 项：50 条 jump 全部到达目标 surface、`renderVals()` 无错、栈深 ≥2、contact 层 / sheet 到位、console 0 错误、50 个画面文本无禁用词；九条流程：详情返回（--hc 写入、起点 key、滚动恢复 120px、落点 landKey）、阅读确认（滚到底才可确认 → 武装失败原位重试 → 成局 → 查看票根 → 出票中无按钮 → 2.3s 后已印）、撕票（Enter 等价 → 联系层 → 真实剪贴板 `readText()==='ameng.nyc'` → 已加微信 → 待赴约）、改期接受（撕新票 → going + toast）/ 拒绝（确认层 → declined → 燃烧结果 → 查看退出结果到 history）、候补退出（门口 `L**` → 退出 → 回执）、审核通过 / 谢绝（待审 −1 · 预留 +1 · 成员 +1 · 原位结果；谢绝不动席位、头部 status 与徽标重算）、改时间（同时间禁用 → 新时间 → 答复区 4 人 · 时间重印 · toast）、取消（受影响名单 → 已取消 · void 成员 · 历史归位）、散场出席更正（intent attendance · 当帧写入 · 新鲜章 · 焦点下一位 · 更正留轨迹）、草稿删除撤销（ghost → 空态 + 撤销条 → 原槽位恢复） |
 | 时钟 | tick 只在有预留行时运行、每秒变化、切到历史停止；+65min 花卷到期 → Leon 获邀 → 我从第 2 位到第 1 位；+5h05 我的 brunch 预留到期 → 未成行 00:00:00；到最近到期 → 轮到我（invited_queue）；局主侧 Leon「预留到期」入离开记录、候补按顺位获邀 |
 | 复制失败分支 | 武装 → toast「未能复制，长按手动复制」+ 手动提示 + 重试，标志消费；重试真实写入成功 |
 | 撕票手势 | 拖半程回弹且不写数据；拖过阈值写入后落券；键盘 Enter 等价 |
@@ -173,4 +199,5 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 | 减少动态（`reducedMotion:'reduce'`） | `rmSys=true`；阅读→确认→出票（瞬印）→撕→联系层完整；无 >1ms 动画在跑；取消到稳定终态 |
 | `settings-r2/tools/widths.cjs C00`（360/375/390/430 × 8 态） | overflow []，字号随宽度不变，`.app` 无 transform，minFont 12 |
 | 头less 冒烟 `<scratchpad>/core1/ctl-smoke.cjs` | 通过（引擎 / 视图模型 / 50 跳 / 禁用词） |
+| 帧序列（`my-r2/tools/capture.cjs`，`my-r2/evidence/C00/<flow>/f*.jpg + sheet.jpg`，均 Read 看过） | `print` 10 帧（纸从出纸口推出到落定）· `tear` 28 帧（拖 60px 回位、拖 200px 撕开、坠落、联系层、已加微信）· `tear-keyboard` 11 帧（Enter 同一路径）· `contact` 6 帧（复制在 file:// 下走失败分支、已加微信 → 待赴约）· `burn` 13 帧（主动退出 → C 变体侧向炭边落灰 → 空舞台 + 已退出这局）· `burn-declined` 11 帧（新票 → 去不了了 → B 多点烧穿）· `stamp` 11 帧（08 场景：章落下、出席印、归档）· `skins` 8 帧（cotton / halo / sunset live）· `reissue` 9 帧（新票打印：原定划线 + 时间已改章） |
 禁用词（扣分 / 信用分 / 处罚 / 等级 / 剩余次数）：核心四文件 + C00 = 0（数据里两句「不会自动处罚」改为「不会自动带来任何后果」，语义不变）。

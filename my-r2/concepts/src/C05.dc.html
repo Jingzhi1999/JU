@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C05 大面</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&family=Archivo:wght@500;600;700;800&family=Space+Mono:wght@400;700&family=Libre+Caslon+Text:wght@400;700&family=Caveat:wght@600;700&family=Archivo+Black&family=Oswald:wght@500;600;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* ============================================================================
+   C05「大面」· 上半屏一场的整面（饱和色面 = 当前环境主色），下半屏其余的纸（#F6F4F1，圆角 26）。
+   面：页头 / 角色切换 / 周六 12.19 15px + 11:30 34px Archivo / 局名 26px·600 / 地点 · 局主 · 状态 14px / CTA；局卡（JuCardV2 原件，中档 212×265）
+   在面右上与大字时间并置。纸：「还有 N 场」14px 局名 + 13px 时间 + 右侧状态，可上拉盖过面。票根页：面变为票底色承载票根 258；
+   管理页：面承载头部状态与进度，纸承载区块。签名运动：点纸上一行 → 该行内容上升进面（面内容交叉淡出），纸下沉 40px 再回弹。
+   行为全部来自 this.ctlVals()；这里只有构图、排版、表面与运动。
+   ========================================================================== */
+.app{position:absolute;inset:0;overflow:hidden;container-type:inline-size;font-family:'Noto Sans SC','PingFang SC','Microsoft YaHei',sans-serif;color:#14161F;--k:1;font-size:calc(14px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;
+  --c05-paper:#F6F4F1;--c05-nav:56px;--c05-zb:110px;--c05-tint:.92;
+  --c05-fj:#E65C7E;--c05-fh:#8E7BD6;--c05-face:var(--c05-fj);
+  --c05-ink:#2A0F1D;--c05-ink2:rgba(42,15,29,.84);--c05-ink3:rgba(42,15,29,.6);--c05-line:rgba(42,15,29,.18);
+  --c05-act:#C12E48;--c05-soon:#0B7F61;--c05-wait:#6b6f7e;--c05-void:#8a8a90;--c05-kept:#4553BE;--c05-blue:#4553BE}
+.app *,.app *::before,.app *::after{box-sizing:border-box}
+.app button{font-family:inherit}
+/* ---- 三环境：面色跟随环境主色（参加者 = 主色；局主 = 环境的第二色，紫系） ---- */
+.app[data-skin="cotton"]{--c05-fj:#E65C7E;--c05-fh:#8E7BD6}
+.app[data-skin="halo"]{--c05-fj:#EE651F;--c05-fh:#8169C4}
+.app[data-skin="sunset"]{--c05-fj:#F97C4A;--c05-fh:#8289D8}
+.app.role-hosted{--c05-face:var(--c05-fh);--c05-ink:#17123A;--c05-ink2:rgba(23,18,58,.86);--c05-ink3:rgba(23,18,58,.62);--c05-line:rgba(23,18,58,.2)}
+/* 票根页：面变为票底灰蓝（#edeff7 的近色，比纸票深一度，纸票的影子落在上面） */
+.app.at-ticket,.app.at-reply{--c05-face:#E1E4EE;--c05-ink:#14161F;--c05-ink2:#454b5e;--c05-ink3:#535b70;--c05-line:rgba(20,22,31,.14);--c05-tint:.97}
+.app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+/* ---- 环境层（共享 skins 引擎挂在 .ju-env 里）+ 色面 ---- */
+.ju-env{position:absolute;inset:0;z-index:0;overflow:hidden;background:var(--c05-face)}
+.c05-tint{position:absolute;inset:0;z-index:1;background:var(--c05-face);opacity:var(--c05-tint);pointer-events:none;transition:background-color calc(360ms * var(--k)) ease,opacity calc(360ms * var(--k)) ease}
+.c05-tint::after{content:'';position:absolute;inset:0;background:radial-gradient(110% 64% at 96% 0%,rgba(255,255,255,.2),rgba(255,255,255,0) 62%)}
+/* 落日：面从橙向下沉入落日的蓝紫（环境本身就是这条渐变）；光晕：橙面上方一点驼色 */
+.c05-tint::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity calc(360ms * var(--k)) ease}
+.app[data-skin="sunset"].role-joined .c05-tint::before{opacity:1;background:linear-gradient(180deg,rgba(255,170,120,0) 0%,rgba(120,118,205,.18) 50%,rgba(104,104,205,.62) 100%)}
+.app[data-skin="sunset"].role-hosted .c05-tint::before{opacity:1;background:linear-gradient(180deg,rgba(250,150,110,.14) 0%,rgba(130,137,216,0) 40%,rgba(84,92,196,.45) 100%)}
+.app[data-skin="halo"].role-joined .c05-tint::before{opacity:1;background:linear-gradient(180deg,rgba(219,186,149,.28) 0%,rgba(219,186,149,0) 40%)}
+.app.at-ticket .c05-tint::before,.app.at-reply .c05-tint::before{opacity:0}
+/* ---- 局卡原件（JuCardV2 中档 212×265）：面的「实物」，在右上与大字时间并置；壳 = V27 正面壳（ju-card.css） ---- */
+.c05-card{position:absolute;right:20px;top:var(--c05-zb);width:212px;height:265px;z-index:1;perspective:1150px;perspective-origin:50% 46%;pointer-events:auto;cursor:pointer;transition:top calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease,transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c05-card.is-off{opacity:0;pointer-events:none;transform:translateY(14px)}
+.c05-card .c05-spin{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(3deg) rotateY(-7deg)}
+.c05-card [data-spin-face=front]{position:absolute;inset:0;border-radius:13px;overflow:hidden;box-shadow:0 42px 84px -28px rgba(18,22,48,.55),0 10px 26px -12px rgba(18,22,48,.35)}
+.c05-card [data-spin-sheen]{transform:translateX(-48%)}
+@container (max-width:376px){.c05-card{right:14px}}
+/* ---- 页面：每个 surface 一页（面内容 + 纸），纸是一个覆盖整页的滚动容器里的一张纸（可上拉盖住面） ---- */
+.c05-pg{position:absolute;inset:0;z-index:2;pointer-events:none;--c05-ptop:524px}
+.c05-pg.is-under.ph-idle{visibility:hidden}
+.c05-fc{position:absolute;left:0;right:0;top:0;z-index:1;padding:calc(24px + var(--sat,0px)) 24px 0;pointer-events:none;color:var(--c05-ink);transition:transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
+.c05-fc button,.c05-fc [role=button],.c05-fc a,.c05-fc .ju-contact-wrap,.c05-fc .c05-stage{pointer-events:auto}
+.c05-sc{position:absolute;inset:0;z-index:2;overflow-y:auto;overflow-x:hidden;pointer-events:none;scrollbar-width:none;overscroll-behavior:contain;display:flex;flex-direction:column}
+.c05-sc::-webkit-scrollbar{display:none}
+.c05-sp{height:var(--c05-ptop);flex:0 0 auto;pointer-events:none}
+.c05-paper{position:relative;flex:1 0 auto;pointer-events:auto;background:var(--c05-paper);border-radius:26px 26px 0 0;min-height:calc(100% - var(--c05-ptop));box-shadow:0 -14px 44px -22px rgba(20,10,20,.55);padding:8px 24px calc(var(--c05-nav) + 28px + var(--sab,0px) + var(--kb,0px));color:#14161F;transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(200ms * var(--k)) ease}
+.c05-pg.pg-deep .c05-paper{padding-bottom:calc(28px + var(--sab,0px) + var(--kb,0px))}
+.c05-handle{width:36px;height:4px;border-radius:2px;background:rgba(20,22,31,.16);margin:0 auto 10px}
+/* ---- 运动：进入（纸上一行上升进面：面内容从行的位置升起并淡入；纸下沉 40 再回弹 320ms）/ 返回（反向，行高亮 1.1s） ---- */
+.c05-pg.is-top.ph-enter.dir-fwd .c05-fc{opacity:0;transform:translateY(calc(var(--fx-y,520px) - var(--c05-zb) - 120px))}
+.c05-pg.is-top.ph-enter.dir-fwd .c05-paper{transform:translateY(40px);opacity:0}
+.c05-pg.is-top.ph-in.dir-fwd .c05-paper{animation:c05-rebound calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes c05-rebound{0%{transform:translateY(40px);opacity:0}62%{transform:translateY(-7px);opacity:1}100%{transform:none;opacity:1}}
+.c05-pg.is-top.ph-enter.dir-swap .c05-fc,.c05-pg.is-top.ph-enter.dir-swap .c05-paper{opacity:0}
+.c05-pg.is-top.ph-exit .c05-fc{opacity:0;transform:translateY(calc(var(--fx-y,520px) - var(--c05-zb) - 160px));transition-duration:calc(300ms * var(--k)),calc(200ms * var(--k))}
+.c05-pg.is-top.ph-exit .c05-paper{transform:translateY(44px);opacity:0}
+.c05-pg.is-under .c05-fc,.c05-pg.is-under .c05-paper{opacity:0}
+.c05-pg.is-under.ph-enter .c05-fc,.c05-pg.is-under.ph-enter .c05-paper{opacity:1}
+.c05-pg.is-under.ph-in .c05-fc{opacity:0;transition:opacity calc(200ms * var(--k)) ease}
+.c05-pg.is-under.ph-in .c05-paper{opacity:0;transition:opacity calc(160ms * var(--k)) ease}
+.c05-pg.is-under.ph-exit .c05-fc,.c05-pg.is-under.ph-exit .c05-paper{opacity:1;transition:opacity calc(240ms * var(--k)) ease calc(40ms * var(--k))}
+.c05-pg.is-leaving{opacity:0;transition:opacity calc(200ms * var(--k)) ease}
+/* 角色切换（dir-role，300ms 同帧）：面色过渡在 .c05-tint 上；面内「一场」与纸上列表交叉淡入 */
+.c05-zb,.c05-list{transition:opacity calc(260ms * var(--k)) ease,transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c05-pg.ph-enter.dir-role .c05-zb,.c05-pg.ph-enter.dir-role .c05-list{opacity:0;transform:translateY(10px)}
+/* ---- 面内文字角色：外层标题 30/500（V27）· 辅助行 14 · 角色切换 15/500 · 日期 15 Archivo · 时间 34 Archivo · 局名 26/600 · 地点·局主·状态 14 ---- */
+.c05-ttl{margin:0;font-size:calc(30px * var(--tz,1));font-weight:500;line-height:1.25;letter-spacing:0;color:var(--c05-ink);overflow-wrap:anywhere}
+.c05-aux{margin:3px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--c05-ink2);min-height:21px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:calc(100% - 150px)}
+.c05-pg.pg-deep .c05-aux{max-width:100%}
+.c05-roles{display:flex;gap:18px;margin:6px 0 0;padding:0;list-style:none}
+.c05-role{appearance:none;border:0;background:none;padding:0 0 4px;margin:0;font-size:calc(15px * var(--tz,1));font-weight:500;line-height:24px;color:var(--c05-ink3);box-shadow:inset 0 -2px 0 transparent;transition:color calc(200ms * var(--k)),box-shadow calc(200ms * var(--k));display:flex;align-items:baseline;gap:5px;cursor:pointer}
+.c05-role.on{color:var(--c05-ink);box-shadow:inset 0 -2px 0 var(--c05-ink)}
+.c05-role .b{font:600 calc(12px * var(--tz,1))/1 'Archivo',sans-serif;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--c05-ink);color:var(--c05-face);display:inline-flex;align-items:center;justify-content:center;transform:translateY(-1px)}
+.c05-role:not(.on) .b{background:var(--c05-ink3)}
+.c05-hd{position:relative;padding-top:53px;min-height:53px}
+.c05-pg.pg-home .c05-hd{padding-top:0}
+.c05-back{position:absolute;left:-2px;top:0;width:44px;height:44px;border:0;padding:0;z-index:3}
+.c05-weak{position:absolute;right:-6px;top:0;z-index:3;min-width:52px;height:44px;display:flex;align-items:center;justify-content:center;padding:0 10px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c05-ink2);border:0;background:transparent;border-radius:12px;cursor:pointer;white-space:nowrap}
+.c05-weak:active{background:rgba(20,22,31,.08)}
+/* 面的「一场」：左列（日期 / 时间 / 状态 / 倒计时 / 地点 / 局主）与右上局卡并置；局名与 CTA 在卡下 */
+.c05-zb{position:relative;margin-top:12px;padding-top:0}
+.c05-num{width:calc(100% - 216px);min-height:265px;padding-top:6px}
+.c05-zb.no-card .c05-num{width:100%;min-height:0}
+.c05-wd{font:600 calc(15px * var(--tz,1))/1.2 'Archivo',sans-serif;letter-spacing:.01em;color:var(--c05-ink)}
+.c05-time{font:700 calc(34px * var(--tz,1))/1.1 'Archivo',sans-serif;letter-spacing:-.02em;margin-top:4px;color:var(--c05-ink);font-variant-numeric:tabular-nums;white-space:nowrap}
+.c05-st{margin-top:14px;font-size:calc(14px * var(--tz,1));font-weight:600;line-height:1.4;color:var(--c05-ink)}
+.c05-cd{font:600 calc(14px * var(--tz,1))/1.4 'Archivo',sans-serif;font-variant-numeric:tabular-nums;color:var(--c05-ink);letter-spacing:.01em}
+.c05-cd.red{color:#7A0C22}.app.role-hosted .c05-cd.red{color:#17123A}
+.c05-bar{height:3px;border-radius:2px;background:var(--c05-line);margin:6px 0 2px;overflow:hidden;max-width:118px}
+.c05-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--c05-ink);transition:width 900ms linear}
+.c05-pl{margin-top:10px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--c05-ink2);overflow-wrap:anywhere}
+.c05-seats + .c05-pl{margin-top:8px;font-size:calc(13px * var(--tz,1))}
+.c05-seats + .c05-pl b{font-size:calc(14px * var(--tz,1))}
+.c05-pl b{font-weight:500;color:var(--c05-ink)}
+.c05-sec2{appearance:none;border:0;background:none;padding:6px 0 0;margin-top:8px;font:500 calc(14px * var(--tz,1))/1.5 inherit;font-family:inherit;color:var(--c05-ink2);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--c05-line);cursor:pointer;min-height:32px;display:block}
+.c05-seats{display:flex;gap:3px;margin:12px 0 0;max-width:118px}
+.c05-seat{flex:1 1 0;height:10px;border-radius:2px;background:var(--c05-line);transform-origin:50% 100%}
+.c05-seat.host,.c05-seat.ok{background:var(--c05-ink)}.c05-seat.res{background:var(--c05-ink);opacity:.45}.c05-seat.att-present{background:var(--c05-ink)}.c05-seat.att-absent{background:var(--c05-ink3)}
+.c05-seat.is-pop{animation:c05-pop calc(500ms * var(--k)) cubic-bezier(.2,.9,.3,1.1)}
+@keyframes c05-pop{0%{transform:scaleY(.42)}70%{transform:scaleY(1.07)}100%{transform:scaleY(1)}}
+.c05-name{margin:14px 0 0;font-size:calc(26px * var(--tz,1));font-weight:600;line-height:1.25;color:var(--c05-ink);max-width:300px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance;overflow-wrap:anywhere}
+.c05-sub{margin:6px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--c05-ink2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.c05-sub b{font-weight:500;color:var(--c05-ink)}
+.c05-cta-row{margin-top:16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.c05-cta-row .ju-v27-cta{align-self:flex-start;flex:0 0 min(100%,280px)}
+.ju-v27-cta{border:0;padding:0;font-family:inherit}
+.c05-err{font-size:calc(13px * var(--tz,1));color:#8b1f30;margin:8px 0 0}
+.app.role-joined .c05-err{color:#5a0b1e}
+.c05-fc.is-land .c05-zb{animation:c05-landface 1100ms ease}
+@keyframes c05-landface{0%{opacity:.55}100%{opacity:1}}
+/* 历史 / 草稿分区时面上的摘要（没有「先做这件」）：大数字 + 口径 */
+.c05-sum{padding-top:16px}
+.c05-sum .n{font:700 calc(56px * var(--tz,1))/1 'Archivo',sans-serif;letter-spacing:-.03em;color:var(--c05-ink)}
+.c05-sum .l{margin-top:10px;font-size:calc(15px * var(--tz,1));color:var(--c05-ink2)}
+.c05-sum .l b{font-weight:600;color:var(--c05-ink)}
+.c05-sum .e{margin-top:16px;font-size:calc(14px * var(--tz,1));color:var(--c05-ink2);max-width:300px;line-height:1.6}
+/* ---- 纸：列表 ---- */
+.c05-cap{display:flex;justify-content:space-between;align-items:baseline;gap:12px;padding:4px 0 2px;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c05-cap b{font-weight:500;color:#14161F;font-size:calc(14px * var(--tz,1))}
+.c05-tabs{display:flex;gap:14px;flex:0 0 auto}
+.c05-tab{appearance:none;border:0;background:none;padding:2px 0;font-size:calc(13px * var(--tz,1));line-height:22px;color:#535b70;box-shadow:inset 0 -2px 0 transparent;cursor:pointer;min-height:28px;display:inline-flex;align-items:center;gap:4px}
+.c05-tab.on{color:#14161F;font-weight:500;box-shadow:inset 0 -2px 0 #14161F}
+.c05-tab .n{font:600 calc(12px * var(--tz,1))/1 'Archivo',sans-serif;color:#8a8a90}
+.c05-grp{margin:14px 0 0;font-size:calc(12px * var(--tz,1));letter-spacing:.06em;color:#6b6f7e;display:flex;gap:8px;align-items:center}
+.c05-grp i{display:inline-block;width:7px;height:7px;border-radius:50%;background:currentColor;flex:0 0 auto}
+.c05-grp.t-act{color:var(--c05-act)}.c05-grp.t-soon{color:var(--c05-soon)}.c05-grp.t-wait{color:var(--c05-wait)}.c05-grp.t-kept{color:var(--c05-kept)}.c05-grp.t-void{color:var(--c05-void)}
+.c05-grp small{color:#6b6f7e;letter-spacing:0;margin-left:auto}
+.c05-row{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:11px 0;margin-top:4px;border-top:1px solid rgba(20,22,31,.08);cursor:pointer;touch-action:pan-y;text-align:left;width:100%;background:none;border-left:0;border-right:0;border-bottom:0;color:inherit;font:inherit;border-radius:0;transition:background calc(120ms * var(--k))}
+.c05-grp + .c05-row{border-top-color:transparent;margin-top:2px}
+.c05-row:active{background:rgba(20,22,31,.045)}
+.c05-row .c{min-width:0;flex:1 1 auto}
+.c05-row .t{font-size:calc(14px * var(--tz,1));font-weight:500;line-height:1.4;color:#14161F;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
+.c05-row .m{font-size:calc(13px * var(--tz,1));line-height:1.45;color:#535b70;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c05-row .s{flex:0 0 auto;max-width:44%;font-size:calc(13px * var(--tz,1));line-height:1.45;padding-top:1px;text-align:right;overflow-wrap:anywhere}
+.c05-row .s.t-act{color:var(--c05-act)}.c05-row .s.t-soon{color:var(--c05-soon)}.c05-row .s.t-wait{color:var(--c05-wait)}.c05-row .s.t-kept{color:var(--c05-kept)}.c05-row .s.t-void{color:var(--c05-void)}
+.c05-row.is-landing{animation:c05-land 1100ms ease}
+@keyframes c05-land{0%{background:rgba(69,83,190,.14)}100%{background:transparent}}
+.c05-row.is-deleting{opacity:0;transform:translateX(24px);transition:opacity calc(260ms * var(--k)),transform calc(260ms * var(--k))}
+.c05-row.is-restored{animation:c05-restore calc(260ms * var(--k)) ease}
+@keyframes c05-restore{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.c05-row .acts{display:flex;gap:16px;align-items:center;margin-top:8px}
+.c05-link{appearance:none;border:0;background:none;padding:6px 0;font:inherit;font-size:calc(14px * var(--tz,1));color:var(--c05-blue);cursor:pointer;min-height:36px}
+.c05-link.inert{color:#8a8a90;cursor:default}
+.c05-link.danger{color:var(--c05-act)}
+.c05-undo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-top:12px;padding:12px 14px;border-radius:14px;background:#14161F;color:#F8F9FF;font-size:calc(14px * var(--tz,1))}
+.c05-undo button{appearance:none;border:0;background:rgba(255,255,255,.14);color:#fff;border-radius:999px;padding:7px 12px;font:inherit;font-size:calc(13px * var(--tz,1));cursor:pointer}
+.c05-empty{padding:18px 0 6px;font-size:calc(14px * var(--tz,1));color:#535b70;line-height:1.6}
+.c05-help{font-size:calc(13px * var(--tz,1));color:#535b70;line-height:1.6;margin:8px 0 0}
+.c05-dim{color:#8a8a90}
+.c05-foot{margin-top:18px;font-size:calc(13px * var(--tz,1));color:#535b70;line-height:1.6}
+/* ---- 根导航（只在首页，在纸上） ---- */
+.c05-nav{position:absolute;left:0;right:0;bottom:0;height:calc(var(--c05-nav) + var(--sab,0px));padding:0 6px var(--sab,0px);display:flex;background:var(--c05-paper);border-top:1px solid rgba(20,22,31,.08);z-index:3;pointer-events:auto}
+.c05-nav button{flex:1;border:0;background:none;font:inherit;font-size:calc(12px * var(--tz,1));color:#8a8a90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:0}
+.c05-nav button.on{color:#14161F;font-weight:500}
+.c05-nav svg{width:22px;height:22px;display:block}
+/* ---- 纸上的区块（管理 / 详情） ---- */
+.c05-secs{display:flex;flex-direction:column}
+.c05-sec{order:var(--o,9);padding:12px 0 2px}
+.c05-sec.is-focus .c05-sh{color:#14161F}
+.c05-sh{margin:0;font-size:calc(15px * var(--tz,1));font-weight:600;display:flex;justify-content:space-between;align-items:baseline;gap:8px;color:#14161F}
+.c05-sh small{font-weight:400;font-size:calc(12px * var(--tz,1));color:#6b6f7e;letter-spacing:.02em;text-align:right}
+.c05-sh button{appearance:none;border:0;background:none;padding:0;font:inherit;font-size:inherit;font-weight:inherit;color:inherit;cursor:pointer;display:flex;gap:8px;align-items:baseline}
+.c05-sec.is-closed .c05-sb{display:none}
+.c05-app{margin:10px 0 0;padding:14px 16px;background:#fff;border-radius:16px;box-shadow:0 1px 0 rgba(20,22,31,.05),0 10px 26px -20px rgba(20,22,31,.45);animation:c05-slidein calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 60ms * var(--k))}
+@keyframes c05-slidein{0%{opacity:0;transform:translateY(22px)}100%{opacity:1;transform:none}}
+.c05-app .hd{display:flex;align-items:center;gap:10px}
+.c05-app .av{width:36px;height:36px;border-radius:50%;background:var(--c05-fh);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:calc(15px * var(--tz,1));flex:0 0 auto}
+.c05-app .n{font-size:calc(15px * var(--tz,1));font-weight:600;line-height:1.3}
+.c05-app .q{font-size:calc(13px * var(--tz,1));color:#535b70;line-height:1.4}
+.c05-app .note{font-size:calc(14px * var(--tz,1));color:#252b3a;margin-top:8px;line-height:1.5}
+.c05-app .acts{display:flex;gap:10px;margin-top:12px;justify-content:flex-end;align-items:center}
+.c05-btn{appearance:none;border:1px solid rgba(20,22,31,.16);background:#fff;border-radius:999px;padding:0 16px;height:40px;font:inherit;font-size:calc(14px * var(--tz,1));font-weight:500;color:#14161F;cursor:pointer;transition:transform calc(120ms * var(--k))}
+.c05-btn:active{transform:scale(.97)}
+.c05-btn.pri{background:var(--c05-blue);border-color:var(--c05-blue);color:#fff;min-width:112px}
+.c05-btn.danger{border-color:rgba(193,46,72,.4);color:var(--c05-act)}
+.c05-btn:disabled{opacity:.5;cursor:default}
+.c05-res{margin-top:10px;font-size:calc(14px * var(--tz,1));color:var(--c05-soon);animation:c05-settle calc(420ms * var(--k)) ease}
+.c05-res.void{color:#6b6f7e}
+@keyframes c05-settle{0%{opacity:.25;transform:translateY(5px)}100%{opacity:1;transform:none}}
+.c05-busy{margin-top:10px;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c05-mem{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-top:1px solid rgba(20,22,31,.08);font-size:calc(14px * var(--tz,1));line-height:1.45}
+.c05-mem:first-of-type{border-top:0}
+.c05-mem .r{color:#535b70;text-align:right;flex:0 0 auto;max-width:52%;font-size:calc(13px * var(--tz,1))}
+.c05-mem .r.ok{color:var(--c05-soon)}.c05-mem .r.res{color:#b45309}.c05-mem .r.void{color:#8a8a90}.c05-mem .r.wait{color:#6b6f7e}
+.c05-mem.you .l{font-weight:500}
+.c05-mem small{display:block;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c05-mini{appearance:none;border:1px solid rgba(20,22,31,.16);background:#fff;border-radius:999px;padding:0 10px;height:28px;font:inherit;font-size:calc(12px * var(--tz,1));color:#14161F;cursor:pointer;margin-left:6px}
+.c05-arr{display:flex;flex-direction:column;gap:2px}
+.c05-arr .it{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 0;border-top:1px solid rgba(20,22,31,.08)}
+.c05-arr .it:first-child{border-top:0}
+.c05-arr small{font-size:calc(13px * var(--tz,1));color:#535b70;line-height:1.4}
+.c05-rules h5{margin:12px 0 4px;font-size:calc(14px * var(--tz,1));font-weight:600}
+.c05-rules p{margin:0 0 8px;font-size:calc(14px * var(--tz,1));color:#252b3a;line-height:1.65}
+.c05-endmark{text-align:center;color:#8a8a90;font-size:calc(12px * var(--tz,1));padding:24px 0 8px;letter-spacing:.06em}
+.c05-receipt{margin-top:10px;padding:12px 14px;border:1px dashed rgba(20,22,31,.3);border-radius:12px;background:#fffdf7;font-size:calc(14px * var(--tz,1))}
+.c05-receipt b{display:block;font-size:calc(17px * var(--tz,1));font-weight:600}
+.c05-chop{display:inline-block;border:2px solid #14161F;border-radius:6px;padding:2px 8px;font-weight:700;transform:rotate(-8deg);font-size:calc(13px * var(--tz,1))}
+.c05-chop.absent{border-color:#8a8a90;color:#8a8a90}.c05-chop.pending{border-style:dashed}
+.c05-chop.fx-stamp{animation:c05-chop calc(550ms * var(--k)) cubic-bezier(.2,.9,.3,1) both}
+@keyframes c05-chop{0%{transform:scale(2.1) rotate(-24deg);opacity:0}60%{opacity:1}100%{transform:scale(1) rotate(-8deg);opacity:1}}
+.c05-att{padding:10px 0;border-top:1px solid rgba(20,22,31,.08)}
+.c05-att.is-next{background:rgba(69,83,190,.06);margin:0 -12px;padding:10px 12px;border-radius:10px}
+.c05-seg{display:flex;gap:8px;margin:8px 0 0}
+.c05-seg .c05-btn{flex:1;padding:0 6px;height:38px;font-size:calc(13px * var(--tz,1))}
+.c05-seg .c05-btn[aria-pressed="true"]{background:#14161F;color:#fff;border-color:#14161F}
+.c05-trail{font-size:calc(12px * var(--tz,1));color:#8a8a90;margin:4px 0 0;line-height:1.5}
+/* ---- 页脚 CTA（票根 / 阅读 / 候补等深层页：V27 页脚构造） ---- */
+.c05-footer{position:absolute;left:0;right:0;bottom:0;z-index:4;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:20px 22px calc(18px + var(--sab,0px) + var(--kb,0px))}
+.c05-footer>*{pointer-events:auto}
+.c05-footer .ju-v27-cta{margin:0}
+.c05-footer.on-paper{background:linear-gradient(0deg,rgba(246,244,241,.98) 70%,rgba(246,244,241,0))}
+.c05-tk-hint{font-size:calc(12px * var(--tz,1));color:#535b70;letter-spacing:.04em;text-align:center}
+/* ---- 票根页：面变为票底色，整面承载票根原件（舞台 + 纸票 258 + 副券 84）；纸只留底部一条（CTA 在纸上） ---- */
+.c05-pg.pg-ticket .c05-fc{z-index:3;bottom:0;overflow:visible}
+.c05-pg.pg-ticket{--c05-ptop:calc(100% - 118px - var(--sab,0px))}
+.c05-pg.pg-ticket .c05-sc{overflow:hidden}
+.c05-pg.pg-ticket .c05-paper{padding-bottom:calc(16px + var(--sab,0px));min-height:0}
+.c05-stage{margin:10px -2px 0;width:calc(100% + 4px)}
+.c05-stage.reissued{--ju-ticket-top:24px}
+.c05-tk-side{position:absolute;right:0;top:0;width:80px}
+.c05-ash{height:46px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.7;margin:12px auto 0;width:258px}
+.c05-result{text-align:center;padding:24px 10px 8px}
+.c05-result b{display:block;font-size:calc(20px * var(--tz,1));font-weight:600}
+.c05-result p{color:var(--c05-ink2);font-size:calc(14px * var(--tz,1));margin:6px 0 0}
+.c05-copyfail{font-size:calc(13px * var(--tz,1));color:#8b1f30;margin:8px 0 0}
+.c05-unav{margin-top:14px;font-size:calc(15px * var(--tz,1));line-height:1.6;color:var(--c05-ink2);max-width:300px}
+.c05-paper .ju-v27-cta{margin:10px auto 0}
+/* ---- 弹层（纸的材质，从底部上来） ---- */
+.c05-over{position:absolute;inset:0;z-index:50;background:rgba(20,10,22,.34);display:flex;align-items:flex-end;animation:c05-fade calc(320ms * var(--k)) ease both}
+@keyframes c05-fade{0%{background:rgba(20,10,22,0)}100%{background:rgba(20,10,22,.34)}}
+.c05-sheet{width:100%;background:var(--c05-paper);border-radius:26px 26px 0 0;padding:14px 24px calc(24px + var(--sab,0px) + var(--kb,0px));max-height:calc(100% - 56px);overflow:auto;animation:c05-up calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;box-shadow:0 -14px 44px -22px rgba(20,10,20,.55)}
+@keyframes c05-up{0%{transform:translateY(40%)}100%{transform:none}}
+.c05-sheet h3{margin:6px 0 8px;font-size:calc(20px * var(--tz,1));font-weight:600;line-height:1.3}
+.c05-sheet p{margin:0 0 10px;font-size:calc(14px * var(--tz,1));color:#252b3a;line-height:1.6}
+.c05-id{display:flex;gap:10px;align-items:center;margin:0 0 12px;padding:10px 12px;border-radius:12px;background:rgba(20,22,31,.05);font-size:calc(13px * var(--tz,1));color:#535b70}
+.c05-id b{display:block;color:#14161F;font-size:calc(14px * var(--tz,1));font-weight:500}
+.c05-id i{width:34px;height:42px;border-radius:5px;background:var(--c05-face);flex:0 0 auto}
+.c05-acts{display:flex;gap:10px;justify-content:flex-end;margin-top:14px;align-items:center}
+.c05-acts .c05-btn{height:44px;padding:0 18px}
+.c05-acts .c05-btn.pri{min-width:132px}
+.c05-acts .c05-btn.danger{background:#C2364C;border-color:#C2364C;color:#fff}
+.c05-irrev{background:#fbe9ec;color:#8b1f30;padding:8px 10px;border-radius:8px;font-size:calc(13px * var(--tz,1));margin:8px 0}
+.c05-in{display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:10px;margin:6px 0;background:#fff}
+.c05-sheet label{display:block;font-size:calc(13px * var(--tz,1));color:#535b70;margin-top:6px}
+/* ---- toast ---- */
+.c05-toast{position:absolute;left:20px;right:20px;bottom:calc(72px + var(--kb,0px) + var(--sab,0px));background:rgba(16,18,30,.92);color:#F8F9FF;padding:12px 16px;border-radius:14px;font-size:calc(14px * var(--tz,1));z-index:60;animation:c05-toast calc(220ms * var(--k)) ease;text-align:center}
+.c05-toast.k-error{background:#8b1f30}
+@keyframes c05-toast{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c05{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <!-- 环境：共享 skins 引擎挂进 .ju-env；色面 = 环境主色的不透明面（.c05-tint），纸盖在下半 -->
+      <div class="ju-env" ref="{{envRef}}"></div>
+      <div class="c05-tint"></div>
+      <!-- 局卡原件（JuCardV2，V27 中档 212×265，V27 正面壳）：面的实物，在右上与大字时间并置；内容随当前主角（首页先做这件 / 打开的那局）交叉切换 -->
+      <div class="c05-card {{hero.cls}}" ref="{{cardRef}}" data-act="card" role="button" tabindex="-1" aria-label="局卡 {{hero.fullTitle}}" onClick="{{hero.open}}">
+        <div class="c05-spin">
+          <div data-spin-shadow="true"></div>
+          <div data-spin-face="front">
+            <div style="position:relative;width:100%;container-type:inline-size;font-family:'Noto Sans SC',sans-serif;background:#F2E8D5">
+  <sc-if value="{{hero.isInvite}}" hint-placeholder-val="{{hero.true}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(174deg,#F4EBD9 0%,#EFE4CC 70%,#EADDC2 100%);color:#241F17;display:flex;flex-direction:column;padding:6.5cqw 7cqw 5.5cqw;box-sizing:border-box">
+      <div style="font-family:'Libre Caslon Text',serif;font-weight:700;font-size:7.6cqw;letter-spacing:0.22cqw;color:#A8281F;text-align:center;line-height:1;white-space:nowrap;overflow:hidden">{{hero.en}}</div>
+      <div style="display:flex;align-items:center;gap:2cqw;margin:2.8cqw 0 3.6cqw"><div style="flex:1;height:0.35cqw;background:#A8281F"></div><div style="font-family:'Space Mono',monospace;font-size:2.4cqw;letter-spacing:0.5cqw;color:#A8281F">JU {{hero.num}}</div><div style="flex:1;height:0.35cqw;background:#A8281F"></div></div>
+      <div style="display:flex;align-items:flex-end;gap:2cqw;font-family:'Space Mono',monospace;font-size:2.9cqw;color:#A8281F;letter-spacing:0.2cqw">
+        <span style="padding-bottom:1cqw">TO:</span>
+        <span style="flex:1;border-bottom:0.3cqw solid #CDAF93;font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6.6cqw;color:#241F17;line-height:1;text-align:center">{{hero.toWho}}</span>
+        <span style="padding-bottom:1cqw">DATE:</span>
+        <span style="border-bottom:0.3cqw solid #CDAF93;font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6cqw;line-height:1;padding:0 1cqw">{{hero.date}}</span>
+      </div>
+      <div style="margin-top:4cqw;flex:1;border:0.4cqw solid #A8281F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6cqw;padding:3cqw;min-height:0;position:relative">
+        <div style="position:absolute;top:1.4cqw;left:1.4cqw;width:2.6cqw;height:2.6cqw;border-top:0.4cqw solid #A8281F;border-left:0.4cqw solid #A8281F"></div>
+        <div style="position:absolute;bottom:1.4cqw;right:1.4cqw;width:2.6cqw;height:2.6cqw;border-bottom:0.4cqw solid #A8281F;border-right:0.4cqw solid #A8281F"></div>
+        <div style="font-family:'Caveat','Zhi Mang Xing',cursive;font-size:11.5cqw;color:#241F17;text-align:center;line-height:1.12;transform:rotate(-2deg)">{{hero.title}}</div>
+        <div style="font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6.6cqw;color:#A8281F;transform:rotate(-2deg)">来不来！！</div>
+      </div>
+      <div style="margin-top:4.2cqw;display:flex;flex-direction:column;gap:1.9cqw;font-family:'Space Mono',monospace;font-size:2.85cqw">
+        <div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">SEATS</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">{{hero.seatLong}}</span></div>
+        <div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">WHERE</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">{{hero.loc}} · NEW YORK</span></div>
+        <div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">TIME</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">{{hero.date}} · {{hero.time}} 开吃</span></div>
+      </div>
+      <div style="margin-top:3.4cqw;display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.6cqw;color:#A8281F;letter-spacing:0.24cqw"><span>BY {{hero.host}} · NYC</span><span>REAL PLANS ONLY</span></div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:3.5cqw;right:3.5cqw;background:#A8281F;color:#F6EFDF;font-size:3cqw;font-weight:700;padding:1.2cqw 2.4cqw;border-radius:999px;transform:rotate(3deg);box-shadow:0 1cqw 2cqw rgba(80,20,10,0.25)">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.14;mix-blend-mode:multiply;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.isStreet}}" hint-placeholder-val="{{hero.false}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(168deg,#96825f 0%,#6f5d46 32%,#473d30 60%,#221e18 100%);color:#FFFDF6;display:flex;flex-direction:column;justify-content:space-between;padding:6cqw;box-sizing:border-box">
+      <div style="position:absolute;left:14%;top:32%;width:70%;height:30%;background:radial-gradient(ellipse at center,rgba(255,242,208,0.35),rgba(255,242,208,0) 70%)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(180deg,rgba(20,16,10,0) 0%,rgba(20,16,10,0.55) 100%)"></div>
+      <div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:3cqw">
+        <div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:8cqw;line-height:1.12;letter-spacing:-0.12cqw;text-wrap:balance;max-width:80%">{{hero.title}}</div>
+        <div style="font-family:'Space Mono',monospace;font-size:2.8cqw;opacity:0.75;padding-top:1cqw;white-space:nowrap">{{hero.num}}</div>
+      </div>
+      <div style="position:relative;margin-top:-14cqw;font-family:'Archivo',sans-serif;font-weight:400;font-size:3.7cqw;opacity:0.82;align-self:flex-start">Hosted by {{hero.host}} · {{hero.seatMid}}</div>
+      <div style="position:relative;align-self:center;border:0.28cqw dashed rgba(255,253,246,0.5);border-radius:1cqw;padding:1.6cqw 3cqw;font-family:'Space Mono',monospace;font-size:2.8cqw;letter-spacing:0.2cqw;color:rgba(255,253,246,0.8)">[ 官方图库 · 街拍 / 夜市_02 ]</div>
+      <div style="position:relative">
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:3cqw">
+          <div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;letter-spacing:-0.08cqw">In {{hero.loc}}<br>纽约</div>
+          <div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;text-align:right;letter-spacing:-0.08cqw">{{hero.date}}<br>{{hero.time}}</div>
+        </div>
+        <div style="margin-top:3cqw;padding-top:2.4cqw;border-top:0.24cqw solid rgba(255,253,246,0.3);display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.7cqw;opacity:0.78;letter-spacing:0.2cqw"><span>PUBLISHED ON JU</span><span>ju.app</span></div>
+      </div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:4cqw;right:4cqw;background:#FFFDF6;color:#26221b;font-size:3cqw;font-weight:700;padding:1.2cqw 2.4cqw;border-radius:999px">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.32;mix-blend-mode:overlay;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.isGrain}}" hint-placeholder-val="{{hero.false}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:radial-gradient(130% 95% at 50% 28%,#26305e 0%,#151a36 46%,#0a0b16 100%);color:#EDE6D2;display:flex;flex-direction:column;padding:5.5cqw;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:3.2cqw;letter-spacing:1cqw;color:#D8D0B8"><span>JU PRESENTS ⤵</span><span style="letter-spacing:0.2cqw">{{hero.num}}</span></div>
+      <div style="flex:1;display:flex;align-items:flex-end;min-height:0">
+        <div style="font-family:'Archivo Black',sans-serif;font-size:13.5cqw;line-height:0.96;letter-spacing:0.08cqw;color:#F0E9D6;text-shadow:0.55cqw 0.55cqw 0 rgba(0,0,0,0.6);width:72%;overflow-wrap:anywhere">{{hero.en}}</div>
+      </div>
+      <div style="position:absolute;right:5.5cqw;bottom:17cqw;text-align:right;font-family:'Space Mono',monospace;font-weight:700;font-size:3.5cqw;line-height:2.05;letter-spacing:0.4cqw;color:#E4DCC4">{{hero.seatShort}}<br>[{{hero.dateNum}}]<br>{{hero.time}}</div>
+      <div style="margin-top:3.4cqw;padding-top:2.6cqw;border-top:0.24cqw solid rgba(237,230,210,0.22);display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.9cqw;letter-spacing:0.3cqw;color:#B7B096"><span>{{hero.title}}</span><span>AT {{hero.loc}}…</span></div>
+      <div style="position:absolute;left:28%;top:6%;width:44%;height:42%;background:radial-gradient(ellipse at center,rgba(96,116,230,0.38),rgba(96,116,230,0) 70%)"></div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:12cqw;right:5.5cqw;border:0.4cqw solid #EDE6D2;color:#EDE6D2;font-size:3cqw;font-weight:700;padding:1cqw 2.2cqw;border-radius:999px">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.55;mix-blend-mode:soft-light;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.isMono}}" hint-placeholder-val="{{hero.false}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(175deg,#5d2314 0%,#8f4726 36%,#70301a 62%,#2e1109 100%);color:#F3EAD8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.7cqw;padding:7cqw;box-sizing:border-box;text-align:center">
+      <div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,230,190,0.05) 0 1.5cqw,rgba(0,0,0,0.07) 1.5cqw 3cqw)"></div>
+      <div style="position:absolute;left:20%;top:20%;width:60%;height:34%;background:radial-gradient(ellipse at center,rgba(255,180,110,0.22),rgba(255,180,110,0) 70%)"></div>
+      <div style="position:relative;font-family:'Space Mono',monospace;font-size:3cqw;letter-spacing:1.1cqw;opacity:0.85">JU {{hero.num}}</div>
+      <div style="position:relative;font-family:'Space Mono','Noto Sans SC',monospace;font-weight:700;font-size:6cqw;letter-spacing:0.9cqw;line-height:1.7;white-space:nowrap;max-width:100%;overflow:hidden">{{hero.title}}</div>
+      <div style="position:relative;font-family:'Space Mono',monospace;font-weight:700;font-size:4.3cqw;letter-spacing:1cqw">IN {{hero.locEn}}, NYC</div>
+      <div style="position:relative;font-family:'Space Mono',monospace;font-weight:700;font-size:4.3cqw;letter-spacing:1cqw">{{hero.date}} · {{hero.time}}</div>
+      <div style="position:relative;font-family:'Space Mono',monospace;font-size:3.1cqw;letter-spacing:0.8cqw;border:0.28cqw solid rgba(243,234,216,0.55);padding:1.5cqw 3.2cqw;border-radius:999px">{{hero.seatAsk}}</div>
+      <div style="position:relative;font-family:'Space Mono',monospace;font-size:2.7cqw;letter-spacing:0.7cqw;opacity:0.72">JU.APP · BY {{hero.host}}</div>
+      <div style="position:absolute;bottom:4cqw;left:50%;transform:translateX(-50%);white-space:nowrap;border:0.28cqw dashed rgba(243,234,216,0.4);border-radius:1cqw;padding:1.2cqw 2.6cqw;font-family:'Space Mono',monospace;font-size:2.5cqw;color:rgba(243,234,216,0.72)">[ 官方图库 · 蒸汽 / 纹理_04 ]</div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:4cqw;right:4cqw;background:#F3EAD8;color:#5a2415;font-size:3cqw;font-weight:700;padding:1.2cqw 2.4cqw;border-radius:999px">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.42;mix-blend-mode:overlay;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.isRiso}}" hint-placeholder-val="{{hero.false}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:#B7BCD9;color:#2A2C33;display:flex;flex-direction:column;padding:6cqw;box-sizing:border-box">
+      <div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:6.5cqw;letter-spacing:-0.2cqw">JU<span style="color:#A8281F">.</span></span><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:4cqw">{{hero.date}}</span></div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:4.2cqw;min-height:0">
+        <div style="font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:11.5cqw;line-height:1.12;letter-spacing:0.2cqw;text-wrap:balance;text-shadow:0.4cqw 0 0 rgba(168,40,31,0.28)">{{hero.title}}</div>
+        <div style="display:flex;gap:3cqw;justify-content:center">
+          <div style="width:37cqw;height:27cqw;background:repeating-linear-gradient(45deg,#989eBE 0 2cqw,#a9aec9 2cqw 4cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.5cqw;color:#5d6076;box-shadow:inset 0 0 0 0.28cqw rgba(42,44,51,0.25)">PHOTO_01</div>
+          <div style="width:37cqw;height:27cqw;background:repeating-linear-gradient(45deg,#989eBE 0 2cqw,#a9aec9 2cqw 4cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.5cqw;color:#5d6076;box-shadow:inset 0 0 0 0.28cqw rgba(42,44,51,0.25)">PHOTO_02</div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-end">
+        <div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:7.5cqw;letter-spacing:-0.1cqw;line-height:1">{{hero.time}} 见</div>
+        <div style="font-family:'Space Mono',monospace;font-size:2.9cqw;text-align:right;line-height:1.75">{{hero.loc}} · 纽约<br>{{hero.seatShort}} · JU {{hero.num}}</div>
+      </div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:14cqw;right:6cqw;background:#2A2C33;color:#B7BCD9;font-size:3cqw;font-weight:700;padding:1.2cqw 2.4cqw;border-radius:999px;transform:rotate(2deg)">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.2;mix-blend-mode:multiply;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.isAcid}}" hint-placeholder-val="{{hero.false}}">
+    <div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:#C9F23C;color:#14150F;display:flex;flex-direction:column;padding:0;box-sizing:border-box">
+      <div style="height:20cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.6cqw;color:#5d7413;letter-spacing:0.3cqw">[ 官方图库 · 餐桌 / 沸腾_01 ]</div>
+      <div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2.4cqw;padding:5cqw 6cqw;min-height:0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.3cqw"><span>{{hero.num}}</span><span>{{hero.en}}</span></div>
+        <div style="display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-weight:500;font-size:4.5cqw;letter-spacing:0.6cqw;text-transform:uppercase;opacity:0.85"><span>HOSTED</span><span>BY {{hero.host}}</span></div>
+        <div style="font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:12.2cqw;line-height:1.08;letter-spacing:0.15cqw">{{hero.title}}</div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.2cqw"><span>{{hero.dateNum}}</span><span style="font-size:5cqw">{{hero.time}} – LATE</span></div>
+        <div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-weight:700;font-size:3.3cqw"><span style="white-space:nowrap">{{hero.loc}} · NYC</span><span style="white-space:nowrap">{{hero.seatShort}}</span></div>
+      </div>
+      <div style="height:14cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw)"></div>
+      <sc-if value="{{hero.genderOn}}" hint-placeholder-val="{{hero.false}}"><div style="position:absolute;top:4cqw;right:4cqw;background:#14150F;color:#C9F23C;font-size:3cqw;font-weight:700;padding:1.2cqw 2.4cqw;border-radius:999px;transform:rotate(2deg)">{{hero.genderTag}}</div></sc-if>
+      <div style="position:absolute;inset:0;pointer-events:none;opacity:0.16;mix-blend-mode:multiply;background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)"></div>
+    </div>
+  </sc-if>
+  <sc-if value="{{hero.qrOn}}" hint-placeholder-val="{{hero.false}}">
+    <div style="display:flex;align-items:center;gap:4cqw;background:#FBF8F0;border-top:0.4cqw dashed #B9AE94;padding:3.5cqw 5cqw;box-sizing:border-box">
+      <div style="position:relative;width:15cqw;height:15cqw;background:conic-gradient(#241F17 90deg,#FBF8F0 90deg 180deg,#241F17 180deg 270deg,#FBF8F0 270deg) 0 0/25% 25%;flex-shrink:0">
+        <div style="position:absolute;top:0;left:0;width:4.5cqw;height:4.5cqw;border:0.8cqw solid #241F17;background:#FBF8F0"></div>
+        <div style="position:absolute;top:0;right:0;width:4.5cqw;height:4.5cqw;border:0.8cqw solid #241F17;background:#FBF8F0"></div>
+        <div style="position:absolute;bottom:0;left:0;width:4.5cqw;height:4.5cqw;border:0.8cqw solid #241F17;background:#FBF8F0"></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:0.9cqw">
+        <div style="font-family:'Space Mono',monospace;font-size:2.9cqw;color:#6E6650;letter-spacing:0.2cqw">SCAN → 扫码直接进这局</div>
+        <div style="font-family:'Space Mono',monospace;font-weight:700;font-size:3.8cqw;color:#241F17">ju.app/j/{{hero.numPlain}}</div>
+      </div>
+      <div style="margin-left:auto;font-family:'Space Mono',monospace;font-size:2.7cqw;color:#A8281F;font-weight:700;text-align:right;line-height:1.5">SHARE<br>CARD</div>
+    </div>
+  </sc-if>
+</div>
+            <div class="ju-v27-face-dots"></div>
+            <div class="ju-v27-sheen-clip"><div data-spin-sheen="true"></div></div>
+            <div class="ju-v27-face-ring"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== HOME ===== -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c05-pg pg-home {{c.nav.cls.home}}" data-surface="home">
+          <div class="c05-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <div class="c05-cap"><b>{{home.caption}}</b><div class="c05-tabs"><sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c05-tab {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><span class="n">{{t.countText}}</span></sc-if></button></sc-for></div></div>
+              <div class="c05-list">
+                <sc-if value="{{home.emptyOn}}"><p class="c05-empty">{{home.emptyBody}}</p><sc-if value="{{home.emptyAction}}"><button type="button" class="c05-link {{home.emptyCls}}" aria-disabled="{{home.emptyInert}}" onClick="{{home.emptyGo}}">{{home.emptyLabel}} ›</button></sc-if></sc-if>
+                <sc-for list="{{home.groups}}" as="g" hint-placeholder-count="3">
+                  <div class="c05-grp {{g.toneCls}}"><i></i>{{g.title}} · {{g.count}}</div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                    <div class="c05-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                      <div class="c"><div class="t">{{r.title}}</div><div class="m">{{r.meta}}</div></div>
+                      <div class="s {{r.toneCls}}">{{r.status}}</div>
+                    </div>
+                  </sc-for>
+                </sc-for>
+                <sc-if value="{{home.drafts}}">
+                  <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
+                    <div class="c05-row {{r.cls}} {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                      <div class="c"><div class="t">{{r.title}}</div><div class="m">{{r.whenText}} · {{r.placeText}} · {{r.agoText}}</div><sc-if value="{{r.sourceText}}"><div class="m">{{r.sourceText}}</div></sc-if>
+                        <div class="acts"><button type="button" class="c05-link inert" aria-disabled="true" onClick="{{c.inert}}">{{r.continueLabel}} ›</button><button type="button" class="c05-link danger" data-act="delete" onClick="{{r.del}}">删除</button></div></div>
+                      <div class="s {{r.readyCls}}">{{r.missingText}}</div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{c.hosted.undo.on}}"><div class="c05-undo" role="status"><span>{{c.hosted.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} · {{c.hosted.undo.left}}s</button></div></sc-if>
+                </sc-if>
+                <sc-if value="{{home.historyFoot}}"><p class="c05-foot">{{c.COPY.historyFooter.lead}} · <span class="c05-dim">账户级记录页不在本次范围</span></p></sc-if>
+              </div>
+            </div>
+          </div>
+          <div class="c05-fc {{home.landCls}}" data-header ref="{{homeFcRef}}">
+            <div class="c05-hd">
+              <h1 class="c05-ttl">我的局</h1>
+              <div class="c05-roles"><sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c05-role {{t.cls}}" data-role-tab="{{t.k}}" aria-pressed="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="b">{{t.badge}}</span></sc-if></button></sc-for></div>
+            </div>
+            <sc-if value="{{lead.on}}">
+              <div class="c05-zb" data-rid="{{lead.id}}" data-origin="{{lead.originKey}}" role="button" tabindex="0" aria-label="{{lead.title}}" onClick="{{lead.open}}">
+                <div class="c05-num">
+                  <div class="c05-wd">{{lead.wd}}</div>
+                  <div class="c05-time">{{lead.time}}</div>
+                  <div class="c05-st">{{lead.status}}</div>
+                  <sc-if value="{{lead.cdOn}}"><div class="c05-cd {{lead.cdTone}}">剩 {{lead.cdText}}</div><div class="c05-bar" style="--ratio:{{lead.cdRatio}}"><i></i></div></sc-if>
+                  <sc-if value="{{lead.seatsOn}}"><div class="c05-seats" ref="{{leadSeatsRef}}"><sc-for list="{{lead.seats}}" as="s" hint-placeholder-count="4"><i class="c05-seat {{s.kind}}"></i></sc-for></div><div class="c05-pl"><b>{{lead.seatText}}</b><sc-if value="{{lead.seatMore}}"><br>{{lead.seatMore}}</sc-if></div></sc-if>
+                  <sc-if value="{{lead.plOn}}"><div class="c05-pl">{{lead.place}}<br>局主 <b>{{lead.host}}</b></div></sc-if>
+                  <sc-if value="{{lead.secondary}}"><button type="button" class="c05-sec2" data-act="{{lead.secondaryKey}}" onClick="{{lead.secondary}}">{{lead.secondaryLabel}}</button></sc-if>
+                </div>
+                <h2 class="c05-name">{{lead.title}}</h2>
+                <p class="c05-sub">{{lead.sub}}</p>
+                <div class="c05-cta-row"><sc-if value="{{lead.cta}}"><button type="button" class="ju-v27-cta" data-act="cta" onClick="{{lead.act}}"><span class="gloss"></span><span class="label">{{lead.cta}}</span></button></sc-if></div>
+              </div>
+            </sc-if>
+            <sc-if value="{{home.sumOn}}">
+              <div class="c05-zb no-card c05-sum"><div class="n">{{home.sumN}}</div><div class="l">{{home.sumL}}</div><sc-if value="{{home.emptyOn}}"><div class="e"><b>{{home.emptyTitle}}</b></div></sc-if></div>
+            </sc-if>
+          </div>
+          <nav class="c05-nav" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5"></rect></svg>{{t.label}}</button></sc-for></nav>
+        </section>
+      </sc-if>
+
+      <!-- ===== DETAIL（参加者局内，含成员视图；read 层在它之上） ===== -->
+      <sc-if value="{{c.nav.on.detail}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep {{c.nav.cls.detail}}" data-surface="detail" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="detail" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.detail.on}}">
+                <sc-if value="{{c.detail.receipt}}"><div class="c05-receipt"><span class="c05-dim">JU. / 候补回执</span><b>{{c.detail.receipt.title}}</b><span>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</span><p class="c05-help">{{c.detail.receipt.note}}</p></div></sc-if>
+                <sc-if value="{{c.detail.result}}"><div class="c05-result"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
+                <div class="c05-sec"><h4 class="c05-sh"><span>成员</span><small>{{c.detail.seatText}}</small></h4>
+                  <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><div class="c05-mem {{m.youCls}}"><span class="l">{{m.name}}</span><span class="r {{m.tone}}">{{m.statusText}}</span></div></sc-for></div>
+                <div class="c05-sec"><h4 class="c05-sh"><button type="button" onClick="{{c.detail.openRead}}">参加约定 ›</button></h4>
+                  <div class="c05-rules"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div></div>
+                <p class="c05-help c05-dim">查看我的记录 · 账户级页面，本轮不可点</p>
+              </sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.detail.secondary}}"><button type="button" class="c05-weak" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></sc-if>
+              <h1 class="c05-ttl">{{c.detail.title}}</h1>
+              <p class="c05-aux">{{c.detail.label}} · {{c.detail.need}}</p>
+            </div>
+            <sc-if value="{{c.detail.on}}">
+              <div class="c05-zb">
+                <div class="c05-num">
+                  <div class="c05-wd">{{detail.wd}}</div>
+                  <div class="c05-time">{{detail.time}}</div>
+                  <div class="c05-st">{{c.detail.label}}</div>
+                  <sc-if value="{{c.detail.countdown.on}}"><div class="c05-cd {{c.detail.countdown.tone}}">剩 {{c.detail.countdown.text}}</div><div class="c05-bar" style="--ratio:{{c.detail.countdown.ratio}}"><i></i></div></sc-if>
+                  <div class="c05-pl">{{c.detail.place.hood}}<br>局主 <b>{{c.detail.host.name}}</b></div>
+                </div>
+                <h2 class="c05-name">{{c.detail.event.title}}</h2>
+                <p class="c05-sub">{{detail.sub}}</p>
+                <sc-if value="{{c.detail.error}}"><p class="c05-err">{{c.detail.error}}</p></sc-if>
+                <div class="c05-cta-row"><button type="button" class="ju-v27-cta" data-act="{{c.detail.primary.key}}" aria-disabled="{{c.detail.primary.disabled}}" disabled="{{c.detail.primary.disabled}}" onClick="{{c.detail.primary.act}}"><span class="gloss"></span><span class="label">{{c.detail.primary.label}}</span></button></div>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== READ（阅读并确认）：约定在纸上，读到末尾才能确认 ===== -->
+      <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep pg-read {{c.nav.cls.read}}" data-surface="read">
+          <div class="c05-sc" data-scroller="read" onScroll="{{c.read.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper" style="padding-bottom:120px">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.read.result}}"><div class="c05-result"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
+              <sc-if value="{{c.read.expired}}"><div class="c05-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
+              <div class="c05-rules"><sc-for list="{{c.read.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div>
+              <div class="c05-endmark">— {{c.read.endMark}} —</div>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.read.secondary}}"><button type="button" class="c05-weak" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if>
+              <h1 class="c05-ttl">{{c.read.title}}</h1>
+              <p class="c05-aux"><sc-if value="{{c.read.countdown.on}}">剩 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</p>
+            </div>
+          </div>
+          <div class="c05-footer on-paper">
+            <sc-if value="{{c.read.error}}"><p class="c05-err">{{c.read.error}}</p></sc-if>
+            <button type="button" class="ju-v27-cta" data-act="{{c.read.primary.key}}" aria-disabled="{{c.read.primary.disabled}}" disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button>
+            <div class="c05-tk-hint">阅读进度 {{read.progressPct}}%</div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== WAITLIST（候补门口 + 回执） ===== -->
+      <sc-if value="{{c.nav.on.waitlist}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep {{c.nav.cls.waitlist}}" data-surface="waitlist" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="waitlist" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper" style="padding-bottom:120px">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.waitlist.on}}">
+                <div class="c05-receipt"><span class="c05-dim">JU. / 候补回执</span><b>{{c.waitlist.receipt.title}}</b><span>{{c.waitlist.receipt.field}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></span><sc-if value="{{c.waitlist.receipt.note}}"><p class="c05-help">{{c.waitlist.receipt.note}}</p></sc-if></div>
+                <div class="c05-sec"><h4 class="c05-sh"><span>已进</span><small>{{c.waitlist.seatLine}}</small></h4><sc-for list="{{c.waitlist.entered}}" as="m" hint-placeholder-count="3"><div class="c05-mem {{m.youCls}}"><span class="l">{{m.name}}</span><span class="r {{m.tone}}">{{m.statusText}}</span></div></sc-for></div>
+                <div class="c05-sec"><h4 class="c05-sh"><span>候补 · {{c.waitlist.total}}</span><small>不占席位</small></h4><sc-for list="{{c.waitlist.queue}}" as="q" hint-placeholder-count="2"><div class="c05-mem {{q.youCls}}"><span class="l">№{{q.pos}} {{q.name}}</span></div></sc-for></div>
+                <p class="c05-help">{{c.waitlist.hint}}</p>
+              </sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.waitlist.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.waitlist.secondary}}"><button type="button" class="c05-weak" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></sc-if>
+              <h1 class="c05-ttl">{{c.waitlist.title}}</h1>
+              <p class="c05-aux">{{c.waitlist.seatLine}}</p>
+            </div>
+            <sc-if value="{{c.waitlist.on}}">
+              <div class="c05-zb">
+                <div class="c05-num"><div class="c05-wd">{{wl.wd}}</div><div class="c05-time">{{wl.time}}</div><div class="c05-st">{{c.waitlist.row.label}}</div><sc-if value="{{c.waitlist.countdown.on}}"><div class="c05-cd {{c.waitlist.countdown.tone}}">剩 {{c.waitlist.countdown.text}}</div></sc-if><div class="c05-pl">{{c.waitlist.row.place.hood}}<br>局主 <b>{{c.waitlist.row.host.name}}</b></div></div>
+                <h2 class="c05-name">{{c.waitlist.row.event.title}}</h2>
+                <p class="c05-sub">{{c.waitlist.hint}}</p>
+              </div>
+            </sc-if>
+          </div>
+          <div class="c05-footer on-paper"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.waitlist.primary.act}}"><span class="gloss"></span><span class="label">{{c.waitlist.primary.label}}</span></button></div>
+        </section>
+      </sc-if>
+
+      <!-- ===== TICKET / REPLY：面变为票底色承载票根原件（打印 / 撕 / 联系层都是共享仪式）；纸在底部一条，CTA 在纸上 ===== -->
+      <sc-if value="{{ticketOn}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep pg-ticket {{c.nav.cls.ticket}}{{c.nav.cls.reply}}" data-surface="{{ticketSurface}}" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="ticket" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta" data-act="{{ticket.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button><div class="c05-tk-hint" style="margin-top:8px">拖动副券撕开 · 或聚焦副券按 Enter</div></sc-if>
+              <sc-if value="{{c.ticket.reply}}"><sc-if value="{{c.ticket.tear.canTear}}"><p style="text-align:center;margin:4px 0 0"><button type="button" class="c05-link" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></p></sc-if></sc-if>
+              <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
+              <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
+              <sc-if value="{{ticket.restLine}}"><p class="c05-help" style="text-align:center;margin-top:10px">{{ticket.restLine}}</p></sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.ticket.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.ticket.canExit}}"><button type="button" class="c05-weak" data-act="{{ticketExitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if>
+              <h1 class="c05-ttl">{{c.ticket.title}}</h1>
+              <p class="c05-aux">{{ticket.aux}}</p>
+            </div>
+            <sc-if value="{{c.ticket.on}}">
+              <sc-if value="{{c.ticket.unavailable}}"><p class="c05-unav">{{c.ticket.unavailable.text}}</p></sc-if>
+              <sc-if value="{{ticket.showStage}}">
+                <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                <div class="ju-ticket-stage c05-stage {{ticket.stageCls}}" data-print-stage="c05" data-state="idle">
+                  <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                  <div class="ju-ticket" data-paper="c05">
+                    <div class="ju-ticket-shadow" data-paper-shadow="c05" data-raster="skip"><div></div></div>
+                    <div class="ju-ticket-shell" data-paper-shell="c05">
+                      <div class="ju-ticket-surface" data-paper-surface="c05">
+                        <div class="ju-ticket-body">
+                          <div class="ju-ticket-face">
+                            <div class="ju-ticket-brand">JU. / 票根</div>
+                            <div class="ju-ticket-title" data-slot="title">{{c.ticket.ritual.title}}</div>
+                            <div class="ju-ticket-when"><span data-slot="time">{{c.ticket.ritual.time}}</span><span data-slot="md">{{c.ticket.ritual.md}}</span></div>
+                            <div class="ju-ticket-previous" data-slot="previous" hidden="{{ticket.noPrevious}}">{{ticket.previousText}}</div>
+                            <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.ticket.ritual.loc}}</strong></div>
+                            <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.ticket.ritual.meeting}}</strong></div>
+                            <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.ticket.ritual.host}}</strong></div>
+                          </div>
+                          <div class="ju-ticket-wet" data-wet="c05" data-raster="skip"></div>
+                        </div>
+                        <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{ticket.noMark}}">{{c.ticket.ritual.mark}}</div>
+                        <div class="ju-ticket-stub" data-tear="c05" data-act="tear"><div class="ju-ticket-bend" data-bend="c05" data-raster="skip"></div></div>
+                      </div>
+                    </div>
+                    <div class="ju-ticket-burn" data-burn="c05" data-raster="skip"></div>
+                  </div>
+                </div>
+                <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
+                  <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+                  <p class="ju-contact-note23"></p>
+                  <p class="ju-form-error"></p>
+                  <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false" style="margin-top:6px"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+                  <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c05-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c05-mini" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></p></sc-if>
+                  <sc-if value="{{c.ticket.contact.closed}}"><p class="c05-err">{{c.ticket.contact.closedText}}</p></sc-if>
+                  <sc-if value="{{c.ticket.contact.error}}"><p class="c05-err">{{c.ticket.contact.error}}</p></sc-if>
+                </div>
+                <sc-if value="{{c.ticket.result}}"><div class="c05-result"><sc-if value="{{ticket.ashes}}"><div class="c05-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
+              </sc-if>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== HISTORY（散场 / 未成行）：记录在纸上；票根灰烬与出席章原件接入在阶段 2 ===== -->
+      <sc-if value="{{c.nav.on.history}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep {{c.nav.cls.history}}" data-surface="history" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="history" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.history.on}}">
+                <sc-if value="{{c.history.hasStamp}}"><p class="c05-help">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if>
+                <sc-if value="{{c.history.contactOpen}}"><div class="c05-mem"><span class="l">局主微信 {{c.history.hostWx}}</span><span class="r"><button type="button" class="c05-mini" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></span></div><sc-if value="{{c.history.copyFail}}"><p class="c05-copyfail">未能复制，长按手动复制 <button type="button" class="c05-mini" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
+                <sc-if value="{{c.history.contactClosedText}}"><p class="c05-help">{{c.history.contactClosedText}}</p></sc-if>
+                <div class="c05-sec"><h4 class="c05-sh"><span>本场相关记录</span><small>{{history.recordCount}} 条</small></h4>
+                  <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c05-mem"><span class="l">{{x.kindLabel}} · {{x.text}}</span><span class="r">{{x.atText}}</span></div></sc-for>
+                  <p><button type="button" class="c05-link" data-act="report" onClick="{{c.history.report.open}}">{{c.history.report.label}}</button></p></div>
+                <p class="c05-foot">{{c.history.footer.lead}} · <span class="c05-dim">我的举报 / 记录页为账户级，本轮不可点</span></p>
+              </sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.history.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <h1 class="c05-ttl">{{c.history.title}}</h1>
+              <p class="c05-aux">{{c.history.label}} · {{c.history.when.zh}}</p>
+            </div>
+            <sc-if value="{{c.history.on}}">
+              <div class="c05-zb">
+                <div class="c05-num"><div class="c05-wd">{{history.wd}}</div><div class="c05-time">{{history.time}}</div><div class="c05-st">{{c.history.label}}</div><sc-if value="{{c.history.stampText}}"><div style="margin-top:10px"><span class="c05-chop {{c.history.stamp}}">{{c.history.stampText}}</span></div></sc-if><div class="c05-pl">{{c.history.place.hood}}<br>局主 <b>{{c.history.host.name}}</b></div></div>
+                <h2 class="c05-name">{{c.history.event.title}}</h2>
+                <p class="c05-sub">{{c.history.reason}}<sc-if value="{{c.history.closedNote}}"> · {{c.history.closedNote}}</sc-if></p>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== MANAGE（H1 十二个表面）：面承载头部状态与进度（与局卡并置），纸承载区块；申请卡逐张滑入，通过后面内计数原位落定 ===== -->
+      <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep pg-manage {{c.nav.cls.manage}}" data-surface="manage" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="manage" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.manage.missing}}"><div class="c05-empty"><b>{{c.manage.title}}</b><br>{{c.manage.body}}</div></sc-if>
+              <sc-if value="{{manage.ready}}">
+                <div class="c05-secs">
+                  <sc-if value="{{c.manage.apps.on}}"><div class="c05-sec {{c.manage.apps.cls}}" data-section="apps" style="--o:{{c.manage.apps.order}}"><h4 class="c05-sh"><span>{{c.manage.apps.title}}</span><small>{{c.manage.apps.sub}}</small></h4><div class="c05-sb">
+                    <sc-for list="{{c.manage.apps.rows}}" as="a" hint-placeholder-count="2"><div class="c05-app" data-rid="{{a.id}}" style="--i:{{a.i}}">
+                      <div class="hd"><div class="av">{{a.initial}}</div><div><div class="n">{{a.nickText}}</div><div class="q">{{a.verifiedLabel}} · {{a.agoText}}</div></div></div>
+                      <sc-if value="{{a.note}}"><div class="note">“{{a.note}}”</div></sc-if>
+                      <sc-if value="{{a.result}}"><div class="c05-res {{a.tone}}">{{a.resultText}}</div></sc-if>
+                      <sc-if value="{{a.busy}}"><div class="c05-busy">处理中…</div></sc-if>
+                      <sc-if value="{{a.error}}"><div class="c05-err">{{a.error}} <button type="button" class="c05-mini" data-act="retry" onClick="{{a.retry}}">知道了</button></div></sc-if>
+                      <sc-if value="{{a.pendingOpen}}"><div class="acts"><button type="button" class="c05-btn" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c05-btn pri" data-act="approve" onClick="{{a.approve}}">发出邀请</button></div></sc-if>
+                    </div></sc-for>
+                    <p class="c05-help">{{c.manage.apps.help}}</p></div></div></sc-if>
+                  <sc-if value="{{c.manage.replies.on}}"><div class="c05-sec {{c.manage.replies.cls}}" data-section="replies" style="--o:{{c.manage.replies.order}}"><h4 class="c05-sh"><span>{{c.manage.replies.title}}</span><small>{{c.manage.replies.sub}}</small></h4><div class="c05-sb">
+                    <p class="c05-help">原定 <s>{{c.manage.replies.oldWhen.zh}}</s> → 改为 {{c.manage.replies.newWhen.zh}}</p>
+                    <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c05-mem" data-rid="{{r.id}}"><span class="l">{{r.name}}</span><span class="r {{r.tone}}">{{r.answerText}} · {{r.ticketLine}}</span></div></sc-for>
+                    <p class="c05-help">{{c.manage.replies.help}}</p></div></div></sc-if>
+                  <sc-if value="{{c.manage.roster.on}}"><div class="c05-sec {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}"><h4 class="c05-sh"><span>{{c.manage.roster.title}}</span><small>{{c.manage.roster.line}}</small></h4><div class="c05-sb">
+                    <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c05-mem" data-rid="{{m.id}}"><span class="l">{{m.name}}<sc-if value="{{m.wxText}}"><small>{{m.wxText}} <button type="button" class="c05-mini" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></small></sc-if><sc-if value="{{m.copyFail}}"><small class="c05-copyfail">未能复制，长按手动复制 <button type="button" class="c05-mini" data-act="retry" onClick="{{m.retryCopy}}">重试</button></small></sc-if></span><span class="r {{m.tone}}">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"><br>{{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"><br>{{m.contactText}}</sc-if></span></div></sc-for>
+                    <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><div class="c05-mem c05-dim"><span class="l">{{o.text}}</span></div></sc-for>
+                    <sc-if value="{{c.manage.roster.openText}}"><p class="c05-help">{{c.manage.roster.openText}}</p></sc-if>
+                    <sc-if value="{{c.manage.roster.voidNote}}"><p class="c05-help">{{c.manage.roster.voidNote}}</p></sc-if></div></div></sc-if>
+                  <sc-if value="{{c.manage.queue.on}}"><div class="c05-sec {{c.manage.queue.cls}}" data-section="queue" style="--o:{{c.manage.queue.order}}"><h4 class="c05-sh"><span>{{c.manage.queue.title}}</span><small>{{c.manage.queue.sub}}</small></h4><div class="c05-sb">
+                    <sc-for list="{{c.manage.queue.rows}}" as="q" hint-placeholder-count="2"><div class="c05-mem"><span class="l">{{q.no}} {{q.nick}}</span><span class="r">{{q.agoText}}</span></div></sc-for>
+                    <p class="c05-help">{{c.manage.queue.help}}</p></div></div></sc-if>
+                  <sc-if value="{{c.manage.leaves.on}}"><div class="c05-sec {{c.manage.leaves.cls}}" data-section="leaves" style="--o:{{c.manage.leaves.order}}"><h4 class="c05-sh"><button type="button" aria-expanded="{{c.manage.leaves.open}}" onClick="{{c.manage.leaves.toggle}}">{{c.manage.leaves.title}} <small>{{manage.leavesArrow}}</small></button></h4><div class="c05-sb">
+                    <sc-for list="{{c.manage.leaves.rows}}" as="l" hint-placeholder-count="2"><div class="c05-mem"><span class="l">{{l.nick}}</span><span class="r">{{l.text}} · {{l.atText}}</span></div></sc-for></div></div></sc-if>
+                  <sc-if value="{{c.manage.attendance.on}}"><div class="c05-sec {{c.manage.attendance.cls}}" data-section="attendance" style="--o:{{c.manage.attendance.order}}"><h4 class="c05-sh"><span>{{c.manage.attendance.title}}</span><small>{{c.manage.attendance.sub}}</small></h4><div class="c05-sb">
+                    <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c05-att {{a.nextCls}}" data-rid="{{a.id}}">
+                      <div><b>{{a.name}}</b> <span class="c05-dim">{{a.label}}</span><sc-if value="{{a.recorded}}"> <span class="c05-chop {{a.stamp}} {{a.stampCls}}">{{a.chopText}}</span></sc-if></div>
+                      <sc-if value="{{a.choosing}}"><div class="c05-seg"><button type="button" class="c05-btn" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" class="c05-btn" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" class="c05-btn" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></div></sc-if>
+                      <sc-if value="{{a.canCorrect}}"><button type="button" class="c05-link" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
+                      <sc-if value="{{a.error}}"><div class="c05-err">{{a.error}}</div></sc-if>
+                      <sc-if value="{{a.showTrail}}"><div class="c05-trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
+                      <sc-if value="{{a.wxText}}"><div class="c05-help">{{a.wxText}} <button type="button" class="c05-mini" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button><sc-if value="{{a.copyFail}}"> <span class="c05-copyfail">未能复制，长按手动复制</span> <button type="button" class="c05-mini" data-act="retry" onClick="{{a.retryCopy}}">重试</button></sc-if></div></sc-if>
+                    </div></sc-for>
+                    <sc-if value="{{c.manage.attendance.doneText}}"><p class="c05-help" style="color:#0B7F61">{{c.manage.attendance.doneText}}</p></sc-if>
+                    <p class="c05-help">{{c.manage.attendance.help}}</p><p class="c05-help">{{c.manage.attendance.contactLine}}</p></div></div></sc-if>
+                  <div class="c05-sec {{c.manage.arrange.cls}}" data-section="arrange" style="--o:{{c.manage.arrange.order}}"><h4 class="c05-sh"><span>{{c.manage.arrange.title}}</span></h4><div class="c05-sb c05-arr">
+                    <sc-if value="{{c.manage.arrange.canReschedule}}"><div class="it"><small>{{c.manage.arrange.rescheduleNote}}</small><button type="button" class="c05-btn" data-act="propose" onClick="{{c.manage.arrange.reschedule}}">{{c.manage.arrange.rescheduleLabel}}</button></div></sc-if>
+                    <sc-if value="{{c.manage.arrange.unansweredHint}}"><p class="c05-help">{{c.manage.arrange.unansweredHint}}</p></sc-if>
+                    <sc-if value="{{c.manage.arrange.canEnd}}"><div class="it"><small>{{c.manage.arrange.endNote}}</small><button type="button" class="c05-btn" data-act="end" onClick="{{c.manage.arrange.end}}">{{c.manage.arrange.endLabel}}</button></div></sc-if>
+                    <sc-if value="{{c.manage.arrange.endHint}}"><p class="c05-help">{{c.manage.arrange.endHint}}</p></sc-if>
+                    <sc-if value="{{c.manage.arrange.canCancel}}"><div class="it"><small>{{c.manage.arrange.cancelNote}}</small><button type="button" class="c05-btn danger" data-act="cancel" onClick="{{c.manage.arrange.cancel}}">{{c.manage.arrange.cancelLabel}}</button></div></sc-if>
+                    <sc-if value="{{c.manage.arrange.showReopen}}"><div class="it"><small>{{c.manage.arrange.reopenNote}}</small><button type="button" class="c05-link inert" aria-disabled="true" onClick="{{c.manage.arrange.reopen}}">{{c.manage.arrange.reopenLabel}}</button></div></sc-if>
+                    <div class="it"><small>成员在详情里看到的是同一张局卡</small><button type="button" class="c05-link" data-act="card" onClick="{{c.manage.card.open}}">{{c.manage.card.label}} ›</button></div>
+                  </div></div>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <h1 class="c05-ttl">{{c.manage.head.title}}</h1>
+              <p class="c05-aux">{{c.manage.head.meta}}</p>
+            </div>
+            <sc-if value="{{manage.ready}}">
+              <div class="c05-zb">
+                <div class="c05-num">
+                  <div class="c05-wd">{{manage.wd}}</div>
+                  <div class="c05-time">{{manage.time}}</div>
+                  <div class="c05-st" ref="{{manageStatusRef}}">{{c.manage.head.status}}</div>
+                  <sc-if value="{{manage.seatsOn}}"><div class="c05-seats" ref="{{manageSeatsRef}}"><sc-for list="{{c.manage.head.progress.seats}}" as="s" hint-placeholder-count="4"><i class="c05-seat {{s.kind}} att-{{s.attendance}}"></i></sc-for></div><div class="c05-pl"><b>{{c.manage.head.progress.text}}</b><sc-if value="{{c.manage.head.progress.more}}"><br>{{c.manage.head.progress.more}}</sc-if></div></sc-if>
+                  <sc-if value="{{c.manage.head.progress.attendance}}"><div class="c05-pl"><b>{{c.manage.head.progress.attendance.text}}</b><br>{{c.manage.head.progress.attendance.sub}}</div></sc-if>
+                  <sc-if value="{{manage.placeOn}}"><div class="c05-pl">{{c.manage.head.place.hood}}</div></sc-if>
+                </div>
+                <p class="c05-sub"><b>{{c.manage.head.life}}</b> · {{c.manage.head.formedLine}}</p>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== DRAFT 摘要 ===== -->
+      <sc-if value="{{c.nav.on.draft}}" hint-placeholder-val="{{false}}">
+        <section class="c05-pg pg-deep {{c.nav.cls.draft}}" data-surface="draft" style="{{c.nav.fromStyle}}">
+          <div class="c05-sc" data-scroller="draft" onScroll="{{c.nav.onScroll}}">
+            <div class="c05-sp"></div>
+            <div class="c05-paper">
+              <div class="c05-handle"></div>
+              <sc-if value="{{c.draft.on}}"><sc-if value="{{c.draft.row}}">
+                <p class="c05-help">{{c.draft.agoText}}<sc-if value="{{c.draft.sourceText}}"> · {{c.draft.sourceText}}</sc-if> · {{c.draft.capacity}} 人（含你）</p>
+                <div class="c05-arr"><div class="it"><small>开局模块，本轮不可点</small><button type="button" class="c05-btn" aria-disabled="true" onClick="{{c.inert}}">继续编辑</button></div><div class="it"><small>删除后 10 秒内可撤销</small><button type="button" class="c05-btn danger" data-act="delete" onClick="{{c.draft.del}}">删除草稿</button></div></div>
+              </sc-if></sc-if>
+            </div>
+          </div>
+          <div class="c05-fc" data-header>
+            <div class="c05-hd">
+              <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="返回" onClick="{{c.draft.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <h1 class="c05-ttl">{{c.draft.title}}</h1>
+              <p class="c05-aux">草稿 · {{c.draft.missingText}}</p>
+            </div>
+            <sc-if value="{{c.draft.on}}"><div class="c05-zb no-card"><div class="c05-num"><div class="c05-wd">草稿</div><div class="c05-time">{{draft.time}}</div><div class="c05-pl">{{c.draft.whenText}}<br>{{c.draft.placeText}}</div></div></div></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===== SHEET（所有弹层：纸的材质） ===== -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="c05-over c05-sheet-over {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="c05-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}">
+            <div class="c05-handle"></div>
+            <h3>{{c.sheet.title}}</h3>
+            <sc-if value="{{c.sheet.identity}}"><div class="c05-id"><i></i><div><b>{{c.sheet.identity.title}}</b>{{c.sheet.identity.when}} · {{c.sheet.identity.place}}</div></div></sc-if>
+            <sc-if value="{{c.sheet.body}}"><p>{{c.sheet.body}}</p></sc-if>
+            <sc-if value="{{c.sheet.fields}}">
+              <p class="c05-help">原定 <s>{{c.sheet.fields.oldWhen.zh}}</s> → 改为 · {{c.sheet.fields.tz}} <b>{{sheet.newOrPlaceholder}}</b></p>
+              <label>新日期<input class="c05-in" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}"></label>
+              <label>新时间<input class="c05-in" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}"></label>
+              <sc-if value="{{c.sheet.fields.sameHint}}"><p class="c05-err">{{c.sheet.fields.sameHint}}</p></sc-if>
+              <p class="c05-help">{{c.sheet.fields.consequence}}</p>
+            </sc-if>
+            <sc-if value="{{sheet.hasAffected}}"><p><b>{{c.sheet.affectedTitle}}</b></p><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><div class="c05-mem"><span class="l">{{x.label}}</span><span class="r">{{x.n}}</span></div></sc-for></sc-if>
+            <sc-if value="{{c.sheet.irreversible}}"><div class="c05-irrev">{{c.sheet.irreversible}}</div></sc-if>
+            <sc-if value="{{c.sheet.hint}}"><p class="c05-help">{{c.sheet.hint}}</p></sc-if>
+            <sc-if value="{{c.sheet.card}}"><div class="c05-id"><i></i><div><b>{{c.sheet.card.title}}</b>{{c.sheet.card.en}} · {{c.sheet.card.statusLabel}} · {{c.sheet.card.caption}}</div></div><sc-if value="{{c.sheet.card.note}}"><p>{{c.sheet.card.note}}</p></sc-if></sc-if>
+            <sc-if value="{{sheet.isRecord}}">
+              <sc-if value="{{c.sheet.done}}"><div class="c05-result"><b>{{c.sheet.doneTitle}}</b><p>{{c.sheet.doneBody}}</p><p class="c05-dim">查看进度 · 不在本次范围</p></div></sc-if>
+              <sc-if value="{{sheet.recordOpen}}"><label>发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c05-in" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label><p class="c05-help">谁：局主 / 同局成员 / 其他 · 截图 ≤ 6（本机不上传）</p></sc-if>
+            </sc-if>
+            <sc-if value="{{c.sheet.error}}"><p class="c05-err">{{c.sheet.error}}</p></sc-if>
+            <div class="c05-acts">
+              <button type="button" class="c05-btn" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+              <sc-if value="{{sheet.showOk}}"><button type="button" class="c05-btn {{sheet.okCls}}" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="c05-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"live":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* C05「大面」— behaviour comes from JU.ctl (this.ctlVals()); this script only composes the view model for the face / paper
+   composition, measures the face so the paper always starts under it, drives the shared rituals on the ticket surface and
+   animates the face's "settling" numbers (status / seats) and the hero card swap. */
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 360, back: 300, swap: 200, role: 300 };
+    this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.envRef = { current: null }; this.cardRef = { current: null }; this.homeFcRef = { current: null };
+    this.manageStatusRef = { current: null }; this.manageSeatsRef = { current: null }; this.leadSeatsRef = { current: null };
+    this._rit = {}; this._heroKey = ''; this._statusKey = ''; this._seatsKey = '';
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  R() { return window.JURitual || null; }
+  live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
+  componentDidMount() { this._mountEnv(); this._measure(); this._syncRituals(null); this._syncReduced(); this._animateFace(); const self = this; if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { self._measure(); }); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._measure(); this._syncRituals(ps); this._syncReduced(ps); this._animateFace(); }
+  componentWillUnmount() { this._destroyTicket(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; if (this._ro) this._ro.disconnect(); }
+  /* ---------------- environment: the shared skins engine lives under the colour plane (.c05-tint) ---------------- */
+  _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
+  _syncEnv(ps) {
+    const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; const r = this.state.review, pr = ps && ps.review;
+    if (!S.state(el)) return this._mountEnv();
+    if (r.skin !== (pr && pr.skin)) S.setSkin(el, r.skin || 'cotton');
+    if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
+  }
+  _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
+  /* ---------------- the face is sized by its content: the paper starts 14px under the face content (nominal 524 / 486 design) ---------------- */
+  _measure() {
+    const root = this.rootRef.current; if (!root) return;
+    const pages = root.querySelectorAll('.c05-pg:not(.pg-ticket)');
+    pages.forEach(function (pg) {
+      const fc = pg.querySelector('.c05-fc'); if (!fc) return;
+      const h = fc.scrollHeight; const top = Math.max(486, Math.round(h + 14));
+      const cur = parseFloat(pg.style.getPropertyValue('--c05-ptop')) || 0;
+      if (Math.abs(cur - top) > 1) pg.style.setProperty('--c05-ptop', top + 'px');
+      /* the hero card (a sibling of the pages) sits where this page's zone starts: under the header, 12px gap */
+      if (pg.classList.contains('is-top')) { const hd = fc.querySelector('.c05-hd'); if (hd) { const zb = Math.round(hd.getBoundingClientRect().bottom - root.getBoundingClientRect().top + 12); const cz = parseFloat(root.style.getPropertyValue('--c05-zb')) || 0; if (Math.abs(cz - zb) > 1) root.style.setProperty('--c05-zb', zb + 'px'); } }
+    });
+    if (!this._ro && window.ResizeObserver) { const self = this; this._ro = new ResizeObserver(function () { self._measure(); }); this._ro.observe(root); }
+  }
+  /* ---------------- settling in place: hero card swap, head status, seat segments ---------------- */
+  _animateFace() {
+    const rm = this.isRM && this.isRM(); const k = (this.state.review && this.state.review.speed === 0.5) ? 2 : 1;
+    const card = this.cardRef.current; const hk = this._c && this._c.heroKey || '';
+    if (card && hk !== this._heroKey) { const had = !!this._heroKey; this._heroKey = hk; if (had && !rm && hk) { try { card.animate([{ opacity: 0, transform: 'translateY(16px)' }, { opacity: 1, transform: 'none' }], { duration: 360 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } }
+    const st = this.manageStatusRef.current; const sk = st ? (this._c.manage.on ? this._c.manage.eventId + '|' + this._c.manage.head.status : '') : '';
+    if (st && sk !== this._statusKey) { const had = this._statusKey && this._statusKey.split('|')[0] === sk.split('|')[0]; this._statusKey = sk; if (had && !rm) { try { st.animate([{ opacity: .25, transform: 'translateY(5px)' }, { opacity: 1, transform: 'none' }], { duration: 280 * k, easing: 'ease' }); } catch (e) { } } }
+    const seats = this.manageSeatsRef.current || this.leadSeatsRef.current; const kinds = seats ? Array.prototype.map.call(seats.children, function (i) { return i.className; }).join(',') : '';
+    const key = seats ? (this._c.manage.on ? this._c.manage.eventId : 'lead') + '|' + kinds : '';
+    if (seats && key !== this._seatsKey) { const prev = this._seatsKey; this._seatsKey = key; if (prev && prev.split('|')[0] === key.split('|')[0] && !rm) { const a = prev.split('|')[1].split(','), b = kinds.split(','); b.forEach(function (c, i) { if (a[i] !== c) { const el = seats.children[i]; el.classList.remove('is-pop'); void el.offsetWidth; el.classList.add('is-pop'); } }); } }
+  }
+  /* ---------------- rituals (shared originals on the ticket surface; data already written by the controller) ---------------- */
+  _syncRituals(ps) {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const stage = root.querySelector('[data-surface="ticket"] .c05-stage,[data-surface="reply"] .c05-stage');
+    if (c.ticket.on && stage) {
+      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) this._mountTicket(stage, c);
+      const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
+    } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
+    const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn;
+    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+  }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _mountTicket(stage, c) {
+    this._destroyTicket();
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
+    if (st === 'printing') {
+      const key = c.ticket.printKey; this.motion('print', () => this._reprint());
+      R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => {
+        if (this._rit.stage !== stage) return;
+        const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null);
+        if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error');
+        this.ticketPrinted(key);
+      });
+    } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
+    else if (st === 'torn') this._settleTicket(stage, data, 'torn');
+  }
+  _settleTicket(stage, data, final, tearOpts) {
+    const R = this.R(); R.fillTicket(stage, data);
+    const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
+    if (final === 'ready' && R.tear) {
+      const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready';
+      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
+      if (tearOpts) this.registerTear(h);
+      return h;
+    }
+    stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
+  }
+  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _contact() {
+    if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
+    const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
+    const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+    const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
+    const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+    this._rit.contact = h; return h;
+  }
+  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.motion('burn', () => this._replayBurn()); }
+  _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R || !c.ticket.on) return; const data = c.ticket.ritual; const torn = c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = c.ticket.result ? c.ticket.result.reason : 'withdrawn'; this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  onEffect(fx) {
+    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
+    if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
+  }
+  /* ---------------- view model ---------------- */
+  _hero(c) {
+    const top = c.nav.cur; let r = null, open = null, on = false;
+    if (top === 'home') { r = c.role === 'joined' ? c.joined.lead : c.hosted.lead; on = !!r && c.section === 'current'; open = r ? r.open : null; }
+    else if (c.detail.on && (c.nav.is.detail || c.nav.is.read)) { r = c.detail.row; on = true; }
+    else if (c.waitlist.on) { r = c.waitlist.row; on = true; }
+    else if (c.manage.on && !c.manage.missing) { r = c.manage.m; on = true; open = c.manage.card.open; }
+    else if (c.history.on) { r = c.history.row; on = true; }
+    if (!r || !r.event) return { on: false, key: '', cls: 'is-off', title: '', open: null, isInvite: true };
+    const e = r.event, when = r.when, counts = r.counts, cap = e.capacity || 4; const avail = Math.max(0, cap - counts.confirmed - counts.reserved);
+    const formed = e.status !== 'cancelled' && (!!e.establishedAt || counts.confirmed >= cap); const pack = e.pack || 'invite';
+    const statusLabel = e.status === 'cancelled' ? '已取消' : e.status === 'ended' ? '已散场' : formed ? '已成局' : counts.reserved ? '席位已预留' : '仍可报名';
+    const caption = '已确认 ' + counts.confirmed + '/' + cap + ' · 已预留 ' + counts.reserved; const seatN = avail, full = !(seatN > 0);
+    /* the card's own typography was set for short names (V27 data ≤ 9 chars): the card carries the name's first segment, the face carries the full name */
+    const cardTitle = String(e.title || '').split(' · ')[0];
+    return { on: on, key: e.id + ':' + pack, cls: on ? '' : 'is-off', open: open, isInvite: pack === 'invite', isStreet: pack === 'street', isGrain: pack === 'grain', isMono: pack === 'mono', isRiso: pack === 'riso', isAcid: pack === 'acid',
+      title: cardTitle, fullTitle: e.title, en: e.en || '', date: when.wdEn + ' ' + when.md, dateNum: when.month + '-' + when.day + '-2026', time: when.time, loc: r.place.hood, locEn: (r.place.area || 'NYC').toUpperCase(), seats: seatN, host: e.host.name, num: 'NYC',
+      toWho: full ? '在局里的你' : '缺' + seatN + '人的你', seatLong: caption, seatMid: statusLabel, seatShort: statusLabel, seatAsk: caption, numPlain: e.id, qrOn: false, genderOn: false, genderTag: '' };
+  }
+  _rowJ(r) { return Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', toneCls: 't-' + (r.tone === 'go' ? 'soon' : r.tone), meta: r.whenText + ' · ' + r.placeText, status: r.label + (r.left && r.left.on ? ' · ' + r.left.text : '') }); }
+  _rowH(r) { return Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', toneCls: r.todo ? 't-act' : r.key === 'formed' ? 't-soon' : r.key === 'cancelled' ? 't-void' : r.key === 'ended' ? 't-kept' : 't-wait', meta: r.whenText + ' · ' + r.placeText, status: r.label }); }
+  _lead(c) {
+    const joined = c.role === 'joined'; const r = c.section === 'current' ? (joined ? c.joined.lead : c.hosted.lead) : null;
+    if (!r) return { on: false, secondary: null };
+    const when = r.when; const host = r.host || r.event.host; const base = { on: true, id: r.id, originKey: r.originKey, open: r.open, act: r.act, title: r.title, wd: when.wdZh + ' ' + when.md, time: when.time, place: r.place.hood, host: host.name, cta: r.cta || '', landing: r.landing };
+    if (joined) { const cd = r.left; return Object.assign(base, { status: r.label, cdOn: !!cd.on, cdText: cd.text, cdRatio: cd.ratio, cdTone: cd.tone === 'red' ? 'red' : '', seatsOn: false, plOn: true, sub: r.need || (r.place.full + ' · 局主 ' + r.host.name), secondary: r.secondary, secondaryLabel: r.secondaryLabel, secondaryKey: r.secondaryKey }); }
+    return Object.assign(base, { status: r.label, cdOn: false, seatsOn: true, seats: r.seats, seatText: r.seatText, seatMore: '含你' + (r.seatMore ? ' · ' + r.seatMore : ''), plOn: false, sub: r.place.full + ' · ' + r.formedLine, secondary: null });
+  }
+  renderVals() {
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals(); this._c = c; const s = this.state; const self = this;
+    const joined = c.role === 'joined', cur = c.section === 'current', hist = c.section === 'history', drafts = c.section === 'drafts';
+    /* home: the lead lives on the face, the paper lists the rest */
+    const lead = this._lead(c); const hero = this._hero(c); c.heroKey = hero.key;
+    let groups = [], caption = '', aux = '', sumOn = false, sumN = '', sumL = '', emptyOn = false, emptyTitle = '', emptyBody = '', emptyLabel = '', emptyGo = null, emptyInert = false;
+    if (joined) {
+      const srcs = cur ? c.joined.sections : c.joined.sectionsHistory; const toneOf = { act: 't-act', soon: 't-soon', wait: 't-wait', kept: 't-kept', closed: 't-void' };
+      groups = srcs.map(function (g) { const rows = g.rows.filter(function (r) { return !(cur && lead.on && r.id === lead.id); }).map(self._rowJ); return { key: g.key, title: g.title, note: g.note, count: rows.length, toneCls: toneOf[g.key] || 't-wait', rows: rows }; }).filter(function (g) { return g.count; });
+      const rest = c.joined.counts.current - (lead.on ? 1 : 0);
+      caption = cur ? (rest > 0 ? '还有 ' + rest + ' 场' : (lead.on ? '没有别的了' : '')) : '历史 ' + c.joined.counts.history + ' 场';
+      aux = cur ? (c.joined.badge ? c.joined.badgeText : (c.joined.counts.current ? c.joined.counts.current + ' 场进行中' : '')) : '散场的票根和没成行的记录';
+      emptyOn = c.joined.empty.on; if (emptyOn) { emptyTitle = c.joined.empty.title; emptyBody = c.joined.empty.body; emptyLabel = c.joined.empty.action.label; emptyGo = c.joined.empty.action.go; emptyInert = !!c.joined.empty.action.inert; }
+      if (hist) { sumOn = true; sumN = String(c.joined.counts.history); sumL = '场已结束 · 散场 ' + c.joined.groups.kept.length + ' · 未成行 ' + c.joined.groups.closed.length; }
+      if (cur && emptyOn) { sumOn = true; sumN = '0'; sumL = '场进行中'; aux = emptyTitle; }
+    } else {
+      const srcs = cur ? c.hosted.sections : hist ? c.hosted.sectionsHistory : []; const toneOf = { todo: 't-act', resched: 't-wait', recruit: 't-wait', formed: 't-soon', ended: 't-kept', cancelled: 't-void' };
+      groups = srcs.map(function (g) { const rows = g.rows.filter(function (r) { return !(cur && lead.on && r.id === lead.id); }).map(self._rowH); return { key: g.key, title: g.title, note: g.note, count: rows.length, toneCls: toneOf[g.key] || 't-wait', rows: rows }; }).filter(function (g) { return g.count; });
+      const rest = c.hosted.counts.current - (lead.on ? 1 : 0);
+      caption = cur ? ((rest > 0 ? '还有 ' + rest + ' 场' : (lead.on ? '没有别的了' : '')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')) : drafts ? '草稿 ' + c.hosted.counts.drafts + ' 份' : '历史 ' + c.hosted.counts.history + ' 场';
+      aux = cur ? (c.hosted.badge ? c.hosted.badgeText : (c.hosted.counts.current ? c.hosted.counts.current + ' 场在手上' : '')) : drafts ? '没写完的局会留在这里' : '散场和取消的局';
+      emptyOn = c.hosted.empty.on; if (emptyOn) { emptyTitle = c.hosted.empty.title; emptyBody = c.hosted.empty.body; emptyLabel = c.hosted.empty.action.label; emptyGo = c.hosted.empty.action.go; emptyInert = !!c.hosted.empty.action.inert; }
+      if (hist) { sumOn = true; sumN = String(c.hosted.counts.history); sumL = '场已结束 · 散场 ' + c.hosted.sections.ended.length + ' · 已取消 ' + c.hosted.sections.cancelled.length; }
+      if (drafts) { sumOn = true; sumN = String(c.hosted.counts.drafts); sumL = '份草稿 · 补完就能发布'; c.hosted.drafts.forEach(function (r) { r.landingCls = r.landing ? 'is-landing' : ''; r.readyCls = r.ready ? 't-soon' : 't-wait'; }); }
+      if (cur && emptyOn) { sumOn = true; sumN = '0'; sumL = '场在手上'; aux = emptyTitle; }
+    }
+    const home = { caption: caption, aux: aux, groups: groups, drafts: !joined && drafts, historyFoot: joined && hist, sumOn: sumOn, sumN: sumN, sumL: sumL, emptyOn: emptyOn, emptyTitle: emptyTitle, emptyBody: emptyBody, emptyLabel: emptyLabel, emptyGo: emptyGo || c.inert, emptyInert: emptyInert, emptyCls: emptyInert ? 'inert' : '', emptyAction: !!emptyLabel, landCls: lead.on && lead.landing ? 'is-land' : '' };
+    const youCls = function (m) { return Object.assign(m, { youCls: m.you ? 'you' : '' }); };
+    if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(youCls); }
+    const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
+    if (c.manage.on && !c.manage.missing) { c.manage.apps.rows.forEach(function (a, i) { a.pendingOpen = !a.result && !a.busy && !a.error; a.i = i; }); c.manage.attendance.rows.forEach(function (a) { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fx-stamp' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; }); }
+    const dw = c.detail.on ? c.detail.when : null; const ww = c.waitlist.on ? c.waitlist.row.when : null; const hw = c.history.on ? c.history.when : null; const mw = c.manage.on && !c.manage.missing ? c.manage.head.when : null;
+    return {
+      panel, rootRef: this.rootRef, envRef: this.envRef, cardRef: this.cardRef, homeFcRef: this.homeFcRef, manageStatusRef: this.manageStatusRef, manageSeatsRef: this.manageSeatsRef, leadSeatsRef: this.leadSeatsRef, c, hero, lead, home,
+      detail: { wd: dw ? dw.wdZh + ' ' + dw.md : '', time: dw ? dw.time : '', sub: c.detail.on ? c.detail.place.full + ' · ' + c.detail.seatText : '' },
+      read: { progressPct: Math.round((c.read.progress || 0) * 100) },
+      wl: { wd: ww ? ww.wdZh + ' ' + ww.md : '', time: ww ? ww.time : '' },
+      history: { recordCount: c.history.on ? c.history.records.length : 0, wd: hw ? hw.wdZh + ' ' + hw.md : '', time: hw ? hw.time : '' },
+      ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
+      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, ashes: !!(tk.result && tk.result.burn && !tk.result.burning),
+        retryCopy: function () { const h = self._contact(); if (h) self._c.ticket.contact.copyWith(function () { return h.copy(); }); else self._c.ticket.contact.retryCopy(); },
+        aux: tk.on ? (tk.row.when.zh + ' · ' + tk.row.place.hood + ' · 局主 ' + tk.row.host.name) : '',
+        restLine: tk.on ? (tk.state === 'printing' ? '出票中 · 纸票出完才能撕' : tk.tear.canTear ? '' : tk.state === 'torn' ? '参加约定 · 成员 ' + tk.row.counts.confirmed + '/' + tk.row.counts.capacity + '（含局主）' : '') : '' },
+      manage: { ready: c.manage.on && !c.manage.missing, seatsOn: c.manage.on && !c.manage.missing && !c.manage.head.ended && !c.manage.head.progress.hidden, placeOn: c.manage.on && !c.manage.missing && (c.manage.head.ended || c.manage.head.progress.hidden), leavesArrow: c.manage.on && c.manage.leaves && c.manage.leaves.open ? '▾' : '▸', wd: mw ? mw.wdZh + ' ' + mw.md : '', time: mw ? mw.time : '' },
+      draft: { time: c.draft.on && c.draft.row && c.draft.row.when ? c.draft.row.when.time : '--:--' },
+      sheet: { hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okCls: c.sheet.danger ? 'danger' : 'pri', okDisabled: !c.sheet.canOk }
+    };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>
