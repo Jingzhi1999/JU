@@ -28,7 +28,8 @@ body{margin:0}
 .app.s01 *{animation-delay:calc(var(--s01-dl,0ms) * var(--k,1))!important}
 .app.paused *{animation-play-state:paused!important}
 .app.s01.scrub *{animation-play-state:paused!important;animation-delay:calc((var(--s01-dl,0ms) - var(--frame,0) * 420ms) * var(--k,1))!important}
-.app.rm *,.app.rm-user *{transition-duration:1ms!important;transition-delay:0ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+/* reduced motion (panel, system, user): no keyframes at all — the result is shown directly (a 1ms keyframe can still paint its first frame) */
+.app.rm *,.app.rm-user *{transition-duration:1ms!important;transition-delay:0ms!important;animation:none!important}
 
 /* ---------- the environment field: a fixed sky, and a paper veil that rises / falls over it (transform only — compositor-cheap).
    The veil's top edge = where the field fades into paper (--v = field height − 200px); JS animates --v0 → --v1 per page. ---------- */
@@ -67,13 +68,13 @@ body{margin:0}
   radial-gradient(80% 22% at 96% 70%,rgba(242,190,150,.55),rgba(242,190,150,0) 72%),
   radial-gradient(70% 20% at 30% 86%,rgba(200,180,230,.55),rgba(200,180,230,0) 72%),
   linear-gradient(180deg,#fde6d3 0%,#f8dfd2 40%,#efdbe6 70%,#f8e3d6 100%)}
-.k-halo::before,.k-halo::after{content:"";position:absolute;inset:0;transform:translate(var(--hx,0px),var(--hy,0px)) scale(var(--hs,1));transform-origin:74% 20%;transition:transform calc(380ms * var(--k,1)) var(--e4)}
-.k-halo::before{background:conic-gradient(from 220deg at 74% 20%,#f7884a,#f39a68 16%,#e598a8 34%,#c697d8 52%,#a995e6 68%,#bd93d2 84%,#f7884a);opacity:.92;
-  -webkit-mask-image:radial-gradient(circle at 74% 20%,transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px);
-  mask-image:radial-gradient(circle at 74% 20%,transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px)}
-.k-halo::after{background:conic-gradient(from 140deg at 74% 20%,#f6a36f,#ebab9e 28%,#cfaee0 58%,#e7b49a 84%,#f6a36f);opacity:.5;
-  -webkit-mask-image:radial-gradient(circle at 74% 20%,transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px);
-  mask-image:radial-gradient(circle at 74% 20%,transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px)}
+.k-halo::before,.k-halo::after{content:"";position:absolute;inset:-400px;transform:translate(var(--hx,0px),var(--hy,0px)) scale(var(--hs,1));transform-origin:calc(74% - 192px) calc(20% + 240px);transition:transform calc(380ms * var(--k,1)) var(--e4)}
+.k-halo::before{background:conic-gradient(from 220deg at calc(74% - 192px) calc(20% + 240px),#f7884a,#f39a68 16%,#e598a8 34%,#c697d8 52%,#a995e6 68%,#bd93d2 84%,#f7884a);opacity:.92;
+  -webkit-mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px);
+  mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 44px,rgba(0,0,0,.3) 76px,#000 110px,#000 134px,rgba(0,0,0,.45) 160px,transparent 212px)}
+.k-halo::after{background:conic-gradient(from 140deg at calc(74% - 192px) calc(20% + 240px),#f6a36f,#ebab9e 28%,#cfaee0 58%,#e7b49a 84%,#f6a36f);opacity:.66;
+  -webkit-mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px);
+  mask-image:radial-gradient(circle at calc(74% - 192px) calc(20% + 240px),transparent 0 200px,rgba(0,0,0,.55) 250px,rgba(0,0,0,.7) 290px,rgba(0,0,0,.35) 340px,transparent 420px)}
 .app:is(.at-profile,.at-profile-edit,.at-record-supplement,.at-record-dispute,.at-record-appeal,.at-report-supplement,.at-feedback,.at-seam-report){--hx:-96px;--hy:96px;--hs:1.45}
 .app.at-appearance{--hx:-60px;--hy:44px;--hs:1.3}
 .app:is(.at-favorites,.at-reports,.at-account,.at-about){--hx:-34px;--hy:40px;--hs:1.12}
@@ -88,6 +89,8 @@ body{margin:0}
 /* ---------- page frame: header (toolbar / 30→18 title / 14 status) + masked scroller ---------- */
 .s01-pg{position:absolute;inset:0;z-index:2}
 .s01-pg.is-under.ph-idle{visibility:hidden}
+/* reduced motion pops a page back in one frame: keep the covered page rastered (invisible, inert) so it is complete on that frame */
+.app:is(.rm,.rm-user) .s01-pg.is-under.ph-idle{visibility:visible;opacity:.001;pointer-events:none}
 .s01-hd{position:absolute;left:0;right:0;top:0;z-index:4;padding:12px var(--gx) 0;container-type:inline-size;pointer-events:none}
 .s01-hd::after{content:"";position:absolute;left:0;right:0;top:68px;height:1px;background:rgba(20,22,31,.13);opacity:calc((var(--hc,0) - .85) * 6.7)}
 .s01-hd button{pointer-events:auto}
@@ -461,9 +464,9 @@ textarea.s01-in{min-height:1lh}
 .s01-pg.is-top.ph-exit [data-mf="on"]{animation:s01-mOut calc(340ms * var(--k,1)) var(--e4) both;--s01-dl:-24ms}
 .s01-pg.is-leaving{animation:s01-fo calc(200ms * var(--k,1)) var(--e1) both;pointer-events:none}
 /* a value whose line count differs between the two pages crossfades on the target's wrap instead of overrunning its neighbours */
-@keyframes s01-xIn{0%,20%{opacity:0}55%,100%{opacity:1}}
-@keyframes s01-xOut{0%,55%{opacity:1}88%,100%{opacity:0}}
-@keyframes s01-xLate{0%,55%{opacity:0}100%{opacity:1}}
+@keyframes s01-xIn{0%,15%{opacity:0}45%,100%{opacity:1}}
+@keyframes s01-xOut{0%,35%{opacity:1}65%,100%{opacity:0}}
+@keyframes s01-xLate{0%,45%{opacity:0}85%,100%{opacity:1}}
 .s01-pg.is-top.ph-enter [data-mf="on"][data-mx],.s01-pg.is-top.ph-in [data-mf="on"][data-mx]{animation:s01-mIn calc(380ms * var(--k,1)) var(--e4) both,s01-xIn calc(380ms * var(--k,1)) linear both}
 .s01-pg.is-top.ph-exit [data-mf="on"][data-mx]{animation:s01-mOut calc(340ms * var(--k,1)) var(--e4) both,s01-xOut calc(340ms * var(--k,1)) linear both}
 .s01-pg.is-under:is(.ph-enter,.ph-in) [data-mf="src"][data-mx]{visibility:visible}
@@ -1004,12 +1007,7 @@ class Component extends DCLogic {
       goVal: goVal,
       sc: function (ev) {
         var el = ev.currentTarget; self._applyHc(el); if (self.state.nav.phase === 'idle') self.s01Sky(false);
-        clearTimeout(self._s01SnapT);
-        self._s01SnapT = setTimeout(function () {
-          if (!el.isConnected || self.state.nav.phase !== 'idle' || el.querySelector('input:focus,textarea:focus')) return;
-          var y = el.scrollTop, R = self.headerRange || 96, max = el.scrollHeight - el.clientHeight;
-          if (y > 1 && y < R - 1 && max >= R) el.scrollTo({ top: y < R * .5 ? 0 : R, behavior: self.isRM() ? 'auto' : 'smooth' });
-        }, 180);
+        self.s01Snap(el, 180);
       },
       openProfile: function (ev) { var t = ev && ev.currentTarget; self.motion('身份展开成资料页', function () { self.go('profile', {}, t ? { currentTarget: t } : null); }); },
       goEdit: function (ev) { var t = ev && ev.currentTarget; self.motion('值原位变成编辑', function () { self.go('profile-edit', {}, t ? { currentTarget: t } : null); }); },
@@ -1048,6 +1046,15 @@ class Component extends DCLogic {
     this.holdKey('s01-saved', 6000, function () { self.setState(function (s) { return { s01: Object.assign({}, s.s01, { saved: null }) }; }); });
     this.afterKey('pf-back', 40, function () { self.back(true); });
   }
+  /* a header resting inside its collapse range settles to fully open or fully collapsed (after a scroll, and after a page returns) */
+  s01Snap(el, ms) {
+    var self = this; clearTimeout(this._s01SnapT);
+    this._s01SnapT = setTimeout(function () {
+      if (!el || !el.isConnected || self.state.nav.phase !== 'idle' || el.querySelector('input:focus,textarea:focus')) return;
+      var y = el.scrollTop, R = self.headerRange || 96, max = el.scrollHeight - el.clientHeight;
+      if (y > 1 && y < R - 1 && max >= R) el.scrollTo({ top: y < R * .5 ? 0 : R, behavior: self.isRM() ? 'auto' : 'smooth' });
+    }, ms);
+  }
   s01FavRemove(r, isLead) {
     if (this._s01FavBusy) return; this._s01FavBusy = true;
     var self = this, F = JUS.derive.favorites(this.state.data); var next = isLead && F.active.length > 1 ? F.active[1].id : null;
@@ -1075,6 +1082,7 @@ class Component extends DCLogic {
     var start = !!(a && b && (a.phase !== b.phase || a.seq !== b.seq) && (b.phase === 'enter' || b.phase === 'exit'));
     if (start) this.s01Morph(b);
     this.s01Sky(start);
+    if (a && b && a.phase === 'exit' && b.phase === 'idle') { var rt = this.rootRef.current, tp = b.stack[b.stack.length - 1]; var sec = rt && rt.querySelector('[data-pg="' + s01Pg(tp.s) + '"]'); this.s01Snap(sec && sec.querySelector('[data-scroller]'), 120); }
     /* environment crossfade (core motion 3): the incoming field fades in from a soft blur while the outgoing one fades out */
     var shown = function (st) { return st && st.data ? ((st.ui && st.ui.skinPreview) || st.data.appearance.skin) : null; };
     var was = shown(ps), now = shown(this.state);
