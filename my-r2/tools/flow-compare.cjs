@@ -1,10 +1,14 @@
 // Same-flow comparison across concepts (差异检查 3 / 正常速度录屏替代): runs the SAME real-click flow in every concept at 1× and
 // records the phone through a CDP screencast (compositor frames with real timestamps, i.e. every frame the browser painted,
 // cropped to the phone), one row per concept, so the spatial organisation of each concept's transition can be compared side by
-// side at normal speed. The default 进入—操作—返回 flow yields well over 24 frames; --max keeps at most N frames per segment
-// (evenly spread, first and last kept) so the sheet stays readable; every kept frame carries its time since the click.
+// side at normal speed. The default 进入—操作—返回 flow yields ≈ 24–32 frames (the headless screencast paints 8–14 fps while
+// something moves; re-run with a longer --span if a run ends below 24); --max keeps at most N frames per segment (evenly spread,
+// first and last kept) so the sheet stays readable. Frame labels: "fK/N +Tms" = the K-th of N painted frames, T ms after the
+// first painted frame of that segment (the screencast's timestamps lag the paint by a varying ≈ 100–300 ms, so times since the
+// click are not claimed; the spacing between frames is real).
 // Usage: node my-r2/tools/flow-compare.cjs <outdir> [--codes C01,C02,...] [--flow enter-back] [--final] [--skin cotton] [--speed 1]
-//        [--span 1100] (ms recorded after each click) [--max 14] (frames kept per click) [--shots] (fallback: timed screenshots instead of the screencast)
+//        [--span 1400] (ms recorded after each click) [--max 16] (frames kept per click) [--shots] (fallback: timed screenshots instead of the screencast)
+//        [--vw 480 --vh 1000] (viewport: small keeps the screencast frame rate up; the phone must fit inside)
 //   files: .build/<CODE>.html per concept (private builds) unless --final (the deliverable) or JU_STANDALONE (one file for all)
 //   flows: my-r2/tools/flows.json (enter-back = home → first row → detail → back; tear-contact-copy; end-attend; …)
 //   output: outdir/<CODE>-NN.jpg frames, outdir/sheet.png (rows = concepts), outdir/log.json (how each click landed, frame times, fps)
@@ -14,7 +18,7 @@ if (!outdir) { console.error('usage: node my-r2/tools/flow-compare.cjs <outdir> 
 (async () => {
   fs.mkdirSync(outdir, { recursive: true });
   const codes = L.opt('codes', 'C01,C02,C03,C04,C05,C06,C07,C08,C09,C10').split(','); const skin = L.opt('skin', ''); const speed = +L.opt('speed', 1);
-  const span = +L.opt('span', 1100), max = +L.opt('max', 14); const flowName = L.opt('flow', 'enter-back'); const useShots = L.flag('shots');
+  const span = +L.opt('span', 1400), max = +L.opt('max', 16); const flowName = L.opt('flow', 'enter-back'); const useShots = L.flag('shots');
   const flow = L.loadFlows()[flowName]; if (!flow) { console.error('unknown flow: ' + flowName); process.exit(2); }
   /* a narrow viewport (the shell lays the rail above the stage below 900px, so the phone sits at the left edge): the screencast
      encodes the whole viewport per frame, and a small one keeps the frame rate up (≈ 2–3× more frames than at 1000×1000) */
@@ -35,13 +39,15 @@ if (!outdir) { console.error('usage: node my-r2/tools/flow-compare.cjs <outdir> 
       const raw = []; const onFrame = async (ev) => { raw.push({ t: ev.metadata.timestamp, data: ev.data }); try { await cdp.send('Page.screencastFrameAck', { sessionId: ev.sessionId }); } catch (e) { } };
       cdp.on('Page.screencastFrame', onFrame);
       await cdp.send('Page.startScreencast', { format: 'jpeg', quality: 78, maxWidth: 1400, maxHeight: 1400, everyNthFrame: 1 });
-      await p.waitForTimeout(300); /* let the screencast pipeline run before the click, so the first frames of the motion are not lost */
-      const t0 = Date.now() / 1000; await act(); await p.waitForTimeout(span);
+      await p.waitForTimeout(80); const t0 = Date.now() / 1000; await act(); await p.waitForTimeout(span);
       try { await cdp.send('Page.stopScreencast'); } catch (e) { } cdp.off('Page.screencastFrame', onFrame);
       const seg = raw.filter(r => r.t >= t0 - 0.05).sort((x, y) => x.t - y.t); fps.push(seg.length ? Math.round(seg.length / span * 1000) : 0);
       if (!seg.length) { await still(label + ' (no frames painted)'); return; }
       const keep = seg.length <= max ? seg : Array.from({ length: max }, (_, i) => seg[Math.round(i * (seg.length - 1) / (max - 1))]);
-      for (const r of keep) { const f = path.join(outdir, `${code}-${String(frames.length).padStart(2, '0')}.jpg`); fs.writeFileSync(f, Buffer.from(r.data, 'base64')); frames.push({ f, label: label + ' +' + Math.max(0, Math.round((r.t - t0) * 1000)) + 'ms', t: r.t - t0, crop: true }); }
+      /* frame times are relative to the FIRST painted frame of the segment: the screencast's own timestamps lag the paint by a
+         pipeline delay (≈ 100–300 ms, varying with the ack round trip), so "since click" would mislead; the spacing is real */
+      const tf = seg[0].t;
+      for (const r of keep) { const f = path.join(outdir, `${code}-${String(frames.length).padStart(2, '0')}.jpg`); fs.writeFileSync(f, Buffer.from(r.data, 'base64')); frames.push({ f, label: label + ' f' + (seg.indexOf(r) + 1) + '/' + seg.length + ' +' + Math.round((r.t - tf) * 1000) + 'ms', t: r.t - tf, crop: true }); }
     };
     await still('起点');
     for (const st of flow.steps) {
