@@ -301,7 +301,8 @@
       this._sheetRef = this._sheetRef || { current: null };
       this.setState({ sheet: assign(sheet, { id: (this._sheetSeq = (this._sheetSeq || 0) + 1), busy: false, error: '', done: false }) });
     };
-    p.closeSheet = function (keepFocus) { if (!this.state.sheet) return; if (this.state.sheet.busy) return; this.cancelKey('busy:sheet'); if (!keepFocus) this._restoreFocus = this._sheetTrigger; this._sheetTrigger = null; this.setState({ sheet: null }); };
+    /* NB: never re-read this.state right after a setState in the same tick — Preact applies it at render time (the busy guard is in sheetCancel, which runs on a fresh click) */
+    p.closeSheet = function (keepFocus) { this.cancelKey('busy:sheet'); if (!keepFocus) this._restoreFocus = this._sheetTrigger; this._sheetTrigger = null; this.setState({ sheet: null }); };
     p._sheetSet = function (patch) { this.setState(function (s) { return s.sheet ? { sheet: assign(s.sheet, patch) } : null; }); };
     p.sheetKey = function (ev) {
       var sh = this.state.sheet; if (!sh) return;
@@ -315,7 +316,7 @@
     /* every sheet's primary action: 处理中 in the sheet → engine → close on success, error in place (重试 = the same button) */
     p.sheetOk = function () {
       var sh = this.state.sheet, self = this; if (!sh || sh.busy) return; var d = this.state.data;
-      var finish = function (res, after) { var e = res.effect; if (e.type === 'error') { self._sheetSet({ busy: false, error: e.message || '这一步没有生效，请刷新后重试。' }); return; } self._sheetSet({ busy: false, error: '' }); if (after) after(e); };
+      var finish = function (res, after) { var e = res.effect; if (e.type === 'error') { self._sheetSet({ busy: false, error: e.message || '这一步没有生效，请刷新后重试。' }); return; } self._sheetSet({ busy: false, error: '' }); if (after) after(e, res.data); };
       var run = function (name, payload, after) { self._sheetSet({ busy: true, error: '' }); self.holdKey('busy:sheet', self.processMs || 360, function () { finish(self.act(name, payload), after); }); };
       if (sh.kind === 'confirm') {
         var map = { withdraw: 'withdrawApplication', release: 'releaseReservation', exit: 'exitEvent', decline: 'declineReschedule', leaveQueue: 'leaveWaitlist' };
@@ -337,7 +338,7 @@
         return;
       }
       if (sh.kind === 'cancel') { run('cancel', { eventId: sh.eventId }, function () { self.closeSheet(); self.scrollTop('manage'); }); return; }
-      if (sh.kind === 'end') { run('end', { eventId: sh.eventId }, function (e) { self.closeSheet(); self.setTopParams({ intent: 'attendance' }); self._uiIn('manage', { open: assign(self.state.ui.manage.open, { attendance: true }), next: e.toRecord ? (self._firstUnrecorded(sh.eventId) || null) : null }); self._pendingSection = 'attendance'; self.scrollTop('manage'); }); return; }
+      if (sh.kind === 'end') { run('end', { eventId: sh.eventId }, function (e, data) { self.closeSheet(); self.setTopParams({ intent: 'attendance' }); self._uiIn('manage', { open: assign(self.state.ui.manage.open, { attendance: true }), next: e.toRecord ? (self._firstUnrecorded(sh.eventId, data) || null) : null }); self._pendingSection = 'attendance'; self.scrollTop('manage'); }); return; }
       if (sh.kind === 'record') {
         var text = (sh.text || '').trim(); if (text.length < 4) { this._sheetSet({ error: '请至少写 4 个字' }); return; }
         run('addRecord', { eventId: sh.eventId, kind: 'report', text: '你补充：' + text }, function () { self._sheetSet({ done: true, text: text }); });
@@ -346,7 +347,7 @@
       if (sh.kind === 'card' || sh.kind === 'contact') { this.closeSheet(); }
     };
     p.sheetInput = function (field, v) { var patch = {}; patch[field] = v; patch.error = ''; this._sheetSet(patch); };
-    p._firstUnrecorded = function (eventId) { var m = JU.derive.manage(this.state.data, eventId); var a = m && m.attendees.filter(function (x) { return !x.attendance; })[0]; return a ? a.id : null; };
+    p._firstUnrecorded = function (eventId, data) { var m = JU.derive.manage(data || this.state.data, eventId); var a = m && m.attendees.filter(function (x) { return !x.attendance; })[0]; return a ? a.id : null; };
 
     /* ---------------- participant actions ---------------- */
     p.readScroll = function (ev) {
@@ -404,7 +405,7 @@
       if (e.type === 'error') { this.setState(function (s) { var er = assign(s.ui.errors); er['att:' + memberId] = e.message; return { ui: assign(s.ui, { errors: er }) }; }); return; }
       var ed = assign(this.state.ui.manage.editing); delete ed[memberId];
       var fresh = assign(this.state.ui.manage.fresh); if (e.type === 'attended') fresh[memberId] = e.seq || Date.now();
-      var next = this._firstUnrecorded(eventId);
+      var next = this._firstUnrecorded(eventId, res.data);
       this._uiIn('manage', { editing: ed, fresh: fresh, next: next });
       this.setState(function (s) { var er = assign(s.ui.errors); delete er['att:' + memberId]; return { ui: assign(s.ui, { errors: er }) }; });
       if (e.type === 'attended') this.holdKey('stamp:' + memberId, 2500, function () { var f = assign(self.state.ui.manage.fresh); delete f[memberId]; self._uiIn('manage', { fresh: f }); });
@@ -432,8 +433,8 @@
     };
 
     /* ---------------- index mapping ---------------- */
-    p.ctlJump = function (e) {
-      var o = e.open || {}; var role = e.role || 'joined'; var section = e.section || 'current'; var d = this.state.data;
+    p.ctlJump = function (e, data) {
+      var o = e.open || {}; var role = e.role || 'joined'; var section = e.section || 'current'; var d = data || this.state.data;
       var ui = JU.ctlState().ui; ui.memo = { joined: 'current', hosted: 'current' }; ui.memo[role] = section;
       var seq = (this.state.nav && this.state.nav.seq) || 1; var patch = { role: role, section: section, sheet: null, toast: null };
       var mk = function (s, pr) { return { s: s, p: pr || {}, from: null, key: null, id: ++seq }; };
@@ -484,16 +485,19 @@
         leavingFrom: nav.leaving && nav.leaving.from ? nav.leaving.from : null };
       var role = s.role, section = s.section;
       var joinedD = JU.derive.joined(d), hostedD = JU.derive.hosted(d);
-      var inert = function () { self.say('不在本次演示范围', 'info'); };
+      var inert = function (ev) { stop(ev); self.say('不在本次演示范围', 'info'); };
+      /* a tap on a button INSIDE a row must not also open the row: inner actions stop propagation, and open() ignores a click whose target sits in an inner [data-act] */
+      var stop = function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); };
+      var innerAct = function (ev) { var t = ev && ev.target; var a = t && t.closest ? t.closest('[data-act]') : null; return !!(a && ev.currentTarget && a !== ev.currentTarget && ev.currentTarget.contains && ev.currentTarget.contains(a)); };
       /* ---- lists ---- */
       var leftOf = function (row) { return { text: row.leftText, ratio: row.leftRatio, tone: row.leftTone, on: !!row.deadline && (row.stage === 'invited' || row.stage === 'invited_queue'), expired: !!row.deadline && row.left <= 0 }; };
       var joinedRow = function (r) {
         var id = r.id; var st = r.stage;
-        var open = function (ev) { if (self._suppressClick) { self._suppressClick = false; return; } if (st === 'ended' || r.group === 'closed') self.go('history', { eventId: id }, ev); else if (st === 'waitlist') self.go('waitlist', { eventId: id }, ev); else if (st === 'reschedule') self.go('reply', { eventId: id }, ev); else if (st === 'tear' || st === 'contact' || st === 'going') self.go('ticket', { eventId: id }, ev); else self.go('detail', { eventId: id }, ev); };
-        var act = function (ev) { if (st === 'invited' || st === 'invited_queue') self.go('read', { eventId: id }, ev); else if (st === 'contact') self.go('ticket', { eventId: id, contact: true }, ev); else open(ev); };
+        var open = function (ev) { if (self._suppressClick) { self._suppressClick = false; return; } if (innerAct(ev)) return; if (st === 'ended' || r.group === 'closed') self.go('history', { eventId: id }, ev); else if (st === 'waitlist') self.go('waitlist', { eventId: id }, ev); else if (st === 'reschedule') self.go('reply', { eventId: id }, ev); else if (st === 'tear' || st === 'contact' || st === 'going') self.go('ticket', { eventId: id }, ev); else self.go('detail', { eventId: id }, ev); };
+        var act = function (ev) { stop(ev); if (st === 'invited' || st === 'invited_queue') self.go('read', { eventId: id }, ev); else if (st === 'contact') self.go('ticket', { eventId: id, contact: true }, ev); else if (st === 'ended' || r.group === 'closed') self.go('history', { eventId: id }, ev); else if (st === 'waitlist') self.go('waitlist', { eventId: id }, ev); else if (st === 'reschedule') self.go('reply', { eventId: id }, ev); else if (st === 'tear' || st === 'going') self.go('ticket', { eventId: id }, ev); else self.go('detail', { eventId: id }, ev); };
         var secLabel = st === 'pending' ? '撤回' : (st === 'invited' || st === 'invited_queue' || st === 'tear' || st === 'contact' || st === 'going' || st === 'reschedule') ? '去不了了' : st === 'waitlist' ? '退出候补' : '';
         var secSub = st === 'pending' ? 'withdraw' : (st === 'invited' || st === 'invited_queue') ? 'release' : st === 'reschedule' ? 'decline' : st === 'waitlist' ? 'leaveQueue' : secLabel ? 'exit' : '';
-        var secondary = secSub ? function (ev) { self.openConfirm(secSub, id, ev); } : null;
+        var secondary = secSub ? function (ev) { stop(ev); self.openConfirm(secSub, id, ev); } : null;
         var when = r.when; var deadlineText = r.deadline && (st === 'invited' || st === 'invited_queue') ? JU.fmt.deadlineCopy(r.deadline) : '';
         return assign(r, { key: id, title: r.event.title, en: r.event.en, pack: r.event.pack, hostName: r.host.name, left: leftOf(r), deadlineText: deadlineText, open: open, act: act, secondary: secondary, secondaryLabel: secLabel, secondaryKey: secSub === 'leaveQueue' ? 'leave-queue' : secSub, ctaLabel: r.cta, isLead: !!(joinedD.lead && joinedD.lead.id === id), landing: ui.landKey === 'row-' + id, originKey: 'row-' + id, whenText: when.zh, placeText: r.place.hood, seatText: '已确认 ' + r.counts.confirmed + '/' + r.counts.capacity, monthTitle: when.month + ' 月' });
       };
@@ -504,11 +508,12 @@
         empty: section === 'history' ? assign({ on: jhist.length === 0 }, JU.COPY.emptyJoinedHistory, { action: { label: '回到当前', inert: false, go: function () { self.setSection('current'); } } }) : assign({ on: jcur.length === 0, kind: joinedD.emptyKind }, jhist.length ? JU.COPY.emptyJoinedRested : JU.COPY.emptyJoinedFirst, { action: { label: '去找局', inert: true, go: inert } }) });
       var hostRow = function (r) {
         var id = r.id; var intent = r.key === 'review' ? 'review' : (r.key === 'ended' && r.unrecorded) ? 'attendance' : 'manage';
-        var open = function (ev) { self.go('manage', { eventId: id, intent: intent }, ev); };
-        return assign(r, { key: id, title: r.event.title, en: r.event.en, pack: r.event.pack, open: open, act: open, intent: intent, ctaLabel: r.cta, isLead: !!(hostedD.lead && hostedD.lead.id === id), landing: ui.landKey === 'row-' + id, originKey: 'row-' + id, whenText: r.when.zh, placeText: r.place.hood, roster: r.seats });
+        var open = function (ev) { if (innerAct(ev)) return; self.go('manage', { eventId: id, intent: intent }, ev); };
+        var act = function (ev) { stop(ev); self.go('manage', { eventId: id, intent: intent }, ev); };
+        return assign(r, { key: id, title: r.event.title, en: r.event.en, pack: r.event.pack, open: open, act: act, intent: intent, ctaLabel: r.cta, isLead: !!(hostedD.lead && hostedD.lead.id === id), landing: ui.landKey === 'row-' + id, originKey: 'row-' + id, whenText: r.when.zh, placeText: r.place.hood, roster: r.seats });
       };
       var sectionsH = function (list) { return list.map(function (g) { return { key: g.key, title: g.title, note: g.note, count: g.rows.length, rows: g.rows.map(hostRow) }; }); };
-      var draftRow = function (dr, cls) { return assign(dr, { key: dr.id, cls: cls || '', sourceText: dr.source ? '由「' + dr.source.title + '」再开' : '', open: function (ev) { self.go('draft', { draftId: dr.id }, ev); }, del: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.deleteDraft(dr.id); }, continueInert: true, continueLabel: '继续编辑', originKey: 'row-' + dr.id, landing: ui.landKey === 'row-' + dr.id }); };
+      var draftRow = function (dr, cls) { return assign(dr, { key: dr.id, cls: cls || '', sourceText: dr.source ? '由「' + dr.source.title + '」再开' : '', open: function (ev) { if (innerAct(ev)) return; self.go('draft', { draftId: dr.id }, ev); }, del: function (ev) { stop(ev); self.deleteDraft(dr.id); }, continueInert: true, continueLabel: '继续编辑', originKey: 'row-' + dr.id, landing: ui.landKey === 'row-' + dr.id }); };
       var drafts = hostedD.drafts.map(function (dr) { return draftRow(dr, ui.restored === dr.id ? 'is-restored' : ''); });
       if (ui.ghost && !drafts.some(function (x) { return x.id === ui.ghost.draftId; })) { var g = hostedD.drafts; var gd = JU.derive.hosted(assign(d, { drafts: [ui.ghost.draft] })).drafts[0]; drafts.splice(Math.min(ui.ghost.index, drafts.length), 0, assign(draftRow(gd, 'is-deleting'), { ghost: true })); }
       var hcur = hostedD.current.map(hostRow), hhist = hostedD.history.map(hostRow);

@@ -148,7 +148,9 @@
       this.clearTimers(); this._paused = false; this._scrubS = null; this._pendingRestore = null; this._pendingSection = null; this._sheetTrigger = null; this._restoreFocus = null;
       var st = this.initialState(e.variant || 'default'); st.jumpKey = e.key;
       this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; });
-      var self = this; this.after(30, function () { self.applyJump(e); });
+      /* the default applyJump (= ctlJump) only writes state, so it is applied in the same tick: one render, no home flash between
+         the fresh dataset and the target surface; a concept's own applyJump may read the DOM and keeps the 30ms delay */
+      var self = this; if (this.applyJump === p.applyJump && this.ctlJump) this.ctlJump(e, st.data); else this.after(30, function () { self.applyJump(e); });
     };
     if (!p.applyJump) p.applyJump = function (e) { if (this.ctlJump) this.ctlJump(e); };
     p.panelVals = function () {

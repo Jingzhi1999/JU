@@ -19,7 +19,7 @@ from fontTools.ttLib import TTFont
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 FONTS_DIR = os.path.join(ROOT, 'my-r2', '.fonts')
-CACHE = os.path.join(FONTS_DIR, 'cache')
+CACHE = os.environ.get('JU_FONTS_CACHE') or os.path.join(FONTS_DIR, 'cache')   # JU_FONTS_CACHE=.build/fonts-cache reuses the Phase B downloads
 DEFAULT_OUT = os.path.join(FONTS_DIR, 'fonts-embed.css')
 os.makedirs(CACHE, exist_ok=True)
 UA = 'Mozilla/4.0 (compatible; fonts-subsetter)'  # generic client => static TTF per weight

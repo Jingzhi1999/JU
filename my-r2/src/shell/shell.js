@@ -7,7 +7,9 @@
      Resource rule: only the instances on screen run. Leaving a view / a concept pauses its timers (pauseTimers) and its
      animations; a compare combination change unmounts the old instances (timers cleared, animations cancelled, nodes removed).
      The state index (window.__JU_INDEX) is injected at build time, so #compare can be opened directly before any concept runs. */
-  var SRC = window.__JU_SOURCES || {}, META = window.__JU_META || [], META_ALL = window.__JU_META_ALL || META, DOCS = window.__JU_DOCS || {};
+  var SRC = window.__JU_SOURCES || {}, META = window.__JU_META || [], DOCS = window.__JU_DOCS || {};
+  /* the overview and the rail list every public concept (built or 画板制作中) plus any internal one built by name (JU_ONLY=C00) */
+  var META_ALL = (window.__JU_META_ALL || META).concat(META.filter(function (c) { return !(window.__JU_META_ALL || []).some(function (x) { return x.code === c.code; }); }));
   var INDEX = window.__JU_INDEX || [];
   var COV = window.__JU_COVERAGE || null, EV = window.__JU_EVIDENCE || { items: [] }, SCOPE = window.__JU_SCOPE || null;
   var $ = function (s, r) { return (r || document).querySelector(s); };

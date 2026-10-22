@@ -15,6 +15,8 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const inst = (p, js, arg) => p.evaluate(([js, arg]) => { const m = window.JUShell.mounts.stage['stage:' + (window.__JU_META[0].code) + ':']; const inst = m.instance, root = m.root; return new Function('inst', 'root', 'arg', 'JU', js)(inst, root, arg, window.JU); }, [js, arg]);
   const phone = (p) => p.locator('.stage-host.on .ju-phone');
   const click = async (p, sel, opts) => { const l = phone(p).locator(sel).first(); await l.scrollIntoViewIfNeeded().catch(() => { }); await l.click(Object.assign({ timeout: 4000 }, opts || {})); await p.waitForTimeout((opts && opts.after) || 120); };
+  /* a real pointer click at the element's current box WITHOUT scrolling anything first (for scroll-memory checks) */
+  const clickAt = async (p, sel) => { const bb = await phone(p).locator(sel).first().boundingBox(); await p.mouse.click(bb.x + bb.width / 2, bb.y + Math.min(bb.height / 2, 40)); await p.waitForTimeout(120); };
   const surface = (p) => inst(p, 'return inst.state.nav.stack[inst.state.nav.stack.length-1].s');
   const stage = (p, id) => inst(p, 'return inst.state.data.joined.filter(function(x){return x.eventId===arg})[0].stage', id);
   const text = (p) => phone(p).evaluate(el => el.textContent);
@@ -27,7 +29,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     ok('index has 50 entries', idx.length === 50, idx.length);
     let bad = [];
     for (const e of idx) {
-      const r = await inst(p, `inst.jumpTo(arg.key); return true;`, e); await p.waitForTimeout(140);
+      await inst(p, `inst.jumpTo(arg.key); return true;`, e); await p.waitForTimeout(300);
       const got = await inst(p, `try { var v = inst.renderVals(); var c = v.c; var top = inst.state.nav.stack[inst.state.nav.stack.length-1]; return { ok: true, cur: top.s, depth: inst.state.nav.stack.length, role: inst.state.role, section: inst.state.section, sheet: !!inst.state.sheet, surf: !!root.querySelector('[data-surface="' + top.s + '"]'), contact: !!(c.ticket.on && c.ticket.contact.on), manageOn: c.manage.on && !c.manage.missing }; } catch (err) { return { ok: false, err: String(err && err.stack || err).slice(0, 300) }; }`);
       const want = e.open ? ({ contact: 'ticket', 'reschedule-reply': 'reply', withdraw: 'ticket' }[e.open.surface] || e.open.surface) : 'home';
       if (!got.ok) bad.push(e.key + ' renderVals threw: ' + got.err);
@@ -43,11 +45,14 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     // (a) detail + back with scroll memory
     await inst(p, `root.querySelector('[data-scroller="home"]').scrollTop = 120; root.querySelector('[data-scroller="home"]').dispatchEvent(new Event('scroll'))`); await p.waitForTimeout(60);
     const hc = await inst(p, `return root.querySelector('[data-surface="home"]').style.getPropertyValue('--hc')`); ok('--hc written on scroll', +hc > 0.9 && +hc <= 1, hc);
-    await click(p, '[data-rid="brunch"]'); await settled(p); ok('row → detail', await surface(p) === 'detail');
-    const from = await inst(p, `return inst.state.nav.stack[1].from && inst.state.nav.stack[1].key`); ok('origin rect + key captured', from === 'row-brunch', from);
-    await click(p, '[data-surface="detail"] [data-act="back"]'); await settled(p); ok('back → home', await surface(p) === 'home');
+    await clickAt(p, '[data-rid="livehouse"]'); await settled(p); ok('row → reply (livehouse is 改期待答复)', await surface(p) === 'reply');
+    const from = await inst(p, `return inst.state.nav.stack[1].from && inst.state.nav.stack[1].key`); ok('origin rect + key captured', from === 'row-livehouse', from);
+    await click(p, '[data-surface="reply"] [data-act="back"]'); await settled(p); ok('back → home', await surface(p) === 'home');
     const st = await inst(p, `return root.querySelector('[data-scroller="home"]').scrollTop`); ok('scroll position restored after back', st === 120, st);
-    const land = await inst(p, `return inst.state.ui.landKey`); ok('landing key marks the origin row', land === 'row-brunch', land);
+    const land = await inst(p, `return inst.state.ui.landKey`); ok('landing key marks the origin row', land === 'row-livehouse', land);
+    await inst(p, `root.querySelector('[data-scroller="home"]').scrollTop = 0`);
+    await click(p, '[data-rid="brunch"]'); await settled(p); ok('row → detail', await surface(p) === 'detail');
+    await click(p, '[data-surface="detail"] [data-act="back"]'); await settled(p); ok('back → home (detail)', await surface(p) === 'home');
     // (b) read → confirm → formed → ticket printing
     await click(p, '[data-rid="brunch"] [data-act="cta"]'); await settled(p); ok('CTA → read (stack home>detail>read)', await inst(p, `return inst.state.nav.stack.map(function(x){return x.s}).join('>')`) === 'home>detail>read');
     const disabledBefore = await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled(); ok('confirm disabled before reading to the end', disabledBefore);
