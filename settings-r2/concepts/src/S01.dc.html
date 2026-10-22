@@ -17,7 +17,6 @@ body{margin:0}
    Hierarchy is type alone: serif display values (Noto Serif SC 600) + Archivo digits / handles + 13px labels as annotations.
    Every page has one protagonist value at the same height as the home name (y≈168); the value you tap moves there (measured FLIP).
    Motion plumbing: all motion is @keyframes; delays come from --dl so 暂停 / 关键帧 hold whole sequences mid-flight. */
-@property --fh{syntax:'<length>';inherits:true;initial-value:397px}
 @property --dl{syntax:'<time>';inherits:false;initial-value:0ms}
 .app.s01{position:absolute;inset:0;overflow:hidden;background:#FBFAF7;color:#14161F;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
   --paper:#FBFAF7;--ink:#14161F;--body:#252b3a;--sec:#535b70;--sec2:#3b4254;--blue:#4553BE;--focus:#4A5AD6;--err:#DA3A52;--ok:#0E9B76;--rule:rgba(20,22,31,.14);
@@ -26,20 +25,32 @@ body{margin:0}
 .app.s01 *{box-sizing:border-box}
 :where(.app.s01) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;text-align:left;-webkit-tap-highlight-color:transparent}
 :where(.app.s01) p{margin:0}
-.app.s01 *,.app.s01 .s01-sky{animation-delay:calc(var(--dl,0ms) * var(--k,1))!important}
+.app.s01 *{animation-delay:calc(var(--dl,0ms) * var(--k,1))!important}
 .app.paused *{animation-play-state:paused!important}
 .app.s01.scrub *{animation-play-state:paused!important;animation-delay:calc((var(--dl,0ms) - var(--frame,0) * 420ms) * var(--k,1))!important}
 .app.rm *,.app.rm-user *{transition-duration:1ms!important;transition-delay:0ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 
-/* ---------- the environment field: one global sky; its height --fh is animated per page (JS sets --fh0 → --fh1) ---------- */
-@keyframes s01-fhA{from{--fh:var(--fh0,397px)}to{--fh:var(--fh1,397px)}}
-@keyframes s01-fhB{from{--fh:var(--fh0,397px)}to{--fh:var(--fh1,397px)}}
-.s01-sky{position:absolute;inset:0;pointer-events:none;z-index:0;--fade:min(236px,calc(var(--fh) * .42));animation:s01-fhA calc(var(--fd,380ms) * var(--k,1)) var(--e4) both;
-  -webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(var(--fh) - var(--fade)),rgba(0,0,0,.55) calc(var(--fh) - var(--fade) * .45),transparent var(--fh));mask-image:linear-gradient(180deg,#000 0,#000 calc(var(--fh) - var(--fade)),rgba(0,0,0,.55) calc(var(--fh) - var(--fade) * .45),transparent var(--fh))}
-.s01-sky[data-fa="b"]{animation-name:s01-fhB}
-.app.s01.scrub .s01-sky{animation-delay:calc(var(--frame,0) * var(--fd,380ms) * var(--k,1) * -1)!important}
-.s01-env{position:absolute;left:0;right:0;top:0;height:var(--ph,844px);opacity:0;filter:blur(14px);transition:opacity calc(650ms * var(--k,1)) var(--e3),filter calc(650ms * var(--k,1)) var(--e3)}
-.app[data-skin="cotton"] .k-cotton,.app[data-skin="halo"] .k-halo,.app[data-skin="sunset"] .k-sunset{opacity:1;filter:none}
+/* ---------- the environment field: a fixed sky, and a paper veil that rises / falls over it (transform only — compositor-cheap).
+   The veil's top edge = where the field fades into paper (--v = field height − 200px); JS animates --v0 → --v1 per page. ---------- */
+@keyframes s01-vA{from{transform:translateY(var(--v0,197px))}to{transform:translateY(var(--v1,197px))}}
+@keyframes s01-vB{from{transform:translateY(var(--v0,197px))}to{transform:translateY(var(--v1,197px))}}
+.s01-sky{position:absolute;inset:0;pointer-events:none;z-index:0}
+.s01-veil{position:absolute;left:0;right:0;top:0;height:calc(var(--ph,844px) + 280px);z-index:1;pointer-events:none;will-change:transform;
+  background:linear-gradient(180deg,rgba(251,250,247,0) 0,rgba(251,250,247,.16) 60px,rgba(251,250,247,.5) 118px,rgba(251,250,247,.86) 168px,#FBFAF7 200px,#FBFAF7 100%);
+  animation:s01-vA calc(var(--fd,380ms) * var(--k,1)) var(--e4) both}
+.s01-veil[data-fa="b"]{animation-name:s01-vB}
+.app.s01.scrub .s01-veil{animation-delay:calc(var(--frame,0) * var(--fd,380ms) * var(--k,1) * -1)!important}
+.s01-env{position:absolute;left:0;right:0;top:0;height:var(--ph,844px);opacity:0}
+.app[data-skin="cotton"] .k-cotton,.app[data-skin="halo"] .k-halo,.app[data-skin="sunset"] .k-sunset{opacity:1}
+.s01-env.e-in{animation:s01-envIn calc(650ms * var(--k,1)) var(--e3) both}
+.s01-env.e-in2{animation:s01-envIn2 calc(650ms * var(--k,1)) var(--e3) both}
+.s01-env.e-out{animation:s01-envOut calc(650ms * var(--k,1)) var(--e3) both}
+.s01-env.e-out2{animation:s01-envOut2 calc(650ms * var(--k,1)) var(--e3) both}
+@keyframes s01-envIn2{from{opacity:0;filter:blur(14px)}to{opacity:1;filter:none}}
+@keyframes s01-envOut2{from{opacity:1;filter:none}to{opacity:0;filter:blur(14px)}}
+@keyframes s01-envIn{from{opacity:0;filter:blur(14px)}to{opacity:1;filter:none}}
+@keyframes s01-envOut{from{opacity:1;filter:none}to{opacity:0;filter:blur(14px)}}
+.app.s01.scrub .s01-env{animation-delay:calc(var(--frame,0) * -650ms * var(--k,1))!important}
 /* 棉糖：粉、紫、青三色的柔和水面 */
 .k-cotton{background:
   radial-gradient(70% 25% at 0% 4%,rgba(238,138,186,.95),rgba(238,138,186,0) 76%),
@@ -152,6 +163,47 @@ body{margin:0}
 .s01-sw[aria-checked="true"] .s01-sww i:first-child,.s01-sw[aria-checked="false"] .s01-sww i:last-child{color:var(--ink);font-weight:600}
 .s01-sw[aria-checked="true"] .s01-sww i:first-child::after,.s01-sw[aria-checked="false"] .s01-sww i:last-child::after{transform:none}
 .s01-sw:active .s01-rt{color:var(--blue)}
+
+
+/* ---------- S01 list grammar: date numerals as the left column, the 局 name as the headline (a contents page, not rows) ---------- */
+.s01-ents{margin-top:20px;border-top:1px solid var(--ink)}
+.s01-ent{position:relative;border-bottom:1px solid var(--rule)}
+.s01-entb{display:grid;grid-template-columns:60px minmax(0,1fr) auto;column-gap:16px;align-items:start;width:100%;min-height:76px;padding:16px 0 15px;text-align:left}
+.s01-entb.s01-nf{grid-template-columns:60px minmax(0,1fr)}
+.s01-dt{display:block;padding-top:4px}
+.s01-dt b{display:block;font:600 21px/1 var(--num);letter-spacing:-.015em;color:var(--ink)}
+.s01-dt i{display:block;margin-top:7px;font-style:normal;font-size:13px;line-height:1.3;color:var(--sec)}
+.s01-et{display:block;min-width:0}
+.s01-et .s01-rt{font-size:21px;line-height:1.34}
+.s01-ef{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:-10px 0 0 76px;min-height:44px}
+.s01-ef .s01-rel{margin-top:0}
+.s01-flag{flex:0 0 auto;padding-top:5px;font-size:15px;font-weight:500;color:var(--blue);white-space:nowrap}
+.s01-flag.is-q{color:var(--sec);font-weight:400}
+.s01-entb:active .s01-rt{color:var(--blue);transition:color 90ms}
+/* ---------- detail compositions ---------- */
+.s01-tg{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);column-gap:20px;margin-top:30px;align-items:start}
+.s01-tg>div{min-width:0}
+.s01-bign{display:block;margin-top:4px;font:600 50px/1 var(--num);letter-spacing:-.025em;color:var(--ink)}
+.s01-bigs{display:block;margin-top:8px;font:600 19px/1.35 var(--serif);color:var(--ink)}
+.s01-stack>*+*{margin-top:18px}
+.s01-stm{display:block;margin-top:14px;font:600 21px/1.5 var(--serif);color:var(--ink);text-wrap:pretty}
+.s01-say{display:block;margin-top:2px;font:600 34px/1.22 var(--serif);color:var(--ink);text-wrap:balance}
+.s01-say small{display:block;margin-top:8px;font:400 15px/1.5 "Noto Sans SC",sans-serif;color:var(--body)}
+.s01-layers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));column-gap:14px;margin-top:30px;padding-top:14px;border-top:1px solid var(--ink)}
+.s01-layers>div{min-width:0}
+.s01-layers .s01-v3{font-size:24px;line-height:1.25}
+.s01-layers .s01-v3.s01-n3{font-family:var(--num);letter-spacing:-.01em}
+.s01-qt{margin-top:18px;padding-left:14px;border-left:2px solid var(--rule)}
+.s01-qt .s01-sub:first-child{margin-top:0}
+/* ---------- appearance: the three names are the selector (and the page is the preview) ---------- */
+.s01-skins{display:flex;flex-wrap:wrap;gap:4px 22px;margin-top:2px}
+.s01-skin{position:relative;display:block;padding-bottom:12px;font:600 44px/1.15 var(--serif);color:rgba(20,22,31,.3);transition:color calc(160ms * var(--k,1))}
+.s01-skin small{display:block;margin-top:4px;font:500 13px/1.4 "Noto Sans SC",sans-serif;color:var(--sec2);letter-spacing:.02em}
+.s01-skin.is-shown{color:var(--ink)}
+.s01-skin>span{display:inline-block;transform-origin:0 0}
+.s01-skin::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;border-radius:2px;background:var(--ink);transform:scaleX(0);transform-origin:0 50%;transition:transform calc(200ms * var(--k,1)) var(--e1)}
+.s01-skin.is-shown::after{transform:none}
+.s01-skin:active{color:var(--blue)}
 
 /* ---------- home ---------- */
 .s01-id{display:block;width:100%}
@@ -280,7 +332,10 @@ textarea.s01-in{min-height:1lh}
 .s01-fdh{position:absolute;inset:0;display:flex;align-items:center;padding:0 2px;font-size:15px;font-weight:600;color:var(--blue)}
 .s01-fdh.is-left{justify-content:flex-end}
 .s01-fdh.is-wrong{color:var(--sec2)}
-.s01-fdr{position:relative;display:flex;align-items:center;gap:12px;min-height:72px;padding:12px 0;touch-action:pan-y;user-select:none;cursor:grab;transition:transform .5s cubic-bezier(.2,.9,.3,1.04)}
+.s01-fdr{position:relative;display:grid;grid-template-columns:60px minmax(0,1fr) auto;column-gap:16px;align-items:start;min-height:76px;padding:16px 0 15px;touch-action:pan-y;user-select:none;cursor:grab;background:var(--paper);transition:transform .5s cubic-bezier(.2,.9,.3,1.04)}
+.s01-fdr .s01-star{margin-top:-8px}
+.s01-mr .s01-entb{padding-right:96px}
+.s01-mra{position:absolute;right:0;top:8px;display:flex;align-items:center;gap:2px}
 .s01-fdr.is-drag{transition:none;background:var(--paper);cursor:grabbing}
 .s01-fdr.is-wrong{background:#ecebe6}
 .s01-fdr.is-armed .s01-star{color:var(--blue)}
@@ -368,7 +423,7 @@ textarea.s01-in{min-height:1lh}
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
     <div class="app s01{{panel.rootCls}}{{v.appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{skin}}">
-      <div class="s01-sky" aria-hidden="true" data-fa="a"><i class="s01-env k-cotton"></i><i class="s01-env k-halo"></i><i class="s01-env k-sunset"></i></div>
+      <div class="s01-sky" aria-hidden="true"><i class="s01-env k-cotton"></i><i class="s01-env k-halo"></i><i class="s01-env k-sunset"></i></div><div class="s01-veil" aria-hidden="true" data-fa="a"></div>
       <div class="s01-warm" aria-hidden="true"><span>{{v.warm}}</span><span class="w5">{{v.warm}}</span><span class="w-serif">{{v.warmSerif}}</span><span class="w-num">{{v.warmNum}}</span></div>
 
       <!-- HOME · the values are the page -->
@@ -509,7 +564,7 @@ textarea.s01-in{min-height:1lh}
         </section>
       </sc-if>
 
-      <!-- FAVORITES · the count is the page; each 局 is an editorial line -->
+      <!-- FAVORITES · the count is the page; each 局 is a headline with its date as a numeral -->
       <sc-if value="{{c.nav.on.favorites}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.favorites}}" data-surface="favorites" data-pg="favorites">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.favorites}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>收藏的局</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.fav.aux}}</span></div></div></header>
@@ -519,34 +574,32 @@ textarea.s01-in{min-height:1lh}
               <sc-if value="{{v.fav.any}}"><span class="s01-lv" data-m="fav-n"><b class="s01-n">{{v.fav.n}}</b>个局</span><p class="s01-ls s01-fx">收藏不等于报名；报名后的进度在「我的局」。</p></sc-if>
               <sc-if value="{{v.fav.empty}}"><span class="s01-lv" data-m="fav-n">{{c.fav.emptyCopy.title}}</span><p class="s01-ls s01-fx">{{c.fav.emptyCopy.body}}</p><button type="button" class="s01-go s01-fx" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}} ›</button></sc-if>
             </div>
-            <sc-if value="{{v.fav.hasActive}}"><div class="s01-list s01-fx"><sc-for list="{{v.fav.active}}" as="r" hint-placeholder-count="3"><div class="s01-row">
-              <button type="button" class="s01-rb" data-rid="{{r.id}}" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span class="s01-rt" data-m="ev-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span><sc-if value="{{r.rel}}"><span class="s01-rel">{{r.rel}}</span></sc-if></button>
-              <button type="button" class="s01-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></sc-for></div></sc-if>
-            <sc-if value="{{v.fav.hasArch}}"><div class="s01-fx"><span class="s01-lab s01-gl">已结束 · 已取消 · {{v.fav.archN}}</span><div class="s01-list"><sc-for list="{{v.fav.archived}}" as="r" hint-placeholder-count="2"><div class="s01-row">
-              <button type="button" class="s01-rb" data-rid="{{r.id}}" onClick="{{r.open}}"><span class="s01-rt" data-m="ev-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.status}} · {{r.meta}}</span></button>
-              <button type="button" class="s01-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></sc-for></div></div></sc-if>
+            <sc-if value="{{v.fav.hasActive}}"><div class="s01-ents s01-fx"><sc-for list="{{v.fav.active}}" as="r" hint-placeholder-count="3"><div class="s01-ent">
+              <button type="button" class="s01-entb s01-nf" data-rid="{{r.id}}" data-origin="fav-{{r.id}}" onClick="{{r.open}}"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s01-et"><span class="s01-rt" data-m="ev-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span></button>
+              <div class="s01-ef"><span class="s01-rel">{{r.rel}}</span><button type="button" class="s01-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></div></sc-for></div></sc-if>
+            <sc-if value="{{v.fav.hasArch}}"><div class="s01-fx"><span class="s01-lab s01-gl">已结束 · 已取消 · {{v.fav.archN}}</span><div class="s01-ents"><sc-for list="{{v.fav.archived}}" as="r" hint-placeholder-count="2"><div class="s01-ent">
+              <button type="button" class="s01-entb s01-nf" data-rid="{{r.id}}" onClick="{{r.open}}"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.status}}</i></span><span class="s01-et"><span class="s01-rt" data-m="ev-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span></button>
+              <div class="s01-ef"><span class="s01-rel"></span><button type="button" class="s01-x" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.remove}}">拿出</button></div></div></sc-for></div></div></sc-if>
           </div>
         </section>
       </sc-if>
 
-      <!-- EVENT DETAIL (favorite-detail / seam-feed-detail) · the title you tapped becomes the page -->
+      <!-- EVENT DETAIL (favorite-detail / seam-feed-detail) · the title you tapped becomes the page; time is the big numeral -->
       <sc-if value="{{v.det.on}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{v.det.cls}}" data-surface="{{v.det.s}}" data-pg="detail">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.det.bk}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>活动详情</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.det.aux}}</span></div></div></header>
           <div class="s01-sc" data-scroller="detail" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">{{v.det.kicker}}</span><span class="s01-lv s01-lv-t" data-m="{{v.det.m}}">{{v.det.title}}</span></div>
-            <div class="s01-vg s01-fx">
-              <div><span class="s01-lab">时间</span><span class="s01-v2">{{v.det.when}}</span></div>
-              <div><span class="s01-lab">地点</span><span class="s01-v2">{{v.det.place}}</span></div>
-              <div><span class="s01-lab">局主</span><span class="s01-v2">{{v.det.host}}</span></div>
-              <div><span class="s01-lab">人数</span><span class="s01-v2">{{v.det.cap}}</span></div>
+            <div class="s01-tg s01-fx">
+              <div><span class="s01-lab">{{v.det.dayLab}}</span><span class="s01-bign">{{v.det.time}}</span><span class="s01-bigs">{{v.det.day}}</span></div>
+              <div class="s01-stack"><div><span class="s01-lab">地点</span><span class="s01-v2">{{v.det.place}}</span></div><div><span class="s01-lab">局主 · 人数</span><span class="s01-v2">{{v.det.host}} · {{v.det.cap}}</span></div></div>
             </div>
-            <div class="s01-blk2 s01-fx"><span class="s01-lab">你和这个局</span><span class="s01-v2">{{v.det.you}}</span><p class="s01-note">{{v.det.applyNote}}</p></div>
+            <sc-if value="{{v.det.note}}"><p class="s01-quote s01-fx">{{v.det.note}}</p></sc-if>
+            <div class="s01-blk2 s01-fx"><span class="s01-lab">你和这个局</span><span class="s01-v3">{{v.det.you}}</span><span class="s01-sub">{{v.det.youSub}}</span></div>
             <div class="s01-blk2 s01-fx"><span class="s01-lab">局主微信</span>
               <sc-if value="{{v.det.canSee}}"><div class="s01-fv"><span class="s01-v-wx">{{v.det.hostWx}}</span><button type="button" class="s01-copy" data-act="copy" onClick="{{v.det.copy}}">复制</button></div></sc-if>
-              <p class="s01-sub">{{v.det.wxRule}}</p></div>
-            <sc-if value="{{v.det.note}}"><p class="s01-read s01-fx">{{v.det.note}}</p></sc-if>
+              <span class="s01-sub">{{v.det.wxRule}}</span></div>
             <button type="button" class="s01-favt s01-fx{{v.det.favCls}}" data-act="{{v.det.favAct}}" aria-pressed="{{v.det.favAria}}" onClick="{{v.det.toggle}}"><i>{{v.det.star}}</i>{{v.det.favLabel}}</button>
           </div>
         </section>
@@ -568,42 +621,45 @@ textarea.s01-in{min-height:1lh}
         </section>
       </sc-if>
 
-      <!-- NOTIFY · the count and the delivery conclusion lead; categories are typographic switches -->
+      <!-- NOTIFY · the count leads, the delivery conclusion is a sentence, three layers are three values; categories are typographic switches -->
       <sc-if value="{{c.nav.on.notify}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.notify}}" data-surface="notify" data-pg="notify">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.notify}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>通知与提醒</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{c.sum.notifyLabel}}</span></div></div></header>
           <div class="s01-sc" data-scroller="notify" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
-            <div class="s01-lead"><span class="s01-lab s01-fx">开着的提醒</span><span class="s01-lv{{v.nt.fl}}" data-m="notify-n"><b class="s01-n">{{v.nt.n}}</b>类提醒</span><p class="s01-ls s01-fx">{{c.notify.deliverLabel}}</p>
+            <div class="s01-lead"><span class="s01-lab s01-fx">开着的提醒</span><span class="s01-lv{{v.nt.fl}}" data-m="notify-n"><b class="s01-n">{{v.nt.n}}</b>类提醒</span><span class="s01-stm s01-fx">{{c.notify.deliverLabel}}</span>
               <sc-if value="{{v.nt.cta}}"><button type="button" class="s01-cta s01-cta-in s01-fx{{v.nt.ctaCls}}" data-act="request" disabled="{{c.notify.isRequesting}}" aria-busy="{{c.notify.isRequesting}}" onClick="{{c.notify.request}}">{{v.nt.ctaLabel}}</button></sc-if></div>
-            <div class="s01-vg s01-fx">
+            <div class="s01-layers s01-fx">
+              <div><span class="s01-lab">你的偏好</span><span class="s01-v3 s01-n3">{{c.notify.onCount}}/{{c.notify.total}}</span></div>
               <div><span class="s01-lab">系统权限</span><span class="s01-v3">{{v.nt.perm}}</span></div>
               <div><span class="s01-lab">提醒服务</span><span class="s01-v3">{{v.nt.svc}}</span></div>
             </div>
-            <p class="s01-sub s01-fx">{{c.notify.permCopy.body}}</p>
-            <p class="s01-sub s01-fx">{{c.notify.serviceCopy}}</p>
-            <span class="s01-lab s01-gl s01-fx">提醒类别 · {{c.notify.onCount}}/{{c.notify.total}}</span>
-            <div class="s01-list s01-fx"><sc-for list="{{v.nt.cats}}" as="x" hint-placeholder-count="6"><button type="button" class="s01-sw" role="switch" aria-checked="{{x.aria}}" data-act="toggle" data-rid="{{x.key}}" onClick="{{x.toggle}}"><span class="s01-rb"><span class="s01-rt">{{x.label}}</span><span class="s01-rm">{{x.sub}}</span></span><span class="s01-sww" aria-hidden="true"><i>开</i><i>关</i></span></button></sc-for></div>
+            <div class="s01-qt s01-fx"><p class="s01-sub">{{c.notify.permCopy.body}}</p><p class="s01-sub">{{c.notify.serviceCopy}}</p></div>
+            <span class="s01-lab s01-gl s01-fx">提醒类别 · 点一行开 / 关</span>
+            <div class="s01-ents s01-fx"><sc-for list="{{v.nt.cats}}" as="x" hint-placeholder-count="6"><button type="button" class="s01-sw" role="switch" aria-checked="{{x.aria}}" data-act="toggle" data-rid="{{x.key}}" onClick="{{x.toggle}}"><span class="s01-rb"><span class="s01-rt">{{x.label}}</span><span class="s01-rm">{{x.sub}}</span></span><span class="s01-sww" aria-hidden="true"><i>开</i><i>关</i></span></button></sc-for></div>
             <p class="s01-note s01-fx">{{c.notify.prefHint}}</p>
           </div>
         </section>
       </sc-if>
 
-      <!-- APPEARANCE · the page itself is the preview -->
+      <!-- APPEARANCE · the three names are the selector, and the page itself is the preview -->
       <sc-if value="{{c.nav.on.appearance}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.appearance}}" data-surface="appearance" data-pg="appearance">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.appearance}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>外观与动态</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.ap.aux}}</span></div></div></header>
           <div class="s01-sc" data-scroller="appearance" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
-            <div class="s01-lead"><span class="s01-lab s01-fx">{{v.ap.kicker}}</span><span class="s01-lv{{v.ap.fl}}" data-m="skin">{{c.skin.shownName}}</span><p class="s01-ls s01-fx">{{v.ap.line}}</p>
-              <sc-if value="{{c.skin.previewing}}"><button type="button" class="s01-cta s01-cta-in s01-fx" data-act="apply" onClick="{{c.skin.apply}}">{{c.skin.applyLabel}}</button><button type="button" class="s01-go s01-fx" data-act="cancel" onClick="{{c.skin.cancel}}">取消预览，回到「{{c.skin.curName}}」</button></sc-if></div>
-            <div class="s01-list s01-fx"><sc-for list="{{v.ap.list}}" as="x" hint-placeholder-count="3"><button type="button" class="s01-row" data-act="preview" data-rid="{{x.key}}" aria-pressed="{{x.pressed}}" onClick="{{x.pick}}"><span class="s01-rb"><span class="s01-rt s01-rt-l">{{x.name}}</span><span class="s01-rm">{{x.en}} · {{x.line}}</span></span><span class="s01-rr{{x.rcls}}">{{x.tag}}</span></button></sc-for></div>
-            <button type="button" class="s01-sw s01-fx" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" onClick="{{c.skin.rmToggle}}"><span class="s01-rb"><span class="s01-rt">减少动态</span><span class="s01-rm">{{c.skin.rmLine}}</span></span><span class="s01-sww" aria-hidden="true"><i>开</i><i>关</i></span></button>
+            <div class="s01-lead"><span class="s01-lab s01-fx">{{v.ap.kicker}}</span>
+              <div class="s01-skins" role="radiogroup" aria-label="外观环境"><sc-for list="{{v.ap.list}}" as="x" hint-placeholder-count="3"><button type="button" class="s01-skin{{x.cls}}" role="radio" aria-checked="{{x.pressed}}" data-act="preview" data-rid="{{x.key}}" onClick="{{x.pick}}"><span class="{{x.lvCls}}" data-m="{{x.m}}">{{x.name}}</span><small class="s01-fx">{{x.tag}}</small></button></sc-for></div>
+              <span class="s01-stm s01-fx">{{v.ap.line}}</span>
+              <sc-if value="{{c.skin.previewing}}"><button type="button" class="s01-cta s01-cta-in s01-fx" data-act="apply" onClick="{{c.skin.apply}}">{{c.skin.applyLabel}}</button><button type="button" class="s01-go s01-fx" data-act="cancel" onClick="{{c.skin.cancel}}">取消预览，回到「{{c.skin.curName}}」</button></sc-if>
+              <sc-if value="{{v.ap.idle}}"><p class="s01-ls s01-fx">点一个名字，整页先换成那一天的光；满意再应用。</p></sc-if></div>
+            <div class="s01-ents s01-fx"><button type="button" class="s01-sw" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" onClick="{{c.skin.rmToggle}}"><span class="s01-rb"><span class="s01-rt">减少动态</span><span class="s01-rm">{{c.skin.rmLine}}</span></span><span class="s01-sww" aria-hidden="true"><i>开</i><i>关</i></span></button></div>
+            <p class="s01-note s01-fx">{{v.ap.sys}}</p>
           </div>
         </section>
       </sc-if>
 
-      <!-- RECORDS · big counts per kind; each fact is an editorial line -->
+      <!-- RECORDS · big counts per kind; each fact is a headline with its date numeral -->
       <sc-if value="{{c.nav.on.records}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.records}}" data-surface="records" data-pg="records">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.records}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>我的记录</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{c.sum.recordLabel}}</span></div></div></header>
@@ -614,28 +670,27 @@ textarea.s01-in{min-height:1lh}
               <sc-if value="{{v.rec.empty}}"><span class="s01-lv">{{c.recs.emptyText}}</span></sc-if>
               <p class="s01-ls s01-fx">{{c.recs.help}}</p></div>
             <sc-for list="{{v.rec.groups}}" as="g" hint-placeholder-count="3"><div class="s01-grp s01-fx"><div class="s01-gh"><b>{{g.count}}</b><span>{{g.title}}</span></div>
-              <div class="s01-list"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s01-row" data-rid="{{r.id}}" data-origin="rec-{{r.id}}" onClick="{{r.open}}"><span class="s01-rb"><span class="s01-rt" data-m="rec-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-rr{{r.rcls}}">{{r.right}}</span></button></sc-for></div></div></sc-for>
+              <div class="s01-ents"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><div class="s01-ent"><button type="button" class="s01-entb" data-rid="{{r.id}}" data-origin="rec-{{r.id}}" onClick="{{r.open}}"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s01-et"><span class="s01-rt" data-m="rec-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-flag{{r.fcls}}">{{r.flag}}</span></button></div></sc-for></div></div></sc-for>
             <div class="s01-blk2 s01-fx"><span class="s01-lab s01-gl">记录怎样算</span><p class="s01-read">{{c.recs.creditSettings}}</p><p class="s01-note">{{c.recs.quotaNo}}</p></div>
           </div>
         </section>
       </sc-if>
 
-      <!-- RECORD DETAIL -->
+      <!-- RECORD DETAIL · the status is said in one large sentence; dates are numerals -->
       <sc-if value="{{c.nav.on.record-detail}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.record-detail}}" data-surface="record-detail" data-pg="record-detail">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.record-detail}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>记录详情</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.rd.aux}}</span></div></div></header>
           <div class="s01-sc" data-scroller="record-detail" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">{{v.rd.kicker}}</span><span class="s01-lv s01-lv-t" data-m="rec-{{v.rd.id}}">{{v.rd.title}}</span></div>
-            <div class="s01-vg s01-fx">
-              <div><span class="s01-lab">状态</span><span class="s01-v2">{{v.rd.status}}</span></div>
-              <div><span class="s01-lab">机会</span><span class="s01-v2">{{v.rd.quota}}</span></div>
-              <div><span class="s01-lab">活动时间</span><span class="s01-v2">{{v.rd.when}}</span></div>
-              <div><span class="s01-lab">记录于</span><span class="s01-v2">{{v.rd.at}}</span></div>
+            <div class="s01-blk2 s01-fx"><span class="s01-lab">现在</span><span class="s01-say">{{v.rd.status}}<small>{{v.rd.quota}}</small></span></div>
+            <div class="s01-tg s01-fx">
+              <div><span class="s01-lab">活动</span><span class="s01-bign">{{v.rd.evMd}}</span><span class="s01-bigs">{{v.rd.evWt}}</span></div>
+              <div><span class="s01-lab">记录于</span><span class="s01-bign">{{v.rd.atMd}}</span><span class="s01-bigs">{{v.rd.atT}}</span></div>
             </div>
             <sc-if value="{{v.rd.help}}"><p class="s01-read s01-fx">{{v.rd.help}}</p></sc-if>
-            <sc-if value="{{v.rd.hasSupp}}"><div class="s01-fx"><span class="s01-lab s01-gl">补充 · {{v.rd.suppN}}</span><div class="s01-list"><sc-for list="{{v.rd.supp}}" as="x" hint-placeholder-count="1"><div class="s01-row s01-row-s"><span class="s01-rb"><span class="s01-rt2">{{x.text}}</span><span class="s01-rm">{{x.meta}}</span></span></div></sc-for></div></div></sc-if>
-            <sc-if value="{{v.rd.hasAppeal}}"><div class="s01-fx"><span class="s01-lab s01-gl">异议与申诉</span><div class="s01-list"><sc-for list="{{v.rd.appeals}}" as="x" hint-placeholder-count="1"><div class="s01-row s01-row-s"><span class="s01-rb"><span class="s01-rt2">{{x.text}}</span><span class="s01-rm">{{x.meta}}</span></span></div></sc-for></div></div></sc-if>
+            <sc-if value="{{v.rd.hasSupp}}"><div class="s01-fx"><span class="s01-lab s01-gl">你的补充 · {{v.rd.suppN}}</span><sc-for list="{{v.rd.supp}}" as="x" hint-placeholder-count="1"><p class="s01-quote">{{x.text}}</p><p class="s01-note">{{x.meta}}</p></sc-for></div></sc-if>
+            <sc-if value="{{v.rd.hasAppeal}}"><div class="s01-fx"><span class="s01-lab s01-gl">异议与申诉</span><sc-for list="{{v.rd.appeals}}" as="x" hint-placeholder-count="1"><p class="s01-quote">{{x.text}}</p><p class="s01-note">{{x.meta}}</p></sc-for></div></sc-if>
             <div class="s01-acts s01-fx">
               <button type="button" class="s01-go" data-act="supplement" onClick="{{v.rd.goSupplement}}">补充说明 ›</button>
               <sc-if value="{{v.rd.goDispute}}"><button type="button" class="s01-go" data-act="dispute" onClick="{{v.rd.goDispute}}">提出出席异议 ›</button></sc-if>
@@ -655,30 +710,25 @@ textarea.s01-in{min-height:1lh}
               <sc-if value="{{v.rp.any}}"><span class="s01-lv" data-m="rep-n"><b class="s01-n">{{v.rp.n}}</b>条</span></sc-if>
               <sc-if value="{{v.rp.empty}}"><span class="s01-lv">{{c.reps.emptyText}}</span></sc-if>
               <p class="s01-ls s01-fx">{{c.reps.note}}</p></div>
-            <sc-if value="{{v.rp.any}}"><div class="s01-list s01-fx"><sc-for list="{{v.rp.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s01-row" data-rid="{{r.id}}" data-origin="rep-{{r.id}}" onClick="{{r.open}}"><span class="s01-rb"><span class="s01-rt" data-m="rep-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-rr{{r.rcls}}">{{r.statusLabel}}</span></button></sc-for></div></sc-if>
+            <sc-if value="{{v.rp.any}}"><div class="s01-ents s01-fx"><sc-for list="{{v.rp.rows}}" as="r" hint-placeholder-count="2"><div class="s01-ent"><button type="button" class="s01-entb" data-rid="{{r.id}}" data-origin="rep-{{r.id}}" onClick="{{r.open}}"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s01-et"><span class="s01-rt" data-m="rep-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-flag{{r.fcls}}">{{r.flag}}</span></button></div></sc-for></div></sc-if>
             <p class="s01-note s01-fx">{{c.reps.mock}}</p>
           </div>
         </section>
       </sc-if>
 
-      <!-- REPORT DETAIL -->
+      <!-- REPORT DETAIL · status said large; the original words quoted; the timeline in numerals -->
       <sc-if value="{{c.nav.on.report-detail}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.report-detail}}" data-surface="report-detail" data-pg="report-detail">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><button type="button" class="s01-back" data-act="back" onClick="{{c.nav.back}}">{{v.bk.report-detail}}</button></div></div><div class="s01-fa"><div class="s01-ttl"><span>举报详情</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.rpd.aux}}</span></div></div></header>
           <div class="s01-sc" data-scroller="report-detail" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">{{v.rpd.kicker}}</span><span class="s01-lv s01-lv-t" data-m="rep-{{v.rpd.id}}">{{v.rpd.title}}</span></div>
+            <div class="s01-blk2 s01-fx"><span class="s01-lab">现在</span><span class="s01-say">{{v.rpd.status}}<small>对象 {{v.rpd.who}} · 本地编号 {{v.rpd.id}}</small></span></div>
             <sc-if value="{{v.rpd.need}}"><div class="s01-need s01-fx"><p class="s01-ls">{{v.rpd.need}}</p><button type="button" class="s01-go" data-act="supplement" onClick="{{v.rpd.goSupplement}}">补充材料 ›</button></div></sc-if>
-            <div class="s01-vg s01-fx">
-              <div><span class="s01-lab">状态</span><span class="s01-v2">{{v.rpd.status}}</span></div>
-              <div><span class="s01-lab">举报对象</span><span class="s01-v2">{{v.rpd.who}}</span></div>
-              <div><span class="s01-lab">本地编号</span><span class="s01-v2 s01-v2n">{{v.rpd.id}}</span></div>
-              <div><span class="s01-lab">提交于</span><span class="s01-v2">{{v.rpd.at}}</span></div>
-            </div>
-            <div class="s01-fx"><span class="s01-lab s01-gl">原文</span><p class="s01-quote">{{v.rpd.text}}</p></div>
+            <div class="s01-fx"><span class="s01-lab s01-gl">你写下的</span><p class="s01-quote">{{v.rpd.text}}</p></div>
             <sc-if value="{{v.rpd.hasShots}}"><div class="s01-fx"><span class="s01-lab s01-gl">材料</span><div class="s01-list"><sc-for list="{{v.rpd.shots}}" as="x" hint-placeholder-count="1"><div class="s01-row s01-row-s"><span class="s01-rt2">{{x}}</span></div></sc-for></div></div></sc-if>
-            <div class="s01-fx"><span class="s01-lab s01-gl">进度 · 更新于 {{v.rpd.updated}}</span><div class="s01-tl"><sc-for list="{{v.rpd.timeline}}" as="t" hint-placeholder-count="3"><div class="s01-tli"><b>{{t.label}}</b><span>{{t.atText}}</span><sc-if value="{{t.text}}"><p>{{t.text}}</p></sc-if></div></sc-for></div></div>
-            <sc-if value="{{v.rpd.hasSupp}}"><div class="s01-fx"><span class="s01-lab s01-gl">已提交的补充</span><div class="s01-list"><sc-for list="{{v.rpd.supp}}" as="x" hint-placeholder-count="1"><div class="s01-row s01-row-s"><span class="s01-rb"><span class="s01-rt2">{{x.text}}</span><span class="s01-rm">{{x.atText}}</span></span></div></sc-for></div></div></sc-if>
+            <div class="s01-fx"><span class="s01-lab s01-gl">进度 · 更新于 {{v.rpd.updated}}</span><div class="s01-ents"><sc-for list="{{v.rpd.timeline}}" as="t" hint-placeholder-count="3"><div class="s01-ent"><div class="s01-entb s01-nf"><span class="s01-dt"><b>{{t.md}}</b><i>{{t.hm}}</i></span><span class="s01-et"><span class="s01-rt">{{t.label}}</span><sc-if value="{{t.text}}"><span class="s01-rm">{{t.text}}</span></sc-if></span></div></div></sc-for></div></div>
+            <sc-if value="{{v.rpd.hasSupp}}"><div class="s01-fx"><span class="s01-lab s01-gl">已提交的补充</span><sc-for list="{{v.rpd.supp}}" as="x" hint-placeholder-count="1"><p class="s01-quote">{{x.text}}</p><p class="s01-note">{{x.atText}}</p></sc-for></div></sc-if>
             <p class="s01-note s01-fx">{{c.reps.mock}}</p>
           </div>
         </section>
@@ -776,7 +826,7 @@ textarea.s01-in{min-height:1lh}
         </section>
       </sc-if>
 
-      <!-- SEAM · 入局 01 找局 (V27 swipe) -->
+      <!-- SEAM · 入局 01 找局 (V27 swipe): the same contents-page grammar; the star is the favourite mark -->
       <sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}">
         <section class="s01-pg {{c.nav.cls.seam-feed}}" data-surface="seam-feed" data-pg="seam-feed">
           <header class="s01-hd" data-header><div class="s01-tb s01-fa"><div class="s01-tbx"><span class="s01-mark" aria-label="JU">JU</span></div></div><div class="s01-fa"><div class="s01-ttl"><span>找局</span></div></div><div class="s01-fa"><div class="s01-aux"><span>{{v.fd.aux}}</span></div></div></header>
@@ -785,8 +835,8 @@ textarea.s01-in{min-height:1lh}
             <div class="s01-lead"><span class="s01-lab s01-fx">{{c.feed.city.name}} · 可报名</span><span class="s01-lv"><b class="s01-n">{{v.fd.n}}</b>个局</span><p class="s01-ls s01-fx">{{c.feed.hintIdle}}</p></div>
             <div class="s01-seg s01-fx"><button type="button" aria-pressed="{{v.fd.allP}}" onClick="{{c.feed.setAll}}">全部</button><button type="button" aria-pressed="{{v.fd.favP}}" onClick="{{c.feed.setFav}}">只看收藏 · {{c.feed.favCount}}</button></div>
             <sc-if value="{{c.feed.empty}}"><p class="s01-ls s01-fx">{{c.feed.emptyText}}</p></sc-if>
-            <div class="s01-list s01-fx"><sc-for list="{{v.fd.rows}}" as="r" hint-placeholder-count="4"><div class="s01-fd"><span class="s01-fdh{{r.hcls}}">{{r.hint}}</span>
-              <div class="s01-fdr {{r.cls}}" data-rid="{{r.id}}" tabindex="0" role="button" aria-label="{{r.title}}" style="{{r.style}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}"><span class="s01-rb"><span class="s01-rt" data-m="feed-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-star{{r.scls}}">{{r.star}}</span></div></div></sc-for></div>
+            <div class="s01-ents s01-fx"><sc-for list="{{v.fd.rows}}" as="r" hint-placeholder-count="4"><div class="s01-fd"><span class="s01-fdh{{r.hcls}}">{{r.hint}}</span>
+              <div class="s01-fdr {{r.cls}}" data-rid="{{r.id}}" tabindex="0" role="button" aria-label="{{r.title}}" style="{{r.style}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s01-et"><span class="s01-rt" data-m="feed-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.meta}}</span></span><span class="s01-star{{r.scls}}">{{r.star}}</span></div></div></sc-for></div>
           </div>
         </section>
       </sc-if>
@@ -798,10 +848,9 @@ textarea.s01-in{min-height:1lh}
           <div class="s01-sc" data-scroller="seam-mine" onScroll="{{v.h.sc}}">
             <div class="s01-sp2"></div>
             <div class="s01-lead"><span class="s01-lab s01-fx">进行中</span><span class="s01-lv"><b class="s01-n">{{v.mn.n}}</b>个局</span><p class="s01-ls s01-fx">{{v.mn.line}}</p></div>
-            <sc-for list="{{v.mn.groups}}" as="g" hint-placeholder-count="3"><div class="s01-fx"><span class="s01-lab s01-gl">{{g.title}}</span><div class="s01-list"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><div class="s01-row">
-              <span class="s01-rb"><span class="s01-rt" data-m="mine-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.label}}</span><sc-if value="{{r.receipt}}"><span class="s01-rel">举报回执 · {{r.receipt}}</span></sc-if></span>
-              <sc-if value="{{r.canReport}}"><button type="button" class="s01-x" data-act="report" data-rid="{{r.id}}" onClick="{{r.report}}">举报</button></sc-if>
-              <button type="button" class="s01-star{{r.scls}}" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.favP}}" aria-label="收藏" onClick="{{r.toggleFav}}">{{r.star}}</button></div></sc-for></div></div></sc-for>
+            <sc-for list="{{v.mn.groups}}" as="g" hint-placeholder-count="3"><div class="s01-fx"><span class="s01-lab s01-gl">{{g.title}}</span><div class="s01-ents"><sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><div class="s01-ent s01-mr">
+              <div class="s01-entb s01-nf"><span class="s01-dt"><b>{{r.md}}</b><i>{{r.wt}}</i></span><span class="s01-et"><span class="s01-rt" data-m="mine-{{r.id}}">{{r.title}}</span><span class="s01-rm">{{r.label}}</span><sc-if value="{{r.receipt}}"><span class="s01-rel">举报回执 · {{r.receipt}}</span></sc-if></span></div>
+              <div class="s01-mra"><sc-if value="{{r.canReport}}"><button type="button" class="s01-x" data-act="report" data-rid="{{r.id}}" onClick="{{r.report}}">举报</button></sc-if><button type="button" class="s01-star{{r.scls}}" data-act="fav" data-rid="{{r.id}}" aria-pressed="{{r.favP}}" aria-label="收藏" onClick="{{r.toggleFav}}">{{r.star}}</button></div></div></sc-for></div></div></sc-for>
             <p class="s01-note s01-fx">{{c.mine.snapshotNote}}</p>
           </div>
         </section>
@@ -833,7 +882,7 @@ textarea.s01-in{min-height:1lh}
    Page grammar: every surface = a .s01-pg section (data-pg) with the same header (toolbar / 30→18 title / 14 status), a masked
    scroller and ONE protagonist value at y≈168 (.s01-lv). Values carry data-m keys; on every push / pop the twin of the tapped value
    moves between pages (measured FLIP, @keyframes, scrub-able). The sky height per page lives in S01_FH and is animated in JS. */
-var S01_FH = { 'home': .47, 'profile': 1, 'profile-edit': 1, 'favorites': .4, 'favorite-detail': .56, 'city': .46, 'notify': .5, 'appearance': 1, 'records': .42, 'record-detail': .54, 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'reports': .42, 'report-detail': .54, 'report-supplement': 1, 'help': .4, 'feedback': 1, 'privacy': .46, 'account': .5, 'about': .44, 'rules': .3, 'seam-feed': .36, 'seam-feed-detail': .56, 'seam-mine': .38, 'seam-report': 1 };
+var S01_FH = { 'home': .5, 'profile': 1.05, 'profile-edit': 1.05, 'favorites': .44, 'favorite-detail': .58, 'city': .48, 'notify': .52, 'appearance': 1.1, 'records': .44, 'record-detail': .56, 'record-supplement': 1.05, 'record-dispute': 1.05, 'record-appeal': 1.05, 'reports': .44, 'report-detail': .56, 'report-supplement': 1.05, 'help': .44, 'feedback': 1.05, 'privacy': .48, 'account': .52, 'about': .46, 'rules': .34, 'seam-feed': .4, 'seam-feed-detail': .58, 'seam-mine': .4, 'seam-report': 1.05 };
 var S01_SHORT = { 'home': '设置', 'profile': '资料', 'favorites': '收藏', 'records': '记录', 'record-detail': '记录', 'reports': '举报', 'report-detail': '举报', 'help': '帮助', 'about': '关于', 'seam-feed': '找局', 'seam-mine': '我的局' };
 var S01_FORMS = { 'record-supplement': 1, 'record-dispute': 1, 'record-appeal': 1, 'report-supplement': 1, 'feedback': 1, 'seam-report': 1 };
 function s01Pg(s) { return s === 'profile-edit' ? 'profile' : (s === 'favorite-detail' || s === 'seam-feed-detail') ? 'detail' : S01_FORMS[s] ? 'form' : s; }
@@ -873,6 +922,7 @@ class Component extends DCLogic {
   initialState(vk) { var st = JUS.baseState(vk); st.s01 = { attOpen: false, saved: null, fl: {} }; return st; }
   beforeReplay(name) {
     if (name === '身份展开成资料页' || name === '值展开成页') this.home();
+    else if (name === '环境切换') { var prev = this._s01PrevSkin, cur = this.state.data.appearance.skin; this.setState(function (s) { return { ui: Object.assign({}, s.ui, { skinPreview: !prev || prev === cur ? null : prev }) }; }); }
     else if (name === '值原位变成编辑') this.ctlJump({ open: { surface: 'profile' } });
     else if (name === '保存原位落定') { this.ctlJump({ open: { surface: 'profile-edit' } }); this.setState(function (s) { return s.pf ? { pf: Object.assign({}, s.pf, { name: s.pf.name === '阿禾二' ? '阿禾' : '阿禾二' }) } : null; }); }
   }
@@ -895,21 +945,34 @@ class Component extends DCLogic {
     var start = !!(a && b && (a.phase !== b.phase || a.seq !== b.seq) && (b.phase === 'enter' || b.phase === 'exit'));
     if (start) this.s01Morph(b);
     this.s01Sky(start);
+    /* environment crossfade (core motion 3): the incoming field fades in from a soft blur while the outgoing one fades out */
+    var r0 = ps && ps.review, r1 = this.state.review, app = this.rootRef.current;
+    var anims = function () { return app && app.getAnimations ? app.getAnimations({ subtree: true }) : []; };
+    if (r1 && r1.scrub != null && !(r0 && r0.scrub != null)) anims().forEach(function (a) { try { a.currentTime = 0; } catch (e) { } });
+    if (r0 && r0.scrub != null && !(r1 && r1.scrub != null)) { var f = (r0.scrub || 0) / 100, kk = r1.speed === 0.5 ? 2 : 1;
+      anims().forEach(function (a) { var n = a.animationName || ''; var span = /^s01-env/.test(n) ? 650 : /^s01-v[AB]$/.test(n) ? (parseFloat(getComputedStyle(a.effect.target).getPropertyValue('--fd')) || 380) : 420; try { a.currentTime = f * span * kk; } catch (e) { } }); }
+    var shown = function (st) { return st && st.data ? ((st.ui && st.ui.skinPreview) || st.data.appearance.skin) : null; };
+    var was = shown(ps), now = shown(this.state);
+    if (was && now && was !== now) {
+      var root = this.rootRef.current; var alt = (this._s01Env = !this._s01Env);
+      root.querySelectorAll('.s01-env').forEach(function (el) { el.classList.remove('e-in', 'e-in2', 'e-out', 'e-out2'); });
+      var a = root.querySelector('.k-' + now), o = root.querySelector('.k-' + was);
+      if (a) a.classList.add(alt ? 'e-in' : 'e-in2'); if (o) o.classList.add(alt ? 'e-out' : 'e-out2');
+    }
   }
   /* the environment field: height per destination page, minus that page's scroll (the light recedes as you read down) */
   s01Sky(start) {
-    var root = this.rootRef.current; var sky = root && root.querySelector('.s01-sky'); if (!sky) return;
+    var root = this.rootRef.current; var veil = root && root.querySelector('.s01-veil'); if (!veil) return;
     var nav = this.state.nav, st = nav.stack, top = st[st.length - 1], under = st.length > 1 ? st[st.length - 2] : null;
     var dest = nav.phase === 'exit' && under ? under.s : top.s;
     var ph = (this.state.review && this.state.review.ph) || 844;
     var sec = root.querySelector('[data-pg="' + s01Pg(dest) + '"]'); var sc = sec && sec.querySelector('[data-scroller]');
-    var tgt = Math.max(72, Math.round(ph * (S01_FH[dest] || .45) - (sc ? Math.min(sc.scrollTop, ph * .6) : 0)));
+    var v1 = Math.round(Math.max(72, ph * (S01_FH[dest] || .45) - (sc ? Math.min(sc.scrollTop, ph * .6) : 0)) - 200);
     if (start) {
-      var cur = parseFloat(getComputedStyle(sky).getPropertyValue('--fh')) || tgt;
-      sky.style.setProperty('--fh0', cur.toFixed(1) + 'px'); sky.style.setProperty('--fh1', tgt + 'px');
-      sky.style.setProperty('--fd', this.navMs(nav.dir) + 'ms');
-      sky.setAttribute('data-fa', sky.getAttribute('data-fa') === 'a' ? 'b' : 'a');
-    } else if (nav.phase === 'idle' && sky.style.getPropertyValue('--fh1') !== tgt + 'px') { sky.style.setProperty('--fh0', tgt + 'px'); sky.style.setProperty('--fh1', tgt + 'px'); }
+      var tf = getComputedStyle(veil).transform; var cur = tf && tf !== 'none' ? new DOMMatrixReadOnly(tf).f : v1;
+      veil.style.setProperty('--v0', cur.toFixed(1) + 'px'); veil.style.setProperty('--v1', v1 + 'px'); veil.style.setProperty('--fd', this.navMs(nav.dir) + 'ms');
+      veil.setAttribute('data-fa', veil.getAttribute('data-fa') === 'a' ? 'b' : 'a');
+    } else if (nav.phase === 'idle' && veil.style.getPropertyValue('--v1') !== v1 + 'px') { veil.style.setProperty('--v0', v1 + 'px'); veil.style.setProperty('--v1', v1 + 'px'); }
   }
   /* measured FLIP between the two pages of a push / pop: every [data-m] of the top page that has a twin below starts (in) / ends (out)
      exactly on that twin; twins below are hidden for the duration. Measured with entrance transforms switched off. */
@@ -924,7 +987,8 @@ class Component extends DCLogic {
     if (!pairs.length) return;
     var lift = function (el, stop) { var dx = 0, dy = 0; for (var n = el.parentElement; n && n !== stop; n = n.parentElement) { var t = getComputedStyle(n).transform; if (t && t !== 'none') { var mm = new DOMMatrixReadOnly(t); dx += mm.e; dy += mm.f; } } return { x: dx, y: dy }; };
     pairs.forEach(function (p) { var r = p.el.getBoundingClientRect(), q = p.src.getBoundingClientRect(), a1 = lift(p.el, T), a2 = lift(p.src, U);
-      p.r = { left: r.left - p.m.e - a1.x, top: r.top - p.m.f - a1.y }; p.q = { left: q.left - a2.x, top: q.top - a2.y };
+      var ts = getComputedStyle(p.src).transform, mq = ts && ts !== 'none' ? new DOMMatrixReadOnly(ts) : new DOMMatrixReadOnly();
+      p.r = { left: r.left - p.m.e - a1.x, top: r.top - p.m.f - a1.y }; p.q = { left: q.left - mq.e - a2.x, top: q.top - mq.f - a2.y };
       p.k = (parseFloat(getComputedStyle(p.src).fontSize) || 1) / (parseFloat(getComputedStyle(p.el).fontSize) || 1); });
     pairs.forEach(function (p) {
       var el = p.el;
@@ -978,15 +1042,15 @@ class Component extends DCLogic {
       ctaCls: pf.saving ? ' is-busy' : pf.failed ? ' is-retry' : '', saveLabel: pf.saved ? '已保存' : pf.saveLabel
     };
     /* favorites */
-    var F = c.fav; var frow = function (r) { return { id: r.id, title: r.title, meta: r.when.zh + ' · ' + r.place.hood + (r.crossCity ? ' · ' + r.cityName + '当地时间' : ''), rel: r.joined || r.hosted ? (r.joined ? '已报名 · ' : '我发起的 · ') + r.relLabel : '', status: r.statusLabel, open: r.open, remove: r.remove }; };
+    var F = c.fav; var frow = function (r) { return { id: r.id, title: r.title, md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, meta: r.place.hood + ' · 局主 ' + r.host + (r.crossCity ? ' · ' + r.cityName + '当地时间' : ''), rel: r.joined || r.hosted ? (r.joined ? '已报名 · ' : '我发起的 · ') + r.relLabel : '收藏 · ' + r.favAgo, status: r.statusLabel, open: r.open, remove: r.remove }; };
     v.fav = { kicker: F.empty ? '收藏 · 0' : '按收藏时间', any: !F.empty, empty: F.empty, n: String(F.count), active: F.active.map(frow), archived: F.archived.map(frow), hasActive: F.active.length > 0, hasArch: F.archived.length > 0, archN: F.archived.length,
       aux: F.empty ? '还没有收藏' : F.active.length + ' 个可报名' + (F.archived.length ? ' · ' + F.archived.length + ' 个已结束' : '') };
     /* event detail (favorite-detail / seam-feed-detail) */
     var dS = N.on['favorite-detail'] ? 'favorite-detail' : N.on['seam-feed-detail'] ? 'seam-feed-detail' : ''; var D = c.favDetail || c.feedDetail;
     v.det = { on: !!(dS && D), s: dS, cls: dS ? N.cls[dS] : '' };
     if (D) Object.assign(v.det, { bk: bk[dS] || '返回', title: D.title, m: (dS === 'favorite-detail' ? 'ev-' : 'feed-') + D.id, kicker: D.city.name + (D.crossCity ? ' · 当地时间' : '') + ' · ' + D.status.label,
-      aux: D.fav ? '已收藏 · ' + (D.joined ? D.joinedLabel : '未报名') : (D.joined ? D.joinedLabel : '未报名'), when: D.when.zh, place: D.place.full, host: D.host, cap: D.cap,
-      you: D.joined ? D.joinedLabel : '未报名 · 收藏不等于报名', applyNote: D.applyNote, canSee: D.canSeeHostWx, hostWx: D.hostWx, wxRule: D.hostWxRule, copy: D.copyHostWx, note: D.note,
+      aux: D.fav ? '已收藏 · ' + (D.joined ? D.joinedLabel : '未报名') : (D.joined ? D.joinedLabel : '未报名'), dayLab: '时间', time: D.when.time, day: D.when.wdZh + ' ' + D.when.date, place: D.place.full, host: D.host, cap: D.cap,
+      you: D.joined ? D.joinedLabel : '未报名', youSub: (D.joined ? '收藏与报名互不影响；' : '收藏不等于报名；') + D.applyNote, applyNote: D.applyNote, canSee: D.canSeeHostWx, hostWx: D.hostWx, wxRule: D.hostWxRule, copy: D.copyHostWx, note: D.note,
       favCls: D.fav ? ' is-on' : '', favAct: D.fav ? 'unfav' : 'fav', favAria: D.fav ? 'true' : 'false', star: D.fav ? '★' : '☆', favLabel: D.fav ? '已收藏 · 拿出收藏' : '收进收藏', toggle: D.toggleFav });
     /* city */
     v.city = { aux: '现在 ' + c.city.cur.name + ' · ' + c.city.cur.tzLabel, fl: flc('city'),
@@ -997,24 +1061,27 @@ class Component extends DCLogic {
       cats: NT.cats.map(function (x) { return { key: x.key, label: x.label, sub: x.sub, aria: x.aria, toggle: function () { x.toggle(); self.s01Flash('nt'); } }; }) };
     /* appearance */
     var SK = c.skin; var shown = JUS.SKINS.filter(function (k) { return k.key === SK.shown; })[0] || JUS.SKINS[0];
-    v.ap = { fl: flc('skin'), kicker: SK.previewing ? '正在预览 · 还没应用' : '正在使用', line: shown.en + ' · ' + shown.line, aux: '使用中「' + SK.curName + '」' + (SK.rmOn ? ' · 减少动态' : ''),
-      list: SK.list.map(function (k) { return { key: k.key, name: k.name, en: k.en, line: k.line, pressed: k.shown ? 'true' : 'false', tag: k.on && k.shown ? '使用中' : k.shown ? '预览中' : k.on ? '使用中' : '预览', rcls: k.shown ? ' is-on' : k.on ? '' : ' is-flag', pick: function () { k.pick(); self.s01Flash('skin'); } }; }) };
+    v.ap = { fl: flc('skin'), kicker: SK.previewing ? '正在预览「' + SK.shownName + '」· 还没应用' : '正在使用「' + SK.curName + '」', line: shown.line, aux: '使用中「' + SK.curName + '」' + (SK.rmOn ? ' · 减少动态' : ''), idle: !SK.previewing,
+      sys: SK.rmSys ? '系统已开启「减少动态」：JU 跟随系统。' : '跟随系统：系统开启「减少动态」时，这里会自动生效。',
+      list: SK.list.map(function (k) { return { key: k.key, name: k.name, pressed: k.shown ? 'true' : 'false', cls: k.shown ? ' is-shown' : ' s01-fx', m: k.shown ? 'skin' : 'skin-' + k.key, lvCls: k.shown ? 's01-mv' + flc('skin') : '', tag: k.on ? '使用中' : k.shown ? '预览中' : k.en, pick: function () { self._s01PrevSkin = SK.shown; self.motion('环境切换', function () { k.pick(); }); self.s01Flash('skin'); } }; }) };
     /* records */
     v.rec = { any: !c.recs.empty, empty: c.recs.empty, n: String(c.recs.count),
-      groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, rows: g.rows.map(function (r) { return { id: r.id, title: r.title, meta: r.label + ' · ' + r.statusLabel, right: r.pendingReview ? '待核实 ›' : JUS.fmt.date(r.at), rcls: r.pendingReview ? ' is-flag' : '', open: r.open }; }) }; }) };
+      groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, rows: g.rows.map(function (r) { return { id: r.id, title: r.title, md: r.when.md, wt: r.when.wdZh, meta: r.label + ' · ' + r.statusLabel, flag: r.pendingReview ? '待核实 ›' : r.appealCount ? '已补充' : '', fcls: r.pendingReview ? '' : ' is-q', open: r.open }; }) }; }) };
     var R = c.rec;
-    v.rd = R ? { id: R.id, title: R.title, kicker: R.label, aux: R.kindLabel + ' · ' + R.statusLabel, status: R.statusLabel, quota: R.quotaLabel || '不涉及退出机会', when: R.when.zh, at: R.atText,
+    var atP = R ? JUS.fmt.parts(R.at) : null; var pad2 = function (n) { return (n < 10 ? '0' : '') + n; };
+    v.rd = R ? { id: R.id, title: R.title, kicker: R.kindLabel + ' · ' + R.label, aux: R.kindLabel + ' · ' + R.statusLabel, status: R.statusLabel, quota: R.quotaLabel || '不涉及退出机会', when: R.when.zh, at: R.atText,
+      evMd: R.when.md, evWt: R.when.wdZh + ' ' + R.when.time, atMd: pad2(atP.mo) + '.' + pad2(atP.d), atT: pad2(atP.h) + ':' + pad2(atP.mi),
       help: R.type === 'absence_reported' ? JUS.COPY.recordHelp : R.type === 'active_withdrawal' ? JUS.COPY.quotaRule : '',
       supp: (R.supplementRows || []).map(function (x) { return { text: x.text, meta: x.atText + (x.materialsText ? ' · 材料 ' + x.materialsText : '') }; }), hasSupp: (R.supplementRows || []).length > 0, suppN: (R.supplementRows || []).length,
       appeals: (R.appealRows || []).map(function (x) { return { text: x.kindLabel + '：' + x.reason, meta: x.statusLabel + ' · ' + x.atText }; }), hasAppeal: (R.appealRows || []).length > 0,
       goSupplement: R.goSupplement, goDispute: R.goDispute, goAppeal: R.goAppeal } : {};
     /* reports */
     v.rp = { any: !c.reps.empty, empty: c.reps.empty, n: String(c.reps.count),
-      rows: c.reps.rows.map(function (r) { return { id: r.id, title: r.title, meta: r.whoName + ' · ' + JUS.fmt.date(r.updatedAt || r.createdAt), statusLabel: r.needsMore ? '需补充 ›' : r.statusLabel, rcls: r.needsMore ? ' is-flag' : '', open: r.open }; }) };
+      rows: c.reps.rows.map(function (r) { var up = JUS.fmt.parts(r.updatedAt || r.createdAt); return { id: r.id, title: r.title, md: pad2(up.mo) + '.' + pad2(up.d), wt: '更新', meta: '对象 ' + r.whoName, flag: r.needsMore ? '需补充 ›' : r.statusLabel, fcls: r.needsMore ? '' : ' is-q', open: r.open }; }) };
     var P = c.rep;
     v.rpd = P ? { id: P.id, title: P.title, kicker: '举报 · ' + P.statusLabel, aux: P.statusLabel + ' · 本地编号 ' + P.id, need: P.needsMore ? (P.needsText || '需要补充材料') : '', goSupplement: P.goSupplement,
       status: P.statusLabel, who: P.whoName, at: P.atText, updated: P.updatedText, text: P.text, shots: (P.shotRows || []).map(function (x) { return x.name + (x.sizeText ? ' · ' + x.sizeText : ''); }), hasShots: (P.shotRows || []).length > 0,
-      timeline: P.timelineRows || [], supp: P.supplementRows || [], hasSupp: (P.supplementRows || []).length > 0 } : {};
+      timeline: (P.timelineRows || []).map(function (t, i) { var tl = (P.timeline || [])[i]; var tp = tl ? JUS.fmt.parts(tl.at) : null; return { label: t.label, text: t.text, md: tp ? pad2(tp.mo) + '.' + pad2(tp.d) : '', hm: tp ? pad2(tp.h) + ':' + pad2(tp.mi) : '' }; }).reverse(), supp: P.supplementRows || [], hasSupp: (P.supplementRows || []).length > 0 } : {};
     /* help / privacy / account / about */
     v.help = { aux: '18 条约定 · 我的反馈 ' + c.help.feedback.length + ' 条', groups: JUS.RULE_GROUPS.map(function (g) { return g.name + '：' + g.line; }).join(' '), fbN: c.help.feedback.length, fbNone: c.help.feedback.length === 0 };
     var PR = c.privacy; var pol = JUS.COPY.wxPolicy.split('。');
@@ -1036,12 +1103,12 @@ class Component extends DCLogic {
     /* seams */
     var FD = c.feed;
     v.fd = { n: String(FD.count), aux: FD.city.name + ' · 已收藏 ' + FD.favCount + ' 个', allP: FD.isAll ? 'true' : 'false', favP: FD.isFav ? 'true' : 'false',
-      rows: FD.rows.map(function (r) { return Object.assign({}, r, { meta: r.when.zh + ' · ' + r.place.hood + ' · ' + r.host, hcls: (r.dx < 0 ? ' is-left' : '') + (/is-wrong/.test(r.cls) ? ' is-wrong' : ''), scls: r.fav ? '' : ' is-off' }); }) };
+      rows: FD.rows.map(function (r) { return Object.assign({}, r, { md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, meta: r.place.hood + ' · 局主 ' + r.host, hcls: (r.dx < 0 ? ' is-left' : '') + (/is-wrong/.test(r.cls) ? ' is-wrong' : ''), scls: r.fav ? '' : ' is-off' }); }) };
     var MN = c.mine; var grp = {}; var order = [];
     MN.current.forEach(function (r) { if (!grp[r.group]) { grp[r.group] = []; order.push(r.group); } grp[r.group].push(r); });
-    var mrow = function (r) { return { id: r.id, title: r.title, label: r.label, receipt: r.receipt, canReport: r.canReport, report: r.report, toggleFav: r.toggleFav, star: r.star, favP: r.fav ? 'true' : 'false', scls: r.fav ? '' : ' is-off' }; };
+    var mrow = function (r) { return { id: r.id, title: r.title, md: r.when.md, wt: r.when.wdZh + ' ' + r.when.time, label: r.label, receipt: r.receipt, canReport: r.canReport, report: r.report, toggleFav: r.toggleFav, star: r.star, favP: r.fav ? 'true' : 'false', scls: r.fav ? '' : ' is-off' }; };
     var mg = order.map(function (k) { return { title: k + ' · ' + grp[k].length, rows: grp[k].map(mrow) }; });
-    if (MN.hosted.length) mg.push({ title: '我发起的 · ' + MN.hosted.length, rows: MN.hosted.map(function (h) { return { id: h.id, title: h.title, label: h.label, receipt: '', canReport: false, toggleFav: h.toggleFav, star: h.star, favP: h.fav ? 'true' : 'false', scls: h.fav ? '' : ' is-off' }; }) });
+    if (MN.hosted.length) mg.push({ title: '我发起的 · ' + MN.hosted.length, rows: MN.hosted.map(function (h) { return { id: h.id, title: h.title, md: h.when.md, wt: h.when.wdZh + ' ' + h.when.time, label: h.label, receipt: '', canReport: false, toggleFav: h.toggleFav, star: h.star, favP: h.fav ? 'true' : 'false', scls: h.fav ? '' : ' is-off' }; }) });
     if (MN.history.length) mg.push({ title: '历史 · ' + MN.history.length, rows: MN.history.map(mrow) });
     var need = MN.current.filter(function (r) { return r.group === '要你回应'; }).length;
     v.mn = { n: String(MN.current.length), groups: mg, line: need ? need + ' 个局要你回应 · 收藏标记 ★ 与报名互不影响' : '收藏标记 ★ 与报名互不影响', aux: '进行中 ' + MN.current.length + ' · 我发起 ' + MN.hosted.length };

@@ -6,7 +6,7 @@
 
 | 项 | 内容 |
 |---|---|
-| 最后更新 | 2026-10-22 01:3x UTC |
+| 最后更新 | 2026-10-22 04:2x UTC |
 | 分支 / 提交 | `claude/eager-brahmagupta-ct0owo`（已推送到 `5e0e47b`） |
 | 任务书 | `settings-r2/brief/R2-PROMPT.txt`（用户上传的 `JU-SETTINGS-FABLO51-REDESIGN-R2-PROMPT.txt` 原文；附带的审查页 `JU-SETTINGS-R2-REVIEW-AND-PROMPT.html` 的逐套诊断已读） |
 | 用户本轮原话（要点） | 旧十套全部重新构思，不选任何一套继续修，不拼接旧构图，不换皮交付；十套各有独立、成熟的艺术指导；共有的 JU 身份与关键行为保持稳定，正文构图 / 空间比例 / 中文排版 / 色彩面积 / 表面层次 / 运动编排充分开放；视觉吸引力是独立且必要的门槛；一次性交付十套完整、可体验、可离线打开的方案；用实际画面和真实操作证明 |
@@ -14,6 +14,14 @@
 | 当前步骤 | 2026-10-22 00:1x UTC 十一个代理（十个构建 + 一个研究）因 Fable 用量上限（HTTP 429）同时中止；用户把会话模型切到 Opus 5.5。主负责人：① 读了七份半成品首屏（S02 / S03 / S04 / S05 / S08 / S09 / S10，`.build/lead-partial/sheet.png`），结论：缩略图里都读成「页头 + 身份 + 一列等高行」，只换了底色——写了 `settings-r2/spec/art-direction-v2.md`（通用规则 + 逐套配方），并把 S02 改为「大字目录」、S06 改为「一段话」；② 写了共享行为控制器 `settings-r2/src/core/jus-ctl.js`（见 §C）；③ 以 Opus 重新启动十个阶段 1 构建代理与研究代理（进行中） |
 | 恢复方法 | 代理完成后其汇报到达主会话；若会话中断：读本文 §E 各套状态 → 看 `settings-r2/evidence/SNN/stage1/` → 用 `settings-r2/tools/lead-sheet.cjs .build/lead-home s-home --gray` 生成十套同状态并排（需要各套私有构建 `.build/SNN.html`：`JU_STANDALONE=.build/SNN.html JUS_ONLY=SNN node settings-r2/src/build.js`）|
 | 用户已认可 | **无**（截至本文，用户未审阅本阶段任何内容） |
+
+
+## A.1 进展日志（追加）
+- 2026-10-22 01:0x–01:5x UTC：十套阶段 1 全部交付并经主负责人复看通过（各套意见见 `settings-r2/spec/verification.md` §2.1）；十套首页隐名并排（三环境、彩色 + 灰度）与同流程比较存于 `settings-r2/evidence/lead/`。
+- 02:0x UTC：十个构建代理 + 研究代理进入阶段 2 后因 **Opus 会话用量上限（HTTP 429，04:00 UTC 重置）** 同时中止；04:02 UTC 主负责人提交它们留下的文件（`ceac387`），04:03 UTC 用 SendMessage 让十一个代理从中断处继续。
+- 04:05 UTC：按用户要求「额度重置后自动继续任务」，建立每小时一次的定时检查（scheduled task「JU 设置 R2 · 额度重置后自动续跑」，每小时第 5 分钟触发到本会话）：若代理因上限中止且已重置，就让它们继续；项目完成后删除。
+- 04:0x UTC：**用户重申「视觉呈现是最高优先级——视觉不好看，再完美的功能也没有意义」**。已写入 `stage2-brief.md` 顶部、`verify-brief.md` 判定节与 `art-direction-v2.md`，并逐一告知十个构建者（先把每个 surface 做到与首页同等质量，再补检查；交付前做 12 页接触表自审；主负责人先只看画面）。
+- 04:1x UTC：主负责人对十个进行中的构建做二级页隐名并排（收藏、通知、记录、记录详情、规则、外观预览、账户确认、找局接缝；`settings-r2/evidence/lead/stage2-wip/`）。观察：二级页大多已延续各自语言（S02 大字分区、S03 光 + 墨、S04 海报块、S05 圆光盘、S07 预览台、S09 夜灯）；**问题**：八套的确认层都是同一种白色底部 sheet；S06 / S07 下部列表退回普通行；S08 二级页依赖页内标签栏；S10 二级页仍是空色块占位——已分别下达意见。
 
 ## B. 输入与基线（实际核对）
 

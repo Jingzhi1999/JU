@@ -181,6 +181,30 @@ body{margin:0}
 .s04-mark.ok::before{background:var(--ok)}
 .s04-mark.no::before{background:transparent;box-shadow:inset 0 0 0 2px currentColor}
 .s04-txt{font-size:15px;line-height:1.75;max-width:22em}
+/* poster dates: the day as a big number, weekday and time under it */
+.s04-date{position:relative;display:block}
+.s04-date b{display:block;font-family:"Archivo",sans-serif;font-weight:700;font-stretch:88%;font-size:56px;line-height:.86;letter-spacing:-.02em}
+.s04-date i{display:block;margin-top:6px;font-style:normal;font-size:15px;font-weight:600;line-height:1.3}
+.s04-date.md b{font-size:44px}
+.s04-date.sm b{font-size:30px}
+.s04-date.sm i{font-size:13px;margin-top:4px}
+.s04-fbig .s04-bx{gap:12px;padding:16px 20px 18px}
+.s04-fbig .s04-bt{font-size:28px}
+.s04-fsm{min-height:178px}
+.s04-fsm .s04-bx{justify-content:space-between;gap:10px;padding:14px 14px 14px}
+.s04-fsm .s04-bt{font-size:18px;line-height:1.35}
+.s04-fsm .s04-ft2{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.s04-big2{display:block;font-size:26px;font-weight:700;line-height:1.2;overflow-wrap:anywhere}
+.s04-quote .s04-q{position:absolute;right:14px;top:-6px;font-family:"Archivo",sans-serif;font-weight:700;font-size:110px;line-height:1;color:var(--s04-c1);pointer-events:none}
+.s04-bq{position:relative;display:block;margin-top:10px;font-size:18px;font-weight:500;line-height:1.75;max-width:20em;overflow-wrap:anywhere}
+.s04-ctyn{display:flex;align-items:flex-end;gap:6px}
+.s04-ctyn b{font-family:"Archivo",sans-serif;font-weight:700;font-stretch:88%;font-size:34px;line-height:.9}
+.s04-ctyn i{font-style:normal;font-size:13px;font-weight:600;line-height:1.3;padding-bottom:2px}
+.s04-ftn{overflow:hidden}
+.s04-ftn .s04-mono{top:6px;right:-12px;font-size:150px;color:color-mix(in srgb,var(--s04-c1) 88%,var(--ink))}
+.s04-ftn > :not(.s04-mono){position:relative}
+/* titles break at the " · " separators, never inside a word (overflow-wrap still rescues a long unbroken name) */
+.s04-ht,.s04-bt,.s04-hw,.s04-hc{word-break:keep-all;overflow-wrap:anywhere}
 /* entries set inside a block (records, my feedback, supplements, timeline) — 56px+ rhythm, a 2px rule of the block's ink */
 .s04-ents{position:relative;display:flex;flex-direction:column;margin-top:14px}
 .s04-ent{position:relative;display:block;width:100%;min-height:58px;padding:12px 0;border-top:2px solid color-mix(in srgb,currentColor 18%,transparent);text-align:left;color:inherit}
@@ -518,6 +542,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
                 <div class="s04-band s04-band-ed"><p class="s04-ednote s04-fade is-late">{{v.snapNote}}</p></div>
                 <div class="s04-stack s04-edstack s04-fade">
                   <label class="s04-ft t-c1 s04-ftn{{v.pfe.name}}">
+                    <span class="s04-mono" aria-hidden="true">{{v.pfInitial}}</span>
                     <span class="s04-tl"><span>怎么称呼</span><span class="s04-cnt{{v.cntCls}}">{{v.pf.nameCount}}</span></span>
                     <span class="s04-fin"><input class="s04-in nm{{v.nmInCls}}" data-field="name" value="{{v.pf.name}}" onInput="{{v.pf.onName}}" placeholder="称呼" autocomplete="off" spellcheck="false" enterkeyhint="next">
                     <sc-if value="{{v.pf.err.name}}"><span class="s04-er" role="alert">{{v.pf.err.name}}</span></sc-if></span>
@@ -575,24 +600,26 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
                 </div>
                 <div class="s04-stack s04-fade">
                   <sc-if value="{{c.fav.empty}}"><button type="button" class="s04-b t-c1 s04-act" data-act="find" onClick="{{v.goFind}}"><span class="s04-bx"><span class="s04-bt">{{c.fav.emptyCopy.cta}}</span><span class="s04-go2">→</span></span></button></sc-if>
-                  <sc-for list="{{v.favA}}" as="r" hint-placeholder-count="3">
-                    <div class="s04-b t-{{r.tone}}{{r.oc}}" role="button" tabindex="0" data-origin="{{r.ok}}" data-push="{{r.ok}}" data-rid="{{r.id}}" style="{{r.ps}}" onClick="{{r.open}}" onKeyDown="{{v.kbd}}">
+                  <sc-for list="{{v.favTop}}" as="r" hint-placeholder-count="1">
+                    <div class="s04-b t-{{r.tone}} s04-fbig{{r.oc}}" role="button" tabindex="0" data-origin="{{r.ok}}" data-push="{{r.ok}}" data-rid="{{r.id}}" style="{{r.ps}}" onClick="{{r.open}}" onKeyDown="{{v.kbd}}">
                       <span class="s04-bx">
-                        <span class="s04-row2 s04-x"><span class="s04-k">{{r.when}} · {{r.place}}</span><button type="button" class="s04-btn sm" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.unfav}}">拿出</button></span>
+                        <span class="s04-row2 s04-x"><span class="s04-date md"><b class="s04-num">{{r.md}}</b><i>{{r.wd}} {{r.time}} · {{r.place}}</i></span><button type="button" class="s04-btn sm" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.unfav}}">拿出</button></span>
                         <span class="s04-bt s04-x">{{r.title}}</span>
-                        <span class="s04-tags s04-x"><span class="s04-tag">{{r.rel}}</span><sc-if value="{{r.cross}}"><span class="s04-tag lt">{{r.cityTag}}</span></sc-if></span>
+                        <span class="s04-tags s04-x" style="margin-top:0"><span class="s04-tag">{{r.rel}}</span><sc-if value="{{r.cross}}"><span class="s04-tag lt">{{r.cityTag}}</span></sc-if></span>
                       </span>
                     </div>
                   </sc-for>
-                  <sc-if value="{{v.favArchHas}}"><div class="s04-tile t-pp"><span class="s04-k">已结束 / 已取消 · 收藏保留，信息随活动更新</span></div></sc-if>
-                  <sc-for list="{{v.favZ}}" as="r" hint-placeholder-count="0">
-                    <div class="s04-b t-off{{r.oc}}" role="button" tabindex="0" data-origin="{{r.ok}}" data-push="{{r.ok}}" data-rid="{{r.id}}" style="{{r.ps}}" onClick="{{r.open}}" onKeyDown="{{v.kbd}}">
-                      <span class="s04-bx">
-                        <span class="s04-row2 s04-x"><span class="s04-k">{{r.when}} · {{r.status}}</span><button type="button" class="s04-btn sm" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.unfav}}">拿出</button></span>
-                        <span class="s04-bt md s04-x">{{r.title}}</span>
-                      </span>
-                    </div>
-                  </sc-for>
+                  <sc-if value="{{v.favRestHas}}"><div class="s04-g2">
+                    <sc-for list="{{v.favRest}}" as="r" hint-placeholder-count="2">
+                      <div class="s04-b t-{{r.tone}} s04-fsm{{r.oc}}" role="button" tabindex="0" data-origin="{{r.ok}}" data-push="{{r.ok}}" data-rid="{{r.id}}" style="{{r.ps}}" onClick="{{r.open}}" onKeyDown="{{v.kbd}}">
+                        <span class="s04-bx">
+                          <span class="s04-date sm s04-x"><b class="s04-num">{{r.md}}</b><i>{{r.wd}} {{r.time}}<sc-if value="{{r.closed}}"> · {{r.status}}</sc-if></i></span>
+                          <span class="s04-bt s04-x">{{r.title}}</span>
+                          <span class="s04-ft2 s04-x"><span class="s04-tag">{{r.relShort}}</span><button type="button" class="s04-btn sm" data-act="unfav" data-rid="{{r.id}}" onClick="{{r.unfav}}">拿出</button></span>
+                        </span>
+                      </div>
+                    </sc-for>
+                  </div></sc-if>
                   <div class="s04-tile s04-fill"><span class="s04-k">{{v.favRule}}</span></div>
                 </div>
               </div>
@@ -617,13 +644,16 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
               <div class="s04-sc" data-scroller="{{x.s}}" onScroll="{{c.nav.onScroll}}">
                 <div class="s04-col">
                   <div class="s04-band sm" data-push="band">
-                    <span class="s04-ht s04-fade">{{x.d.title}}</span>
-                    <span class="s04-hs s04-fade">{{x.d.when.zh}} · {{x.d.place.full}}</span>
-                    <span class="s04-hk s04-fade"><span class="s04-tag">局主 {{x.d.host}} · {{x.d.cap}}</span><sc-if value="{{x.d.crossCity}}"><span class="s04-tag lt">{{x.d.city.name}} · {{x.d.city.tzLabel}}</span></sc-if><sc-if value="{{x.d.favAgo}}"><span class="s04-tag lt">{{x.d.favAgo}}收藏</span></sc-if></span>
+                    <span class="s04-ht s04-fade">{{x.title}}</span>
+                    <span class="s04-hk s04-fade"><span class="s04-tag">局主 {{x.d.host}}</span><sc-if value="{{x.d.crossCity}}"><span class="s04-tag lt">{{x.d.city.name}} · {{x.d.city.tzLabel}}</span></sc-if><sc-if value="{{x.d.favAgo}}"><span class="s04-tag lt">{{x.d.favAgo}}收藏</span></sc-if></span>
                   </div>
                   <div class="s04-stack s04-fade">
                     <div class="s04-g2">
-                      <div class="s04-tile t-ink"><span class="s04-k">报名</span><span class="s04-bt md">{{x.d.joinedLabel}}</span><span class="s04-bm">{{x.d.status.label}}</span></div>
+                      <div class="s04-tile t-ink"><span class="s04-k">时间</span><span class="s04-date" style="margin-top:10px"><b class="s04-num">{{x.d.when.md}}</b><i>{{x.d.when.wdZh}} {{x.d.when.time}}</i></span></div>
+                      <div class="s04-tile {{x.placeTone}}"><span class="s04-k">地点</span><span class="s04-big2" style="margin-top:10px">{{x.d.place.hood}}</span><span class="s04-bm">{{x.d.place.borough}}</span></div>
+                    </div>
+                    <div class="s04-g2">
+                      <div class="s04-tile t-pp"><span class="s04-k">报名</span><span class="s04-bt md">{{x.d.joinedLabel}}</span><span class="s04-bm">{{x.d.status.label}} · 局主 {{x.d.host}} · {{x.d.cap}}</span></div>
                       <button type="button" class="s04-b {{x.favTone}} s04-sw" data-act="{{x.favAct}}" aria-pressed="{{x.favAria}}" onClick="{{x.d.toggleFav}}"><span class="s04-swl">{{x.d.favLabel}}</span><span class="s04-swv bare">{{x.favState}}</span></button>
                     </div>
                     <div class="s04-tile t-pp">
@@ -665,7 +695,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
                   </label>
                   <sc-if value="{{c.city.none}}"><div class="s04-tile t-off s04-sw"><span class="s04-bt md">{{c.city.noResult}}</span><button type="button" class="s04-btn" data-act="retry" onClick="{{c.city.clearQ}}">{{c.city.retry}}</button></div></sc-if>
                   <div class="s04-g2">
-                    <sc-for list="{{v.cities}}" as="x" hint-placeholder-count="6"><button type="button" class="s04-b t-{{x.tone}} s04-sw{{x.flash}}" data-act="pick" data-rid="{{x.key}}" aria-pressed="{{x.aria}}" onClick="{{x.pick}}"><span class="s04-bt">{{x.name}}</span><span class="s04-swv">{{x.mark}}</span></button></sc-for>
+                    <sc-for list="{{v.cities}}" as="x" hint-placeholder-count="6"><button type="button" class="s04-b t-{{x.tone}} s04-sw{{x.flash}}" data-act="pick" data-rid="{{x.key}}" aria-pressed="{{x.aria}}" onClick="{{x.pick}}"><span><span class="s04-bt">{{x.name}}</span><sc-if value="{{x.cur}}"><span class="s04-mark" style="margin-top:6px">当前默认</span></sc-if></span><span class="s04-ctyn"><b class="s04-num">{{x.n}}</b><i>{{x.nl}}</i></span></button></sc-for>
                   </div>
                   <div class="s04-tile s04-fill"><span class="s04-k">{{c.city.note}}</span></div>
                 </div>
@@ -792,11 +822,11 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
               <div class="s04-col">
                 <div class="s04-band sm" data-push="band" style="{{v.ps.band}}">
                   <span class="s04-hl s04-fade">{{c.rec.label}}</span>
-                  <span class="s04-ht s04-fade" style="margin-top:4px">{{c.rec.title}}</span>
+                  <span class="s04-ht s04-fade" style="margin-top:4px">{{v.recTitle}}</span>
                   <span class="s04-hk s04-fade"><span class="s04-tag">{{c.rec.statusLabel}}</span><sc-if value="{{c.rec.quotaLabel}}"><span class="s04-tag lt">{{c.rec.quotaLabel}}</span></sc-if></span>
                 </div>
                 <div class="s04-stack s04-fade">
-                  <div class="s04-tile t-pp"><span class="s04-k">事实（只读，不会被改写）</span><span class="s04-bp">{{c.rec.when.zh}} · {{c.rec.place.full}} · 局主 {{c.rec.host}}</span><span class="s04-bm">记录于 {{c.rec.atText}}</span></div>
+                  <div class="s04-tile t-ink"><span class="s04-k">事实（只读，不会被改写）</span><span class="s04-row2" style="margin-top:12px;align-items:flex-end"><span class="s04-date"><b class="s04-num">{{c.rec.when.md}}</b><i>{{c.rec.when.wdZh}} {{c.rec.when.time}}</i></span><span class="s04-bm" style="text-align:right;margin:0">{{c.rec.place.full}}<br>局主 {{c.rec.host}}</span></span><span class="s04-bm" style="margin-top:14px">记录于 {{c.rec.atText}}</span></div>
                   <sc-if value="{{v.recSuppHas}}"><div class="s04-tile t-c3"><span class="s04-row2"><span class="s04-bt md">我的补充</span><span class="s04-cnt2 s04-num" style="font-size:40px">{{v.recSuppN}}</span></span><span class="s04-ents"><sc-for list="{{c.rec.supplementRows}}" as="s" hint-placeholder-count="1"><span class="s04-ent"><span class="s04-et">{{s.text}}</span><span class="s04-em">{{s.atText}}<sc-if value="{{s.materialsText}}"> · 材料 {{s.materialsText}}</sc-if></span></span></sc-for></span></div></sc-if>
                   <sc-if value="{{v.recApHas}}"><div class="s04-tile t-ink"><span class="s04-bt md">异议与申诉</span><span class="s04-ents"><sc-for list="{{c.rec.appealRows}}" as="s" hint-placeholder-count="1"><span class="s04-ent"><span class="s04-et">{{s.kindLabel}} · {{s.statusLabel}}</span><span class="s04-em">{{s.reason}} · {{s.atText}}</span></span></sc-for></span></div></sc-if>
                   <div class="s04-g2">
@@ -863,13 +893,13 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
             <div class="s04-sc" data-scroller="report-detail" onScroll="{{c.nav.onScroll}}">
               <div class="s04-col">
                 <div class="s04-band sm" data-push="band" style="{{v.ps.band}}">
-                  <span class="s04-ht s04-fade">{{c.rep.title}}</span>
+                  <span class="s04-ht s04-fade">{{v.repTitle}}</span>
                   <span class="s04-hk s04-fade"><span class="s04-tag">{{c.rep.statusLabel}}</span><span class="s04-tag lt">本地编号 {{c.rep.id}}</span></span>
                   <sc-if value="{{c.rep.needsMore}}"><span class="s04-hs s04-fade" style="color:var(--fg,inherit)">{{c.rep.needsText}}</span></sc-if>
                 </div>
                 <div class="s04-stack s04-fade">
                   <sc-if value="{{v.repSuppGo}}"><button type="button" class="s04-b t-c3 s04-act{{v.oc.act-rsupp}}" data-origin="act-rsupp" data-act="supplement" onClick="{{v.repSupp}}"><span class="s04-bx"><span class="s04-bt s04-x">补充材料</span><span class="s04-go2 s04-x">→</span></span></button></sc-if>
-                  <div class="s04-tile t-pp"><span class="s04-k">举报内容 · 对象 {{c.rep.whoName}}</span><span class="s04-bp">{{c.rep.text}}</span><span class="s04-bm">提交于 {{c.rep.atText}} · 更新于 {{c.rep.updatedText}}</span></div>
+                  <div class="s04-tile t-pp s04-quote"><span class="s04-q" aria-hidden="true">“</span><span class="s04-k">举报内容 · 对象 {{c.rep.whoName}}</span><span class="s04-bq">{{c.rep.text}}</span><span class="s04-bm">提交于 {{c.rep.atText}} · 更新于 {{c.rep.updatedText}}</span></div>
                   <sc-if value="{{v.repShotHas}}"><div class="s04-tile t-c3"><span class="s04-k">材料（只记文件名与大小）</span><span class="s04-ents"><sc-for list="{{c.rep.shotRows}}" as="s" hint-placeholder-count="1"><span class="s04-ent"><span class="s04-et">{{s.name}}</span><span class="s04-em">{{s.sizeText}}</span></span></sc-for></span></div></sc-if>
                   <div class="s04-tile t-ink"><span class="s04-bt md">进度</span><span class="s04-ents"><sc-for list="{{c.rep.timelineRows}}" as="s" hint-placeholder-count="2"><span class="s04-ent"><span class="s04-et">{{s.label}}</span><span class="s04-em">{{s.atText}}<sc-if value="{{s.text}}"> · {{s.text}}</sc-if></span></span></sc-for></span></div>
                   <sc-if value="{{v.repSuppHas}}"><div class="s04-tile t-c2"><span class="s04-bt md">已提交的补充</span><span class="s04-ents"><sc-for list="{{c.rep.supplementRows}}" as="s" hint-placeholder-count="1"><span class="s04-ent"><span class="s04-et">{{s.text}}</span><span class="s04-em">{{s.atText}}</span></span></sc-for></span></div></sc-if>
@@ -1015,7 +1045,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
             <div class="s04-sc" data-scroller="about" onScroll="{{c.nav.onScroll}}">
               <div class="s04-col">
                 <div class="s04-band sm" data-push="band" style="{{v.ps.band}}">
-                  <span class="s04-ht s04-fade">{{c.about.version}}</span>
+                  <span class="s04-ht s04-fade">{{v.aboutVer}}</span>
                   <span class="s04-hk s04-fade"><span class="s04-tag">{{c.about.demo}}</span></span>
                 </div>
                 <div class="s04-stack s04-fade">
@@ -1186,6 +1216,8 @@ var S04_OPP = { c1: 'c3', c2: 'c1', c3: 'c1', ink: 'c1', paper: 'c1', pp: 'c1', 
 function s04px(n) { return (Math.round(n * 10) / 10) + 'px'; }
 /* long addresses break after @ . _ - , never inside a word */
 function s04brk(t) { return String(t || '').replace(/([@._-])/g, '$1​'); }
+/* a title's " · " separator stays with the word before it, so a line never starts with the dot */
+function s04t(t) { return String(t || '').replace(/ · /g, '\u00a0· '); }
 function s04JU() { return typeof JU !== 'undefined' && JU.fx && JU.fx.rectIn; }
 class Component extends DCLogic {
   constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 320, back: 300, root: 300, swap: 280 }; this.headerRange = 56; this._s04tone = {}; }
@@ -1311,19 +1343,21 @@ class Component extends DCLogic {
     /* favourites */
     var favT = ['c1', 'c3', 'c2'];
     var mkFav = function (r, i, arch) { var ok = 'fav-' + r.id; var tone = arch ? 'off' : favT[i % 3];
-      return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: r.title, when: r.when.zh, place: r.place.hood, status: r.statusLabel, rel: r.joined ? '已报名 · ' + r.relLabel : r.hosted ? '我发起 · ' + r.relLabel : '未报名', cross: r.crossCity, cityTag: r.cityName + ' · 当地时间',
+      return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: s04t(r.title), when: r.when.zh, md: r.when.md, wd: r.when.wdZh, time: r.when.time, closed: arch, place: r.place.hood, status: r.statusLabel, relShort: r.joined ? '已报名' : r.hosted ? '我发起' : '未报名', rel: r.joined ? '已报名 · ' + r.relLabel : r.hosted ? '我发起 · ' + r.relLabel : '未报名', cross: r.crossCity, cityTag: r.cityName + ' · 当地时间',
         open: function (ev) { self.s04Go('favorite-detail', { id: r.id }, ev, arch ? 'c3' : tone); }, unfav: function (ev) { if (ev) ev.stopPropagation(); r.remove(); } }; };
     var favA = c.fav.active.map(function (r, i) { return mkFav(r, i, false); }), favZ = c.fav.archived.map(function (r, i) { return mkFav(r, i, true); });
+    var favAll = favA.concat(favZ);
+    var v0 = c.fav.active.slice().sort(function (a, b) { return JUS.t(a.event.iso) - JUS.t(b.event.iso); })[0] || null;
     /* event details (favourite + 入局 seam) */
     var cf = c.you.copyFail;
-    var mkDet = function (sf, det) { var tone = tn[sf]; return { s: sf, on: !!c.nav.on[sf] && !!det, cls: c.nav.cls[sf] || '', pcls: pg[sf], style: pv[sf], tone: tone, back: back[sf], d: det || {},
-      favTone: det && det.fav ? (tone === 'c1' ? 't-c3' : 't-c1') : 't-off', favAct: det && det.fav ? 'unfav' : 'fav', favAria: det && det.fav ? 'true' : 'false', favState: det && det.fav ? '★ 在收藏里' : '☆ 不在收藏里', copyFail: !!(cf && det && det.hostWx && cf === det.hostWx) }; };
+    var mkDet = function (sf, det) { var tone = tn[sf]; return { s: sf, on: !!c.nav.on[sf] && !!det, cls: c.nav.cls[sf] || '', pcls: pg[sf], style: pv[sf], tone: tone, back: back[sf], d: det || {}, title: s04t(det && det.title),
+      favTone: det && det.fav ? (tone === 'c3' ? 't-c1' : 't-c3') : 't-off', placeTone: tone === 'c2' ? 't-c1' : 't-c2', favAct: det && det.fav ? 'unfav' : 'fav', favAria: det && det.fav ? 'true' : 'false', favState: det && det.fav ? '★ 在收藏里' : '☆ 不在收藏里', copyFail: !!(cf && det && det.hostWx && cf === det.hostWx) }; };
     /* records */
     var gT = { '出席记录': 'c2', '主动退出': 'ink', '安排变化': 'c3' };
-    var recG = c.recs.groups.map(function (gr) { var tone = gT[gr.title] || 'c2'; return { title: gr.title, count: gr.count, tone: tone, rows: gr.rows.map(function (r) { var ok = 'rec-' + r.id; return { id: r.id, ok: ok, oc: oc[ok] || '', title: r.title, label: r.label, status: r.statusLabel, pend: r.pendingReview && !r.appeals.length, appeal: r.appealLine, open: function (ev) { self.s04Go('record-detail', { id: r.id }, ev, tone === 'ink' ? 'c3' : tone); } }; }) }; });
+    var recG = c.recs.groups.map(function (gr) { var tone = gT[gr.title] || 'c2'; return { title: gr.title, count: gr.count, tone: tone, rows: gr.rows.map(function (r) { var ok = 'rec-' + r.id; return { id: r.id, ok: ok, oc: oc[ok] || '', title: s04t(r.title), label: r.label, status: r.statusLabel, pend: r.pendingReview && !r.appeals.length, appeal: r.appealLine, open: function (ev) { self.s04Go('record-detail', { id: r.id }, ev, tone === 'ink' ? 'c3' : tone); } }; }) }; });
     var rid = c.rec && c.rec.id;
     /* reports */
-    var repR = c.reps.rows.map(function (r, i) { var ok = 'rep-' + r.id; var tone = r.needsMore ? 'c1' : (i % 2 ? 'c2' : 'c3'); return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: r.title, status: r.statusLabel, who: r.whoName, upd: r.updatedText, needs: r.needsMore, needsText: r.needsText || '需要补充材料', open: function (ev) { self.s04Go('report-detail', { id: r.id }, ev, tone); } }; });
+    var repR = c.reps.rows.map(function (r, i) { var ok = 'rep-' + r.id; var tone = r.needsMore ? 'c1' : (i % 2 ? 'c2' : 'c3'); return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: s04t(r.title), status: r.statusLabel, who: r.whoName, upd: r.updatedText, needs: r.needsMore, needsText: r.needsText || '需要补充材料', open: function (ev) { self.s04Go('report-detail', { id: r.id }, ev, tone); } }; });
     /* help / rules / privacy */
     var hT = ['c1', 'c2', 'c3'];
     var helpG = c.help.groups.map(function (gr, i) { var ok = 'grp-' + gr.key; return { ok: ok, oc: oc[ok] || '', tone: hT[i % 3], name: gr.name, line: gr.line, n: gr.rules.length, open: function (ev) { self.s04Go('rules', {}, ev, hT[i % 3]); } }; });
@@ -1334,23 +1368,24 @@ class Component extends DCLogic {
     var cats = N.cats.map(function (x) { return { key: x.key, label: x.label, sub: x.sub, aria: x.aria, toggle: x.toggle, tone: x.on ? 'c1' : 'off', state: x.on ? '开' : '关' }; });
     /* city */
     var feedAll = JUS.derive.feed(d, 'all');
-    var cities = c.city.list.map(function (x, i) { return { key: x.key, name: x.name, pick: x.pick, aria: x.on ? 'true' : 'false', tone: x.on ? 'ink' : (i % 2 ? 'c2' : 'c1'), mark: x.on ? '当前默认' : x.tzLabel, flash: x.on && c.city.flash ? ' is-flash' : '' }; });
+    var cityN = {}; Object.keys(d.events).forEach(function (k) { var e = d.events[k]; if (!e.hosted && JUS.derive.eventStatus(d, e).key === 'open') cityN[e.city] = (cityN[e.city] || 0) + 1; });
+    var cities = c.city.list.map(function (x, i) { var n = cityN[x.key] || 0; return { key: x.key, name: x.name, pick: x.pick, cur: x.on, aria: x.on ? 'true' : 'false', tone: x.on ? 'ink' : (i % 2 ? 'c2' : 'c1'), n: n ? String(n) : '0', nl: n ? '个局可报名' : '暂时没有局', flash: x.on && c.city.flash ? ' is-flash' : '' }; });
     /* appearance */
     var envs = c.skin.list.map(function (k) { var p = S04_PAL[k.key]; return { key: k.key, name: k.name, en: k.en, aria: k.shown ? 'true' : 'false', pick: function () { self.s04Skin(k.key); }, bg: '--bc:' + p[0] + ';--fg:#14161F', cls: k.shown ? ' is-shown' : '', sw: [p[0], p[1], p[2], '#14161F'].map(function (h) { return 'background:' + h; }), mark: k.shown && c.skin.previewing ? '预览中' : k.on ? '当前' : '点一下预览' }; });
     /* forms */
     var fctx = function (sf) {
-      if (/^record-/.test(sf)) return { t: c.rec ? c.rec.title : '', m: c.rec ? c.rec.label + ' · ' + c.rec.statusLabel : '' };
-      if (sf === 'report-supplement') return { t: c.rep ? c.rep.title : '', m: c.rep ? (c.rep.needsText || c.rep.statusLabel) : '' };
-      if (sf === 'seam-report') return { t: c.seamReport ? c.seamReport.title : '', m: c.seamReport ? c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host : '' };
+      if (/^record-/.test(sf)) return { t: c.rec ? s04t(c.rec.title) : '', m: c.rec ? c.rec.label + ' · ' + c.rec.statusLabel : '' };
+      if (sf === 'report-supplement') return { t: c.rep ? s04t(c.rep.title) : '', m: c.rep ? (c.rep.needsText || c.rep.statusLabel) : '' };
+      if (sf === 'seam-report') return { t: c.seamReport ? s04t(c.seamReport.title) : '', m: c.seamReport ? c.seamReport.when.zh + ' · 局主 ' + c.seamReport.host : '' };
       return { t: '给 JU 的产品反馈', m: c.help.feedback.length ? '已提交 ' + c.help.feedback.length + ' 条，只保存在本机' : '只保存在本机，与举报分开' };
     };
     var forms = S04_FORMS.map(function (sf) { var tone = tn[sf]; var x = fctx(sf); return { s: sf, on: !!c.nav.on[sf], cls: c.nav.cls[sf] || '', pcls: pg[sf], style: pv[sf], tone: tone, ftone: S04_OPP[tone] || 'c1', title: c.nav.title[sf], ctxT: x.t, ctxM: x.m }; });
     var formV = Object.assign({}, form, { who: (form.who || []).map(function (w) { return { label: w.label, toggle: w.toggle, aria: w.on ? 'true' : 'false' }; }), err: form.err || {} });
     /* seams */
-    var feedR = c.feed.rows.map(function (r) { var ok = 'feed-' + r.id; var tone = r.fav ? 'c1' : 'c3'; return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: r.title, host: r.host, capacity: r.capacity, joinedLabel: r.joinedLabel, whenTxt: r.when.zh + ' · ' + r.place.hood, star: r.star, hint: r.hint, cls: r.cls, style: r.style, down: r.down, move: r.move, up: r.up, cancel: r.cancel, keyh: r.key,
+    var feedR = c.feed.rows.map(function (r) { var ok = 'feed-' + r.id; var tone = r.fav ? 'c1' : 'c3'; return { id: r.id, ok: ok, oc: oc[ok] || '', ps: ps[ok] || '', tone: tone, title: s04t(r.title), host: r.host, capacity: r.capacity, joinedLabel: r.joinedLabel, whenTxt: r.when.zh + ' · ' + r.place.hood, star: r.star, hint: r.hint, cls: r.cls, style: r.style, down: r.down, move: r.move, up: r.up, cancel: r.cancel, keyh: r.key,
       open: function (ev) { if (self._suppressClick === r.id) { self._suppressClick = null; return; } self.s04Go('seam-feed-detail', { id: r.id }, ev, tone); } }; });
     var mT = ['c1', 'c3', 'c2'];
-    var mineC = c.mine.current.map(function (r, i) { return { id: r.id, title: r.title, label: r.label, group: r.group, star: r.star, aria: r.fav ? 'true' : 'false', toggleFav: r.toggleFav, tone: mT[i % 3] }; });
+    var mineC = c.mine.current.map(function (r, i) { return { id: r.id, title: s04t(r.title), label: r.label, group: r.group, star: r.star, aria: r.fav ? 'true' : 'false', toggleFav: r.toggleFav, tone: mT[i % 3] }; });
     var mineH = c.mine.history.map(function (r) { var ok = 'mrep-' + r.id; return { id: r.id, ok: ok, oc: oc[ok] ? ' is-origin' : '', title: r.title, label: r.label, receipt: r.receipt, canReport: r.canReport, star: r.star, aria: r.fav ? 'true' : 'false', toggleFav: r.toggleFav, rep: function (ev) { self.s04Go('seam-report', { id: r.id }, ev, 'c1'); } }; });
     var mineO = c.mine.hosted.map(function (r) { return { id: r.id, title: r.title, label: r.label, star: r.star, aria: r.fav ? 'true' : 'false', toggleFav: r.toggleFav }; });
     return {
@@ -1367,7 +1402,7 @@ class Component extends DCLogic {
       skinLine: skin.en + (d.appearance.reduceMotion ? ' · 减少动态' : ''),
       recPend: sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '',
       repLine: sum.needMore ? sum.needMore + ' 条需补充 ›' : sum.reportLabel,
-      meta: { favorites: sum.favLabel + (c.fav.archived.length ? ' · ' + c.fav.archived.length + ' 个已结束' : ''), city: c.city.cur.tzLabel + ' · ' + (feedAll.count ? feedAll.count + ' 个局可报名' : '暂时没有可报名的局'), appearance: '当前环境：' + c.skin.curName + (c.skin.previewing ? ' · 正在预览' + c.skin.shownName : ''), records: sum.recordLabel, reports: sum.reportLabel, 'seam-mine': c.mine.current.length + ' 个进行中 · ' + c.mine.history.length + ' 个历史' },
+      meta: { favorites: (v0 ? '最近的一个在 ' + v0.when.wdZh + ' ' + v0.when.md + ' ' + v0.when.time : '') + (c.fav.archived.length ? ' · ' + c.fav.archived.length + ' 个已结束' : ''), city: c.city.cur.tzLabel + ' · ' + (feedAll.count ? feedAll.count + ' 个局可报名' : '暂时没有可报名的局'), appearance: '当前环境：' + c.skin.curName + (c.skin.previewing ? ' · 正在预览' + c.skin.shownName : ''), records: sum.recordLabel, reports: sum.reportLabel, 'seam-mine': c.mine.current.length + ' 个进行中 · ' + c.mine.history.length + ' 个历史' },
       /* profile */
       nameRule: (JUS.derive.privacy(d).general || [])[0] || '',
       pfMeta: you.verified ? you.domain + ' 已验证 · ' + (d.you.emailKind === 'work' ? '工作邮箱' : '学校邮箱') : you.email ? '邮箱未验证' : '邮箱未填写',
@@ -1388,8 +1423,8 @@ class Component extends DCLogic {
       save: function () { if (self.state.pf) self.s04Save(); },
       scrim: function () { if (c.sheet.unsaved) self.sheetKeep(); else self.closeSheet(); },
       /* favourites */
-      favA: favA, favZ: favZ, favHas: c.fav.count > 0, favArchHas: favZ.length > 0,
-      favHeroL: c.fav.active.length + ' 个还能报名', favHeroS: '收藏只是留着，不代表报名；已报名的局拿出收藏，阶段与票根不变。', favRule: '点一块看详情 · 拿出后 4 秒内可以撤回',
+      favA: favA, favZ: favZ, favTop: favAll.slice(0, 1), favRest: favAll.slice(1), favRestHas: favAll.length > 1, favHas: c.fav.count > 0, favArchHas: false, pfInitial: Array.from((pf.name || '').trim())[0] || '·',
+      favHeroL: c.fav.active.length + ' 个还能报名', favHeroS: '收藏只是留着，不代表报名；已报名的局拿出收藏，阶段与票根不变。', favRule: c.fav.empty ? '收藏只是留着，不代表报名。' : '点一块看详情 · 拿出后 4 秒内可以撤回',
       goFind: function (ev) { if (ev && ev.currentTarget && s04JU()) self._s04rootFrom = JU.fx.rectIn(ev.currentTarget, self.rootRef.current); c.fav.goFind(); },
       details: [mkDet('favorite-detail', c.favDetail), mkDet('seam-feed-detail', c.feedDetail)],
       /* city */
@@ -1400,7 +1435,7 @@ class Component extends DCLogic {
       envs: envs, shownEn: skin.en, shownLine: skin.line, rmTone: c.skin.rmOn ? 'c1' : 'off', rmState: c.skin.rmOn ? (c.skin.rmSys ? '开 · 跟随系统' : '开') : '关',
       apPad: c.skin.previewing ? 'padding-bottom:84px' : '',
       /* records */
-      recG: recG, recHas: c.recs.count > 0, recHeroL: c.recs.empty ? '' : (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '没有待核实的'),
+      recG: recG, recTitle: s04t(c.rec && c.rec.title), repTitle: s04t(c.rep && c.rep.title), aboutVer: s04t(c.about.version), recHas: c.recs.count > 0, recHeroL: c.recs.empty ? '' : (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '没有待核实的'),
       recSuppHas: !!(c.rec && c.rec.supplementRows && c.rec.supplementRows.length), recSuppN: c.rec && c.rec.supplementRows ? c.rec.supplementRows.length : 0, recApHas: !!(c.rec && c.rec.appealRows && c.rec.appealRows.length),
       recAct: { supp: function (ev) { self.s04Go('record-supplement', { id: rid }, ev, 'c3'); }, disp: function (ev) { self.s04Go('record-dispute', { id: rid }, ev, 'c1'); }, appeal: function (ev) { self.s04Go('record-appeal', { id: rid }, ev, 'c1'); } },
       /* reports */
