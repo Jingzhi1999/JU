@@ -15,14 +15,15 @@ body{margin:0}
 /* ===== S10 叠层 ===== The interface is a stack of full-width sheets lit from the sky above. The white identity sheet (230px) sits first;
    every following sheet overlaps the one before so only a 72px strip shows, each one deeper in colour than the sheet behind it; the front
    sheet runs to the bottom. One light, one depth rule: each sheet casts 0 -10px 30px upward (stronger for the sheets nearest you) and carries
-   a 1px light top edge; nothing else glows, no texture. Tap a strip: that sheet rises to the top (320ms) and becomes the page; the others
-   compress into 24px edges at the bottom (the pile = one 120px "back to the stack" control). A deeper page is one more sheet rising inside
-   the lifted one, 16px lower, so its parent's edge stays visible. Lists inside are sheets within the sheet, never rows on a coloured page.
-   Core motions are @keyframes (pausable + scrubbable): lift / drop / swap, in-sheet save (deck sinks, value lands), environment switch. */
+   a 1px light top edge; nothing else glows, no texture. Tap a strip: that sheet rises to the top (320ms) and becomes the page, carrying its
+   own content; the strip's name and value travel into the page title and headline. The others compress into 12px edges at the bottom (the
+   pile: a depth cue and one 60px "put it back" control). A deeper page is one more sheet rising inside the lifted one, 16px lower, so its
+   parent's edge stays visible. Lists inside are sheets within the sheet, never rows on a coloured page.
+   Core motions are @keyframes (pausable + scrubbable): lift / drop / swap, in-sheet save (deck sinks, edited values fly home), environment switch. */
 .app.s10{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;-webkit-font-smoothing:antialiased;background:#eceaf2;
   --ink:#14161F;--body:#252b3a;--sub:#3a4152;--blue:#4553BE;--link:#4352bb;--focus:#4A5AD6;--err:#DA3A52;--err-ink:#8E1A2C;--ok:#0E9B76;--ok-ink:#045541;--ok-ink-w:#0B7F62;
   --ease:cubic-bezier(.22,.8,.24,1);--ease-io:cubic-bezier(.45,0,.2,1);--lift:calc(320ms * var(--k,1));--env:calc(650ms * var(--k,1));
-  --top:44px;--pile:120px;--pileb:max(var(--pile),var(--kb,0px));--navh:64px;--t2:var(--sub);--kt:320ms}
+  --top:44px;--pile:60px;--pileb:max(var(--pile),var(--kb,0px));--navh:64px;--t2:var(--sub);--kt:320ms}
 :where(.app.s10) *{box-sizing:border-box}
 :where(.app.s10) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left}
 :where(.app.s10) :is(input,textarea){font:inherit;color:inherit}
@@ -61,11 +62,13 @@ body{margin:0}
 /* ---- roots: settings (the stack), 找局 and 我的局 are three pages over the same sky; switching roots sinks one and raises the other ---- */
 .s10-root{position:absolute;inset:0}
 .s10-root.s10-off{visibility:hidden;pointer-events:none}
+/* switching roots fades through the sky: the leaving page is gone within the first third (~110ms), then the new one rises — two pages of
+   text are never on screen together */
 .s10-root.is-top.ph-enter.dir-root{opacity:0}
-.s10-root.is-top.ph-in.dir-root{animation:s10-root-in var(--lift) var(--ease) both}
-.s10-root.is-leaving{animation:s10-root-out calc(240ms * var(--k,1)) var(--ease-io) both;pointer-events:none}
-@keyframes s10-root-in{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
-@keyframes s10-root-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(28px)}}
+.s10-root.is-top.ph-in.dir-root{animation:s10-root-in var(--lift) linear both}
+.s10-root.is-leaving{animation:s10-root-out var(--lift) linear both;pointer-events:none}
+@keyframes s10-root-in{0%,34%{opacity:0;transform:translateY(24px);animation-timing-function:cubic-bezier(.22,.8,.24,1)}100%{opacity:1;transform:none}}
+@keyframes s10-root-out{0%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(8px)}}
 /* ---- page header on the sky: 30/500 + 14 meta; --hc (0→1) tucks the title to 18px into the tool row (y 40–84) ---- */
 .s10-hd{position:absolute;left:0;right:0;top:0;height:calc(124px - 40px * var(--hc,0));z-index:30;overflow:hidden}
 .s10-hd .s10-sky{inset:0}
@@ -84,7 +87,6 @@ body{margin:0}
 .s10-nav button{position:relative;flex:1 1 0;height:44px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--sub)}
 .s10-nav button.on{color:var(--ink);font-weight:600}
 .s10-nav button.on::after{content:"";position:absolute;left:50%;bottom:4px;width:18px;height:3px;border-radius:2px;margin-left:-9px;background:var(--ink)}
-.s10-nav button.off{opacity:.55}
 .app.s10[data-skin=sunset] .s10-nav button{color:#2a1608}
 .app.s10[data-skin=sunset] .s10-nav button.on{color:#120a04}
 .s10-navoff .s10-nav{transform:translateY(110%);pointer-events:none}
@@ -93,8 +95,8 @@ body{margin:0}
 @keyframes s10-nav-out{from{transform:none}to{transform:translateY(110%)}}
 @keyframes s10-nav-in{from{transform:translateY(110%)}to{transform:none}}
 .s10-g-lift .s10-hd{opacity:0;pointer-events:none}
-.s10-tr-lift .s10-hd{animation:s10-early var(--lift) linear both}
-.s10-tr-drop .s10-hd{animation:s10-late var(--lift) linear both}
+.s10-tr-lift .s10-hd{animation:s10-out var(--lift) linear both}
+.s10-tr-drop .s10-hd{animation:s10-in-b var(--lift) linear both}
 /* ---- sheets: geometry from the component: displayed state --ty/--h/--r/--z; while moving, --ty0/--h0/--r0 is where the sheet comes from ---- */
 .s10-layer{position:absolute;left:0;right:0;top:0;height:var(--h);transform:translate3d(0,var(--ty),0);z-index:var(--z);background-color:var(--lc);border-radius:var(--r,28px) var(--r,28px) 0 0;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.72);overflow:hidden}
 .s10-mv .s10-layer.mv{animation:s10-sheet-a var(--lift) var(--ease) both}
@@ -139,70 +141,94 @@ body{margin:0}
 .s10-more button{height:44px;font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center}
 .s10-more button:active{opacity:.6}
 .s10-more p{flex:1 0 100%;margin-top:4px;font-size:13px;line-height:1.5;color:var(--body)}
-/* the 24px edge in the pile: a legible label; the whole pile is one ≥44px "back to the stack" control (.s10-pilehit) */
-.s10-pl{position:absolute;left:0;right:0;top:0;height:24px;padding:0 24px;display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none}
-.st-pile .s10-pl{opacity:1}
-.s10-pilehit{position:absolute;left:0;right:0;bottom:0;height:var(--pile);z-index:31;display:none;align-items:flex-end;justify-content:flex-end;padding:0 18px 8px}
-.s10-g-lift .s10-pilehit{display:flex}
-.s10-pilehit span{font-size:13px;font-weight:600;color:var(--ink);opacity:.0}
-.s10-pilehit:active{background:rgba(20,22,31,.04)}
+/* the pile: the five other sheets pressed into 12px edges under the page — a depth cue, no labels (the page's own 「< 设置」 names the way
+   back); the whole 60px pile is one "put this sheet back" control */
+.s10-pilehit{position:absolute;left:0;right:0;bottom:0;height:var(--pile);z-index:31;display:none}
+.s10-g-lift .s10-pilehit{display:block}
+.s10-pilehit:active{background:rgba(20,22,31,.05)}
 /* displayed-state visibility */
-.st-pile .s10-st,.st-pile .s10-more,.st-pile .s10-face,.st-lift .s10-st,.st-lift .s10-more{opacity:0;pointer-events:none}
+.st-pile :is(.s10-st,.s10-more,.s10-face,.s10-pg,.s10-sub),.st-lift :is(.s10-st,.s10-more){opacity:0;pointer-events:none}
 .st-lift .s10-face{pointer-events:none}
 .st-lift .s10-face .s10-rest{opacity:0}
-.s10-g-rec .s10-L0.st-lift .s10-face,.s10-g-rec .s10-L0.st-start .s10-face .s10-name{opacity:0}
+.s10-g-rec .s10-L0.st-lift .s10-face{opacity:0}
 .s10-pf .s10-L0:is(.st-lift,.st-start,.fr-lift) .s10-face .s10-name{visibility:hidden}
-.st-pile .s10-pg{opacity:0;pointer-events:none}
-/* motion (all parts run the full 320ms with no delay so the panel's keyframe scrub lands every part correctly):
-   what was showing leaves early (gone by 35%), what arrives comes late (after 45%) */
-@keyframes s10-early{0%{opacity:1}35%,100%{opacity:0}}
-@keyframes s10-late{0%,45%{opacity:0}100%{opacity:1}}
-.s10-mv .mv.fr-home:not(.st-home) :is(.s10-st,.s10-more,.s10-face .s10-rest){animation:s10-early var(--lift) linear both}
-.s10-mv .s10-L0.mv.fr-home.st-pile .s10-face,.s10-g-rec.s10-mv .s10-L0.mv.fr-home .s10-face{animation:s10-early var(--lift) linear both}
-.s10-mv .mv.st-home:not(.fr-home) :is(.s10-st,.s10-more,.s10-face,.s10-face .s10-rest){animation:s10-late var(--lift) linear both}
-.s10-mv .mv.st-pile:not(.fr-pile) .s10-pl{animation:s10-late var(--lift) linear both}
-.s10-mv .mv.fr-pile:not(.st-pile) .s10-pl{animation:s10-early var(--lift) linear both}
-.s10-mv .mv.st-pile.fr-lift .s10-pg{animation:s10-early var(--lift) linear both}
+/* ---- motion: every sheet carries its own content, so no frame is an empty sheet. Only the head of a sheet hands over: the strip's name and
+   value travel into the page title and headline (FLIP, measured by the component into --cx/--cy/--cs) while the rest cross-fades in
+   overlapping windows. Every part runs the full 320ms from 0 so the panel's keyframe scrub lands every part on the same frame. ---- */
+@keyframes s10-out{0%{opacity:1}30%,100%{opacity:0}}
+@keyframes s10-in{0%,6%{opacity:0}38%,100%{opacity:1}}
+@keyframes s10-in-b{0%,18%{opacity:0}60%,100%{opacity:1}}
+@keyframes s10-out-b{0%{opacity:1}40%,100%{opacity:0}}
+@keyframes s10-out-late{0%,55%{opacity:1}90%,100%{opacity:0}}
+@keyframes s10-in-early{0%{opacity:0}16%,100%{opacity:1}}
+@keyframes s10-tin{0%{opacity:0}28%,100%{opacity:1}}
+@keyframes s10-tout{0%,14%{opacity:1}56%,100%{opacity:0}}
+@keyframes s10-carry{from{transform:translate(var(--cx,0px),var(--cy,0px)) scale(var(--cs,1))}to{transform:none}}
+@keyframes s10-carry-out{from{transform:none}to{transform:translate(var(--cx,0px),var(--cy,0px)) scale(var(--cs,1))}}
+[data-carry],[data-carry-src]{transform-origin:0 0}
+/* lift (home → page): the strip leaves in the first 30%, its name and value travel on into the page */
+.s10-tr-lift .mv.st-lift :is(.s10-st,.s10-more,.s10-face .s10-rest),.s10-tr-lift.s10-g-rec .s10-L0.mv .s10-face,.s10-tr-lift .mv.st-pile :is(.s10-st,.s10-more,.s10-face){animation:s10-out var(--lift) linear both}
+.s10-tr-lift .mv.st-lift [data-carry-src]{animation:s10-carry-out var(--lift) var(--ease) both}
+/* drop (page → home): the reverse; the strip comes back from 18% while the page title travels home into it */
+.s10-tr-drop .mv.fr-lift :is(.s10-st,.s10-more,.s10-face .s10-rest),.s10-tr-drop.s10-g-rec .s10-L0.mv .s10-face,.s10-tr-drop .mv.fr-pile :is(.s10-st,.s10-more,.s10-face){animation:s10-in-b var(--lift) linear both}
+.s10-tr-drop .mv.fr-lift [data-carry-src]{animation:s10-carry var(--lift) var(--ease) both}
+/* swap (a page of one sheet → a page of another): one sheet sinks into the pile with its content while the other rises out of it with its own */
+.s10-tr-swap .mv.st-pile.fr-lift :is(.s10-pg,.s10-sub){animation:s10-out-late var(--lift) linear both}
+.s10-tr-swap .mv.st-lift.fr-pile :is(.s10-pg,.s10-sub){animation:s10-in-early var(--lift) linear both}
 /* ---- identity sheet (white, 230px): the name first ---- */
 .s10-face{position:absolute;left:0;right:0;top:0;height:230px;padding:26px 24px 0;cursor:pointer;outline:none}
-.s10-name{font-size:52px;font-weight:600;line-height:1.15;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
-.s10-acct{margin-top:8px;font-size:15px;line-height:1.45;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-name{font-size:52px;font-weight:600;line-height:1.15;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere;text-wrap:balance}
+/* the account line keeps its status outside the ellipsis */
+.s10-acct{margin-top:8px;display:flex;align-items:baseline;gap:6px;font-size:15px;line-height:1.45;color:var(--sub);white-space:nowrap}
+.s10-acct-t{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.s10-acct-s{flex:0 0 auto}
 .s10-acct .ok{color:var(--ok-ink-w);font-weight:500}
-.s10-fx{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.s10-fx{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.s10-fx-c{display:flex;flex-direction:column;align-items:flex-start;min-width:0}
 .s10-fx-i{display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:44px;padding:2px 0;transition:opacity 120ms ease}
 .s10-fx-i:active{opacity:.55}
 .s10-fx-i .l{font-size:13px;font-weight:500;line-height:18px;color:var(--sub)}
 .s10-fx-i b{margin-top:2px;font-size:20px;font-weight:600;line-height:28px;color:var(--ink);white-space:nowrap}
-.s10-fx-i .s{display:flex;align-items:center;gap:4px;min-height:20px;font-size:14px;line-height:20px;color:var(--body);white-space:nowrap}
+.s10-fx-s{display:flex;align-items:center;gap:4px;min-height:20px;font-size:14px;line-height:20px;color:var(--body);white-space:nowrap}
+/* something waiting for you: a JU-blue sentence that opens that record / report directly */
+.s10-att{position:relative;display:inline-flex;align-items:center;gap:6px;height:44px;margin:-11px 0 -12px;font-size:15px;font-weight:500;color:var(--link);white-space:nowrap;transition:opacity 120ms ease}
+.s10-att:active{opacity:.55}
+.s10-att svg{width:14px;height:14px;margin-left:-2px}
 .s10-fresh{display:inline-block;margin-left:10px;vertical-align:middle;font-size:13px;font-weight:500;line-height:1;padding:5px 8px;border-radius:10px;color:var(--ok-ink-w);background:rgba(14,155,118,.10);letter-spacing:0}
-.s10-land-a{animation:s10-land-a calc(240ms * var(--k,1)) var(--ease) both}
-.s10-land-b{animation:s10-land-b calc(240ms * var(--k,1)) var(--ease) both}
 @keyframes s10-land-a{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
-@keyframes s10-land-b{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* ---- a lifted sheet becomes the page: header (30/500 + 14, collapsing to 18 in the tool row) + its own scroller ---- */
 .s10-pg{position:absolute;inset:0}
 .s10-ph{position:absolute;left:0;right:0;top:0;height:calc(116px - 68px * var(--hc,0));z-index:3;overflow:hidden;background-color:var(--lc)}
 .s10-bk{position:absolute;left:10px;top:2px;height:44px;min-width:44px;padding:0 10px 0 4px;display:flex;align-items:center;gap:2px;font-size:15px;font-weight:500;color:var(--ink)}
 .s10-bk svg{width:22px;height:22px;display:block}
 .s10-bk:active{opacity:.55}
-.s10-ph-t{position:absolute;top:calc(52px - 39px * var(--hc,0));left:calc(24px + (50% - 24px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(100% - 48px - 120px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.s10-ph-t{position:absolute;top:calc(52px - 39px * var(--hc,0));left:calc(24px + (50% - 24px) * var(--hc,0));translate:calc(-50% * var(--hc,0)) 0;max-width:calc(100% - 48px - 120px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
 .s10-ph-m{position:absolute;top:92px;left:24px;right:24px;font-size:14px;line-height:1.5;color:var(--t2);opacity:calc(1 - var(--hc,0) * 2.2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s10-sc2{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:116px 0 0;scrollbar-width:none}
-/* root page phases: it arrives with its sheet; the profile name starts exactly where the strip's name was (--pg-off) */
-@keyframes s10-ph-in{0%{opacity:0;transform:translateY(var(--pg-off,0px))}45%{opacity:0}100%{opacity:1;transform:none}}
-@keyframes s10-ph-out{0%{opacity:1;transform:none}28%{opacity:0}100%{opacity:0;transform:translateY(var(--pg-off,0px))}}
+/* root page phases. Lift: the page body comes in under the leaving strip (6–38%), the headline from 0; the title travels from the strip's
+   name. Drop: the reverse. The header is see-through while it hands over (nothing of the page sits under it then; a scrolled page is
+   clipped at the header line) so the strip shows through it. 个人资料 rides on --pg-off so its name starts exactly on the identity sheet's. */
 @keyframes s10-pgc-in{from{transform:translateY(var(--pg-off,0px))}to{transform:none}}
 @keyframes s10-pgc-out{from{transform:none}to{transform:translateY(calc(var(--pg-off,0px) + var(--psc,0px)))}}
-.s10-pg.is-top.ph-enter .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px))}
-.s10-pg.is-top.ph-enter .s10-pgc{transform:translateY(var(--pg-off,0px))}
-.s10-pg.is-top.ph-enter .s10-pgr{opacity:0}
-.s10-trl .s10-pg.is-top.ph-in .s10-ph{animation:s10-ph-in var(--lift) var(--ease) both}
-.s10-trl .s10-pg.is-top.ph-in .s10-pgc{animation:s10-pgc-in var(--lift) var(--ease) both}
-.s10-trl .s10-pg.is-top.ph-in .s10-pgr{animation:s10-late var(--lift) linear both}
-.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph,.s10-tr-swap .s10-pg.is-top.ph-exit .s10-ph{animation:s10-ph-out var(--lift) var(--ease) both}
-.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgc{animation:s10-pgc-out var(--lift) var(--ease) both}
-.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr,.s10-tr-swap .s10-pg.is-top.ph-exit .s10-pgc{animation:s10-early var(--lift) linear both}
-.s10-tr-swap .s10-pg.is-under.ph-exit{animation:s10-late var(--lift) linear both}
+@keyframes s10-ph-up{from{transform:none}to{transform:translateY(var(--pg-off,0px))}}
+.s10-pg.is-top.ph-enter:not(.s10-over) :is(.s10-bk,.s10-ph-t,.s10-ph-m,.s10-pgr > *){opacity:0}
+.s10-pg.is-top.ph-enter:not(.s10-over) .s10-ph{background-color:transparent}
+.s10-pgp.is-top.ph-enter :is(.s10-ph,.s10-pgc){transform:translateY(var(--pg-off,0px))}
+.s10-tr-lift .s10-pg.is-top.ph-in .s10-ph,.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph{background-color:transparent;overflow:visible}
+.s10-tr-lift .s10-pg.is-top.ph-in :is(.s10-bk,.s10-ph-m,.s10-pgr > *){animation:s10-in var(--lift) linear both}
+.s10-tr-lift .s10-pg.is-top.ph-in .s10-pgr > .s10-dom{animation-name:s10-tin}
+.s10-tr-lift .s10-pg.is-top.ph-in .s10-ph-t{animation:s10-carry var(--lift) var(--ease) both,s10-tin var(--lift) linear both}
+.s10-tr-lift .s10-pg.is-top.ph-in [data-carry=v]{animation:s10-carry var(--lift) var(--ease) both}
+.s10-tr-lift .s10-pgp.is-top.ph-in :is(.s10-ph,.s10-pgc){animation:s10-pgc-in var(--lift) var(--ease) both}
+.s10-tr-drop .s10-pg.is-top.ph-exit :is(.s10-bk,.s10-ph-m){animation:s10-out var(--lift) linear both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph-t{animation:s10-carry-out var(--lift) var(--ease) both,s10-tout var(--lift) linear both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr > *{animation:s10-out-late var(--lift) linear both}
+.s10-tr-drop :is(.s10-L0,.s10-L5) .s10-pg.is-top.ph-exit .s10-pgr > *{animation-name:s10-out-b}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr > .s10-dom{animation-name:s10-tout}
+.s10-tr-drop .s10-pg.is-top.ph-exit [data-carry=v]{animation:s10-carry-out var(--lift) var(--ease) both}
+.s10-tr-drop .s10-pg.is-top.ph-exit:not(.s10-pgp) .s10-sc2{clip-path:inset(calc((116px - 68px * var(--hc,0)) * min(1, var(--hc,0) * 1000)) 0 0 0)}
+.s10-tr-drop .s10-pgp.is-top.ph-exit .s10-ph{animation:s10-ph-up var(--lift) var(--ease) both}
+.s10-tr-drop .s10-pgp.is-top.ph-exit .s10-pgc{animation:s10-pgc-out var(--lift) var(--ease) both}
 .s10-pgp{--pg-off:-102px}
 .s10-pgc{padding:12px 0 0}
 .s10-pgc > .s10-name{padding:0 24px}
@@ -216,26 +242,49 @@ body{margin:0}
 .s10-sub.is-top.ph-exit{animation:s10-sub-out calc(260ms * var(--k,1)) var(--ease-io) both;--kt:260ms}
 @keyframes s10-sub-in{from{transform:translateY(105%)}to{transform:none}}
 @keyframes s10-sub-out{from{transform:none}to{transform:translateY(105%)}}
+/* 我的记录 / 我的举报 opened from 个人资料: the page is one more sheet rising inside the identity sheet (16px lower); its own details go 16px deeper */
+.s10-pg.s10-over{top:16px;z-index:6;border-radius:28px 28px 0 0;background-color:var(--lc);box-shadow:0 -10px 30px rgba(20,22,31,.13),inset 0 1px 0 rgba(255,255,255,.8);overflow:hidden}
+.s10-pg.s10-over.is-top.ph-enter{transform:translateY(105%)}
+.s10-pg.s10-over.is-top.ph-in{animation:s10-sub-in calc(300ms * var(--k,1)) var(--ease) both;--kt:300ms}
+.s10-pg.s10-over.is-top.ph-exit{animation:s10-sub-out calc(260ms * var(--k,1)) var(--ease-io) both;--kt:260ms}
+.s10-l0deep .s10-sub{top:32px}
+.s10-l0deep .s10-sub.d2{top:48px}
 /* ---- edit 资料: inside the identity sheet a second, smaller deck rises from the pile line (approved in stage 1) ---- */
 .s10-pge{position:absolute;inset:0;z-index:4}
 .s10-pge .s10-sc2{background:transparent}
 .s10-deck{position:relative;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px);padding-top:6px}
-.s10-pge.ph-enter .s10-deck{transform:translateY(calc(var(--ph,844px) - 380px))}
+.s10-sub .s10-deck{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 132px)}
+.s10-sub.d2 .s10-deck{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 148px)}
+.s10-l0deep .s10-sub.d2 .s10-deck{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 164px)}
+.s10-sub.s10-seamsub .s10-deck{min-height:calc(var(--ph,844px) - var(--top) - var(--kb,0px) - 116px)}
+/* the deck rises from below the pile line over 个人资料, which stays in place under it, and sinks back out of sight; the headers cross over */
+@keyframes s10-deck-in{from{transform:translateY(calc(var(--ph,844px) - 150px))}to{transform:none}}
+@keyframes s10-deck-out{from{transform:none}to{transform:translateY(calc(var(--ph,844px) - 150px))}}
+@keyframes s10-hin{0%,6%{opacity:0;transform:translateY(10px)}40%,100%{opacity:1;transform:none}}
+@keyframes s10-hout{0%{opacity:1;transform:none}34%,100%{opacity:0;transform:translateY(-10px)}}
+.s10-pge.ph-enter .s10-deck{transform:translateY(calc(var(--ph,844px) - 150px))}
 .s10-pge.is-top.ph-in .s10-deck{animation:s10-deck-in var(--lift) var(--ease) both}
 .s10-pge.is-top.ph-exit .s10-deck{animation:s10-deck-out var(--lift) var(--ease) both}
-@keyframes s10-deck-in{from{transform:translateY(calc(var(--ph,844px) - 380px))}to{transform:none}}
-@keyframes s10-deck-out{from{transform:none}to{transform:translateY(calc(var(--ph,844px) - 380px))}}
 .s10-pge.is-top.ph-enter .s10-ph{opacity:0}
-.s10-pge.is-top.ph-in .s10-ph{animation:s10-late var(--lift) linear both}
-.s10-pge.is-top.ph-exit .s10-ph{animation:s10-early var(--lift) linear both}
-.s10-pgp.is-under .s10-ph,.s10-pgp.is-under .s10-pgc{opacity:0}
-.s10-pgp.is-under.ph-in .s10-ph,.s10-pgp.is-under.ph-in .s10-pgc{animation:s10-early var(--lift) linear both}
-.s10-pgp.is-under.ph-exit .s10-ph,.s10-pgp.is-under.ph-exit .s10-pgc{opacity:1;animation:s10-late var(--lift) linear both}
+.s10-pge.is-top.ph-in .s10-ph{animation:s10-hin var(--lift) linear both}
+.s10-pge.is-top.ph-exit .s10-ph{animation:s10-hout var(--lift) linear both}
+.s10-pf .s10-pgp.is-under.ph-idle :is(.s10-ph,.s10-pgc){opacity:0}
+/* saving: each edited value leaves its field and flies to its place on 个人资料 (FLIP copies, measured at the moment of saving) while the
+   deck sinks; the real values wait under them, the 刚更新 marks arrive last */
+.s10-fly{position:absolute;z-index:5;margin:0;pointer-events:none;transform-origin:0 0;color:var(--ink);font-weight:600}
+.s10-fly-name{padding:0 24px}
+.s10-fly-v{font-size:20px;line-height:1.35;overflow-wrap:anywhere}
+.s10-fly .s10-fresh{visibility:hidden}
+.s10-pge.ph-exit .s10-fly{animation:s10-carry var(--lift) var(--ease) both}
+.s10-pge.ph-exit .s10-in.s10-flown{color:transparent}
+.s10-pgp.is-under.ph-exit .s10-flying{color:transparent}
+.s10-pgp.is-under.ph-exit .s10-fresh{animation:s10-badge var(--lift) linear both}
+@keyframes s10-badge{0%,72%{opacity:0;transform:scale(.86)}100%{opacity:1;transform:none}}
 /* field sheets (edit + every form): one sheet per field, same colours as the home stack */
 .s10-fs{position:relative;margin-top:-28px;padding:20px 24px 42px;border-radius:28px 28px 0 0;background-color:var(--fc);box-shadow:0 -10px 30px rgba(20,22,31,.10),inset 0 1px 0 rgba(255,255,255,.6)}
 .s10-fs:first-child{margin-top:0}
 .s10-fs1{--fc:var(--c1);--pc:var(--p1)}.s10-fs2{--fc:var(--c2);--pc:var(--p2)}.s10-fs3{--fc:var(--c3);--pc:var(--p3)}
-.s10-fa{--fc:#fff;flex:1 0 auto;padding:22px 24px 24px;display:flex;flex-direction:column;align-items:center}
+.s10-fa{--fc:#fff;flex:1 0 auto;padding:22px 24px 24px;display:flex;flex-direction:column;align-items:center;justify-content:flex-end}
 .ju-phone.kb .s10-fa{position:sticky;bottom:0;flex:0 0 auto}
 .ju-phone.kb .s10-sc2.s10-form{padding-bottom:0;scroll-padding-bottom:110px}
 .s10-fl{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;line-height:20px;color:var(--sub)}
@@ -253,6 +302,7 @@ body{margin:0}
 .s10-er{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;margin-top:12px}
 .s10-code{width:7em;height:40px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);background:transparent;padding:0;font-size:20px;font-weight:600;letter-spacing:.22em;color:var(--ink)}
 .s10-code:focus{border-bottom:2px solid var(--focus)}
+.s10-code.bad{border-bottom:2px solid var(--err)}
 .s10-rs{margin-top:4px}
 .s10-rs .s10-link{height:32px;font-size:14px}
 .s10-rs .s10-link[disabled]{color:var(--sub);cursor:default}
@@ -278,9 +328,10 @@ body{margin:0}
 .s10-ish:first-child{margin-top:0}
 button.s10-ish:active{filter:brightness(.97)}
 .s10-base{flex:1 0 auto;padding:22px 24px 28px;--ib:color-mix(in srgb,var(--lc) 30%,#fff)}
-.s10-pgbody{display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px)}
+.s10-pgbody{display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 128px)}
 .s10-sub .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 132px)}
-.s10-sub.d2 .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 148px)}
+.s10-sub.d2 .s10-pgbody,.s10-l0deep .s10-sub .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 148px)}
+.s10-over .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 144px)}
 .s10-dom{padding:6px 24px 26px}
 .s10-big{display:flex;align-items:baseline;gap:8px;font-weight:600;color:var(--ink)}
 .s10-big b{font:600 64px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:-.02em}
@@ -326,12 +377,16 @@ button.s10-ish:active{filter:brightness(.97)}
 .s10-x{flex:0 0 auto;align-self:center;height:44px;padding:0 4px 0 10px;font-size:14px;font-weight:500;color:var(--sub);text-decoration:underline;text-underline-offset:3px}
 .s10-ideck.archived .s10-ish{--ib:color-mix(in srgb,var(--lc) 20%,#fff)}
 .s10-ideck.archived .s10-dt b,.s10-ideck.archived .s10-it{color:var(--sub)}
+.s10-next{margin-top:10px}
+.s10-next span{display:block;font-size:14px;line-height:1.5;color:var(--t2)}
+.s10-next b{display:block;margin-top:2px;font-size:17px;font-weight:600;line-height:1.4;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .s10-empty{padding:4px 24px 0}
 .s10-empty b{display:block;font-size:30px;font-weight:600;line-height:1.3;color:var(--ink)}
 .s10-empty p{margin-top:8px;font-size:16px;line-height:1.6;color:var(--t2)}
 /* detail sub-sheet: title large, the time set like a timetable */
 .s10-dhead{padding:4px 24px 24px}
-.s10-dtitle{font-size:28px;font-weight:600;line-height:1.32;color:var(--ink);overflow-wrap:anywhere}
+.s10-dtitle{display:none;margin-bottom:6px;font-size:28px;font-weight:600;line-height:1.32;color:var(--ink);overflow-wrap:anywhere}
+[data-trunc="1"] .s10-dtitle{display:block}
 .s10-when{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px;margin-top:14px}
 .s10-when b{font:600 56px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:-.02em;color:var(--ink)}
 .s10-when span{font-size:17px;font-weight:500}
@@ -407,11 +462,24 @@ button.s10-ish:active{filter:brightness(.97)}
 .s10-fbody{position:relative;flex:1 1 auto;min-height:calc(var(--ph,844px) - 470px)}
 .s10-seamsc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:124px 0 var(--navh);scrollbar-width:none}
 .s10-seamsc::-webkit-scrollbar{display:none}
-/* profile (read): the identity sheet holds its own small deck — 微信号 / 邮箱 sheets in the edit deck's colours, then a white base sheet */
-.s10-rdeck{margin-top:24px;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 212px)}
+/* profile (read): the name on top; the identity sheet's own small deck rests on the pile — 微信号 / 邮箱 in the edit deck's colours,
+   我的记录 | 我的举报 (the identity sheet's two columns, now sheets you can open), then a white base sized to its content with the snapshot
+   note and 编辑资料. Spare height opens between the name and the deck, never as an empty band under the button. */
+.s10-pgp .s10-pgc{display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px)}
+.s10-pgp .s10-pgc > .s10-name{flex:0 0 auto;margin-bottom:24px}
+.s10-rdeck{margin-top:auto;display:flex;flex-direction:column}
+.s10-rdeck .s10-ra{flex:0 0 auto}
 .s10-pgp .s10-sc2{padding-bottom:0}
+.s10-fs4{--fc:var(--c4);--pc:var(--p4)}
+.s10-rr{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;padding-top:16px;padding-bottom:40px}
+.s10-rr-i{display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:56px;transition:opacity 120ms ease}
+.s10-rr-i:active{opacity:.55}
+.s10-rr-i .l{font-size:13px;font-weight:500;line-height:18px;color:var(--sub)}
+.s10-rr-i b{margin-top:2px;font-size:20px;font-weight:600;line-height:28px;color:var(--ink);white-space:nowrap}
+.s10-rr-i .s{display:flex;align-items:center;gap:4px;min-height:20px;font-size:14px;line-height:20px;color:var(--body);white-space:nowrap}
 .s10-rv{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 14px;min-height:40px;padding-top:6px}
 .s10-rv .v{font-size:20px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere;min-width:0}
+.s10-rv .v.none{font-size:16px;font-weight:400;color:var(--sub)}
 .s10-rv .ok{font-size:15px;font-weight:500;color:var(--ok-ink)}
 .s10-rv .no{font-size:15px;font-weight:500;color:var(--sub)}
 .s10-ra .s10-snap{margin-top:0}
@@ -445,7 +513,7 @@ button.s10-ish:active{filter:brightness(.97)}
 .s10-toast.k-error{background:#3a0d16}
 .s10-toast.s10-undo{bottom:calc(var(--pileb) + 72px)}
 @keyframes s10-toast{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.s10-sub.s10-seamsub{top:var(--top);z-index:36}
+.s10-sub.s10-seamsub{top:var(--top);bottom:var(--kb,0px);z-index:36}
 /* the system's own prompt (not JU's material): a plain system alert */
 .s10-sys{position:absolute;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);animation:s10-fade calc(180ms * var(--k,1)) ease both}
 .s10-sys-b{width:270px;border-radius:14px;background:rgba(246,246,248,.98);text-align:center;font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;overflow:hidden;animation:s10-sys calc(220ms * var(--k,1)) var(--ease) both}

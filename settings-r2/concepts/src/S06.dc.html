@@ -338,7 +338,7 @@ body{margin:0}
                 <sc-if value="{{v.band.favorites}}"><div class="s06-bx {{v.bxDir}}">
                   <sc-if value="{{c.fav.empty}}"><p class="s06-say s06-big">{{c.fav.emptyCopy.title}}。</p><p class="s06-said">{{c.fav.emptyCopy.body}}</p><div class="s06-acts"><button type="button" class="s06-go" data-act="find" onClick="{{c.fav.goFind}}"><span>{{c.fav.emptyCopy.cta}}</span><em>→</em></button></div></sc-if>
                   <sc-if value="{{v.favs.lead}}"><p class="s06-said">{{v.favs.lead}}</p></sc-if>
-                  <sc-for list="{{v.favs.days}}" as="g" hint-placeholder-count="2"><p class="s06-day{{g.cls}}">{{g.day}}</p><sc-for list="{{g.items}}" as="r" hint-placeholder-count="2"><div class="s06-fi" data-rid="{{r.id}}"><span class="s06-tm">{{r.tm}}</span><p class="s06-item{{r.cls}}"><span class="s06-v s06-long" role="button" tabindex="0" data-origin="fav-{{r.id}}" onClick="{{r.open}}" onKeyDown="{{v.key}}"><sc-for list="{{r.parts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span>，<span class="s06-nb">{{r.place}}</span>，<span class="s06-nb">{{r.status}}。<button type="button" class="s06-verb" data-act="unfav" data-rid="{{r.id}}" aria-label="{{r.removeAria}}" onClick="{{r.remove}}">拿出</button></span></p></div></sc-for></sc-for>
+                  <sc-for list="{{v.favs.days}}" as="g" hint-placeholder-count="2"><p class="s06-day{{g.cls}}">{{g.day}}</p><sc-for list="{{g.items}}" as="r" hint-placeholder-count="2"><div class="s06-fi" data-rid="{{r.id}}"><span class="s06-tm">{{r.tm}}</span><p class="s06-item{{r.cls}}"><span class="s06-v s06-long" role="button" tabindex="0" data-origin="fav-{{r.id}}" onClick="{{r.open}}" onKeyDown="{{v.key}}"><sc-for list="{{r.parts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span>，<span class="{{r.placeCls}}">{{r.place}}</span>，<span class="s06-nb">{{r.status}}。<button type="button" class="s06-verb" data-act="unfav" data-rid="{{r.id}}" aria-label="{{r.removeAria}}" onClick="{{r.remove}}">拿出</button></span></p></div></sc-for></sc-for>
                 </div></sc-if>
                 <!-- 收藏 · 活动详情 -->
                 <sc-if value="{{v.band.favDetail}}"><div class="s06-bx {{v.bxDir}}">
@@ -558,6 +558,7 @@ class Component extends DCLogic {
     var root = this.s06Root();
     if (root && !root.__s06end) { root.__s06end = true; root.addEventListener('animationend', function (ev) {
       if (ev.target !== root || (ev.animationName !== 's06-open' && ev.animationName !== 's06-shut')) return;
+      if (self.state.review && self.state.review.scrub != null) return;   /* 关键帧 may visit the last frame and come back: keep the class while scrubbing */
       self._s06moEnded = true; self.forceUpdate();
       if (ev.animationName === 's06-shut') requestAnimationFrame(function () { requestAnimationFrame(function () { self.s06Sink(); }); });
     }); }
@@ -582,6 +583,11 @@ class Component extends DCLogic {
     if (nk !== this._s06nk) { this._s06nk = nk; this.s06NavScroll(nav); }
     var kbk = (this.state.review && this.state.review.kb ? 'kb:' : ':') + (this._s06bandS || '') + ':' + (this._s06seamS || '');
     if (kbk !== this._s06kbk) { this._s06kbk = kbk; if (this.state.review && this.state.review.kb) this.s06KbScroll(); }
+    /* after 关键帧 is released at the very end, no new animationend comes: a finished 聚焦 is cleaned up here */
+    if (this._s06mo && !this._s06moEnded && !(this.state.review && (this.state.review.scrub != null || this.state.review.paused))) {
+      var fin = false; try { root.getAnimations().forEach(function (a) { if ((a.animationName === 's06-open' || a.animationName === 's06-shut') && a.playState === 'finished') fin = true; }); } catch (e) { }
+      if (fin) { this._s06moEnded = true; var self1 = this; requestAnimationFrame(function () { self1.forceUpdate(); }); }
+    }
     /* editable phrases carry their own text (the template gives them no children): state → DOM only when the field is not being typed in */
     var pf0 = this.state.pf;
     if (pf0) { var act = root.getRootNode && root.getRootNode().activeElement; root.querySelectorAll('.s06-ce[data-field]').forEach(function (el) { var want = pf0[el.getAttribute('data-field')] || ''; if (el !== act && el.textContent !== want) el.textContent = want; }); }
@@ -610,7 +616,7 @@ class Component extends DCLogic {
       var sc = endEl.closest('[data-scroller]'); var y = 0, el = endEl; while (el && el !== sc && sc && sc.contains(el)) { y += el.offsetTop; el = el.offsetParent; }
       var rb = root.getBoundingClientRect(); var sx = (rb.height / H) || 1;
       var bt = sc ? (sc.getBoundingClientRect().top - rb.top) / sx + y + endEl.offsetHeight - sc.scrollTop : (endEl.getBoundingClientRect().bottom - rb.top) / sx;
-      if (bt > 0 && bt < H * 1.6) sink = Math.max(0, Math.min(H * 0.26, bt + 24 - H * 0.72));
+      if (bt > 0 && bt < H * 1.6) sink = Math.max(0, Math.min(H * 0.26, bt + 24 - H * 0.77));
     }
     sink = Math.round(sink); if (sink !== this._s06sinkV) { this._s06sinkV = sink; sky.style.setProperty('--s06-sink', sink + 'px'); }
   }
@@ -709,7 +715,7 @@ class Component extends DCLogic {
     this._s06fk = fk; this._s06fkv = fkv; this._s06bandS = bandS; this._s06seamS = seamShown ? shown : null;
     /* 聚焦 motion class: opening when a group is first focused, closing when the paragraph folds back; kept while consistent */
     var fTop = !!S06_FOCUS[topS], fUnder = !!(under && S06_FOCUS[under]);
-    var mo = null, mk = nav.seq + ':' + (phase === 'exit' ? 'x' : 'e');
+    var mo = null, mk = s.nav.seq + ':' + (phase === 'exit' ? 'x' : 'e');
     if ((phase === 'enter' || phase === 'in') && dir === 'fwd' && fTop && !fUnder) mo = 'open';
     else if (phase === 'exit' && fTop && !fUnder) mo = 'shut';
     if (mo) { if (this._s06mk !== mk) { this._s06mk = mk; this._s06moEnded = false; } this._s06mo = mo; }
@@ -865,7 +871,7 @@ class Component extends DCLogic {
     var q = (c.city.q || '').trim(), cl = c.city.list, others = q ? cl : cl.filter(function (x) { return !x.on; }), seps = s06Seps(others.length, '或');
     v.ct = { any: cl.length > 0, pre: q ? '找到 ' : '也可以换成 ', post: q ? '。' : '。', list: others.map(function (x, i) { return { key: x.key, name: x.name + (q && x.on ? '（当前）' : ''), pick: x.pick, cls: x.on ? ' is-on' : '', pressed: x.on ? 'true' : 'false', sep: seps[i] }; }) };
     /* favourites: one 局 per line */
-    var favItem = function (r, arch) { var st = r.joined || r.hosted ? r.relLabel : r.closed ? r.statusLabel : '未报名'; return { id: r.id, parts: self.s06Words(r.title, true), tm: arch ? r.when.md : r.when.time, cls: arch ? ' is-arch' : '', place: r.place.hood + (r.crossCity ? '（' + r.cityName + ' · 当地时间）' : ''), status: st, open: r.open, remove: r.remove, removeAria: '拿出收藏：' + r.title, day: r.when.wdZh + ' ' + r.when.md, t: JUS.t(r.event.iso) }; };
+    var favItem = function (r, arch) { var st = r.joined || r.hosted ? r.relLabel : r.closed ? r.statusLabel : '未报名'; return { id: r.id, parts: self.s06Words(r.title, true), tm: arch ? r.when.md : r.when.time, cls: arch ? ' is-arch' : '', place: r.place.hood + (r.crossCity ? '（' + r.cityName + ' · 当地时间）' : ''), placeCls: Array.from(r.place.hood).length <= 8 ? 's06-nb' : '', status: st, open: r.open, remove: r.remove, removeAria: '拿出收藏：' + r.title, day: r.when.wdZh + ' ' + r.when.md, t: JUS.t(r.event.iso) }; };
     var byDay = function (rows) { var out = []; rows.forEach(function (it) { var g = out[out.length - 1]; if (!g || g.day !== it.day) out.push(g = { day: it.day, cls: out.length ? '' : ' is-first', items: [] }); g.items.push(it); }); return out; };
     var actItems = c.fav.active.map(function (r) { return favItem(r, false); }).sort(function (a, b) { return a.t - b.t; });
     var archItems = c.fav.archived.map(function (r) { return favItem(r, true); }).sort(function (a, b) { return b.t - a.t; });
