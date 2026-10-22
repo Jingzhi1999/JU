@@ -46,6 +46,8 @@ body{margin:0}
 .app.s04[data-skin="sunset"]{--s04-c1:#FFD45E;--s04-c2:#FF9A5C;--s04-c3:#9CC8F6;--s1:rgba(20,22,31,.8);--s2:#14161F;--s3:#14161F;--s04-e1:#33a0ff;--s04-e2:#ff7a33;--s04-e3:#ffc53d;
   --s04-l0:#FFF2B0;--s04-l1:#FFC24A;--s04-l2:#FF8E4E;--s04-l3:#4C97F0;--s04-l5:#F2A0A6;--s04-l4:#FFB566;--mono:rgba(255,255,255,.45)}
 /* the environment's light: a soft bloom (棉糖) / an orange-to-lilac ring on warm white (光晕) / a low sun in a blue-to-amber sky (落日) — only on the identity band */
+/* 落日: no blue block next to the JU-blue CTA (the one primary blue on screen stays unique) */
+.app.s04[data-skin="sunset"] .s04-ncta{--bc:var(--s04-c2);--fg2:var(--s2)}
 .app.s04{--lit:radial-gradient(circle at 76% 60%,var(--s04-l0) 0 8%,var(--s04-l1) 20%,var(--s04-l2) 35%,transparent 56%),linear-gradient(180deg,var(--s04-l3) 0%,var(--s04-l5) 55%,var(--s04-l4) 100%)}
 /* environment switch (core motion 3): the whole palette moves from the previous environment's values in 650ms (keyframes → pausable) */
 @keyframes s04-sk0{from{--s04-c1:var(--q1);--s04-c2:var(--q2);--s04-c3:var(--q3);--s04-e1:var(--q4);--s04-e2:var(--q5);--s04-e3:var(--q6);--s04-l0:var(--q7);--s04-l1:var(--q8);--s04-l2:var(--q9);--s04-l3:var(--q10);--s04-l5:var(--q11);--s04-l4:var(--q12)}}
@@ -110,7 +112,7 @@ body{margin:0}
 .s04-mono{position:absolute;right:-20px;top:max(104px,calc(30cqh - 196px));font-size:204px;font-weight:900;line-height:1;color:var(--mono);pointer-events:none;user-select:none}
 .s04-idtag{position:absolute;right:20px;top:67px;display:flex;align-items:baseline;gap:6px}
 .s04-arr{font-size:17px;line-height:1;font-weight:500}
-.s04-nm{position:relative;display:block;font-size:52px;font-weight:700;line-height:1.12;letter-spacing:-.01em;overflow-wrap:anywhere}
+.s04-nm{position:relative;display:block;font-size:52px;font-weight:700;line-height:1.12;letter-spacing:-.01em;overflow-wrap:anywhere;text-wrap:balance}
 .s04-nm.is-long{font-size:40px;line-height:1.15}
 .s04-acc{position:relative;display:block;margin-top:8px;font-size:15px;line-height:1.45;color:var(--f1);overflow-wrap:anywhere}
 .s04-id.is-flash{animation:s04-flashb calc(380ms*var(--k,1)) ease calc(var(--d-back)*var(--k,1)) both}
@@ -172,6 +174,7 @@ body{margin:0}
 .s04-b.is-flipin{animation:s04-flipIn calc(280ms*var(--k,1)) var(--eg) both}
 @keyframes s04-flipIn{from{opacity:0;transform:scale(.9)}to{opacity:1;transform:scale(1)}}
 .s04-ghosts{position:absolute;inset:0;z-index:3;pointer-events:none}
+.s04-backhit{position:absolute;left:8px;top:8px;width:112px;height:44px;z-index:55;background:transparent}
 .s04-ghost{animation:s04-ghost calc(220ms*var(--k,1)) cubic-bezier(.4,0,1,1) both}
 @keyframes s04-ghost{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.9)}}
 .s04-band{position:relative;overflow:hidden;flex:0 0 auto;min-height:34cqh;background:var(--pc)}
@@ -458,7 +461,9 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
 .s04-page.is-top.ph-in.dir-fwd .s04-fade{animation:s04-in calc(210ms*var(--k,1)) cubic-bezier(.2,.7,.2,1) calc(110ms*var(--k,1)) both}
 .s04-page.is-top.ph-in.dir-fwd .s04-fade.is-late{animation:s04-in0 calc(140ms*var(--k,1)) ease-out calc(180ms*var(--k,1)) both}
 .s04-page.is-top.ph-exit :is(.s04-fade,.s04-new){animation:s04-out calc(130ms*var(--k,1)) ease-in both}
-.s04-page.is-top.ph-exit .s04-stack.s04-fade{animation:none}
+/* on the way back the colour blocks are wiped away upward (an edge, never a translucent mix), leaving the page ground to fold into the block */
+.s04-page.is-top.ph-exit .s04-stack.s04-fade{animation:s04-wipe calc(150ms*var(--k,1)) cubic-bezier(.4,0,1,1) both}
+@keyframes s04-wipe{from{clip-path:inset(0 0 0 0)}to{clip-path:inset(0 0 100% 0)}}
 /* no origin (index jump / programmatic): the page rises and sinks as one block */
 .s04-page.no-origin.is-top.ph-enter.dir-fwd{opacity:0}
 .s04-page.no-origin.is-top.ph-in.dir-fwd{animation:s04-pagein calc(var(--d-fwd)*var(--k,1)) var(--eg) both}
@@ -624,7 +629,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
                     <span class="s04-fin"><input class="s04-in wx{{v.wxInCls}}" data-field="wx" value="{{v.pf.wx}}" onInput="{{v.pf.onWx}}" placeholder="微信号" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">
                     <sc-if value="{{v.pf.err.wx}}"><span class="s04-er" role="alert">{{v.pf.err.wx}}</span></sc-if></span>
                   </label>
-                  <div class="s04-ft t-c3 s04-ftm{{v.pfe.email}}">
+                  <div class="s04-ft t-c3 s04-ftm s04-ncta{{v.pfe.email}}">
                     <label class="s04-tl"><span>工作 / 学校邮箱（可空）</span></label>
                     <div class="s04-fin"><input class="s04-in ml{{v.mlInCls}}" data-field="email" type="email" inputmode="email" value="{{v.pf.email}}" onInput="{{v.pf.onEmail}}" placeholder="name@school.edu" autocomplete="off" autocapitalize="off" spellcheck="false">
                     <sc-if value="{{v.pf.err.email}}"><span class="s04-er" role="alert">{{v.pf.err.email}}</span></sc-if>
@@ -802,7 +807,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
                     <span class="s04-bm">{{c.notify.permCopy.body}}</span>
                     <sc-if value="{{c.notify.isDefault}}"><button type="button" class="s04-cta inline" data-act="request" onClick="{{c.notify.request}}">开启提醒</button></sc-if>
                   </div>
-                  <div class="s04-tile t-c3"><span class="s04-row2"><span class="s04-k">提醒服务</span><span class="s04-mark{{v.svcMk}}">{{v.svcState}}</span></span><span class="s04-bm" style="color:var(--fg)">{{c.notify.serviceCopy}}</span></div>
+                  <div class="s04-tile t-c3 s04-ncta"><span class="s04-row2"><span class="s04-k">提醒服务</span><span class="s04-mark{{v.svcMk}}">{{v.svcState}}</span></span><span class="s04-bm" style="color:var(--fg)">{{c.notify.serviceCopy}}</span></div>
                   <div class="s04-g2">
                     <sc-for list="{{v.cats}}" as="x" hint-placeholder-count="6"><button type="button" class="s04-b t-{{x.tone}} s04-sw" role="switch" aria-checked="{{x.aria}}" data-act="toggle" data-rid="{{x.key}}" onClick="{{x.toggle}}"><span><span class="s04-swl">{{x.label}}</span><span class="s04-sws">{{x.sub}}</span></span><span class="s04-swv">{{x.state}}</span></button></sc-for>
                   </div>
@@ -1267,6 +1272,7 @@ button.s04-ent::after{content:"›";position:absolute;right:2px;top:50%;transfor
           </div>
         </div>
       </sc-if>
+      <sc-if value="{{v.backHit}}"><button type="button" class="s04-backhit" aria-hidden="true" tabindex="-1" onClick="{{c.nav.back}}"></button></sc-if>
       <sc-if value="{{c.toast.on}}"><div class="s04-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
@@ -1421,7 +1427,11 @@ class Component extends DCLogic {
   s04Skin(key) { this._s04SkinFrom = this.state.ui.skinPreview || null; this.motion('skin', function () { this.skinPick(key); }); }
   beforeReplay(name) {
     if (name === 'grow' && this._s04From) this.ctlJump({ open: { surface: this._s04From.s, id: this._s04From.id } });
-    if (name === 'save') { this.ctlJump({ open: { surface: 'profile-edit' } }); }
+    /* save: replay only the landing — the edit page (with the 「编辑资料」 block as its origin) folds back; no data is written */
+    if (name === 'save') { this.ctlJump({ open: { surface: 'profile-edit' } }); var self = this;
+      this.after(20, function () { var root = self.rootRef.current, nav = self.state.nav, st = nav && nav.stack; if (!root || !st || st.length < 2) return; var top = st[st.length - 1];
+        var m = self.s04Measure(root, 'profile', 'edit', 'profile-edit', false); if (!m) return;
+        self.setState(function (s) { var stack = s.nav.stack.slice(); stack[stack.length - 1] = Object.assign({}, stack[stack.length - 1], { key: 'edit' }); var geo = Object.assign({}, s.s04.geo); geo[top.id] = m; return { nav: Object.assign({}, s.nav, { stack: stack }), s04: Object.assign({}, s.s04, { geo: geo }) }; }); }); }
     if (name === 'skin') { var from = this._s04SkinFrom; this.setState(function (s) { return { ui: Object.assign({}, s.ui, { skinPreview: from }) }; }); }
   }
   /* ---------- view model ---------- */
@@ -1562,7 +1572,7 @@ class Component extends DCLogic {
       permState: permLab, permMk: N.isGranted ? ' ok' : N.isDefault || N.isRequesting ? '' : ' no', svcState: N.serviceConnected ? '已连接' : '未连接', svcMk: N.serviceConnected ? ' ok' : ' no', cats: cats,
       /* appearance */
       envs: envs, shownEn: skin.en, shownLine: skin.line, rmTone: c.skin.rmOn ? 'c1' : 'off', rmState: c.skin.rmOn ? (c.skin.rmSys ? '开 · 跟随系统' : '开') : '关', rmSysLine: c.skin.rmSys ? '' : '跟随系统：系统现在没有开启「减少动态」；开启后 JU 自动跟随',
-      apPad: c.skin.previewing ? 'padding-bottom:84px' : '', landCls: g.land ? ' s04-landing' : '',
+      apPad: c.skin.previewing ? 'padding-bottom:84px' : '', landCls: g.land ? ' s04-landing' : '', backHit: st.length > 1 && nav.dir === 'fwd' && (nav.phase === 'enter' || nav.phase === 'in'),
       /* records */
       recG: recG, recTitle: s04t(c.rec && c.rec.title), repTitle: s04t(c.rep && c.rep.title), aboutVer: s04t(c.about.version), recHas: c.recs.count > 0, recHeroL: c.recs.empty ? c.recs.emptyText : (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '没有待核实的'),
       recSuppHas: !!(c.rec && c.rec.supplementRows && c.rec.supplementRows.length), recSuppN: c.rec && c.rec.supplementRows ? c.rec.supplementRows.length : 0, recApHas: !!(c.rec && c.rec.appealRows && c.rec.appealRows.length),

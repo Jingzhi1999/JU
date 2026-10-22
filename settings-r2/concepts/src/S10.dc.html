@@ -163,6 +163,9 @@ body{margin:0}
 @keyframes s10-in-early{0%{opacity:0}16%,100%{opacity:1}}
 @keyframes s10-tin{0%{opacity:0}28%,100%{opacity:1}}
 @keyframes s10-tout{0%,14%{opacity:1}56%,100%{opacity:0}}
+/* the header's meta line rests at 1 − 2.2·hc (gone once the header has tucked in), so its hand-over starts / ends there */
+@keyframes s10-in-m{0%,6%{opacity:0}38%,100%{opacity:calc(1 - var(--hc,0) * 2.2)}}
+@keyframes s10-out-m{0%{opacity:calc(1 - var(--hc,0) * 2.2)}30%,100%{opacity:0}}
 @keyframes s10-carry{from{transform:translate(var(--cx,0px),var(--cy,0px)) scale(var(--cs,1))}to{transform:none}}
 @keyframes s10-carry-out{from{transform:none}to{transform:translate(var(--cx,0px),var(--cy,0px)) scale(var(--cs,1))}}
 [data-carry],[data-carry-src]{transform-origin:0 0}
@@ -216,15 +219,17 @@ body{margin:0}
 .s10-pg.is-top.ph-enter:not(.s10-over) .s10-ph{background-color:transparent}
 .s10-pgp.is-top.ph-enter :is(.s10-ph,.s10-pgc){transform:translateY(var(--pg-off,0px))}
 .s10-tr-lift .s10-pg.is-top.ph-in .s10-ph,.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph{background-color:transparent;overflow:visible}
-.s10-tr-lift .s10-pg.is-top.ph-in :is(.s10-bk,.s10-ph-m,.s10-pgr > *){animation:s10-in var(--lift) linear both}
+.s10-tr-lift .s10-pg.is-top.ph-in :is(.s10-bk,.s10-pgr > *){animation:s10-in var(--lift) linear both}
+.s10-tr-lift .s10-pg.is-top.ph-in .s10-ph-m{animation:s10-in-m var(--lift) linear both}
 .s10-tr-lift .s10-pg.is-top.ph-in .s10-pgr > .s10-dom{animation-name:s10-tin}
 .s10-tr-lift .s10-pg.is-top.ph-in .s10-ph-t{animation:s10-carry var(--lift) var(--ease) both,s10-tin var(--lift) linear both}
 .s10-tr-lift .s10-pg.is-top.ph-in [data-carry=v]{animation:s10-carry var(--lift) var(--ease) both}
 .s10-tr-lift .s10-pgp.is-top.ph-in :is(.s10-ph,.s10-pgc){animation:s10-pgc-in var(--lift) var(--ease) both}
-.s10-tr-drop .s10-pg.is-top.ph-exit :is(.s10-bk,.s10-ph-m){animation:s10-out var(--lift) linear both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-bk{animation:s10-out var(--lift) linear both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph-m{animation:s10-out-m var(--lift) linear both}
 .s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph-t{animation:s10-carry-out var(--lift) var(--ease) both,s10-tout var(--lift) linear both}
 .s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr > *{animation:s10-out-late var(--lift) linear both}
-.s10-tr-drop :is(.s10-L0,.s10-L5) .s10-pg.is-top.ph-exit .s10-pgr > *{animation-name:s10-out-b}
+.s10-tr-drop :is(.s10-L0,.s10-L5) .s10-pg.is-top.ph-exit .s10-pgr > *,.s10-dropsc .s10-pg.is-top.ph-exit .s10-pgr > *{animation-name:s10-out-b}
 .s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr > .s10-dom{animation-name:s10-tout}
 .s10-tr-drop .s10-pg.is-top.ph-exit [data-carry=v]{animation:s10-carry-out var(--lift) var(--ease) both}
 .s10-tr-drop .s10-pg.is-top.ph-exit:not(.s10-pgp) .s10-sc2{clip-path:inset(calc((116px - 68px * var(--hc,0)) * min(1, var(--hc,0) * 1000)) 0 0 0)}
@@ -515,7 +520,7 @@ button.s10-ish:active{filter:brightness(.97)}
 .s10-navoff .s10-toast{bottom:max(7px, calc(var(--kb,0px) + 14px))}
 .s10-toast.k-error{background:#3a0d16}
 .s10-toast.s10-undo{bottom:calc(var(--navh) + 68px)}
-.s10-navoff .s10-toast.s10-undo{bottom:calc(max(7px, calc(var(--kb,0px) + 14px)) + 54px)}
+.s10-navoff .s10-toast.s10-undo{bottom:max(7px, calc(var(--kb,0px) + 14px))}
 @keyframes s10-toast{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
 .s10-sub.s10-seamsub{top:var(--top);bottom:var(--kb,0px);z-index:36}
 /* the system's own prompt (not JU's material): a plain system alert */
@@ -1214,6 +1219,7 @@ class Component extends DCLogic {
     var navA = !!S10.roots[pair[0]], navB = !!S10.roots[pair[1]];
     if (!(ph === 'enter' ? navA : navB)) x.appCls += ' s10-navoff';
     if (pair[2] && navA !== navB) x.appCls += ' s10-navgo';
+    if (tr === 'drop' && layerMove && (this._psc || 0) > 2) x.appCls += ' s10-dropsc'; /* a scrolled page clears its body before the strip comes back */
     if (d.appearance.reduceMotion) x.appCls += ' rm-user';
     /* environment switch: keep the previous sky under the new one and tint every sheet from its old colour (650ms keyframes) */
     var shown = c.skinShown;
