@@ -149,16 +149,17 @@
       var s = this._scrubS; this._scrubS = null; if (!s) return;
       s.zeroed.forEach(function (z) { try { if (z.ct != null && z.a.effect && z.a.effect.target && z.a.effect.target.isConnected) z.a.currentTime = z.ct; } catch (e) { } });
     };
-    p.reset = function (variant) { this.clearTimers(); this._paused = false; this._scrubS = null; var r = this.state.review; var st = this.initialState(variant || this.state.variant || 'default'); st.review = Object.assign({}, r, { scrub: null, paused: false, kb: false }); st.jumpKey = null; if (this.persist) JUS.store.clear(this.concept.code); this.setState(st); };
+    p.reset = function (variant) { this.clearTimers(); this._paused = false; this._scrubS = null; var st = this.initialState(variant || this.state.variant || 'default'); st.jumpKey = null; if (this.persist) JUS.store.clear(this.concept.code); this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; }); /* merge into the latest review state: a size change in the same tick is kept */ };
     p.loadVariant = function (key) { this.reset(key); };
     p.replay = function () { if (!this.lastMotion) return; var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name); var self = this; this.after(60, function () { m.fn.call(self); }); };
     p.jumpTo = function (key) {
       var e = JUS.INDEX.filter(function (x) { return x.key === key; })[0]; if (!e) return;
       this.clearTimers(); this._paused = false; this._scrubS = null;
       var st = this.initialState(e.variant || 'default');
-      st.review = Object.assign({}, this.state.review, { scrub: null, paused: false, kb: false }); /* each jump starts with the keyboard down; s-kb raises it itself */
       st.jumpKey = e.key;
-      this.setState(st);
+      /* each jump starts with the keyboard down (s-kb raises it itself); merge into the latest review state so a phone-size
+         change made in the same tick is kept */
+      this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; });
       var self = this; this.after(30, function () { self.applyJump(e); });
     };
     if (!p.applyJump) p.applyJump = function (e) { if (this.ctlJump) this.ctlJump(e); else if (this.openSurface) this.openSurface(e.open); };
