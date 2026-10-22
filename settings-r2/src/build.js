@@ -97,16 +97,29 @@ class Component extends DCLogic {
 }
 
 /* ---- appendices (markdown → html, minimal) ---- */
+/* a table row splits on | except an escaped \| and a | inside a `code span` */
+function splitRow(r) {
+  r = r.trim().replace(/^\|/, '').replace(/\|$/, '');
+  const out = []; let cur = '', code = false;
+  for (let i = 0; i < r.length; i++) {
+    const ch = r[i];
+    if (ch === '\\' && r[i + 1] === '|') { cur += '|'; i++; continue; }
+    if (ch === '`') code = !code;
+    if (ch === '|' && !code) { out.push(cur); cur = ''; continue; }
+    cur += ch;
+  }
+  out.push(cur); return out;
+}
 function md(s) {
   const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  const inline = (t) => esc(t).replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/(^|[^"'>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
+  const inline = (t) => esc(t).replace(/&lt;br\s*\/?&gt;/g, '<br>').replace(/`([^`]+)`/g, '<code>$1</code>').replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>').replace(/\[([^\]]+)\]\((https?:[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>').replace(/(^|[^"'>])(https?:\/\/[^\s<)]+)/g, '$1<a href="$2" target="_blank" rel="noopener">$2</a>');
   const lines = s.split('\n'); let out = [], i = 0;
   while (i < lines.length) {
     const l = lines[i];
     if (/^\s*$/.test(l)) { i++; continue; }
     let m;
     if ((m = /^(#{1,6})\s+(.*)$/.exec(l))) { out.push(`<h${m[1].length}>${inline(m[2])}</h${m[1].length}>`); i++; continue; }
-    if (/^\|/.test(l)) { const rows = []; while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; } const cells = rows.filter(r => !/^\|\s*:?-+/.test(r)).map(r => r.replace(/^\||\|$/g, '').split('|').map(c => inline(c.trim()))); out.push('<table><thead><tr>' + cells[0].map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' + cells.slice(1).map(r => '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</tbody></table>'); continue; }
+    if (/^\|/.test(l)) { const rows = []; while (i < lines.length && /^\|/.test(lines[i])) { rows.push(lines[i]); i++; } const cells = rows.filter(r => !/^\|\s*:?-+/.test(r)).map(r => splitRow(r).map(c => inline(c.trim()))); out.push('<table><thead><tr>' + cells[0].map(c => `<th>${c}</th>`).join('') + '</tr></thead><tbody>' + cells.slice(1).map(r => '<tr>' + r.map(c => `<td>${c}</td>`).join('') + '</tr>').join('') + '</tbody></table>'); continue; }
     if (/^\s*[-*]\s+/.test(l)) { out.push('<ul>'); while (i < lines.length && /^\s*[-*]\s+/.test(lines[i])) { out.push(`<li>${inline(lines[i].replace(/^\s*[-*]\s+/, ''))}</li>`); i++; } out.push('</ul>'); continue; }
     if (/^\s*\d+[.)]\s+/.test(l)) { out.push('<ol>'); while (i < lines.length && /^\s*\d+[.)]\s+/.test(lines[i])) { out.push(`<li>${inline(lines[i].replace(/^\s*\d+[.)]\s+/, ''))}</li>`); i++; } out.push('</ol>'); continue; }
     if (/^```/.test(l)) { let b = []; i++; while (i < lines.length && !/^```/.test(lines[i])) { b.push(lines[i]); i++; } i++; out.push(`<pre>${esc(b.join('\n'))}</pre>`); continue; }
@@ -114,6 +127,8 @@ function md(s) {
   }
   return out.join('\n');
 }
+/* the state index for the shell's compare view (the shell must not depend on a concept having been mounted first) */
+const INDEX_LIST = (() => { const vm = require('vm'); const ctx = { window: {} }; ctx.window.window = ctx.window; vm.createContext(ctx); vm.runInContext(read('settings-r2/src/core/jus-data.js'), ctx); return (ctx.window.JUS.INDEX || []).map(e => ({ key: e.key, group: e.group, label: e.label })); })();
 const docs = {};
 for (const [k, f] of Object.entries({ matrix: exists('settings-r2/spec/matrix.md') ? 'settings-r2/spec/matrix.md' : 'settings-r2/spec/directions.md', refs: 'settings-r2/spec/concept-refs.md', mapping: 'settings-r2/spec/function-state-map.md', verification: 'settings-r2/spec/verification.md', observations: 'settings-r2/spec/baseline-observations.md', contract: 'settings-r2/spec/state-contract.md', ledger: 'settings-r2/research/ledger.md', rules: 'settings-r2/spec/rules-check.md', limits: 'settings-r2/spec/limits.md' })) { if (exists(f)) docs[k] = md(read(f)); else docs[k] = '<p>（尚未生成：' + f + '）</p>'; }
 
@@ -129,7 +144,7 @@ const standalone = (FONTS_CSS ? stripFontLinks(shellHtml) : shellHtml)
   .replace('/*@shell-css*/', () => read('settings-r2/src/shell/shell.css'))
   .replace('/*@preact*/', () => read('src/runtime/preact.min.js'))
   .replace('/*@runtime*/', () => read('src/runtime/dc-mini-runtime.js'))
-  .replace('/*@data*/', () => `window.__JUS_SOURCES=${js(built)};window.__JUS_META=${js(metaBuilt)};window.__JUS_DOCS=${js(docs)};window.__JUS_BUILT=${js(new Date().toISOString())};`)
+  .replace('/*@data*/', () => `window.__JUS_SOURCES=${js(built)};window.__JUS_META=${js(metaBuilt)};window.__JUS_DOCS=${js(docs)};window.__JUS_INDEX=${js(INDEX_LIST)};window.__JUS_BUILT=${js(new Date().toISOString())};`)
   .replace('/*@shell-js*/', () => read('settings-r2/src/shell/shell.js'));
 const outPath = PRIVATE ? path.resolve(PRIVATE) : path.join(ROOT, 'JU-SETTINGS-R2-TEN-DIRECTIONS.html');
 fs.mkdirSync(path.dirname(outPath), { recursive: true });

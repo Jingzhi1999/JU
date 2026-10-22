@@ -84,9 +84,13 @@ body{margin:0}
 
 /* ---- roots: home (设置) and the two seams share one page frame; root switch = cross-fade with a 10px rise ---- */
 .s05-home,.s05-root{position:absolute;inset:0;z-index:2}
-.s05-home.is-top.ph-enter.dir-root,.s05-root.is-top.ph-enter{opacity:0}
-.s05-home.is-top.ph-in.dir-root,.s05-root.is-top.ph-in.dir-root{animation:s05-rise calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) calc(150ms * var(--k,1)) both}
-.s05-home.is-leaving,.s05-root.is-leaving{animation:s05-fo calc(150ms * var(--k,1)) ease both;pointer-events:none}
+/* root switch (找局 / 我的局 / 设置): never a blank frame — the JU mark and the room's light stay; the outgoing page starts leaving only
+   once the incoming one is mounted, and the incoming words rise while the outgoing ones are still fading (overlap 60–170ms) */
+.s05-home.is-top.ph-enter.dir-root>.s05-sc,.s05-root.is-top.ph-enter.dir-root>.s05-sc,.s05-home.is-top.ph-enter.dir-root>.s05-hd .s05-hd-t,.s05-root.is-top.ph-enter.dir-root>.s05-hd .s05-hd-t,.s05-home.is-top.ph-enter.dir-root>.s05-hd .s05-hd-m,.s05-root.is-top.ph-enter.dir-root>.s05-hd .s05-hd-m{opacity:0}
+.s05-home.is-top.ph-in.dir-root>.s05-sc,.s05-root.is-top.ph-in.dir-root>.s05-sc{animation:s05-rise calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) calc(60ms * var(--k,1)) both}
+.s05-home.is-top.ph-in.dir-root>.s05-hd .s05-hd-t,.s05-root.is-top.ph-in.dir-root>.s05-hd .s05-hd-t,.s05-home.is-top.ph-in.dir-root>.s05-hd .s05-hd-m,.s05-root.is-top.ph-in.dir-root>.s05-hd .s05-hd-m{animation:s05-xin calc(220ms * var(--k,1)) ease calc(60ms * var(--k,1)) both}
+.s05-home.is-leaving,.s05-root.is-leaving{pointer-events:none}
+.s05-home.is-leaving.ph-in,.s05-root.is-leaving.ph-in{animation:s05-fo calc(170ms * var(--k,1)) cubic-bezier(.4,0,1,1) both}
 @keyframes s05-rise{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
 .s05-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;scrollbar-width:none;box-sizing:border-box;padding:0 0 calc(132px + var(--kb,0px));
   -webkit-mask:linear-gradient(180deg,#000 0,#000 calc(100% - 172px),rgba(0,0,0,.26) calc(100% - 124px),rgba(0,0,0,0) calc(100% - 96px));mask:linear-gradient(180deg,#000 0,#000 calc(100% - 172px),rgba(0,0,0,.26) calc(100% - 124px),rgba(0,0,0,0) calc(100% - 96px))}
@@ -1106,7 +1110,7 @@ body{margin:0}
    cross-fades in place), 'skin' (the environment light changes, 650ms). Each is registered with this.motion() for 重播. */
 var S05 = { OPEN: ['profile', 'favorites', 'city', 'notify', 'appearance', 'records', 'reports', 'help', 'privacy', 'account', 'about'], XF_MS: 900, VX_MS: 420, SW_MS: 700, SAVED_MS: 8000 };
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 280, back: 260, root: 420, swap: 260 }; this.saveMs = 320; this.headerRange = 96; this._s5Pt = null; this._s5Pf = null; }
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 280, back: 260, root: 340, swap: 260 }; this.saveMs = 320; this.headerRange = 96; this._s5Pt = null; this._s5Pf = null; }
   initialState(v) { return Object.assign(JUS.baseState(v), { s5: { att: false, xf: null, savedSeen: 0, vx: {}, sw: null } }); }
   /* ---------- helpers ---------- */
   s5Set(patch) { this.setState(function (s) { var p = typeof patch === 'function' ? patch(s.s5 || {}) : patch; return p ? { s5: Object.assign({}, s.s5, p) } : null; }); }

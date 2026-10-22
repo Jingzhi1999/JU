@@ -59,7 +59,10 @@
     p.setSpeed = function (x) { this.setReview({ speed: x }); };
     p.toggleRM = function () { this.setReview({ rm: !this.state.review.rm }); };
     p.isRM = function () { var r = this.state.review || {}; var d = this.state.data; return !!(r.rm || r.rmSys || (d && d.appearance && d.appearance.reduceMotion)); };
-    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h }); };
+    p.setPhoneSize = function (w, h) { this.setReview({ pw: w, ph: h, fit: false }); };
+    /* 适应窗口高度: the phone keeps its width and takes the browser window's height (667–932), a real reflow for short laptop
+       screens — nothing is scaled */
+    p.fitPhone = function () { var vh = (global.innerHeight || 844) - 96; var h = Math.max(667, Math.min(932, Math.round(vh))); this.setReview({ ph: h, fit: true }); };
     p.toggleKb = function () { this.setReview({ kb: !this.state.review.kb }); };
     p.advanceClock = function (ms) { JUS.advance(ms || 5 * 60000); this.setReview({ clockTick: (this.state.review.clockTick || 0) + 1 }); };
     p.expireCode = function () { var self = this; this.setState(function (s) { return { data: JUS.engine.expireEmailCode(s.data, {}).data }; }); };
@@ -194,8 +197,9 @@
         k: k, frame: r.scrub == null ? 0 : r.scrub / 100,
         rootCls: ((r.rm || r.rmSys) ? ' rm' : '') + (r.rmSys ? ' rm-sys' : '') + (r.paused ? ' paused' : '') + (r.scrub != null ? ' scrub' : ''),
         phoneStyle: '--pw:' + r.pw + 'px;--ph:' + r.ph + 'px;--kb:' + (r.kb ? '300px' : '0px'), phoneCls: r.kb ? ' kb' : '',
-        w375: r.pw === 375 ? 'on' : '', w390: r.pw === 390 ? 'on' : '', w430: r.pw === 430 ? 'on' : '',
+        w375: !r.fit && r.pw === 375 ? 'on' : '', w390: !r.fit && r.pw === 390 ? 'on' : '', w430: !r.fit && r.pw === 430 ? 'on' : '',
         setW375: function () { self.setPhoneSize(375, 812); }, setW390: function () { self.setPhoneSize(390, 844); }, setW430: function () { self.setPhoneSize(430, 932); },
+        wFit: r.fit ? 'on' : '', setFit: function () { self.fitPhone(); }, fitLabel: r.fit ? '（' + r.pw + '×' + r.ph + '）' : '',
         kbOn: r.kb ? 'on' : '', toggleKb: function () { self.toggleKb(); },
         rmSysLine: r.rmSys ? '系统 prefers-reduced-motion：开（已生效）' : '系统 prefers-reduced-motion：关',
         clockLine: '演示时钟：' + (clockMin >= 0 ? '+' : '') + clockMin + ' 分钟（真实走时 + 面板偏移）', advance5: function () { self.advanceClock(5 * 60000); }, expireCode: function () { self.expireCode(); }

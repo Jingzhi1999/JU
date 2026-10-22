@@ -573,6 +573,27 @@ class Component extends DCLogic {
   /* replay of 聚焦 starts again from the closed paragraph */
   beforeReplay(name) { if (name === '聚焦') { this.cancelKey('nav'); this.home(); } }
   s06Root() { return this.rootRef && this.rootRef.current; }
+  /* 关键帧: the mixin seeks the core keyframes through the .scrub rules; everything else that moves in the same moment (the band
+     text sliding in, the band height, the header title, a receipt rising) is put at the same point in time here, so frame 0 is the
+     first frame and frame 100 is exactly the settled end state. */
+  s06ScrubSync() {
+    var root = this.s06Root(), rv = this.state.review || {}; if (!root || rv.scrub == null || !root.getAnimations) return;
+    var f = Math.max(0, Math.min(1, (+rv.scrub || 0) / 100)), s = this._scrubS, core = 0;
+    var zeroed = s ? s.zeroed.map(function (z) { try { core = Math.max(core, z.a.effect.getComputedTiming().activeDuration || 0); } catch (e) { } return z.a; }) : [];
+    if (!core) { var k = parseFloat(getComputedStyle(root).getPropertyValue('--k')) || 1; core = ({ '聚焦': 320, '写回': 420, '换光': 650 }[this.lastMotion && this.lastMotion.name] || 320) * k; }
+    /* only what is part of this moment: an animation still under way when the drag first meets it (one that ended earlier and only
+       lingers through its fill — the band text of a page opened before — keeps its end state) */
+    if (!this._s06sm || this._s06sm.s !== s) this._s06sm = { s: s, m: new WeakMap() };
+    var mine = this._s06sm.m;
+    try { root.getAnimations({ subtree: true }).forEach(function (a) {
+      if (zeroed.indexOf(a) >= 0 || !a.effect) return;
+      var T; try { T = a.effect.getComputedTiming().endTime; } catch (e) { return; } if (!isFinite(T) || !(T > 0)) return;
+      if (!mine.has(a)) mine.set(a, a.currentTime == null || a.currentTime < T - 0.5);
+      if (!mine.get(a)) return;
+      if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition && a.playState !== 'paused') a.pause();
+      try { a.currentTime = Math.min(T, f * Math.max(core, T)); } catch (e) { }
+    }); } catch (e) { }
+  }
   s06Caret(el) { try { var rg = document.createRange(); rg.selectNodeContents(el); rg.collapse(false); var rn = el.getRootNode(); var sel = rn.getSelection ? rn.getSelection() : window.getSelection(); sel.removeAllRanges(); sel.addRange(rg); } catch (e) { } }
   s06After() {
     var root = this.s06Root(); if (!root) return;
@@ -600,6 +621,7 @@ class Component extends DCLogic {
     /* 暂停 also holds CSS transitions (the band height when a deeper page swaps in) */
     var pz = !!(this.state.review && (this.state.review.paused || this.state.review.scrub != null));
     if (pz !== this._s06pz) { this._s06pz = pz; try { root.getAnimations({ subtree: true }).forEach(function (a) { if (typeof CSSTransition !== 'undefined' && a instanceof CSSTransition) { if (pz) a.pause(); else a.play(); } }); } catch (e) { } }
+    if (this.state.review && this.state.review.scrub != null) this.s06ScrubSync();
     /* a question written into the band is brought into view where it was asked */
     var ak = this.state.sheet ? this.state.sheet.kind : '';
     if (ak !== this._s06ak) { this._s06ak = ak; if (ak) { var q = root.querySelector('.s06-ask'); if (q) this.reveal(q); } }
@@ -651,7 +673,7 @@ class Component extends DCLogic {
     var inner = para.querySelector('.s06-band-in'); var gap = inner ? Math.ceil(inner.offsetHeight) : 0;
     if (gap !== st.gap) {
       if (!st.open) { para.classList.add('s06-nogap'); para.style.setProperty('--s06-gap', gap + 'px'); void para.offsetHeight; para.classList.remove('s06-nogap'); }
-      else para.style.setProperty('--s06-gap', gap + 'px');
+      else { para.style.setProperty('--s06-gap', gap + 'px'); if (this.state.review && this.state.review.scrub != null) this.s06ScrubSync(); }
       st.gap = gap;
     }
     st.open = true;
@@ -955,6 +977,13 @@ class Component extends DCLogic {
 JUS.mixin(Component);
 /* index jumps, resets and variants rebuild the data: those are not user changes, so they do not write back or change the light */
 (function () { var P = Component.prototype; ['jumpTo', 'reset'].forEach(function (k) { var f = P[k]; P[k] = function () { this._s06quietUntil = Date.now() + 600; this._s06top = true; this._s06.lifted = false; return f.apply(this, arguments); }; }); })();
+/* 释放 carries on from the frame on screen: the mixin puts each seeked keyframe back to the time stored for it, set here to the
+   frame's own time (otherwise a motion dragged to 100 would jump back to where the drag began and play again) */
+(function () { var P = Component.prototype, f0 = P.scrubTo; P.scrubTo = function (v) {
+  var s = this._scrubS, rv = this.state.review || {};
+  if (v == null && s && rv.scrub != null) { var f = Math.max(0, Math.min(1, (+rv.scrub || 0) / 100)); s.zeroed.forEach(function (z) { try { z.ct = f * (z.a.effect.getComputedTiming().activeDuration || 0); } catch (e) { } }); }
+  return f0.apply(this, arguments);
+}; })();
 </script>
 </body>
 </html>

@@ -90,9 +90,22 @@ def css_for(name, weights, ital):
     except Exception:
         return fetch('https://fonts.googleapis.com/css2?family=%s&display=swap' % fam).decode('utf-8')
 
+def gb2312_level1():
+    # the 3,755 most common Chinese characters (GB2312 level 1, rows 16-55): what people type for names, feedback and notes
+    out = set()
+    for hi in range(0xB0, 0xD8):
+        for lo in range(0xA1, 0xFF):
+            try:
+                out.add(bytes([hi, lo]).decode('gb2312'))
+            except Exception:
+                pass
+    return out
+
 def main():
-    out = sys.argv[1]
-    srcs = sys.argv[2:]
+    args = [a for a in sys.argv[1:] if not a.startswith('--')]
+    common = '--common' in sys.argv
+    out = args[0]
+    srcs = args[1:]
     texts = [open(p, encoding='utf-8').read() for p in srcs if os.path.exists(p)]
     fams = families_from_links(texts)
     allchars = set()
@@ -101,6 +114,8 @@ def main():
     # always include printable ASCII + common CJK punctuation
     allchars |= set(chr(c) for c in range(0x20, 0x7f))
     allchars |= set('，。、；：？！“”‘’（）《》〈〉【】—…·・～￥％＋－＝×÷→←↑↓★☆●○■□✓✕')
+    if common:
+        allchars |= gb2312_level1()
     text = ''.join(sorted(c for c in allchars if ord(c) >= 0x20))
     rules = []
     report = []
