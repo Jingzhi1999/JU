@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>S06 一段话</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* S06 一段话 — the settings home is one paragraph about you. Paper on top, the environment light rises from the bottom.
+   Every value is a phrase (600 + 3px environment underline). Tapping one dims the rest to 35% and parts the paragraph
+   under that line: copy A (interactive, clipped above the split) and copy B (identical, clipped below, pushed down by the gap)
+   make the cut fall exactly between two line boxes, so no glyph is ever cut or scaled. The gap is a band of the same light. */
+@property --s06-p{syntax:'<number>';inherits:true;initial-value:0}
+@property --s06-gap{syntax:'<length>';inherits:true;initial-value:0px}
+@property --s06-split{syntax:'<length>';inherits:true;initial-value:9999px}
+.app{position:absolute;inset:0;overflow:hidden;--k:1;--ink:#14161F;--body:#252b3a;--sec:#535b70;--ju:#4553BE;--focus:#4A5AD6;--err:#DA3A52;--ok:#0E9B76;--serif:"Noto Serif SC","Songti SC","STSong",serif;--sans:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;
+  font-family:var(--sans);color:var(--ink);background:var(--paper);transition:background-color calc(650ms * var(--k)) cubic-bezier(.22,1,.36,1);-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent}
+.app.rm *,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+/* ---- environments: paper tone, underline light, band light, press tint ---- */
+.app[data-skin="cotton"]{--paper:#FBF8F8;--ul:linear-gradient(90deg,#E8609F,#9A7FEA 52%,#2FAFCF);--deep:#C9468A;--band:linear-gradient(100deg,#F9DCE9 0%,#EAE3FA 50%,#D7EFF6 100%);--press:rgba(232,96,159,.16);--edge:rgba(201,70,138,.22)}
+.app[data-skin="halo"]{--paper:#FFF9F0;--ul:linear-gradient(90deg,#FF5005,#E59448 50%,#A07FD6);--deep:#E2480A;--band:linear-gradient(100deg,#FFE2CC 0%,#F8E6D2 48%,#EADFF3 100%);--press:rgba(255,80,5,.13);--edge:rgba(226,72,10,.22)}
+.app[data-skin="sunset"]{--paper:#FFF9F1;--ul:linear-gradient(90deg,#FF7A33,#FFB21F 50%,#2F93F5);--deep:#E8601C;--band:linear-gradient(100deg,#FFE3C9 0%,#FFF0C4 48%,#D5E9FF 100%);--press:rgba(255,122,51,.15);--edge:rgba(47,147,245,.24)}
+/* the light: three stacked fields so a skin change is a 650ms cross-fade of the light itself */
+.s06-sky{position:absolute;left:0;right:0;bottom:0;height:60%;pointer-events:none;-webkit-mask:linear-gradient(180deg,transparent 0,rgba(0,0,0,.55) 16%,#000 32%);mask:linear-gradient(180deg,transparent 0,rgba(0,0,0,.55) 16%,#000 32%)}
+.s06-sky{transition:opacity calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),translate calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.app.s06-focus .s06-sky{opacity:.42;translate:0 9%}
+.s06-sky i{position:absolute;inset:0;opacity:0;transition:opacity calc(650ms * var(--k)) cubic-bezier(.22,1,.36,1)}
+.app[data-skin="cotton"] .s06-sky .k-cotton,.app[data-skin="halo"] .s06-sky .k-halo,.app[data-skin="sunset"] .s06-sky .k-sunset{opacity:1}
+.s06-sky .k-cotton{background:radial-gradient(84% 64% at 2% 102%,#EC78AF 0%,rgba(236,120,175,.6) 36%,rgba(236,120,175,0) 100%),radial-gradient(86% 70% at 102% 88%,#56B9DE 0%,rgba(86,185,222,.55) 38%,rgba(86,185,222,0) 100%),radial-gradient(100% 60% at 50% 62%,#B6A6F0 0%,rgba(182,166,240,0) 100%),linear-gradient(180deg,#F0D9EC 0%,#DED2F5 44%,#C6E2F3 100%)}
+.s06-sky .k-halo{background:radial-gradient(150% 150% at 50% 112%,#FFFCF6 0%,#FFF4E4 24%,#FFD3AE 30%,#FF8A47 34.5%,#FF5A12 37.5%,#FF7432 39.5%,#FFA66C 44%,#F2C8A3 51%,#DFC6E9 62%,rgba(223,198,233,0) 80%),linear-gradient(180deg,rgba(255,249,240,0),#FBEFE6)}
+.s06-sky .k-sunset{background:radial-gradient(80% 40% at 50% 104%,#FFD45C 0%,rgba(255,197,61,0) 100%),linear-gradient(180deg,#D8EAFF 0%,#93C6FF 24%,#BFC2F0 40%,#FFB07A 60%,#FF7F3A 80%,#FFB43C 100%)}
+/* ---- the page (one composition hosts home / profile / profile-edit; stage 2 adds the other panels) ---- */
+.s06-page{position:absolute;inset:0;transition:opacity calc(320ms * var(--k)) ease}
+.app.s06-seam .s06-page{opacity:0;visibility:hidden}
+.s06-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;box-sizing:border-box;padding:150px 24px calc(150px + var(--kb,0px));scrollbar-width:none;
+  -webkit-mask:linear-gradient(180deg,#000 calc(100% - 104px - var(--kb,0px)),transparent calc(100% - 52px - var(--kb,0px)));mask:linear-gradient(180deg,#000 calc(100% - 104px - var(--kb,0px)),transparent calc(100% - 52px - var(--kb,0px)))}
+.s06-sc::-webkit-scrollbar{display:none}
+.ju-phone.kb .s06-sc{-webkit-mask:none;mask:none}
+/* header: 30 → 18 driven by --hc (written by the controller on scroll), moving into the middle of the tool row */
+.s06-hd{position:absolute;left:0;right:0;top:0;height:136px;z-index:6;pointer-events:none;container-type:inline-size}
+.s06-hd::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(134px - 66px * var(--hc,0));background:linear-gradient(180deg,var(--paper) calc(100% - 22px),color-mix(in srgb,var(--paper) 0%,transparent))}
+.s06-bar{position:absolute;left:0;right:0;top:10px;height:44px;display:flex;align-items:center;padding:0 16px 0 24px;pointer-events:auto}
+.s06-ju{font:700 17px/1 var(--sans);letter-spacing:.03em;color:var(--ink)}
+.s06-back{appearance:none;border:0;background:none;color:var(--ink);font:500 15px/1 var(--sans);padding:0 10px 0 0;margin-left:-4px;height:44px;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
+.s06-back b{font:400 22px/1 var(--serif);margin-top:-3px}
+.s06-tt{position:absolute;left:24px;top:62px;display:grid}
+.s06-t{grid-area:1/1;justify-self:start;font:500 calc(30px - 12px * var(--hc,0))/1.25 var(--serif);white-space:nowrap;color:var(--ink);opacity:0;transition:opacity calc(110ms * var(--k)) ease;translate:calc(var(--hc,0) * (50cqw - 24px - 50%)) calc(var(--hc,0) * -40px)}
+.s06-t.on{opacity:1;transition:opacity calc(190ms * var(--k)) ease calc(90ms * var(--k))}
+.s06-meta{position:absolute;left:24px;right:24px;top:106px;font:400 14px/20px var(--sans);color:var(--sec);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:max(0,calc(1 - var(--hc,0) * 3))}
+.s06-meta b{font-weight:500;color:var(--ju)}
+/* ---- the paragraph ---- */
+.s06-para{position:relative;padding-bottom:calc(var(--s06-gap) * var(--s06-p));transition:--s06-p calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1),--s06-gap calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.app.s06-focus .s06-para{--s06-p:1}
+.s06-para.s06-nogap{transition:--s06-p calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.s06-copy{font:400 22px/1.8 var(--serif);color:#373d4c;text-align:left;text-wrap:pretty;line-break:strict;overflow-wrap:anywhere;text-autospace:no-autospace;text-spacing-trim:space-first;font-kerning:normal}
+.s06-pa{position:relative;clip-path:inset(-24px -24px calc(100% - var(--s06-split)) -24px)}
+.s06-pb{position:absolute;left:0;right:0;top:0;clip-path:inset(var(--s06-split) -24px -60px -24px);translate:0 calc(var(--s06-gap) * var(--s06-p))}
+.s06-s{transition:opacity calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.app.s06-focus .s06-s,.app.s06-focus .s06-ix{opacity:.35}
+.app.s06-f-id .s06-s-id,.app.s06-f-place .s06-s-place,.app.s06-f-notify .s06-s-notify,.app.s06-f-look .s06-s-look,.app.s06-f-rec .s06-s-rec,.app.s06-f-ix .s06-ix{opacity:1}
+.s06-end{font-style:normal;margin-right:.32em}
+.s06-nb{white-space:nowrap}
+.s06-v{font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer;outline:none;background-image:var(--ul);background-repeat:no-repeat;background-size:100% 3px;background-position:0 100%;padding:0 .13em 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px;transition:background-color calc(120ms * var(--k)) ease}
+.s06-v:active{background-color:var(--press)}
+.s06-v:focus-visible{box-shadow:0 0 0 2px var(--focus)}
+.s06-v.s06-long{white-space:normal;word-break:keep-all;overflow-wrap:anywhere}
+.s06-v.s06-att{color:var(--ju);background-color:rgba(69,83,190,.09);background-image:linear-gradient(var(--ju),var(--ju))}
+.s06-v.s06-att:active{background-color:rgba(69,83,190,.18)}
+.s06-dim{color:var(--sec)}
+.s06-v.s06-wrote{animation:s06-write calc(560ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes s06-write{0%{background-size:0% 3px;background-color:var(--press)}55%{background-size:100% 3px}100%{background-size:100% 3px;background-color:transparent}}
+/* inline editors: same face, same size, same underline geometry as the phrase they replace */
+.s06-in{font:600 22px/normal var(--serif);color:var(--ink);background:transparent;background-image:var(--ul);background-repeat:no-repeat;background-size:100% 3px;background-position:0 100%;border:0;border-radius:0;margin:0;padding:0 .1em 2px;vertical-align:baseline;field-sizing:content;min-width:1.4em;max-width:100%;box-sizing:border-box;outline:none;caret-color:var(--focus);transition:background-color calc(160ms * var(--k)) ease}
+.s06-in:focus{background-image:linear-gradient(var(--focus),var(--focus));background-color:rgba(74,90,214,.07)}
+.s06-in.is-err{background-image:linear-gradient(var(--err),var(--err));background-color:rgba(218,58,82,.06)}
+.s06-in::placeholder{color:rgba(20,22,31,.34);font-weight:400}
+.s06-in[readonly]{cursor:default}
+.app.s06-saving .s06-in{color:rgba(20,22,31,.55)}
+/* the text index */
+.s06-ix{display:flex;flex-wrap:wrap;align-items:center;margin-top:26px;font:400 15px/1.6 var(--serif);color:var(--body);transition:opacity calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.s06-ix span{padding:10px 0;cursor:pointer;outline:none}
+.s06-ix span:focus-visible{box-shadow:0 2px 0 var(--focus)}
+.s06-ix i{font-style:normal;padding:0 9px;color:rgba(20,22,31,.38)}
+/* ---- the band: the paper parts under the line and the same light shows through ---- */
+.s06-slit{position:absolute;left:-24px;right:-24px;top:var(--s06-split);height:calc(var(--s06-gap) * var(--s06-p));overflow:hidden;background:var(--band);box-shadow:inset 0 1px 0 var(--edge),inset 0 -1px 0 var(--edge)}
+.s06-slit-in{position:absolute;left:0;right:0;top:0;box-sizing:border-box;padding:20px 24px 24px;opacity:clamp(0,calc((var(--s06-p) - .38) * 2.4),1)}
+.s06-who{margin:0 0 14px;padding:0;display:grid;grid-template-columns:auto 1fr;column-gap:14px;row-gap:8px}
+.s06-who dt{font:500 13px/28px var(--sans);color:var(--sec);white-space:nowrap}
+.s06-who dd{margin:0;font:400 16px/28px var(--serif);color:var(--body)}
+.s06-acts{display:flex;align-items:center;flex-wrap:wrap;gap:4px 22px}
+.s06-go{appearance:none;border:0;background:none;cursor:pointer;color:var(--ink);font:600 18px/1 var(--serif);padding:13px 0;display:inline-flex;align-items:center;gap:8px}
+.s06-go span{background-image:var(--ul);background-repeat:no-repeat;background-size:100% 3px;background-position:0 100%;padding-bottom:5px}
+.s06-go em{font:400 20px/1 var(--serif);font-style:normal}
+.s06-tx{appearance:none;border:0;background:none;cursor:pointer;color:var(--body);font:500 15px/1 var(--sans);padding:14px 0;text-decoration:underline;text-decoration-color:rgba(20,22,31,.3);text-underline-offset:5px}
+.s06-tx[disabled]{text-decoration:none;color:var(--sec);cursor:default}
+.s06-note{margin:12px 0 0;font:400 13px/1.6 var(--sans);color:var(--sec)}
+.s06-errs{list-style:none;margin:0 0 14px;padding:0}
+.s06-errs li{font:500 14px/1.65 var(--sans);color:var(--err)}
+.s06-errs b{font-weight:500;color:var(--ink);margin-right:8px}
+.s06-line{margin:0 0 12px;font:400 17px/1.75 var(--serif);color:var(--body)}
+.s06-line b{font-weight:600;color:var(--ink)}
+.s06-code{font:600 22px/normal var(--serif);letter-spacing:.16em;color:var(--ink);background:transparent;background-image:linear-gradient(var(--ink),var(--ink));background-repeat:no-repeat;background-size:100% 3px;background-position:0 100%;border:0;border-radius:0;margin:0 .1em;padding:0 .1em 2px;width:6.6em;vertical-align:baseline;outline:none;caret-color:var(--focus)}
+.s06-code:focus{background-image:linear-gradient(var(--focus),var(--focus))}
+.s06-code.is-err{background-image:linear-gradient(var(--err),var(--err))}
+.s06-code::placeholder{color:rgba(20,22,31,.3);letter-spacing:.06em;font-weight:400}
+.s06-pill{appearance:none;border:1.5px solid var(--ink);background:transparent;color:var(--ink);font:500 15px/1 var(--sans);height:40px;padding:0 16px;border-radius:20px;cursor:pointer;vertical-align:middle}
+.s06-pill[disabled]{border-color:rgba(20,22,31,.25);color:rgba(20,22,31,.45);cursor:default}
+.s06-msg{margin:0 0 12px;font:500 14px/1.6 var(--sans)}
+.s06-msg.is-err{color:var(--err)}
+.s06-msg.is-ok{color:var(--ok)}
+.s06-cta-row{display:flex;align-items:center;gap:18px;margin-top:6px}
+.s06-cta{appearance:none;border:0;cursor:pointer;flex:1 1 auto;max-width:280px;min-width:0;width:min(100%,280px);height:48px;border-radius:24px;color:#fff;font:500 16px/1 var(--sans);letter-spacing:.06em;background:linear-gradient(180deg,#5A68D3 0%,#4553BE 54%,#3B48AF 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.34),inset 0 -2px 0 rgba(12,18,70,.2);transition:transform calc(120ms * var(--k)) ease,opacity 160ms ease}
+.s06-cta:active{transform:scale(.958)}
+.s06-cta[disabled]{opacity:.78;cursor:default}
+.s06-cta-row .s06-tx{flex:0 0 auto;white-space:nowrap;padding:14px 4px}
+.s06-in-anim{animation:s06-in calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes s06-in{from{opacity:.2;translate:0 6px}}
+/* ---- root navigation: four words on the light ---- */
+.s06-root{position:absolute;left:0;right:0;bottom:0;height:70px;z-index:7;display:flex;justify-content:space-around;align-items:flex-start;padding:10px 20px 0;box-sizing:border-box;transition:opacity calc(200ms * var(--k)) ease}
+.ju-phone.kb .s06-root{opacity:0;pointer-events:none}
+.s06-root button{appearance:none;border:0;background:none;cursor:pointer;position:relative;min-width:60px;padding:12px 8px 14px;font:500 13px/1 var(--sans);color:rgba(20,22,31,.7);letter-spacing:.04em}
+.s06-root button.on{color:var(--ink);font-weight:700}
+.s06-root button.on::after{content:"";position:absolute;left:50%;bottom:4px;width:20px;height:3px;margin-left:-10px;border-radius:2px;background:var(--ink)}
+.s06-root button.off{color:rgba(20,22,31,.42)}
+/* seam roots (stage 2 builds them out) */
+.s06-seampg{position:absolute;inset:0;padding:70px 24px 0;box-sizing:border-box;animation:s06-in calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.s06-seampg h2{margin:0;font:500 30px/1.25 var(--serif)}
+.s06-seampg p{margin:10px 0 0;font:400 17px/1.75 var(--serif);color:var(--body)}
+/* ---- overlays: a paper slip rises over the light ---- */
+.s06-over{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end;padding-bottom:var(--kb,0px)}
+.s06-scrim{position:absolute;inset:0;background:rgba(20,22,31,.26);animation:s06-fade calc(240ms * var(--k)) ease both}
+.s06-slip{position:relative;background:var(--paper);padding:26px 24px 30px;border-top:1px solid rgba(20,22,31,.12);animation:s06-up calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.s06-slip::before{content:"";position:absolute;left:0;right:0;top:-4px;height:4px;background:var(--ul)}
+.s06-slip h3{margin:0;font:600 22px/1.5 var(--serif);color:var(--ink)}
+.s06-slip p{margin:6px 0 22px;font:400 15px/1.65 var(--sans);color:var(--body)}
+.s06-slip .s06-row{display:flex;align-items:center;gap:10px}
+.s06-keep{appearance:none;border:0;cursor:pointer;height:48px;padding:0 28px;border-radius:24px;background:var(--ink);color:#fff;font:500 16px/1 var(--sans);transition:transform calc(120ms * var(--k)) ease}
+.s06-keep:active,.s06-drop:active{transform:scale(.958)}
+.s06-drop{appearance:none;border:0;cursor:pointer;height:48px;padding:0 16px;background:none;color:var(--err);font:500 16px/1 var(--sans);transition:transform calc(120ms * var(--k)) ease}
+@keyframes s06-fade{from{opacity:0}}
+@keyframes s06-up{from{translate:0 100%}}
+.s06-toast{position:absolute;left:24px;right:24px;bottom:calc(86px + var(--kb,0px));z-index:30;box-sizing:border-box;padding:12px 16px 14px;background:var(--paper);border:1px solid rgba(20,22,31,.12);border-radius:3px;font:500 16px/1.5 var(--serif);color:var(--ink);animation:s06-rise calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.s06-toast span{background-image:var(--ul);background-repeat:no-repeat;background-size:100% 3px;background-position:0 100%;padding-bottom:3px}
+.s06-toast.k-error{color:var(--err)}
+.s06-toast.k-error span{background-image:linear-gradient(var(--err),var(--err))}
+@keyframes s06-rise{from{opacity:0;translate:0 12px}}
+.app.paused *,.app.scrub *{animation-play-state:paused!important}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app s06{{panel.rootCls}}{{c.nav.rootCls}}{{v.cls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+      <div class="s06-sky" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div>
+
+      <section class="s06-page" data-surface="{{v.surface}}">
+        <header class="s06-hd" data-header>
+          <div class="s06-bar">
+            <sc-if value="{{v.isHome}}"><span class="s06-ju">JU</span></sc-if>
+            <sc-if value="{{v.hasBack}}"><button type="button" class="s06-back" data-act="{{v.backAct}}" onClick="{{v.backFn}}"><sc-if value="{{v.chev}}"><b>‹</b></sc-if>{{v.backLabel}}</button></sc-if>
+          </div>
+          <div class="s06-tt" aria-live="polite"><sc-for list="{{v.titles}}" as="t" hint-placeholder-count="3"><span class="s06-t {{t.cls}}">{{t.text}}</span></sc-for></div>
+          <div class="s06-meta">{{v.meta}}</div>
+        </header>
+        <div class="s06-sc" data-scroller="page" onScroll="{{c.nav.onScroll}}">
+          <div class="s06-para">
+            <sc-for list="{{v.copies}}" as="cp" hint-placeholder-count="2">
+            <div class="s06-copy {{cp.cls}}" aria-hidden="{{cp.aria}}">
+              <div class="s06-txt"><span class="s06-s s06-s-id" onClick="{{v.sent.id}}"><sc-if value="{{v.editing}}"><span class="s06-nb">我是</span><input class="s06-in{{v.inCls.name}}" type="text" data-field="{{cp.fName}}" aria-label="称呼" placeholder="称呼" value="{{c.pf.name}}" onInput="{{cp.onName}}" readonly="{{cp.ro}}" tabindex="{{cp.tab}}" autocomplete="off" spellcheck="false" enterkeyhint="next">，<span class="s06-nb">微信</span><input class="s06-in{{v.inCls.wx}}" type="text" data-field="{{cp.fWx}}" aria-label="微信号" placeholder="微信号" value="{{c.pf.wx}}" onInput="{{cp.onWx}}" readonly="{{cp.ro}}" tabindex="{{cp.tab}}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="next">，<span class="s06-nb">邮箱</span><input class="s06-in{{v.inCls.email}}" type="text" inputmode="email" data-field="{{cp.fEmail}}" aria-label="工作或学校邮箱（可空）" placeholder="工作或学校邮箱" value="{{c.pf.email}}" onInput="{{cp.onEmail}}" readonly="{{cp.ro}}" tabindex="{{cp.tab}}" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="done"><span class="s06-nb">{{v.pfNote}}</span><i class="s06-end" data-end="id">。</i></sc-if><sc-if value="{{v.reading}}"><span class="s06-nb">我是</span><span class="s06-v{{v.wrote.name}}{{v.P.nameCls}}" role="button" tabindex="{{cp.tab}}" data-origin="name" onClick="{{v.tap.name}}" onKeyDown="{{v.key}}"><sc-for list="{{v.P.nameParts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span>，<span class="s06-nb">微信</span><span class="s06-v{{v.wrote.wx}}{{v.P.wxCls}}" role="button" tabindex="{{cp.tab}}" data-origin="wx" onClick="{{v.tap.wx}}" onKeyDown="{{v.key}}"><sc-for list="{{v.P.wxParts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span>，<span class="s06-nb">邮箱</span><span class="s06-v{{v.wrote.email}}{{v.P.emailCls}}" role="button" tabindex="{{cp.tab}}" data-origin="email" onClick="{{v.tap.email}}" onKeyDown="{{v.key}}"><sc-for list="{{v.P.emailParts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span><span class="s06-nb">{{v.P.emailNote}}</span><i class="s06-end" data-end="id">。</i></sc-if></span><span class="s06-s s06-s-place" onClick="{{v.sent.place}}"><span class="s06-nb">平时在</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="city" onClick="{{v.tap.city}}" onKeyDown="{{v.key}}">{{v.P.city}}</span><span class="s06-nb">找局，</span><sc-if value="{{v.P.favNone}}"><span class="s06-nb">还</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="favorites" onClick="{{v.tap.favorites}}" onKeyDown="{{v.key}}">没有收藏局</span></sc-if><sc-if value="{{v.P.favAny}}"><span class="s06-nb">收藏了</span><sc-for list="{{v.P.favs}}" as="f" hint-placeholder-count="3"><span class="s06-v{{f.cls}}" role="button" tabindex="{{cp.tab}}" data-origin="{{f.key}}" onClick="{{f.open}}" onKeyDown="{{v.key}}"><sc-for list="{{f.parts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span>{{f.sep}}</sc-for><sc-if value="{{v.P.favMore}}">等<span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="favorites" onClick="{{v.tap.favorites}}" onKeyDown="{{v.key}}">{{v.P.favMore}}</span></sc-if></sc-if><i class="s06-end" data-end="place">。</i></span><span class="s06-s s06-s-notify" onClick="{{v.sent.notify}}"><span class="s06-nb">{{v.P.nPre}}</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="notify" onClick="{{v.tap.notify}}" onKeyDown="{{v.key}}">{{v.P.nPhrase}}</span><span class="s06-nb">{{v.P.nPost}}{{v.P.pPre}}</span><span class="s06-v{{v.P.pCls}}" role="button" tabindex="{{cp.tab}}" data-origin="permission" onClick="{{v.tap.notify}}" onKeyDown="{{v.key}}"><sc-for list="{{v.P.pParts}}" as="x" hint-placeholder-count="1">{{x.t}}<sc-if value="{{x.w}}"><wbr></sc-if></sc-for></span><span class="s06-nb">{{v.P.pPost}}</span><i class="s06-end" data-end="notify">。</i></span><span class="s06-s s06-s-look" onClick="{{v.sent.look}}"><span class="s06-nb">界面用</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="appearance" onClick="{{v.tap.look}}" onKeyDown="{{v.key}}">{{v.P.skin}}</span>，<span class="s06-nb">动态</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="motion" onClick="{{v.tap.look}}" onKeyDown="{{v.key}}">{{v.P.motion}}</span><i class="s06-end" data-end="look">。</i></span><span class="s06-s s06-s-rec" onClick="{{v.sent.rec}}"><span class="s06-nb">{{v.P.recPre}}</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="records" onClick="{{v.tap.records}}" onKeyDown="{{v.key}}">{{v.P.recPhrase}}</span><sc-if value="{{v.P.pend}}">，<span class="s06-nb">其中</span><span class="s06-v s06-att" role="button" tabindex="{{cp.tab}}" data-origin="att-record" onClick="{{v.tap.pend}}" onKeyDown="{{v.key}}">{{v.P.pendPhrase}}</span></sc-if><span class="s06-nb">{{v.P.repPre}}</span><span class="s06-v" role="button" tabindex="{{cp.tab}}" data-origin="reports" onClick="{{v.tap.reports}}" onKeyDown="{{v.key}}">{{v.P.repPhrase}}</span><span class="s06-nb">{{v.P.repPost}}</span><sc-if value="{{v.P.need}}">，<span class="s06-v s06-att" role="button" tabindex="{{cp.tab}}" data-origin="att-report" onClick="{{v.tap.need}}" onKeyDown="{{v.key}}">{{v.P.needPhrase}}</span></sc-if><i class="s06-end" data-end="rec">。</i></span></div>
+              <div class="s06-ix" onClick="{{v.sent.ix}}"><span role="button" tabindex="{{cp.tab}}" data-origin="help" onClick="{{v.tap.help}}" onKeyDown="{{v.key}}">帮助与反馈</span><i>·</i><span role="button" tabindex="{{cp.tab}}" data-origin="privacy" onClick="{{v.tap.privacy}}" onKeyDown="{{v.key}}">隐私</span><i>·</i><span role="button" tabindex="{{cp.tab}}" data-origin="account" onClick="{{v.tap.account}}" onKeyDown="{{v.key}}">账户</span><i>·</i><span role="button" tabindex="{{cp.tab}}" data-origin="about" onClick="{{v.tap.about}}" onKeyDown="{{v.key}}">关于</span><i>·</i><span role="button" tabindex="{{cp.tab}}" data-origin="rules" onClick="{{v.tap.rules}}" onKeyDown="{{v.key}}">约定</span><i class="s06-end" data-end="ix"></i></div>
+            </div>
+            </sc-for>
+            <div class="s06-slit" aria-hidden="{{v.slitHidden}}">
+              <div class="s06-slit-in">
+                <sc-if value="{{v.slit.profile}}"><div class="s06-in-anim">
+                  <dl class="s06-who"><sc-for list="{{v.who}}" as="w" hint-placeholder-count="3"><dt>{{w.k}}</dt><dd>{{w.t}}</dd></sc-for></dl>
+                  <div class="s06-acts">
+                    <button type="button" class="s06-go" data-act="edit" data-origin="edit" onClick="{{v.goEdit}}"><span>修改资料</span><em>→</em></button>
+                    <sc-if value="{{v.canCopy}}"><button type="button" class="s06-tx" data-act="copy" onClick="{{c.you.copyWx}}">复制微信号</button></sc-if>
+                  </div>
+                  <sc-if value="{{c.you.copyFail}}"><p class="s06-msg is-err">{{v.copyFailLine}}</p></sc-if>
+                  <p class="s06-note">{{v.snapshotNote}}</p>
+                </div></sc-if>
+                <sc-if value="{{v.slit.edit}}">
+                  <div class="s06-in-anim">
+                    <sc-if value="{{v.errs.any}}"><ul class="s06-errs" role="alert"><sc-for list="{{v.errs.list}}" as="e" hint-placeholder-count="2"><li><b>{{e.k}}</b>{{e.m}}</li></sc-for></ul></sc-if>
+                    <sc-if value="{{v.showCode}}">
+                      <sc-if value="{{c.pf.codeNone}}"><p class="s06-line">新邮箱 <b>{{v.newEmail}}</b> 要先验证。</p><p class="s06-line"><button type="button" class="s06-pill" data-act="send" onClick="{{c.pf.sendCode}}">发送验证码</button></p></sc-if>
+                      <sc-if value="{{c.pf.codeSent}}"><p class="s06-line">验证码发到了 <b>{{v.newEmail}}</b>，填在这里：<input class="s06-code{{v.codeCls}}" type="text" inputmode="numeric" maxlength="6" data-field="code" aria-label="6 位验证码" placeholder="6 位数" value="{{c.pf.code}}" onInput="{{c.pf.onCode}}" onKeyDown="{{c.pf.onKeyCode}}" autocomplete="one-time-code"></p><p class="s06-line"><button type="button" class="s06-pill" data-act="verify" onClick="{{c.pf.verify}}">验证</button> <button type="button" class="s06-tx" data-act="resend" onClick="{{c.pf.resend}}" disabled="{{v.resendOff}}">{{c.pf.resendLabel}}</button></p></sc-if>
+                      <sc-if value="{{c.pf.codeExpired}}"><p class="s06-line">发到 <b>{{v.newEmail}}</b> 的验证码过期了。</p><p class="s06-line"><button type="button" class="s06-pill" data-act="resend" onClick="{{c.pf.resend}}">重新发送</button></p></sc-if>
+                      <sc-if value="{{c.pf.err.code}}"><p class="s06-msg is-err" role="alert">{{c.pf.err.code}}</p></sc-if>
+                      <p class="s06-note" style="margin:0 0 14px">{{c.pf.codeNote}}</p>
+                    </sc-if>
+                    <sc-if value="{{c.pf.codeVerified}}"><p class="s06-msg is-ok">{{c.pf.verifiedText}}</p></sc-if>
+                    <sc-if value="{{c.pf.failed}}"><p class="s06-msg is-err" role="alert">{{c.pf.failText}}</p></sc-if>
+                    <div class="s06-cta-row"><button type="button" class="s06-cta" data-act="save" onClick="{{c.pf.save}}" disabled="{{c.pf.saving}}">{{c.pf.saveLabel}}</button><button type="button" class="s06-tx" data-act="cancel" onClick="{{c.pf.cancel}}">取消</button></div>
+                    <p class="s06-note">{{v.editNote}}</p>
+                  </div>
+                </sc-if>
+                <sc-if value="{{v.slit.other}}">
+                  <p class="s06-line"><b>{{v.otherTitle}}</b>　{{v.otherLine}}</p>
+                  <button type="button" class="s06-tx" data-act="back" onClick="{{c.nav.back}}">收起</button>
+                </sc-if>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <sc-if value="{{v.seam}}">
+        <section class="s06-seampg" data-surface="{{v.surface}}"><h2>{{v.seamTitle}}</h2><p>{{v.seamLine}}</p></section>
+      </sc-if>
+
+      <nav class="s06-root" aria-label="JU"><sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for></nav>
+
+      <sc-if value="{{c.sheet.on}}">
+        <div class="s06-over" role="dialog" aria-modal="true">
+          <div class="s06-scrim" onClick="{{v.sheetScrim}}"></div>
+          <div class="s06-slip">
+            <h3>{{c.sheet.title}}</h3>
+            <p>{{c.sheet.body}}</p>
+            <sc-if value="{{c.sheet.unsaved}}"><div class="s06-row"><button type="button" class="s06-keep" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button><button type="button" class="s06-drop" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button></div></sc-if>
+            <sc-if value="{{c.sheet.accountEnd}}"><div class="s06-row"><button type="button" class="s06-keep" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s06-drop" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></div></sc-if>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="s06-toast {{c.toast.cls}}" role="status"><span>{{c.toast.text}}</span></div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* which sentence of the paragraph each surface focuses (the band opens under the line where that sentence ends) */
+var S06_FOCUS = { 'profile': 'id', 'profile-edit': 'id', 'city': 'place', 'favorites': 'place', 'favorite-detail': 'place', 'notify': 'notify', 'appearance': 'look',
+  'records': 'rec', 'record-detail': 'rec', 'record-supplement': 'rec', 'record-dispute': 'rec', 'record-appeal': 'rec', 'reports': 'rec', 'report-detail': 'rec', 'report-supplement': 'rec',
+  'help': 'ix', 'feedback': 'ix', 'privacy': 'ix', 'account': 'ix', 'about': 'ix', 'rules': 'ix' };
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 300, back: 280, root: 320, swap: 280 };
+    this.saveMs = 380;
+    this._s06 = { split: null, gap: -1, open: false };
+  }
+  initialState(variant) { return Object.assign(JUS.baseState(variant), { s06w: null }); }
+  componentDidMount() {
+    var self = this; this.s06Measure();
+    try { if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { self.s06Measure(); }); } catch (e) { }
+    this.s06Observe();
+  }
+  componentDidUpdate() { this.s06Measure(); this.s06Observe(); }
+  componentWillUnmount() { if (this._s06ro) { try { this._s06ro.disconnect(); } catch (e) { } } }
+  /* keep the split and the band height in step with fonts, input widths and band content */
+  s06Observe() {
+    var root = this.rootRef && this.rootRef.current; if (!root || typeof ResizeObserver === 'undefined') return;
+    var a = root.querySelector('.s06-pa'), inner = root.querySelector('.s06-slit-in'); if (!a || !inner) return;
+    if (this._s06roA === a && this._s06roI === inner) return;
+    var self = this; if (this._s06ro) { try { this._s06ro.disconnect(); } catch (e) { } }
+    this._s06ro = new ResizeObserver(function () { self.s06Measure(); }); this._s06ro.observe(a); this._s06ro.observe(inner); this._s06roA = a; this._s06roI = inner;
+  }
+  s06Measure() {
+    var root = this.rootRef && this.rootRef.current; if (!root) return;
+    var para = root.querySelector('.s06-para'); var a = para && para.querySelector('.s06-pa'); if (!a) return;
+    var st = this._s06, fk = this._s06fk;
+    if (!fk) { st.open = false; return; }
+    var end = a.querySelector('[data-end="' + fk + '"]');
+    if (end) {
+      var pr = a.getBoundingClientRect(); var sx = (a.offsetWidth ? pr.width / a.offsetWidth : 1) || 1; var r = end.getBoundingClientRect();
+      var lh = parseFloat(getComputedStyle(end).lineHeight) || 39.6; var h = (r.bottom - r.top) / sx;
+      var split = Math.round((r.bottom - pr.top) / sx + Math.max(0, (lh - h) / 2) + 3);
+      if (split !== st.split) { para.style.setProperty('--s06-split', split + 'px'); st.split = split; }
+    }
+    var inner = para.querySelector('.s06-slit-in'); var gap = inner ? Math.ceil(inner.offsetHeight) : 0;
+    if (gap !== st.gap) {
+      if (!st.open) { para.classList.add('s06-nogap'); para.style.setProperty('--s06-gap', gap + 'px'); void para.offsetHeight; para.classList.remove('s06-nogap'); }
+      else para.style.setProperty('--s06-gap', gap + 'px');
+      st.gap = gap;
+    }
+    st.open = true;
+  }
+  /* save lands in the sentence: the inputs fold back into phrases, the changed value draws its underline in, then the band returns to the profile facts */
+  onProfileSaved(e) {
+    var self = this;
+    this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
+    this.setState({ s06w: { fields: e.changed || [], at: Date.now() } });
+    this.holdKey('s06w', 2400, function () { self.setState({ s06w: null }); });
+    this.afterKey('pf-back', 240, function () { self.back(true); });
+  }
+  /* break points for a value: none when it is short (it never breaks); for a long one, between words (Intl.Segmenter for Chinese,
+     after _ . @ - inside IDs and addresses), never before closing or after opening punctuation */
+  s06Words(t, long) {
+    t = String(t == null ? '' : t); if (!long) return [{ t: t, w: false }];
+    var a = [];
+    try { if (typeof Intl !== 'undefined' && Intl.Segmenter) { if (!this._s06seg) this._s06seg = new Intl.Segmenter('zh', { granularity: 'word' }); var it = this._s06seg.segment(t); for (var x of it) a.push(x.segment); } } catch (e) { a = []; }
+    if (!a.length) a = [t];
+    var out = []; a.forEach(function (x) { x.split(/(?<=[_.@-])/).forEach(function (y) { if (y) out.push(y); }); });
+    var CLOSE = /^[，。、；：！？）」』】》〉,.;:!?)\]]/, OPEN = /[（「『【《〈(\[]$/;
+    return out.map(function (x, i) { var nx = out[i + 1]; return { t: x, w: !!nx && !CLOSE.test(nx) && !OPEN.test(x) }; });
+  }
+  s06View(c) {
+    var self = this, s = this.state, d = s.data, nav = c.nav, ui = s.ui || {};
+    var shown = nav.phase === 'exit' && nav.prev ? nav.prev : nav.cur;            /* during a return the composition already shows the destination */
+    var leaving = nav.phase === 'exit' ? nav.cur : null;
+    var fk = S06_FOCUS[shown] || null; this._s06fk = fk;
+    var seam = /^seam-/.test(shown);
+    var pf = c.pf || { on: false };
+    var editing = shown === 'profile-edit' && pf.on && !pf.saved;
+    var slitS = fk ? shown : (leaving && S06_FOCUS[leaving] ? leaving : null);
+    var rmUser = d.appearance.reduceMotion ? ' rm-user' : '';
+    var v = { shown: shown, surface: shown, seam: seam, editing: editing, reading: !editing, isHome: shown === 'home' || seam };
+    v.cls = ' s06-at-' + shown + (fk ? ' s06-focus s06-f-' + fk : '') + (editing ? ' s06-editing' : '') + (editing && pf.saving ? ' s06-saving' : '') + (seam ? ' s06-seam' : '') + rmUser;
+    /* header */
+    var T = nav.title;
+    v.titles = Object.keys(T).filter(function (k) { return k.indexOf('seam') !== 0; }).map(function (k) { return { text: T[k], cls: k === shown ? 'on' : '' }; });
+    v.hasBack = !v.isHome;
+    v.chev = shown !== 'profile-edit';
+    if (shown === 'profile-edit') { v.backLabel = '取消'; v.backAct = 'cancel'; v.backFn = pf.on ? pf.cancel : c.nav.back; }
+    else { var stk = s.nav.stack, ix = stk.length - 1 - (nav.phase === 'exit' ? 1 : 0); var prevS = ix > 0 ? stk[ix - 1].s : null; v.backLabel = prevS ? (T[prevS] || '返回') : '返回'; v.backAct = 'back'; v.backFn = c.nav.back; }
+    var you = c.you, sum = c.sum;
+    v.meta = shown === 'home' ? (c.attCount ? c.attCount + ' 件事等你回应 · 本地演示' : JUS.COPY.demoOnly)
+      : shown === 'profile' ? (you.email ? (you.domain || '') + ' ' + you.emailLabel + (you.wx ? ' · 微信 ' + you.wx : '') : '邮箱未填写')
+      : shown === 'profile-edit' ? ('称呼 ' + (pf.nameCount || '') + ' · 邮箱可空') : (sum[{ city: 'cityLabel', favorites: 'favLabel', notify: 'notifyLabel', appearance: 'appearanceLabel', records: 'recordLabel', reports: 'reportLabel' }[shown]] || JUS.COPY.demoOnly);
+    /* taps: a phrase opens its surface; while another sentence is focused, a tap on the dimmed text folds the paragraph back */
+    var top = function () { return self._top().s; };
+    var stop = function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); };
+    var fold = function (key) { var cur = top(); var cf = S06_FOCUS[cur]; if (cf && cf !== key) { if (cur !== 'profile-edit') self.back(); return true; } return false; };
+    var to = function (surface, params, key) { return function (ev) { stop(ev); if (fold(key)) return; if (top() === surface) return; self.go(surface, params || {}, ev); }; };
+    var idTap = function (field) { return function (ev) { stop(ev); var cur = top(); if (cur === 'home') self.go('profile', {}, ev); else if (cur === 'profile') { self._focusField = field; self.go('profile-edit', {}, ev); } else fold('id'); }; };
+    var att = c.att || [], attRec = att.filter(function (a) { return a.kind === 'record'; }), attRep = att.filter(function (a) { return a.kind === 'report'; });
+    var viaAtt = function (list, fallback, key) { return function (ev) { stop(ev); if (fold(key)) return; if (list.length === 1) list[0].open(ev); else self.go(fallback, {}, ev); }; };
+    v.tap = { name: idTap('name'), wx: idTap('wx'), email: idTap('email'), city: to('city', null, 'place'), favorites: to('favorites', null, 'place'), notify: to('notify', null, 'notify'), look: to('appearance', null, 'look'),
+      records: to('records', null, 'rec'), reports: to('reports', null, 'rec'), pend: viaAtt(attRec, 'records', 'rec'), need: viaAtt(attRep, 'reports', 'rec'),
+      help: to('help', null, 'ix'), privacy: to('privacy', null, 'ix'), account: to('account', null, 'ix'), about: to('about', null, 'ix'), rules: to('rules', null, 'ix') };
+    v.sent = {}; ['id', 'place', 'notify', 'look', 'rec', 'ix'].forEach(function (k) { v.sent[k] = function (ev) { fold(k); }; });
+    v.key = function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); if (ev.currentTarget && ev.currentTarget.click) ev.currentTarget.click(); } };
+    /* the paragraph's values */
+    var P = {};
+    /* short values stay whole on a line; long ones (long names, long mail, long titles) may wrap */
+    var longCJK = function (t, n) { return Array.from(t || '').length > n; };
+    P.name = you.name || '还没填'; P.nameCls = longCJK(P.name, 8) ? ' s06-long' : '';
+    P.wx = you.wx || '还没填'; P.wxCls = (you.wx ? '' : ' s06-dim') + (longCJK(P.wx, 16) ? ' s06-long' : '');
+    P.email = you.email || '还没填'; P.emailCls = (you.email ? '' : ' s06-dim') + (longCJK(P.email, 16) ? ' s06-long' : '');
+    /* long IDs and addresses break after _ . @ - (never before the comma that follows them) */
+    P.wxParts = this.s06Words(P.wx, P.wxCls.indexOf('long') >= 0); P.emailParts = this.s06Words(P.email, P.emailCls.indexOf('long') >= 0); P.nameParts = this.s06Words(P.name, !!P.nameCls);
+    P.emailNote = you.email ? (you.verified ? '（已验证）' : '（未验证）') : '';
+    P.city = sum.cityLabel;
+    var favById = {}; c.fav.rows.forEach(function (r) { favById[r.id] = r; });
+    var order = d.favorites.map(function (f) { return favById[f.eventId]; }).filter(Boolean); var three = order.slice(0, 3);
+    /* in prose a 局 is called by its name: the head of the title before「 · 」(the full title lives in its panel / detail) */
+    var short = function (t) { var i = t.indexOf(' · '); return i > 1 ? t.slice(0, i) : t; };
+    P.favs = three.map(function (r, i) { var last = i === three.length - 1, beforeLast = i === three.length - 2; var nm = short(r.title); var lg = longCJK(nm, 9); return { title: nm, parts: self.s06Words(nm, lg), cls: lg ? ' s06-long' : '', key: 'fav-' + r.id, sep: last ? '' : (beforeLast && order.length <= 3 ? '和' : '、'), open: function (ev) { stop(ev); if (fold('place')) return; r.open(ev); } }; });
+    P.favAny = order.length > 0; P.favNone = !order.length; P.favMore = order.length > 3 ? order.length + ' 个局' : '';
+    var n = c.notify, on = n.onCount, total = n.total;
+    if (on === total) { P.nPre = ''; P.nPhrase = on + ' 类提醒'; P.nPost = '都开着'; } else if (on === 0) { P.nPre = ''; P.nPhrase = '提醒'; P.nPost = '全关了'; } else { P.nPre = '开着'; P.nPhrase = on + ' 类提醒'; P.nPost = ''; }
+    var pc = JUS.COPY.permission[n.permission] || JUS.COPY.permission['default'];
+    var pp = { 'default': ['，但', ''], requesting: ['，', ''], granted: ['，', n.serviceConnected ? '，提醒服务已连接' : '，消息提醒暂未开通'], denied: ['，但', ''], unsupported: ['，但', ''] }[n.permission] || ['，', ''];
+    P.pPre = pp[0]; P.pPhrase = pc.title; P.pPost = pp[1]; P.pCls = longCJK(pc.title, 9) ? ' s06-long' : ''; P.pParts = this.s06Words(pc.title, !!P.pCls);
+    P.skin = c.skin.curName; P.motion = c.skin.rmSys ? '跟随系统减少' : c.skin.rmUser ? '已减少' : '正常';
+    var rc = sum.recordCount, pend = sum.pendingRecords, rn = sum.reportCount, need = sum.needMore;
+    var openReps = d.reports.filter(function (r) { return r.status !== 'resolved'; }).length;
+    P.recPre = rc ? '我有' : '还没有'; P.recPhrase = rc ? rc + ' 条记录' : '记录';
+    P.pend = !!pend; P.pendPhrase = pend + ' 条待核实';
+    P.repPre = rc ? '；' : '，也没有'; P.repPhrase = rn ? rn + ' 条举报' : '举报';
+    P.repPost = !rn ? '' : openReps === rn ? '在处理' : openReps ? '，' + openReps + ' 条在处理' : '都已处理';
+    if (rn && !rc) P.repPre = '；有';
+    P.need = !!need; P.needPhrase = need + ' 条需要补充';
+    v.P = P;
+    /* just-written values (save → the new value draws its underline in place) */
+    var w = s.s06w || (ui.lastSaved && ui.lastSaved.fields && Date.now() - ui.lastSaved.at < 2500 ? ui.lastSaved : null);
+    var wf = w && w.fields ? w.fields : [];
+    v.wrote = { name: wf.indexOf('name') >= 0 ? ' s06-wrote' : '', wx: wf.indexOf('wx') >= 0 ? ' s06-wrote' : '', email: wf.indexOf('email') >= 0 ? ' s06-wrote' : '' };
+    /* the two copies of the paragraph: A is the reading/editing copy, B only shows the lines below the split */
+    var err = pf.err || {};
+    v.inCls = { name: err.name ? ' is-err' : '', wx: err.wx ? ' is-err' : '', email: err.email ? ' is-err' : '' };
+    v.copies = [
+      { cls: 's06-pa', aria: null, tab: '0', fName: 'name', fWx: 'wx', fEmail: 'email', ro: null, onName: pf.onName, onWx: pf.onWx, onEmail: pf.onEmail },
+      { cls: 's06-pb', aria: 'true', tab: '-1', fName: null, fWx: null, fEmail: null, ro: true, onName: null, onWx: null, onEmail: null }
+    ];
+    v.pfNote = editing ? (pf.codeVerified ? '（已验证）' : pf.emailChanged && (pf.email || '').trim() ? '（待验证）' : you.email && (pf.email || '').trim() === you.email ? (you.verified ? '（已验证）' : '（未验证）') : '') : '';
+    /* the band */
+    v.slit = { profile: slitS === 'profile' || (slitS === 'profile-edit' && !editing), edit: editing, other: !!slitS && slitS !== 'profile' && slitS !== 'profile-edit' };
+    v.slitHidden = slitS ? null : 'true';
+    var pv = c.privacy || { general: [] };
+    v.who = [{ k: '称呼', t: pv.general[0] || '' }, { k: '微信', t: JUS.COPY.wxPolicy }, { k: '邮箱', t: pv.general[2] || '' }];
+    v.goEdit = function (ev) { self._focusField = 'name'; self.go('profile-edit', {}, ev); };
+    v.canCopy = !!you.wx;
+    v.copyFailLine = JUS.COPY.copyFailInline + '：' + (you.copyFail || '');
+    v.snapshotNote = JUS.COPY.snapshotNote;
+    var EL = { name: '称呼', wx: '微信号', email: '邮箱' };
+    var errList = ['name', 'wx', 'email'].filter(function (k) { return err[k]; }).map(function (k) { return { k: EL[k], m: err[k] }; });
+    v.errs = { any: errList.length > 0, list: errList };
+    v.newEmail = (pf.email || '').trim();
+    v.showCode = !!pf.needCode && (!err.email || err.email === JUS.COPY.profileErrors.mailUnverified);
+    v.codeCls = err.code ? ' is-err' : '';
+    v.resendOff = pf.codeSent && pf.resendLeft > 0 ? true : null;
+    v.editNote = pf.emailChanged ? JUS.COPY.emailHint : JUS.COPY.snapshotNote;
+    var OL = { city: 'cityLabel', favorites: 'favLabel', 'favorite-detail': 'favLabel', notify: 'notifyLabel', appearance: 'appearanceLabel', records: 'recordLabel', 'record-detail': 'recordLabel', reports: 'reportLabel', 'report-detail': 'reportLabel' };
+    v.otherTitle = slitS ? (T[slitS] || '') : ''; v.otherLine = slitS && OL[slitS] ? sum[OL[slitS]] : JUS.COPY.demoOnly;
+    /* seams (stage 2 builds them out) */
+    v.seamTitle = shown === 'seam-feed' || shown === 'seam-feed-detail' ? '找局 · ' + c.feed.city.name : '我的局';
+    v.seamLine = shown === 'seam-feed' || shown === 'seam-feed-detail' ? c.feed.count + ' 个局可以报名，收藏了 ' + c.feed.favCount + ' 个。' : c.mine.current.length + ' 个进行中的局。';
+    v.sheetScrim = c.sheet.unsaved ? c.sheet.keep : c.sheet.cancel;
+    return v;
+  }
+  renderVals() {
+    var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var c = this.ctlVals();
+    var v = this.s06View(c);
+    return { panel: panel, rootRef: this.rootRef, c: c, v: v };
+  }
+}
+JUS.mixin(Component);
+</script>
+</body>
+</html>
