@@ -266,6 +266,8 @@
         if (e.type === 'invalid') { self._pfSet({ saving: false, errors: e.errors, shake: (self.state.pf.shake || 0) + 1 }); return; }
         if (e.type === 'error') { self._pfSet({ saving: false, failed: true }); return; }
         self.setState(function (s) { return { pf: s.pf ? assign(s.pf, { saving: false, saved: true, base: { name: draft.name.trim(), wx: draft.wx.trim(), email: draft.email } }) : null, ui: assign(s.ui, { lastSaved: { fields: e.changed, nothing: e.nothing, at: Date.now() } }) }; });
+        /* 「刚更新」 marks are a real-time window: they clear after 4.5s (long enough to be seen back on the page / home) */
+        self.holdKey('fresh', 4500, function () { self.setState(function (s) { return { ui: assign(s.ui, { lastSaved: null }) }; }); });
         if (self.onProfileSaved) self.onProfileSaved(e);
         else { self.say(e.nothing ? '没有改动' : '资料已保存', 'ok'); self.afterKey('pf-back', 220, function () { self.back(true); }); }
       });

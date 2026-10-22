@@ -65,3 +65,4 @@ JUS.mixin(Component);   // 同时安装评审 mixin 与控制器；applyJump 默
 - `capture.cjs` 的 `click` 是真实指针点击（先 `reveal()` 只滚动所属 `[data-scroller]`，再点元素中心，最多在顶部以下 48px）；被遮挡会记入日志。屏幕外的目标请先用滑动 / 滚动把它带进来。
 - 面板接口：`scrubTo(v)` 的 v 是 0–100（`--frame` = v / 100），`scrubTo(null)` 释放；`setSpeed(x)` 只认 1 与 0.5。`capture.cjs` 的 `jump` 与 `click` 都接受 `"shot": false`。
 - 视图模型补充（S06 / S07 复核与汇报后）：`c.pf.base`（编辑开始时的原值，用于标出改动过的字段）；`c.sheet.guards`（未保存确认保护的是 `'profile'` 还是某个表单种类）与 `c.sheet.guardsKey`（表单的 `kind:id`）；`c.sum.pendingRecords` 现在是「仍在核实中的记录数」（异议之后仍算待核实），`c.sum.pendingToAnswer` 是「还等你回应的」（计入首页需要处理的件数）。未保存确认标题改为「修改还没保存」。
+- `c.you.lastSaved` / `savedName` 等「刚更新」标记在保存后 4.5 秒自动清除（实时窗口，不受减少动态影响）；不要再自己永久保留。
