@@ -88,10 +88,10 @@ body{margin:0}
 .s09-idl b{margin-left:8px;font-weight:500;color:var(--t0);white-space:nowrap}
 .s09-new{display:inline-block;margin-left:10px;font-size:13px;line-height:1.4;font-weight:500;color:var(--ok);vertical-align:middle;white-space:nowrap;letter-spacing:0}
 /* what needs you: one JU-blue line + a sentence, then the two real items */
-.s09-att{position:relative;margin-top:30px;padding-left:18px}
-.s09-att::before{content:"";position:absolute;left:0;top:4px;bottom:8px;width:3px;border-radius:3px;background:var(--ju-lit)}
+.s09-att{position:relative;margin-top:26px;padding-left:18px}
+.s09-att::before{content:"";position:absolute;left:0;top:10px;bottom:10px;width:3px;border-radius:3px;background:var(--ju-lit)}
 .s09-att-h{font-size:17px;font-weight:500;line-height:1.45}
-.s09-att-i{display:flex;align-items:center;gap:10px;width:100%;min-height:44px;padding:9px 0;font-size:15px;line-height:1.45;color:var(--w92);text-align:left;transition:opacity calc(120ms * var(--k)) ease}
+.s09-att-i{display:flex;align-items:center;gap:10px;width:100%;min-height:48px;padding:10px 0;font-size:16px;line-height:1.45;color:var(--w92);text-align:left;transition:opacity calc(120ms * var(--k)) ease}
 .s09-att-i:active{opacity:.6}
 .s09-att-i .t{flex:1 1 auto;min-width:0}
 .s09-att-i .t b{font-weight:500;color:#fff}
@@ -110,7 +110,6 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
 .s09-grid-sm .s09-st{min-height:56px}
 .s09-grid-sm .s09-st-v{margin-top:4px;font-size:17px;line-height:1.4;color:var(--w92)}
 .s09-st-x{margin-top:2px;font-size:13px;line-height:1.5;color:var(--w70);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s09-foot{margin-top:40px;font-size:13px;line-height:1.6;color:var(--w70)}
 /* root navigation */
 .s09-nav{position:absolute;left:0;right:0;bottom:0;height:80px;z-index:4;display:flex;padding:10px 8px 22px}
 .s09-tab{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;font-size:14px;line-height:1;color:var(--w70);text-align:center;border-radius:14px}
@@ -247,7 +246,6 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
             </button>
             <sc-if value="{{c.attCount}}" hint-placeholder-val="{{true}}">
               <div class="s09-att s09-dim{{v.home.fc.att}}">
-                <p class="s09-att-h">{{v.home.attLine}}</p>
                 <sc-for list="{{v.att}}" as="a" hint-placeholder-count="2">
                   <button type="button" class="s09-att-i" data-origin="{{a.key}}" data-rid="{{a.rid}}" onClick="{{a.go}}"><span class="t"><b>{{a.title}}</b><span> · {{a.label}}</span></span><span class="c" aria-hidden="true">›</span></button>
                 </sc-for>
@@ -292,12 +290,11 @@ button.s09-st:active .s09-st-v,.s09-st-hit:active .s09-st-v,.s09-id:active .s09-
               <button type="button" class="s09-st s09-dim{{v.home.fc.account}}" data-origin="account" onClick="{{v.open.account}}"><span class="s09-st-l">账户与本机数据</span><span class="s09-st-v">{{v.home.account}}</span></button>
               <button type="button" class="s09-st s09-dim{{v.home.fc.about}}" data-origin="about" onClick="{{v.open.about}}"><span class="s09-st-l">关于与规则</span><span class="s09-st-v">{{v.home.about}}</span><span class="s09-st-s s09-st-x">{{v.home.aboutSub}}</span></button>
             </div>
-            <p class="s09-foot s09-dim">{{v.home.foot}}</p>
           </div>
           <header class="s09-hd s09-hd-home s09-dim" data-header>
             <div class="s09-tools"><span class="s09-ju">JU</span></div>
             <h1 class="s09-title">设置</h1>
-            <p class="s09-meta">{{c.demoNote}}</p>
+            <p class="s09-meta">{{v.home.meta}}</p>
           </header>
         </section>
       </sc-if>
@@ -543,7 +540,7 @@ class Component extends DCLogic {
   toEdit(field) {
     var self = this; this.setState({ focusField: null, lampField: field || null });
     this.go('profile-edit', {}, null);
-    if (field) this.afterKey('focus', 400, function () { var r = self.rootRef.current; var el = r && r.querySelector('[data-field="' + field + '"]'); if (el) { try { el.focus({ preventScroll: true }); } catch (e) { } } });
+    if (field) this.afterKey('focus', 400, function () { var r = self.rootRef.current; var el = r && r.querySelector('[data-field="' + field + '"]'); if (el) { try { el.focus({ preventScroll: true }); } catch (e) { } self.reveal(el); } });
   }
   onProfileSaved(e) {
     var self = this; this.say(e.nothing ? '没有改动' : '资料已保存', 'ok');
@@ -621,15 +618,15 @@ class Component extends DCLogic {
     var openReps = c.reps.rows.filter(function (r) { return r.open; }).length;
     var home = { cls: fk ? ' has-focus' : '', fc: fc,
       wx: you.wx ? you.wx : '微信号未填写', mail: you.email ? you.email : '邮箱未填写', mailState: you.email ? you.emailLabel : '',
-      attLine: c.attCount + ' 件事等你回应',
+      meta: (c.attCount ? c.attCount + ' 件事等你回应' : '没有要你处理的事') + ' · ' + sum.cityLabel,
       fav: { value: sum.favLabel, titles: c.fav.rows.slice(0, 3).map(function (r) { return r.title; }), sub: c.fav.count > 3 ? '还有 ' + (c.fav.count - 3) + ' 个' : (c.fav.empty ? JUS.COPY.favEmpty.body : '') },
       city: { value: sum.cityLabel, sub: c.feed.count ? c.feed.count + ' 个局可报名' : '暂时没有可报名的局' },
       notify: { value: c.notify.onCount + ' 类提醒', sub: permShort },
       appearance: { value: c.skin.curName, sub: c.skin.rmOn ? '减少动态' : '正常动态' },
       records: { value: c.recs.count + ' 条事实', sub: c.recs.count ? (sum.pendingRecords ? sum.pendingRecords + ' 条待核实' : '') : JUS.COPY.creditEmpty },
       reports: { value: c.reps.count + ' 条举报', sub: c.reps.count ? (sum.needMore ? sum.needMore + ' 条需补充' : openReps ? openReps + ' 条处理中' : '均已处理') : JUS.COPY.reportsEmpty },
-      help: JUS.RULES.length + ' 条约定', privacy: c.privacy.facts.length + ' 种情形', account: c.acct.demo ? '本机演示' : '演示已结束', about: String(c.about.version).split(' · ')[0], aboutSub: c.about.rulesVersion,
-      foot: JUS.COPY.demoOnly + ' · ' + c.acct.device };
+      help: JUS.RULES.length + ' 条约定', privacy: c.privacy.facts.length + ' 种情形', account: c.acct.ended ? '会话已结束' : c.acct.device, about: String(c.about.version).split(' · ')[0], aboutSub: c.about.rulesVersion,
+    };
     var open = {};
     [['profile', 'profile'], ['favorites', 'favorites'], ['city', 'city'], ['notify', 'notify'], ['appearance', 'appearance'], ['records', 'records'], ['reports', 'reports'], ['help', 'help'], ['privacy', 'privacy'], ['account', 'account'], ['about', 'about']].forEach(function (p) {
       open[p[0]] = function () { self.motion('rise', function () { this.rise(p[1], p[0]); }); };

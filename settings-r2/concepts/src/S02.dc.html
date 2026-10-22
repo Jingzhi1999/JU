@@ -480,8 +480,10 @@ var S02 = (function () {
   var M = { index: '目录 → 竖栏', rail: '竖栏换页', value: '值更新' };
   function short(t) { return String(t || '').split(' · ')[0]; }
   function mmss(s) { s = Math.max(0, Math.floor(s || 0)); var r = s % 60; return Math.floor(s / 60) + ':' + (r < 10 ? '0' : '') + r; }
+  /* real event names first; two only when they fit beside the word, so the count is never eaten by the ellipsis */
+  function favLine(rows) { var n = rows.map(function (r) { return short(r.title); }); var two = n.length > 1 && (n[0] + n[1]).length <= 12; var shown = two ? n.slice(0, 2) : n.slice(0, 1); return [shown.join('、'), rows.length > shown.length ? ' 等 ' + rows.length + ' 个' : '']; }
   function split2(label) { var p = String(label || '').split(' · '); return [p[0], p.length > 1 ? ' · ' + p.slice(1).join(' · ') : '']; }
-  return { IX: IX, GROUP: GROUP, SEAM: SEAM, LATER: LATER, M: M, short: short, mmss: mmss, split2: split2 };
+  return { IX: IX, GROUP: GROUP, SEAM: SEAM, LATER: LATER, M: M, short: short, mmss: mmss, split2: split2, favLine: favLine };
 })();
 
 class Component extends DCLogic {
@@ -490,7 +492,7 @@ class Component extends DCLogic {
     this.motionSpec = { fwd: 380, back: 340, root: 320, swap: 300 };
     this.headerRange = 72;
   }
-  initialState(variant) { return Object.assign(JUS.baseState(variant), { s02i: false }); }
+  initialState(v) { return Object.assign(JUS.baseState(v), { s02i: false }); }
   componentDidMount() { this._s02st(); }
   componentDidUpdate() { this._s02st(); }
   /* the rail glyphs are the index's first characters; --st (home scrollTop) keeps them on their unscrolled slots */
@@ -545,7 +547,7 @@ class Component extends DCLogic {
     var mailLine = you.email ? (you.verified ? you.domain + ' 已验证' : '邮箱未验证') : '邮箱未填写';
     var vals = [
       [mailLine, ''],
-      favRows.length ? [favRows.slice(0, 2).map(function (r) { return S02.short(r.title); }).join('、'), favRows.length > 2 ? ' 等 ' + favRows.length + ' 个' : ''] : ['还没有收藏', ''],
+      favRows.length ? S02.favLine(favRows) : ['还没有收藏', ''],
       [sum.cityLabel, ' · ' + feedAll + ' 个局可报名'],
       S02.split2(sum.notifyLabel),
       [c.skin.curName, rmUser ? ' · 减少动态' : ' · 正常动态'],
@@ -597,7 +599,7 @@ class Component extends DCLogic {
       homeFresh: you.savedName && recent && (top === 'home' || exp) ? 's02-fresh' : '', privLine: c.privacy.facts.length + ' 种情形',
       bk: bk, pfFresh: pfFresh, nameCls: (nameLong ? 'is-long' : '') + (pfFresh ? ' s02-fresh' : ''), verLine: verLine, verCls: you.email && you.verified ? '' : 'is-off',
       emailShown: you.email || '未填写', snapshotNote: JUS.COPY.snapshotNote, copyFailInline: JUS.COPY.copyFailInline,
-      codeOn: !!(pf.on && pf.needCode && !pf.err.email), fe: fe, nameOverCls: pf.on && pf.nameOver ? 'is-over' : '', codeLive: !!(pf.on && (pf.codeSent || pf.codeExpired)), resendOff: !!(pf.on && pf.codeSent && pf.resendLeft > 0),
+      codeOn: !!(pf.on && pf.needCode && (!pf.err.email || pf.err.email === JUS.COPY.profileErrors.mailUnverified)), fe: fe, nameOverCls: pf.on && pf.nameOver ? 'is-over' : '', codeLive: !!(pf.on && (pf.codeSent || pf.codeExpired)), resendOff: !!(pf.on && pf.codeSent && pf.resendLeft > 0),
       expLine: pf.on && pf.codeSent ? '验证码 ' + S02.mmss(pf.expiresIn) + ' 后过期' : '', ctaCls: pf.on ? (pf.saving ? 'is-busy' : pf.failed ? 'is-retry' : '') : '',
       editMeta: '称呼、微信号必填 · 邮箱可空',
       snapOn: snaps.length > 0, snaps: snaps, snapCount: cur.length,

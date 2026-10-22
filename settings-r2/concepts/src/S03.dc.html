@@ -509,7 +509,7 @@ class Component extends DCLogic {
     const groups = [
       { name: '偏好', rows: [row('city', '默认浏览城市', sum.cityLabel), row('notify', '通知与提醒', sum.notifyLabel), row('appearance', '外观与动态', sum.appearanceLabel)] },
       { name: '记录与举报', rows: [row('records', '我的记录', sum.recordLabel), row('reports', '我的举报', sum.reportLabel)] },
-      { name: '帮助与账户', rows: [row('help', '帮助与反馈', c.help.feedback.length ? '我的反馈 ' + c.help.feedback.length + ' 条' : '常见问题'), row('privacy', '隐私与资料可见性', c.privacy.facts.length ? c.privacy.facts.length + ' 种情形' : ''), row('account', '账户与本机数据', c.acct.ended ? '演示会话已结束' : '本地演示'), row('about', '关于与规则', JUS.RULES.length + ' 条约定')] }
+      { name: '帮助与账户', rows: [row('help', '帮助与反馈', c.help.feedback.length ? '我的反馈 ' + c.help.feedback.length + ' 条' : '常见问题'), row('privacy', '隐私与资料可见性', c.privacy.facts.length ? c.privacy.facts.length + ' 种情形' : ''), row('account', '账户与本机数据', c.acct.ended ? '会话已结束' : c.acct.device), row('about', '关于与规则', JUS.RULES.length + ' 条约定')] }
     ];
     return {
       meta: (c.attCount ? c.attCount + ' 项需要处理 · ' : '') + sum.cityLabel,
@@ -524,7 +524,7 @@ class Component extends DCLogic {
     const y = c.you, fresh = this.isFresh();
     const kind = y.emailKind === 'school' ? '学校邮箱' : y.emailKind === 'work' ? '工作邮箱' : '';
     return {
-      meta: c.demoNote, name: y.name,
+      meta: c.sum.joinedCount ? c.sum.joinedCount + ' 个已报名的局沿用报名时的资料' : (y.verified ? '邮箱已验证' + (kind ? ' · ' + kind : '') : y.email ? '邮箱未验证' : '邮箱未填写'), name: y.name,
       whoName: c.privacy.general[0], whoWx: c.privacy.general[1], whoEmail: c.privacy.general[2], wx: y.wx || '未填写', wxCls: y.wx ? '' : ' s03-none', hasWx: !!y.wx, email: y.email || '未填写', emailCls: y.email ? '' : ' s03-none',
       emailTag: y.email ? (y.verified ? '已验证' + (kind ? ' · ' + kind : '') : '未验证') : '',
       freshName: fresh && y.savedName, freshWx: fresh && y.savedWx, freshEmail: fresh && y.savedEmail,
@@ -555,9 +555,9 @@ class Component extends DCLogic {
     const nav = this.state.nav, st = nav.stack, out = [];
     const value = (s) => ({ favorites: c.sum.favLabel, 'favorite-detail': c.favDetail && c.favDetail.title, city: c.sum.cityLabel, notify: c.sum.notifyLabel, appearance: c.sum.appearanceLabel,
       records: c.sum.recordLabel, 'record-detail': c.rec && c.rec.title, reports: c.sum.reportLabel, 'report-detail': c.rep && c.rep.title, help: JUS.RULES.length + ' 条约定', privacy: c.privacy.facts.length + ' 种情形',
-      account: c.sum.sessionLabel || '演示会话已结束', about: c.about.version, rules: JUS.RULES_VERSION, 'seam-feed': c.feed.city.name + ' · ' + c.feed.count + ' 个局', 'seam-feed-detail': c.feedDetail && c.feedDetail.title,
+      account: c.acct.ended ? '会话已结束' : c.acct.device, about: c.about.version, rules: JUS.RULES_VERSION, 'seam-feed': c.feed.city.name + ' · ' + c.feed.count + ' 个局', 'seam-feed-detail': c.feedDetail && c.feedDetail.title,
       'seam-mine': c.mine.current.length + ' 个进行中的局', 'seam-report': c.seamReport && c.seamReport.title }[s] || (c.form.on ? c.form.title : ''));
-    const add = (e, role) => { if (S03.OWN[e.s]) return; out.push({ s: e.s, cls: c.nav.cls[e.s], formCls: S03.FORMS[e.s] ? 's03-p-form' : '', title: c.nav.title[e.s] || '', meta: S03.ROOTS[e.s] ? c.demoNote : '', value: value(e.s) || '', line: '', hasBack: role !== 'leaving' && st.length > 1 && !S03.ROOTS[e.s], isRoot: !!S03.ROOTS[e.s] }); };
+    const add = (e, role) => { if (S03.OWN[e.s]) return; out.push({ s: e.s, cls: c.nav.cls[e.s], formCls: S03.FORMS[e.s] ? 's03-p-form' : '', title: c.nav.title[e.s] || '', meta: e.s === 'seam-feed' ? c.feed.hintIdle : e.s === 'seam-mine' ? c.mine.current.length + ' 个局进行中' : '', value: value(e.s) || '', line: '', hasBack: role !== 'leaving' && st.length > 1 && !S03.ROOTS[e.s], isRoot: !!S03.ROOTS[e.s] }); };
     if (st.length > 1) add(st[st.length - 2], 'under');
     if (nav.leaving) add(nav.leaving, 'leaving');
     add(st[st.length - 1], 'top');
