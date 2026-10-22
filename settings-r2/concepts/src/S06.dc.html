@@ -381,6 +381,7 @@ body{margin:0}
                   <p class="s06-gloss" style="margin:0 0 12px">{{v.rd.meta}}</p>
                   <sc-for list="{{c.rec.supplementRows}}" as="x" hint-placeholder-count="1"><p class="s06-quote">{{x.text}}<span>补充 · {{x.atText}}{{x.matLine}}</span></p></sc-for>
                   <sc-for list="{{c.rec.appealRows}}" as="x" hint-placeholder-count="1"><p class="s06-quote"><b>{{x.kindLabel}}</b>{{x.reason}}<span>{{x.atText}} · {{x.statusLabel}}</span></p></sc-for>
+                  <sc-if value="{{c.rec.helpText}}"><p class="s06-gloss">{{c.rec.helpText}}</p></sc-if>
                   <div class="s06-acts is-col"><button type="button" class="s06-go" data-act="supplement" onClick="{{c.rec.goSupplement}}"><span>补充说明</span><em>→</em></button><sc-if value="{{c.rec.goDispute}}"><button type="button" class="s06-go" data-act="dispute" onClick="{{c.rec.goDispute}}"><span>提出出席异议</span><em>→</em></button></sc-if><sc-if value="{{c.rec.goAppeal}}"><button type="button" class="s06-go" data-act="appeal" onClick="{{c.rec.goAppeal}}"><span>补充与申诉</span><em>→</em></button></sc-if></div>
                 </div></sc-if>
                 <!-- 补充 / 异议 / 申诉 / 举报补充 / 反馈: one sentence names the object, then ruled paper -->
@@ -407,7 +408,7 @@ body{margin:0}
                   <p class="s06-said">{{c.rep.title}}。<sc-if value="{{c.rep.needsMore}}"><span class="s06-blue">{{v.rq.needs}}</span></sc-if></p>
                   <p class="s06-quote">{{c.rep.text}}<span>{{v.rq.meta}}</span></p>
                   <p class="s06-said">{{v.rq.timeline}}</p>
-                  <sc-for list="{{c.rep.supplementRows}}" as="x" hint-placeholder-count="1"><p class="s06-quote">{{x.text}}<span>补充 · {{x.atText}}</span></p></sc-for>
+                  <sc-for list="{{c.rep.supplementRows}}" as="x" hint-placeholder-count="1"><p class="s06-quote">{{x.text}}<span>补充 · {{x.atText}}{{x.matLine}}</span></p></sc-for>
                   <sc-if value="{{c.rep.goSupplement}}"><div class="s06-acts"><button type="button" class="s06-go" data-act="supplement" onClick="{{c.rep.goSupplement}}"><span>补充材料</span><em>→</em></button></div></sc-if>
                   <p class="s06-note">{{c.reps.mock}}</p>
                 </div></sc-if>
@@ -798,7 +799,7 @@ class Component extends DCLogic {
     var longCJK = function (t, n) { return Array.from(t || '').length > n; };
     var full = fkv === 'id';   /* the identity group shows the full values only when it is the focused group (资料 / 编辑) */
     var gr = function (t) { try { if (typeof Intl !== 'undefined' && Intl.Segmenter) return Array.from(new Intl.Segmenter('zh', { granularity: 'grapheme' }).segment(t), function (x) { return x.segment; }); } catch (e) { } return Array.from(t); };
-    var shortName = function (t) { var g = gr(t); if (g.length <= 8) return t; var o = g.slice(0, 6).join('') + '…'; if (/[（(]/.test(o) && !/[）)]/.test(o)) o += o.indexOf('（') >= 0 ? '）' : ')'; return o; };
+    var shortName = function (t) { var g = gr(t); if (g.length <= 10) return t; var o = g.slice(0, 8).join('') + '…'; if (/[（(]/.test(o) && !/[）)]/.test(o)) o += o.indexOf('（') >= 0 ? '）' : ')'; return o; };
     var shortWx = function (t) { return t.length <= 14 ? t : t.slice(0, 12) + '…'; };
     var shortMail = function (t) { if (t.length <= 18) return t; var i = t.indexOf('@'); if (i < 0) return t.slice(0, 16) + '…'; var lo = t.slice(0, i); return (lo.length > 7 ? lo.slice(0, 7) + '…' : lo) + t.slice(i); };
     P.name = you.name ? (full ? you.name : shortName(you.name)) : '还没填'; P.nameCls = longCJK(P.name, 8) ? ' s06-long' : '';
@@ -895,7 +896,7 @@ class Component extends DCLogic {
     v.rc = { groups: c.recs.groups.map(function (g) { return { title: g.title, count: g.count, items: g.rows.map(function (r) { var att2 = r.pendingReview && !r.appeals.length; return { id: r.id, label: r.label, open: r.open, attCls: att2 ? ' s06-att' : '', rest: ' · ' + r.title + '，' + r.when.md + '，' + r.statusLabel + '。' }; }) }; }) };
     var rec = c.rec;
     v.rd = rec ? { stCls: rec.pendingReview ? 's06-blue' : '', sentence: rec.title + '，' + rec.when.zh.replace(' · ', ' ') + '，在 ' + rec.place.full + '，局主 ' + rec.host + '。', meta: '记于 ' + rec.atText + (rec.quotaLabel ? '；' + rec.quotaLabel : '') + '。' } : {};
-    if (rec) rec.supplementRows.forEach(function (x) { x.matLine = x.materialsText ? ' · 材料 ' + x.materialsText : ''; });
+    [rec, c.rep].forEach(function (o) { if (o) o.supplementRows.forEach(function (x) { x.matLine = x.materialsText ? ' · 材料 ' + x.materialsText : ''; }); });
     /* forms: one sentence names the object */
     var fm = c.form && c.form.on ? c.form : null; var rep = c.rep;
     if (fm) {

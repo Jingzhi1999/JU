@@ -511,7 +511,7 @@ span.s02-eb{cursor:default}
           <section class="s02-pg {{c.nav.cls.profile}}" data-surface="profile">
             <div class="s02-psc" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
               <div class="s02-fld"><p class="s02-L">称呼<sc-if value="{{pfFresh}}"><em class="ju">刚更新</em></sc-if></p><p class="s02-D is-hero {{nameUpd}}">{{nameShown}}</p></div>
-              <div class="s02-fld"><p class="s02-L">微信号</p><div class="s02-Vr"><p class="s02-D">{{c.you.wxLabel}}</p><sc-if value="{{c.you.wx}}"><button type="button" class="s02-mini" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></div><sc-if value="{{c.you.copyFail}}"><p class="s02-cf">{{copyFailInline}}：<span>{{c.you.copyFail}}</span></p></sc-if></div>
+              <div class="s02-fld"><p class="s02-L">微信号</p><div class="s02-Vr"><p class="s02-D">{{wxShown}}</p><sc-if value="{{c.you.wx}}"><button type="button" class="s02-mini" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></div><sc-if value="{{c.you.copyFail}}"><p class="s02-cf">{{copyFailInline}}：<span>{{c.you.copyFail}}</span></p></sc-if></div>
               <div class="s02-fld"><p class="s02-L">邮箱</p><p class="s02-D">{{emailShown}}</p><p class="s02-ver {{verCls}}">{{verLine}}</p></div>
               <sc-if value="{{snapOn}}"><div class="s02-sec"><p class="s02-S">已报名<em>{{snapCount}} 个局用报名时的资料</em></p>
                 <sc-for list="{{snaps}}" as="r" hint-placeholder-count="3"><div class="s02-er"><span class="s02-dc"><b>{{r.md}}</b><small>{{r.wd}}</small></span><span class="s02-eb"><span class="s02-et">{{r.t1s}}<span class="s02-et2">{{r.t2}}</span></span><span class="s02-em">{{r.who}}</span></span></div></sc-for></div></sc-if>
@@ -862,6 +862,21 @@ var S02 = (function () {
     return { y: y, inv: function (v) { var a = 0, b = 1; for (var i = 0; i < 32; i++) { var m = (a + b) / 2; if (y(m) < v) a = m; else b = m; } return (a + b) / 2; } };
   }
   var E_COL = bez(.2, .86, .2, 1), E_EXP = bez(.38, 0, .22, 1);
+  /* a person's name breaks only between words: dictionary words (Intl.Segmenter), a lone character stays with the word before it
+     (阿|禾 → 阿禾, 十一|点 → 十一点), and a middle dot keeps both neighbours (阿禾·周末) */
+  var SEG = null; try { SEG = new Intl.Segmenter('zh', { granularity: 'word' }); } catch (e) { SEG = null; }
+  function nameBreaks(v) {
+    var s = String(v == null ? '' : v); if (!SEG || glen(s) <= 4) return s;
+    var cjk = /[\u3400-\u9fff]/, out = [];
+    Array.from(SEG.segment(s)).forEach(function (x) {
+      var g = x.segment, last = out.length ? out[out.length - 1] : null;
+      var glue = last != null && (/[·・]$/.test(last) || /^[·・]/.test(g) || (glen(g) === 1 && cjk.test(g) && cjk.test(last.slice(-1))) || /^\s+$/.test(g) || /\s$/.test(last) === false && !cjk.test(g) && !cjk.test(last.slice(-1)));
+      if (glue) out[out.length - 1] = last + g; else out.push(g);
+    });
+    return out.join('\u200b');
+  }
+  /* ids and addresses break after . _ - and before @ (display only; copying uses the raw value) */
+  function idBreaks(v) { return String(v == null ? '' : v).replace(/([._\-])(?=\S)/g, '$1\u200b').replace(/(\S)@/g, '$1\u200b@'); }
   function dot(v) { return String(v == null ? '' : v).split(' · ').join(' ·\u00a0'); }
   /* event names are 「name · tagline」: the name is set big, the tagline under it (no dangling separators when a line breaks) */
   function tt(t) { var s = String(t || ''); var i = s.indexOf(' · '); var a = i < 0 ? s : s.slice(0, i), b = i < 0 ? '' : dot(s.slice(i + 3)); return { t1: a, t2: b, t1s: b ? a + ' ' : a, tlong: glen(a) > 9 ? 'is-long' : '' }; }
@@ -872,7 +887,7 @@ var S02 = (function () {
       canSeeHostWx: F.canSeeHostWx, hostWx: F.hostWx, copyHostWx: F.copyHostWx, note: F.note, favAgo: F.favAgo ? '收藏于 ' + F.favAgo : '还没收藏',
       favAct: F.fav ? 'unfav' : 'fav', toggleFav: F.toggleFav, favLabel: F.favLabel, applyNote: F.applyNote, city: (F.city ? F.city.name : '') + (F.crossCity ? ' · 不是默认城市' : '') };
   }
-  return { IX: IX, Y: Y, CS: CS, GROUP: GROUP, SEAM: SEAM, M: M, WORD: WORD, short: short, mmss: mmss, split2: split2, favLine: favLine, glen: glen, tt: tt, dot: dot, det: det, E_COL: E_COL, E_EXP: E_EXP };
+  return { IX: IX, Y: Y, CS: CS, GROUP: GROUP, SEAM: SEAM, M: M, WORD: WORD, short: short, mmss: mmss, split2: split2, favLine: favLine, glen: glen, tt: tt, dot: dot, nameBreaks: nameBreaks, idBreaks: idBreaks, det: det, E_COL: E_COL, E_EXP: E_EXP };
 })();
 
 class Component extends DCLogic {
@@ -1092,10 +1107,10 @@ class Component extends DCLogic {
       homeOn: inSet || leaving === 'home', homeTab: deep ? '-1' : '0', railTab: railm ? '0' : '-1', homeHidden: deep ? 'true' : false,
       onHomeScroll: function (ev) { c.nav.onScroll(ev); var el = ev.currentTarget; el.style.setProperty('--st', el.scrollTop + 'px'); },
       goYou: function (ev) { self.indexGo('profile', ev); }, goPrivacy: function (ev) { self.indexGo('privacy', ev); }, goAbout: function (ev) { self.indexGo('about', ev); },
-      ix: ix, acct: you.wx ? you.wx : '微信号未填写', homeMeta: c.attCount ? c.attCount + ' 项需要处理 · ' + sum.cityLabel : sum.cityLabel + ' · ' + sum.favLabel,
+      ix: ix, acct: you.wx ? S02.idBreaks(you.wx) : '微信号未填写', homeMeta: c.attCount ? c.attCount + ' 项需要处理 · ' + sum.cityLabel : sum.cityLabel + ' · ' + sum.favLabel,
       homeUpd: upd('pf', 'name', top === 'home' || exp), privLead: String(c.privacy.lead || '').replace('情形下', '情形下\u200b'), privFacts: c.privacy.facts.map(function (f) { return Object.assign({}, f, { rule: S02.dot(f.rule) }); }), privN: c.privacy.facts.length, privLine: c.privacy.facts.length + ' 种情形',
-      bk: bk, pfFresh: !!(you.savedName && onProfile), nameShown: String(you.name || '').replace('（', '\u200b（'), nameUpd: upd('pf', 'name', onProfile),
-      verLine: verLine, verCls: you.email && you.verified ? '' : 'is-off', emailShown: you.email || '未填写', snapshotNote: JUS.COPY.snapshotNote, copyFailInline: JUS.COPY.copyFailInline,
+      bk: bk, pfFresh: !!(you.savedName && onProfile), nameShown: S02.nameBreaks(you.name), nameUpd: upd('pf', 'name', onProfile),
+      verLine: verLine, verCls: you.email && you.verified ? '' : 'is-off', emailShown: you.email ? S02.idBreaks(you.email) : '未填写', wxShown: you.wx ? S02.idBreaks(you.wx) : c.you.wxLabel, snapshotNote: JUS.COPY.snapshotNote, copyFailInline: JUS.COPY.copyFailInline,
       snapOn: snaps.length > 0, snaps: snaps, snapCount: curJ.length,
       fe: fe, nameOverCls: pf.on && pf.nameOver ? 'is-over' : '', codeOn: !!(pf.on && pf.needCode && (!pf.err.email || pf.err.email === JUS.COPY.profileErrors.mailUnverified)),
       codeLive: !!(pf.on && (pf.codeSent || pf.codeExpired)), resendOff: !!(pf.on && pf.codeSent && pf.resendLeft > 0),
@@ -1123,7 +1138,7 @@ class Component extends DCLogic {
       feedAllP: c.feed.isAll ? 'true' : 'false', feedFavP: c.feed.isFav ? 'true' : 'false',
       mineGroups: mineGroups, mineMeta: c.mine.current.length + ' 个进行中 · ' + c.mine.hosted.length + ' 个我发起',
       rootNav: rootNav, toastCls: toastCls, toastOn: toastOn,
-      navBack: function (ev) { self._s02preBack(); c.nav.back(ev); }, xq: exp && this._s02xq && Date.now() - this._s02xq.at < 700 * kk ? this._s02xq.q.toFixed(3) : '0', toastText: String(c.toast.text || '').split(' · ').join('\u00a0· '), undoText: String((c.fav.undo && c.fav.undo.text) || '').split(' · ').join('\u00a0· '),
+      navBack: function (ev) { self._s02preBack(); c.nav.back(ev); }, xq: exp && this._s02xq && Date.now() - this._s02xq.at < 700 * kk ? this._s02xq.q.toFixed(3) : '0', toastText: S02.dot(c.toast.text), undoText: S02.dot(c.fav.undo && c.fav.undo.text),
       dq: dq || {}, dqOn: !!dq, dqInert: !!dqLive, dqRole: 'alertdialog', dqCls: dqLive ? (dqLive.sys ? 'is-sys' : '') : 'is-out',
       dqScrim: function () { if (dqLive && !dqLive.sys) dqLive.a.go(); },
       dqKey: function (ev) { if (ev.key === 'Escape' && dqLive && !dqLive.sys) { ev.preventDefault(); dqLive.a.go(); } }
