@@ -8,43 +8,66 @@
 <body>
 <x-dc>
 <helmet>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@600;700&family=DM+Mono:wght@500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@600;700&display=swap">
 <style>
 body{margin:0}
 /* @panel-css */
-/* ===== S10 叠层 · v2 ===== The interface is a stack of full-width sheets. A white identity sheet (230px) sits first; every following
-   sheet overlaps the one before it so only a 72px strip shows; the last sheet runs to the bottom. Depth is the thesis: one light from the
-   sky above, every sheet casts 0 -10px 30px upward, nothing else glows. Tap a strip: that sheet rises to the top (320ms) and becomes the
-   page, the others compress into 24px edges piled at the bottom; back reverses. The environment is the sky above / below the stack and
-   the colour of every sheet (each sheet = one solid colour sliced from the environment). */
+/* ===== S10 叠层 ===== The interface is a stack of full-width sheets lit from the sky above. The white identity sheet (230px) sits first;
+   every following sheet overlaps the one before so only a 72px strip shows, each one deeper in colour than the sheet behind it; the front
+   sheet runs to the bottom. One light, one depth rule: each sheet casts 0 -10px 30px upward (stronger for the sheets nearest you) and carries
+   a 1px light top edge; nothing else glows, no texture. Tap a strip: that sheet rises to the top (320ms) and becomes the page; the others
+   compress into 24px edges at the bottom (the pile = one 120px "back to the stack" control). A deeper page is one more sheet rising inside
+   the lifted one, 16px lower, so its parent's edge stays visible. Lists inside are sheets within the sheet, never rows on a coloured page.
+   Core motions are @keyframes (pausable + scrubbable): lift / drop / swap, in-sheet save (deck sinks, value lands), environment switch. */
 .app.s10{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;color:#14161F;-webkit-font-smoothing:antialiased;background:#eceaf2;
-  --ink:#14161F;--body:#252b3a;--sub:#3a4152;--sec:#535b70;--blue:#4553BE;--link:#4352bb;--focus:#4A5AD6;--err:#DA3A52;--err-ink:#8E1A2C;--ok-ink:#045541;--ok:#0E9B76;
-  --ease:cubic-bezier(.22,.8,.24,1);--lift:calc(320ms * var(--k,1));--env:calc(650ms * var(--k,1));--sheet-shadow:0 -10px 30px rgba(20,22,31,.10);
-  --top:44px;--pile:120px;--pileb:max(var(--pile),var(--kb,0px));--navh:64px}
-.app.s10 *{box-sizing:border-box}
+  --ink:#14161F;--body:#252b3a;--sub:#3a4152;--blue:#4553BE;--link:#4352bb;--focus:#4A5AD6;--err:#DA3A52;--err-ink:#8E1A2C;--ok:#0E9B76;--ok-ink:#045541;--ok-ink-w:#0B7F62;
+  --ease:cubic-bezier(.22,.8,.24,1);--ease-io:cubic-bezier(.45,0,.2,1);--lift:calc(320ms * var(--k,1));--env:calc(650ms * var(--k,1));
+  --top:44px;--pile:120px;--pileb:max(var(--pile),var(--kb,0px));--navh:64px;--t2:var(--sub);--kt:320ms}
+:where(.app.s10) *{box-sizing:border-box}
 :where(.app.s10) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:left}
-:where(.app.s10) input{font:inherit;color:inherit}
-:where(.app.s10) input:focus{outline:none}
-:where(.app.s10) :is(p,h1,h2,dl,dd){margin:0}
+:where(.app.s10) :is(input,textarea){font:inherit;color:inherit}
+:where(.app.s10) :is(input,textarea):focus{outline:none}
+:where(.app.s10) :is(p,h1,h2,h3,dl,dd,ul,ol){margin:0;padding:0}
+:where(.app.s10) li{list-style:none}
+:where(.app.s10) button:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 .app.s10.rm *,.app.s10.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;transition-delay:0ms!important;animation-delay:0ms!important}
-/* sheet colours: each environment sliced into solid sheets, each one deeper than the sheet behind it (relative luminance steps ≈ .1:
-   .79 → .37), so every rounded corner shows a lighter sheet behind it, in colour and in grey. L0 identity is white in every environment. */
+/* pausable / scrubbable core motions: every keyframed element reads its delay from --kd and the motion length from --kt */
+.app.s10.paused *{animation-play-state:paused!important}
+.app.s10.scrub *{animation-play-state:paused!important;animation-delay:calc(var(--kd,0ms) - var(--frame,0) * var(--kt,320ms) * var(--k,1))!important}
+/* sheet colours: each environment sliced into solid sheets, each deeper than the sheet behind it (relative luminance .79 → .37), so every
+   28px corner shows a lighter sheet behind it, in colour and in grey. c0 = the white identity sheet. p0–p5 = the previous environment's
+   colours, used only while the environment switch is playing. */
 .app.s10[data-skin=cotton]{--c0:#ffffff;--c1:#FBDDE9;--c2:#F2CAEE;--c3:#D5BDF0;--c4:#A3B6E9;--c5:#55AFCF}
 .app.s10[data-skin=halo]{--c0:#ffffff;--c1:#FFE1C3;--c2:#FFCBB1;--c3:#F6B5B1;--c4:#E0A3C2;--c5:#BB96D4}
 .app.s10[data-skin=sunset]{--c0:#ffffff;--c1:#FFE587;--c2:#FFCE7A;--c3:#FFB672;--c4:#FF9C6D;--c5:#F7836B}
+.app.s10[data-prev=cotton]{--p1:#FBDDE9;--p2:#F2CAEE;--p3:#D5BDF0;--p4:#A3B6E9;--p5:#55AFCF}
+.app.s10[data-prev=halo]{--p1:#FFE1C3;--p2:#FFCBB1;--p3:#F6B5B1;--p4:#E0A3C2;--p5:#BB96D4}
+.app.s10[data-prev=sunset]{--p1:#FFE587;--p2:#FFCE7A;--p3:#FFB672;--p4:#FF9C6D;--p5:#F7836B}
 /* ---- the sky: one environment field for the whole phone; header and root nav carry pixel-aligned copies so sheets can pass under them ---- */
-.s10-sky{position:absolute;overflow:hidden;pointer-events:none}
+.s10-sky{position:absolute;overflow:hidden;pointer-events:none;z-index:0}
 .s10-env{inset:0;z-index:0}
-.s10-sky i{position:absolute;left:0;right:0;height:var(--ph,844px);opacity:0;filter:blur(12px);transition:opacity var(--env) cubic-bezier(.22,1,.36,1),filter var(--env) cubic-bezier(.22,1,.36,1)}
+.s10-sky i{position:absolute;left:0;right:0;height:var(--ph,844px);opacity:0}
 .s10-env i,.s10-sky-top i{top:0}
 .s10-sky-bot i{bottom:0}
-.app.s10[data-skin=cotton] .s10-sky .k-cotton,.app.s10[data-skin=halo] .s10-sky .k-halo,.app.s10[data-skin=sunset] .s10-sky .k-sunset{opacity:1;filter:blur(0)}
+.app.s10[data-skin=cotton] .s10-sky .k-cotton,.app.s10[data-skin=halo] .s10-sky .k-halo,.app.s10[data-skin=sunset] .s10-sky .k-sunset{opacity:1;z-index:2}
+.app.s10[data-prev=cotton] .s10-sky .k-cotton,.app.s10[data-prev=halo] .s10-sky .k-halo,.app.s10[data-prev=sunset] .s10-sky .k-sunset{opacity:1;z-index:1}
+.s10-sk0[data-skin=cotton] .s10-sky .k-cotton,.s10-sk0[data-skin=halo] .s10-sky .k-halo,.s10-sk0[data-skin=sunset] .s10-sky .k-sunset{animation:s10-sky-a var(--env) cubic-bezier(.22,1,.36,1) both;--kt:650ms}
+.s10-sk1[data-skin=cotton] .s10-sky .k-cotton,.s10-sk1[data-skin=halo] .s10-sky .k-halo,.s10-sk1[data-skin=sunset] .s10-sky .k-sunset{animation:s10-sky-b var(--env) cubic-bezier(.22,1,.36,1) both;--kt:650ms}
+@keyframes s10-sky-a{from{opacity:0;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
+@keyframes s10-sky-b{from{opacity:0;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
 .s10-sky .k-cotton{background:radial-gradient(70% 34% at 4% 2%,#F5A9C8 0%,rgba(245,169,200,0) 100%),radial-gradient(60% 30% at 98% 8%,#9FD8EA 0%,rgba(159,216,234,0) 100%),radial-gradient(90% 34% at 50% 100%,#C9B8F2 0%,rgba(201,184,242,0) 100%),radial-gradient(80% 30% at 100% 92%,#F3B3CF 0%,rgba(243,179,207,0) 100%),linear-gradient(180deg,#E9D3EC 0%,#DCDDF4 48%,#D4E6F2 100%)}
 .s10-sky .k-halo{background:radial-gradient(circle at 84% 3%,#FFF9EF 0 34px,#FF6A1F 62px,#F7925A 96px,#DBBA95 138px,#D0BCE1 186px,rgba(208,188,225,0) 250px),radial-gradient(110% 30% at 0% 100%,#D6BFEA 0%,rgba(214,191,234,0) 100%),radial-gradient(80% 26% at 100% 100%,#FFA46B 0%,rgba(255,164,107,0) 100%),linear-gradient(180deg,#FFF5E8 0%,#F8E6D6 100%)}
 .s10-sky .k-sunset{background:radial-gradient(circle at 16% 4%,#FFF0B8 0 20px,rgba(255,206,92,.95) 46px,rgba(255,197,61,0) 120px),linear-gradient(180deg,#2E95FF 0%,#6CB2FF 9%,#B8C9E6 15%,#FFC53D 40%,#FFA03E 70%,#FF7A33 100%)}
-/* ---- home header: sky copy + 设置 30/500 + meta 14; --hc (0→1) tucks the title to 18px into the tool row (y 40–84) ---- */
-.s10-home{position:absolute;inset:0}
-.s10-hd{position:absolute;left:0;right:0;top:0;height:calc(124px - 40px * var(--hc,0));z-index:30;overflow:hidden;transition:opacity calc(200ms * var(--k,1)) ease}
+/* ---- roots: settings (the stack), 找局 and 我的局 are three pages over the same sky; switching roots sinks one and raises the other ---- */
+.s10-root{position:absolute;inset:0}
+.s10-root.s10-off{visibility:hidden;pointer-events:none}
+.s10-root.is-top.ph-enter.dir-root{opacity:0}
+.s10-root.is-top.ph-in.dir-root{animation:s10-root-in var(--lift) var(--ease) both}
+.s10-root.is-leaving{animation:s10-root-out calc(240ms * var(--k,1)) var(--ease-io) both;pointer-events:none}
+@keyframes s10-root-in{from{opacity:0;transform:translateY(36px)}to{opacity:1;transform:none}}
+@keyframes s10-root-out{from{opacity:1;transform:none}to{opacity:0;transform:translateY(28px)}}
+/* ---- page header on the sky: 30/500 + 14 meta; --hc (0→1) tucks the title to 18px into the tool row (y 40–84) ---- */
+.s10-hd{position:absolute;left:0;right:0;top:0;height:calc(124px - 40px * var(--hc,0));z-index:30;overflow:hidden}
 .s10-hd .s10-sky{inset:0}
 .s10-hd-t{position:absolute;top:50px;left:calc(24px + (50% - 24px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;color:var(--ink)}
 .s10-hd-m{position:absolute;top:92px;left:24px;right:24px;font-size:14px;line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0) * 2.2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -52,141 +75,182 @@ body{margin:0}
 .app.s10[data-skin=sunset] .s10-hd-t,.app.s10[data-skin=sunset] .s10-ju{color:#0e1430}
 .app.s10[data-skin=sunset] .s10-hd-m{color:#141c3c}
 .s10-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none}
-.s10-sc::-webkit-scrollbar{display:none}
+.s10-sc::-webkit-scrollbar,.s10-sc2::-webkit-scrollbar{display:none}
 .app.s10:not(.at-home) .s10-sc[data-scroller=home]{overflow:hidden}
 .s10-stack{position:relative;width:100%;height:calc(max(844px, var(--ph,844px)) + 96px);overflow:hidden;--st:0px}
-/* ---- root nav: a band of sky at the foot of the stack; sheets slide under it; it steps aside when a sheet is lifted ---- */
-.s10-nav{position:absolute;left:0;right:0;bottom:0;height:var(--navh);z-index:40;display:flex;align-items:flex-start;padding:10px 12px 0;transition:transform var(--lift) var(--ease)}
+/* ---- root nav: a band of sky at the foot; sheets slide under it; it steps aside whenever a sheet is lifted or a page rises ---- */
+.s10-nav{position:absolute;left:0;right:0;bottom:0;height:var(--navh);z-index:40;display:flex;align-items:flex-start;padding:10px 12px 0}
 .s10-nav .s10-sky{inset:0}
-.s10-nav button{position:relative;flex:1 1 0;height:40px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--sub)}
+.s10-nav button{position:relative;flex:1 1 0;height:44px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:var(--sub)}
 .s10-nav button.on{color:var(--ink);font-weight:600}
-.s10-nav button.on::after{content:"";position:absolute;left:50%;bottom:2px;width:18px;height:3px;border-radius:2px;margin-left:-9px;background:var(--ink)}
+.s10-nav button.on::after{content:"";position:absolute;left:50%;bottom:4px;width:18px;height:3px;border-radius:2px;margin-left:-9px;background:var(--ink)}
 .s10-nav button.off{opacity:.55}
 .app.s10[data-skin=sunset] .s10-nav button{color:#2a1608}
 .app.s10[data-skin=sunset] .s10-nav button.on{color:#120a04}
-.s10-lifted .s10-nav{transform:translateY(110%)}
-.s10-lifted .s10-hd{opacity:0;pointer-events:none}
-/* ---- sheets: geometry comes from the component as --ty / --h / --z / --r (content coordinates of the home scroller; --st = its scrollTop) ---- */
-.s10-layer{position:absolute;left:0;right:0;top:0;height:var(--h);transform:translate3d(0,var(--ty),0);z-index:var(--z);background-color:var(--lc);border-radius:var(--r,28px) var(--r,28px) 0 0;box-shadow:var(--sheet-shadow),inset 0 1px 0 rgba(255,255,255,.55);overflow:hidden;transition:background-color var(--env) cubic-bezier(.22,1,.36,1)}
-.s10-anim .s10-layer{transition:transform var(--lift) var(--ease),height var(--lift) var(--ease),border-radius var(--lift) var(--ease),background-color var(--env) cubic-bezier(.22,1,.36,1)}
-.s10-L0{--lc:var(--c0)}.s10-L1{--lc:var(--c1)}.s10-L2{--lc:var(--c2)}.s10-L3{--lc:var(--c3)}.s10-L4{--lc:var(--c4)}.s10-L5{--lc:var(--c5)}
-.s10-L0{box-shadow:0 -10px 30px rgba(20,22,31,.10),0 -1px 0 rgba(20,22,31,.04)}
-/* the strip: 20/600 group name + 15 current value, aligned like a contents page; press = 120ms darken */
-.s10-st{position:absolute;left:0;right:0;top:0;height:72px;width:100%;display:flex;align-items:center;gap:16px;padding:0 24px 2px;transition:background-color 120ms ease}
+.s10-navoff .s10-nav{transform:translateY(110%);pointer-events:none}
+.s10-navgo.s10-navoff .s10-nav{animation:s10-nav-out var(--lift) var(--ease) both}
+.s10-navgo:not(.s10-navoff) .s10-nav{animation:s10-nav-in var(--lift) var(--ease) both}
+@keyframes s10-nav-out{from{transform:none}to{transform:translateY(110%)}}
+@keyframes s10-nav-in{from{transform:translateY(110%)}to{transform:none}}
+.s10-g-lift .s10-hd{opacity:0;pointer-events:none}
+.s10-tr-lift .s10-hd{animation:s10-early var(--lift) linear both}
+.s10-tr-drop .s10-hd{animation:s10-late var(--lift) linear both}
+/* ---- sheets: geometry from the component: displayed state --ty/--h/--r/--z; while moving, --ty0/--h0/--r0 is where the sheet comes from ---- */
+.s10-layer{position:absolute;left:0;right:0;top:0;height:var(--h);transform:translate3d(0,var(--ty),0);z-index:var(--z);background-color:var(--lc);border-radius:var(--r,28px) var(--r,28px) 0 0;box-shadow:var(--sh),inset 0 1px 0 rgba(255,255,255,.72);overflow:hidden}
+.s10-mv .s10-layer.mv{animation:s10-sheet-a var(--lift) var(--ease) both}
+.s10-mv-b .s10-layer.mv{animation-name:s10-sheet-b}
+@keyframes s10-sheet-a{from{transform:translate3d(0,var(--ty0),0);height:var(--h0);border-top-left-radius:var(--r0);border-top-right-radius:var(--r0)}to{transform:translate3d(0,var(--ty),0);height:var(--h);border-top-left-radius:var(--r);border-top-right-radius:var(--r)}}
+@keyframes s10-sheet-b{from{transform:translate3d(0,var(--ty0),0);height:var(--h0);border-top-left-radius:var(--r0);border-top-right-radius:var(--r0)}to{transform:translate3d(0,var(--ty),0);height:var(--h);border-top-left-radius:var(--r);border-top-right-radius:var(--r)}}
+/* the sheets nearest you cast a little more */
+.s10-L0{--lc:var(--c0);--sh:0 -10px 30px rgba(20,22,31,.10),0 -1px 0 rgba(20,22,31,.04)}
+.s10-L1{--lc:var(--c1);--pc:var(--p1);--sh:0 -10px 30px rgba(20,22,31,.10)}
+.s10-L2{--lc:var(--c2);--pc:var(--p2);--sh:0 -10px 30px rgba(20,22,31,.10),0 -1px 2px rgba(20,22,31,.03)}
+.s10-L3{--lc:var(--c3);--pc:var(--p3);--sh:0 -11px 31px rgba(20,22,31,.11),0 -1px 3px rgba(20,22,31,.04)}
+.s10-L4{--lc:var(--c4);--pc:var(--p4);--sh:0 -12px 32px rgba(20,22,31,.13),0 -1px 4px rgba(20,22,31,.05);--t2:var(--body)}
+.s10-L5{--lc:var(--c5);--pc:var(--p5);--sh:0 -12px 34px rgba(20,22,31,.15),0 -1px 4px rgba(20,22,31,.06);--t2:var(--body)}
+.s10-sk0 .s10-layer:not(.s10-L0),.s10-sk0 .s10-tint{animation:s10-tint-a var(--env) cubic-bezier(.22,1,.36,1) both;--kt:650ms}
+.s10-sk1 .s10-layer:not(.s10-L0),.s10-sk1 .s10-tint{animation:s10-tint-b var(--env) cubic-bezier(.22,1,.36,1) both;--kt:650ms}
+@keyframes s10-tint-a{from{background-color:var(--pc)}}
+@keyframes s10-tint-b{from{background-color:var(--pc)}}
+/* the strip: name 20/600 + value 15 on the first tier; a glimpse of the sheet's own content on the second, its lower edge tucked under the next sheet */
+.s10-st{position:absolute;left:0;right:0;top:0;height:72px;width:100%;display:block;transition:background-color 120ms ease}
 .s10-st:active{background-color:rgba(20,22,31,.05)}
-.s10-st-n{flex:0 0 auto;font-size:20px;font-weight:600;line-height:1.3;color:var(--ink)}
-.s10-st-v{flex:1 1 auto;min-width:0;display:flex;justify-content:flex-end;align-items:center;gap:6px;font-size:15px;line-height:1.4;color:var(--body);white-space:nowrap}
-.s10-st-v .t{min-width:0;overflow:hidden;text-overflow:ellipsis}
-.s10-st-v .s{flex:0 0 auto}
+.s10-st-r1{position:absolute;left:24px;right:24px;top:9px;height:30px;display:flex;align-items:center;gap:14px}
+.s10-st-n{flex:0 0 auto;font-size:20px;font-weight:600;line-height:30px;color:var(--ink)}
+.s10-st-v{flex:1 1 auto;min-width:0;text-align:right;font-size:15px;line-height:30px;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-st-g{position:absolute;left:24px;right:24px;top:45px;height:26px;display:flex;align-items:center;gap:8px;overflow:hidden}
+.s10-tag{flex:0 1 auto;min-width:0;max-width:48%;height:24px;padding:0 10px;border-radius:12px;background:rgba(255,255,255,.7);box-shadow:0 1px 0 rgba(20,22,31,.05);font-size:13px;font-weight:500;line-height:24px;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-tag.more{flex:0 0 auto;background:transparent;box-shadow:none;padding:0 2px}
+.s10-city-big{position:absolute;right:24px;top:10px;font-size:34px;font-weight:600;line-height:50px;letter-spacing:.02em;color:var(--ink);max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-g-note{font-size:13px;line-height:26px;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-swm{flex:0 0 auto;position:relative;width:18px;height:10px;border-radius:5px;background:rgba(20,22,31,.14)}
+.s10-swm::after{content:"";position:absolute;top:2px;left:2px;width:6px;height:6px;border-radius:50%;background:#fff}
+.s10-swm.on{background:rgba(20,22,31,.66)}
+.s10-swm.on::after{left:10px}
+.s10-g-note.sp{margin-left:6px}
+.s10-env3{flex:0 0 auto;width:42px;height:22px;border-radius:11px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.65)}
+.s10-env3.on{outline:2px solid var(--ink);outline-offset:2px}
+.s10-env3.k-cotton{background:linear-gradient(120deg,#F5A9C8,#DCD0F2 55%,#9FD8EA)}
+.s10-env3.k-halo{background:radial-gradient(circle at 78% 30%,#FFF9EF 0 4px,#FF6A1F 8px,#DBBA95 14px,#D0BCE1 22px)}
+.s10-env3.k-sunset{background:linear-gradient(180deg,#2E95FF,#FFC53D 55%,#FF7A33)}
 .s10-dot{flex:0 0 auto;display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blue);box-shadow:0 0 0 2px rgba(255,255,255,.9);margin-right:4px}
-/* the 24px edge in the pile (13/600 label) */
-.s10-pl{position:absolute;left:0;right:0;top:0;height:24px;width:100%;padding:0 24px;display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none}
-.st-pile .s10-pl{opacity:1;pointer-events:auto}
-.st-pile .s10-st,.st-pile .s10-more{opacity:0;transform:translateY(-12px);pointer-events:none}
-.st-lift .s10-st,.st-lift .s10-more,.st-drop .s10-st,.st-drop .s10-more{opacity:0;pointer-events:none}
-.s10-anim .s10-st,.s10-anim .s10-pl,.s10-anim .s10-more{transition:opacity calc(110ms * var(--k,1)) ease,transform var(--lift) var(--ease)}
-.s10-anim .st-pile .s10-pl{transition:opacity calc(160ms * var(--k,1)) ease calc(150ms * var(--k,1))}
-/* drop: the 24px labels leave first, the strip names return after them; the home header returns after the page header has gone */
-.s10-drop.s10-anim .st-home .s10-pl{transition:opacity calc(80ms * var(--k,1)) ease}
-.s10-drop.s10-anim .st-home .s10-st,.s10-drop.s10-anim .st-home .s10-more,.s10-drop.s10-anim .st-home .s10-face{transition:opacity calc(160ms * var(--k,1)) ease calc(110ms * var(--k,1)),transform var(--lift) var(--ease)}
-.s10-drop .s10-hd{transition:opacity calc(200ms * var(--k,1)) ease calc(110ms * var(--k,1))}
-.s10-anim .st-drop .s10-st,.s10-anim .st-drop .s10-more{opacity:1;transition:opacity calc(160ms * var(--k,1)) ease calc(160ms * var(--k,1))}
+/* the front sheet (帮助 · 隐私 · 账户 · 关于) */
 .s10-L5 .s10-more{position:absolute;left:24px;right:24px;top:66px;display:flex;flex-wrap:wrap;gap:0 20px}
-.s10-more button{height:40px;font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center}
+.s10-more button{height:44px;font-size:15px;font-weight:500;color:var(--ink);display:flex;align-items:center}
 .s10-more button:active{opacity:.6}
-.s10-more p{flex:1 0 100%;margin-top:10px;font-size:13px;line-height:1.5;color:var(--body)}
-/* ---- identity sheet (white, 230px): the name is the first thing you see ---- */
+.s10-more p{flex:1 0 100%;margin-top:4px;font-size:13px;line-height:1.5;color:var(--body)}
+/* the 24px edge in the pile: a legible label; the whole pile is one ≥44px "back to the stack" control (.s10-pilehit) */
+.s10-pl{position:absolute;left:0;right:0;top:0;height:24px;padding:0 24px;display:flex;align-items:center;font-size:13px;font-weight:600;line-height:1;color:var(--body);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:0;pointer-events:none}
+.st-pile .s10-pl{opacity:1}
+.s10-pilehit{position:absolute;left:0;right:0;bottom:0;height:var(--pile);z-index:31;display:none;align-items:flex-end;justify-content:flex-end;padding:0 18px 8px}
+.s10-g-lift .s10-pilehit{display:flex}
+.s10-pilehit span{font-size:13px;font-weight:600;color:var(--ink);opacity:.0}
+.s10-pilehit:active{background:rgba(20,22,31,.04)}
+/* displayed-state visibility */
+.st-pile .s10-st,.st-pile .s10-more,.st-pile .s10-face,.st-lift .s10-st,.st-lift .s10-more{opacity:0;pointer-events:none}
+.st-lift .s10-face{pointer-events:none}
+.st-lift .s10-face .s10-rest{opacity:0}
+.s10-g-rec .s10-L0.st-lift .s10-face,.s10-g-rec .s10-L0.st-start .s10-face .s10-name{opacity:0}
+.s10-pf .s10-L0:is(.st-lift,.st-start,.fr-lift) .s10-face .s10-name{visibility:hidden}
+.st-pile .s10-pg{opacity:0;pointer-events:none}
+/* motion (all parts run the full 320ms with no delay so the panel's keyframe scrub lands every part correctly):
+   what was showing leaves early (gone by 35%), what arrives comes late (after 45%) */
+@keyframes s10-early{0%{opacity:1}35%,100%{opacity:0}}
+@keyframes s10-late{0%,45%{opacity:0}100%{opacity:1}}
+.s10-mv .mv.fr-home:not(.st-home) :is(.s10-st,.s10-more,.s10-face .s10-rest){animation:s10-early var(--lift) linear both}
+.s10-mv .s10-L0.mv.fr-home.st-pile .s10-face,.s10-g-rec.s10-mv .s10-L0.mv.fr-home .s10-face{animation:s10-early var(--lift) linear both}
+.s10-mv .mv.st-home:not(.fr-home) :is(.s10-st,.s10-more,.s10-face,.s10-face .s10-rest){animation:s10-late var(--lift) linear both}
+.s10-mv .mv.st-pile:not(.fr-pile) .s10-pl{animation:s10-late var(--lift) linear both}
+.s10-mv .mv.fr-pile:not(.st-pile) .s10-pl{animation:s10-early var(--lift) linear both}
+.s10-mv .mv.st-pile.fr-lift .s10-pg{animation:s10-early var(--lift) linear both}
+/* ---- identity sheet (white, 230px): the name first ---- */
 .s10-face{position:absolute;left:0;right:0;top:0;height:230px;padding:26px 24px 0;cursor:pointer;outline:none}
 .s10-name{font-size:52px;font-weight:600;line-height:1.15;letter-spacing:-.01em;color:var(--ink);overflow-wrap:anywhere}
 .s10-acct{margin-top:8px;font-size:15px;line-height:1.45;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s10-acct .ok{color:#0B7F62;font-weight:500}
+.s10-acct .ok{color:var(--ok-ink-w);font-weight:500}
 .s10-fx{margin-top:20px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.s10-fx-i{display:flex;flex-direction:column;align-items:flex-start;min-width:0;padding:2px 0;transition:opacity 120ms ease}
+.s10-fx-i{display:flex;flex-direction:column;align-items:flex-start;min-width:0;min-height:44px;padding:2px 0;transition:opacity 120ms ease}
 .s10-fx-i:active{opacity:.55}
 .s10-fx-i .l{font-size:13px;font-weight:500;line-height:18px;color:var(--sub)}
 .s10-fx-i b{margin-top:2px;font-size:20px;font-weight:600;line-height:28px;color:var(--ink);white-space:nowrap}
 .s10-fx-i .s{display:flex;align-items:center;gap:4px;min-height:20px;font-size:14px;line-height:20px;color:var(--body);white-space:nowrap}
-.s10-L0:not(.st-home):not(.st-pile) .s10-face .s10-name{visibility:hidden}
-.st-lift .s10-face .s10-rest{opacity:0;pointer-events:none}
-.st-pile .s10-face{opacity:0;pointer-events:none}
-.s10-anim .s10-face,.s10-anim .s10-face .s10-rest{transition:opacity calc(80ms * var(--k,1)) ease}
-.s10-anim .st-drop .s10-face .s10-rest{transition:opacity calc(160ms * var(--k,1)) ease calc(140ms * var(--k,1))}
-.st-lift .s10-face,.st-drop .s10-face{pointer-events:none}
+.s10-fresh{display:inline-block;margin-left:10px;vertical-align:middle;font-size:13px;font-weight:500;line-height:1;padding:5px 8px;border-radius:10px;color:var(--ok-ink-w);background:rgba(14,155,118,.10);letter-spacing:0}
+.s10-land-a{animation:s10-land-a calc(240ms * var(--k,1)) var(--ease) both}
+.s10-land-b{animation:s10-land-b calc(240ms * var(--k,1)) var(--ease) both}
+@keyframes s10-land-a{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes s10-land-b{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
 /* ---- a lifted sheet becomes the page: header (30/500 + 14, collapsing to 18 in the tool row) + its own scroller ---- */
 .s10-pg{position:absolute;inset:0}
-.s10-ph{position:absolute;left:0;right:0;top:0;height:calc(116px - 68px * var(--hc,0));z-index:3;overflow:hidden;background-color:var(--lc);transition:opacity calc(200ms * var(--k,1)) ease,transform var(--lift) var(--ease),background-color var(--env)}
-.s10-bk{position:absolute;left:10px;top:4px;height:44px;padding:0 10px 0 4px;display:flex;align-items:center;gap:2px;font-size:15px;font-weight:500;color:var(--ink)}
+.s10-ph{position:absolute;left:0;right:0;top:0;height:calc(116px - 68px * var(--hc,0));z-index:3;overflow:hidden;background-color:var(--lc)}
+.s10-bk{position:absolute;left:10px;top:2px;height:44px;min-width:44px;padding:0 10px 0 4px;display:flex;align-items:center;gap:2px;font-size:15px;font-weight:500;color:var(--ink)}
 .s10-bk svg{width:22px;height:22px;display:block}
 .s10-bk:active{opacity:.55}
-.s10-ph-t{position:absolute;top:calc(52px - 39px * var(--hc,0));left:calc(24px + (50% - 24px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(100% - 48px);font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
-.s10-ph-m{position:absolute;top:92px;left:24px;right:24px;font-size:14px;line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0) * 2.2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.s10-sc2{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:116px 0 28px;scrollbar-width:none}
-.ju-phone.kb .s10-pge .s10-sc2{padding-bottom:0;scroll-padding-bottom:104px}
-.s10-sc2::-webkit-scrollbar{display:none}
-/* page phases (controller classes): the page arrives with the sheet; its name starts exactly where the strip's name was */
-.s10-pgc{transition:transform var(--lift) var(--ease),opacity calc(200ms * var(--k,1)) ease}
-.s10-pgr{transition:opacity calc(220ms * var(--k,1)) ease calc(110ms * var(--k,1))}
-/* the page header travels with the page (same offset, same curve) and only shows once the name has passed it */
-.s10-pg.is-top.ph-enter .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px));transition:none}
-.s10-lifted.s10-anim .s10-pg.is-top .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(150ms * var(--k,1)),transform var(--lift) var(--ease),background-color var(--env)}
-.s10-pg.is-top.ph-enter .s10-pgc{transform:translateY(var(--pg-off,0px));transition:none}
-.s10-pg.is-top.ph-enter .s10-pgr{opacity:0;transition:none}
-.s10-pg.is-top.ph-exit .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px));transition:opacity calc(90ms * var(--k,1)) ease,transform var(--lift) var(--ease),background-color var(--env)}
-.s10-pg.is-top.ph-exit .s10-pgc{transform:translateY(calc(var(--pg-off,0px) + var(--psc,0px)))}
-.s10-pg.is-top.ph-exit .s10-pgr{opacity:0;transition:opacity calc(120ms * var(--k,1)) ease}
+.s10-ph-t{position:absolute;top:calc(52px - 39px * var(--hc,0));left:calc(24px + (50% - 24px) * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(100% - 48px - 120px * var(--hc,0));font-size:calc(30px - 12px * var(--hc,0));font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.s10-ph-m{position:absolute;top:92px;left:24px;right:24px;font-size:14px;line-height:1.5;color:var(--t2);opacity:calc(1 - var(--hc,0) * 2.2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.s10-sc2{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:116px 0 0;scrollbar-width:none}
+/* root page phases: it arrives with its sheet; the profile name starts exactly where the strip's name was (--pg-off) */
+@keyframes s10-ph-in{0%{opacity:0;transform:translateY(var(--pg-off,0px))}45%{opacity:0}100%{opacity:1;transform:none}}
+@keyframes s10-ph-out{0%{opacity:1;transform:none}28%{opacity:0}100%{opacity:0;transform:translateY(var(--pg-off,0px))}}
+@keyframes s10-pgc-in{from{transform:translateY(var(--pg-off,0px))}to{transform:none}}
+@keyframes s10-pgc-out{from{transform:none}to{transform:translateY(calc(var(--pg-off,0px) + var(--psc,0px)))}}
+.s10-pg.is-top.ph-enter .s10-ph{opacity:0;transform:translateY(var(--pg-off,0px))}
+.s10-pg.is-top.ph-enter .s10-pgc{transform:translateY(var(--pg-off,0px))}
+.s10-pg.is-top.ph-enter .s10-pgr{opacity:0}
+.s10-trl .s10-pg.is-top.ph-in .s10-ph{animation:s10-ph-in var(--lift) var(--ease) both}
+.s10-trl .s10-pg.is-top.ph-in .s10-pgc{animation:s10-pgc-in var(--lift) var(--ease) both}
+.s10-trl .s10-pg.is-top.ph-in .s10-pgr{animation:s10-late var(--lift) linear both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-ph,.s10-tr-swap .s10-pg.is-top.ph-exit .s10-ph{animation:s10-ph-out var(--lift) var(--ease) both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgc{animation:s10-pgc-out var(--lift) var(--ease) both}
+.s10-tr-drop .s10-pg.is-top.ph-exit .s10-pgr,.s10-tr-swap .s10-pg.is-top.ph-exit .s10-pgc{animation:s10-early var(--lift) linear both}
+.s10-tr-swap .s10-pg.is-under.ph-exit{animation:s10-late var(--lift) linear both}
 .s10-pgp{--pg-off:-102px}
-.s10-pgp.is-under .s10-ph{opacity:0;transition:opacity calc(90ms * var(--k,1)) ease}
-.s10-pgp.is-under.ph-exit .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(110ms * var(--k,1))}
-.s10-pge.is-top.ph-in .s10-ph{transition:opacity calc(180ms * var(--k,1)) ease calc(110ms * var(--k,1))}
-
-.s10-pgp.is-under .s10-pgc{opacity:0}
-.s10-pgp.is-under.ph-exit .s10-ph{opacity:1}
-.s10-pgp.is-under.ph-exit .s10-pgc{opacity:1}
-/* ---- profile (the identity sheet lifted) ---- */
 .s10-pgc{padding:12px 0 0}
 .s10-pgc > .s10-name{padding:0 24px}
-.s10-fresh{display:inline-block;margin-left:10px;vertical-align:middle;font-size:13px;font-weight:500;line-height:1;padding:5px 8px;border-radius:10px;color:#0B7F62;background:rgba(14,155,118,.10);letter-spacing:0}
-.s10-rdeck{margin-top:24px;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 212px)}
-.s10-pgp .s10-sc2{padding-bottom:0}
-.s10-rv{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 14px;min-height:40px;padding-top:6px}
-.s10-rv .v{font-size:20px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere;min-width:0}
-.s10-rv .ok{font-size:15px;font-weight:500;color:var(--ok-ink)}
-.s10-rv .no{font-size:15px;font-weight:500;color:var(--sub)}
-.s10-ra .s10-snap{margin-top:0}
-.s10-link{height:32px;font-size:15px;font-weight:500;color:var(--link)}
-.s10-link:active{opacity:.55}
-.s10-cpf{margin-top:4px;font-size:13px;line-height:1.5;color:var(--err-ink)}
-.s10-snap{margin-top:30px;font-size:14px;line-height:1.6;color:var(--sub);max-width:30em}
-.s10-ra .s10-btn{margin-top:18px}
-.s10-btn{margin-top:22px;height:46px;padding:0 24px;border-radius:23px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.28);font-size:16px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;transition:transform 120ms ease,background-color 120ms ease}
-.s10-btn:active{transform:scale(.97);background-color:rgba(20,22,31,.05)}
-/* ---- edit: inside the identity sheet a second, smaller deck rises from the pile line — one sheet per field, same colours as the home stack ---- */
+/* ---- deeper pages: one more sheet rising inside the lifted one, 16px lower, so the parent's edge stays visible ---- */
+.s10-sub{position:absolute;left:0;right:0;bottom:0;top:16px;z-index:6;border-radius:28px 28px 0 0;background-color:var(--lc);box-shadow:0 -10px 30px rgba(20,22,31,.13),inset 0 1px 0 rgba(255,255,255,.8);overflow:hidden;--lc:#fff;--t2:var(--sub)}
+.s10-sub.d2{top:32px;z-index:7}
+.s10-L0 .s10-sub{--lc:var(--c1)}
+.s10-L0 .s10-sub.d2{--lc:#fff}
+.s10-sub.is-top.ph-enter{transform:translateY(105%)}
+.s10-sub.is-top.ph-in{animation:s10-sub-in calc(300ms * var(--k,1)) var(--ease) both;--kt:300ms}
+.s10-sub.is-top.ph-exit{animation:s10-sub-out calc(260ms * var(--k,1)) var(--ease-io) both;--kt:260ms}
+@keyframes s10-sub-in{from{transform:translateY(105%)}to{transform:none}}
+@keyframes s10-sub-out{from{transform:none}to{transform:translateY(105%)}}
+/* ---- edit 资料: inside the identity sheet a second, smaller deck rises from the pile line (approved in stage 1) ---- */
 .s10-pge{position:absolute;inset:0;z-index:4}
 .s10-pge .s10-sc2{background:transparent}
-.s10-deck{position:relative;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px);padding-top:6px;transition:transform var(--lift) var(--ease)}
-.s10-pge.ph-enter .s10-deck{transform:translateY(calc(var(--ph,844px) - 380px));transition:none}
-.s10-pge.ph-exit .s10-deck{transform:translateY(calc(var(--ph,844px) - 380px))}
-.s10-fs{position:relative;margin-top:-28px;padding:20px 24px 42px;border-radius:28px 28px 0 0;background-color:var(--fc);box-shadow:var(--sheet-shadow),inset 0 1px 0 rgba(255,255,255,.55);transition:background-color var(--env)}
+.s10-deck{position:relative;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px);padding-top:6px}
+.s10-pge.ph-enter .s10-deck{transform:translateY(calc(var(--ph,844px) - 380px))}
+.s10-pge.is-top.ph-in .s10-deck{animation:s10-deck-in var(--lift) var(--ease) both}
+.s10-pge.is-top.ph-exit .s10-deck{animation:s10-deck-out var(--lift) var(--ease) both}
+@keyframes s10-deck-in{from{transform:translateY(calc(var(--ph,844px) - 380px))}to{transform:none}}
+@keyframes s10-deck-out{from{transform:none}to{transform:translateY(calc(var(--ph,844px) - 380px))}}
+.s10-pge.is-top.ph-enter .s10-ph{opacity:0}
+.s10-pge.is-top.ph-in .s10-ph{animation:s10-late var(--lift) linear both}
+.s10-pge.is-top.ph-exit .s10-ph{animation:s10-early var(--lift) linear both}
+.s10-pgp.is-under .s10-ph,.s10-pgp.is-under .s10-pgc{opacity:0}
+.s10-pgp.is-under.ph-in .s10-ph,.s10-pgp.is-under.ph-in .s10-pgc{animation:s10-early var(--lift) linear both}
+.s10-pgp.is-under.ph-exit .s10-ph,.s10-pgp.is-under.ph-exit .s10-pgc{opacity:1;animation:s10-late var(--lift) linear both}
+/* field sheets (edit + every form): one sheet per field, same colours as the home stack */
+.s10-fs{position:relative;margin-top:-28px;padding:20px 24px 42px;border-radius:28px 28px 0 0;background-color:var(--fc);box-shadow:0 -10px 30px rgba(20,22,31,.10),inset 0 1px 0 rgba(255,255,255,.6)}
 .s10-fs:first-child{margin-top:0}
-.s10-fs1{--fc:var(--c1);z-index:1}.s10-fs2{--fc:var(--c2);z-index:2}.s10-fs3{--fc:var(--c3);z-index:3}
-.s10-fa{--fc:#fff;z-index:4;flex:1 0 auto;padding:22px 24px 24px;display:flex;flex-direction:column;align-items:center}
+.s10-fs1{--fc:var(--c1);--pc:var(--p1)}.s10-fs2{--fc:var(--c2);--pc:var(--p2)}.s10-fs3{--fc:var(--c3);--pc:var(--p3)}
+.s10-fa{--fc:#fff;flex:1 0 auto;padding:22px 24px 24px;display:flex;flex-direction:column;align-items:center}
 .ju-phone.kb .s10-fa{position:sticky;bottom:0;flex:0 0 auto}
+.ju-phone.kb .s10-sc2.s10-form{padding-bottom:0;scroll-padding-bottom:110px}
 .s10-fl{display:flex;align-items:baseline;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;line-height:20px;color:var(--sub)}
-.s10-fl label{color:var(--sub)}
 .s10-cnt{font-size:13px;color:var(--sub)}
 .s10-cnt.over{color:var(--err-ink);font-weight:600}
-.s10-in{display:block;width:100%;height:40px;margin-top:2px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);border-radius:0;background:transparent;padding:0;font-size:20px;font-weight:600;line-height:1.3;color:var(--ink);transition:border-color 160ms ease}
-.s10-in::placeholder{color:rgba(58,65,82,.55);font-weight:500}
-.s10-in:focus{border-bottom:2px solid var(--focus)}
-.is-bad .s10-in{border-bottom:2px solid var(--err)}
+.s10-in{display:block;width:100%;height:40px;margin-top:2px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);border-radius:0;background:transparent;padding:0;font-size:20px;font-weight:600;line-height:1.3;color:var(--ink);transition:border-color 140ms ease}
+.s10-in::placeholder,.s10-ta::placeholder{color:rgba(58,65,82,.58);font-weight:400}
+.s10-in:focus,.s10-ta:focus{border-bottom:2px solid var(--focus)}
+.is-bad .s10-in,.is-bad .s10-ta{border-bottom:2px solid var(--err)}
 .is-bad .s10-fl label{color:var(--err-ink)}
+.s10-ta{display:block;width:100%;min-height:132px;margin-top:6px;padding:4px 0 8px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);border-radius:0;background:transparent;resize:none;font-size:17px;line-height:1.6;color:var(--ink)}
 .s10-fe{min-height:18px;margin-top:6px;font-size:13px;line-height:18px;color:var(--err-ink)}
 .s10-fe:empty{min-height:8px}
 .s10-okl{margin-top:8px;font-size:15px;font-weight:500;line-height:1.4;color:var(--ok-ink)}
 .s10-er{display:flex;align-items:center;flex-wrap:wrap;gap:10px 12px;margin-top:12px}
-.s10-pill{height:38px;padding:0 16px;border-radius:19px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.34);background-color:rgba(255,255,255,.42);font-size:15px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;transition:transform 120ms ease}
-.s10-pill:active{transform:scale(.96)}
-.s10-pill[disabled]{opacity:.55;cursor:default}
 .s10-code{width:7em;height:40px;border:0;border-bottom:1.5px solid rgba(20,22,31,.30);background:transparent;padding:0;font-size:20px;font-weight:600;letter-spacing:.22em;color:var(--ink)}
 .s10-code:focus{border-bottom:2px solid var(--focus)}
 .s10-rs{margin-top:4px}
@@ -195,41 +259,208 @@ body{margin:0}
 .s10-fs3 .s10-link:not([disabled]){color:var(--ink);text-decoration:underline;text-underline-offset:3px}
 .s10-fh{margin-top:8px;font-size:13px;line-height:1.55;color:var(--sub)}
 .s10-fail{align-self:stretch;margin-bottom:12px;font-size:14px;line-height:1.5;color:var(--err-ink);text-align:center}
-.s10-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border-radius:24px;background-color:var(--blue);background-image:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 52%,rgba(8,12,40,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 10px 22px -12px rgba(69,83,190,.85);color:#fff;font-size:16px;font-weight:600;letter-spacing:.04em;text-align:center;transition:transform 120ms ease,opacity 160ms ease}
-.s10-cta:active{transform:scale(.958)}
-.s10-cta[disabled]{opacity:.82;cursor:default}
-.s10-fa .s10-snap{margin-top:14px;font-size:13px;line-height:1.55;text-align:center}
 .shake-0 .is-bad{animation:s10-shk0 calc(220ms * var(--k,1)) ease}
 .shake-1 .is-bad{animation:s10-shk1 calc(220ms * var(--k,1)) ease}
 @keyframes s10-shk0{0%,100%{transform:none}30%{transform:translateX(-6px)}65%{transform:translateX(4px)}}
 @keyframes s10-shk1{0%,100%{transform:none}30%{transform:translateX(-6px)}65%{transform:translateX(4px)}}
-/* ---- confirm: one more sheet rises over the pile (same material); the rest dims a little ---- */
+.s10-files{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.s10-file{display:flex;align-items:center;gap:10px;min-height:40px;padding:0 4px 0 12px;border-radius:12px;background:rgba(255,255,255,.62);font-size:14px;color:var(--body)}
+.s10-file span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.s10-file button{flex:0 0 auto;height:40px;padding:0 10px;font-size:14px;color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.s10-add{position:relative;display:inline-flex;align-items:center;height:40px;padding:0 16px;border-radius:20px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.34);background:rgba(255,255,255,.45);font-size:15px;font-weight:500;color:var(--ink);overflow:hidden;cursor:pointer}
+.s10-add input{position:absolute;inset:0;opacity:0;cursor:pointer;font-size:0}
+.s10-who{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.s10-who button{height:38px;padding:0 14px;border-radius:19px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.3);font-size:15px;font-weight:500;color:var(--ink);transition:background-color 120ms ease,color 120ms ease}
+.s10-who button[aria-pressed=true]{background:var(--ink);color:#fff;box-shadow:none}
+/* ---- sheets within a sheet: every list is a small deck; the last (base) sheet carries the rest of the page and runs to the bottom ---- */
+.s10-ideck{position:relative;display:flex;flex-direction:column}
+.s10-ish{position:relative;display:block;width:100%;margin-top:-22px;padding:18px 24px 34px;border-radius:22px 22px 0 0;background-color:var(--ib,#fff);box-shadow:0 -8px 24px rgba(20,22,31,.09),inset 0 1px 0 rgba(255,255,255,.85);text-align:left;color:var(--ink)}
+.s10-ish:first-child{margin-top:0}
+button.s10-ish:active{filter:brightness(.97)}
+.s10-base{flex:1 0 auto;padding:22px 24px 28px;--ib:color-mix(in srgb,var(--lc) 30%,#fff)}
+.s10-pgbody{display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 116px)}
+.s10-sub .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 132px)}
+.s10-sub.d2 .s10-pgbody{min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 148px)}
+.s10-dom{padding:6px 24px 26px}
+.s10-big{display:flex;align-items:baseline;gap:8px;font-weight:600;color:var(--ink)}
+.s10-big b{font:600 64px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:-.02em}
+.s10-big span{font-size:20px;font-weight:600}
+.s10-lead{font-size:24px;font-weight:600;line-height:1.42;color:var(--ink)}
+.s10-dom p.s10-note{margin-top:10px}
+.s10-note{font-size:14px;line-height:1.6;color:var(--t2)}
+.s10-small{font-size:13px;line-height:1.55;color:var(--t2)}
+.s10-h{font-size:13px;font-weight:600;line-height:20px;color:var(--t2);margin-bottom:6px}
+.s10-it{font-size:17px;font-weight:600;line-height:1.4;color:var(--ink);overflow-wrap:anywhere}
+.s10-is{margin-top:4px;font-size:14px;line-height:1.5;color:var(--sub);overflow-wrap:anywhere}
+.s10-row{display:flex;align-items:center;gap:10px;min-height:28px}
+.s10-row .s10-it{flex:1 1 auto;min-width:0}
+.s10-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.s10-chip{display:inline-flex;align-items:center;height:24px;padding:0 9px;border-radius:12px;font-size:13px;font-weight:500;line-height:1;background:rgba(20,22,31,.07);color:var(--body);white-space:nowrap}
+.s10-chip.hot{background:var(--blue);color:#fff}
+.s10-chip.ok{background:rgba(14,155,118,.12);color:var(--ok-ink)}
+.s10-chip.mute{background:transparent;box-shadow:inset 0 0 0 1px rgba(20,22,31,.18)}
+.s10-link{height:32px;font-size:15px;font-weight:500;color:var(--link)}
+.s10-link:active{opacity:.55}
+.s10-snap{margin-top:30px;font-size:14px;line-height:1.6;color:var(--sub);max-width:30em}
+.s10-btn{margin-top:18px;height:46px;padding:0 24px;border-radius:23px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.28);font-size:16px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;justify-content:center;transition:transform 120ms ease,background-color 120ms ease}
+.s10-btn:active{transform:scale(.97);background-color:rgba(20,22,31,.05)}
+.s10-btn.danger{box-shadow:inset 0 0 0 1.5px rgba(218,58,82,.55);color:var(--err-ink)}
+.s10-btns{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.s10-btns .s10-btn{margin-top:0}
+.s10-pill{height:38px;padding:0 16px;border-radius:19px;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.34);background-color:rgba(255,255,255,.42);font-size:15px;font-weight:500;color:var(--ink);display:inline-flex;align-items:center;transition:transform 120ms ease}
+.s10-pill:active{transform:scale(.96)}
+.s10-pill[disabled]{opacity:.55;cursor:default}
+.s10-cta{display:flex;align-items:center;justify-content:center;width:min(100%,280px);height:48px;border-radius:24px;background-color:var(--blue);background-image:linear-gradient(180deg,rgba(255,255,255,.20),rgba(255,255,255,0) 52%,rgba(8,12,40,.16));box-shadow:inset 0 1px 0 rgba(255,255,255,.30),0 10px 22px -12px rgba(69,83,190,.85);color:#fff;font-size:16px;font-weight:600;letter-spacing:.04em;text-align:center;transition:transform 120ms ease,opacity 160ms ease}
+.s10-cta:active{transform:scale(.958)}
+.s10-cta[disabled]{opacity:.82;cursor:default}
+.s10-switch{position:relative;flex:0 0 auto;width:50px;height:30px;border-radius:15px;background:rgba(20,22,31,.2);transition:background-color 140ms ease}
+.s10-switch::after{content:"";position:absolute;top:2px;left:2px;width:26px;height:26px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(20,22,31,.25);transition:transform 140ms ease}
+.s10-switch[data-on=true]{background:var(--ink)}
+.s10-switch[data-on=true]::after{transform:translateX(20px)}
+/* ---- favourites: a deck of white event sheets; the date is the first thing in each ---- */
+.s10-ev{display:flex;align-items:flex-start;gap:14px}
+.s10-dt{flex:0 0 52px;display:flex;flex-direction:column;align-items:flex-start;padding-top:1px}
+.s10-dt b{font:600 32px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:-.02em;color:var(--ink)}
+.s10-dt span{margin-top:5px;font-size:13px;line-height:1.3;color:var(--sub);white-space:nowrap}
+.s10-ev-m{flex:1 1 auto;min-width:0}
+.s10-x{flex:0 0 auto;align-self:center;height:44px;padding:0 4px 0 10px;font-size:14px;font-weight:500;color:var(--sub);text-decoration:underline;text-underline-offset:3px}
+.s10-ideck.archived .s10-ish{--ib:color-mix(in srgb,var(--lc) 20%,#fff)}
+.s10-ideck.archived .s10-dt b,.s10-ideck.archived .s10-it{color:var(--sub)}
+.s10-empty{padding:4px 24px 0}
+.s10-empty b{display:block;font-size:30px;font-weight:600;line-height:1.3;color:var(--ink)}
+.s10-empty p{margin-top:8px;font-size:16px;line-height:1.6;color:var(--t2)}
+/* detail sub-sheet: title large, the time set like a timetable */
+.s10-dhead{padding:4px 24px 24px}
+.s10-dtitle{font-size:28px;font-weight:600;line-height:1.32;color:var(--ink);overflow-wrap:anywhere}
+.s10-when{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 14px;margin-top:14px}
+.s10-when b{font:600 56px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:-.02em;color:var(--ink)}
+.s10-when span{font-size:17px;font-weight:500}
+.s10-when span{font-size:16px;color:var(--body)}
+.s10-kv{display:grid;grid-template-columns:5.2em 1fr;gap:8px 12px;font-size:15px;line-height:1.5}
+.s10-kv dt{color:var(--sub)}
+.s10-kv dd{color:var(--ink);overflow-wrap:anywhere;min-width:0}
+.s10-quote{font-size:17px;line-height:1.75;color:var(--ink);overflow-wrap:anywhere}
+/* city: the current city set huge; six cities as a deck */
+.s10-cbig{font-size:64px;font-weight:600;line-height:1.05;letter-spacing:.02em;color:var(--ink)}
+.s10-cen{margin-top:8px;font-size:16px;color:var(--body)}
+.s10-srch{display:flex;align-items:center;gap:10px}
+.s10-srch input{flex:1 1 auto;min-width:0;height:44px;border:0;border-bottom:1.5px solid rgba(20,22,31,.3);background:transparent;font-size:20px;font-weight:500;color:var(--ink)}
+.s10-srch input:focus{border-bottom:2px solid var(--focus)}
+.s10-crow{display:flex;align-items:center;gap:12px;min-height:30px}
+.s10-crow b{font-size:22px;font-weight:600;color:var(--ink)}
+.s10-crow span{font-size:14px;color:var(--sub)}
+.s10-crow i{margin-left:auto;font-style:normal;font-size:13px;color:var(--sub)}
+.s10-ish.on .s10-crow i{color:#fff;background:var(--ink);padding:5px 10px;border-radius:12px;font-weight:500}
+.s10-flash{animation:s10-land-a calc(240ms * var(--k,1)) var(--ease) both}
+/* notify: the conclusion is the page; the three layers are three sheets */
+.s10-layerno{font:600 13px/1 "Archivo","Noto Sans SC",sans-serif;letter-spacing:.06em;color:var(--sub)}
+.s10-swrow{display:flex;align-items:center;gap:14px;min-height:62px;padding:8px 0;border-top:1px solid rgba(20,22,31,.08);width:100%;text-align:left}
+.s10-swrow:first-of-type{border-top:0}
+.s10-swrow .t{flex:1 1 auto;min-width:0}
+.s10-swrow .t b{display:block;font-size:16px;font-weight:600;line-height:1.4;color:var(--ink)}
+.s10-swrow .t span{display:block;margin-top:2px;font-size:13px;line-height:1.45;color:var(--sub)}
+.s10-perm{margin-top:14px}
+/* appearance: each environment is a sheet whose face IS the environment */
+.s10-envs .s10-ish{min-height:128px;padding-top:22px;background-color:transparent;overflow:hidden}
+.s10-envs .s10-ish::before{content:"";position:absolute;inset:0;border-radius:inherit;z-index:0}
+.s10-envs .s10-ish > *{position:relative;z-index:1}
+.s10-envs .k-cotton::before{background:radial-gradient(70% 90% at 0% 0%,#F5A9C8 0%,rgba(245,169,200,0) 100%),radial-gradient(70% 90% at 100% 20%,#9FD8EA 0%,rgba(159,216,234,0) 100%),linear-gradient(180deg,#E9D3EC,#D4E6F2)}
+.s10-envs .k-halo::before{background:radial-gradient(circle at 86% 30%,#FFF9EF 0 18px,#FF6A1F 34px,#F7925A 52px,#DBBA95 78px,#D0BCE1 110px,rgba(208,188,225,0) 150px),linear-gradient(180deg,#FFF5E8,#F8E6D6)}
+.s10-envs .k-sunset::before{background:radial-gradient(circle at 14% 18%,#FFF0B8 0 10px,rgba(255,206,92,.95) 26px,rgba(255,197,61,0) 70px),linear-gradient(180deg,#2E95FF 0%,#9EC3EE 22%,#FFC53D 60%,#FF7A33 100%)}
+.s10-envn{display:flex;align-items:baseline;gap:10px}
+.s10-envn b{font-size:26px;font-weight:600;color:var(--ink)}
+.s10-envn span{font-size:14px;color:var(--body)}
+.s10-envs .k-sunset .s10-envn b,.s10-envs .k-sunset .s10-envn span{color:#0e1430}
+.s10-envl{margin-top:6px;font-size:14px;color:var(--body)}
+.s10-envs .s10-chip{position:absolute;right:18px;top:20px;background:rgba(255,255,255,.85);color:var(--ink)}
+.s10-envs .s10-chip.hot{background:var(--ink);color:#fff}
+/* records / reports: the page is a stack — a kind sheet, then its records, each a sheet */
+.s10-kind{padding-top:16px;padding-bottom:30px;--ib:var(--kc)}
+.s10-kind .s10-row b{font-size:20px;font-weight:600;color:var(--ink)}
+.s10-kind .s10-row span{margin-left:auto;font:600 15px/1 "Archivo","Noto Sans SC",sans-serif;color:var(--sub)}
+.s10-rec{--ib:color-mix(in srgb,var(--kc) 42%,#fff)}
+.k-att{--kc:var(--c1)}.k-exit{--kc:var(--c2)}.k-chg{--kc:var(--c3)}.k-rep{--kc:var(--c2)}
+.s10-tl .s10-ish{padding-top:14px;padding-bottom:30px}
+.s10-tl .s10-row b{font-size:16px;font-weight:600;color:var(--ink)}
+.s10-tl .s10-row span{margin-left:auto;font-size:13px;color:var(--sub)}
+.s10-statbig{font-size:34px;font-weight:600;line-height:1.2;color:var(--ink)}
+/* reading sheet (rules, privacy): a comfortable measure */
+.s10-read{max-width:31em}
+.s10-gname{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.s10-gname b{font-size:26px;font-weight:600;color:var(--ink)}
+.s10-gname span{font-size:15px;color:var(--t2)}
+.s10-rule{margin-top:22px}
+.s10-rule h3{display:flex;gap:12px;align-items:baseline;font-size:18px;font-weight:600;line-height:1.45;color:var(--ink)}
+.s10-rule h3 i{flex:0 0 auto;font:600 15px/1.45 "Archivo","Noto Sans SC",sans-serif;font-style:normal;color:var(--sub);min-width:1.6em}
+.s10-rule p{margin-top:6px;padding-left:calc(1.6em + 12px);font-size:16px;line-height:1.78;color:var(--body)}
+/* seams: 找局 is a deck of event sheets you can swipe sideways (V27 gesture); 我的局 is a deck per stage */
+.s10-feedf{display:flex;gap:8px;padding:0 24px 18px}
+.s10-feedf button{height:38px;padding:0 16px;border-radius:19px;background:rgba(255,255,255,.55);font-size:15px;font-weight:500;color:var(--ink)}
+.s10-feedf button[aria-pressed=true]{background:var(--ink);color:#fff}
+.s10-fdeck{padding-top:2px}
+.s10-fcard{touch-action:pan-y;user-select:none;-webkit-user-select:none;transition:transform .5s cubic-bezier(.2,.9,.3,1.04);will-change:transform;min-height:116px;--ib:var(--fcol)}
+.s10-fcard.is-drag{transition:none}
+.s10-fcard.is-wrong{filter:grayscale(.55) brightness(.97)}
+.s10-fstar{flex:0 0 auto;font-size:22px;line-height:1;color:var(--ink);width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin:-8px -10px 0 0}
+.s10-fhint{position:absolute;right:20px;bottom:14px;font-size:13px;font-weight:600;color:var(--ink);background:rgba(255,255,255,.8);padding:4px 10px;border-radius:12px}
+.s10-fcard.is-wrong .s10-fhint{color:var(--sub)}
+.s10-fbody{position:relative;flex:1 1 auto;min-height:calc(var(--ph,844px) - 470px)}
+.s10-seamsc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;padding:124px 0 var(--navh);scrollbar-width:none}
+.s10-seamsc::-webkit-scrollbar{display:none}
+/* profile (read): the identity sheet holds its own small deck — 微信号 / 邮箱 sheets in the edit deck's colours, then a white base sheet */
+.s10-rdeck{margin-top:24px;display:flex;flex-direction:column;min-height:calc(var(--ph,844px) - var(--top) - var(--pileb) - 212px)}
+.s10-pgp .s10-sc2{padding-bottom:0}
+.s10-rv{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 14px;min-height:40px;padding-top:6px}
+.s10-rv .v{font-size:20px;font-weight:600;line-height:1.35;color:var(--ink);overflow-wrap:anywhere;min-width:0}
+.s10-rv .ok{font-size:15px;font-weight:500;color:var(--ok-ink)}
+.s10-rv .no{font-size:15px;font-weight:500;color:var(--sub)}
+.s10-ra .s10-snap{margin-top:0}
+.s10-ra .s10-btn{margin-top:18px}
+.s10-cpf{margin-top:4px;font-size:13px;line-height:1.5;color:var(--err-ink)}
+.s10-fa .s10-snap{margin-top:14px;font-size:13px;line-height:1.55;text-align:center}
+/* ---- overlays: confirm = one more sheet rising over everything; toast / undo = a thin ink sheet above the pile or the nav ---- */
 .s10-over{position:absolute;inset:0;z-index:80}
-.s10-cf-dim{position:absolute;inset:0;background:rgba(20,22,31,.24);animation:s10-fade calc(220ms * var(--k,1)) ease both}
-.s10-cf-sheet{position:absolute;left:0;right:0;bottom:var(--kb,0px);padding:30px 24px 26px;border-radius:28px 28px 0 0;background:#fff;box-shadow:0 -10px 30px rgba(20,22,31,.16);animation:s10-rise calc(300ms * var(--k,1)) var(--ease) both}
+.s10-cf-dim{position:absolute;inset:0;background:rgba(20,22,31,.2);animation:s10-fade calc(220ms * var(--k,1)) ease both}
+.s10-cf-deck{position:absolute;left:0;right:0;bottom:var(--kb,0px);animation:s10-rise calc(320ms * var(--k,1)) var(--ease) both}
+.s10-cf-edge{height:44px;margin-bottom:-28px;border-radius:28px 28px 0 0;background:var(--c3);box-shadow:0 -10px 30px rgba(20,22,31,.10),inset 0 1px 0 rgba(255,255,255,.6)}
+.s10-cf-edge + .s10-cf-edge{background:var(--c2)}
+.s10-cf-sheet{position:relative;padding:30px 24px 26px;border-radius:28px 28px 0 0;background:var(--c1);box-shadow:0 -10px 30px rgba(20,22,31,.14),inset 0 1px 0 rgba(255,255,255,.8)}
+.s10-cf-sheet.danger{background:#fff}
 .s10-cf-t{font-size:22px;font-weight:600;line-height:1.35;color:var(--ink)}
 .s10-cf-b{margin-top:8px;font-size:15px;line-height:1.6;color:var(--sub)}
 .s10-cf-row{display:flex;gap:12px;margin-top:22px}
-.s10-b2{flex:1 1 0;height:48px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;text-align:center;transition:transform 120ms ease}
+.s10-b2{flex:1 1 0;min-height:48px;padding:0 8px;border-radius:24px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;text-align:center;transition:transform 120ms ease}
 .s10-b2:active{transform:scale(.97)}
 .s10-b-ink{background:var(--ink);color:#fff}
 .s10-b-line{box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.28);color:var(--ink)}
 .s10-b-danger{box-shadow:inset 0 0 0 1.5px rgba(218,58,82,.55);color:var(--err-ink)}
 @keyframes s10-rise{from{transform:translateY(105%)}to{transform:none}}
 @keyframes s10-fade{from{opacity:0}to{opacity:1}}
-/* ---- toast: a thin ink sheet above the pile / nav ---- */
-.s10-toast{position:absolute;left:24px;right:24px;bottom:calc(var(--navh) + 14px);z-index:90;min-height:46px;padding:12px 18px;border-radius:16px;background:rgba(20,22,31,.94);color:#fff;font-size:15px;line-height:1.45;box-shadow:0 12px 26px -14px rgba(20,22,31,.6);animation:s10-toast calc(260ms * var(--k,1)) var(--ease) both;transition:bottom var(--lift) var(--ease)}
-.s10-lifted .s10-toast,.s10-start .s10-toast,.s10-drop .s10-toast{bottom:calc(var(--pileb) + 14px)}
+.s10-toast{position:absolute;left:24px;right:24px;bottom:calc(var(--navh) + 14px);z-index:90;display:flex;align-items:center;gap:12px;min-height:46px;padding:10px 10px 10px 18px;border-radius:16px;background:rgba(20,22,31,.94);color:#fff;font-size:15px;line-height:1.45;box-shadow:0 12px 26px -14px rgba(20,22,31,.6);animation:s10-toast calc(260ms * var(--k,1)) var(--ease) both}
+.s10-toast span{flex:1 1 auto;min-width:0}
+.s10-toast button{flex:0 0 auto;min-height:36px;padding:0 12px;border-radius:12px;background:rgba(255,255,255,.14);color:#fff;font-size:15px;font-weight:600}
+.s10-navoff .s10-toast{bottom:calc(var(--pileb) + 14px)}
 .s10-toast.k-error{background:#3a0d16}
+.s10-toast.s10-undo{bottom:calc(var(--pileb) + 72px)}
 @keyframes s10-toast{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.scrub .s10-layer,.scrub .s10-pgc,.scrub .s10-deck{transition-duration:0ms!important}
+.s10-sub.s10-seamsub{top:var(--top);z-index:36}
+/* the system's own prompt (not JU's material): a plain system alert */
+.s10-sys{position:absolute;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.28);animation:s10-fade calc(180ms * var(--k,1)) ease both}
+.s10-sys-b{width:270px;border-radius:14px;background:rgba(246,246,248,.98);text-align:center;font-family:-apple-system,"PingFang SC","Noto Sans SC",sans-serif;overflow:hidden;animation:s10-sys calc(220ms * var(--k,1)) var(--ease) both}
+.s10-sys-b p{padding:18px 16px 4px;font-size:16px;font-weight:600;line-height:1.35;color:#000}
+.s10-sys-b small{display:block;padding:0 16px 16px;font-size:13px;line-height:1.4;color:#333}
+.s10-sys-b div{display:flex;border-top:1px solid rgba(0,0,0,.14)}
+.s10-sys-b button{flex:1 1 0;height:44px;text-align:center;font-size:16px;color:#0a64d6}
+.s10-sys-b button + button{border-left:1px solid rgba(0,0,0,.14);font-weight:600}
+@keyframes s10-sys{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:none}}
 </style>
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app s10{{panel.rootCls}}{{c.nav.rootCls}}{{x.appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}">
+    <div class="app s10{{panel.rootCls}}{{c.nav.rootCls}}{{x.appCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skinShown}}" data-prev="{{x.prevSkin}}">
       <div class="s10-sky s10-env" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div>
-      <section class="s10-home" data-surface="home">
+      <!-- ROOT 设置: the stack -->
+      <section class="s10-root s10-home {{x.homeCls}}" data-surface="home">
         <header class="s10-hd" data-header>
           <div class="s10-sky s10-sky-top" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div>
           <h1 class="s10-hd-t">设置</h1>
@@ -238,7 +469,7 @@ body{margin:0}
         </header>
         <div class="s10-sc" data-scroller="home" onScroll="{{x.onHomeScroll}}">
           <div class="s10-stack">
-            <!-- L0 identity: white, 230px; lifted it becomes 个人资料, and 编辑资料 rises inside it -->
+            <!-- L0 identity: white, 230px; it hosts 个人资料 (编辑 rises inside it), 我的记录, 我的举报 -->
             <div class="s10-layer s10-L0 {{x.L0.cls}}" style="{{x.L0.style}}" data-layer="id" data-origin="profile">
               <div class="s10-face" role="button" tabindex="0" aria-label="个人资料" onClick="{{x.L0.tap}}">
                 <p class="s10-name" style="font-size:{{x.nameSize}}px">{{c.you.name}}<sc-if value="{{x.freshName}}"><span class="s10-fresh">刚更新</span></sc-if></p>
@@ -250,22 +481,22 @@ body{margin:0}
                   </div>
                 </div>
               </div>
-              <button type="button" class="s10-pl" onClick="{{x.L0.pileTap}}">{{c.you.name}} · 资料 · 记录 · 举报</button>
+              <span class="s10-pl" aria-hidden="true">{{c.you.name}} · 资料 · 记录 · 举报</span>
               <sc-if value="{{c.nav.on.profile}}" hint-placeholder-val="{{false}}">
                 <div class="s10-pg s10-pgp {{c.nav.cls.profile}}" data-surface="profile">
                   <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">个人资料</h2><p class="s10-ph-m">{{x.profMeta}}</p></header>
                   <div class="s10-sc2" data-scroller="profile" onScroll="{{c.nav.onScroll}}">
                     <div class="s10-pgc">
-                      <p class="s10-name" style="font-size:{{x.nameSize}}px">{{c.you.name}}<sc-if value="{{x.freshName}}"><span class="s10-fresh">刚更新</span></sc-if></p>
+                      <p class="s10-name {{x.landName}}" style="font-size:{{x.nameSize}}px">{{c.you.name}}<sc-if value="{{x.freshName}}"><span class="s10-fresh">刚更新</span></sc-if></p>
                       <div class="s10-pgr s10-rdeck">
                         <section class="s10-fs s10-fs2">
                           <div class="s10-fl"><span>微信号</span><sc-if value="{{x.freshWx}}"><span class="s10-fresh">刚更新</span></sc-if></div>
-                          <div class="s10-rv"><span class="v">{{c.you.wxLabel}}</span><sc-if value="{{c.you.wx}}"><button type="button" class="s10-link" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></div>
+                          <div class="s10-rv {{x.landWx}}"><span class="v">{{c.you.wxLabel}}</span><sc-if value="{{c.you.wx}}"><button type="button" class="s10-link" data-act="copy" onClick="{{c.you.copyWx}}">复制</button></sc-if></div>
                           <sc-if value="{{c.you.copyFail}}"><p class="s10-cpf">{{x.copyFailInline}}：{{c.you.copyFail}}</p></sc-if>
                         </section>
                         <section class="s10-fs s10-fs3">
                           <div class="s10-fl"><span>工作 / 学校邮箱</span><sc-if value="{{x.freshMail}}"><span class="s10-fresh">刚更新</span></sc-if></div>
-                          <div class="s10-rv"><span class="v">{{x.mailFull}}</span><span class="{{x.mailStateCls}}">{{x.mailState}}</span></div>
+                          <div class="s10-rv {{x.landMail}}"><span class="v">{{x.mailFull}}</span><span class="{{x.mailStateCls}}">{{x.mailState}}</span></div>
                         </section>
                         <section class="s10-fs s10-fa s10-ra">
                           <p class="s10-snap">{{x.snapNote}}</p>
@@ -312,88 +543,429 @@ body{margin:0}
                   </div>
                 </div>
               </sc-if>
-              <sc-if value="{{x.L0.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L0.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <!-- 我的记录: a big count, then the page is a stack — a sheet per kind, its records as sheets in that kind's colour -->
+              <sc-if value="{{c.nav.on.records}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.records}}" data-surface="records">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">我的记录</h2><p class="s10-ph-m">只有你自己看得到 · 不是公开分数</p></header>
+                  <div class="s10-sc2" data-scroller="records" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <sc-if value="{{c.recs.empty}}"><div class="s10-dom s10-empty"><b>{{c.recs.emptyText}}</b><p>{{c.recs.help}}</p></div></sc-if>
+                      <sc-if value="{{x.recsAny}}"><div class="s10-dom">
+                        <p class="s10-big"><b>{{c.recs.count}}</b><span>条事实</span></p>
+                        <sc-if value="{{x.recDot}}"><p class="s10-row" style="margin-top:8px"><i class="s10-dot"></i><span class="s10-it" style="font-size:16px">{{x.recSub}} · 未处罚</span></p></sc-if>
+                        <p class="s10-note">{{c.recs.help}}</p>
+                      </div></sc-if>
+                      <div class="s10-ideck">
+                        <sc-for list="{{x.recGroups}}" as="g" hint-placeholder-count="3">
+                          <div class="s10-ish s10-kind {{g.cls}}"><p class="s10-row"><b>{{g.title}}</b><span>{{g.count}}</span></p></div>
+                          <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><button type="button" class="s10-ish s10-rec {{g.cls}}" data-rid="{{r.id}}" data-origin="rec-{{r.id}}" onClick="{{r.open}}">
+                            <span class="s10-row"><span class="s10-it">{{r.label}}</span><sc-if value="{{r.pendingReview}}"><span class="s10-chip hot">待核实</span></sc-if></span>
+                            <span class="s10-is" style="display:block">{{r.title}} · {{r.when.date}}</span>
+                            <span class="s10-chips"><span class="s10-chip">{{r.statusLabel}}</span><sc-if value="{{r.appealLine}}"><span class="s10-chip mute">{{r.appealLine}}</span></sc-if></span>
+                          </button></sc-for>
+                        </sc-for>
+                        <div class="s10-ish s10-base"><p class="s10-h">怎么记、怎么算</p><p class="s10-note">{{c.recs.creditSettings}}</p><p class="s10-small" style="margin-top:10px">{{c.recs.quotaNo}}</p></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <!-- 记录详情: one more sheet rises; the status is the headline -->
+              <sc-if value="{{c.nav.on.record-detail}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub {{c.nav.cls.record-detail}}" data-surface="record-detail">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>我的记录</button><h2 class="s10-ph-t">{{c.rec.label}}</h2><p class="s10-ph-m">{{c.rec.kindLabel}} · 记于 {{c.rec.atText}}</p></header>
+                  <div class="s10-sc2" data-scroller="record-detail" onScroll="{{c.nav.onScroll}}"><div class="s10-pgbody">
+                    <div class="s10-dom"><p class="s10-statbig">{{c.rec.statusLabel}}</p><sc-if value="{{c.rec.quotaLabel}}"><p class="s10-note" style="margin-top:6px">{{c.rec.quotaLabel}}</p></sc-if></div>
+                    <div class="s10-ideck">
+                      <div class="s10-ish"><p class="s10-h">活动</p><p class="s10-it">{{c.rec.title}}</p><p class="s10-is">{{c.rec.when.zh}} · {{c.rec.place.full}} · 局主 {{c.rec.host}}</p></div>
+                      <sc-for list="{{c.rec.supplementRows}}" as="s" hint-placeholder-count="1"><div class="s10-ish" style="--ib:color-mix(in srgb,var(--c2) 40%,#fff)"><p class="s10-h">补充 · {{s.atText}}</p><p class="s10-quote">{{s.text}}</p><sc-if value="{{s.materialsText}}"><p class="s10-small" style="margin-top:6px">材料：{{s.materialsText}}</p></sc-if></div></sc-for>
+                      <sc-for list="{{c.rec.appealRows}}" as="a" hint-placeholder-count="1"><div class="s10-ish" style="--ib:color-mix(in srgb,var(--c3) 40%,#fff)"><p class="s10-h">{{a.kindLabel}} · {{a.atText}}</p><p class="s10-quote">{{a.reason}}</p><p class="s10-chips"><span class="s10-chip">{{a.statusLabel}}</span></p></div></sc-for>
+                      <div class="s10-ish s10-base">
+                        <div class="s10-btns"><button type="button" class="s10-btn" data-act="supplement" onClick="{{c.rec.goSupplement}}">补充说明</button><sc-if value="{{c.rec.goDispute}}"><button type="button" class="s10-btn" data-act="dispute" onClick="{{c.rec.goDispute}}">提出出席异议</button></sc-if><sc-if value="{{c.rec.goAppeal}}"><button type="button" class="s10-btn" data-act="appeal" onClick="{{c.rec.goAppeal}}">补充与申诉</button></sc-if></div>
+                        <p class="s10-small" style="margin-top:14px">{{c.recs.help}}</p>
+                      </div>
+                    </div>
+                  </div></div>
+                </div>
+              </sc-if>
+              <!-- 我的举报 -->
+              <sc-if value="{{c.nav.on.reports}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.reports}}" data-surface="reports">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">我的举报</h2><p class="s10-ph-m">{{c.reps.note}}</p></header>
+                  <div class="s10-sc2" data-scroller="reports" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <sc-if value="{{c.reps.empty}}"><div class="s10-dom s10-empty"><b>{{c.reps.emptyText}}</b><p>{{c.reps.mock}}</p></div></sc-if>
+                      <sc-if value="{{x.repsAny}}"><div class="s10-dom">
+                        <p class="s10-big"><b>{{c.reps.count}}</b><span>条举报</span></p>
+                        <sc-if value="{{x.repDot}}"><p class="s10-row" style="margin-top:8px"><i class="s10-dot"></i><span class="s10-it" style="font-size:16px">{{x.repSub}}</span></p></sc-if>
+                      </div></sc-if>
+                      <div class="s10-ideck">
+                        <sc-for list="{{x.repRows}}" as="r" hint-placeholder-count="2"><button type="button" class="s10-ish s10-rec k-rep" data-rid="{{r.id}}" data-origin="rep-{{r.id}}" onClick="{{r.open}}">
+                          <span class="s10-row"><span class="s10-it">{{r.title}}</span><span class="s10-chip {{r.chipCls}}">{{r.statusLabel}}</span></span>
+                          <span class="s10-is" style="display:block">对象 {{r.whoName}} · 更新于 {{r.updatedText}}</span>
+                        </button></sc-for>
+                        <div class="s10-ish s10-base"><p class="s10-note">{{c.reps.mock}}</p></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <!-- 举报详情: the status is the headline; the original text is a quote sheet; the timeline is a small deck -->
+              <sc-if value="{{c.nav.on.report-detail}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub {{c.nav.cls.report-detail}}" data-surface="report-detail">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>我的举报</button><h2 class="s10-ph-t">举报详情</h2><p class="s10-ph-m">本地编号 {{c.rep.id}}</p></header>
+                  <div class="s10-sc2" data-scroller="report-detail" onScroll="{{c.nav.onScroll}}"><div class="s10-pgbody">
+                    <div class="s10-dom"><p class="s10-statbig">{{c.rep.statusLabel}}</p><sc-if value="{{c.rep.needsMore}}"><p class="s10-note" style="margin-top:6px;color:var(--ink)">{{c.rep.needsText}}</p></sc-if></div>
+                    <div class="s10-ideck">
+                      <div class="s10-ish"><p class="s10-h">活动 · 对象</p><p class="s10-it">{{c.rep.title}}</p><p class="s10-is">{{c.rep.when.zh}} · 对象 {{c.rep.whoName}}</p></div>
+                      <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c2) 40%,#fff)"><p class="s10-h">你写的原文 · {{c.rep.atText}}</p><p class="s10-quote">{{c.rep.text}}</p><sc-if value="{{x.repShots}}"><p class="s10-small" style="margin-top:8px">材料：{{x.repShots}}</p></sc-if></div>
+                      <sc-for list="{{c.rep.timelineRows}}" as="t" hint-placeholder-count="3"><div class="s10-ish s10-step" style="--ib:color-mix(in srgb,var(--c3) 34%,#fff)"><p class="s10-row"><b class="s10-it" style="font-size:16px">{{t.label}}</b><span class="s10-small" style="margin-left:auto">{{t.atText}}</span></p><sc-if value="{{t.text}}"><p class="s10-is">{{t.text}}</p></sc-if></div></sc-for>
+                      <sc-for list="{{c.rep.supplementRows}}" as="s" hint-placeholder-count="1"><div class="s10-ish"><p class="s10-h">已提交补充 · {{s.atText}}</p><p class="s10-quote">{{s.text}}</p></div></sc-for>
+                      <div class="s10-ish s10-base"><sc-if value="{{c.rep.goSupplement}}"><button type="button" class="s10-btn" style="margin-top:0" data-act="supplement" onClick="{{c.rep.goSupplement}}">补充材料</button></sc-if><p class="s10-small" style="margin-top:14px">{{c.reps.mock}}</p></div>
+                    </div>
+                  </div></div>
+                </div>
+              </sc-if>
+              <!-- forms over a detail (补充 / 异议 / 申诉 / 举报补充): a second sheet, its fields a deck -->
+              <sc-if value="{{x.formL0}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub d2 {{x.formCls}}" data-surface="{{c.nav.cur}}">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="cancel" onClick="{{c.form.cancel}}">取消</button><h2 class="s10-ph-t">{{c.form.title}}</h2><p class="s10-ph-m">{{x.formMeta}}</p></header>
+                  <div class="s10-sc2 s10-form" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-deck {{x.formShake}}">
+                      <sc-if value="{{c.form.needWho}}"><section class="s10-fs s10-fs1 {{x.formBadWho}}"><div class="s10-fl"><label>举报对象（可多选）</label></div><div class="s10-who"><sc-for list="{{c.form.who}}" as="w" hint-placeholder-count="3"><button type="button" aria-pressed="{{w.on}}" onClick="{{w.toggle}}">{{w.label}}</button></sc-for></div><p class="s10-fe" role="alert">{{c.form.err.who}}</p></section></sc-if>
+                      <section class="s10-fs {{x.formTextCls}} {{x.formBadText}}">
+                        <div class="s10-fl"><label for="s10-f-text">{{c.form.label}}</label><span class="s10-cnt">{{c.form.count}} 字</span></div>
+                        <textarea id="s10-f-text" class="s10-ta" data-field="text" placeholder="{{c.form.placeholder}}" value="{{c.form.text}}" onInput="{{c.form.onInput}}"></textarea>
+                        <p class="s10-fe" role="alert">{{c.form.err.text}}</p>
+                      </section>
+                      <sc-if value="{{c.form.canFiles}}"><section class="s10-fs {{x.formFileCls}}">
+                        <div class="s10-fl"><label>材料（可选，最多 3 个）</label></div>
+                        <div class="s10-files"><sc-for list="{{c.form.files}}" as="f" hint-placeholder-count="1"><p class="s10-file"><span>{{f.name}} · {{f.sizeText}}</span><button type="button" onClick="{{f.remove}}">移除</button></p></sc-for></div>
+                        <p class="s10-er"><span class="s10-add">添加材料<input type="file" multiple aria-label="添加材料" onChange="{{c.form.onFiles}}"></span></p>
+                        <p class="s10-fh">{{c.form.fileNote}}</p>
+                      </section></sc-if>
+                      <section class="s10-fs s10-fa">
+                        <sc-if value="{{c.form.failed}}"><p class="s10-fail" role="alert">{{c.form.failText}}</p></sc-if>
+                        <button type="button" class="s10-cta" data-act="submit" onClick="{{c.form.submit}}" disabled="{{c.form.saving}}">{{c.form.submitLabel}}</button>
+                      </section>
+                    </div>
+                  </div>
                 </div>
               </sc-if>
             </div>
-            <!-- L1 收藏的局 -->
+            <!-- L1 收藏: strip shows the favourite titles as tags tucked under the next sheet -->
             <div class="s10-layer s10-L1 {{x.L1.cls}}" style="{{x.L1.style}}" data-layer="fav" data-origin="favorites">
-              <button type="button" class="s10-st" onClick="{{x.L1.tap}}" aria-label="收藏的局"><span class="s10-st-n">收藏</span><span class="s10-st-v"><span class="t">{{x.favT}}</span><span class="s">{{x.favS}}</span></span></button>
-              <button type="button" class="s10-pl" onClick="{{x.L1.pileTap}}">收藏的局</button>
-              <sc-if value="{{x.L1.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L1.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <button type="button" class="s10-st" onClick="{{x.L1.tap}}" aria-label="收藏的局 · {{c.sum.favLabel}}"><span class="s10-st-r1"><span class="s10-st-n">收藏</span><span class="s10-st-v">{{c.sum.favLabel}}</span></span>
+                <span class="s10-st-g"><sc-for list="{{x.favTags}}" as="t" hint-placeholder-count="3"><span class="s10-tag">{{t.title}}</span></sc-for><sc-if value="{{x.favMore}}"><span class="s10-tag more">+{{x.favMore}}</span></sc-if><sc-if value="{{c.fav.empty}}"><span class="s10-g-note">遇到想去的，留在这里</span></sc-if></span></button>
+              <span class="s10-pl" aria-hidden="true">收藏的局 · {{c.sum.favLabel}}</span>
+              <sc-if value="{{c.nav.on.favorites}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.favorites}}" data-surface="favorites">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">收藏的局</h2><p class="s10-ph-m">收藏不等于报名 · 拿出收藏不影响已报名的局</p></header>
+                  <div class="s10-sc2" data-scroller="favorites" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <sc-if value="{{c.fav.empty}}"><div class="s10-dom s10-empty"><b>{{c.fav.emptyCopy.title}}</b><p>{{c.fav.emptyCopy.body}}</p><button type="button" class="s10-btn" onClick="{{c.fav.goFind}}">{{c.fav.emptyCopy.cta}}</button></div></sc-if>
+                      <sc-if value="{{x.favAny}}"><div class="s10-dom"><p class="s10-big"><b>{{c.fav.count}}</b><span>个局</span></p><sc-if value="{{x.favNext}}"><p class="s10-note" style="color:var(--ink);font-size:15px">最近的一个：{{x.favNext}}</p></sc-if></div></sc-if>
+                      <div class="s10-ideck">
+                        <sc-for list="{{x.favRows}}" as="r" hint-placeholder-count="3"><div class="s10-ish" role="button" tabindex="0" data-rid="{{r.id}}" data-origin="fav-{{r.id}}" onClick="{{r.open}}">
+                          <div class="s10-ev"><p class="s10-dt"><b>{{r.day}}</b><span>{{r.mon}}</span></p>
+                            <div class="s10-ev-m"><p class="s10-it">{{r.title}}</p><p class="s10-is">{{r.when.time}} · {{r.place.hood}} · 局主 {{r.host}}</p><p class="s10-chips"><span class="s10-chip {{r.relCls}}">{{r.relLabel}}</span><sc-if value="{{r.crossCity}}"><span class="s10-chip mute">{{r.cityName}} · 当地时间</span></sc-if></p></div>
+                            <button type="button" class="s10-x" data-act="unfav" onClick="{{r.rm}}">拿出</button></div>
+                        </div></sc-for>
+                        <sc-if value="{{x.favArchived}}"><div class="s10-ish s10-kind k-chg"><p class="s10-row"><b>已结束 / 已取消</b><span>{{x.favArchivedCount}}</span></p></div></sc-if>
+                        <sc-for list="{{x.favArchivedRows}}" as="r" hint-placeholder-count="1"><div class="s10-ish" style="--ib:color-mix(in srgb,var(--c3) 30%,#fff)" role="button" tabindex="0" data-rid="{{r.id}}" onClick="{{r.open}}">
+                          <div class="s10-ev"><p class="s10-dt"><b>{{r.day}}</b><span>{{r.mon}}</span></p><div class="s10-ev-m"><p class="s10-it">{{r.title}}</p><p class="s10-chips"><span class="s10-chip mute">{{r.statusLabel}}</span></p></div><button type="button" class="s10-x" data-act="unfav" onClick="{{r.rm}}">拿出</button></div>
+                        </div></sc-for>
+                        <div class="s10-ish s10-base"><p class="s10-note">右滑「找局」里的局就能收进来；收藏与报名、票根、历史互不影响。</p></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{c.nav.on.favorite-detail}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub {{c.nav.cls.favorite-detail}}" data-surface="favorite-detail">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>收藏的局</button><h2 class="s10-ph-t">{{c.favDetail.title}}</h2><p class="s10-ph-m">{{x.fdMeta}}</p></header>
+                  <div class="s10-sc2" data-scroller="favorite-detail" onScroll="{{c.nav.onScroll}}"><div class="s10-pgbody">
+                    <div class="s10-dhead"><sc-if value="{{x.favDetailLong}}"><p class="s10-dtitle" style="margin-bottom:6px">{{c.favDetail.title}}</p></sc-if><p class="s10-when"><b>{{c.favDetail.when.md}}</b><span>{{c.favDetail.when.wdZh}} {{c.favDetail.when.time}}</span></p><p class="s10-chips"><span class="s10-chip">{{c.favDetail.status.label}}</span><span class="s10-chip {{x.fdx.relCls}}">{{c.favDetail.joinedLabel}}</span><sc-if value="{{c.favDetail.crossCity}}"><span class="s10-chip mute">{{c.favDetail.city.name}} · 当地时间</span></sc-if></p></div>
+                    <div class="s10-ideck">
+                      <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 55%,#fff)"><dl class="s10-kv"><dt>地点</dt><dd>{{c.favDetail.place.full}}</dd><dt>局主</dt><dd>{{c.favDetail.host}}</dd><dt>人数</dt><dd>{{c.favDetail.cap}}</dd></dl><sc-if value="{{c.favDetail.note}}"><p class="s10-quote" style="margin-top:12px;font-size:16px">{{c.favDetail.note}}</p></sc-if></div>
+                      <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c2) 45%,#fff)"><p class="s10-h">局主的微信</p><sc-if value="{{c.favDetail.canSeeHostWx}}"><p class="s10-row"><span class="s10-it" style="font-size:20px">{{c.favDetail.hostWx}}</span><button type="button" class="s10-link" data-act="copy" onClick="{{c.favDetail.copyHostWx}}">复制</button></p></sc-if><p class="s10-is">{{c.favDetail.hostWxRule}}</p></div>
+                      <div class="s10-ish s10-base"><button type="button" class="s10-btn" style="margin-top:0" data-act="{{x.fdx.favAct}}" aria-pressed="{{c.favDetail.fav}}" onClick="{{c.favDetail.toggleFav}}">{{c.favDetail.favLabel}}</button><p class="s10-small" style="margin-top:12px">{{c.favDetail.applyNote}}<sc-if value="{{c.favDetail.favAgo}}"> · 收藏于 {{c.favDetail.favAgo}}</sc-if></p></div>
+                    </div>
+                  </div></div>
                 </div>
               </sc-if>
             </div>
-            <!-- L2 默认浏览城市 -->
+            <!-- L2 城市: the strip sets the city large -->
             <div class="s10-layer s10-L2 {{x.L2.cls}}" style="{{x.L2.style}}" data-layer="city" data-origin="city">
-              <button type="button" class="s10-st" onClick="{{x.L2.tap}}" aria-label="默认浏览城市"><span class="s10-st-n">城市</span><span class="s10-st-v"><span class="t">{{c.sum.cityLabel}}</span></span></button>
-              <button type="button" class="s10-pl" onClick="{{x.L2.pileTap}}">默认浏览城市</button>
-              <sc-if value="{{x.L2.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L2.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <button type="button" class="s10-st" onClick="{{x.L2.tap}}" aria-label="默认浏览城市 · {{c.sum.cityLabel}}"><span class="s10-st-r1"><span class="s10-st-n">城市</span></span><span class="s10-st-g"><span class="s10-g-note">{{x.cityTz}} · 只影响「找局」</span></span><span class="s10-city-big">{{c.sum.cityLabel}}</span></button>
+              <span class="s10-pl" aria-hidden="true">默认浏览城市 · {{c.sum.cityLabel}}</span>
+              <sc-if value="{{c.nav.on.city}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.city}}" data-surface="city">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">默认浏览城市</h2><p class="s10-ph-m">{{c.city.cur.en}} · {{c.city.cur.tzLabel}}</p></header>
+                  <div class="s10-sc2" data-scroller="city" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-cbig {{x.cityFlash}}">{{c.city.cur.name}}</p><p class="s10-note" style="margin-top:10px">{{c.city.scope}}</p></div>
+                      <div class="s10-ideck">
+                        <div class="s10-ish"><p class="s10-srch"><input data-field="search" type="search" placeholder="搜索城市（中文或英文）" aria-label="搜索城市" autocomplete="off" value="{{c.city.q}}" onInput="{{c.city.onQ}}"></p></div>
+                        <sc-if value="{{c.city.none}}"><div class="s10-ish"><p class="s10-it">{{c.city.noResult}}</p><button type="button" class="s10-btn" onClick="{{c.city.clearQ}}">{{c.city.retry}}</button></div></sc-if>
+                        <sc-for list="{{x.cityList}}" as="k" hint-placeholder-count="6"><button type="button" class="s10-ish {{k.cls}}" style="{{k.bg}}" data-rid="{{k.key}}" aria-pressed="{{k.on}}" onClick="{{k.pick}}"><span class="s10-crow"><b>{{k.name}}</b><span>{{k.en}}</span><i>{{k.mark}}</i></span></button></sc-for>
+                        <div class="s10-ish s10-base"><p class="s10-small">{{c.city.note}}</p></div>
+                      </div>
+                    </div></div>
+                  </div>
                 </div>
               </sc-if>
             </div>
-            <!-- L3 通知与提醒 -->
+            <!-- L3 提醒: the strip shows the six switches as tiny marks -->
             <div class="s10-layer s10-L3 {{x.L3.cls}}" style="{{x.L3.style}}" data-layer="notify" data-origin="notify">
-              <button type="button" class="s10-st" onClick="{{x.L3.tap}}" aria-label="通知与提醒"><span class="s10-st-n">提醒</span><span class="s10-st-v"><span class="t">{{c.sum.notifyLabel}}</span></span></button>
-              <button type="button" class="s10-pl" onClick="{{x.L3.pileTap}}">通知与提醒</button>
-              <sc-if value="{{x.L3.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L3.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <button type="button" class="s10-st" onClick="{{x.L3.tap}}" aria-label="通知与提醒 · {{c.sum.notifyLabel}}"><span class="s10-st-r1"><span class="s10-st-n">提醒</span><span class="s10-st-v">{{x.permShort}}</span></span>
+                <span class="s10-st-g"><sc-for list="{{c.notify.cats}}" as="k" hint-placeholder-count="6"><i class="s10-swm {{k.cls}}"></i></sc-for><span class="s10-g-note sp">{{c.notify.onCount}}/{{c.notify.total}} 类开着</span></span></button>
+              <span class="s10-pl" aria-hidden="true">通知与提醒 · {{c.sum.notifyLabel}}</span>
+              <sc-if value="{{c.nav.on.notify}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.notify}}" data-surface="notify">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">通知与提醒</h2><p class="s10-ph-m">偏好 · 系统权限 · 提醒服务，三件事分开看</p></header>
+                  <div class="s10-sc2" data-scroller="notify" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-lead">{{c.notify.deliverLabel}}</p></div>
+                      <div class="s10-ideck">
+                        <div class="s10-ish"><p class="s10-layerno">系统权限</p><p class="s10-it" style="margin-top:8px">{{c.notify.permCopy.title}}</p><p class="s10-is">{{c.notify.permCopy.body}}</p>
+                          <sc-if value="{{c.notify.isDefault}}"><p class="s10-perm"><button type="button" class="s10-cta" data-act="request" onClick="{{c.notify.request}}">开启提醒</button></p></sc-if>
+                          <sc-if value="{{x.permChip}}"><p class="s10-chips"><span class="s10-chip {{x.permChipCls}}">{{x.permChip}}</span></p></sc-if></div>
+                        <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 45%,#fff)"><p class="s10-layerno">提醒服务</p><p class="s10-it" style="margin-top:8px">{{x.svcTitle}}</p><p class="s10-is">{{x.svcBody}}</p></div>
+                        <div class="s10-ish s10-base"><p class="s10-layerno">提醒类别 · {{c.notify.onCount}}/{{c.notify.total}}</p>
+                          <div style="margin-top:6px"><sc-for list="{{c.notify.cats}}" as="k" hint-placeholder-count="6"><button type="button" class="s10-swrow" role="switch" aria-checked="{{k.aria}}" data-act="toggle" data-rid="{{k.key}}" onClick="{{k.toggle}}"><span class="t"><b>{{k.label}}</b><span>{{k.sub}}</span></span><span class="s10-switch" data-on="{{k.aria}}"></span></button></sc-for></div>
+                          <p class="s10-small" style="margin-top:10px">{{c.notify.prefHint}}</p></div>
+                      </div>
+                    </div></div>
+                  </div>
                 </div>
               </sc-if>
             </div>
-            <!-- L4 外观与动态 -->
+            <!-- L4 外观: the strip shows the three environments as swatches -->
             <div class="s10-layer s10-L4 {{x.L4.cls}}" style="{{x.L4.style}}" data-layer="skin" data-origin="appearance">
-              <button type="button" class="s10-st" onClick="{{x.L4.tap}}" aria-label="外观与动态"><span class="s10-st-n">外观</span><span class="s10-st-v"><span class="t">{{c.sum.appearanceLabel}}</span></span></button>
-              <button type="button" class="s10-pl" onClick="{{x.L4.pileTap}}">外观与动态</button>
-              <sc-if value="{{x.L4.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L4.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <button type="button" class="s10-st" onClick="{{x.L4.tap}}" aria-label="外观与动态 · {{c.sum.appearanceLabel}}"><span class="s10-st-r1"><span class="s10-st-n">外观</span><span class="s10-st-v">{{c.sum.appearanceLabel}}</span></span>
+                <span class="s10-st-g"><sc-for list="{{x.skinList}}" as="k" hint-placeholder-count="3"><i class="s10-env3 k-{{k.key}} {{k.onCls}}"></i></sc-for><span class="s10-g-note sp">{{x.rmShort}}</span></span></button>
+              <span class="s10-pl" aria-hidden="true">外观与动态 · {{c.sum.appearanceLabel}}</span>
+              <sc-if value="{{c.nav.on.appearance}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.appearance}}" data-surface="appearance">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">外观与动态</h2><p class="s10-ph-m">点一种环境，整个画面先预览；应用才会保存</p></header>
+                  <div class="s10-sc2" data-scroller="appearance" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-lead">{{x.skinLead}}</p></div>
+                      <div class="s10-ideck s10-envs">
+                        <sc-for list="{{x.skinList}}" as="k" hint-placeholder-count="3"><button type="button" class="s10-ish k-{{k.key}}" data-act="preview" data-rid="{{k.key}}" aria-pressed="{{k.shown}}" onClick="{{k.go}}"><span class="s10-envn"><b>{{k.name}}</b><span>{{k.en}}</span></span><span class="s10-envl" style="display:block">{{k.line}}</span><sc-if value="{{k.chip}}"><span class="s10-chip {{k.chipCls}}">{{k.chip}}</span></sc-if></button></sc-for>
+                        <div class="s10-ish s10-base">
+                          <sc-if value="{{c.skin.previewing}}"><div class="s10-btns" style="margin:0 0 14px;justify-content:center"><button type="button" class="s10-cta" data-act="apply" onClick="{{x.skinApply}}">{{c.skin.applyLabel}}</button><button type="button" class="s10-btn" data-act="cancel" onClick="{{c.skin.cancel}}">取消预览</button></div></sc-if>
+                          <button type="button" class="s10-swrow" role="switch" aria-checked="{{c.skin.rmAria}}" data-act="toggle" onClick="{{c.skin.rmToggle}}"><span class="t"><b>减少动态</b><span>{{c.skin.rmLine}}</span></span><span class="s10-switch" data-on="{{c.skin.rmAria}}"></span></button>
+                          <p class="s10-small" style="margin-top:8px">{{x.rmSysLine}}</p>
+                        </div>
+                      </div>
+                    </div></div>
+                  </div>
                 </div>
               </sc-if>
             </div>
-            <!-- L5 帮助与反馈 · the front sheet, runs to the bottom -->
+            <!-- L5 帮助 · 隐私 · 账户 · 关于: the front sheet, runs to the bottom -->
             <div class="s10-layer s10-L5 {{x.L5.cls}}" style="{{x.L5.style}}" data-layer="more" data-origin="help">
-              <button type="button" class="s10-st" onClick="{{x.L5.tap}}" aria-label="帮助与反馈"><span class="s10-st-n">帮助</span><span class="s10-st-v"><span class="t">{{x.helpVal}}</span></span></button>
-              <div class="s10-more"><button type="button" data-origin="privacy" onClick="{{x.goPrivacy}}">隐私与可见性</button><button type="button" data-origin="account" onClick="{{x.goAccount}}">账户与本机数据</button><button type="button" data-origin="about" onClick="{{x.goAbout}}">关于与规则</button><p>{{x.rulesLine}}</p></div>
-              <button type="button" class="s10-pl" onClick="{{x.L5.pileTap}}">帮助 · 隐私 · 账户 · 关于</button>
-              <sc-if value="{{x.L5.page}}" hint-placeholder-val="{{false}}">
-                <div class="s10-pg {{x.pageCls}}" data-surface="{{c.nav.cur}}">
-                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">{{c.nav.curTitle}}</h2><p class="s10-ph-m">{{x.L5.meta}}</p></header>
-                  <div class="s10-sc2" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}"><div class="s10-pgc"></div></div>
+              <button type="button" class="s10-st" onClick="{{x.L5.tap}}" aria-label="帮助与反馈"><span class="s10-st-r1"><span class="s10-st-n">帮助</span><span class="s10-st-v">{{x.helpVal}}</span></span></button>
+              <div class="s10-more"><button type="button" data-origin="privacy" onClick="{{x.goPrivacy}}">隐私与可见性</button><button type="button" data-origin="account" onClick="{{x.goAccount}}">账户与本机数据</button><button type="button" data-origin="about" onClick="{{x.goAbout}}">关于与规则</button><p>规则版本 {{c.about.rulesVersion}}</p></div>
+              <span class="s10-pl" aria-hidden="true">帮助 · 隐私 · 账户 · 关于</span>
+              <sc-if value="{{c.nav.on.help}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.help}}" data-surface="help">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">帮助与反馈</h2><p class="s10-ph-m">参加约定 · 我的反馈 · 我的举报</p></header>
+                  <div class="s10-sc2" data-scroller="help" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-big"><b>18</b><span>条参加约定</span></p><p class="s10-note">三件事：确认、信用、赴约。点开读全文。</p></div>
+                      <div class="s10-ideck">
+                        <sc-for list="{{x.helpGroups}}" as="g" hint-placeholder-count="3"><button type="button" class="s10-ish" data-origin="rules" onClick="{{c.help.goRules}}"><span class="s10-row"><span class="s10-it" style="font-size:22px">{{g.name}}</span><span class="s10-small" style="margin-left:auto">{{g.count}} 条</span></span><span class="s10-is" style="display:block">{{g.line}}</span></button></sc-for>
+                        <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 50%,#fff)"><p class="s10-layerno">我的反馈</p><sc-for list="{{c.help.feedback}}" as="f" hint-placeholder-count="1"><p class="s10-it" style="margin-top:10px;font-size:16px">{{f.text}}</p><p class="s10-is">{{f.statusLabel}} · {{f.localNo}} · {{f.atText}}</p></sc-for><sc-if value="{{x.noFeedback}}"><p class="s10-is" style="margin-top:8px">还没写过反馈</p></sc-if></div>
+                        <div class="s10-ish s10-base"><div class="s10-btns" style="margin-top:0"><button type="button" class="s10-btn" data-origin="feedback" onClick="{{c.help.goFeedback}}">写反馈</button><button type="button" class="s10-btn" data-origin="reports" onClick="{{c.help.goReports}}">我的举报</button></div></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{x.formL5}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub {{x.formCls}}" data-surface="{{c.nav.cur}}">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="cancel" onClick="{{c.form.cancel}}">取消</button><h2 class="s10-ph-t">{{c.form.title}}</h2><p class="s10-ph-m">{{x.formMeta}}</p></header>
+                  <div class="s10-sc2 s10-form" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-deck {{x.formShake}}">
+                      <sc-if value="{{c.form.needWho}}"><section class="s10-fs s10-fs1 {{x.formBadWho}}"><div class="s10-fl"><label>举报对象（可多选）</label></div><div class="s10-who"><sc-for list="{{c.form.who}}" as="w" hint-placeholder-count="3"><button type="button" aria-pressed="{{w.on}}" onClick="{{w.toggle}}">{{w.label}}</button></sc-for></div><p class="s10-fe" role="alert">{{c.form.err.who}}</p></section></sc-if>
+                      <section class="s10-fs {{x.formTextCls}} {{x.formBadText}}">
+                        <div class="s10-fl"><label for="s10-f-text">{{c.form.label}}</label><span class="s10-cnt">{{c.form.count}} 字</span></div>
+                        <textarea id="s10-f-text" class="s10-ta" data-field="text" placeholder="{{c.form.placeholder}}" value="{{c.form.text}}" onInput="{{c.form.onInput}}"></textarea>
+                        <p class="s10-fe" role="alert">{{c.form.err.text}}</p>
+                      </section>
+                      <sc-if value="{{c.form.canFiles}}"><section class="s10-fs {{x.formFileCls}}">
+                        <div class="s10-fl"><label>材料（可选，最多 3 个）</label></div>
+                        <div class="s10-files"><sc-for list="{{c.form.files}}" as="f" hint-placeholder-count="1"><p class="s10-file"><span>{{f.name}} · {{f.sizeText}}</span><button type="button" onClick="{{f.remove}}">移除</button></p></sc-for></div>
+                        <p class="s10-er"><span class="s10-add">添加材料<input type="file" multiple aria-label="添加材料" onChange="{{c.form.onFiles}}"></span></p>
+                        <p class="s10-fh">{{c.form.fileNote}}</p>
+                      </section></sc-if>
+                      <section class="s10-fs s10-fa">
+                        <sc-if value="{{c.form.failed}}"><p class="s10-fail" role="alert">{{c.form.failText}}</p></sc-if>
+                        <button type="button" class="s10-cta" data-act="submit" onClick="{{c.form.submit}}" disabled="{{c.form.saving}}">{{c.form.submitLabel}}</button>
+                      </section>
+                    </div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{c.nav.on.privacy}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.privacy}}" data-surface="privacy">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">隐私与资料可见性</h2><p class="s10-ph-m">没有开关 · 由活动的状态决定</p></header>
+                  <div class="s10-sc2" data-scroller="privacy" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-lead">{{c.privacy.lead}}</p></div>
+                      <div class="s10-ideck">
+                        <div class="s10-ish"><sc-for list="{{c.privacy.general}}" as="g" hint-placeholder-count="4"><p class="s10-quote" style="font-size:16px;margin-bottom:10px">{{g}}</p></sc-for></div>
+                        <sc-for list="{{c.privacy.facts}}" as="f" hint-placeholder-count="3"><div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 45%,#fff)"><p class="s10-row"><span class="s10-it">{{f.title}}</span><span class="s10-chip">{{f.role}}</span></p><p class="s10-is">{{f.rule}}</p></div></sc-for>
+                        <div class="s10-ish s10-base"><p class="s10-it" style="font-size:16px">{{c.privacy.noToggles}}</p><p class="s10-note" style="margin-top:8px">{{c.privacy.policy}}</p></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{c.nav.on.account}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.account}}" data-surface="account">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">账户与本机数据</h2><p class="s10-ph-m">{{c.acct.device}}</p></header>
+                  <div class="s10-sc2" data-scroller="account" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-lead">{{x.acctLead}}</p><p class="s10-note">{{c.demoNote}}</p></div>
+                      <div class="s10-ideck">
+                        <div class="s10-ish"><p class="s10-h">会话</p><sc-if value="{{c.acct.demo}}"><p class="s10-it">开始于 {{c.acct.startedText}}</p></sc-if><sc-if value="{{c.acct.ended}}"><p class="s10-it">已于 {{c.acct.endedText}} 结束</p></sc-if><p class="s10-is">{{c.acct.device}}</p></div>
+                        <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 45%,#fff)"><p class="s10-h">本机数据</p><p class="s10-quote" style="font-size:15px">{{c.acct.storageNote}}</p></div>
+                        <div class="s10-ish s10-base"><p class="s10-note">{{c.acct.noAccount}}</p>
+                          <sc-if value="{{c.acct.demo}}"><button type="button" class="s10-btn danger" data-act="end" onClick="{{c.acct.end}}">退出登录（本地演示）</button></sc-if>
+                          <sc-if value="{{c.acct.ended}}"><p style="margin-top:18px"><button type="button" class="s10-cta" data-act="restart" onClick="{{c.acct.restart}}">重新开始</button></p></sc-if></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <sc-if value="{{c.nav.on.about}}" hint-placeholder-val="{{false}}">
+                <div class="s10-pg {{c.nav.cls.about}}" data-surface="about">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>设置</button><h2 class="s10-ph-t">关于与规则</h2><p class="s10-ph-m">{{c.about.version}}</p></header>
+                  <div class="s10-sc2" data-scroller="about" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-pgc"><div class="s10-pgr s10-pgbody">
+                      <div class="s10-dom"><p class="s10-lead">JU · 设置</p><p class="s10-note">{{c.about.demo}}</p></div>
+                      <div class="s10-ideck">
+                        <div class="s10-ish"><dl class="s10-kv"><dt>规则版本</dt><dd>{{c.about.rulesVersion}}</dd><dt>城市</dt><dd>{{c.about.cities}} 座</dd><dt>本机存储</dt><dd>{{x.storageKey}}</dd><dt>构建</dt><dd>{{x.builtText}}</dd></dl></div>
+                        <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 45%,#fff)"><p class="s10-h">关于这些规则</p><p class="s10-quote" style="font-size:15px">{{c.about.policyNote}}</p></div>
+                        <div class="s10-ish s10-base"><button type="button" class="s10-btn" style="margin-top:0" data-origin="rules" onClick="{{c.about.goRules}}">读参加约定全文</button></div>
+                      </div>
+                    </div></div>
+                  </div>
+                </div>
+              </sc-if>
+              <!-- 参加约定: a reading sheet, one sheet per group, comfortable measure -->
+              <sc-if value="{{c.nav.on.rules}}" hint-placeholder-val="{{false}}">
+                <div class="s10-sub {{c.nav.cls.rules}}" data-surface="rules">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>{{x.backLabel}}</button><h2 class="s10-ph-t">参加约定</h2><p class="s10-ph-m">{{c.about.rulesVersion}} · 18 条</p></header>
+                  <div class="s10-sc2" data-scroller="rules" onScroll="{{c.nav.onScroll}}"><div class="s10-pgbody">
+                    <div class="s10-ideck">
+                      <sc-for list="{{x.ruleGroups}}" as="g" hint-placeholder-count="3"><section class="s10-ish" style="{{g.bg}};padding-bottom:44px"><div class="s10-read"><p class="s10-gname"><b>{{g.name}}</b><span>{{g.line}}</span></p>
+                        <sc-for list="{{g.rules}}" as="r" hint-placeholder-count="4"><div class="s10-rule"><h3><i>{{r.n}}</i><span>{{r.title}}</span></h3><sc-if value="{{r.body}}"><p>{{r.body}}</p></sc-if></div></sc-for></div></section></sc-for>
+                      <div class="s10-ish s10-base"><p class="s10-small">{{x.policyNote}}</p></div>
+                    </div>
+                  </div></div>
                 </div>
               </sc-if>
             </div>
           </div>
         </div>
       </section>
+      <!-- ROOT 找局 (seam): the feed is a deck of event sheets; swipe one sideways (V27 gesture) to keep it -->
+      <sc-if value="{{c.nav.on.seam-feed}}" hint-placeholder-val="{{false}}">
+        <section class="s10-root {{c.nav.cls.seam-feed}}" data-surface="seam-feed">
+          <header class="s10-hd" data-header><div class="s10-sky s10-sky-top" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div><h1 class="s10-hd-t">找局</h1><p class="s10-hd-m">{{c.feed.city.name}} · 收藏 {{c.feed.favCount}} · {{c.feed.hintIdle}}</p><span class="s10-ju" aria-label="JU">JU</span></header>
+          <div class="s10-seamsc" data-scroller="seam-feed" onScroll="{{c.nav.onScroll}}">
+            <p class="s10-feedf"><button type="button" aria-pressed="{{c.feed.isAll}}" onClick="{{c.feed.setAll}}">全部</button><button type="button" aria-pressed="{{c.feed.isFav}}" onClick="{{c.feed.setFav}}">只看收藏 · {{c.feed.favCount}}</button></p>
+            <div class="s10-ideck s10-fdeck">
+              <sc-for list="{{x.feedRows}}" as="r" hint-placeholder-count="4"><div class="s10-ish s10-fcard {{r.cls}}" style="{{r.cstyle}}" data-rid="{{r.id}}" tabindex="0" role="button" aria-label="{{r.title}} · {{r.starLabel}}" onPointerDown="{{r.down}}" onPointerMove="{{r.move}}" onPointerUp="{{r.up}}" onPointerCancel="{{r.cancel}}" onKeyDown="{{r.key}}" onClick="{{r.open}}">
+                <div class="s10-ev"><p class="s10-dt"><b>{{r.day}}</b><span>{{r.mon}}</span></p><div class="s10-ev-m"><p class="s10-it">{{r.title}}</p><p class="s10-is">{{r.when.time}} · {{r.place.hood}} · 局主 {{r.host}}</p></div><span class="s10-fstar" aria-hidden="true">{{r.star}}</span></div>
+                <sc-if value="{{r.hint}}"><span class="s10-fhint">{{r.hint}}</span></sc-if>
+              </div></sc-for>
+              <div class="s10-ish s10-base s10-fbody"><sc-if value="{{c.feed.empty}}"><p class="s10-it">{{c.feed.emptyText}}</p></sc-if><p class="s10-small">{{x.feedNote}}</p></div>
+            </div>
+          </div>
+          <sc-if value="{{c.nav.on.seam-feed-detail}}" hint-placeholder-val="{{false}}">
+            <div class="s10-sub s10-seamsub {{c.nav.cls.seam-feed-detail}}" data-surface="seam-feed-detail">
+              <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="back" onClick="{{c.nav.back}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 5l-7 7 7 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>找局</button><h2 class="s10-ph-t">{{c.feedDetail.title}}</h2><p class="s10-ph-m">{{c.feed.city.name}} · {{c.feedDetail.joinedLabel}}</p></header>
+              <div class="s10-sc2" data-scroller="seam-feed-detail" onScroll="{{c.nav.onScroll}}"><div class="s10-pgbody">
+                    <div class="s10-dhead"><sc-if value="{{x.feedDetailLong}}"><p class="s10-dtitle" style="margin-bottom:6px">{{c.feedDetail.title}}</p></sc-if><p class="s10-when"><b>{{c.feedDetail.when.md}}</b><span>{{c.feedDetail.when.wdZh}} {{c.feedDetail.when.time}}</span></p><p class="s10-chips"><span class="s10-chip">{{c.feedDetail.status.label}}</span><span class="s10-chip {{x.sfx.relCls}}">{{c.feedDetail.joinedLabel}}</span><sc-if value="{{c.feedDetail.crossCity}}"><span class="s10-chip mute">{{c.feedDetail.city.name}} · 当地时间</span></sc-if></p></div>
+                    <div class="s10-ideck">
+                      <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c1) 55%,#fff)"><dl class="s10-kv"><dt>地点</dt><dd>{{c.feedDetail.place.full}}</dd><dt>局主</dt><dd>{{c.feedDetail.host}}</dd><dt>人数</dt><dd>{{c.feedDetail.cap}}</dd></dl><sc-if value="{{c.feedDetail.note}}"><p class="s10-quote" style="margin-top:12px;font-size:16px">{{c.feedDetail.note}}</p></sc-if></div>
+                      <div class="s10-ish" style="--ib:color-mix(in srgb,var(--c2) 45%,#fff)"><p class="s10-h">局主的微信</p><sc-if value="{{c.feedDetail.canSeeHostWx}}"><p class="s10-row"><span class="s10-it" style="font-size:20px">{{c.feedDetail.hostWx}}</span><button type="button" class="s10-link" data-act="copy" onClick="{{c.feedDetail.copyHostWx}}">复制</button></p></sc-if><p class="s10-is">{{c.feedDetail.hostWxRule}}</p></div>
+                      <div class="s10-ish s10-base"><button type="button" class="s10-btn" style="margin-top:0" data-act="{{x.sfx.favAct}}" aria-pressed="{{c.feedDetail.fav}}" onClick="{{c.feedDetail.toggleFav}}">{{c.feedDetail.favLabel}}</button><p class="s10-small" style="margin-top:12px">{{c.feedDetail.applyNote}}<sc-if value="{{c.feedDetail.favAgo}}"> · 收藏于 {{c.feedDetail.favAgo}}</sc-if></p></div>
+                    </div>
+              </div></div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+      <!-- ROOT 我的局 (seam): a deck per stage; history sheets carry the report entry and its receipt -->
+      <sc-if value="{{c.nav.on.seam-mine}}" hint-placeholder-val="{{false}}">
+        <section class="s10-root {{c.nav.cls.seam-mine}}" data-surface="seam-mine">
+          <header class="s10-hd" data-header><div class="s10-sky s10-sky-top" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div><h1 class="s10-hd-t">我的局</h1><p class="s10-hd-m">{{x.mineMeta}}</p><span class="s10-ju" aria-label="JU">JU</span></header>
+          <div class="s10-seamsc" data-scroller="seam-mine" onScroll="{{c.nav.onScroll}}">
+            <div class="s10-ideck">
+              <sc-for list="{{x.mineGroups}}" as="g" hint-placeholder-count="3">
+                <div class="s10-ish s10-kind {{g.cls}}"><p class="s10-row"><b>{{g.title}}</b><span>{{g.count}}</span></p></div>
+                <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2"><div class="s10-ish s10-rec {{g.cls}}" data-rid="{{r.id}}">
+                  <p class="s10-row"><span class="s10-it">{{r.title}}</span><button type="button" class="s10-fstar" data-act="fav" aria-pressed="{{r.fav}}" aria-label="{{r.starLabel}}" onClick="{{r.toggleFav}}">{{r.star}}</button></p>
+                  <p class="s10-is">{{r.label}}</p>
+                  <sc-if value="{{r.canReport}}"><p class="s10-chips"><sc-if value="{{r.receipt}}"><span class="s10-chip">举报 · {{r.receipt}}</span></sc-if><button type="button" class="s10-x" style="height:32px" data-act="report" data-origin="report-{{r.id}}" onClick="{{r.report}}">举报</button></p></sc-if>
+                </div></sc-for>
+              </sc-for>
+              <div class="s10-ish s10-base s10-fbody"><p class="s10-small">{{c.mine.snapshotNote}}</p></div>
+            </div>
+          </div>
+          <sc-if value="{{x.formSeam}}" hint-placeholder-val="{{false}}">
+            <div class="s10-sub s10-seamsub {{x.formCls}}" data-surface="seam-report">
+                  <header class="s10-ph" data-header><button type="button" class="s10-bk" data-act="cancel" onClick="{{c.form.cancel}}">取消</button><h2 class="s10-ph-t">{{c.form.title}}</h2><p class="s10-ph-m">{{x.formMeta}}</p></header>
+                  <div class="s10-sc2 s10-form" data-scroller="{{c.nav.cur}}" onScroll="{{c.nav.onScroll}}">
+                    <div class="s10-deck {{x.formShake}}">
+                      <sc-if value="{{c.form.needWho}}"><section class="s10-fs s10-fs1 {{x.formBadWho}}"><div class="s10-fl"><label>举报对象（可多选）</label></div><div class="s10-who"><sc-for list="{{c.form.who}}" as="w" hint-placeholder-count="3"><button type="button" aria-pressed="{{w.on}}" onClick="{{w.toggle}}">{{w.label}}</button></sc-for></div><p class="s10-fe" role="alert">{{c.form.err.who}}</p></section></sc-if>
+                      <section class="s10-fs {{x.formTextCls}} {{x.formBadText}}">
+                        <div class="s10-fl"><label for="s10-f-text">{{c.form.label}}</label><span class="s10-cnt">{{c.form.count}} 字</span></div>
+                        <textarea id="s10-f-text" class="s10-ta" data-field="text" placeholder="{{c.form.placeholder}}" value="{{c.form.text}}" onInput="{{c.form.onInput}}"></textarea>
+                        <p class="s10-fe" role="alert">{{c.form.err.text}}</p>
+                      </section>
+                      <sc-if value="{{c.form.canFiles}}"><section class="s10-fs {{x.formFileCls}}">
+                        <div class="s10-fl"><label>材料（可选，最多 3 个）</label></div>
+                        <div class="s10-files"><sc-for list="{{c.form.files}}" as="f" hint-placeholder-count="1"><p class="s10-file"><span>{{f.name}} · {{f.sizeText}}</span><button type="button" onClick="{{f.remove}}">移除</button></p></sc-for></div>
+                        <p class="s10-er"><span class="s10-add">添加材料<input type="file" multiple aria-label="添加材料" onChange="{{c.form.onFiles}}"></span></p>
+                        <p class="s10-fh">{{c.form.fileNote}}</p>
+                      </section></sc-if>
+                      <section class="s10-fs s10-fa">
+                        <sc-if value="{{c.form.failed}}"><p class="s10-fail" role="alert">{{c.form.failText}}</p></sc-if>
+                        <button type="button" class="s10-cta" data-act="submit" onClick="{{c.form.submit}}" disabled="{{c.form.saving}}">{{c.form.submitLabel}}</button>
+                      </section>
+                    </div>
+                  </div>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
       <nav class="s10-nav" aria-label="JU">
         <div class="s10-sky s10-sky-bot" aria-hidden="true"><i class="k-cotton"></i><i class="k-halo"></i><i class="k-sunset"></i></div>
-        <sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
+        <sc-for list="{{c.rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-current="{{t.on}}" onClick="{{t.go}}">{{t.label}}</button></sc-for>
       </nav>
+      <button type="button" class="s10-pilehit" aria-label="把这一层放回设置" onClick="{{x.pileTap}}"><span>放回</span></button>
+      <sc-if value="{{c.fav.undo.on}}" hint-placeholder-val="{{false}}"><div class="s10-toast s10-undo" role="status"><span>{{c.fav.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.fav.undo.act}}">{{c.fav.undo.label}}</button></div></sc-if>
+      <sc-if value="{{c.notify.sys.on}}" hint-placeholder-val="{{false}}"><div class="s10-sys s10-over" role="alertdialog" aria-label="{{c.notify.sys.title}}"><div class="s10-sys-b"><p>{{c.notify.sys.title}}</p><small>{{c.notify.sys.body}}</small><div><button type="button" data-act="deny" onClick="{{c.notify.sys.deny}}">不允许</button><button type="button" data-act="allow" onClick="{{c.notify.sys.allow}}">允许</button></div></div></div></sc-if>
       <sc-if value="{{c.sheet.on}}" hint-placeholder-val="{{false}}">
         <div class="s10-over" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}">
           <div class="s10-cf-dim" onClick="{{x.sheetDismiss}}"></div>
-          <div class="s10-cf-sheet">
+          <div class="s10-cf-deck"><div class="s10-cf-edge"></div><div class="s10-cf-edge"></div><div class="s10-cf-sheet {{x.cfCls}}">
             <p class="s10-cf-t">{{c.sheet.title}}</p>
             <p class="s10-cf-b">{{c.sheet.body}}</p>
             <sc-if value="{{c.sheet.unsaved}}"><div class="s10-cf-row"><button type="button" class="s10-b2 s10-b-danger" data-act="discard" onClick="{{c.sheet.discard}}">{{c.sheet.discardLabel}}</button><button type="button" class="s10-b2 s10-b-ink" data-act="keep" onClick="{{c.sheet.keep}}">{{c.sheet.keepLabel}}</button></div></sc-if>
             <sc-if value="{{c.sheet.accountEnd}}"><div class="s10-cf-row"><button type="button" class="s10-b2 s10-b-line" data-act="cancel" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="s10-b2 s10-b-danger" data-act="confirm" onClick="{{c.sheet.confirm}}">{{c.sheet.confirmLabel}}</button></div></sc-if>
-          </div>
+          </div></div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s10-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{c.toast.on}}" hint-placeholder-val="{{false}}"><div class="s10-toast {{c.toast.cls}}" role="status"><span>{{c.toast.text}}</span></div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -402,23 +974,29 @@ body{margin:0}
 </x-dc>
 <script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"idle":{"editor":"boolean","default":false},"persist":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
 /* @core */
-/* S10 geometry (CSS px, content coordinates of the home scroller): the stack starts under the 124px sky header; the white identity sheet
-   shows 230px, four preference sheets a 72px strip each, and the front sheet (帮助 · 隐私 · 账户 · 关于) runs to the bottom of a stack that is
-   one screen + 96px tall. Lifted: the sheet sits at --top (44px) and ends where the pile begins; the other five compress into 24px edges
-   (--pile = 120px) at the bottom of the screen. The identity sheet hosts everything about you: 个人资料, 我的记录, 我的举报. */
+/* S10 geometry (CSS px, content coordinates of the home scroller). The stack starts under the 124px sky header: the white identity sheet shows
+   230px, four preference sheets a 72px strip each, the front sheet (帮助 · 隐私 · 账户 · 关于) runs to the bottom of a stack one screen + 96px
+   tall. layout(g, i) = where sheet i sits when sheet g is lifted (g = null: the stack). A lifted sheet sits at --top (44px) and ends where the
+   pile begins; the other five compress into 24px edges (--pile = 120px) at the bottom, in stack order. */
 var S10 = {
   TOP: 124, IDH: 230, STRIP: 72, EDGE: 24, N: 6,
   layers: [{ k: 'id', s: 'profile' }, { k: 'fav', s: 'favorites' }, { k: 'city', s: 'city' }, { k: 'notify', s: 'notify' }, { k: 'skin', s: 'appearance' }, { k: 'more', s: 'help' }],
   group: { 'profile': 0, 'profile-edit': 0, 'records': 0, 'record-detail': 0, 'record-supplement': 0, 'record-dispute': 0, 'record-appeal': 0,
     'reports': 0, 'report-detail': 0, 'report-supplement': 0, 'favorites': 1, 'favorite-detail': 1, 'city': 2, 'notify': 3, 'appearance': 4,
     'help': 5, 'feedback': 5, 'privacy': 5, 'account': 5, 'about': 5, 'rules': 5 },
+  roots: { 'home': 1, 'seam-feed': 1, 'seam-mine': 1 },
   homeY: function (i) { return i === 0 ? S10.TOP : S10.TOP + S10.IDH + (i - 1) * S10.STRIP; },
-  /* visible height at home (the front sheet: to the bottom of the stack) */
   homeVis: function (i) { return i === 0 ? S10.IDH + 'px' : i < S10.N - 1 ? S10.STRIP + 'px' : 'calc(max(844px, var(--ph, 844px)) + 96px - ' + S10.homeY(i) + 'px)'; },
-  homeH: function (i) { return i === 0 ? (S10.IDH + 28) + 'px' : i < S10.N - 1 ? (S10.STRIP + 28) + 'px' : S10.homeVis(i); }
+  homeH: function (i) { return i === 0 ? (S10.IDH + 28) + 'px' : i < S10.N - 1 ? (S10.STRIP + 28) + 'px' : S10.homeVis(i); },
+  layout: function (g, i) {
+    if (g == null) return { ty: S10.homeY(i) + 'px', h: S10.homeH(i), z: 1 + i, r: 28, st: 'home' };
+    if (g === i) return { ty: 'calc(var(--st) + var(--top))', h: 'calc(var(--ph, 844px) - var(--top) - var(--pileb))', z: 29, r: 28, st: 'lift' };
+    var j = i < g ? i : i - 1;
+    return { ty: 'calc(var(--st) + var(--ph, 844px) - var(--pile) + ' + (j * S10.EDGE) + 'px)', h: 'calc(var(--pile) - ' + (j * S10.EDGE) + 'px)', z: 1 + i, r: 16, st: 'pile' };
+  }
 };
 class Component extends DCLogic {
-  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 320, back: 320, root: 300, swap: 280 }; this.saveMs = 360; this._psc = 0; }
+  constructor(p) { super(p); this.reviewInit(CONCEPT); this.motionSpec = { fwd: 320, back: 320, root: 320, swap: 320 }; this.saveMs = 360; this._psc = 0; }
   initialState(variant) { return JUS.baseState(variant); }
   componentDidMount() { this.s10Sync(); }
   componentDidUpdate() { this.s10Sync(); }
@@ -426,82 +1004,134 @@ class Component extends DCLogic {
   s10Sync() { var r = this.rootRef && this.rootRef.current; if (!r) return; var sc = r.querySelector('[data-scroller="home"]'); var st = r.querySelector('.s10-stack'); if (sc && st) st.style.setProperty('--st', sc.scrollTop + 'px'); }
   onNav(type, s) {
     if (type === 'go') this._psc = 0;
-    /* dropping back to the stack: remember how far the page was scrolled so its name lands exactly on the strip's name */
+    /* dropping back into the stack: remember how far the page was scrolled so its name lands exactly on the strip's name */
     if (type === 'back' && s === 'home') { var r = this.rootRef.current; var sc = r && r.querySelector('.s10-layer.st-lift .s10-pg.is-top [data-scroller]'); this._psc = sc ? sc.scrollTop : 0; }
   }
-  beforeReplay(name) { if (name === 'lift') this.home(); }
+  /* core motion 1 · lift a sheet out of the stack */
   s10Lift(surface) { this.motion('lift', function () { this.go(surface, {}, null); }); }
+  /* core motion 3 · environment switch (preview changes the whole stack's colours and the sky) */
+  s10Preview(key) { this._s10skinUndo = this.state.ui.skinPreview || null; this.motion('skin', function () { this.skinPick(key); }); }
+  /* core motion 2 · in-sheet save: toast, the field deck sinks back, the new value lands in place */
+  onProfileSaved(e) { var self = this; this.motion('save', function () { this.say(e.nothing ? '没有改动' : '资料已保存', 'ok'); this._s10land = (this._s10land || 0) + 1; this.afterKey('pf-back', 220, function () { self.back(true); }); }); }
+  beforeReplay(name) {
+    var self = this;
+    if (name === 'lift') this.home();
+    if (name === 'skin') { this._s10skQuiet = true; this.setState(function (s) { return { ui: Object.assign({}, s.ui, { skinPreview: self._s10skinUndo }) }; }); }
+    if (name === 'save') this.ctlJump({ open: { surface: 'profile-edit' } });
+  }
   renderVals() {
     var self = this; var panel = this.panelVals(); panel.show = this.props.panel !== false;
     var c = this.ctlVals(); var d = this.state.data; var nav = c.nav; var G = S10.group;
-    /* sheet mode from the controller's stack + phase: home → start (one frame) → lifted (in / idle); back to home = drop */
-    var gTop = G[nav.cur] != null ? G[nav.cur] : null; var mode = 'home', lift = -1, anim = false;
-    if (gTop != null) {
-      lift = gTop;
-      if (nav.phase === 'exit' && nav.prev === 'home') { mode = 'drop'; anim = true; }
-      else if (nav.phase === 'enter' && nav.dir === 'fwd' && nav.prev === 'home') mode = 'start';
-      else { mode = 'lifted'; anim = nav.phase === 'in' && nav.prev === 'home'; }
-    }
-    var pileOrder = []; for (var q = 0; q < S10.N; q++) if (q !== lift) pileOrder.push(q);
-    var x = { appCls: (mode === 'home' ? ' s10-m-home' : ' s10-' + mode) + (anim ? ' s10-anim' : '') + (d.appearance.reduceMotion ? ' rm-user' : '') };
-    var psc = this._psc || 0;
+    var gOf = function (s) { return s != null && G[s] != null ? G[s] : null; };
+    var leaving = this.state.nav.leaving ? this.state.nav.leaving.s : null; var bottom = this.state.nav.stack[0].s;
+    var ph = nav.phase, dir = nav.dir, cur = nav.cur, prev = nav.prev;
+    /* the motion pair: surface A (where the sheets come from) → surface B (where they go) */
+    var fromS = dir === 'fwd' ? prev : leaving;
+    var pair = ph === 'enter' ? [fromS, cur, false, false] : ph === 'in' ? [fromS, cur, true, false] : ph === 'exit' ? [cur, prev, true, true] : [cur, cur, false, false];
+    var gA = gOf(pair[0]), gB = gOf(pair[1]); var layerMove = pair[2] && gA !== gB; var showG = ph === 'enter' ? gA : gB;
+    var tr = gA === gB ? '' : gA == null ? 'lift' : gB == null ? 'drop' : 'swap';
+    var x = { appCls: showG != null ? ' s10-g-lift' : ' s10-g-home' };
+    if (layerMove) x.appCls += ' s10-mv s10-mv-' + (pair[3] ? 'b' : 'a') + ' s10-tr-' + tr + (tr !== 'drop' && !pair[3] ? ' s10-trl' : '');
+    var l0s = gB === 0 ? pair[1] : gA === 0 ? pair[0] : null;
+    if (l0s) x.appCls += (l0s === 'profile' || l0s === 'profile-edit') ? ' s10-pf' : ' s10-g-rec';
+    var navA = !!S10.roots[pair[0]], navB = !!S10.roots[pair[1]];
+    if (!(ph === 'enter' ? navA : navB)) x.appCls += ' s10-navoff';
+    if (pair[2] && navA !== navB) x.appCls += ' s10-navgo';
+    if (d.appearance.reduceMotion) x.appCls += ' rm-user';
+    /* environment switch: keep the previous sky under the new one and tint every sheet from its old colour (650ms keyframes) */
+    var shown = c.skinShown;
+    if (this._s10sk && this._s10sk !== shown && !this._s10skQuiet) { this._s10skPrev = this._s10sk; this._s10skSeq = (this._s10skSeq || 0) + 1; var seq = this._s10skSeq; this.afterKey('s10skin', 650, function () { if (self._s10skSeq === seq) { self._s10skPrev = null; self.setState({ s10tick: Date.now() }); } }); }
+    this._s10skQuiet = false; this._s10sk = shown;
+    if (this._s10skPrev) x.appCls += ' s10-skinning s10-sk' + (this._s10skSeq % 2);
+    x.prevSkin = this._s10skPrev || '';
+    /* each sheet: displayed state (+ where it comes from while moving) */
+    var psc = this._psc || 0; var homeIdle = cur === 'home' && ph === 'idle';
     S10.layers.forEach(function (ly, i) {
-      var y = S10.homeY(i), hv = S10.homeVis(i);
-      var st = 'st-home', ty = y + 'px', h = S10.homeH(i), z = 1 + i, r = 28;
-      if (i === lift && (mode === 'start' || mode === 'drop')) { st = mode === 'start' ? 'st-start' : 'st-drop'; h = hv; z = 29; }
-      else if (mode === 'lifted') {
-        if (i === lift) { st = 'st-lift'; ty = 'calc(var(--st) + var(--top))'; h = 'calc(var(--ph, 844px) - var(--top) - var(--pileb))'; z = 29; }
-        else { var j = pileOrder.indexOf(i); st = 'st-pile'; ty = 'calc(var(--st) + var(--ph, 844px) - var(--pile) + ' + (j * S10.EDGE) + 'px)'; h = 'calc(var(--pile) - ' + (j * S10.EDGE) + 'px)'; r = 16; }
-      }
-      x['L' + i] = { cls: st, style: '--ty:' + ty + ';--h:' + h + ';--z:' + z + ';--r:' + r + 'px' + (i === lift ? ';--psc:' + psc + 'px' : ''),
-        tap: function () { if (mode === 'home') self.s10Lift(ly.s); },
-        pileTap: function () { if (mode === 'lifted' && i !== lift) self.back(); },
-        page: i === lift && (i > 0 || (nav.cur !== 'profile' && nav.cur !== 'profile-edit')), meta: '' };
+      var A = S10.layout(gA, i), B = S10.layout(gB, i), z = B.z;
+      if (gA !== gB) { if (i === gB) { z = 29; if (gA == null) A.h = S10.homeVis(i); } else if (i === gA) { z = gB == null ? 29 : 28; if (gB == null) B.h = S10.homeVis(i); } }
+      var D = ph === 'enter' ? A : B;
+      var cls = 'st-' + D.st + (ph === 'enter' && i === gB && gA !== gB ? ' st-start' : '');
+      var style = '--ty:' + D.ty + ';--h:' + D.h + ';--r:' + D.r + 'px;--z:' + z;
+      if (layerMove && (A.ty !== B.ty || A.h !== B.h)) { cls += ' mv fr-' + A.st; style += ';--ty0:' + A.ty + ';--h0:' + A.h + ';--r0:' + A.r + 'px'; }
+      if (i === gA || i === gB) style += ';--psc:' + psc + 'px';
+      x['L' + i] = { cls: cls, style: style, tap: function () { if (homeIdle) self.s10Lift(ly.s); } };
     });
-    /* identity sheet */
+    x.pileTap = function () { if (showG != null && ph === 'idle') self.back(); };
+    x.homeCls = bottom === 'home' ? (nav.cls.home || '') : (leaving && (leaving === 'home' || G[leaving] != null) ? 'is-leaving' : 's10-off');
+    var lift = function (s) { return function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); if (homeIdle) self.s10Lift(s); }; };
+    x.goRecords = lift('records'); x.goReports = lift('reports'); x.goPrivacy = lift('privacy'); x.goAccount = lift('account'); x.goAbout = lift('about');
+    x.backLabel = !prev || prev === 'home' ? '设置' : (nav.title[prev] || '返回');
+    x.onHomeScroll = function (ev) { nav.onScroll(ev); var el = ev.currentTarget; var s = el.querySelector('.s10-stack'); if (s) s.style.setProperty('--st', el.scrollTop + 'px'); };
+    var split = function (label) { var p = String(label || '').split(' · '); return [p[0] || '', p.slice(1).join(' · ')]; };
+    var dm = function (w) { var p = String((w && w.md) || '').split('.'); return { day: p[1] ? String(+p[1]) : '', mon: p[0] ? (+p[0]) + '月 ' + ((w && w.wdZh) || '') : '' }; };
+    var stop = function (fn) { return function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); fn(ev); }; };
+    /* identity sheet + 个人资料 */
     var you = c.you; var nm = Array.from(you.name || '').length;
     x.nameSize = nm <= 4 ? 52 : nm <= 7 ? 40 : 30;
-    x.mailShort = you.domain || ((you.email || '').split('@')[1] || '');
-    x.mailCls = you.verified ? 'ok' : '';
-    var split = function (label) { var p = String(label || '').split(' · '); return [p[0] || '', p.slice(1).join(' · ')]; };
+    x.mailShort = you.domain || ((you.email || '').split('@')[1] || ''); x.mailCls = you.verified ? 'ok' : '';
     var rl = split(c.sum.recordLabel), pl = split(c.sum.reportLabel);
-    x.recMain = rl[0]; x.recSub = rl[1]; x.repMain = pl[0]; x.repSub = pl[1];
-    x.goRecords = function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); if (mode === 'home') self.s10Lift('records'); };
-    x.goReports = function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); if (mode === 'home') self.s10Lift('reports'); };
+    x.recMain = rl[0]; x.recSub = rl[1]; x.repMain = pl[0]; x.repSub = pl[1]; x.recDot = c.sum.pendingRecords > 0; x.repDot = c.sum.needMore > 0;
     x.homeMeta = (c.attCount ? c.attCount + ' 件事等你回应 · ' : '') + '浏览城市 ' + c.sum.cityLabel + (c.attCount ? '' : ' · ' + c.sum.favLabel);
-    x.profMeta = you.email ? (you.verified ? you.domain + ' · ' + (d.you.emailKind === 'work' ? '工作邮箱' : '学校邮箱') + '已验证' : '邮箱还没验证') : '还没填邮箱';
-    x.mailFull = you.email || '未填写';
-    x.mailState = you.email ? (you.verified ? '已验证' : '未验证') : '';
-    x.mailStateCls = you.verified ? 'ok' : 'no';
-    /* 刚更新 marks the changed value in place only while the save toast is up */
-    var justSaved = !!(c.toast.on && c.toast.kind === 'ok' && you.lastSaved && !you.lastSaved.nothing);
-    x.freshName = justSaved && you.savedName; x.freshWx = justSaved && you.savedWx; x.freshMail = justSaved && you.savedEmail;
+    x.mailFull = you.email || '未填写'; x.mailState = you.email ? (you.verified ? '已验证' : '未验证') : ''; x.mailStateCls = you.verified ? 'ok' : 'no';
     x.snapNote = JUS.COPY.snapshotNote; x.copyFailInline = JUS.COPY.copyFailInline;
-    /* strips */
-    var favs = c.fav.active.slice().sort(function (a, b) { return a.event.iso < b.event.iso ? -1 : 1; }); var first = favs[0] || c.fav.rows[0];
-    x.favT = c.fav.count ? first.title : c.sum.favLabel; x.favS = c.fav.count > 1 ? '等 ' + c.fav.count + ' 个' : '';
-    x.recDot = c.sum.pendingRecords > 0; x.repDot = c.sum.needMore > 0; x.rulesLine = '规则版本 ' + JUS.RULES_VERSION;
-    x.helpVal = JUS.RULES.length + ' 条约定' + (c.sum.feedbackCount ? ' · ' + c.sum.feedbackCount + ' 条反馈' : '');
-    x.goPrivacy = function () { if (mode === 'home') self.s10Lift('privacy'); };
-    x.goAccount = function () { if (mode === 'home') self.s10Lift('account'); };
-    x.goAbout = function () { if (mode === 'home') self.s10Lift('about'); };
-    var metas = { 0: nav.cur === 'reports' || /^report-/.test(nav.cur) ? c.sum.reportLabel : c.sum.recordLabel, 1: c.sum.favLabel, 2: c.sum.cityLabel, 3: c.sum.notifyLabel, 4: c.sum.appearanceLabel, 5: x.helpVal };
-    for (var k = 0; k < S10.N; k++) x['L' + k].meta = metas[k];
-    x.pageCls = lift >= 0 ? (nav.cls[nav.cur] || '') : '';
-    x.backLabel = nav.prev === 'home' || !nav.prev ? '设置' : (nav.title[nav.prev] || '返回');
-    /* home scroll: the controller's header collapse + the stack's --st */
-    x.onHomeScroll = function (ev) { nav.onScroll(ev); var el = ev.currentTarget; var s = el.querySelector('.s10-stack'); if (s) s.style.setProperty('--st', el.scrollTop + 'px'); };
-    /* edit deck */
+    var ls = you.lastSaved; var justSaved = !!(ls && !ls.nothing && ((c.toast.on && c.toast.kind === 'ok') || Date.now() - ls.at < 3000));
+    x.freshName = justSaved && you.savedName; x.freshWx = justSaved && you.savedWx; x.freshMail = justSaved && you.savedEmail;
+    var landing = justSaved && (cur === 'profile' || (cur === 'profile-edit' && ph === 'exit')); var lc = 's10-land-' + ((this._s10land || 0) % 2 ? 'a' : 'b');
+    x.landName = landing && you.savedName ? lc : ''; x.landWx = landing && you.savedWx ? lc : ''; x.landMail = landing && you.savedEmail ? lc : '';
+    /* 编辑资料 */
     var pf = c.pf; var pe = pf.on ? pf.err : {};
-    x.badName = pe.name ? 'is-bad' : ''; x.badWx = pe.wx ? 'is-bad' : ''; x.badMail = pe.email || pe.code ? 'is-bad' : '';
-    x.cntCls = pf.nameOver ? 'over' : '';
+    x.badName = pe.name ? 'is-bad' : ''; x.badWx = pe.wx ? 'is-bad' : ''; x.badMail = pe.email || pe.code ? 'is-bad' : ''; x.cntCls = pf.nameOver ? 'over' : '';
     x.mailKept = !!(pf.on && !pf.emailChanged && (pf.email || '').trim() && d.you.emailVerified); x.mailKeptText = '已验证 · ' + (d.you.emailDomain || '');
-    x.codeOk = !!(pf.on && pf.emailChanged && pf.codeVerified);
-    x.mailErr = pf.on ? (pe.email || pe.code || '') : '';
-    x.mailHint = pf.on && (pf.codeSent || pf.codeExpired) ? pf.codeNote : pf.emailHint;
-    x.showHint = !!(pf.on && pf.emailChanged && !x.mailErr);
+    x.codeOk = !!(pf.on && pf.emailChanged && pf.codeVerified); x.mailErr = pf.on ? (pe.email || pe.code || '') : '';
+    x.mailHint = pf.on && (pf.codeSent || pf.codeExpired) ? pf.codeNote : pf.emailHint; x.showHint = !!(pf.on && pf.emailChanged && !x.mailErr);
     x.resendOff = !pf.canResend; x.saveAct = pf.failed ? 'retry' : 'save';
-    x.sheetDismiss = c.sheet.accountEnd ? c.sheet.cancel : c.sheet.keep;
+    /* 我的记录 / 我的举报 */
+    var kindCls = { '出席记录': 'k-att', '主动退出': 'k-exit', '安排变化': 'k-chg' };
+    x.recGroups = c.recs.groups.map(function (g) { return { title: g.title, count: g.count, cls: kindCls[g.title] || 'k-chg', rows: g.rows }; }); x.recsAny = !c.recs.empty;
+    x.repRows = c.reps.rows.map(function (r) { return Object.assign({}, r, { chipCls: r.needsMore ? 'hot' : r.open ? '' : 'mute' }); }); x.repsAny = !c.reps.empty;
+    x.repShots = c.rep && c.rep.shotRows && c.rep.shotRows.length ? c.rep.shotRows.map(function (s) { return s.name + (s.sizeText ? '（' + s.sizeText + '）' : ''); }).join('、') : '';
+    /* forms (shared c.form): which sheet hosts it */
+    var fo = !!c.form.on; x.formL0 = fo && gOf(cur) === 0; x.formL5 = fo && cur === 'feedback'; x.formSeam = fo && cur === 'seam-report'; x.formCls = nav.cls[cur] || '';
+    x.formMeta = !fo ? '' : /^record-/.test(cur) && c.rec ? c.rec.label + ' · ' + c.rec.title : cur === 'report-supplement' && c.rep ? c.rep.title + ' · ' + c.rep.statusLabel : cur === 'seam-report' && c.seamReport ? c.seamReport.title + ' · ' + c.seamReport.when.zh : '会作为本机记录保存';
+    x.formShake = fo && c.form.shake ? 'shake-' + (c.form.shake % 2) : ''; x.formBadText = fo && c.form.err.text ? 'is-bad' : ''; x.formBadWho = fo && c.form.err.who ? 'is-bad' : '';
+    x.formTextCls = fo && c.form.needWho ? 's10-fs2' : 's10-fs1'; x.formFileCls = fo && c.form.needWho ? 's10-fs3' : 's10-fs2';
+    /* 收藏 */
+    var byIso = function (a, b) { return a.event.iso < b.event.iso ? -1 : 1; };
+    var favRow = function (r) { var m = dm(r.when); return Object.assign({}, r, { day: m.day, mon: m.mon, rm: stop(r.remove), relCls: r.joined ? 'ok' : r.hosted ? '' : 'mute' }); };
+    var act = c.fav.active.slice().sort(byIso);
+    x.favRows = act.map(favRow); x.favArchivedRows = c.fav.archived.map(favRow); x.favArchived = c.fav.archived.length > 0; x.favArchivedCount = c.fav.archived.length; x.favAny = !c.fav.empty;
+    x.favNext = act[0] ? act[0].when.wdZh + ' ' + act[0].when.md + ' · ' + act[0].title : '';
+    x.favTags = act.concat(c.fav.archived).slice(0, 2).map(function (r) { return { title: r.title }; }); x.favMore = c.fav.count > 2 ? c.fav.count - 2 : 0;
+    x.favDetailLong = !!(c.favDetail && Array.from(c.favDetail.title).length > 12); x.feedDetailLong = !!(c.feedDetail && Array.from(c.feedDetail.title).length > 12);
+    var fd = c.favDetail; x.fdx = fd ? { relCls: fd.joined ? 'ok' : 'mute', favAct: fd.fav ? 'unfav' : 'fav' } : {};
+    x.fdMeta = fd ? (fd.crossCity ? fd.city.name + ' · 当地时间' : fd.favAgo ? '收藏于 ' + fd.favAgo : fd.status.label) : '';
+    /* 城市 */
+    x.cityList = c.city.list.map(function (k) { return Object.assign({}, k, { mark: k.on ? '当前' : k.tzLabel, bg: k.on ? '--ib:color-mix(in srgb,var(--c3) 50%,#fff)' : '' }); });
+    x.cityFlash = c.city.flash ? 's10-flash' : ''; x.cityTz = c.sum.city.tzLabel;
+    /* 提醒 */
+    x.permShort = split(c.sum.notifyLabel)[1];
+    x.permChip = c.notify.isDefault ? '' : c.notify.permissionLabel; x.permChipCls = c.notify.isGranted ? 'ok' : c.notify.isRequesting ? 'hot' : 'mute';
+    var sv = split(c.notify.serviceCopy); x.svcTitle = sv[0]; x.svcBody = sv[1];
+    /* 外观 */
+    x.skinList = c.skin.list.map(function (k) { var pv = k.shown && c.skin.previewing; return { key: k.key, name: k.name, en: k.en, line: k.line, shown: k.shown, onCls: k.on ? 'on' : '', chip: pv ? '预览中' : k.on ? '使用中' : '', chipCls: pv ? 'hot' : '', go: function () { self.s10Preview(k.key); } }; });
+    x.skinLead = c.skin.previewing ? '正在预览「' + c.skin.shownName + '」，整个画面已经换上它' : '现在是「' + c.skin.curName + '」';
+    x.skinApply = function () { self.skinApply(); };
+    x.rmShort = c.skin.rmOn ? '减少动态' : '正常动态';
+    x.rmSysLine = c.skin.rmSys ? '跟随系统：系统已开启「减少动态」，JU 现在只切换结果、不播放过渡' : '跟随系统：系统没有开启「减少动态」，以这里的开关为准';
+    /* 帮助 · 约定 · 账户 · 关于 */
+    x.helpVal = JUS.RULES.length + ' 条约定' + (c.sum.feedbackCount ? ' · ' + c.sum.feedbackCount + ' 条反馈' : '');
+    x.helpGroups = c.help.groups.map(function (g) { return { name: g.name, line: g.line, count: g.rules.length }; }); x.noFeedback = !c.help.feedback.length;
+    x.ruleGroups = c.help.groups.map(function (g, i) { return { name: g.name, line: g.line, rules: g.rules, bg: '--ib:' + (i % 2 ? 'color-mix(in srgb,var(--c1) 38%,#fff)' : '#fff') }; });
+    x.policyNote = JUS.POLICY_NOTE; x.acctLead = c.acct.demo ? '本机演示会话进行中' : '本机演示会话已结束';
+    x.storageKey = JUS.store.key(this.concept.code); x.builtText = c.about.built ? String(c.about.built).slice(0, 10) : '本地构建';
+    /* seams */
+    x.feedRows = c.feed.rows.map(function (r, i) { var m = dm(r.when); return Object.assign({}, r, { day: m.day, mon: m.mon, cstyle: r.style + ';--fcol:var(--c' + (i % 5 + 1) + ')', starLabel: r.fav ? '已收藏' : '未收藏' }); });
+    x.feedNote = '右滑一张收进收藏，左滑拿出；点一下看详情。收藏不等于报名。';
+    var fdd = c.feedDetail; x.sfx = fdd ? { relCls: fdd.joined ? 'ok' : 'mute', favAct: fdd.fav ? 'unfav' : 'fav' } : {};
+    var mineRow = function (r) { return Object.assign({}, r, { starLabel: r.fav ? '已收藏，点一下拿出' : '收进收藏' }); };
+    x.mineGroups = [{ title: '进行中', cls: 'k-att', rows: c.mine.current }, { title: '我发起的', cls: 'k-exit', rows: c.mine.hosted }, { title: '历史', cls: 'k-chg', rows: c.mine.history }].filter(function (g) { return g.rows.length; }).map(function (g) { return { title: g.title, cls: g.cls, count: g.rows.length, rows: g.rows.map(mineRow) }; });
+    x.mineMeta = c.mine.current.length + ' 个进行中 · 收藏 ' + c.sum.favCount + ' · 收藏不改报名';
+    x.sheetDismiss = c.sheet.accountEnd ? c.sheet.cancel : c.sheet.keep; x.cfCls = c.sheet.accountEnd ? 'danger' : '';
     return { panel: panel, rootRef: this.rootRef, c: c, x: x };
   }
 }
@@ -509,7 +1139,7 @@ JUS.mixin(Component);
 /* with the keyboard up the action sheet is pinned above it: also keep the focused field clear of that sheet */
 (function () { var base = Component.prototype.reveal; if (!base) return;
   Component.prototype.reveal = function (el) { base.call(this, el); var sc = el && el.closest && el.closest('[data-scroller]'); var foot = sc && sc.querySelector('.s10-fa');
-    if (!foot || getComputedStyle(foot).position !== 'sticky') return; var r = el.getBoundingClientRect(), f = foot.getBoundingClientRect(); if (r.bottom > f.top - 12) sc.scrollTop += r.bottom - f.top + 20; };
+    if (!foot || getComputedStyle(foot).position !== 'sticky' || foot.contains(el)) return; var r = el.getBoundingClientRect(), f = foot.getBoundingClientRect(); if (r.bottom > f.top - 12) sc.scrollTop += r.bottom - f.top + 20; };
 })();
 </script>
 </body>
