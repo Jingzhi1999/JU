@@ -361,6 +361,10 @@
       var city = JUS.cityByKey(d.prefs.city); var n = d.notify; var onCount = Object.keys(n.prefs).filter(function (k) { return n.prefs[k]; }).length;
       var permLabel = { default: '未申请系统权限', requesting: '请求中', granted: n.serviceConnected ? '已允许通知 · 提醒已连接' : '已允许通知 · 提醒暂未开通', denied: '通知已拒绝', unsupported: '暂不支持通知' }[n.permission];
       var openReports = d.reports.filter(function (r) { return r.status !== 'resolved'; }).length, needMore = d.reports.filter(function (r) { return r.status === 'needs_info'; }).length;
+      /* the report label names each stage once: 需补充 / 处理中 (accepted + processing) / 已提交 — a submitted report is not 「处理中」 yet */
+      var repBy = {}; d.reports.forEach(function (r) { repBy[r.status] = (repBy[r.status] || 0) + 1; });
+      var repProc = (repBy.processing || 0) + (repBy.accepted || 0), repParts = [];
+      if (needMore) repParts.push(needMore + ' 条需补充'); if (repProc) repParts.push(repProc + ' 条处理中'); if (repBy.submitted) repParts.push(repBy.submitted + ' 条已提交');
       /* 待核实 describes the record (still under review after a dispute); attention counts only the ones still waiting for you */
       var pendingAll = d.records.filter(function (r) { return r.status === 'pending_review'; }).length;
       var pending = d.records.filter(function (r) { return r.status === 'pending_review' && !r.appeals.length; }).length;
@@ -370,7 +374,7 @@
         city: city, cityLabel: city.name, notifyLabel: onCount + '/' + JUS.NOTIFY_CATS.length + ' 类开启 · ' + permLabel, permission: n.permission, serviceConnected: n.serviceConnected,
         skin: JUS.SKINS.filter(function (s) { return s.key === d.appearance.skin; })[0], reduceMotion: d.appearance.reduceMotion, appearanceLabel: JUS.SKINS.filter(function (s) { return s.key === d.appearance.skin; })[0].name + (d.appearance.reduceMotion ? ' · 减少动态' : ''),
         recordCount: d.records.length, recordLabel: d.records.length ? d.records.length + ' 条事实' + (pendingAll ? ' · ' + pendingAll + ' 条待核实' : '') : JUS.COPY.creditEmpty, pendingRecords: pendingAll, pendingToAnswer: pending,
-        reportCount: d.reports.length, reportLabel: d.reports.length ? (openReports ? openReports + ' 条处理中' : '均已处理') + (needMore ? ' · ' + needMore + ' 条需补充' : '') : JUS.COPY.reportsEmpty, needMore: needMore,
+        reportCount: d.reports.length, reportLabel: d.reports.length ? (repParts.length ? repParts.join(' · ') : '均已处理') : JUS.COPY.reportsEmpty, needMore: needMore, reportOpen: openReports, reportProcessing: repProc, reportSubmitted: repBy.submitted || 0,
         feedbackCount: d.feedback.length, attention: needMore + pending,
         sessionLabel: d.session.kind === 'demo' ? JUS.COPY.demoOnly : '', joinedCount: d.joined.filter(function (j) { return j.group !== '历史'; }).length, hostedCount: d.hosted.filter(function (h) { return !h.ended; }).length
       };
