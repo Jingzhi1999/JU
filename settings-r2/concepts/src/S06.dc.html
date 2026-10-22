@@ -269,11 +269,16 @@ body{margin:0}
 .s06-toast.is-undo{bottom:calc(140px + var(--kb,0px))}
 @keyframes s06-rise{from{opacity:0;translate:0 12px}}
 /* ---- review: 暂停 holds every keyframe; 关键帧 maps --frame onto the three core motions ---- */
+/* 关键帧: entering .scrub switches each core motion to a twin keyframe, so it restarts at t=0, held, and --frame maps straight to progress */
+@keyframes s06-openx{from{--s06-p:0}to{--s06-p:1}}
+@keyframes s06-shutx{from{--s06-p:1}to{--s06-p:0}}
+@keyframes s06-wx{0%{background-size:0% 2px;background-color:var(--tone-soft)}58%{background-size:100% 2px;background-color:var(--tone-soft)}100%{background-size:100% 2px;background-color:transparent}}
+@keyframes s06-lx{from{opacity:.25;filter:blur(12px)}to{opacity:1;filter:blur(0)}}
 .app.paused,.app.paused *,.app.scrub,.app.scrub *{animation-play-state:paused!important}
-.app.scrub.s06-opening{animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
-.app.scrub.s06-closing{animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
-.app.scrub .s06-w-a,.app.scrub .s06-w-b{animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
-.app.scrub .s06-sky i{animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
+.app.scrub.s06-opening{animation-name:s06-openx!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.scrub.s06-closing{animation-name:s06-shutx!important;animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
+.app.scrub .s06-v.s06-w-a,.app.scrub .s06-v.s06-w-b{animation-name:s06-wx!important;animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
+.app.scrub.s06-sw0[data-skin="cotton"] .k-cotton,.app.scrub.s06-sw0[data-skin="halo"] .k-halo,.app.scrub.s06-sw0[data-skin="sunset"] .k-sunset,.app.scrub.s06-sw1[data-skin="cotton"] .k-cotton,.app.scrub.s06-sw1[data-skin="halo"] .k-halo,.app.scrub.s06-sw1[data-skin="sunset"] .k-sunset{animation-name:s06-lx!important;animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
 .app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 </style>
 </helmet>
@@ -642,8 +647,8 @@ class Component extends DCLogic {
     sc.scrollTop = Math.max(0, para.offsetTop + (this._s06.split || 0) - 66);
     this._applyHc(sc);
   }
-  s06Write(keys) { var n = (this._s06wn = (this._s06wn || 0) + 1); var self = this; this.setState({ s06w: { keys: keys, ab: n % 2 ? 'a' : 'b' } }); this.afterKey('s06w', 460, function () { self.setState({ s06w: null }); }); }
-  s06Light(from) { var n = (this._s06ln = (this._s06ln || 0) + 1); var self = this; this.setState({ s06sk: { from: from, n: n % 2 } }); this.afterKey('s06sk', 680, function () { self.setState({ s06sk: null }); }); }
+  s06Write(keys) { var n = (this._s06wn = (this._s06wn || 0) + 1); var self = this; this._s06lastW = { keys: keys, ab: n % 2 ? 'a' : 'b' }; this.setState({ s06w: this._s06lastW }); this.afterKey('s06w', 460, function () { self.setState({ s06w: null }); }); }
+  s06Light(from) { var n = (this._s06ln = (this._s06ln || 0) + 1); var self = this; this._s06lastL = { from: from, n: n % 2 }; this.setState({ s06sk: this._s06lastL }); this.afterKey('s06sk', 680, function () { self.setState({ s06sk: null }); }); }
   /* a tap on a receded group folds the paragraph back (the whole drill-down closes as one motion) */
   s06Fold() {
     var st = this.state.nav; if (st.phase !== 'idle') st = this._navSettle();
@@ -689,7 +694,9 @@ class Component extends DCLogic {
     var pf = c.pf || { on: false };
     var editing = shown === 'profile-edit' && pf.on && !pf.saved;
     var rmUser = d.appearance.reduceMotion ? ' rm-user' : '';
-    var sk = s.s06sk;
+    /* while 关键帧 is held, the last 写回 / 换光 stays inspectable even after its classes were cleared */
+    var scrubbing = !!(s.review && s.review.scrub != null), lm = this.lastMotion ? this.lastMotion.name : '';
+    var sk = s.s06sk || (scrubbing && lm === '换光' ? this._s06lastL : null);
     var v = { editing: editing, reading: !editing, seam: seamShown };
     v.cls = (fk ? ' s06-focus' : '') + (fkv ? ' s06-fv' : '') + (mo === 'open' ? ' s06-opening' : mo === 'shut' ? ' s06-closing' : '') + (editing ? ' s06-editing' : '') + (editing && pf.saving ? ' s06-saving' : '') + (sk ? ' s06-sw' + sk.n + ' s06-from-' + sk.from : '') + rmUser;
     this._s06skNew = c.skinShown;
@@ -776,7 +783,7 @@ class Component extends DCLogic {
     P.need = !!need; P.needPhrase = need + ' 条需要补充';
     v.P = P;
     this._s06sigNew = { name: P.name, wx: P.wx, email: P.email + P.emailNote, city: P.city, fav: three.map(function (r) { return r.id; }).join(',') + '|' + order.length, n: P.nPhrase + P.nPost, p: P.pPhrase, skin: P.skin, motion: P.motion, rec: P.recPhrase, pend: P.pend ? P.pendPhrase : '', rep: P.repPhrase + P.repPost, need: P.need ? P.needPhrase : '' };
-    var w = s.s06w, wk = w ? w.keys : [], wc = w ? ' s06-w-' + w.ab : '';
+    var w = s.s06w || (scrubbing && lm === '写回' ? this._s06lastW : null), wk = w ? w.keys : [], wc = w ? ' s06-w-' + w.ab : '';
     v.wrote = {}; ['name', 'wx', 'email', 'city', 'fav', 'n', 'p', 'skin', 'motion', 'rec', 'pend', 'rep', 'need'].forEach(function (k) { v.wrote[k] = wk.indexOf(k) >= 0 ? wc : ''; });
     /* identity editing */
     var err = pf.err || {};
