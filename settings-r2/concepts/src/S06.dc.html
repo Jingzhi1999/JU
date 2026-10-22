@@ -62,6 +62,7 @@ body{margin:0}
 /* header: 30 → 18 driven by --hc, moving into the middle of the tool row */
 .s06-hd{position:absolute;left:0;right:0;top:0;height:136px;z-index:6;pointer-events:none;container-type:inline-size}
 .s06-hd::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(134px - 66px * var(--hc,0));background:linear-gradient(180deg,var(--paper) calc(100% - 22px),color-mix(in srgb,var(--paper) 0%,transparent))}
+.app.s06-opening .s06-hd::before,.app.s06-closing .s06-hd::before{background:var(--paper)}
 .s06-bar{position:absolute;left:0;right:0;top:10px;height:44px;display:flex;align-items:center;padding:0 16px 0 24px;pointer-events:auto}
 .s06-ju{font:700 17px/1 var(--sans);letter-spacing:.03em;color:var(--ink)}
 .s06-back{appearance:none;border:0;background:none;color:var(--ink);font:500 15px/1 var(--sans);padding:0 12px 0 0;margin-left:-4px;height:44px;display:inline-flex;align-items:center;gap:5px;cursor:pointer}
@@ -75,9 +76,14 @@ body{margin:0}
 .s06-para.s06-nogap{transition:none}
 .s06-b{position:relative;font:400 22px/1.8 var(--serif);color:var(--run);text-align:left;text-wrap:pretty;line-break:strict;overflow-wrap:anywhere;text-autospace:no-autospace;text-spacing-trim:space-first}
 .s06-b+.s06-b{margin-top:10px}
-.app.s06-fv .s06-b.is-up{opacity:calc(1 - var(--s06-p))}
+.app.s06-fv .s06-b.is-up{opacity:max(0,calc(1 - 2 * var(--s06-p)))}
 .app.s06-focus .s06-b.is-up{pointer-events:none}
-.app.s06-fv .s06-b.is-dn{opacity:calc(1 - .65 * var(--s06-p));translate:0 calc(var(--s06-gap) * var(--s06-p))}
+.app.s06-fv .s06-b.is-dn{opacity:calc(1 - .82 * var(--s06-p));translate:0 calc(var(--s06-gap) * var(--s06-p))}
+.app.s06-focus .s06-b.is-dn{pointer-events:none}
+/* below the band the rest of the paragraph is only remembered: underlines thin away and the blue chips fade with the same progress */
+.app.s06-fv .s06-b.is-dn .s06-v{background-size:100% calc(2px * (1 - var(--s06-p)))}
+.app.s06-fv .s06-b.is-dn .s06-v.s06-att{background-color:rgba(69,83,190,calc(.09 * (1 - var(--s06-p))))}
+.app.s06-fv .s06-b.is-dn .s06-ix span.on{background-size:100% calc(2px * (1 - var(--s06-p)))}
 .s06-nb{white-space:nowrap}
 .s06-end{font-style:normal;margin-right:.32em}
 .s06-v{font-weight:600;color:var(--ink);white-space:nowrap;cursor:pointer;outline:none;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;padding:0 .1em 2px;-webkit-box-decoration-break:clone;box-decoration-break:clone;border-radius:2px;transition:background-color calc(120ms * var(--k)) ease}
@@ -99,6 +105,12 @@ body{margin:0}
 .s06-v.s06-w-b{animation:s06-wb calc(420ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 /* inline editors: same face, size and underline as the phrase they replace */
 .s06-in{font:600 22px/normal var(--serif);color:var(--ink);background:transparent;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;border:0;border-radius:0;margin:0;padding:0 .1em 2px;vertical-align:baseline;field-sizing:content;min-width:1.4em;max-width:100%;box-sizing:border-box;outline:none;caret-color:var(--focus);transition:background-color calc(160ms * var(--k)) ease}
+/* the identity sentence in edit: each value is an editable phrase (contenteditable plaintext) that wraps like the reading state */
+.s06-ce{font-weight:600;color:var(--ink);outline:none;caret-color:var(--focus);white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-all;background-image:linear-gradient(var(--tone),var(--tone));background-repeat:no-repeat;background-size:100% 2px;background-position:0 100%;background-color:color-mix(in srgb,var(--tone) 10%,transparent);padding:0 .14em 2px;border-radius:4px 4px 0 0;-webkit-box-decoration-break:clone;box-decoration-break:clone;cursor:text}
+.s06-ce:focus{background-image:linear-gradient(var(--focus),var(--focus));background-color:rgba(74,90,214,.1)}
+.s06-ce.is-err{background-image:linear-gradient(var(--err),var(--err));background-color:rgba(218,58,82,.07)}
+.s06-ce:empty::before{content:attr(data-ph);color:rgba(20,22,31,.34);font-weight:400}
+.app.s06-saving .s06-ce{color:rgba(20,22,31,.55)}
 /* in the sentence each input reads as a blank to fill: a pale wash of the environment tone above its underline */
 .s06-in{background-color:color-mix(in srgb,var(--tone) 10%,transparent);border-radius:4px 4px 0 0;padding:0 .2em 2px}
 .s06-in:focus{background-image:linear-gradient(var(--focus),var(--focus));background-color:rgba(74,90,214,.1)}
@@ -129,6 +141,12 @@ body{margin:0}
 .s06-item.is-arch{color:var(--sec)}
 .s06-item.is-arch .s06-v{color:var(--body);font-weight:500}
 .s06-item.is-ro{font-size:17px;line-height:1.7;color:var(--body)}
+.s06-day{display:flex;align-items:center;gap:10px;margin:18px 0 6px;font:600 15px/1.5 var(--serif);letter-spacing:.04em;color:var(--body)}
+.s06-day::after{content:"";flex:1 1 auto;height:1px;background:var(--edge)}
+.s06-day.is-first{margin-top:4px}
+.s06-fi{display:grid;grid-template-columns:3.3em minmax(0,1fr);column-gap:8px;align-items:baseline;margin:0 0 10px}
+.s06-fi .s06-item{margin:0}
+.s06-tm{font:500 15px/1.6 var(--serif);font-variant-numeric:tabular-nums;color:var(--sec);white-space:nowrap}
 .s06-gloss{margin:14px 0 0;font:400 15px/1.7 var(--serif);color:var(--sec)}
 .s06-note{margin:10px 0 0;font:400 13px/1.6 var(--sans);color:var(--sec)}
 .s06-blue{color:var(--ju)}
@@ -209,6 +227,8 @@ body{margin:0}
 .s06-fw.is-moving .s06-fu{visibility:visible}
 .s06-fw.to-l .s06-fu{justify-content:flex-end}
 .s06-fw.is-wrong .s06-fu{background:#ECEBEF;color:var(--sec)}
+.s06-fw.is-wrong .s06-fu span{visibility:hidden}
+.s06-fm.is-hint{color:var(--ink);font-weight:600}
 .s06-fr{position:relative;display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:12px;align-items:center;padding:14px 24px;background:var(--paper);touch-action:pan-y;user-select:none;-webkit-user-select:none;cursor:pointer;outline:none;transition:transform calc(500ms * var(--k)) cubic-bezier(.2,.9,.3,1.04)}
 .s06-fr.is-drag{transition:none}
 .s06-fr:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)}
@@ -240,20 +260,20 @@ body{margin:0}
 .s06-keep:active{transform:scale(.958)}
 @keyframes s06-fade{from{opacity:0}}
 @keyframes s06-up{from{translate:0 100%}}
-.s06-toast{position:absolute;left:24px;right:24px;bottom:calc(86px + var(--kb,0px));z-index:30;box-sizing:border-box;display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:48px;padding:12px 16px;background:var(--paper);border:1px solid rgba(20,22,31,.12);border-radius:3px;font:500 16px/1.5 var(--serif);color:var(--ink);animation:s06-rise calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.s06-toast{position:absolute;left:0;right:0;bottom:calc(70px + var(--kb,0px));z-index:30;box-sizing:border-box;display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-height:50px;padding:13px 24px 14px;background:var(--band);box-shadow:inset 0 1px 0 var(--edge),inset 0 -1px 0 var(--edge),inset 0 7px 9px -7px rgba(20,22,31,.13),inset 0 -7px 9px -7px rgba(20,22,31,.09);font:500 17px/1.5 var(--serif);color:var(--ink);animation:s06-rise calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .s06-toast span{background:linear-gradient(var(--tone),var(--tone)) no-repeat 0 100%/100% 2px;padding-bottom:3px}
 .s06-toast.k-error{color:var(--err)}
 .s06-toast.k-error span{background-image:linear-gradient(var(--err),var(--err))}
 .s06-toast .s06-verb{font-size:16px;flex:0 0 auto;white-space:nowrap}
-.s06-toast.is-undo{bottom:calc(140px + var(--kb,0px))}
+.s06-toast.is-undo{bottom:calc(120px + var(--kb,0px))}
 @keyframes s06-rise{from{opacity:0;translate:0 12px}}
 /* ---- review: 暂停 holds every keyframe; 关键帧 maps --frame onto the three core motions (the shared mixin sets their current time to 0
    when scrubbing starts and restores it on 释放, so the negative delay lands on an absolute frame and the live state carries on) ---- */
 .app.paused,.app.paused *,.app.scrub,.app.scrub *{animation-play-state:paused!important}
-.app.scrub.s06-opening{animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
-.app.scrub.s06-closing{animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
-.app.scrub .s06-v.s06-w-a,.app.scrub .s06-v.s06-w-b{animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
-.app.scrub.s06-sw0[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-sw0[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-sw0[data-skin="sunset"] .s06-sky .k-sunset,.app.scrub.s06-sw1[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-sw1[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-sw1[data-skin="sunset"] .s06-sky .k-sunset{animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
+.app.scrub.s06-m-focus.s06-opening{animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.scrub.s06-m-focus.s06-closing{animation-delay:calc(-1 * var(--frame,0) * 280ms * var(--k,1))!important}
+.app.scrub.s06-m-write .s06-v.s06-w-a,.app.scrub.s06-m-write .s06-v.s06-w-b{animation-delay:calc(-1 * var(--frame,0) * 420ms * var(--k,1))!important}
+.app.scrub.s06-m-light.s06-sw0[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-m-light.s06-sw0[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-m-light.s06-sw0[data-skin="sunset"] .s06-sky .k-sunset,.app.scrub.s06-m-light.s06-sw1[data-skin="cotton"] .s06-sky .k-cotton,.app.scrub.s06-m-light.s06-sw1[data-skin="halo"] .s06-sky .k-halo,.app.scrub.s06-m-light.s06-sw1[data-skin="sunset"] .s06-sky .k-sunset{animation-delay:calc(-1 * var(--frame,0) * 650ms * var(--k,1))!important}
 .app.rm,.app.rm *,.app.rm-user,.app.rm-user *{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
 </style>
 </helmet>
