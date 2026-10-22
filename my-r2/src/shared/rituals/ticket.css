@@ -1,0 +1,104 @@
+/* ticket.css — JU 票根物件：未撕 / 已撕 / 作废 三态的 CSS（真实尺寸，不改尺寸、不改配色、不改字体角色）
+   来源：/home/user/JU/.build/baseline/V27.html（去 base64 副本 V27.code.html 行号与原文件一致）
+   · 第 49 行   :root{--ju-font-ui:'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif}
+   · 第 71-73 行 @media (prefers-reduced-motion:reduce){*{animation-duration:1ms…transition-duration:80ms…}}（全局规则，原样保留）
+   · 第 261-263 行 .ju-ticket-face / .ju-ticket-brand / .ju-ticket-title / .ju-ticket-when / .ju-ticket-line / .ju-ticket-previous
+   · 第 264 行   .ju-contact-row / .ju-contact-name / .ju-contact-account / .ju-contact-copy（联系信息层）
+   · 第 311 行   .ju-contact-note23
+   · 第 318 行   .ju-tear-error24
+   · 第 327 行   [data-paper] / [data-paper-surface] / [data-paper-shell] / .ju-paper-shadow24（V25：影子由外壳投，纸本体 filter:none）
+   · 第 347 行   .ju-paper-shadow24>div{clip-path:inset(0 0 var(--ju-shadow-stub25,0px) 0)}（副券区域不投主票影子，副券画布自带影子）
+   · 第 349 行   #s06 [data-print-stage],#s11 [data-print-stage]{flex-shrink:0;overflow:visible;overflow-anchor:none}
+   · 第 3448-3466 行 vals06()：pr7Stage / pr7Paper / pr7Body / pr7Rig / pr7WetTop / pr7Bend（s07 主线票根内联样式）
+   · 第 3938-3961 行 vals11()：pr10Stage / pr10Paper / pr10Body / pr10Stamp / pr10Rig / burnHost（s10 改期票根；data-raster="stamp" 的「时间已改」章）
+   · 第 4003-4004 行 vals12()：p12Paper / p12Stamp（s12 取消票根；juStamp .55s ease .4s both）
+   · 第 1258-1268 行（s06）、1548-1562 行（s11）、1630-1642 行（s12）：票根 DOM 结构
+   · 第 3602 行   measurePaper21()：--ju-paper-height = ceil(top + 纸高 + 58)（未撕）/ ceil(top + 纸高 + 20)（已撕）；--ju-shadow-stub25 = min(84, 副券高)
+   · 第 4505-4507 行 contactWrap23 / contactButton23（联系层出现的过渡）
+   副券纸面不是 DOM：由 ju-tear.js 的 JUTear.drawStub() 画在 258×84 的 canvas 上（见 tear.js / ticket.html）。
+   类名映射：V27 里 [data-paper] = .ju-ticket，[data-paper-surface] = .ju-ticket-surface，[data-paper-shell] = .ju-ticket-shell，
+   .ju-paper-shadow24 = .ju-ticket-shadow，[data-tear] = .ju-ticket-stub，[data-burn] = .ju-ticket-burn，[data-raster=stamp] = .ju-ticket-mark。
+   原件的 data-* 钩子（data-paper / data-paper-surface / data-paper-shadow / data-tear / data-burn / data-raster / data-wet / data-bend）必须保留，引擎按它们取元素。 */
+
+:root{--ju-font-ui:'Noto Sans SC','Microsoft YaHei','PingFang SC',sans-serif}
+
+/* V27 第 71-73 行：系统减少动态 → 关键帧 1ms、过渡 80ms（全局，原样） */
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:1ms!important;animation-delay:0ms!important;animation-iteration-count:1!important;transition-duration:80ms!important;transition-delay:0ms!important}
+}
+/* 评审开关：html[data-ju-reduced="true"] 与系统设置等价（demo 用；原件为手动开关 otpReduced()） */
+html[data-ju-reduced="true"] *{animation-duration:1ms!important;animation-delay:0ms!important;animation-iteration-count:1!important;transition-duration:80ms!important;transition-delay:0ms!important}
+
+/* ── 舞台（V27 pr7Stage / pr10Stage + measurePaper21 写入的变量） ───────────────────────────── */
+.ju-ticket-stage{
+  position:relative;height:var(--ju-paper-height,476px);flex-shrink:0;margin:2px 0 0;
+  overflow:visible;overflow-anchor:none;
+  transition:height .5s cubic-bezier(.2,.9,.3,1);              /* pr7Stage：撕后收高 */
+  --ju-ticket-top:84px;                                        /* pr7Paper top；s10 为 24px；手机高 <720 时 24px */
+  --ju-shadow-stub:84px;                                       /* 有副券时影子让出 84px */
+}
+.ju-ticket-stage[data-print="printing"],.ju-ticket-stage[data-state="idle"]{overflow:hidden;transition:none}   /* 出纸中：纸从上方 -452px 推出，舞台裁掉上方 */
+.ju-ticket-stage[data-state="torn"]{--ju-shadow-stub:var(--ju-stub-torn,0px)}
+
+/* ── 纸本体（V27 pr7Paper + 第 327 行） ────────────────────────────────────────────────── */
+.ju-ticket{
+  position:absolute;left:50%;top:var(--ju-ticket-top,84px);width:258px;margin-left:-129px;z-index:3;
+  transform-origin:50% 0%;isolation:isolate;
+  filter:none!important;will-change:auto!important;backface-visibility:visible!important;   /* 第 327 行 [data-paper] */
+}
+.ju-ticket-stage[data-state="idle"] .ju-ticket{transform:translateY(-452px);opacity:0;pointer-events:none}   /* printReset 的起点 */
+.ju-ticket-shadow{position:absolute;inset:0;pointer-events:none;z-index:-1;filter:drop-shadow(0 18px 26px rgba(18,22,48,.26)) drop-shadow(0 3px 4px rgba(18,22,48,.18))}
+.ju-ticket-shadow>div{position:absolute;inset:0;background:#edeff7;border-radius:14px 14px 10px 10px;clip-path:inset(0 0 var(--ju-shadow-stub,0px) 0)}
+.ju-ticket-shell{position:relative;filter:none!important}
+.ju-ticket-surface{position:relative;width:258px;isolation:isolate;transform:none!important;will-change:auto!important}
+.ju-ticket-body{background:#EDEFF7;border-radius:14px 14px 0 0;overflow:hidden;position:relative}
+
+/* ── 票面文字（V27 第 261-263 行，逐字） ───────────────────────────────────────────────── */
+.ju-ticket-face{box-sizing:border-box;position:relative;padding:18px;background:#edeff7;color:#22283b;font:14px/1.5 'Noto Sans SC',sans-serif;border-radius:14px 14px 0 0}
+.ju-ticket-brand{font:700 13px/1.4 'Space Mono';letter-spacing:.12em;color:#51596f}
+.ju-ticket-title{font-size:20px;line-height:1.35;font-weight:600;margin:12px 0 16px;overflow-wrap:anywhere}
+.ju-ticket-when{display:flex;justify-content:space-between;gap:8px;font:700 28px/1.1 'Archivo';letter-spacing:-.02em;padding-bottom:14px}
+.ju-ticket-line{display:grid;grid-template-columns:40px 1fr;gap:10px;border-top:1px solid #cdd1de;padding-top:8px;margin-top:8px}
+.ju-ticket-line>span:first-child{color:#555e73}
+.ju-ticket-line strong{font-weight:500;overflow-wrap:anywhere}
+.ju-ticket-previous{font-size:14px;color:#555e73;text-decoration:line-through;margin:0 0 10px}
+.ju-ticket-previous[hidden]{display:none}
+
+/* ── 湿墨 / 弯折渐变（pr7WetTop / pr7Bend：V27 保留但 opacity 恒为 0，出纸明暗由 WebGL 网格承担） ── */
+.ju-ticket-wet{position:absolute;left:0;right:0;top:0;height:42px;pointer-events:none;background:linear-gradient(180deg,rgba(20,22,31,.14),rgba(20,22,31,0));opacity:0}
+.ju-ticket-bend{position:absolute;left:0;right:0;bottom:0;height:34px;pointer-events:none;background:linear-gradient(180deg,rgba(20,22,31,0),rgba(20,22,31,.16));opacity:0}
+
+/* ── 「时间已改」章（pr10Stamp，data-raster="stamp"；燃烧时其轮廓并入纸的蒙版） ─────────────── */
+.ju-ticket-mark{position:absolute;top:150px;right:-20px;border:2.5px double #4550BE;color:#4550BE;font-family:'Space Mono',monospace;font-weight:700;font-size:10px;letter-spacing:.14em;padding:7px 10px;border-radius:8px;transform:rotate(-9deg);background:rgba(243,244,251,.86);white-space:nowrap;z-index:7}
+.ju-ticket-mark[hidden]{display:none}
+/* s12 取消票根上的章（p12Stamp）：落章关键帧 juStamp（V27 第 78 行，见 burn.css） */
+.ju-ticket-mark[data-variant="cancel"]{top:118px;right:-14px;border-color:rgba(26,29,42,.5);color:rgba(26,29,42,.66);font-size:11px;letter-spacing:.16em;padding:7px 11px;animation:juStamp .55s ease .4s both}
+
+/* ── 副券宿主（pr7Rig / pr10Rig）：258×84，由 JUTear 挂 canvas；撕完后按 s10 规则收成 0 ─────────── */
+.ju-ticket-stub{position:relative;height:84px;margin-top:-1px;z-index:4;pointer-events:none}
+.ju-ticket-stage[data-state="torn"] .ju-ticket-stub{height:var(--ju-stub-torn,0px);visibility:hidden}
+.ju-ticket-stub-static{display:block;width:258px;height:84px}     /* ticket.html 静态未撕副券（同 s12 .ju-ticket-stub20 canvas） */
+
+/* ── 燃烧宿主（burnHost）：画布由 JUNativeBurn 挂在这里，pad 74px 向四周外扩 ───────────────── */
+.ju-ticket-burn{position:absolute;left:0;top:0;width:258px;height:0;z-index:9;pointer-events:none}
+
+/* ── 作废终态（s11 pr10Body display:none / s12 p12Paper opacity:0） ───────────────────────── */
+.ju-ticket-stage[data-state="void"] .ju-ticket-body,
+.ju-ticket-stage[data-state="void"] .ju-ticket-mark,
+.ju-ticket-stage[data-state="void"] .ju-ticket-stub{display:none}
+.ju-ticket-stage[data-state="void"] .ju-ticket{opacity:0;transition:none}
+
+/* ── 撕票错误行（第 318 行） ── */
+.ju-form-error{font:14px/1.5 'Noto Sans SC',sans-serif;color:#a32b3e;margin:0 0 8px;max-width:100%}
+.ju-tear-error24:empty{display:none}.ju-tear-error24{margin:8px 0 0}
+
+/* ── 联系信息层（第 264 / 311 行 + contactWrap23 / contactButton23 的出现过渡） ───────────────── */
+.ju-contact-wrap{display:flex;flex-direction:column;gap:2px;margin-top:14px;opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .6s cubic-bezier(.2,.9,.3,1);pointer-events:none;visibility:hidden}
+.ju-contact-wrap[data-revealed="true"]{opacity:1;transform:translateY(0);pointer-events:auto;visibility:visible}
+.ju-contact-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:7px 16px;min-height:84px;padding:16px 0;box-sizing:border-box;border-top:1px solid #b9c2d4;color:#252d41;cursor:pointer}
+.ju-contact-name{grid-column:1;font-size:14px;overflow-wrap:anywhere}
+.ju-contact-account{grid-column:1;min-width:0;font-size:18px;line-height:1.5;overflow-wrap:anywhere;user-select:text}
+.ju-contact-copy{grid-column:2;grid-row:1/3;align-self:center;justify-self:end;display:flex;align-items:center;gap:5px;min-width:76px;white-space:nowrap;min-height:44px;border:0;background:transparent;font:500 14px var(--ju-font-ui);color:#4352bb;cursor:pointer}
+.ju-contact-note23{font-size:13px;line-height:1.6;color:#596177;margin:6px 0 0}
+.ju-contact-action{opacity:0;transform:translateY(12px);transition:opacity .5s ease,transform .55s cubic-bezier(.2,.9,.3,1);pointer-events:none}
+.ju-contact-action[data-shown="true"]{opacity:1;transform:translateY(0);pointer-events:auto}

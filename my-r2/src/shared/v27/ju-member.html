@@ -1,0 +1,178 @@
+<!-- ============================================================================
+ JU V27 共有语言提取 · ju-member.html（成员资料底部抽屉 JuMemberSheet，原样解码，未改一字）
+ 来源：V27.html 引导脚本 data 表 "./ju-member.html"；别名 aliases["./JuMemberSheet.dc.html"]（V27.code.html L27）。
+ 使用处：<dc-import name="JuMemberSheet" open= session= member= on-close= hint-size="100%,100%" style="position:absolute;inset:0;z-index:39">
+   V27.code.html L665(s02) 以及 s03b / s05(L1128) / s06g / s09 的同名引用。
+ 宿主侧配套 CSS：.ju-overlay / .ju-sheet（V27.code.html L224-L227）。
+ ============================================================================ -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<div class="ju-overlay" role="dialog" aria-modal="true" aria-label="{{ariaLabel}}" style="{{rootStyle}}">
+  <div onClick="{{close}}" style="{{scrimStyle}}"></div>
+  <div class="ju-sheet" style="{{sheetStyle}}">
+    <div onPointerDown="{{dragDown}}" style="touch-action:none;width:36px;height:4px;border-radius:999px;background:rgba(20,22,31,.15);align-self:center;flex-shrink:0"></div>
+    <div style="display:flex;align-items:center;gap:8px;padding:19px 4px 0">
+      <span style="font-size:23px;font-weight:500;letter-spacing:.01em;color:#14161F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0">{{name}}</span>
+      <sc-if value="{{verified}}" hint-placeholder-val="{{ true }}"><svg width="16" height="16" viewBox="0 0 24 24" style="flex-shrink:0;display:block;opacity:.94"><g fill="#4A5AD6"><rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5.8"></rect><rect x="3.4" y="3.4" width="17.2" height="17.2" rx="5.8" transform="rotate(45 12 12)"></rect></g><path d="M8.3 12.3l2.7 2.7 4.9-5.4" stroke="#FFFFFF" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+      <button type="button" ref="{{closeButtonRef}}" onClick="{{close}}" aria-label="关闭成员资料" style="margin-left:auto;flex:0 0 44px;width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;border:1px solid rgba(20,22,31,.16);border-radius:50%;background:rgba(255,255,255,.84);color:#14161F;font:24px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation"><span aria-hidden="true">×</span></button>
+    </div>
+    <sc-if value="{{hasHandle}}" hint-placeholder-val="{{ true }}">
+      <span style="font-family:'Space Mono',monospace;font-size:11.5px;letter-spacing:.04em;color:rgba(20,22,31,.42);padding:7px 4px 0">{{handle}}</span>
+    </sc-if>
+    <div style="height:1px;background:rgba(20,22,31,.07);margin:24px 0 8px;flex-shrink:0"></div>
+    <sc-for list="{{fields}}" as="f" hint-placeholder-count="4">
+      <div style="display:flex;align-items:baseline;gap:16px;padding:11px 4px">
+        <span style="font-size:12.5px;letter-spacing:.02em;color:rgba(20,22,31,.65);white-space:nowrap">{{f.k}}</span>
+        <span style="margin-left:auto;font-size:14.5px;font-weight:500;letter-spacing:.02em;color:#14161F;white-space:nowrap">{{f.v}}</span>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:460},&quot;open&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;},&quot;member&quot;:{&quot;editor&quot;:null,&quot;default&quot;:{&quot;name&quot;:&quot;小面&quot;,&quot;verified&quot;:true,&quot;handle&quot;:&quot;@xiaomian&quot;,&quot;gender&quot;:&quot;女&quot;,&quot;events&quot;:8,&quot;rep&quot;:&quot;极好&quot;},&quot;tsType&quot;:&quot;object&quot;},&quot;onClose&quot;:{&quot;editor&quot;:null,&quot;tsType&quot;:&quot;() =&gt; void&quot;}}">
+class Component extends DCLogic {
+  state = { dy: 0, dragging: false };
+  sync() {
+    const open = this.props.open !== false;
+    if (this._initialized && this.props.session === this._sess && open === this._openProp) return;
+    this._initialized = true;
+    this._openProp = open;
+    this.unbind();
+    cancelAnimationFrame(this._focusFrame);
+    this._sess = this.props.session;
+    this._touchSess = null;
+    this._done = false;
+    this._rm = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    if (open) this.focusClose();
+  }
+  focusClose() {
+    cancelAnimationFrame(this._focusFrame);
+    const session = this._sess;
+    this._focusFrame = requestAnimationFrame(() => {
+      if (this._unmounted || this._done || this.props.open === false || this._sess !== session) return;
+      const button = this._closeButton;
+      if (button && button.isConnected) button.focus({ preventScroll: true });
+    });
+  }
+  componentWillUnmount() {
+    this._unmounted = true;
+    clearTimeout(this._t0); clearTimeout(this._t1);
+    cancelAnimationFrame(this._focusFrame);
+    this.unbind();
+  }
+  unbind() {
+    const drag = this._drag;
+    this._drag = null;
+    if (this._mv) window.removeEventListener('pointermove', this._mv);
+    if (this._up) window.removeEventListener('pointerup', this._up);
+    if (this._cancel) window.removeEventListener('pointercancel', this._cancel);
+    if (this._blur) window.removeEventListener('blur', this._blur);
+    if (this._hidden) document.removeEventListener('visibilitychange', this._hidden);
+    if (drag && this._cancel) drag.node.removeEventListener('lostpointercapture', this._cancel);
+    this._mv = this._up = this._cancel = this._blur = this._hidden = null;
+    if (drag && drag.node.hasPointerCapture && drag.node.hasPointerCapture(drag.id)) {
+      try { drag.node.releasePointerCapture(drag.id); } catch (_) {}
+    }
+  }
+  cancelDrag() {
+    if (!this._drag) return;
+    this.unbind();
+    if (!this._unmounted) this.setState({ dy: 0, dragging: false });
+  }
+  fire() {
+    if (this._done) return;
+    this._done = true;
+    this.unbind();
+    cancelAnimationFrame(this._focusFrame);
+    this.setState({ dy: 0, dragging: false });
+    const f = this.props.onClose; if (f) f();
+  }
+  down(e) {
+    if (this._rm || this._done || this.props.open === false || this._drag || e.button !== 0 || e.isPrimary === false) return;
+    if (e.target.closest && e.target.closest('button,a,input,textarea,select,[role="button"],[contenteditable="true"]')) return;
+    const node = e.currentTarget, rect = node.getBoundingClientRect();
+    const scale = rect.height / (node.offsetHeight || rect.height) || 1;
+    const drag = this._drag = { id: e.pointerId, node, session: this._sess, y0: e.clientY,
+      prevY: e.clientY, prevT: performance.now(), v: 0, dy: 0, scale };
+    e.preventDefault();
+    this._touchSess = this._sess;
+    this.setState({ dy: 0, dragging: true });
+    try { node.setPointerCapture(e.pointerId); } catch (_) {}
+    this._mv = ev => {
+      if (this._drag !== drag || ev.pointerId !== drag.id || drag.session !== this._sess) return;
+      const now = performance.now(), dt = Math.max(1, now - drag.prevT);
+      drag.v = (ev.clientY - drag.prevY) / drag.scale / dt;
+      drag.prevY = ev.clientY; drag.prevT = now;
+      drag.dy = Math.max(0, (ev.clientY - drag.y0) / drag.scale);
+      this.setState({ dy: drag.dy });
+    };
+    this._up = ev => {
+      if (this._drag !== drag || ev.pointerId !== drag.id) return;
+      const commit = drag.session === this._sess && (drag.dy > 88 || (performance.now() - drag.prevT < 120 && drag.v > 0.55));
+      this.unbind();
+      if (commit) this.fire();
+      else this.setState({ dy: 0, dragging: false });
+    };
+    this._cancel = ev => { if (this._drag === drag && ev.pointerId === drag.id) this.cancelDrag(); };
+    this._blur = () => this.cancelDrag();
+    this._hidden = () => { if (document.hidden) this.cancelDrag(); };
+    window.addEventListener('pointermove', this._mv);
+    window.addEventListener('pointerup', this._up);
+    window.addEventListener('pointercancel', this._cancel);
+    window.addEventListener('blur', this._blur);
+    document.addEventListener('visibilitychange', this._hidden);
+    node.addEventListener('lostpointercapture', this._cancel);
+  }
+  renderVals() {
+    this.sync();
+    const m = this.props.member || {};
+    const st = this.state;
+    const open = this.props.open !== false && !this._done;
+    const touched = this._touchSess === this._sess;
+    const dy = touched ? st.dy : 0;
+    const fields = [{ k: '身份验证', v: m.verified ? (m.domain || '已验证') : '未验证' }];
+    if (m.gender) fields.push({ k: '性别', v: m.gender });
+    if (m.events > 0) fields.push({ k: '来过', v: m.events + ' 局' });
+    fields.push({ k: '信誉', v: m.rep || '新朋友' });
+    const surface = { position: 'relative', display: 'flex', flexDirection: 'column',
+      background: 'linear-gradient(180deg,rgba(255,255,255,.95) 0%,rgba(251,252,255,.9) 100%)',
+      backdropFilter: 'blur(30px) saturate(1.6)', WebkitBackdropFilter: 'blur(30px) saturate(1.6)',
+      borderRadius: '28px 28px 0 0', padding: '12px 24px calc(34px + env(safe-area-inset-bottom))',
+      boxShadow: 'inset 0 1px 0 rgba(255,255,255,.92), inset 0 0 0 1px rgba(20,22,31,.05), 0 -26px 60px -30px rgba(20,26,52,.55)',
+      maxHeight:'calc(100% - 32px)',overflowY:'auto',boxSizing:'border-box',touchAction:'pan-y',userSelect:'text', cursor: touched && st.dragging ? 'grabbing' : 'grab' };
+    const scrim = { position: 'absolute', inset: 0, background: 'rgba(12,14,26,.30)',
+      backdropFilter: 'blur(2px)', WebkitBackdropFilter: 'blur(2px)' };
+    let sheetStyle, scrimStyle;
+    if (!open) {
+      sheetStyle = Object.assign({}, surface, { transform: 'translate3d(0,104%,0)', transition: 'transform .3s cubic-bezier(.4,0,.92,.5)' });
+      scrimStyle = Object.assign({}, scrim, { opacity: 0, transition: 'opacity .28s ease', pointerEvents: 'none' });
+    } else if (touched) {
+      sheetStyle = Object.assign({}, surface, { transform: 'translate3d(0,' + dy.toFixed(1) + 'px,0)',
+        transition: st.dragging ? 'none' : 'transform .44s cubic-bezier(.18,.92,.26,1.02)' });
+      scrimStyle = Object.assign({}, scrim, { opacity: Math.max(0, 1 - dy / 300), transition: st.dragging ? 'none' : 'opacity .34s ease' });
+    } else {
+      sheetStyle = Object.assign({}, surface, { animation: this._rm ? 'none' : 'juSheet .42s cubic-bezier(.17,.89,.24,1) both' });
+      scrimStyle = Object.assign({}, scrim, { opacity: 1 });
+    }
+    return {
+      name: m.name || '', verified: !!m.verified, handle: m.handle || '', hasHandle: !!m.handle,
+      ariaLabel: (m.name || '') + ' 的资料', fields: fields,
+      rootStyle: { position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column', justifyContent: 'flex-end',
+        overflow: 'hidden', borderRadius: 0, pointerEvents: open ? 'auto' : 'none' },
+      close: () => this.fire(),
+      closeButtonRef: this._closeRef || (this._closeRef = el => { this._closeButton = el; if (el && this.props.open !== false && !this._done) this.focusClose(); }),
+      dragDown: e => this.down(e),
+      scrimStyle: scrimStyle, sheetStyle: sheetStyle,
+    };
+  }
+}
+</script>
+</body>
+</html>
