@@ -129,6 +129,8 @@ body{margin:0}
 .c01-pg.is-under.ph-exit .c01-hd{opacity:1;transition:opacity calc(130ms * var(--k)) ease calc(80ms * var(--k))}
 .c01-pg.is-under .c01-day.is-src>.c01-an{opacity:0}
 .c01-day>.c01-an{transition:none!important}
+.c01-day.is-going>.c01-an{opacity:0;transition:opacity calc(200ms * var(--k)) ease!important}
+.c01-day.is-back>.c01-an{animation:c01-restore calc(260ms * var(--k)) ease}
 .c01-pg.is-leaving{opacity:0;pointer-events:none}
 /* ---- the deadline block: its own anchor + an information plate; the one primary CTA stands below on the environment's light ---- */
 .c01-due{margin:0 0 16px}
@@ -200,6 +202,7 @@ body{margin:0}
 /* ---- empty / result / notes ---- */
 .c01-empty{padding:4px 0 10px}
 .c01-eday>.c01-an{position:static}.c01-eday .c01-empty{padding:13px 0 16px}
+.c01-eday{animation:c01-settle calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .c01-ghost{height:64px}.c01-ghost .c01-an{position:static;padding:14px 0 0}.c01-ghost .c01-an-big{color:var(--sec)}
 .c01-empty b{display:block;font-size:calc(19px * var(--tz,1));font-weight:500;line-height:1.3;color:var(--ink)}
 .c01-empty p{margin:6px 0 10px;font-size:calc(14px * var(--tz,1));color:var(--sec)}
@@ -476,7 +479,7 @@ body{margin:0}
               <sc-if value="{{home.legend.on}}"><p class="c01-legend"><sc-for list="{{home.legend.items}}" as="x" hint-placeholder-count="3"><span class="{{x.cls}}">{{x.text}}</span></sc-for></p></sc-if>
               <!-- the axis: day groups; rows of one day share its anchor -->
               <sc-for list="{{home.days}}" as="g" hint-placeholder-count="4">
-                <div class="c01-g c01-day {{g.srcCls}}">
+                <div class="c01-g c01-day {{g.srcCls}} {{g.goCls}}">
                   <div class="c01-an {{g.anCls}}"><div class="c01-an-big {{g.bigCls}}">{{g.big}}</div><div class="c01-an-s">{{g.wd}}</div><sc-if value="{{g.month}}"><div class="c01-an-s">{{g.month}}</div></sc-if></div>
                   <div class="c01-rows">
                     <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
@@ -959,7 +962,20 @@ class Component extends DCLogic {
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment (JU.shared.skins) ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._homeTc(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._travel(); this._keepHead(); this._showCopyFail(); this._homeTc(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._travel(); this._keepHead(); this._showCopyFail(); this._homeTc(); this._flipDrafts(); }
+  /* M10: drafts neighbours close the gap (and open it again on 撤销) by FLIP on the day groups — positions recorded after every
+     update, keyed by the group's first row; WAAPI without fill, so a node Preact reuses for another row keeps nothing */
+  _flipDrafts() {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const on = c.role === 'hosted' && c.section === 'drafts' && c.nav.cur === 'home' && c.nav.phase === 'idle';
+    const sc = on && root.querySelector('[data-scroller="home"]'); if (!sc) { this._lmPos = null; return; }
+    const base = sc.getBoundingClientRect().top - sc.scrollTop; const pos = {};
+    sc.querySelectorAll('.c01-day').forEach(g => { const r = g.querySelector('.c01-row[data-rid]'); if (r) pos[r.getAttribute('data-rid')] = { el: g, y: g.getBoundingClientRect().top - base }; });
+    const cap = sc.querySelector('.c01-cap'); if (cap) pos['@cap'] = { el: cap, y: cap.getBoundingClientRect().top - base };
+    const prev = this._lmPos; this._lmPos = {}; Object.keys(pos).forEach(id => { this._lmPos[id] = pos[id].y; }); if (!prev) return;
+    const r = this.state.review || {}; const k = (r.rm || r.rmSys || this.userRM()) ? 0 : (r.speed === 0.5 ? 2 : 1); if (!k) return;
+    Object.keys(pos).forEach(id => { if (prev[id] == null) return; const d = prev[id] - pos[id].y; if (Math.abs(d) < 2) return; try { pos[id].el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 320 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } });
+  }
   /* the free span of the collapsed home tool row: from the role switch (spine head) to the section tabs */
   _homeTc() {
     const root = this.rootRef.current; const hd = root && root.querySelector('[data-surface="home"] .c01-hd'); const secs = hd && hd.querySelector(':scope > .c01-secs'); if (!secs) return;
@@ -1127,7 +1143,7 @@ class Component extends DCLogic {
       let g = by[k];
       if (!g) {
         const dn = w.iso ? this._dn(JU.t(w.iso)) : null; const rel = dn == null ? '' : dn === nowDn ? '今天' : dn === nowDn + 1 ? '明天' : dn === nowDn - 1 ? '昨天' : '';
-        g = by[k] = { key: k, big: w.iso ? String(+w.day) : '—', bigCls: w.iso ? '' : 'zh', wd: w.iso ? (rel || w.wdZh) : '未定', mo: w.iso ? +w.month : 0, month: '', anCls: dn === nowDn ? 'today' : (!desc && dn != null && dn < nowDn ? 'past' : ''), rows: [], srcCls: '' };
+        g = by[k] = { key: k, big: w.iso ? String(+w.day) : '—', bigCls: w.iso ? '' : 'zh', wd: w.iso ? (rel || w.wdZh) : '未定', mo: w.iso ? +w.month : 0, month: '', anCls: dn === nowDn ? 'today' : (!desc && dn != null && dn < nowDn ? 'past' : ''), rows: [], srcCls: '', goCls: '' };
         groups.push(g);
       }
       g.rows.push(r);
@@ -1242,9 +1258,11 @@ class Component extends DCLogic {
     const by = {}, groups = [];
     rows.map(r => Object.assign(r, { _a: this._agoAnchor(r.agoText) })).sort((a, b) => a._a.mins - b._a.mins).forEach(r => {
       const k = r._a.big + r._a.wd; let g = by[k];
-      if (!g) { g = by[k] = { key: k, big: r._a.big, bigCls: r._a.bigCls, wd: r._a.wd, month: r._a.mo, anCls: 'edit', rows: [], srcCls: '' }; groups.push(g); }
+      if (!g) { g = by[k] = { key: k, big: r._a.big, bigCls: r._a.bigCls, wd: r._a.wd, month: r._a.mo, anCls: 'edit', rows: [], srcCls: '', goCls: '' }; groups.push(g); }
       g.rows.push(r); if (srcKey && r.originKey === srcKey) g.srcCls = 'is-src';
     });
+    /* a group whose every row is leaving takes its anchor with it; a group coming back (undo) brings its anchor back the same way */
+    groups.forEach(g => { g.goCls = g.rows.every(r => r.ghost) ? 'is-going' : g.rows.every(r => r.cls === 'is-restored') ? 'is-back' : ''; });
     return groups;
   }
   /* the sheet: a cached copy keeps rendering for one short exit after the controller drops it */
