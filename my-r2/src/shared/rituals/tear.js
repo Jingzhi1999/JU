@@ -505,7 +505,7 @@
       onDetach: () => {
         const ok = opts.onDetach ? opts.onDetach() !== false : true;
         if (err) err.textContent = ok ? '' : (data.reissued ? '新时间未保存，请重新撕下副券' : '未能保存，请重新撕下副券');
-        if (ok) detachedAt = performance.now();
+        if (ok) { detachedAt = performance.now(); stage.dataset.detached = '1'; }   /* 主负责人：坠落期间焦点框不再框空位 */
         return ok;
       },
       onDone: () => {
@@ -521,7 +521,7 @@
       enable: on => { rig.setEnabled(!!on); el.inert = !on; return handle; },
       /* 键盘 / 按钮等价入口：与 grab 上的 Enter / Space 完全相同（auto=true, rate=2.8/s），不改视觉 */
       trigger: () => { if (!rig.enabled || rig.done || rig.destroyed) return false; rig.auto = true; rig.rate = 2.8; rig.start(); return true; },
-      reset: () => { rig.reset(); stage.dataset.state = 'ready'; if (NS.measureTicket) NS.measureTicket(stage, false); return handle; },
+      reset: () => { rig.reset(); stage.dataset.state = 'ready'; delete stage.dataset.detached; if (NS.measureTicket) NS.measureTicket(stage, false); return handle; },
       destroy: () => { try { rig.destroy(); } catch (e) { } delete el.__juritual; delete el.__juritualKey; },
       get p() { return rig.p; }, get done() { return rig.done; },
     };
