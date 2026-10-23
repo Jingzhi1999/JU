@@ -279,7 +279,7 @@
       var r = JU.derive.hostRow(data, it); var e = r.event;
       var apps = it.applications.map(function (a) { return Object.assign({}, a, { verifiedLabel: a.verified ? (a.mail.split('@')[1] || '') + ' 邮箱已验证' : '未验证邮箱', agoText: '申请于 ' + fmt.ago(a.appliedAt), handled: a.status !== 'pending', resultText: a.status === 'approved' ? '已发出邀请 · 等对方确认' : a.status === 'rejected' ? '已谢绝 · 对方会看到「这次没留住」' : a.status === 'cancelled' ? '活动已取消' : '' }); });
       var roster = it.members.slice().sort(function (a, b) { return (a.slot || 0) - (b.slot || 0); }).map(function (m) {
-        var stateText = m.host ? '局主 · 你' : e.status === 'cancelled' ? (m.status === 'confirmed' ? '取消前已确认' : m.status === 'invited' ? '取消前已预留' : '') : m.status === 'invited' ? '已预留' : m.status === 'confirmed' ? (m.reschedule === 'ask' ? '未答复新时间' : m.reschedule === 'accepted' ? '已接受新时间' : '已确认') : m.status === 'declined' ? '拒绝改期 · 已退出' : m.status === 'expired' ? '预留到期' : m.status === 'exited' ? '主动退出' : m.status;
+        var stateText = m.host ? '局主' : e.status === 'cancelled' ? (m.status === 'confirmed' ? '取消前已确认' : m.status === 'invited' ? '取消前已预留' : '') : m.status === 'invited' ? '已预留' : m.status === 'confirmed' ? (m.reschedule === 'ask' ? '未答复新时间' : m.reschedule === 'accepted' ? '已接受新时间' : '已确认') : m.status === 'declined' ? '拒绝改期 · 已退出' : m.status === 'expired' ? '预留到期' : m.status === 'exited' ? '主动退出' : m.status;
         var ticketText = m.host ? '' : m.status !== 'confirmed' ? '' : e.status === 'cancelled' ? '票根作废' : r.formed ? (m.torn ? '已撕票' : '票根未撕') : '等成局出票';
         var tone = m.host ? 'host' : e.status === 'cancelled' ? 'void' : m.status === 'invited' ? 'res' : m.status === 'confirmed' ? (m.reschedule === 'ask' ? 'wait' : 'ok') : 'void';
         return Object.assign({}, m, { stateText: stateText, ticketText: ticketText, tone: tone, leftText: m.deadline && m.status === 'invited' ? '剩 ' + fmt.left(Math.max(0, m.deadline - JU.now())) : '', leftRatio: m.deadline && m.status === 'invited' ? Math.max(0, Math.min(1, (m.deadline - JU.now()) / (6 * H))) : 0, leftTone: m.deadline && m.status === 'invited' ? (m.deadline - JU.now() < H ? 'red' : m.deadline - JU.now() < 3 * H ? 'amber' : 'green') : '', showWx: !m.host && m.status === 'confirmed' && r.contactOpen && !!m.wx, attLabel: m.attendance === 'present' ? '出席' : m.attendance === 'absent' ? '未出席 · 待核实' : m.attendance === 'pending' ? '待定' : '未记录', attTrail: (m.trail || []).slice().reverse().map(function (x, i, arr) { var name = function (v) { return v === 'present' ? '出席' : v === 'absent' ? '未出席' : '待定'; }; var prev = arr[i + 1]; return prev ? '更正 ' + name(prev.v) + ' → ' + name(x.v) + ' · ' + fmt.abs(x.at) : '记录 ' + name(x.v) + ' · ' + fmt.abs(x.at); }), inRoster: m.status === 'confirmed' || m.status === 'invited' || m.host });
@@ -401,7 +401,7 @@
     approveHelp: '发出邀请后对方有 6 小时阅读约定并确认，确认前不占定、不出票；申请人的微信成局后才可见。',
     repliesHelp: '接受的人换新版票并保留已加微信；拒绝的人释放席位，不计主动退出。',
     queueHelp: '有人放弃或预留到期时，按顺位自动发出 6 小时预留。',
-    attendanceHelp: '未出席是待核实的事实，不等于故意缺席，也不会自动处罚；可随时更正，更正会留下记录。',
+    attendanceHelp: '未出席是待核实的事实，不等于故意缺席，也不会自动带来任何后果；可随时更正，更正会留下记录。',
     contactNote: '撕券后 8 小时内联系局主。此处为示例微信。',
     contactedNote: '已加微信 · 等这次见面。',
     emptyJoinedFirst: { title: '还没有加入任何局', body: '找到想去的局，申请或留位后会出现在这里。' },

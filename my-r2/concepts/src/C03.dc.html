@@ -231,6 +231,7 @@ body{margin:0}
 .c03-empty{display:flex;flex-direction:column;align-items:center;text-align:center;padding:44px 12px 10px}
 .c03-empty::before{content:"";display:block;width:120px;height:150px;margin:0 0 26px;border-radius:12px;border:1.5px dashed rgba(20,22,31,.24);transform:rotate(-4deg);background:linear-gradient(rgba(20,22,31,.09),rgba(20,22,31,.09)) 14px 104px/62px 8px no-repeat,linear-gradient(rgba(20,22,31,.06),rgba(20,22,31,.06)) 14px 120px/40px 6px no-repeat,radial-gradient(circle 7px at 50% -1px,rgba(20,22,31,.16) 6px,transparent 7px)}
 .c03-hs .c03-empty::before{border-color:rgba(244,245,250,.26);background:linear-gradient(rgba(244,245,250,.12),rgba(244,245,250,.12)) 14px 104px/62px 8px no-repeat,linear-gradient(rgba(244,245,250,.08),rgba(244,245,250,.08)) 14px 120px/40px 6px no-repeat,radial-gradient(circle 7px at 50% -1px,rgba(244,245,250,.22) 6px,transparent 7px)}
+.c03-empty.has-undo{padding-top:18px}.c03-empty.has-undo::before{display:none}
 .c03-empty b{display:block;font-size:calc(18px * var(--tz,1));font-weight:500;margin-bottom:6px}
 .c03-empty p{margin:0 0 12px;color:var(--c03-ink2);font-size:calc(14px * var(--tz,1))}
 .c03-hs .c03-empty p{color:var(--c03-fg2)}
@@ -310,6 +311,8 @@ body{margin:0}
 /* after the burn the empty stage folds to a 28px ash line (the original's own .5s height transition), so the result reads at once */
 .c03-stage.is-ash{--ju-paper-height:28px!important;overflow:hidden}
 .c03-tk-sc.has-result .ju-contact-wrap{display:none}
+/* the write-failure line lives under the stub (the controller's tear.error), where the eye is after a failed tear */
+.c03-tk-sc .ju-tear-error24{display:none}
 .c03-stage.is-ash::after{content:"";position:absolute;left:22%;right:22%;top:13px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,rgba(74,60,52,.32),transparent)}
 .c03-tkc{text-align:center}
 .c03-copyfail{font-size:calc(13px * var(--tz,1));color:var(--c03-red)}
@@ -437,7 +440,7 @@ body{margin:0}
 .c03-undo span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c03-undo button{flex:0 0 auto;border:0;border-radius:10px;padding:8px 12px;background:var(--c03-ink);color:#fff;font-size:calc(14px * var(--tz,1));cursor:pointer;font-variant-numeric:tabular-nums}
 /* 根导航 */
-/* two copies of the root nav, each clipped to its own paper, so la */
+/* two copies of the root nav, each clipped to its own paper: the labels change colour at the rising paper edge */
 .c03-nav{position:absolute;left:0;right:0;bottom:0;height:var(--c03-nav);padding:0 8px var(--sab,0px);display:flex;z-index:30}
 .c03-nav-d{box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
 .c03-nav-l{box-shadow:inset 0 1px 0 rgba(20,22,31,.09)}
@@ -763,6 +766,7 @@ body{margin:0}
                               <div class="ju-ticket-burn" data-burn="c03" data-raster="skip"></div>
                             </div>
                           </div>
+                          <sc-if value="{{c.ticket.tear.error}}"><p class="c03-err c03-tkc" role="status">{{c.ticket.tear.error}}</p></sc-if>
                           <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                             <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                             <p class="ju-contact-note23"></p>
@@ -875,7 +879,7 @@ body{margin:0}
                     </sc-for>
                   </sc-if>
                   <sc-if value="{{home.hDrafts}}">
-                    <sc-if value="{{c.hosted.empty.on}}"><div class="c03-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c03-btn inert" aria-disabled="true" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+                    <sc-if value="{{c.hosted.empty.on}}"><div class="c03-empty {{home.hUndoCls}}"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c03-btn inert" aria-disabled="true" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
                     <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
                       <div class="c03-row {{r.cls}} {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
                         <span class="t">{{r.title}}</span><span class="s {{r.readyCls}}">{{r.missingText}}</span>
@@ -1202,7 +1206,7 @@ class Component extends DCLogic {
     if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
   }
   _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
-  /* a ticket that was already torn when it was opened shows the host */
+  /* a ticket that was already torn when it was opened shows the host's contact at once */
   _autoContact() {
     const c = this._c; if (!c) return; const st = this.state.nav.stack, top = st[st.length - 1];
     if (!c.ticket.on || (top.s !== 'ticket' && top.s !== 'reply')) { this._tkId = null; return; }
@@ -1222,8 +1226,8 @@ class Component extends DCLogic {
     const deepTw = !swap && unders.some(e => e.classList.contains('c03-face'));
     const pk = this.state.role === 'hosted' ? '--c03-pkj' : '--c03-pkh';
     const sp = (this.state.review || {}).speed === 0.5 ? 2 : 1;
-    const tw = { tops: tops, unders: unders, fwd: fwd, swap: swap, deep: deepTw, pk: pk, from: from, t0: performance.now(), dur: Math.max(120, (fwd ? 360 : swap ? 280 : 284) * from) * sp, raf: 0, held: 0, p: null, log: this._twLog ? [] : null };
-    if (kind === 'back') unders.forEach(el => { const sc = el.querySelector(el.classList.contains('c03-face') ? '.c03-hsc' : ':scope>.c03-sc'); if (sc) this._fit(sc, true); });
+    const tw = { tops: tops, unders: unders, fwd: fwd, swap: swap, deep: deepTw, pk: pk, from: from, t0: performance.now(), dur: Math.max(120, (fwd ? 360 : swap ? 280 : 284) * from) * sp, raf: 0, held: 0, p: null };
+    if (kind === 'back') unders.forEach(el => { const face = el.classList.contains('c03-face'); const sc = el.querySelector(face ? '.c03-hsc' : ':scope>.c03-sc'); if (!sc) return; if (face) this._landNow(sc); this._fit(sc, true); });
     /* the incoming page is fitted for its landed geometry now */
     if (!kind || kind !== 'back') tops.forEach(el => { if (el.classList.contains('is-top') && !el.classList.contains('is-leaving')) { const sc = el.querySelector(':scope>.c03-sc'); if (sc) this._fit(sc, true); } });
     this._tw = tw; this._twApply(this.isRM() ? 1 : 0);
@@ -1236,10 +1240,9 @@ class Component extends DCLogic {
     for (let i = 0; i < tw.tops.length; i++) tw.tops[i].style.setProperty('--pp', v);
     for (let i = 0; i < tw.unders.length; i++) tw.unders[i].style.setProperty('--pp', v);
     if (tw.deep) { const home = this.homeRef.current; if (home) { home.style.setProperty('--c03-dp', v); home.style.setProperty(tw.pk, v); } }
-    if (tw.log) tw.log.push({ at: Math.round((now || performance.now()) * 10) / 10, x: Math.round(x * 1000) / 1000, pp: v });
   }
   _twStop() { const tw = this._tw; if (tw && tw.raf) cancelAnimationFrame(tw.raf); this._twEnd(); }
-  _twEnd() { const tw = this._tw; if (!tw) return; if (tw.raf) cancelAnimationFrame(tw.raf); if (tw.log) this._twLast = tw.log; tw.tops.concat(tw.unders).forEach(el => el.style.removeProperty('--pp')); const home = this.homeRef.current; if (home && tw.deep) { home.style.removeProperty('--c03-dp'); home.style.removeProperty(tw.pk); } this._tw = null; this._fitAll(); }
+  _twEnd() { const tw = this._tw; if (!tw) return; if (tw.raf) cancelAnimationFrame(tw.raf); tw.tops.concat(tw.unders).forEach(el => el.style.removeProperty('--pp')); const home = this.homeRef.current; if (home && tw.deep) { home.style.removeProperty('--c03-dp'); home.style.removeProperty(tw.pk); } this._tw = null; this._fitAll(); }
   /* ---------------- the home list: lift, band hairline, row snapping ---------------- */
   _list(role) { const root = this.rootRef.current; if (!root) return null; role = role || this.state.role; return root.querySelector((role === 'hosted' ? '.c03-hw' : '.c03-jw') + ' .c03-hsc'); }
   _L(role) { const sc = this._list(role); return sc ? Math.max(0, Math.min(1, sc.scrollTop / 76)) : 0; }
@@ -1247,20 +1250,36 @@ class Component extends DCLogic {
   _cut(sc) { const w = sc && sc.closest('.c03-win'); if (w) w.style.setProperty('--c03-cut', String(Math.max(0, Math.min(1, (sc.scrollTop - 76) / 10)))); }
   _onListScroll(ev) { const c = this._c; if (c) c.nav.onScroll(ev); this._cut(ev.currentTarget); }
   /* past the lift */
-  _snap(sc, smooth, to) {
-    if (!sc) return; const max = Math.max(0, sc.scrollHeight - sc.clientHeight); const cur = to == null ? sc.scrollTop : Math.max(0, Math.min(max, to)); let best = cur;
+  _snapTarget(sc, to) {
+    const max = Math.max(0, sc.scrollHeight - sc.clientHeight); const cur = Math.max(0, Math.min(max, to)); let best = cur;
     if (cur > 76 && cur < max - 1) {
       const top = sc.getBoundingClientRect().top - sc.scrollTop; const els = sc.querySelectorAll('.c03-lead,.c03-dlead,.c03-row,.c03-grp,.c03-empty,.c03-list > .c03-help');
       for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (!r.height) continue; const a = r.top - top, b = r.bottom - top; if (a < cur - 0.5 && b > cur + 0.5) { best = (cur - a <= b - cur || b > max) ? a : b; break; } }
     }
+    return best;
+  }
+  _snap(sc, smooth, to) {
+    if (!sc) return; const best = this._snapTarget(sc, to == null ? sc.scrollTop : to);
     if (Math.abs(best - sc.scrollTop) >= 1) { if (smooth && !this.isRM()) { try { sc.scrollTo({ top: best, behavior: 'smooth' }); } catch (e) { sc.scrollTop = best; } } else sc.scrollTop = best; }
     this._cut(sc);
   }
+  /* where the list must rest so the origin row is whole in view (mid-list when it was not) and no row is cut under the band */
+  _landTarget(sc, el) {
+    const a = sc.getBoundingClientRect(), r = el.getBoundingClientRect(); const vt = a.top + Math.max(0, 76 - sc.scrollTop);
+    return this._snapTarget(sc, r.top >= vt - 0.5 && r.bottom <= a.bottom - 0.5 ? sc.scrollTop : sc.scrollTop + (r.top - a.top) - (a.height - r.height) * 0.42);
+  }
   _landInView(key) {
     const sc = this._list(); const el = sc && sc.querySelector('[data-origin="' + key + '"]'); if (!el) { this._snap(sc, false); return; }
-    const a = sc.getBoundingClientRect(), r = el.getBoundingClientRect(); const vt = a.top + Math.max(0, 76 - sc.scrollTop), vb = a.bottom - 24;
-    if (r.top >= vt - 0.5 && r.bottom <= vb) { this._snap(sc, false); return; }
-    this._snap(sc, true, sc.scrollTop + (r.top - a.top) - (a.height - r.height) * 0.42);
+    this._snap(sc, true, this._landTarget(sc, el));
+  }
+  /* back(): the list under the leaving page is put where it will land before it starts sliding in (one motion, no scroll after landing);
+     the controller's scroll memo follows, so its restore at the end of the pop changes nothing */
+  _landNow(sc) {
+    const st = this.state.nav.stack, top = st[st.length - 1], under = st[st.length - 2]; if (!top || !top.key || !under) return;
+    const el = sc.querySelector('[data-origin="' + top.key + '"]'); if (!el) return;
+    const to = this._landTarget(sc, el); if (Math.abs(to - sc.scrollTop) < 1) return; sc.scrollTop = to;
+    const k = this._scrollKey ? this._scrollKey(under) : null, nm = sc.getAttribute('data-scroller'); if (k != null && nm) { const m = (this._scrollMemo = this._scrollMemo || {}); (m[k] = m[k] || {})[nm] = sc.scrollTop; }
+    if (this._c && this._c.nav && this._c.nav.onScroll) this._c.nav.onScroll({ currentTarget: sc, target: sc }); this._cut(sc);
   }
   /* at-rest edge fit */
   _fitAll() { const root = this.rootRef.current; if (!root || this._tw || this.state.c03moving) return; if (performance.now() - (this._lastScroll || 0) < 150) { clearTimeout(this._fitT); this._fitT = setTimeout(() => this._fitAll(), 170); return; } root.querySelectorAll('.c03-win.is-exp .c03-face:not(.is-under) .c03-hsc,.c03-win.is-exp .c03-pg.is-top>.c03-sc').forEach(sc => this._fit(sc)); }
@@ -1398,7 +1417,7 @@ class Component extends DCLogic {
     const c = this._c, root = this.rootRef.current; if (!c || !root) return;
     const stage = root.querySelector('[data-surface="ticket"] .c03-stage,[data-surface="reply"] .c03-stage');
     if (c.ticket.on && stage) {
-      /* remount when the surface / print key changed, or when the data w */
+      /* remount when the surface / print key changed, or when the data was reset under a stub that was already torn */
       if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey || (this._rit.st === 'torn' && c.ticket.state !== 'torn')) this._mountTicket(stage, c);
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => { if (this._c.ticket.result) this._c.ticket.result.burnDone(); });
@@ -1529,7 +1548,7 @@ class Component extends DCLogic {
       jTabs: tabsFor('joined'), hTabs: tabsFor('hosted'),
       jCurrent: jSec === 'current', jHistory: jSec === 'history',
       hCurrent: hSec === 'current', hDrafts: hSec === 'drafts', hHistory: hSec === 'history',
-      jLead: jSec === 'current' ? c.joined.lead : null, hLead: hSec === 'current' ? c.hosted.lead : null, jPath: jSec === 'current' ? jPath : null, hPath: hSec === 'current' ? hPath : null,
+      jLead: jSec === 'current' ? c.joined.lead : null, hLead: hSec === 'current' ? c.hosted.lead : null, jPath: jSec === 'current' ? jPath : null, hPath: hSec === 'current' ? hPath : null, hUndoCls: c.hosted.undo && c.hosted.undo.on ? 'has-undo' : '',
       hostedEmptyCls: c.hosted.empty.action && c.hosted.empty.action.inert ? 'inert' : '',
       jTop: jTop, hTop: hTop, jOpen: jOpen, hOpen: hOpen,
       wTo: isJ ? 'hosted' : 'joined', wLabel: isJ ? '收起我参加的，展开我发起的' : '展开我参加的',

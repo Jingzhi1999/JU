@@ -1,0 +1,936 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C10 中轴</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* ============================================================================================================================
+   C10 中轴 — everything sits on one vertical axis. Composition first: a centred column (32px gutters), an invitation-like lead
+   (date → Archivo time → title → place · host → state → the V27 CTA), then intent groups marked by an axis tick, a 12px spaced
+   label and a 28px dash in the intent colour. No containers: the environment light is the ground; a soft vertical light column
+   keeps the reading lane clear on all three environments. Deep pages are the same axis expanded downward (the title rises to the
+   top of the axis, the body unfolds under it); the ticket prints on the axis at its own size.
+   ============================================================================================================================ */
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:var(--ink);font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;background:#ebe9f1;
+  --ink:#14161F;--ink2:#262b39;--sub:#535b70;--faint:rgba(20,22,31,.17);--hair:rgba(20,22,31,.12);
+  --act:#BE2F4B;--go:#0A7559;--wait:#5a6175;--res:#3F4DB8;--amber:#B0620A;--void:#6d7283;
+  --lux:.30;--veil:240,239,246;--num:"Archivo","Noto Sans SC",sans-serif}
+.app[data-skin="halo"]{--sub:#3d4253;--ink2:#1f2330;--act:#9C1736;--go:#055A45;--wait:#3d4253;--res:#2B379A;--amber:#7E3F00;--void:#4a4f60;--faint:rgba(20,22,31,.2);--lux:.44;--veil:246,229,214}
+.app[data-skin="sunset"]{--sub:#3d4253;--ink2:#1f2330;--act:#9C1736;--go:#055A45;--wait:#3d4253;--res:#2B379A;--amber:#7E3F00;--void:#4a4f60;--faint:rgba(20,22,31,.2);--lux:.40;--veil:250,226,210}
+.app *,.app *::before,.app *::after{box-sizing:border-box}
+.app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app button{font-family:inherit;-webkit-tap-highlight-color:transparent}
+.ju-env{position:absolute;inset:0;z-index:0;overflow:hidden}
+.c10-env0{position:absolute;inset:0;z-index:0;background:linear-gradient(170deg,#f3dbe7,#e6e6f1 50%,#d4ebf1)}
+/* the axis light: a soft vertical lane of light down the middle (the environment stays saturated at the edges and the top) */
+.c10-lux{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(90deg,rgba(255,255,255,0) 0%,rgba(255,255,255,var(--lux)) 21%,rgba(255,255,255,var(--lux)) 79%,rgba(255,255,255,0) 100%);-webkit-mask:linear-gradient(180deg,transparent 0,rgba(0,0,0,.55) 64px,#000 170px);mask:linear-gradient(180deg,transparent 0,rgba(0,0,0,.55) 64px,#000 170px)}
+/* ---------- pages ---------- */
+.c10-pg{position:absolute;inset:0;z-index:2}
+.c10-pg.is-top{z-index:3}
+.c10-pg.is-leaving{z-index:4;pointer-events:none}
+.c10-pg.is-under.ph-idle,.c10-pg.u-skip,.c10-pg.is-from.ph-idle{visibility:hidden}
+.c10-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.c10-sc::-webkit-scrollbar{display:none}
+.c10-col{padding:0 32px calc(132px + var(--sab,0px) + var(--kb,0px));display:flex;flex-direction:column;align-items:center;text-align:center;min-height:100%}
+.pg-home .c10-col{padding-bottom:calc(120px + var(--sab,0px))}
+/* the outer title (V27 30 → 18, centred on the axis the whole way): an overlay; an invisible twin in the flow keeps its space */
+.c10-hd{position:absolute;left:0;right:0;top:0;height:0;z-index:6;pointer-events:none}
+.c10-hd::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--sat,0px) + 96px);opacity:var(--hc,0);background:linear-gradient(180deg,rgba(var(--veil),.97) 0,rgba(var(--veil),.94) 62%,rgba(var(--veil),0) 100%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);-webkit-mask:linear-gradient(#000 70%,transparent);mask:linear-gradient(#000 70%,transparent)}
+.c10-ht{position:absolute;margin:0;left:calc(32px + 42px * var(--hc,0));right:calc(32px + 42px * var(--hc,0));top:calc(var(--sat,0px) + 77px - 40.45px * var(--hc,0));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.05;letter-spacing:0;color:#14161f;text-align:center;text-wrap:balance;overflow-wrap:anywhere;transform-origin:50% 0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c10-hd.hc1 .c10-ht{-webkit-line-clamp:1;display:block;white-space:nowrap;text-overflow:ellipsis}
+.c10-tsp{visibility:hidden;width:100%;margin:calc(var(--sat,0px) + 77px) 0 0;font-size:calc(30px * var(--tz,1));font-weight:500;line-height:1.05;text-wrap:balance;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c10-meta{margin:9px 0 0;max-width:100%;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0));text-wrap:balance}
+.c10-tool{position:absolute;left:0;right:0;top:0;height:0;z-index:7}
+.c10-back{position:absolute!important;left:22px;top:calc(var(--sat,0px) + 24px);pointer-events:auto;border:0;padding:0;z-index:7}
+.c10-tr{position:absolute;right:12px;top:calc(var(--sat,0px) + 24px);height:44px;padding:0 12px;border:0;background:none;border-radius:12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--sub);pointer-events:auto;cursor:pointer}
+.c10-tr:active{background:rgba(255,255,255,.4)}
+/* ---------- the legend line (辅助行 = one judgement: how many of each intent) ---------- */
+.c10-legend{margin:9px 0 0;display:flex;justify-content:center;flex-wrap:wrap;gap:2px 16px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0))}
+.c10-legend span{white-space:nowrap}
+.c10-legend em{font-style:normal;font-family:var(--num);font-weight:600;margin-left:3px;color:var(--ink2)}
+.c10-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--tone);margin:0 6px 2px 0;vertical-align:middle}
+/* ---------- role switch: a capsule that slides between two centred labels ---------- */
+.c10-roles{position:relative;display:grid;grid-template-columns:1fr 1fr;width:252px;margin:20px auto 0;height:40px}
+.c10-cap{position:absolute;left:0;top:0;bottom:0;width:50%;border-radius:999px;background:rgba(255,255,255,.66);box-shadow:inset 0 1px 1px rgba(255,255,255,.9),inset 0 0 0 1px rgba(255,255,255,.62),0 6px 16px -10px rgba(20,26,52,.42),0 1px 2px rgba(20,26,52,.08);transition:transform calc(300ms * var(--k,1)) cubic-bezier(.3,.8,.25,1)}
+.c10-roles[data-on="hosted"] .c10-cap{transform:translateX(100%)}
+.c10-role{position:relative;z-index:1;border:0;background:none;border-radius:999px;font-size:calc(15px * var(--tz,1));color:var(--sub);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:color calc(200ms * var(--k,1))}
+.c10-role.on{color:var(--ink);font-weight:500}
+.c10-role:focus-visible{outline:2px solid #4A5AD6;outline-offset:2px}
+.c10-bdg{font-family:var(--num);font-size:calc(12px * var(--tz,1));font-weight:600;color:var(--act);line-height:1}
+.c10-secs{display:flex;justify-content:center;gap:30px;margin:10px 0 0}
+.c10-sec{position:relative;height:34px;padding:0 4px;border:0;background:none;font-size:calc(13px * var(--tz,1));letter-spacing:.06em;color:var(--sub);cursor:pointer}
+.c10-sec em{font-style:normal;font-family:var(--num);margin-left:4px}
+.c10-sec.on{color:var(--ink);font-weight:500}
+.c10-sec.on::after{content:"";position:absolute;left:50%;bottom:3px;width:14px;height:2px;margin-left:-7px;border-radius:1px;background:var(--ink)}
+.c10-sec:focus-visible{outline:2px solid #4A5AD6;outline-offset:1px;border-radius:8px}
+/* ---------- groups: axis tick → spaced label → 28px dash in the intent colour ---------- */
+.c10-feed{width:100%;display:flex;flex-direction:column;align-items:center}
+.c10-g{width:100%;display:flex;flex-direction:column;align-items:center;--tone:var(--wait)}
+.t-act{--tone:var(--act)}.t-go{--tone:var(--go)}.t-wait{--tone:var(--wait)}.t-res{--tone:var(--res)}.t-void{--tone:var(--void)}
+.c10-gh{display:flex;flex-direction:column;align-items:center;margin:34px 0 8px}
+.c10-gh::before{content:"";width:1px;height:22px;background:var(--faint);margin-bottom:12px}
+.c10-g:first-child .c10-gh{margin-top:22px}
+.c10-g:first-child .c10-gh::before{height:0;margin:0}
+.c10-gh b{font-size:calc(12px * var(--tz,1));font-weight:500;letter-spacing:.16em;color:var(--ink2);padding-left:.16em;line-height:1.4}
+.c10-gh b em{font-style:normal;font-family:var(--num);font-weight:600;letter-spacing:0;margin-left:6px;color:var(--tone)}
+.c10-gh i{width:28px;height:2px;border-radius:1px;background:var(--tone);margin-top:9px}
+/* rows: tappable items on the axis (touch area, press light, focus ring) */
+.c10-it{position:relative;display:block;width:calc(100% + 24px);margin:0 -12px;padding:12px 12px 13px;border:0;background:none;border-radius:20px;text-align:center;color:inherit;cursor:pointer;touch-action:pan-y;transition:transform calc(160ms * var(--k,1)) ease,background-color calc(220ms * var(--k,1)) ease}
+.c10-it+.c10-it{margin-top:6px}
+.c10-it:active{transform:scale(.985);background:rgba(255,255,255,.38)}
+.c10-it:focus-visible{outline:2px solid #4A5AD6;outline-offset:-2px}
+.c10-it-t{font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.35;color:var(--ink);text-wrap:balance;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c10-it-m{margin-top:4px;font-size:calc(13px * var(--tz,1));line-height:1.45;color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c10-it-s{margin-top:3px;font-size:calc(13px * var(--tz,1));font-weight:500;line-height:1.45;color:var(--tone);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c10-it-s::before{content:"";display:inline-block;width:5px;height:5px;border-radius:50%;background:currentColor;margin:0 7px 2px 0;vertical-align:middle}
+.is-fly [data-ttl]{visibility:hidden}
+.c10-it.is-land{animation:c10-land calc(1100ms * var(--k,1)) ease both}
+@keyframes c10-land{0%{background:rgba(255,255,255,0)}18%{background:rgba(255,255,255,.52)}100%{background:rgba(255,255,255,0)}}
+.c10-it.is-deleting{opacity:0;transform:translateY(-6px) scale(.98);transition:opacity calc(260ms * var(--k,1)) ease,transform calc(260ms * var(--k,1)) ease}
+.c10-it.is-restored{animation:c10-in calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes c10-in{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+/* ---------- the lead: an invitation on the axis ---------- */
+.c10-ld{position:relative;isolation:isolate;width:100%;display:flex;flex-direction:column;align-items:center;padding:6px 0 0}
+.c10-ld-d{font-family:var(--num);font-size:calc(13px * var(--tz,1));font-weight:500;letter-spacing:.08em;color:var(--sub);line-height:1.3;padding-left:.08em}
+.c10-ld-h{margin-top:6px;font-family:var(--num);font-size:calc(32px * var(--tz,1));font-weight:600;letter-spacing:-.01em;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
+.c10-ld-t{margin-top:12px;max-width:100%;font-size:calc(24px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--ink);text-wrap:balance;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c10-ld-p{margin-top:8px;max-width:100%;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);text-wrap:balance;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+.c10-ld-s{margin-top:8px;font-size:calc(13px * var(--tz,1));font-weight:500;line-height:1.45;color:var(--tone)}
+.c10-ld-s b{font-family:var(--num);font-weight:600;font-variant-numeric:tabular-nums}
+.c10-cd{position:relative;width:104px;height:3px;border-radius:2px;background:var(--faint);margin:9px auto 0;overflow:hidden;color:var(--go)}
+.c10-cd.amber{color:var(--amber)}.c10-cd.red{color:var(--act)}
+.c10-cd i{position:absolute;left:50%;top:0;bottom:0;width:calc(var(--r,0) * 100%);transform:translateX(-50%);border-radius:2px;background:currentColor;transition:width 900ms linear}
+.c10-ld-gap{height:20px}
+.c10-ld-n{margin-top:7px;font-size:calc(12px * var(--tz,1));color:var(--sub);letter-spacing:.02em}
+.c10-ld .ju-v27-cta{margin-top:20px;border:0;padding:0;font-family:inherit}
+.c10-ld .c10-weak{margin-top:4px}
+.c10-weak{height:44px;padding:0 18px;border:0;background:none;border-radius:999px;font-size:calc(14px * var(--tz,1));color:var(--sub);cursor:pointer}
+.c10-weak:active{background:rgba(255,255,255,.4)}
+.c10-weak:focus-visible,.ju-v27-cta:focus-visible{outline:2px solid #4A5AD6;outline-offset:3px}
+.c10-ld[data-origin].is-fly [data-ttl]{visibility:hidden}
+.c10-ld.is-land::before{content:"";position:absolute;z-index:-1;left:-14px;right:-14px;top:-8px;bottom:-4px;border-radius:30px;background:rgba(255,255,255,.5);pointer-events:none;animation:c10-landp calc(1100ms * var(--k,1)) ease both}
+@keyframes c10-landp{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.c10-seats{display:flex;justify-content:center;gap:4px;margin:10px auto 0}
+.c10-seat{width:20px;height:4px;border-radius:2px;background:var(--faint);transition:background-color calc(420ms * var(--k,1)) ease}
+.c10-seat.host,.c10-seat.ok{background:var(--ink2)}
+.c10-seat.res{background:var(--amber)}
+.c10-seat.att-present{background:var(--go)}.c10-seat.att-absent{background:var(--void)}
+/* ---------- empty ---------- */
+.c10-empty{margin:56px 0 0;display:flex;flex-direction:column;align-items:center;max-width:300px}
+.c10-empty::before{content:"";width:28px;height:2px;border-radius:1px;background:var(--faint);margin-bottom:22px}
+.c10-empty b{font-size:calc(20px * var(--tz,1));font-weight:500;line-height:1.35;text-wrap:balance}
+.c10-empty p{margin:10px 0 0;font-size:calc(14px * var(--tz,1));color:var(--sub);text-wrap:balance}
+.c10-empty button{margin-top:16px}
+.c10-inert{opacity:.5;cursor:default}
+.c10-foot-note{margin:30px 0 0;font-size:calc(12px * var(--tz,1));line-height:1.6;color:var(--sub);max-width:300px;text-wrap:balance}
+.c10-undo{position:absolute;left:50%;bottom:calc(82px + var(--sab,0px));transform:translateX(-50%);z-index:21;display:flex;align-items:center;gap:12px;padding:8px 8px 8px 18px;border-radius:999px;background:rgba(20,22,31,.88);color:#f5f6fb;font-size:calc(14px * var(--tz,1));white-space:nowrap;animation:c10-toast calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.c10-undo button{height:34px;padding:0 14px;border:0;border-radius:999px;background:rgba(255,255,255,.16);color:#fff;font-size:calc(14px * var(--tz,1));cursor:pointer}
+/* ---------- deep pages: body unfolds down the axis ---------- */
+.c10-body{width:100%;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0}
+.c10-pg.is-top.ph-enter.dir-fwd .c10-body{opacity:0;-webkit-mask:linear-gradient(#000 calc(100% - 72px),transparent) 0 0/100% 0 no-repeat;mask:linear-gradient(#000 calc(100% - 72px),transparent) 0 0/100% 0 no-repeat}
+.c10-pg.is-top.ph-in.dir-fwd .c10-body{opacity:1;-webkit-mask:linear-gradient(#000 calc(100% - 72px),transparent) 0 0/100% 1100px no-repeat;mask:linear-gradient(#000 calc(100% - 72px),transparent) 0 0/100% 1100px no-repeat;transition:opacity calc(240ms * var(--k,1)) ease calc(60ms * var(--k,1)),-webkit-mask-size calc(360ms * var(--k,1)) cubic-bezier(.25,.7,.25,1) calc(30ms * var(--k,1)),mask-size calc(360ms * var(--k,1)) cubic-bezier(.25,.7,.25,1) calc(30ms * var(--k,1))}
+.c10-pg.is-top.ph-exit .c10-body{opacity:0;transform:translateY(-14px);transition:opacity calc(200ms * var(--k,1)) ease,transform calc(300ms * var(--k,1)) cubic-bezier(.4,0,.6,1)}
+.c10-pg.is-top.ph-exit .c10-tool,.c10-pg.is-top.ph-exit .c10-foot,.c10-pg.is-top.ph-exit .c10-meta,.c10-pg.is-top.ph-exit .c10-prog,.c10-pg.is-top.ph-exit .c10-hd::before{opacity:0;transition:opacity calc(160ms * var(--k,1)) ease}
+.c10-pg.is-top.ph-enter.dir-fwd .c10-tool,.c10-pg.is-top.ph-enter.dir-fwd .c10-foot,.c10-pg.is-top.ph-enter.dir-fwd .c10-meta{opacity:0}
+.c10-pg.is-top.ph-in.dir-fwd .c10-tool,.c10-pg.is-top.ph-in.dir-fwd .c10-foot{transition:opacity calc(260ms * var(--k,1)) ease calc(120ms * var(--k,1))}
+.c10-pg.is-top.ph-in.dir-fwd .c10-meta{transition:opacity calc(220ms * var(--k,1)) ease calc(140ms * var(--k,1))}
+.c10-pg.no-fly.is-top.ph-enter .c10-ht{opacity:0}
+.c10-pg.no-fly.is-top.ph-in .c10-ht{transition:opacity calc(240ms * var(--k,1)) ease}
+.c10-pg.is-top.ph-exit.no-fly .c10-ht{opacity:0;transition:opacity calc(180ms * var(--k,1)) ease}
+/* swap (read → ticket, section switch): the title stays on the axis, the body hands over */
+.c10-pg.is-leaving .c10-body,.c10-pg.is-leaving .c10-foot,.c10-pg.is-leaving .c10-meta{opacity:0;transform:translateY(-10px);transition:opacity calc(200ms * var(--k,1)) ease,transform calc(260ms * var(--k,1)) ease}
+.c10-pg.is-leaving .c10-ht,.c10-pg.is-leaving .c10-tool,.c10-pg.is-leaving .c10-hd::before{opacity:0}
+.c10-pg.is-top.ph-enter.dir-swap .c10-body{opacity:0;transform:translateY(12px)}
+.c10-pg.is-top.ph-in.dir-swap .c10-body{transition:opacity calc(260ms * var(--k,1)) ease calc(70ms * var(--k,1)),transform calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) calc(70ms * var(--k,1))}
+/* home underneath a deep page: fades out when the axis expands, fades back when it folds */
+.pg-home.is-under .c10-fade,.pg-home.is-from .c10-fade{opacity:0}
+.pg-home.is-under.ph-enter.dir-fwd .c10-fade,.pg-home.is-from.ph-enter .c10-fade{opacity:1;transition:none}
+.pg-home.is-under.ph-in.dir-fwd .c10-fade,.pg-home.is-from.ph-in .c10-fade{opacity:0;transition:opacity calc(200ms * var(--k,1)) ease}
+.pg-home.is-under.ph-exit .c10-fade{opacity:1;transition:opacity calc(260ms * var(--k,1)) ease calc(50ms * var(--k,1))}
+.c10-pg:not(.pg-home).is-under.ph-in,.c10-pg:not(.pg-home).is-under.ph-enter{visibility:hidden}
+.c10-pg:not(.pg-home).is-under.ph-exit .c10-body,.c10-pg:not(.pg-home).is-under.ph-exit .c10-foot,.c10-pg:not(.pg-home).is-under.ph-exit .c10-meta{animation:c10-in calc(300ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+/* role / section switch on home: the feed settles onto the axis (no blank frame: it starts at .22) */
+.pg-home.is-top.ph-enter.dir-role .c10-feed,.pg-home.is-top.ph-enter.dir-swap .c10-feed{opacity:.22;transform:translateY(10px)}
+.pg-home.is-top.ph-in.dir-role .c10-feed,.pg-home.is-top.ph-in.dir-swap .c10-feed{transition:opacity calc(240ms * var(--k,1)) ease,transform calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1)}
+.pg-home.is-top.ph-enter.dir-role .c10-legend{opacity:.3}
+.pg-home.is-top.ph-in.dir-role .c10-legend{transition:opacity calc(220ms * var(--k,1)) ease}
+/* ---------- footer (the one CTA of a deep page) ---------- */
+.c10-foot{position:absolute;left:0;right:0;bottom:0;z-index:7;display:flex;flex-direction:column;align-items:center;gap:2px;padding:30px 32px calc(18px + var(--sab,0px) + var(--kb,0px));pointer-events:none;background:linear-gradient(180deg,rgba(var(--veil),0) 0,rgba(var(--veil),.93) 26px,rgba(var(--veil),.98) 100%)}
+.c10-foot::before{content:"";position:absolute;inset:0;z-index:-1;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);-webkit-mask:linear-gradient(180deg,transparent 0,#000 26px);mask:linear-gradient(180deg,transparent 0,#000 26px)}
+.c10-foot:empty{display:none}
+.c10-foot>*{pointer-events:auto}
+.c10-foot .ju-v27-cta{border:0;padding:0;font-family:inherit}
+/* ---------- the read layer (约定沿轴展开) ---------- */
+.c10-prog{position:relative;width:132px;height:2px;margin:14px auto 0;background:var(--faint);border-radius:1px;overflow:hidden;opacity:calc(1 - var(--hc,0))}
+.c10-hprog{position:absolute;left:32px;right:32px;top:calc(var(--sat,0px) + 80px);width:auto;height:1.5px;margin:0;opacity:calc(var(--hc,0) * .8);background:rgba(20,22,31,.08)}
+.c10-prog i{position:absolute;left:50%;top:0;bottom:0;width:calc(var(--p,0) * 100%);transform:translateX(-50%);background:var(--ink2);border-radius:1px;transition:width calc(120ms * var(--k,1)) linear}
+.c10-people{margin:18px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--ink2);text-wrap:balance;max-width:310px}
+.c10-people span{white-space:nowrap}
+.c10-people span+span::before{content:"·";margin:0 8px;color:var(--faint)}
+.c10-people small{font-size:calc(12px * var(--tz,1));color:var(--sub);margin-left:4px}
+.c10-rule{width:100%;display:flex;flex-direction:column;align-items:center}
+.c10-rl{margin:18px 0 0;max-width:310px}
+.c10-rl b{display:block;font-size:calc(16px * var(--tz,1));font-weight:500;line-height:1.45;color:var(--ink);text-wrap:balance}
+.c10-rl p{margin:4px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.65;color:var(--ink2);text-wrap:balance}
+.c10-end{margin:34px 0 0;display:flex;align-items:center;gap:10px;font-size:calc(12px * var(--tz,1));letter-spacing:.14em;color:var(--sub)}
+.c10-end::before,.c10-end::after{content:"";width:22px;height:1px;background:var(--faint)}
+.c10-res{margin:22px 0 0;display:flex;flex-direction:column;align-items:center;animation:c10-in calc(360ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.c10-res b{font-size:calc(20px * var(--tz,1));font-weight:600;color:var(--go)}
+.c10-res p{margin:6px 0 0;font-size:calc(14px * var(--tz,1));color:var(--ink2)}
+.c10-err{margin:10px 0 0;font-size:calc(13px * var(--tz,1));color:var(--act);text-wrap:balance}
+.c10-hint{margin:12px 0 0;font-size:calc(13px * var(--tz,1));color:var(--sub);text-wrap:balance}
+/* ---------- ticket on the axis: the shared original, 258 wide, never scaled; the page around it is ours ---------- */
+.c10-stage{width:calc(100% + 64px);margin:6px -32px 0;flex-shrink:0;text-align:left}
+.c10-stage.is-waiting .ju-print-mouth,.c10-stage.is-waiting .ju-print-lip{opacity:1}
+.c10-stage.reissued{--ju-ticket-top:24px}
+.c10-slot{position:absolute;left:50%;top:var(--ju-ticket-top,84px);width:258px;height:351px;margin-left:-129px;border-radius:14px 14px 10px 10px;z-index:1;pointer-events:none;background:rgba(255,255,255,.1);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);opacity:0;transition:opacity calc(420ms * var(--k,1)) ease}
+.c10-stage.is-waiting .c10-slot{opacity:1}
+.c10-stage[data-state="ready"] .c10-slot,.c10-stage[data-state="torn"] .c10-slot,.c10-stage[data-state="void"] .c10-slot{opacity:0}
+.c10-contact{width:258px;margin:0 auto;text-align:left}
+.c10-contact .ju-contact-wrap{text-align:left}
+.c10-tkhint{margin:4px 0 0;font-size:calc(13px * var(--tz,1));color:var(--sub);min-height:20px}
+.c10-fhint{margin:0 0 8px;font-size:calc(13px * var(--tz,1));color:var(--sub)}
+.c10-copyfail{margin:6px 0 0;font-size:calc(13px * var(--tz,1));color:var(--act)}
+.c10-copyfail button{margin-left:6px;height:32px;padding:0 12px;border:0;border-radius:999px;background:rgba(255,255,255,.55);color:var(--ink);font-size:calc(13px * var(--tz,1));cursor:pointer}
+.c10-unav{margin:40px 0 0;max-width:300px;font-size:calc(15px * var(--tz,1));color:var(--ink2);text-wrap:balance}
+/* ---------- detail (参加者局内) ---------- */
+.c10-facts{display:flex;flex-direction:column;align-items:center;margin:22px 0 0}
+.c10-sech{display:flex;flex-direction:column;align-items:center;margin:34px 0 4px;scroll-margin-top:96px}
+.c10-sech::before{content:"";width:1px;height:20px;background:var(--faint);margin-bottom:12px}
+.c10-sech b{font-size:calc(12px * var(--tz,1));font-weight:500;letter-spacing:.16em;padding-left:.16em;color:var(--ink2)}
+.c10-sech b em{font-style:normal;font-family:var(--num);font-weight:600;letter-spacing:0;margin-left:6px;color:var(--tone,var(--ink2))}
+.c10-sech i{width:28px;height:2px;border-radius:1px;background:var(--tone,var(--faint));margin-top:9px}
+.c10-sech small{margin-top:8px;font-size:calc(12px * var(--tz,1));line-height:1.5;color:var(--sub);max-width:300px;text-wrap:balance}
+.c10-link{height:40px;padding:0 14px;border:0;background:none;border-radius:999px;font-size:calc(14px * var(--tz,1));color:var(--res);cursor:pointer}
+.c10-link:active{background:rgba(255,255,255,.4)}
+/* ---------- manage: centred head, sections with an axis tick, applicant cards 300 wide ---------- */
+.c10-mh{display:flex;flex-direction:column;align-items:center;margin:18px 0 0}
+.c10-mh-s{font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--tone);--tone:var(--act)}
+.c10-mh-s.t-go{--tone:var(--go)}.c10-mh-s.t-wait{--tone:var(--wait)}.c10-mh-s.t-res{--tone:var(--res)}.c10-mh-s.t-void{--tone:var(--void)}
+.c10-mh .c10-seats{margin-top:12px}
+.c10-mh .c10-seat{width:30px;height:5px;border-radius:3px}
+.c10-mh-p{margin-top:9px;font-size:calc(13px * var(--tz,1));color:var(--ink2)}
+.c10-mh-p span{white-space:nowrap}
+.c10-mh-f{margin-top:3px;font-size:calc(12px * var(--tz,1));color:var(--sub)}
+.c10-secs-m{width:100%;display:flex;flex-direction:column;align-items:center}
+.c10-ms{width:100%;display:flex;flex-direction:column;align-items:center}
+.c10-ms.is-focus .c10-sech b{color:var(--ink)}
+.c10-ap{position:relative;width:300px;max-width:100%;margin:14px 0 0;padding:20px 20px 16px;border-radius:24px;background:linear-gradient(180deg,rgba(255,255,255,.58),rgba(255,255,255,.42));box-shadow:inset 0 1px 0 rgba(255,255,255,.85),inset 0 0 0 1px rgba(255,255,255,.5),0 14px 30px -24px rgba(20,26,52,.45);display:flex;flex-direction:column;align-items:center;transition:background-color calc(320ms * var(--k,1))}
+.c10-ap-n{font-size:calc(19px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--ink)}
+.c10-ap-v{margin-top:5px;font-size:calc(12px * var(--tz,1));color:var(--sub);display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap}
+.c10-ap-v svg{flex:none}
+.c10-vf{display:inline-flex;align-items:center;gap:5px}.c10-vf.ok{color:var(--go)}
+.c10-ap-q{margin:12px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--ink2);text-wrap:balance}
+.c10-ap-a{margin-top:14px;width:100%;min-height:96px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.c10-ap-a .ju-v27-cta{border:0;padding:0;font-family:inherit}
+.c10-ap-a .c10-weak{height:40px;margin-top:4px}
+.c10-ap-r{display:flex;flex-direction:column;align-items:center;animation:c10-settle calc(420ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.c10-ap-r b{display:flex;align-items:center;gap:7px;font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--go)}
+.c10-ap-r.t-void b{color:var(--void)}
+.c10-ap-r span{margin-top:4px;font-size:calc(12px * var(--tz,1));color:var(--sub)}
+@keyframes c10-settle{0%{opacity:0;transform:translateY(8px) scale(.98)}100%{opacity:1;transform:none}}
+.c10-busy{font-size:calc(14px * var(--tz,1));color:var(--sub);display:flex;align-items:center;gap:8px}
+.c10-busy::before{content:"";width:14px;height:14px;border-radius:50%;border:2px solid var(--faint);border-top-color:var(--ink2);animation:c10-spin calc(700ms * var(--k,1)) linear infinite}
+@keyframes c10-spin{to{transform:rotate(360deg)}}
+.c10-ap.is-done{background:linear-gradient(180deg,rgba(255,255,255,.4),rgba(255,255,255,.26))}
+.c10-mrow{width:100%;max-width:300px;display:flex;align-items:baseline;justify-content:center;flex-wrap:wrap;gap:0 10px;padding:6px 0;font-size:calc(15px * var(--tz,1));line-height:1.45}
+.c10-mrow b{font-weight:500;color:var(--ink)}
+.c10-mrow span{font-size:calc(13px * var(--tz,1));color:var(--sub)}
+.c10-mrow span.t-res{color:var(--amber)}.c10-mrow span.t-go{color:var(--go)}
+.c10-mrow.is-open b{font-weight:400;color:var(--sub)}
+.c10-at{width:300px;max-width:100%;display:flex;flex-direction:column;align-items:center;margin-top:6px;padding:14px 0 12px;border-radius:22px;transition:background-color calc(300ms * var(--k,1)) ease}
+.c10-at.is-next{background:rgba(255,255,255,.44);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6)}
+.c10-at-n{font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.35}
+.c10-seg{display:flex;gap:8px;margin-top:10px}
+.c10-seg button{height:40px;padding:0 16px;border:0;border-radius:999px;background:rgba(255,255,255,.58);box-shadow:inset 0 0 0 1px rgba(20,22,31,.1);font-size:calc(14px * var(--tz,1));color:var(--ink2);cursor:pointer}
+.c10-seg button:active{transform:scale(.96)}
+.c10-seg button[aria-pressed="true"]{background:var(--ink);color:#fff;box-shadow:none}
+.c10-chop{margin-top:9px;padding:2px 10px 2px 12px;border:2px solid currentColor;border-radius:8px;font-size:calc(15px * var(--tz,1));font-weight:700;letter-spacing:.18em;color:var(--go);transform:rotate(-6deg)}
+.c10-chop.t-absent{color:var(--void)}.c10-chop.t-pending{color:var(--amber);border-style:dashed}
+.c10-chop.is-fresh{animation:c10-chop calc(520ms * var(--k,1)) cubic-bezier(.2,1.25,.3,1) both}
+@keyframes c10-chop{0%{transform:scale(1.7) rotate(-14deg);opacity:0}60%{transform:scale(.96) rotate(-5deg);opacity:1}100%{transform:rotate(-6deg);opacity:1}}
+.c10-done{margin:14px 0 0;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--go)}
+.c10-help{margin:12px 0 0;max-width:300px;font-size:calc(12px * var(--tz,1));line-height:1.6;color:var(--sub);text-wrap:balance}
+.c10-arr{display:flex;flex-direction:column;align-items:center;margin-top:6px}
+.c10-arr button{margin-top:8px}
+.c10-arr small{display:block;font-size:calc(12px * var(--tz,1));color:var(--sub);max-width:300px;text-wrap:balance}
+.c10-danger{color:var(--act)!important}
+/* ---------- root nav (JU tabs) ---------- */
+.c10-nav{position:absolute;left:0;right:0;bottom:0;z-index:20;height:calc(76px + var(--sab,0px));padding:14px 18px var(--sab,0px);display:flex;align-items:flex-start;justify-content:space-around;background:linear-gradient(180deg,rgba(var(--veil),0) 0,rgba(var(--veil),.9) 22px,rgba(var(--veil),.97) 100%);transition:transform calc(320ms * var(--k,1)) cubic-bezier(.3,.7,.2,1),opacity calc(240ms * var(--k,1)) ease}
+.c10-nav::before{content:"";position:absolute;inset:0;z-index:-1;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);-webkit-mask:linear-gradient(180deg,transparent 0,#000 22px);mask:linear-gradient(180deg,transparent 0,#000 22px)}
+.app:not(.at-home) .c10-nav{transform:translateY(100%);opacity:0;pointer-events:none}
+.c10-nav button{flex:1;height:52px;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:calc(12px * var(--tz,1));color:var(--sub);cursor:pointer}
+.c10-nav button svg{width:22px;height:22px}
+.c10-nav button.on{color:var(--ink);font-weight:500}
+.c10-nav button.off{opacity:.55}
+/* ---------- sheet: rises along the axis ---------- */
+.c10-over{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-end;background:rgba(16,18,30,.28);animation:c10-dim calc(280ms * var(--k,1)) ease both}
+@keyframes c10-dim{0%{background:rgba(16,18,30,0)}100%{background:rgba(16,18,30,.28)}}
+.c10-sheet{position:relative;width:100%;max-height:calc(100% - 40px);overflow:auto;padding:14px 32px calc(22px + var(--sab,0px) + var(--kb,0px));border-radius:30px 30px 0 0;background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(246,245,250,.98));box-shadow:0 -18px 40px -24px rgba(16,18,30,.5);display:flex;flex-direction:column;align-items:center;text-align:center;animation:c10-up calc(340ms * var(--k,1)) cubic-bezier(.2,.85,.25,1) both}
+@keyframes c10-up{0%{transform:translateY(46%);opacity:.4}100%{transform:none;opacity:1}}
+.c10-sheet::before{content:"";width:28px;height:2px;border-radius:1px;background:var(--faint);margin:2px 0 18px}
+.c10-sheet h3{margin:0;font-size:calc(20px * var(--tz,1));font-weight:500;line-height:1.35;text-wrap:balance}
+.c10-sheet .c10-sid{margin:8px 0 0;font-size:calc(13px * var(--tz,1));color:var(--sub);text-wrap:balance}
+.c10-sheet p.c10-sb{margin:14px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.65;color:var(--ink2);text-wrap:balance;max-width:310px}
+.c10-sheet .c10-irr{margin:14px 0 0;font-size:calc(13px * var(--tz,1));color:var(--act)}
+.c10-sacts{width:100%;display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:22px}
+.c10-sacts .ju-v27-cta,.c10-sacts .ju-v27-danger{border:0;padding:0;font-family:inherit}
+.c10-ink{width:min(100%,280px);height:48px;border:0;border-radius:999px;background:#14161F;color:#fff;font-size:calc(15px * var(--tz,1));font-weight:500;cursor:pointer}
+.c10-ink:active{transform:scale(.97)}
+.c10-ghost{width:min(100%,280px);height:48px;border:0;border-radius:999px;background:rgba(20,22,31,.05);box-shadow:inset 0 0 0 1px rgba(20,22,31,.12);color:var(--ink);font-size:calc(15px * var(--tz,1));cursor:pointer}
+.c10-ghost:active{transform:scale(.97)}
+/* ---------- toast ---------- */
+.c10-toast{position:absolute;left:50%;bottom:calc(92px + var(--sab,0px) + var(--kb,0px));transform:translateX(-50%);z-index:60;max-width:calc(100% - 48px);padding:11px 18px;border-radius:999px;background:rgba(20,22,31,.9);color:#f6f7fb;font-size:calc(14px * var(--tz,1));line-height:1.4;text-align:center;box-shadow:0 12px 26px -16px rgba(0,0,0,.5);animation:c10-toast calc(260ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.app:not(.at-home) .c10-toast{bottom:calc(96px + var(--sab,0px) + var(--kb,0px))}
+.c10-toast.k-error{background:rgba(122,22,42,.94)}
+@keyframes c10-toast{0%{opacity:0;transform:translate(-50%,10px)}100%{opacity:1;transform:translate(-50%,0)}}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c10{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <div class="ju-env" ref="{{envRef}}"></div>
+      <sc-if value="{{v.noSkins}}"><div class="c10-env0"></div></sc-if>
+      <div class="c10-lux" aria-hidden="true"></div>
+
+      <!-- ================= HOME ================= -->
+      <sc-if value="{{v.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c10-pg pg-home {{c.nav.cls.home}}{{v.homeFrom}}" data-surface="home">
+          <div class="c10-sc c10-fade" data-scroller="home" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+            <div class="c10-col">
+              <div class="c10-tsp" aria-hidden="true">我的局</div>
+              <p class="c10-legend"><sc-for list="{{v.legend}}" as="l" hint-placeholder-count="3"><span class="t-{{l.tone}}"><i></i>{{l.label}}<em>{{l.n}}</em></span></sc-for><sc-if value="{{v.legendEmpty}}"><span>{{v.legendEmpty}}</span></sc-if></p>
+              <div class="c10-roles" data-on="{{c.role}}">
+                <i class="c10-cap" aria-hidden="true"></i>
+                <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c10-role {{t.cls}}" data-role-tab="{{t.k}}" aria-pressed="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="c10-bdg">{{t.badge}}</span></sc-if></button></sc-for>
+              </div>
+              <div class="c10-secs">
+                <sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c10-sec {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><em>{{t.countText}}</em></sc-if></button></sc-for>
+              </div>
+              <div class="c10-feed">
+                <sc-if value="{{v.empty}}">
+                  <div class="c10-empty"><b>{{v.empty.title}}</b><p>{{v.empty.body}}</p><button type="button" class="c10-ghost {{v.empty.cls}}" aria-disabled="{{v.empty.inert}}" onClick="{{v.empty.go}}">{{v.empty.label}}</button></div>
+                </sc-if>
+                <sc-for list="{{v.groups}}" as="g" hint-placeholder-count="3">
+                  <div class="c10-g t-{{g.tone}}" data-group="{{g.key}}">
+                    <div class="c10-gh"><b>{{g.title}}<em>{{g.n}}</em></b><i></i></div>
+                    <sc-if value="{{g.lead}}">
+                      <div class="c10-ld{{g.lead.cls}}" data-rid="{{g.lead.id}}" data-origin="{{g.lead.ok}}">
+                        <div class="c10-ld-d">{{g.lead.d}}</div>
+                        <div class="c10-ld-h">{{g.lead.h}}</div>
+                        <div class="c10-ld-t" data-ttl>{{g.lead.t}}</div>
+                        <div class="c10-ld-p">{{g.lead.p}}</div>
+                        <div class="c10-ld-s">{{g.lead.s}}<sc-if value="{{g.lead.cdOn}}"> · 剩 <b>{{g.lead.cdText}}</b></sc-if></div>
+                        <sc-if value="{{g.lead.cdOn}}"><div class="c10-cd {{g.lead.cdTone}}" style="--r:{{g.lead.cdR}}" aria-hidden="true"><i></i></div></sc-if>
+                        <sc-if value="{{g.lead.seats}}"><div class="c10-seats" aria-label="{{g.lead.seatLabel}}"><sc-for list="{{g.lead.seats}}" as="s" hint-placeholder-count="5"><i class="c10-seat {{s.kind}}"></i></sc-for></div><div class="c10-ld-n">{{g.lead.seatLine}}</div></sc-if>
+                        <sc-if value="{{g.lead.cta}}"><button type="button" class="ju-v27-cta" data-act="cta" onClick="{{g.lead.act}}"><span class="gloss"></span><span class="label">{{g.lead.cta}}</span></button></sc-if>
+                        <sc-if value="{{g.lead.sec}}"><button type="button" class="c10-weak" data-act="{{g.lead.sec.key}}" onClick="{{g.lead.sec.act}}">{{g.lead.sec.label}}</button></sc-if>
+                        <sc-if value="{{g.lead.open}}"><button type="button" class="c10-link" onClick="{{g.lead.open}}">查看这局</button></sc-if>
+                        <sc-if value="{{g.lead.gap}}"><div class="c10-ld-gap"></div></sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                      <div class="c10-it{{r.cls}}" role="button" tabindex="0" data-rid="{{r.id}}" data-origin="{{r.ok}}" onClick="{{r.open}}" onKeyDown="{{r.key}}">
+                        <div class="c10-it-t" data-ttl>{{r.t}}</div>
+                        <div class="c10-it-m">{{r.m}}</div>
+                        <div class="c10-it-s">{{r.s}}</div>
+                        <sc-if value="{{r.del}}"><button type="button" class="c10-weak" data-act="delete" onClick="{{r.del}}">删除草稿</button></sc-if>
+                      </div>
+                    </sc-for>
+                  </div>
+                </sc-for>
+                <sc-if value="{{v.footNote}}"><p class="c10-foot-note">{{v.footNote}}</p></sc-if>
+              </div>
+            </div>
+          </div>
+          <header class="c10-hd c10-fade" data-header><h1 class="c10-ht">我的局</h1></header>
+          <sc-if value="{{c.hosted.undo.on}}"><div class="c10-undo" role="status">{{c.hosted.undo.text}}<button type="button" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} {{c.hosted.undo.left}}s</button></div></sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ================= DETAIL (参加者局内) ================= -->
+      <sc-if value="{{c.nav.on.detail}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-detail {{c.nav.cls.detail}}{{v.pgCls.detail}}" data-surface="detail" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{c.detail.on}}">
+            <div class="c10-sc" data-scroller="detail" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.dt.title}}</div>
+                <p class="c10-meta">{{v.dt.meta}}</p>
+                <div class="c10-body">
+                  <div class="c10-facts">
+                    <div class="c10-ld-d">{{v.dt.d}}</div>
+                    <div class="c10-ld-h">{{v.dt.h}}</div>
+                    <div class="c10-ld-p">{{v.dt.p}}</div>
+                    <sc-if value="{{c.detail.countdown.on}}"><div class="c10-ld-s t-act" style="--tone:var(--act)">已预留 · 剩 <b>{{c.detail.countdown.text}}</b></div><div class="c10-cd {{c.detail.countdown.tone}}" style="--r:{{c.detail.countdown.ratio}}"><i></i></div></sc-if>
+                  </div>
+                  <sc-if value="{{c.detail.result}}"><div class="c10-res"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
+                  <sc-if value="{{c.detail.receipt}}"><div class="c10-res"><b>{{c.detail.receipt.title}}</b><p>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</p></div></sc-if>
+                  <div class="c10-sech"><b>同局<em>{{c.detail.seatText}}</em></b><i></i></div>
+                  <div class="c10-seats"><sc-for list="{{c.detail.seats}}" as="s" hint-placeholder-count="4"><i class="c10-seat {{s.kind}}"></i></sc-for></div>
+                  <p class="c10-people"><sc-for list="{{v.dt.people}}" as="m" hint-placeholder-count="3"><span>{{m.name}}<small>{{m.st}}</small></span></sc-for></p>
+                  <div class="c10-sech"><b>参加约定</b><i></i></div>
+                  <sc-for list="{{v.dt.rules}}" as="r" hint-placeholder-count="3"><div class="c10-mrow"><span>{{r.t}}</span><b>{{r.h}}</b></div></sc-for>
+                  <sc-if value="{{v.dt.canRead}}"><button type="button" class="c10-link" onClick="{{c.detail.openRead}}">阅读约定</button></sc-if>
+                  <sc-if value="{{c.detail.error}}"><p class="c10-err">{{c.detail.error}}</p></sc-if>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.dt.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+            <div class="c10-foot">
+              <sc-if value="{{v.dt.primary}}"><button type="button" class="ju-v27-cta" data-act="{{c.detail.primary.key}}" aria-disabled="{{c.detail.primary.disabled}}" onClick="{{c.detail.primary.act}}"><span class="gloss"></span><span class="label">{{c.detail.primary.label}}</span></button></sc-if>
+              <sc-if value="{{c.detail.secondary}}"><button type="button" class="c10-weak" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></sc-if>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ================= READ (约定沿轴展开) ================= -->
+      <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-read {{c.nav.cls.read}}{{v.pgCls.read}}" data-surface="read">
+          <sc-if value="{{v.rd}}">
+            <div class="c10-sc" data-scroller="read" data-measure="layout" onScroll="{{v.rd.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.rd.title}}</div>
+                <p class="c10-meta">{{v.rd.meta}}</p>
+                <div class="c10-prog" style="--p:{{v.rd.p}}" aria-hidden="true"><i></i></div>
+                <div class="c10-body">
+                  <p class="c10-people"><sc-for list="{{v.rd.people}}" as="m" hint-placeholder-count="3"><span>{{m.name}}<small>{{m.st}}</small></span></sc-for></p>
+                  <sc-for list="{{v.rd.rules}}" as="g" hint-placeholder-count="3">
+                    <div class="c10-rule">
+                      <div class="c10-sech"><b>{{g.title}}</b><i></i></div>
+                      <sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><div class="c10-rl"><sc-if value="{{l.h}}"><b>{{l.h}}</b></sc-if><p>{{l.b}}</p></div></sc-for>
+                    </div>
+                  </sc-for>
+                  <div class="c10-end">{{v.rd.endMark}}</div>
+                  <sc-if value="{{v.rd.result}}"><div class="c10-res"><b>{{v.rd.result.title}}</b><p>{{v.rd.result.body}}</p></div></sc-if>
+                  <sc-if value="{{c.read.error}}"><p class="c10-err">{{c.read.error}}</p></sc-if>
+                  <p class="c10-hint">{{v.rd.hint}}</p>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.rd.title}}</h1><div class="c10-prog c10-hprog" style="--p:{{v.rd.p}}" aria-hidden="true"><i></i></div></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+            <div class="c10-foot">
+              <button type="button" class="ju-v27-cta" data-act="{{c.read.primary.key}}" aria-disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button>
+              <sc-if value="{{c.read.secondary}}"><button type="button" class="c10-weak" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ================= TICKET / REPLY: the shared original on the axis ================= -->
+      <sc-if value="{{v.tkOn}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-ticket {{c.nav.cls.ticket}}{{c.nav.cls.reply}}{{v.pgCls.ticket}}" data-surface="{{v.tkSurface}}" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{c.ticket.on}}">
+            <div class="c10-sc" data-scroller="ticket" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.tk.title}}</div>
+                <p class="c10-meta">{{v.tk.meta}}</p>
+                <div class="c10-body">
+                  <sc-if value="{{c.ticket.unavailable}}"><p class="c10-unav">{{c.ticket.unavailable.text}}</p></sc-if>
+                  <sc-if value="{{v.tk.showStage}}">
+                    <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                    <div class="ju-ticket-stage c10-stage {{v.tk.stageCls}}" data-print-stage="c10" data-state="idle">
+                      <div class="c10-slot" aria-hidden="true"></div>
+                      <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                      <div class="ju-ticket" data-paper="c10">
+                        <div class="ju-ticket-shadow" data-paper-shadow="c10" data-raster="skip"><div></div></div>
+                        <div class="ju-ticket-shell" data-paper-shell="c10">
+                          <div class="ju-ticket-surface" data-paper-surface="c10">
+                            <div class="ju-ticket-body">
+                              <div class="ju-ticket-face">
+                                <div class="ju-ticket-brand">JU. / 票根</div>
+                                <div class="ju-ticket-title" data-slot="title">{{c.ticket.ritual.title}}</div>
+                                <div class="ju-ticket-when"><span data-slot="time">{{c.ticket.ritual.time}}</span><span data-slot="md">{{c.ticket.ritual.md}}</span></div>
+                                <div class="ju-ticket-previous" data-slot="previous" hidden="{{v.tk.noPrevious}}">{{v.tk.previousText}}</div>
+                                <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.ticket.ritual.loc}}</strong></div>
+                                <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.ticket.ritual.meeting}}</strong></div>
+                                <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.ticket.ritual.host}}</strong></div>
+                              </div>
+                              <div class="ju-ticket-wet" data-wet="c10" data-raster="skip"></div>
+                            </div>
+                            <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{v.tk.noMark}}">{{c.ticket.ritual.mark}}</div>
+                            <div class="ju-ticket-stub" data-tear="c10" data-act="tear"><div class="ju-ticket-bend" data-bend="c10" data-raster="skip"></div></div>
+                          </div>
+                        </div>
+                        <div class="ju-ticket-burn" data-burn="c10" data-raster="skip"></div>
+                      </div>
+                    </div>
+                    <sc-if value="{{v.tk.printingHint}}"><p class="c10-tkhint">{{v.tk.printingHint}}</p></sc-if>
+                    <div class="c10-contact">
+                      <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
+                        <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+                        <p class="ju-contact-note23"></p>
+                        <p class="ju-form-error"></p>
+                      </div>
+                    </div>
+                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c10-copyfail">未能复制，长按微信号手动复制<button type="button" data-act="retry" onClick="{{v.tk.retryCopy}}">重试</button></p></sc-if>
+                    <sc-if value="{{v.tk.showClosed}}"><p class="c10-err">{{c.ticket.contact.closedText}}</p></sc-if>
+                    <sc-if value="{{c.ticket.contact.error}}"><p class="c10-err">{{c.ticket.contact.error}}</p></sc-if>
+                    <sc-if value="{{c.ticket.result}}"><div class="c10-res"><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.tk.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.ticket.back}}"><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.ticket.canExit}}"><button type="button" class="c10-tr" data-act="{{v.tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if></div>
+            <div class="c10-foot">
+ <sc-if value="{{c.ticket.tear.canTear}}"><p class="c10-fhint ju-print-cta-in">{{v.tk.hint}}</p></sc-if>
+              <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta ju-print-cta-in" data-act="{{v.tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
+              <sc-if value="{{v.tk.declineOn}}"><button type="button" class="c10-weak" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if>
+              <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+              <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
+              <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
+            </div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ================= MANAGE (H1): centred head, sections with an axis tick, applicant cards 300 wide ================= -->
+      <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-manage {{c.nav.cls.manage}}{{v.pgCls.manage}}" data-surface="manage" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{v.mg}}">
+            <div class="c10-sc" data-scroller="manage" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.mg.title}}</div>
+                <p class="c10-meta">{{v.mg.meta}}</p>
+                <div class="c10-body">
+                  <sc-if value="{{c.manage.missing}}"><p class="c10-unav">{{c.manage.body}}</p></sc-if>
+                  <sc-if value="{{v.mg.ready}}">
+                    <div class="c10-mh">
+                      <div class="c10-mh-s t-{{v.mg.tone}}" data-bump="m-status">{{v.mg.status}}</div>
+                      <sc-if value="{{v.mg.seatsOn}}"><div class="c10-seats" aria-label="{{v.mg.progText}}"><sc-for list="{{v.mg.seats}}" as="s" hint-placeholder-count="5"><i class="c10-seat {{s.kind}} att-{{s.attendance}}" data-seat="{{s.i}}"></i></sc-for></div></sc-if>
+                      <sc-if value="{{v.mg.progText}}"><div class="c10-mh-p" data-bump="m-prog">{{v.mg.progText}}</div></sc-if>
+                      <sc-if value="{{v.mg.formedLine}}"><div class="c10-mh-f">{{v.mg.formedLine}}</div></sc-if>
+                    </div>
+                    <div class="c10-secs-m">
+                      <sc-if value="{{c.manage.apps.on}}">
+                        <div class="c10-ms t-act {{c.manage.apps.cls}}" data-section="apps" style="order:{{c.manage.apps.order}}">
+                          <div class="c10-sech" style="--tone:var(--act)"><b>{{v.mg.appsT}}<em data-bump="m-apps">{{v.mg.appsN}}</em></b><i></i><small data-bump="m-apps-sub">{{c.manage.apps.sub}}</small></div>
+                          <sc-for list="{{v.mg.apps}}" as="a" hint-placeholder-count="2">
+                            <div class="c10-ap{{a.cls}}" data-rid="{{a.id}}">
+                              <div class="c10-ap-n">{{a.nickText}}</div>
+                              <div class="c10-ap-v"><span class="c10-vf{{a.vCls}}"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="{{a.vPath}}"></path></svg>{{a.verifiedLabel}}</span><span>· {{a.agoText}}</span></div>
+                              <sc-if value="{{a.note}}"><p class="c10-ap-q">「{{a.note}}」</p></sc-if>
+                              <div class="c10-ap-a">
+                                <sc-if value="{{a.pendingOpen}}"><button type="button" class="ju-v27-cta" data-act="approve" onClick="{{a.approve}}"><span class="gloss"></span><span class="label">发出邀请</span></button><button type="button" class="c10-weak" data-act="reject" onClick="{{a.reject}}">谢绝</button></sc-if>
+                                <sc-if value="{{a.busy}}"><div class="c10-busy">处理中…</div></sc-if>
+                                <sc-if value="{{a.result}}"><div class="c10-ap-r t-{{a.tone}}"><b><svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="{{a.rPath}}"></path></svg>{{a.resultText}}</b><span>{{a.resultNote}}</span></div></sc-if>
+                                <sc-if value="{{a.error}}"><p class="c10-err">{{a.error}}</p><button type="button" class="c10-weak" data-act="retry" onClick="{{a.retry}}">知道了</button></sc-if>
+                              </div>
+                            </div>
+                          </sc-for>
+                          <p class="c10-help">{{c.manage.apps.help}}</p>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{c.manage.replies.on}}">
+                        <div class="c10-ms t-res {{c.manage.replies.cls}}" data-section="replies" style="order:{{c.manage.replies.order}}">
+                          <div class="c10-sech" style="--tone:var(--res)"><b>{{c.manage.replies.title}}</b><i></i><small>{{c.manage.replies.sub}}</small></div>
+                          <p class="c10-help">原定 <s>{{c.manage.replies.oldWhen.zh}}</s> → {{c.manage.replies.newWhen.zh}}</p>
+                          <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c10-mrow" data-rid="{{r.id}}"><b>{{r.name}}</b><span>{{r.answerText}} · {{r.ticketLine}}</span></div></sc-for>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{c.manage.roster.on}}">
+                        <div class="c10-ms {{c.manage.roster.cls}}" data-section="members" style="order:{{c.manage.roster.order}}">
+                          <div class="c10-sech"><b>{{c.manage.roster.title}}</b><i></i><small data-bump="m-roster">{{c.manage.roster.line}}</small></div>
+                          <sc-for list="{{v.mg.roster}}" as="m" hint-placeholder-count="3"><div class="c10-mrow" data-rid="{{m.id}}"><b>{{m.name}}</b><span class="t-{{m.tone}}" data-bump="{{m.bk}}">{{m.st}}</span></div></sc-for>
+                          <sc-if value="{{c.manage.roster.openText}}"><p class="c10-help">{{c.manage.roster.openText}}</p></sc-if>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{c.manage.queue.on}}">
+                        <div class="c10-ms {{c.manage.queue.cls}}" data-section="queue" style="order:{{c.manage.queue.order}}">
+                          <div class="c10-sech"><b>{{c.manage.queue.title}}</b><i></i><small>{{c.manage.queue.sub}}</small></div>
+                          <sc-for list="{{c.manage.queue.rows}}" as="q" hint-placeholder-count="2"><div class="c10-mrow"><b>{{q.no}} {{q.nick}}</b><span>{{q.agoText}}</span></div></sc-for>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{c.manage.leaves.on}}">
+                        <div class="c10-ms {{c.manage.leaves.cls}}" data-section="leaves" style="order:{{c.manage.leaves.order}}">
+                          <div class="c10-sech"><b>{{c.manage.leaves.title}}</b><i></i></div>
+                          <button type="button" class="c10-link" aria-expanded="{{c.manage.leaves.open}}" onClick="{{c.manage.leaves.toggle}}">{{v.mg.leavesLabel}}</button>
+                          <sc-if value="{{c.manage.leaves.open}}"><sc-for list="{{c.manage.leaves.rows}}" as="l" hint-placeholder-count="2"><div class="c10-mrow"><b>{{l.nick}}</b><span>{{l.text}} · {{l.atText}}</span></div></sc-for></sc-if>
+                        </div>
+                      </sc-if>
+                      <sc-if value="{{c.manage.attendance.on}}">
+                        <div class="c10-ms {{c.manage.attendance.cls}}" data-section="attendance" style="order:{{c.manage.attendance.order}}">
+                          <div class="c10-sech" style="--tone:var(--go)"><b>{{v.mg.attT}}<em data-bump="m-att">{{v.mg.attN}}</em></b><i></i><small>{{c.manage.attendance.sub}}</small></div>
+                          <sc-for list="{{v.mg.att}}" as="a" hint-placeholder-count="3">
+                            <div class="c10-at{{a.cls}}" data-rid="{{a.id}}">
+                              <div class="c10-at-n">{{a.name}}</div>
+                              <sc-if value="{{a.recorded}}"><div class="c10-chop t-{{a.stamp}}{{a.fresh}}">{{a.chop}}</div></sc-if>
+                              <sc-if value="{{a.choosing}}"><div class="c10-seg" role="group" aria-label="{{a.name}} 的出席"><button type="button" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></div></sc-if>
+                              <sc-if value="{{a.canCorrect}}"><button type="button" class="c10-link" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
+                              <sc-if value="{{a.trailText}}"><p class="c10-help">{{a.trailText}}</p></sc-if>
+                              <sc-if value="{{a.error}}"><p class="c10-err">{{a.error}}</p></sc-if>
+                            </div>
+                          </sc-for>
+                          <sc-if value="{{c.manage.attendance.doneText}}"><p class="c10-done">{{c.manage.attendance.doneText}}</p></sc-if>
+                          <p class="c10-help">{{c.manage.attendance.help}}</p>
+                        </div>
+                      </sc-if>
+                      <div class="c10-ms {{c.manage.arrange.cls}}" data-section="arrange" style="order:{{c.manage.arrange.order}}">
+                        <div class="c10-sech"><b>{{c.manage.arrange.title}}</b><i></i></div>
+                        <div class="c10-arr">
+                          <sc-if value="{{c.manage.arrange.canReschedule}}"><button type="button" class="c10-link" data-act="propose" onClick="{{c.manage.arrange.reschedule}}">{{c.manage.arrange.rescheduleLabel}}</button><small>{{c.manage.arrange.rescheduleNote}}</small></sc-if>
+                          <sc-if value="{{c.manage.arrange.unansweredHint}}"><small>{{c.manage.arrange.unansweredHint}}</small></sc-if>
+                          <sc-if value="{{c.manage.arrange.canEnd}}"><button type="button" class="c10-link" data-act="end" onClick="{{c.manage.arrange.end}}">{{c.manage.arrange.endLabel}}</button><small>{{c.manage.arrange.endNote}}</small></sc-if>
+                          <sc-if value="{{c.manage.arrange.endHint}}"><small>{{c.manage.arrange.endHint}}</small></sc-if>
+                          <sc-if value="{{c.manage.arrange.canCancel}}"><button type="button" class="c10-link c10-danger" data-act="cancel" onClick="{{c.manage.arrange.cancel}}">{{c.manage.arrange.cancelLabel}}</button><small>{{c.manage.arrange.cancelNote}}</small></sc-if>
+                          <button type="button" class="c10-link" data-act="card" onClick="{{c.manage.card.open}}">{{c.manage.card.label}}</button>
+                        </div>
+                      </div>
+                    </div>
+                  </sc-if>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.mg.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ================= HISTORY / WAITLIST / DRAFT (stage 2 builds these out on the same axis) ================= -->
+      <sc-if value="{{c.nav.on.history}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-history {{c.nav.cls.history}}{{v.pgCls.history}}" data-surface="history" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{c.history.on}}">
+            <div class="c10-sc" data-scroller="history" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.hs.title}}</div>
+                <p class="c10-meta">{{v.hs.meta}}</p>
+                <div class="c10-body">
+                  <p class="c10-unav">{{c.history.reason}}</p>
+                  <sc-if value="{{c.history.closedNote}}"><p class="c10-hint">{{c.history.closedNote}}</p></sc-if>
+                  <div class="c10-sech"><b>本场相关记录<em>{{v.hs.rc}}</em></b><i></i></div>
+                  <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c10-mrow"><b>{{x.kindLabel}}</b><span>{{x.text}} · {{x.atText}}</span></div></sc-for>
+                  <button type="button" class="c10-link" data-act="report" onClick="{{c.history.report.open}}">{{c.history.report.label}}</button>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.hs.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.history.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+          </sc-if>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.waitlist}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-waitlist {{c.nav.cls.waitlist}}{{v.pgCls.waitlist}}" data-surface="waitlist" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{c.waitlist.on}}">
+            <div class="c10-sc" data-scroller="waitlist" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.wl.title}}</div>
+                <p class="c10-meta">{{c.waitlist.title}} · {{c.waitlist.seatLine}}</p>
+                <div class="c10-body">
+                  <div class="c10-res"><b>{{c.waitlist.receipt.title}}</b><p>{{c.waitlist.receipt.field}} {{c.waitlist.receipt.body}}</p></div>
+                  <div class="c10-sech"><b>候补<em>{{c.waitlist.total}}</em></b><i></i></div>
+                  <sc-for list="{{c.waitlist.queue}}" as="q" hint-placeholder-count="2"><div class="c10-mrow"><b>第 {{q.pos}} 位</b><span>{{q.name}}</span></div></sc-for>
+                  <p class="c10-help">{{c.waitlist.hint}}</p>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.wl.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.waitlist.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+            <div class="c10-foot"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.waitlist.primary.act}}"><span class="gloss"></span><span class="label">{{c.waitlist.primary.label}}</span></button><sc-if value="{{c.waitlist.secondary}}"><button type="button" class="c10-weak" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></sc-if></div>
+          </sc-if>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.draft}}" hint-placeholder-val="{{false}}">
+        <section class="c10-pg pg-draft {{c.nav.cls.draft}}{{v.pgCls.draft}}" data-surface="draft" style="{{c.nav.fromStyle}}">
+          <sc-if value="{{v.df}}">
+            <div class="c10-sc" data-scroller="draft" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+              <div class="c10-col">
+                <div class="c10-tsp" aria-hidden="true">{{v.df.title}}</div>
+                <p class="c10-meta">草稿 · {{c.draft.missingText}}</p>
+                <div class="c10-body">
+                  <div class="c10-facts"><div class="c10-ld-p">{{c.draft.whenText}} · {{c.draft.placeText}}</div><div class="c10-hint">{{c.draft.agoText}}</div></div>
+                  <button type="button" class="c10-ghost c10-inert" aria-disabled="true" onClick="{{c.inert}}">继续编辑 · 开局模块，本轮不可点</button>
+                </div>
+              </div>
+            </div>
+            <header class="c10-hd" data-header><h1 class="c10-ht">{{v.df.title}}</h1></header>
+            <div class="c10-tool"><button type="button" class="ju-v27-back-pill c10-back" data-act="back" aria-label="返回" onClick="{{c.draft.back}}"><span class="ju-v27-back-glyph">←</span></button></div>
+            <div class="c10-foot"><button type="button" class="c10-weak c10-danger" data-act="delete" onClick="{{c.draft.del}}">删除草稿</button></div>
+          </sc-if>
+        </section>
+      </sc-if>
+
+      <nav class="c10-nav" aria-label="JU">
+        <sc-for list="{{v.nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{t.icon}}"></path></svg><span>{{t.label}}</span></button></sc-for>
+      </nav>
+
+      <!-- ================= SHEET ================= -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="c10-over {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="c10-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}">
+            <h3>{{c.sheet.title}}</h3>
+            <sc-if value="{{c.sheet.identity}}"><p class="c10-sid">{{c.sheet.identity.title}} · {{c.sheet.identity.when}}</p></sc-if>
+            <sc-if value="{{c.sheet.body}}"><p class="c10-sb">{{c.sheet.body}}</p></sc-if>
+            <sc-if value="{{c.sheet.hint}}"><p class="c10-sb">{{c.sheet.hint}}</p></sc-if>
+            <sc-if value="{{c.sheet.irreversible}}"><p class="c10-irr">{{c.sheet.irreversible}}</p></sc-if>
+            <sc-if value="{{c.sheet.error}}"><p class="c10-err">{{c.sheet.error}}</p></sc-if>
+            <div class="c10-sacts">
+              <sc-if value="{{v.sh.keepFirst}}"><button type="button" class="ju-v27-cta" data-act="close" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button></sc-if>
+              <sc-if value="{{v.sh.showOk}}"><button type="button" class="{{v.sh.okCls}}" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}"><sc-if value="{{v.sh.okCta}}"><span class="gloss"></span></sc-if><span class="label">{{v.sh.okLabel}}</span></button></sc-if>
+              <sc-if value="{{v.sh.keepLast}}"><button type="button" class="c10-weak" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button></sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="c10-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"live":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+const C10_TJ = { act: 'act', soon: 'go', wait: 'wait', kept: 'go', closed: 'void' };
+const C10_TH = { todo: 'act', resched: 'res', recruit: 'wait', formed: 'go', ended: 'go', cancelled: 'void' };
+const C10_SHORT = { act: '要回应', soon: '就快见面', wait: '还在等', todo: '待处理', resched: '改期中', recruit: '招募中', formed: '已成局', kept: '散场', closed: '未成行', ended: '已散场', cancelled: '已取消' };
+const C10_ICON = { find: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20', create: 'M12 5v14M5 12h14', mine: 'M5 6h14M5 12h14M5 18h9', settings: 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4' };
+const C10_CHECK = 'M3.5 8.4l3 3 6-6.6', C10_DOT = 'M8 8.01v-.02', C10_X = 'M4.5 4.5l7 7M11.5 4.5l-7 7';
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 400, back: 340, swap: 300, role: 300 };
+    this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.envRef = { current: null }; this._rit = {}; this._bumps = {}; this._idle = null; this._fsig = '';
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  R() { return window.JURitual || null; }
+  live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
+  kf() { const r = this.state.review || {}; return r.speed === 0.5 ? 2 : 1; }
+  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._hc1(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._flight(); this._bump(); this._syncRituals(ps); this._syncReduced(ps); this._land(ps); this._hc1(); }
+  componentWillUnmount() { if (this._hcObs) this._hcObs.disconnect(); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
+  /* ---------------- environment ---------------- */
+  _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
+  _syncEnv(ps) {
+    const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; const r = this.state.review, pr = ps && ps.review;
+    if (!S.state(el)) return this._mountEnv();
+    if (r.skin !== (pr && pr.skin)) S.setSkin(el, r.skin || 'cotton');
+    if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
+  }
+  _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
+  /* the collapsed title becomes one line with an ellipsis only at the end of the collapse (V27: nowrap at p = 1) */
+  _hc1() { const root = this.rootRef.current; if (!root) return; root.querySelectorAll('.c10-hd').forEach(h => { const v = parseFloat(h.style.getPropertyValue('--hc')) || 0; h.classList.toggle('hc1', v >= 0.999); }); if (!this._hcObs && window.MutationObserver) { this._hcObs = new MutationObserver(() => this._hc1q()); this._hcObs.observe(root, { attributes: true, subtree: true, attributeFilter: ['style'] }); } }
+  _hc1q() { if (this._hcq) return; this._hcq = requestAnimationFrame(() => { this._hcq = 0; const root = this.rootRef.current; if (!root) return; root.querySelectorAll('.c10-hd').forEach(h => { const v = parseFloat(h.style.getPropertyValue('--hc')) || 0; if (h.classList.contains('hc1') !== (v >= 0.999)) h.classList.toggle('hc1', v >= 0.999); }); }); }
+  /* ---------------- the title on the axis: a row's title rises to the top of the axis (fwd) and falls back (back) ---------------- */
+  _flight() {
+    const root = this.rootRef.current, st = this.state.nav; if (!root || !st) return;
+    const stack = st.stack, top = stack[stack.length - 1]; const sig = st.phase + ':' + st.dir + ':' + top.id + ':' + stack.length; if (sig === this._fsig) return; this._fsig = sig;
+    if (this.isRM()) return;
+    if (st.phase === 'enter' && st.dir === 'fwd' && top.key) {
+      const src = root.querySelector('.pg-home [data-origin="' + top.key + '"] [data-ttl]'); const dst = root.querySelector('.c10-pg.is-top .c10-ht');
+      if (src && dst) this._fly(src, dst, 'fwd');
+    } else if (st.phase === 'enter' && st.dir === 'swap') {
+      const old = root.querySelector('.c10-pg.is-leaving .c10-ht'), dst = root.querySelector('.c10-pg.is-top .c10-ht');
+      if (old && dst && old.textContent.trim() === dst.textContent.trim()) this._fly(old, dst, 'fwd', 260);
+    } else if (st.phase === 'exit' && st.dir === 'back') {
+      const key = this._backKey; if (!key) return;
+      const row = root.querySelector('.pg-home [data-origin="' + key + '"]'); const dst = row && row.querySelector('[data-ttl]'); const src = root.querySelector('.c10-pg.is-top .c10-ht');
+      if (!src || !dst) return;
+      /* the row may have moved to another group (确认后 → 待撕票): bring it into view first, and remember that scroll for the settle */
+      const sc = row.closest('[data-scroller]'); if (sc && !top.key) { const a = row.getBoundingClientRect(), b = sc.getBoundingClientRect(); if (a.top < b.top + 70 || a.bottom > b.bottom - 96) { try { this.reveal(row, false, { soft: true, memoKey: this._scrollKey(stack[stack.length - 2]) }); } catch (e) { } } }
+      this._fly(dst, src, 'back');
+    }
+  }
+  /* rowT = the small title on the axis below, pageT = the outer title at the top of the axis; FLIP on the outer title only
+     (uniform scale about its top centre; both titles are centred on the same axis, so the motion is vertical) */
+  _fly(rowT, pageT, dir, ms) {
+    const root = this.rootRef.current; const k = this.kf(); const rr = rowT.getBoundingClientRect(), pr = pageT.getBoundingClientRect();
+    if (!rr.height || !pr.height) return;
+    const cr = getComputedStyle(rowT), cp = getComputedStyle(pageT); const fr = parseFloat(cr.fontSize) || 17, fp = parseFloat(cp.fontSize) || 30;
+    const s = fr / fp; const lr = parseFloat(cr.lineHeight) || fr * 1.35, lp = parseFloat(cp.lineHeight) || fp * 1.05;
+    const dx = (rr.left + rr.width / 2) - (pr.left + pr.width / 2); const dy = (rr.top + (lr - fr) / 2) - (pr.top + (lp - fp) / 2 * s);
+    const T = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + s.toFixed(4) + ')';
+    if (this._flyA) { try { this._flyA.cancel(); } catch (e) { } }
+    const d = (ms || (dir === 'fwd' ? 360 : 320)) * k;
+    try { this._flyA = pageT.animate(dir === 'fwd' ? [{ transform: T }, { transform: 'none' }] : [{ transform: 'none' }, { transform: T }], { duration: d, easing: dir === 'fwd' ? 'cubic-bezier(.22,.8,.22,1)' : 'cubic-bezier(.4,.05,.25,1)', fill: dir === 'fwd' ? 'backwards' : 'forwards' }); } catch (e) { }
+  }
+  /* the row a back lands on: the origin key, or (a parent inserted under a deeper page) the row of the same event */
+  _land(ps) {
+    const st = this.state.nav, pst = ps && ps.nav; if (!st || !pst) return;
+    if (pst.phase === 'exit' && st.phase === 'idle' && this._backKey && !this.state.ui.landKey && this._top().s === 'home') {
+      const key = this._backKey; this.setState({ c10land: key }); this.holdKey('c10land', 1100, () => this.setState({ c10land: null }));
+    }
+    if (st.phase !== 'exit') this._backKey = null;
+  }
+  /* counts / seats that change in place (审核 → 待审 −1 · 预留 +1): the new value settles where the old one was */
+  _bump() {
+    const root = this.rootRef.current; if (!root) return; const rm = this.isRM(); const k = this.kf();
+    root.querySelectorAll('[data-bump]').forEach(el => { const key = el.getAttribute('data-bump'); const t = el.textContent; const prev = this._bumps[key]; this._bumps[key] = t; if (prev != null && prev !== t && !rm) { try { el.animate([{ opacity: .15, transform: 'translateY(7px)' }, { opacity: 1, transform: 'none' }], { duration: 440 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } });
+    root.querySelectorAll('[data-seat]').forEach(el => { const key = 'seat' + el.getAttribute('data-seat'); const t = el.className; const prev = this._bumps[key]; this._bumps[key] = t; if (prev != null && prev !== t && !rm) { try { el.animate([{ transform: 'scaleY(1)' }, { transform: 'scaleY(2.4)', offset: .35 }, { transform: 'scaleY(1)' }], { duration: 520 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } });
+  }
+  /* ---------------- rituals (the controller wrote the data; these calls only show it) ---------------- */
+  _syncRituals(ps) {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const stage = root.querySelector('[data-surface="ticket"] .c10-stage,[data-surface="reply"] .c10-stage');
+    if (c.ticket.on && stage) {
+      const fresh = this._rit.stage !== stage || this._rit.key !== c.ticket.printKey;
+      /* print only once the axis has settled (the page unfolds first; the empty slot holds the ticket's place) */
+      if (fresh && !(c.ticket.state === 'printing' && c.nav.phase !== 'idle')) this._mountTicket(stage, c);
+      stage.classList.toggle('is-waiting', c.ticket.state === 'printing' || c.ticket.state === 'fresh');
+      const want = !!c.ticket.contact.on; if (this._rit.stage === stage && want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
+    } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
+  }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _mountTicket(stage, c) {
+    this._destroyTicket();
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
+    if (st === 'printing') {
+      const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
+      R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => {
+        if (this._rit.stage !== stage) return;
+        const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null);
+        if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error');
+        this.ticketPrinted(key);
+      });
+    } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
+    else if (st === 'torn') this._settleTicket(stage, data, 'torn');
+  }
+  _settleTicket(stage, data, final, tearOpts) {
+    const R = this.R(); R.fillTicket(stage, data);
+    const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
+    if (final === 'ready' && R.tear) {
+      const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready';
+      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage && this._rit.hstage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
+      if (tearOpts) this.registerTear(h);
+      return h;
+    }
+    stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
+  }
+  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _contact() {
+    if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
+    const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
+    const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+    const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
+    const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+    this._rit.contact = h; return h;
+  }
+  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R) return; const data = c.ticket.ritual; const torn = c.ticket.row && c.ticket.row.item && c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = c.ticket.result ? c.ticket.result.reason : 'withdrawn'; this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _destroyHistory() { }
+  onEffect(fx) {
+    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
+    if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
+  }
+  /* ---------------- view model: the axis vocabulary built from this.ctlVals() ---------------- */
+  _rel(iso) { if (!iso) return ''; const d = new Date(iso.slice(0, 10) + 'T00:00:00'), n = new Date(JU.now()); const n0 = new Date(n.getFullYear(), n.getMonth(), n.getDate()); const dd = Math.round((d - n0) / 86400000); return dd === 0 ? '今天' : dd === 1 ? '明天' : dd === 2 ? '后天' : ''; }
+  _people(members) { return (members || []).map(m => ({ name: m.name, st: m.status === 'host' ? '局主' : m.status === 'confirmed' ? '已确认' : m.status === 'invited' ? '已预留' : (m.statusText || '').split(' · ')[0] })); }
+  renderVals() {
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals(); this._c = c; const self = this;
+    const st = this.state.nav, stack = st.stack, top = stack[stack.length - 1], under = stack.length > 1 ? stack[stack.length - 2] : null;
+    const moving = st.phase !== 'idle';
+    if (!moving) this._idle = { s: top.s, id: top.id };
+    /* a deeper page pushed from home with its parent inserted underneath (home → [detail] → read): home stays drawn while it leaves */
+    const fromHome = moving && st.dir === 'fwd' && this._idle && this._idle.s === 'home' && under && under.s !== 'home' && top.s !== 'home';
+    if (st.phase === 'exit' && st.dir === 'back' && under && under.s === 'home' && !this._backKey) this._backKey = top.key || (top.p && top.p.eventId ? 'row-' + top.p.eventId : null);
+    const flyKey = (st.phase === 'enter' || st.phase === 'in') && st.dir === 'fwd' ? top.key : st.phase === 'exit' && st.dir === 'back' ? this._backKey : null;
+    const land = c.nav.landKey || this.state.c10land || null;
+    const rcls = (ok) => (flyKey && flyKey === ok ? ' is-fly' : '') + (land && land === ok ? ' is-land' : '');
+    const kd = (t) => (JU.fmt && JU.fmt.keepDot) ? JU.fmt.keepDot(t || '') : (t || '');
+    const keyOpen = (fn) => (ev) => { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); fn(ev); } };
+    const v = { noSkins: !c.ritual.skins, on: { home: c.nav.on.home || fromHome }, homeFrom: fromHome ? ' is-from ' + 'ph-' + st.phase + ' dir-fwd' : '' };
+    const pgCls = {}; ['detail', 'read', 'ticket', 'manage', 'history', 'waitlist', 'draft'].forEach(s => { let x = ''; if (fromHome && under && under.s === s) x += ' u-skip'; if (!top.key && st.dir === 'fwd' && top.s === s) x += ' no-fly'; if (st.phase === 'exit' && top.s === s && !this._backKey) x += ' no-fly'; pgCls[s] = x; }); v.pgCls = pgCls;
+    /* ---- home ---- */
+    const role = c.role, sec = c.section;
+    const oldT = (r) => r.oldWhen ? (r.oldWhen.md === (r.when && r.when.md) ? r.oldWhen.time : r.oldWhen.md + ' ' + r.oldWhen.time) : '';
+    const jRow = (r) => ({ id: r.id, ok: r.originKey, t: kd(r.title), m: r.whenText + ' · ' + r.placeText, s: r.label + (r.oldWhen ? ' · 原定 ' + oldT(r) : '') + (r.left && r.left.on ? ' · 剩 ' + r.left.text : '') + (sec === 'history' && r.attendanceText ? ' · ' + r.attendanceText : ''), open: r.open, key: keyOpen(r.open), cls: rcls(r.originKey), del: null });
+    const hRow = (r) => ({ id: r.id, ok: r.originKey, t: kd(r.title), m: r.whenText + ' · ' + r.placeText + (sec === 'current' ? ' · ' + r.seatText : ''), s: r.label + (r.oldWhen ? ' · 原定 ' + oldT(r) : ''), open: r.open, key: keyOpen(r.open), cls: rcls(r.originKey), del: null });
+    const leadOf = (r, hosted) => {
+      const L = { id: r.id, ok: r.originKey, cls: rcls(r.originKey), d: r.when.wdZh + ' ' + r.when.md, h: r.when.time, t: kd(r.title), cta: r.ctaLabel || '', act: r.act, sec: null, open: null };
+      if (hosted) {
+        L.p = r.place.full + ' · ' + r.life; L.seats = (r.seats || []).map(s => ({ kind: s.kind })); L.seatLabel = r.seatText + (r.seatMore ? ' · ' + r.seatMore : '');
+        let who = ''; if (r.stateKey === 'review') { try { const m = JU.derive.manage(this.state.data, r.id); who = (m.apps || []).filter(a => a.status === 'pending').map(a => a.nick).slice(0, 3).join('、'); } catch (e) { } }
+        L.s = r.label + (who ? ' · ' + who : ''); L.seatLine = r.seatText + '（含你）' + (r.seatMore ? ' · ' + r.seatMore : '');
+      }
+      else { L.p = r.place.full + ' · 局主 ' + r.hostName; L.s = r.label + (r.oldWhen ? ' · 原定 ' + oldT(r) : ''); L.seats = null; if (r.secondary) L.sec = { label: r.secondaryLabel, act: r.secondary, key: r.secondaryKey }; }
+      L.cdOn = !!(r.left && r.left.on && !r.left.expired); L.cdText = L.cdOn ? r.left.text : ''; L.cdR = L.cdOn ? Math.max(0, Math.min(1, r.left.ratio || 0)).toFixed(3) : '0'; L.cdTone = r.left ? r.left.tone : '';
+      if (!L.cta) L.open = r.open;
+      L.gap = !L.sec && !L.open;
+      return L;
+    };
+    let groups = [], empty = null, footNote = '';
+    if (role === 'joined') {
+      const J = c.joined;
+      if (sec === 'current') groups = J.sections.map(g => { const lr = g.rows.find(r => r.isLead); return { key: g.key, title: g.title, n: g.count, tone: C10_TJ[g.key] || 'wait', lead: lr ? leadOf(lr, false) : null, rows: g.rows.filter(r => !r.isLead).map(jRow) }; });
+      else { groups = J.sectionsHistory.map(g => ({ key: g.key, title: g.title, n: g.count, tone: C10_TJ[g.key] || 'void', lead: null, rows: g.rows.map(jRow) })); footNote = c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围'; }
+      if (J.empty.on) empty = { title: J.empty.title, body: J.empty.body, label: J.empty.action.label, go: J.empty.action.go, inert: !!J.empty.action.inert, cls: J.empty.action.inert ? 'c10-inert' : '' };
+    } else {
+      const H = c.hosted;
+      if (sec === 'current') groups = H.sections.map(g => { const lr = g.rows.find(r => r.isLead); return { key: g.key, title: g.title, n: g.count, tone: C10_TH[g.key] || 'wait', lead: lr ? leadOf(lr, true) : null, rows: g.rows.filter(r => !r.isLead).map(hRow) }; });
+      else if (sec === 'history') { groups = H.sectionsHistory.map(g => ({ key: g.key, title: g.title, n: g.count, tone: C10_TH[g.key] || 'void', lead: null, rows: g.rows.map(hRow) })); footNote = '再开一局 · 只带入活动内容，成员与记录不复制（本轮不可点）'; }
+      else groups = H.drafts.length ? [{ key: 'drafts', title: '草稿', n: H.drafts.filter(d => !d.ghost).length, tone: 'wait', lead: null, rows: H.drafts.map(r => ({ id: r.id, ok: r.originKey, t: kd(r.title), m: r.whenText + ' · ' + r.placeText + ' · ' + r.agoText, s: r.missingText, open: r.open, key: keyOpen(r.open), cls: rcls(r.originKey) + (r.cls ? ' ' + r.cls : ''), del: r.del })) }] : [];
+      if (H.empty.on) empty = { title: H.empty.title, body: H.empty.body, label: H.empty.action.label, go: H.empty.action.go, inert: !!H.empty.action.inert, cls: H.empty.action.inert ? 'c10-inert' : '' };
+    }
+    groups = groups.filter(g => g.lead || g.rows.length);
+    v.groups = groups; v.empty = empty; v.footNote = empty ? '' : footNote;
+    v.legend = groups.map(g => ({ label: C10_SHORT[g.key] || g.title, n: g.n, tone: g.tone }));
+    v.legendEmpty = groups.length ? '' : (role === 'joined' ? '这里会放你参加的局' : '这里会放你发起的局');
+    v.nav = c.rootNav.map(t => ({ cls: t.cls, inert: t.inert, go: t.go, label: t.label, icon: C10_ICON[t.k] || '' }));
+    /* ---- detail ---- */
+    if (c.detail.on) { const D = c.detail; v.dt = { title: kd(D.row ? D.row.title : D.title), meta: D.label + (D.need ? ' · ' + D.need : ''), rules: (D.rules || []).map(g => { const l = g.lines[0] || ''; const i = l.indexOf('：'); return { t: g.title, h: i > 0 ? l.slice(0, i) : l }; }), d: D.when.wdZh + ' ' + D.when.md, h: D.when.time, p: D.place.full + ' · 局主 ' + D.host.name, people: this._people(D.members), canRead: D.primary && D.primary.key !== 'read' && D.stage === 'invited', primary: !!(D.primary && D.primary.key !== 'none' && D.primary.label) }; }
+    else v.dt = { title: '', people: [] };
+    /* ---- read ---- */
+    if (c.read.on) {
+      const Rd = c.read; const row = Rd.row; const cd = Rd.countdown || {};
+      v.rd = { title: kd(row.title), onScroll: Rd.onScroll, p: (Rd.progress || 0).toFixed(3), endMark: Rd.endMark, hint: Rd.confirmed ? '' : Rd.hint,
+        meta: Rd.confirmed ? (Rd.result ? Rd.result.title : '已确认') : Rd.expired ? '预留已到期' : (cd.on ? '剩 ' + cd.text + ' · ' : '') + (Rd.done ? '已读完，可以确认' : '读到末尾，再确认入局'),
+        people: this._people(Rd.members), result: Rd.result ? { title: Rd.result.title, body: Rd.result.body } : null,
+        rules: (Rd.rules || []).map(g => ({ title: g.title, lines: g.lines.map(l => { const i = l.indexOf('：'); return i > 0 && i < 18 ? { h: l.slice(0, i), b: l.slice(i + 1) } : { h: '', b: l }; }) })) };
+    } else v.rd = null;
+    /* ---- ticket ---- */
+    const tk = c.ticket; v.tkOn = c.nav.on.ticket || c.nav.on.reply; v.tkSurface = c.nav.on.reply ? 'reply' : 'ticket';
+    if (tk.on) {
+      v.tk = { title: kd(tk.face.title), meta: tk.title + (tk.face && tk.face.when ? ' · ' + tk.face.when.wdZh + ' ' + tk.face.when.md + ' ' + tk.face.when.time : ''), showStage: !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !tk.ritual.previous, previousText: tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !tk.ritual.mark,
+        tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', exitAct: tk.isReply ? 'decline' : 'exit', declineOn: !!(tk.reply && tk.tear.canTear),
+        contactAction: !tk.unavailable && !tk.result, showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable),
+        retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
+        printingHint: tk.state === 'printing' || tk.state === 'fresh' ? '出票中…' : '', hint: tk.isReply ? '向右拖动新副券撕开 · 或按下方按钮' : '向右拖动副券撕开 · 或按下方按钮' };
+    } else v.tk = { title: '' };
+    /* ---- manage ---- */
+    const M = c.manage;
+    if (M.on) {
+      const hd = M.head || {}; const pg = hd.progress || {};
+      const tone = hd.cancelled ? 'void' : hd.ended ? 'go' : (M.m && M.m.todo) ? 'act' : hd.formed ? 'go' : 'wait';
+      v.mg = { title: kd(hd.title || M.title || ''), meta: hd.when ? hd.when.zh + ' · ' + (hd.place ? hd.place.full : '') : '', ready: !M.missing, tone: tone,
+        status: (hd.life ? hd.life + ' · ' : '') + (hd.status || ''), seatsOn: !M.missing && !pg.hidden && !hd.ended && (pg.seats || []).length > 0,
+        seats: (pg.seats || []).map((s, i) => ({ kind: s.kind, attendance: s.attendance || '', i: i })), progText: pg.hidden ? '' : (pg.attendance ? pg.attendance.text : (pg.text || '') + (pg.more ? ' · ' + pg.more : '')), formedLine: hd.formedLine || '',
+        appsT: M.apps ? String(M.apps.title || '申请').split(' · ')[0] : '申请', appsN: M.apps ? (M.apps.count != null ? M.apps.count : '') : '',
+        attT: M.attendance ? String(M.attendance.title || '出席').split(' · ')[0] : '出席', attN: M.attendance && M.attendance.on ? M.attendance.rec + '/' + M.attendance.total : '',
+        att: M.attendance && M.attendance.rows ? M.attendance.rows.map(a => Object.assign({}, a, { cls: a.isNext ? ' is-next' : '', fresh: a.stampFresh ? ' is-fresh' : '', chop: a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定', canCorrect: a.recorded && !a.editing, trailText: a.showTrail ? (a.trail || []).join(' → ') : '' })) : [],
+        roster: M.roster && M.roster.rows ? M.roster.rows.map(m => ({ id: m.id, name: m.name, tone: m.tone, bk: 'm-r-' + m.id, st: (m.name === '你' ? String(m.stateText || '').replace(/ · 你$/, '') : m.stateText) + (m.left && m.left.on ? ' · ' + m.left.text : '') })) : [], leavesLabel: M.leaves ? (M.leaves.open ? '收起' : '展开 ' + M.leaves.count + ' 条') : '', apps: [] };
+      if (M.apps && M.apps.rows) v.mg.apps = M.apps.rows.map(a => Object.assign({}, a, { pendingOpen: !a.result && !a.busy && !a.error, cls: a.result ? ' is-done' : '', vCls: a.verified ? ' ok' : '', vPath: a.verified ? C10_CHECK : C10_DOT, rPath: a.result === 'rejected' ? C10_X : C10_CHECK, tone: a.result === 'rejected' ? 'void' : 'go', resultNote: a.result === 'rejected' ? '不占名额，对方会收到通知' : '6 小时内确认后入局，否则释放' }));
+    } else v.mg = null;
+    /* ---- history / waitlist / draft (kept minimal in stage 1) ---- */
+    v.hs = c.history.on ? { title: kd(c.history.title), meta: (c.history.label || '') + ' · ' + (c.history.when ? c.history.when.zh : ''), rc: (c.history.records || []).length } : { title: '' };
+    v.wl = c.waitlist.on ? { title: kd(c.waitlist.row ? c.waitlist.row.title : c.waitlist.title) } : { title: '' };
+    v.df = c.draft.on && c.draft.row ? { title: kd(c.draft.title) } : null;
+    /* ---- sheet: V27 roles — keep = blue CTA (release/exit/decline), danger ok; withdraw / leave-queue = ink capsule ---- */
+    const sh = c.sheet; const okCta = sh.on && !sh.danger && !sh.okTone && sh.kind !== 'confirm';
+    v.sh = { showOk: sh.on && sh.kind !== 'card' && sh.kind !== 'contact' && !(sh.kind === 'record' && sh.done), okDisabled: !sh.canOk, okLabel: sh.busy ? '处理中…' : sh.okLabel, keepFirst: !!(sh.on && sh.keepPrimary), keepLast: !(sh.on && sh.keepPrimary),
+      okCta: okCta, okCls: okCta ? 'ju-v27-cta' : (sh.danger || sh.okTone === 'danger') ? 'ju-v27-danger' : 'c10-ink' };
+    return { panel, rootRef: this.rootRef, envRef: this.envRef, c, v };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>

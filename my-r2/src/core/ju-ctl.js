@@ -42,6 +42,8 @@
   var TITLES = { home: '我的局', detail: '局内详情', read: '阅读并确认', waitlist: '候补', ticket: '票根', reply: '局主改了时间', history: '历史', manage: '管理这局', draft: '草稿' };
   var FOCUSABLE = 'button:not([disabled]),[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
   /* layout position (offset chain): ignores CSS transforms / running animations and scroll offsets */
+  /* a receipt whose title already says its field (「位置已预留」+「已预留」) drops the field (C06 report) */
+  function noDupField(r) { return r && r.field && r.title && r.title.indexOf(r.field) >= 0 ? assign(r, { field: '' }) : r; }
   function layoutXY(n) { var x = 0, y = 0; while (n) { x += n.offsetLeft || 0; y += n.offsetTop || 0; n = n.offsetParent; } return { x: x, y: y }; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function assign() { var o = {}; for (var i = 0; i < arguments.length; i++) { var a = arguments[i]; if (a) for (var k in a) if (Object.prototype.hasOwnProperty.call(a, k)) o[k] = a[k]; } return o; }
@@ -117,7 +119,7 @@
        final position and the settle-time restore has nothing left to move (no visible double scroll) */
     p._restoreNow = function (key) {
       var root = this.rootRef && this.rootRef.current; var memo = key != null && (this._scrollMemo || {})[key]; if (!root || !memo) return;
-      Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el && Math.abs(el.scrollTop - memo[k]) > 0.5) el.scrollTop = memo[k]; });
+      Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el && el.getAttribute('data-restore') !== 'manual' && Math.abs(el.scrollTop - memo[k]) > 0.5) el.scrollTop = memo[k]; });
     };
     p._navSettle = function () {
       var nav = this.state.nav; this.cancelKey('nav');
@@ -178,7 +180,8 @@
       if (this.onNav) this.onNav('back', under.s, under.p);
       return true;
     };
-    p.home = function () { var top = this._top(); this.cancelKey('nav'); if (top.s !== 'home') this._leaveApply(top.s); var id = (this.state.nav.seq || 1) + 1; this._pendingRestore = 'home:' + this.state.role + ':' + this.state.section; this.setState({ nav: { stack: [{ s: 'home', p: {}, from: null, key: null, id: id }], phase: 'idle', dir: 'back', seq: id, leaving: null }, sheet: null }); };
+    p.home = function () { if (this.state.nav && this.state.nav.stack.length === 2 && this.state.nav.phase !== 'exit') return this.back();   /* one level deep: same exit motion as back() (C06: in-place layouts fold) */
+      var top = this._top(); this.cancelKey('nav'); if (top.s !== 'home') this._leaveApply(top.s); var id = (this.state.nav.seq || 1) + 1; this._pendingRestore = 'home:' + this.state.role + ':' + this.state.section; this.setState({ nav: { stack: [{ s: 'home', p: {}, from: null, key: null, id: id }], phase: 'idle', dir: 'back', seq: id, leaving: null }, sheet: null }); };
     p.setTopParams = function (patch) { this.setState(function (st) { var sk = st.nav.stack.slice(); var top = sk[sk.length - 1]; sk[sk.length - 1] = assign(top, { p: assign(top.p, patch) }); return { nav: assign(st.nav, { stack: sk }) }; }); };
     /* role / section: the home surface stays on the stack; the phase + dir tell the concept what moved */
     p.setRole = function (k) {
@@ -231,9 +234,10 @@
     p._ctlAfterUpdate = function () {
       var root = this.rootRef && this.rootRef.current; if (!root || !this.state.nav) return;
       var self = this;
+      if (this._resetScrollers) { this._resetScrollers = false; this._scrollMemo = {}; root.querySelectorAll('[data-scroller]').forEach(function (el) { el.scrollTop = 0; }); }   /* jumpTo / reset start every list at the top (C06 report) */
       if (this._pendingRestore != null) {
         var memo = (this._scrollMemo || {})[this._pendingRestore]; this._pendingRestore = null;
-        if (memo) Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el) el.scrollTop = memo[k]; });
+        if (memo) Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el && el.getAttribute('data-restore') !== 'manual') el.scrollTop = memo[k]; });   /* data-restore="manual": the concept places this scroller itself (in-place layouts, C06) */
       }
       root.querySelectorAll('[data-scroller]').forEach(function (el) { self._applyHc(el); });
       if (this._pendingSection) { var sec = root.querySelector('[data-section="' + this._pendingSection + '"]'); this._pendingSection = null; if (sec) this.reveal(sec, true); }
@@ -329,7 +333,7 @@
       if (armed) { this.setState(function (s) { return { data: JU.engine.setCopyFailNext(s.data, { on: false }).data }; }); ok = false; }
       this._ui({ copy: { key: key, text: text, ok: ok, at: Date.now() } });
       if (ok) { if (!quietOk) this.say(okText || '已复制', 'ok'); this.holdKey('copy:' + key, 2600, function () { self._clearCopy(key); }); }   /* quietOk: the shared module already shows「✓ 已复制」in place — no second toast */
-      else { this.say('未能复制，长按手动复制', 'error'); this.holdKey('copy:' + key, 8000, function () { self._clearCopy(key); }); }
+      else { if (!quietOk) this.say('未能复制，长按手动复制', 'error'); this.holdKey('copy:' + key, 8000, function () { self._clearCopy(key); }); }   /* via the shared module its own line「复制失败，请长按账号复制」is the feedback (C04: three messages at once) — no toast */
       return ok;
     };
     p.copy = function (text, key, okText) {
@@ -657,7 +661,7 @@
         var queue = (it0.queue || []).map(function (q, i) { return { pos: i + 1, name: q.you ? '你' : mask(q.name), you: !!q.you }; });
         var turn = wlRow.stage === 'invited_queue';
         out.waitlist = { on: true, eventId: wid, row: wlRow, title: wres ? wres.title : turn ? '轮到你了' : '候补第 ' + it0.queuePos + ' 位', stage: wlRow.stage, pos: it0.queuePos, total: it0.queue.length, counts: wlRow.counts, seats: wlRow.seats, seatLine: wlRow.counts.confirmed + '/' + wlRow.counts.capacity + ' 已确认 · ' + wlRow.counts.reserved + ' 已预留 · 候补 ' + it0.queue.length, entered: entered, queue: queue, hint: turn ? '位置已留给你' : it0.queue.length ? '轮到后需在6小时内确认。' : '候补尚未留位，按加入顺序邀请。',
-          receipt: wres ? { title: wres.title, field: wres.sub === 'leaveQueue' ? '已退出' : '', body: wres.body } : turn ? { title: cdW.expired ? '邀请已到期' : '位置已预留', field: cdW.expired ? '已到期' : '已预留', body: cdW.expired ? '' : wlRow.deadlineText, note: '邀请的6小时已开始计时。' } : { title: '已加入候补', field: it0.queuePos + ' 位', body: '轮到你时才开始 6 小时预留', note: '' },
+          receipt: noDupField(wres ? { title: wres.title, field: wres.sub === 'leaveQueue' ? '已退出' : '', body: wres.body } : turn ? { title: cdW.expired ? '邀请已到期' : '位置已预留', field: cdW.expired ? '已到期' : '已预留', body: cdW.expired ? '' : wlRow.deadlineText, note: '邀请的6小时已开始计时。' } : { title: '已加入候补', field: it0.queuePos + ' 位', body: '轮到你时才开始 6 小时预留', note: '' }),
           countdown: cdW, turn: turn, result: wres, viewInvite: function (ev) { self.go('read', { eventId: wid }, ev); }, leave: function (ev) { self.openConfirm('leaveQueue', wid, ev); }, ok: function () { self.back(); }, back: function () { self.back(); }, primary: wres ? { label: '回到列表', act: function () { self.home(); } } : turn ? { label: '查看邀请', act: function (ev) { self.go('read', { eventId: wid }, ev); } } : { label: '知道了', act: function () { self.back(); } }, secondary: !wres && !turn ? { label: '退出候补', act: function (ev) { self.openConfirm('leaveQueue', wid, ev); } } : null };
       } else out.waitlist = { on: false };
       /* ticket / reply */
@@ -665,7 +669,7 @@
       if (tkRow) {
         var tid = tkRow.id, it1 = tkRow.item, ev2 = tkRow.event, tk = ui.ticket; var reply = is.reply; var st1 = tkRow.stage;
         var tres = ui.result && ui.result.eventId === tid ? ui.result : null;
-        var ver = reply ? ev2.version : (it1.ticket ? it1.ticket.version : ev2.version); var key = tid + ':' + ver; var printed = !!tk.printed[key];
+        var ver = reply ? ev2.version : (it1.ticket ? it1.ticket.version : ev2.version); var key = tid + ':' + ver; var printed = !!tk.printed[key] || (!reply && !!(it1.ticket && it1.ticket.torn));   /* a ticket torn earlier is not reprinted (needPrint skips it), so it counts as printed: state 'torn', contact layer available (C04 report) */
         var hasTicket = reply ? st1 === 'reschedule' || st1 === 'contact' || st1 === 'going' : !!(it1.ticket && !it1.ticket.void && (st1 === 'tear' || st1 === 'contact' || st1 === 'going'));
         var torn = reply ? (it1.reschedule && it1.reschedule.answered === 'accepted') || tk.tear.done : !!(it1.ticket && it1.ticket.torn) || tk.tear.done;
         var state = tres && (tres.kind === 'exited' || tres.kind === 'reschedule-declined') ? 'void' : !hasTicket ? 'void' : tk.printing === key ? 'printing' : !printed ? 'fresh' : torn ? 'torn' : 'printed';
@@ -746,7 +750,11 @@
       /* a surface that is LEAVING after replace() (read → ticket, ticket ⇄ reply …) keeps the last model it rendered with, so its exit
          animation never paints an empty frame (C07 review); the cache is per surface and only reused for the same event / draft */
       var vmCache = (this._vmCache = this._vmCache || {});
-      ['detail', 'read', 'waitlist', 'ticket', 'history', 'manage', 'draft'].forEach(function (k) { if (out[k] && out[k].on && is[k]) vmCache[k] = out[k]; });
+      /* the same holds for the top surface during back()'s exit phase: _leaveApply has already cleared its result / contact state,
+         so it would change text mid-exit (C06 report: a folding paragraph swapped sentences) — it keeps its last model instead */
+      var exitTop = nav.phase === 'exit' ? nav.stack[nav.stack.length - 1] : null, exitK = exitTop ? (exitTop.s === 'reply' ? 'ticket' : exitTop.s) : null;
+      ['detail', 'read', 'waitlist', 'ticket', 'history', 'manage', 'draft'].forEach(function (k) { if (k === exitK) return; if (out[k] && out[k].on && is[k]) vmCache[k] = out[k]; });
+      if (exitK && vmCache[exitK]) { var ep = exitTop.p || {}, ec = vmCache[exitK]; if ((ep.eventId && ec.eventId === ep.eventId) || (ep.draftId && ec.draftId === ep.draftId)) out[exitK] = assign(ec, { leaving: true }); }
       if (nav.leaving && out[nav.leaving.s] && !out[nav.leaving.s].on) {
         var cached = vmCache[nav.leaving.s], lp = nav.leaving.p || {};
         if (cached && ((lp.eventId && cached.eventId === lp.eventId) || (lp.draftId && cached.draftId === lp.draftId))) out[nav.leaving.s] = assign(cached, { leaving: true });

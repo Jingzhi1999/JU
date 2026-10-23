@@ -1,0 +1,1032 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C09 地点</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Space+Mono:wght@400;700&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* ============================================================================================================================
+   C09「地点」· 按区分节：哪里见。
+   构图：顶部「先做这件」白面（2px 墨线顶边 = 预留倒计时）→ 按区分节：满宽节头（24px/600 中文区名 + N 场 + 右侧 12px 英文区名）
+   + 1.5px 墨线；节内行满宽 342：局名 16/500 · 第二行行首街区 14/500 墨 · 第三行状态（形 + 色 + 字重 = 三种意图）。
+   深层页：同一个节头离开列表、停在页头下方作面包屑（V27 页头的「进度块」位置，收拢后贴在工具行下），内容沿 x 轴从节内滑入。
+   环境色光直接做底（棉糖 / 光晕 / 落日露出来）；节头与行无容器；只有先做块、弹层是白面。
+   ============================================================================================================================ */
+.app.c09{position:absolute;inset:0;overflow:hidden;color:var(--c09-ink);background:#dfdfe7;font-family:var(--c09-f);font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;
+  --k:1;--c09-f:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;--c09-n:"Archivo","Noto Sans SC",sans-serif;
+  --c09-ink:#14161F;--c09-meta:#535b70;--c09-red:#B4233F;--c09-green:#086048;--c09-blue:#3542A8;--c09-amber:#8F4A06;--c09-wait:#555c70;
+  --c09-hair:rgba(20,22,31,.12);--c09-rule:rgba(20,22,31,.84);--c09-veil:250,249,251;--c09-va:0;--c09-vb:.10;--c09-vc:.18;--c09-ease:cubic-bezier(.22,.8,.2,1)}
+.app.c09[data-skin="halo"]{--c09-meta:#343a4b;--c09-red:#8E1830;--c09-green:#075A43;--c09-blue:#2E3A9A;--c09-amber:#7c3f05;--c09-wait:#3f4556;--c09-hair:rgba(20,22,31,.17);--c09-veil:253,247,241;--c09-va:.04;--c09-vb:.34;--c09-vc:.47}
+.app.c09[data-skin="sunset"]{--c09-meta:#343a4b;--c09-red:#8E1830;--c09-green:#075A43;--c09-blue:#2E3A9A;--c09-amber:#7c3f05;--c09-wait:#3f4556;--c09-hair:rgba(20,22,31,.17);--c09-veil:251,246,247;--c09-va:.02;--c09-vb:.27;--c09-vc:.40}
+.c09 *,.c09 *::before,.c09 *::after{box-sizing:border-box}
+.app.c09.rm *,.app.c09.rm *::before,.app.c09.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+:where(.c09) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.c09 button:focus-visible,.c09 [tabindex]:focus-visible{outline:2px solid #4A5AD6;outline-offset:2px}
+:where(.c09) :is(p,h1,h2,h3,h4,dl){margin:0;font-weight:inherit}
+:where(.c09) b{font-weight:inherit}
+.ju-env{position:absolute;inset:0;z-index:0;overflow:hidden}
+.c09-envfb{position:absolute;inset:0;z-index:0;background:linear-gradient(160deg,#ece2ea,#e2e4ec 50%,#d8e8ee)}
+.app.c09[data-skin="halo"] .c09-envfb{background:radial-gradient(80% 60% at 70% 40%,#e58934,#d8a77f 50%,#cfb6cf)}
+.app.c09[data-skin="sunset"] .c09-envfb{background:linear-gradient(180deg,#ff9f6b,#cfa1a0 55%,#9bacd4)}
+/* the light that falls from the top: the environment glows behind the title and settles into a calmer reading tone lower down (no container) */
+.c09-veil{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(var(--c09-veil),var(--c09-va)) 0,rgba(var(--c09-veil),var(--c09-vb)) 28%,rgba(var(--c09-veil),var(--c09-vc)) 62%,rgba(var(--c09-veil),var(--c09-vc)))}
+
+/* ---------------- pages ---------------- */
+.c09-pg{position:absolute;inset:0;z-index:2;--th:calc(31.5px * var(--tz,1));--c09-t0:calc(var(--sat,0px) + 77px);--c09-mh:calc(21px * var(--tz,1));--c09-bh:calc(31.2px * var(--tz,1) + 16.5px)}
+.c09-sc{position:absolute;inset:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding:calc(var(--c09-t0) + var(--th) + 18px + var(--c09-mh) + var(--c09-bh) + 2px) 22px calc(150px + var(--kb,0px) + var(--sab,0px))}
+.c09-sc::-webkit-scrollbar{display:none}
+.c09-home .c09-sc{padding-top:calc(var(--c09-t0) + var(--th) + 18px + var(--c09-mh) + 6px);padding-bottom:calc(96px + var(--sab,0px) + var(--kb,0px))}
+/* header (V27 outer title + continuous collapse; --hc 0→1 from the controller, p = scrollTop / 88). The header never changes the scroller. */
+.c09-hd{position:absolute;left:0;right:0;top:0;height:0;z-index:20}
+.c09-hd::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--c09-t0) + var(--c09-bh) + 4px);opacity:var(--hc,0);pointer-events:none;background:linear-gradient(180deg,rgba(var(--c09-veil),.86),rgba(var(--c09-veil),.7) 84%,rgba(var(--c09-veil),0));-webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25)}
+.c09-home .c09-hd::before{height:calc(var(--sat,0px) + 76px)}
+.c09-tool{position:absolute;left:22px;right:18px;top:calc(var(--sat,0px) + 24px);height:44px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.c09-tt{position:absolute;margin:0;top:calc(var(--c09-t0) - 40.45px * var(--hc,0));left:calc(22px + (100% - 44px) / 2 * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(100% - 44px - 104px * var(--hc,0));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.05;letter-spacing:0;color:var(--c09-ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance;pointer-events:none}
+.c09-p1 .c09-tt{-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}
+.c09-probe{visibility:hidden;top:0!important;left:22px!important;transform:none!important;max-width:calc(100% - 44px)!important;width:calc(100% - 44px);font-size:calc(30px * var(--tz,1))!important;-webkit-line-clamp:2!important;display:-webkit-box!important;white-space:normal!important}
+.c09-meta{position:absolute;left:22px;right:22px;top:calc(var(--c09-t0) + (var(--th) + 9px) * (1 - var(--hc,0)) - 9px * var(--hc,0));height:var(--c09-mh);font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--c09-meta);opacity:calc(1 - 1.6 * var(--hc,0));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c09-band{position:absolute;left:0;right:0;top:calc(var(--c09-t0) + (var(--th) + 18px + var(--c09-mh)) * (1 - var(--hc,0)));z-index:2;transform:none;opacity:1}
+.c09-back{position:relative}
+.c09-back .ju-v27-back-glyph{font-size:calc(15px * var(--tz,1))}
+.c09-weak{height:44px;min-width:52px;padding:0 4px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-meta);white-space:nowrap}
+
+/* ---------------- the district header (one object: list section header = deep-page breadcrumb band) ---------------- */
+.c09-ah{position:relative;display:flex;align-items:baseline;gap:10px;margin:0 -22px;padding:0 22px 9px;min-height:var(--c09-bh)}
+.c09-ah::after{content:"";position:absolute;left:22px;right:22px;bottom:0;height:2px;background:var(--c09-rule)}
+.c09-ah .n{flex:none;font-size:calc(24px * var(--tz,1));font-weight:600;line-height:1.3;letter-spacing:.02em;color:var(--c09-ink);white-space:nowrap}
+.c09-ah .sub{display:grid;min-width:0;flex:0 1 auto}
+.c09-ah .sub>*{grid-area:1/1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:opacity calc(220ms * var(--k)) ease}
+.c09-ah .c{font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--c09-meta)}
+.c09-ah .h{font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-ink)}
+.c09-ah .h::before{content:"· ";color:var(--c09-meta)}
+.c09-ah .en{margin-left:auto;flex:none;font-family:var(--c09-n);font-size:calc(12px * var(--tz,1));font-weight:500;letter-spacing:.16em;color:var(--c09-meta);white-space:nowrap}
+.c09-ah .r{margin-left:auto;flex:0 1 auto;min-width:0;font-size:calc(12px * var(--tz,1));color:var(--c09-meta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c09-ah.is-lift{opacity:0}
+.c09-ah.is-stuck{background:rgba(var(--c09-veil),.8);-webkit-backdrop-filter:blur(14px) saturate(1.25);backdrop-filter:blur(14px) saturate(1.25)}
+.c09-area>.c09-ah{position:sticky;top:calc(var(--sat,0px) + 70px);z-index:3;padding-top:6px;margin-top:-6px}
+.c09-band .c09-ah{margin:-6px 0 0;padding:6px 22px 9px}
+.c09-band .c09-ah .c{opacity:0}
+.c09-band .c09-ah .h{opacity:1}
+
+/* ---------------- home ---------------- */
+.c09-seg{position:relative;display:inline-grid;grid-template-columns:1fr 1fr;height:calc(38px * var(--tz,1));max-width:100%;padding:3px;border-radius:999px;background:rgba(255,255,255,.34);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);box-shadow:inset 0 1px 1px rgba(255,255,255,.92),inset 0 0 0 1px rgba(255,255,255,.5),0 6px 16px -10px rgba(20,26,52,.42);opacity:calc(1 - 1.8 * var(--hc,0))}
+.c09-puck{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(20,22,31,.12),0 5px 12px -7px rgba(20,22,31,.32);transition:translate calc(280ms * var(--k)) cubic-bezier(.3,.85,.25,1)}
+.app.c09.role-hosted .c09-puck{translate:100% 0}
+.c09-segb{position:relative;min-width:0;padding:0 calc(12px * var(--tz,1));font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-meta);white-space:nowrap;display:flex;align-items:center;justify-content:center;gap:5px;transition:color calc(200ms * var(--k))}
+.c09-segb.on{color:var(--c09-ink);font-weight:600}
+.c09-badge{display:inline-grid;place-items:center;min-width:calc(18px * var(--tz,1));height:calc(18px * var(--tz,1));padding:0 5px;border-radius:9px;background:#C2364C;color:#fff;font-family:var(--c09-n);font-size:calc(12px * var(--tz,1));font-weight:600;line-height:1}
+.c09-secs{position:absolute;right:16px;top:calc(var(--c09-t0) - 4px);height:calc(40px * var(--tz,1));display:flex;align-items:stretch;gap:2px;opacity:calc(1 - 2.2 * var(--hc,0))}
+.c09-sect{position:relative;padding:0 7px;font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--c09-meta);white-space:nowrap}
+.c09-sect small{margin-left:3px;font-family:var(--c09-n);font-size:calc(12px * var(--tz,1));font-weight:500}
+.c09-sect.on{color:var(--c09-ink);font-weight:600}
+.c09-sect::after{content:"";position:absolute;left:7px;right:7px;bottom:4px;height:2px;background:var(--c09-ink);transform:scaleX(0);transform-origin:left;transition:transform calc(240ms * var(--k)) var(--c09-ease)}
+.c09-sect.on::after{transform:none}
+.c09-p5 .c09-seg,.c09-p5 .c09-secs,.c09-p5 .c09-ix{pointer-events:none}
+.c09-ixb{font-size:inherit;color:var(--c09-ink);font-weight:500;line-height:1.5;padding:0}
+.c09-ixb span{margin-left:3px;font-family:var(--c09-n);font-weight:500;color:var(--c09-meta)}
+.c09-pane{transition:translate calc(260ms * var(--k)) var(--c09-ease),opacity calc(220ms * var(--k)) ease}
+.c09-home.ph-enter.dir-role .c09-pane{transition:none;opacity:.3;translate:var(--c09-rdx,24px) 0}
+.app.c09.role-joined .c09-pane{--c09-rdx:-24px}
+.c09-home.ph-enter.dir-swap .c09-pane{transition:none;opacity:.3;translate:0 10px}
+/* the 先做这件 block: the only white plane on the page. Its 2px ink top edge is the reservation's remaining time (ink = what is left). */
+.c09-lead{position:relative;margin:2px 0 0;padding:15px 18px 8px;background:#fff;border-radius:0 0 14px 14px;box-shadow:0 1px 0 rgba(20,22,31,.05),0 20px 36px -26px rgba(20,22,31,.5);cursor:pointer}
+.c09-edge{position:absolute;left:0;right:0;top:0;height:2px;background:rgba(20,22,31,.16)}
+.c09-edge i{position:absolute;left:0;top:0;bottom:0;width:calc(var(--c09-left,1) * 100%);background:var(--c09-ink);transition:width 900ms linear}
+.c09-lt{display:flex;align-items:baseline;gap:10px;font-size:calc(12px * var(--tz,1));line-height:1.5;font-weight:600;color:#C2364C}
+.c09-lt>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c09-lt .ar{margin-left:auto;flex:none;font-weight:500;color:#535b70;letter-spacing:.04em}
+.c09-lead h2{margin-top:6px;font-size:calc(21px * var(--tz,1));font-weight:600;line-height:1.35;color:var(--c09-ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance}
+.c09-lm{display:flex;align-items:baseline;margin-top:5px;font-size:calc(13px * var(--tz,1));line-height:1.5;color:#535b70;white-space:nowrap;min-width:0}
+.c09-lm b{font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-ink);overflow:hidden;text-overflow:ellipsis;min-width:2em}
+.c09-lm span{flex:none}
+.c09-lc{margin-top:3px;font-size:calc(13px * var(--tz,1));line-height:1.5;color:#535b70}
+.c09-lc b{font-family:var(--c09-n);font-weight:600;color:var(--c09-ink);font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.c09-lc.red b{color:#C2364C}.c09-lc.amber b{color:#a35c0a}
+.c09-lead .ju-v27-cta{margin:14px auto 0}
+.c09-lw{display:block;margin:2px auto 0;height:42px;padding:0 18px;font-size:calc(14px * var(--tz,1));font-weight:500;color:#535b70}
+.c09-lead-pad{height:10px}
+/* areas + rows */
+.c09-area{position:relative;margin-top:30px}
+.c09-pane>.c09-area:first-child{margin-top:4px}
+.c09-row{position:relative;z-index:0;display:block;padding:13px 0 14px;cursor:pointer;touch-action:pan-y;outline:none}
+.c09-row+.c09-row{border-top:1px solid var(--c09-hair)}
+.c09-row::before{content:"";position:absolute;z-index:-1;inset:-1px -12px;border-radius:12px;pointer-events:none;background:rgba(255,255,255,0);transition:background calc(280ms * var(--k)) ease}
+.c09-row:active::before{background:rgba(20,22,31,.055);transition:none}
+.c09-row:focus-visible::before{box-shadow:0 0 0 2px #4A5AD6}
+.c09-row.is-landing::before{animation:c09-land calc(1100ms * var(--k)) ease-out both}
+.c09-row.is-landing::after{content:"";position:absolute;left:-12px;top:15px;bottom:16px;width:3px;border-radius:2px;background:var(--c09-ink);animation:c09-tick calc(1100ms * var(--k)) ease-out both}
+@keyframes c09-land{0%,35%{background:rgba(255,255,255,.72)}100%{background:rgba(255,255,255,0)}}
+@keyframes c09-tick{0%,45%{opacity:1}100%{opacity:0}}
+.c09-row.is-deleting{opacity:0;transform:translateX(24px);transition:opacity calc(260ms * var(--k)),transform calc(260ms * var(--k))}
+.c09-row.is-restored{animation:c09-restore calc(260ms * var(--k)) ease}
+@keyframes c09-restore{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.c09-rt{font-size:calc(16px * var(--tz,1));font-weight:500;line-height:1.42;color:var(--c09-ink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance}
+.c09-rl{display:flex;align-items:baseline;margin-top:4px;font-size:calc(13px * var(--tz,1));line-height:1.45;color:var(--c09-meta);white-space:nowrap;min-width:0}
+.c09-rl b{flex:0 1 auto;min-width:2em;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-ink);overflow:hidden;text-overflow:ellipsis}
+.c09-rl span{flex:none}
+.c09-rs{display:flex;align-items:center;gap:7px;margin-top:5px;font-size:calc(13px * var(--tz,1));line-height:1.45;min-width:0;min-height:calc(19px * var(--tz,1))}
+.c09-rs .s{flex:none;white-space:nowrap}
+.c09-rs .x{min-width:0;color:var(--c09-meta);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c09-rs .x::before{content:"· "}
+.c09-ra{flex:none;margin:-8px 0 -8px auto;height:34px;padding:0 0 0 14px;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--c09-blue);white-space:nowrap}
+.c09-g{flex:none;width:8px;height:8px;border-radius:50%}
+.t-act .s{color:var(--c09-red);font-weight:600}.t-act .c09-g{background:var(--c09-red)}
+.t-soon .s{color:var(--c09-green);font-weight:500}.t-soon .c09-g{width:10px;height:6px;border-radius:0;border-left:2px solid var(--c09-green);border-bottom:2px solid var(--c09-green);transform:translateY(-2px) rotate(-45deg)}
+.t-wait .s{color:var(--c09-wait);font-weight:400}.t-wait .c09-g{box-shadow:inset 0 0 0 1.5px var(--c09-wait)}
+.t-amber .s{color:var(--c09-amber);font-weight:600}.t-amber .c09-g{background:linear-gradient(90deg,var(--c09-amber) 50%,transparent 50%);box-shadow:inset 0 0 0 1.5px var(--c09-amber)}
+.t-kept .s{color:var(--c09-ink);font-weight:500}.t-kept .c09-g{width:7px;height:7px;border-radius:1px;background:var(--c09-ink)}
+.t-void .s{color:var(--c09-meta);font-weight:400}.t-void .c09-g{width:9px;height:1.5px;border-radius:1px;background:var(--c09-meta)}
+.c09-dr{display:flex;gap:6px;margin:6px 0 -6px;justify-content:flex-end}
+.c09-dr button{height:36px;padding:0 10px;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--c09-blue)}
+.c09-dr .inert{color:var(--c09-meta);opacity:.7}
+.c09-undo{position:sticky;bottom:calc(84px + var(--sab,0px));z-index:5;display:flex;align-items:center;gap:12px;margin:18px 0 0;padding:10px 12px 10px 16px;border-radius:12px;background:rgba(20,22,31,.9);color:#F5F6FA;font-size:calc(14px * var(--tz,1))}
+.c09-undo span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c09-undo button{height:36px;padding:0 12px;border-radius:999px;background:#fff;color:var(--c09-ink);font-weight:600}
+.c09-empty{padding:56px 4px 30px}
+.c09-empty .c09-ah{margin-bottom:16px}
+.c09-empty p{font-size:calc(15px * var(--tz,1));line-height:1.6;color:var(--c09-meta);max-width:300px}
+.c09-empty button{margin-top:18px;height:40px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-blue)}
+.c09-empty button[aria-disabled="true"]{color:var(--c09-meta);opacity:.6}
+.c09-foot-note{margin:28px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--c09-meta)}
+/* root nav (out-of-scope items are inert, kept for position) */
+.c09-nav{position:absolute;left:0;right:0;bottom:0;z-index:30;height:calc(60px + var(--sab,0px));padding:4px 10px var(--sab,0px);display:flex;background:rgba(var(--c09-veil),.9);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 -1px 0 rgba(20,22,31,.06);transition:translate calc(300ms * var(--k)) var(--c09-ease)}
+.c09-nav::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:30px;pointer-events:none;background:linear-gradient(180deg,rgba(var(--c09-veil),0),rgba(var(--c09-veil),.78))}
+.c09-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:calc(12px * var(--tz,1));color:var(--c09-meta)}
+.c09-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.c09-nav .on{color:var(--c09-ink);font-weight:600}
+.c09-nav .off{opacity:.55}
+.app.c09:not(.at-home) .c09-nav{translate:0 110%}
+.app.c09.nav-exit.over-home .c09-nav{translate:0 0}
+
+/* ---------------- deep pages: content slides along x inside the section, the band (district header) is the fixed breadcrumb ---------------- */
+.c09-deep .c09-sc,.c09-deep .c09-foot{transition:translate calc(320ms * var(--k)) var(--c09-ease),opacity calc(260ms * var(--k)) ease}
+.c09-deep .c09-tool,.c09-deep .c09-tt,.c09-deep .c09-meta{transition:translate calc(320ms * var(--k)) var(--c09-ease),opacity calc(240ms * var(--k)) ease}
+.c09-deep .c09-band{transition:transform calc(320ms * var(--k)) var(--c09-ease),opacity calc(240ms * var(--k)) ease}
+.c09-deep.is-top.ph-enter .c09-sc,.c09-deep.is-top.ph-enter .c09-foot{transition:none;translate:48px 0;opacity:0}
+.c09-deep.is-top.ph-enter .c09-tool,.c09-deep.is-top.ph-enter .c09-tt,.c09-deep.is-top.ph-enter .c09-meta{transition:none;translate:18px 0;opacity:0}
+.c09-deep.is-top.ph-enter .c09-band{transition:none;transform:translateY(var(--c09-bfrom,20px));opacity:var(--c09-bo,0)}
+.c09-deep.is-top.ph-enter .c09-band .c,.c09-deep.is-top.ph-exit .c09-band .c{opacity:var(--c09-bc,0)}
+.c09-deep.is-top.ph-enter .c09-band .h,.c09-deep.is-top.ph-exit .c09-band .h{opacity:calc(1 - var(--c09-bc,0))}
+.c09-deep.is-top.ph-enter .c09-band .c09-ah .sub>*{transition:none}
+.c09-deep.is-top.ph-exit .c09-sc,.c09-deep.is-top.ph-exit .c09-foot{translate:48px 0;opacity:0}
+.c09-deep.is-top.ph-exit .c09-tool,.c09-deep.is-top.ph-exit .c09-tt,.c09-deep.is-top.ph-exit .c09-meta{translate:18px 0;opacity:0}
+.c09-deep.is-top.ph-exit .c09-band{transform:translateY(var(--c09-bto,20px));opacity:var(--c09-bo2,0)}
+.c09-pg.is-under{transition:translate calc(320ms * var(--k)) var(--c09-ease),opacity calc(260ms * var(--k)) ease}
+.c09-pg.is-under.ph-in,.c09-pg.is-under.ph-idle{translate:-36px 0;opacity:0;pointer-events:none}
+.c09-pg.is-under.ph-idle{visibility:hidden}
+.c09-pg.is-under.ph-in{transition-duration:calc(320ms * var(--k)),calc(150ms * var(--k))}
+.c09-pg.is-under.ph-exit{transition-duration:calc(300ms * var(--k)),calc(230ms * var(--k));transition-delay:0ms,calc(50ms * var(--k))}
+.c09-deep.is-top.ph-in .c09-tool,.c09-deep.is-top.ph-in .c09-tt,.c09-deep.is-top.ph-in .c09-meta{transition-delay:calc(100ms * var(--k))}
+.c09-deep.is-top.ph-in .c09-sc,.c09-deep.is-top.ph-in .c09-foot{transition-delay:calc(30ms * var(--k))}
+.c09-deep.is-top.ph-exit .c09-tool,.c09-deep.is-top.ph-exit .c09-tt,.c09-deep.is-top.ph-exit .c09-meta{transition-duration:calc(130ms * var(--k))}
+.c09-deep.is-top.ph-exit .c09-sc,.c09-deep.is-top.ph-exit .c09-foot{transition-duration:calc(300ms * var(--k)),calc(200ms * var(--k))}
+.c09-pg.is-leaving{opacity:0;transition:opacity calc(200ms * var(--k)) ease;pointer-events:none}
+.c09-deep.is-top.ph-enter.dir-swap .c09-sc{translate:0 14px}
+.c09-body{position:relative}
+.c09-foot{position:absolute;left:0;right:0;bottom:0;z-index:24;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 22px calc(20px + var(--sab,0px) + var(--kb,0px));background:linear-gradient(180deg,rgba(var(--c09-veil),0),rgba(var(--c09-veil),.6) 46%,rgba(var(--c09-veil),.7))}
+.c09-foot:empty{display:none}
+.c09-foot>*{pointer-events:auto}
+.c09-foot .ju-v27-cta{flex:none}
+.c09-foot .c09-weak{height:40px}
+.c09-note{font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--c09-meta)}
+.c09-err{font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--c09-red);font-weight:500}
+.c09-ok{font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--c09-green);font-weight:500}
+.c09-tbtn{display:inline-flex;align-items:center;height:36px;padding:0 4px;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--c09-blue)}
+
+/* ---------------- ticket surface: the stage hangs from the band's rule (the print mouth sits right under it) ---------------- */
+.c09-tk .c09-sc{padding-top:calc(var(--c09-t0) + var(--th) + 18px + var(--c09-mh) + var(--c09-bh))}
+.c09-stw{position:relative}
+.c09-slot{position:absolute;left:50%;top:84px;width:258px;height:352px;margin-left:-129px;border-radius:14px;border:1.5px dashed rgba(20,22,31,.2);opacity:0;transition:opacity calc(300ms * var(--k)) ease;display:grid;place-items:center;font-size:calc(13px * var(--tz,1));color:var(--c09-meta);pointer-events:none}
+.c09-stw .ju-ticket-stage[data-state="idle"]~.c09-slot{opacity:1}
+.c09-stage.reissued{--ju-ticket-top:24px}
+.c09-stage.reissued~.c09-slot{top:24px}
+.c09-peek{display:flex;align-items:center;gap:12px;margin-top:14px;min-height:64px;padding:12px 0;border-top:1px solid var(--c09-hair);font-size:calc(14px * var(--tz,1));cursor:pointer;width:100%;text-align:left}
+.c09-peek span{flex:1;min-width:0;color:var(--c09-ink)}
+.c09-peek em{font-style:normal;font-weight:500;color:var(--c09-blue)}
+.c09-copyfail{margin-top:4px;font-size:calc(13px * var(--tz,1));color:var(--c09-red)}
+.c09-result{padding:18px 0 4px}
+.c09-result b{display:block;font-size:calc(20px * var(--tz,1));font-weight:600;line-height:1.35}
+.c09-result p{margin-top:6px;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--c09-meta)}
+.c09-reply{margin-top:10px;font-size:calc(14px * var(--tz,1));line-height:1.6}
+.c09-reply s{color:var(--c09-meta)}
+.c09-ash{height:44px;margin:10px auto 0;width:258px;border-radius:0 0 10px 10px;background:repeating-linear-gradient(90deg,rgba(59,42,32,.55) 0 6px,rgba(90,74,64,.4) 6px 10px)}
+
+/* ---------------- manage: sections are blocks, block headers are the same district-header type ---------------- */
+.c09-mh{padding:4px 0 2px}
+.c09-seats{display:flex;align-items:center;gap:7px;margin:2px 0 8px}
+.c09-seat{width:14px;height:14px;border-radius:50%;box-shadow:inset 0 0 0 1.5px rgba(20,22,31,.38);transition:background calc(300ms * var(--k)),box-shadow calc(300ms * var(--k))}
+.c09-seat.host,.c09-seat.ok{background:var(--c09-ink);box-shadow:none}
+.c09-seat.host{box-shadow:0 0 0 2px rgba(var(--c09-veil),1),0 0 0 3.5px var(--c09-ink)}
+.c09-seat.res{background:linear-gradient(90deg,var(--c09-amber) 50%,transparent 50%);box-shadow:inset 0 0 0 1.5px var(--c09-amber)}
+.c09-seat.att-present{background:var(--c09-green);box-shadow:none}.c09-seat.att-absent{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c09-meta)}
+.c09-seat.is-fresh{animation:c09-pop calc(520ms * var(--k)) cubic-bezier(.2,1.4,.4,1) both}
+@keyframes c09-pop{0%{transform:scale(.4)}100%{transform:none}}
+.c09-mst{font-size:calc(15px * var(--tz,1));font-weight:500;line-height:1.5}
+.c09-mst span{margin-left:8px;font-size:calc(13px * var(--tz,1));font-weight:400;color:var(--c09-meta)}
+.c09-mst.is-fresh,.c09-ah .c.is-fresh,.c09-meta.is-fresh{animation:c09-fresh calc(1200ms * var(--k)) ease-out}
+@keyframes c09-fresh{0%{color:#a35c0a}60%{color:#a35c0a}100%{}}
+.c09-mfl{display:flex;align-items:baseline;gap:12px;margin-top:2px;font-size:calc(13px * var(--tz,1));color:var(--c09-meta);line-height:1.6}
+.c09-mfl span{min-width:0;flex:1}
+.c09-blocks{display:flex;flex-direction:column}
+.c09-blk{order:var(--o,9);margin-top:32px;scroll-margin-top:calc(var(--c09-bh) + 12px)}
+.c09-blk>.c09-ah{margin-bottom:2px}
+.c09-blk.is-closed .c09-bb{display:none}
+.c09-ah .tog{margin-left:auto;height:32px;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--c09-blue)}
+.c09-app{padding:14px 0 12px}
+.c09-app+.c09-app,.c09-mem+.c09-mem,.c09-att+.c09-att{border-top:1px solid var(--c09-hair)}
+.c09-an{display:flex;align-items:baseline;gap:10px}
+.c09-an b{font-size:calc(17px * var(--tz,1));font-weight:600}
+.c09-an span{margin-left:auto;font-size:calc(13px * var(--tz,1));color:var(--c09-meta);white-space:nowrap}
+.c09-av{margin-top:2px;font-size:calc(13px * var(--tz,1));color:var(--c09-meta)}
+.c09-av.ok::before{content:"";display:inline-block;width:9px;height:5px;margin:0 6px 3px 1px;border-left:1.6px solid var(--c09-green);border-bottom:1.6px solid var(--c09-green);transform:rotate(-45deg)}
+.c09-aq{margin-top:6px;font-size:calc(15px * var(--tz,1));line-height:1.55;color:var(--c09-ink)}
+.c09-aa{display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-top:10px;min-height:42px}
+.c09-btn-t{height:42px;padding:0 14px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-meta)}
+.c09-btn-w{height:40px;padding:0 20px;border-radius:999px;background:#fff;color:var(--c09-ink);font-size:calc(14px * var(--tz,1));font-weight:600;box-shadow:inset 0 0 0 1px rgba(20,22,31,.12),0 1px 0 rgba(20,22,31,.06),0 8px 18px -12px rgba(20,22,31,.45);transition:transform .48s cubic-bezier(.18,1.5,.36,1)}
+.c09-btn-w:active{transform:scale(.958)}
+.c09-busy{font-size:calc(14px * var(--tz,1));color:var(--c09-meta)}
+.c09-busy::before{content:"";display:inline-block;width:12px;height:12px;margin:0 8px -1px 0;border-radius:50%;border:1.6px solid rgba(20,22,31,.25);border-top-color:var(--c09-ink);animation:c09-spin calc(700ms * var(--k)) linear infinite}
+@keyframes c09-spin{to{transform:rotate(360deg)}}
+.c09-res{font-size:calc(14px * var(--tz,1));font-weight:500;line-height:1.5;animation:c09-settle calc(420ms * var(--k)) var(--c09-ease) both}
+.c09-res.ok{color:var(--c09-green)}.c09-res.void,.c09-res.wait{color:var(--c09-meta)}.c09-res.res{color:var(--c09-amber)}
+@keyframes c09-settle{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+.c09-mem{display:flex;align-items:baseline;gap:12px;padding:12px 0}
+.c09-mem>b{flex:none;min-width:3.5em;font-size:calc(16px * var(--tz,1));font-weight:500}
+.c09-mem>div{flex:1;min-width:0;text-align:right;font-size:calc(13px * var(--tz,1));line-height:1.55;color:var(--c09-meta)}
+.c09-mem .st{color:var(--c09-ink);font-weight:500}
+.c09-mem .st.res{color:var(--c09-amber)}.c09-mem .st.void{color:var(--c09-meta)}
+.c09-mem.open>b{color:var(--c09-meta);font-weight:400}
+.c09-mem.is-fresh{animation:c09-memin calc(700ms * var(--k)) var(--c09-ease) both}
+@keyframes c09-memin{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:none}}
+.c09-wx{display:flex;align-items:center;justify-content:flex-end;gap:6px;margin-top:2px}
+.c09-wx code{font-family:var(--c09-n);font-size:calc(14px * var(--tz,1));color:var(--c09-ink)}
+.c09-arr{display:flex;align-items:baseline;gap:12px;width:100%;padding:14px 0;text-align:left;border-top:1px solid var(--c09-hair)}
+.c09-arr:first-of-type{border-top:0}
+.c09-arr b{flex:none;font-size:calc(16px * var(--tz,1));font-weight:500;color:var(--c09-ink)}
+.c09-arr span{flex:1;min-width:0;font-size:calc(13px * var(--tz,1));color:var(--c09-meta)}
+.c09-arr i{font-style:normal;color:var(--c09-meta)}
+.c09-arr.danger b{color:#B4233F}
+.c09-arr.inert{opacity:.55;cursor:default}
+.c09-att{padding:12px 0}
+.c09-att.is-next{background:linear-gradient(90deg,rgba(255,255,255,.4),rgba(255,255,255,0));margin:0 -12px;padding:12px}
+.c09-att>p{display:flex;align-items:baseline;gap:10px}
+.c09-att>p b{font-size:calc(16px * var(--tz,1));font-weight:500}
+.c09-att>p span{font-size:calc(13px * var(--tz,1));color:var(--c09-meta)}
+.c09-segs{display:flex;gap:6px;margin-top:8px}
+.c09-segs button{flex:1;height:40px;border-radius:999px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--c09-ink);background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px rgba(20,22,31,.14)}
+.c09-segs button[aria-pressed="true"]{background:var(--c09-ink);color:#fff}
+.c09-chop{display:inline-block;margin-left:auto;padding:2px 9px;border:2px solid var(--c09-green);border-radius:6px;color:var(--c09-green);font-family:"Noto Serif SC",serif;font-weight:900;font-size:calc(14px * var(--tz,1));transform:rotate(-8deg)}
+.c09-chop.absent{border-color:var(--c09-meta);color:var(--c09-meta)}.c09-chop.pending{border-style:dashed;border-color:var(--c09-amber);color:var(--c09-amber)}
+.c09-chop.is-fresh{animation:c09-chop calc(550ms * var(--k)) cubic-bezier(.2,1.3,.4,1) both}
+@keyframes c09-chop{0%{opacity:0;transform:rotate(-8deg) scale(1.8)}60%{opacity:1}100%{transform:rotate(-8deg) scale(1)}}
+.c09-trail{margin-top:4px;font-size:calc(12px * var(--tz,1));color:var(--c09-meta)}
+.c09-q{display:flex;gap:12px;padding:10px 0;font-size:calc(15px * var(--tz,1))}
+.c09-q i{font-style:normal;font-family:var(--c09-n);color:var(--c09-meta);min-width:2em}
+.c09-q span{margin-left:auto;font-size:calc(13px * var(--tz,1));color:var(--c09-meta)}
+
+/* ---------------- detail / read / waitlist / history / draft (same skeleton) ---------------- */
+.c09-card{display:flex;justify-content:center;margin:6px 0 4px}
+.c09-kv{display:grid;grid-template-columns:4.2em 1fr;gap:6px 12px;margin-top:18px;font-size:calc(14px * var(--tz,1));line-height:1.55}
+.c09-kv dt{color:var(--c09-meta)}.c09-kv dd{margin:0;color:var(--c09-ink);min-width:0;overflow-wrap:anywhere}
+.c09-sub{margin-top:28px}
+.c09-sub>.c09-ah{margin-bottom:4px}
+.c09-rules h5{margin:16px 0 4px;font-size:calc(15px * var(--tz,1));font-weight:600}
+.c09-rules p{font-size:calc(15px * var(--tz,1));line-height:1.75;color:var(--c09-ink)}
+.c09-endmark{padding:22px 0 6px;text-align:center;font-size:calc(12px * var(--tz,1));color:var(--c09-meta);letter-spacing:.08em}
+.c09-cd{display:flex;align-items:baseline;gap:10px;margin-top:14px;font-size:calc(13px * var(--tz,1));color:var(--c09-meta)}
+.c09-cd b{font-family:var(--c09-n);font-size:calc(20px * var(--tz,1));font-weight:600;color:var(--c09-ink);font-variant-numeric:tabular-nums}
+.c09-rcpt{margin-top:8px;padding:16px 18px;background:#fff;border-top:2px solid var(--c09-ink);border-radius:0 0 12px 12px}
+.c09-rcpt b{display:block;font-size:calc(19px * var(--tz,1));font-weight:600}
+.c09-rcpt p{margin-top:4px;font-size:calc(14px * var(--tz,1));color:#535b70;line-height:1.55}
+.c09-t08{position:relative;height:520px;margin:6px -22px 0}
+.c09-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
+
+/* ---------------- sheet + toast ---------------- */
+.c09-over{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-end;background:rgba(14,16,26,.3);animation:c09-dim calc(300ms * var(--k)) ease both}
+@keyframes c09-dim{0%{background:rgba(14,16,26,0)}100%{background:rgba(14,16,26,.3)}}
+.c09-sheet{position:relative;width:100%;max-height:calc(100% - 40px);overflow:auto;background:#fff;padding:22px 22px calc(22px + var(--sab,0px) + var(--kb,0px));border-top:2px solid var(--c09-ink);box-shadow:0 -18px 40px -28px rgba(14,16,26,.6);animation:c09-up calc(320ms * var(--k)) var(--c09-ease) both;color:#14161F}
+@keyframes c09-up{0%{transform:translateY(56%);opacity:.4}100%{transform:none;opacity:1}}
+.c09-sheet h3{font-size:calc(21px * var(--tz,1));font-weight:600;line-height:1.35}
+.c09-sheet .c09-sid{display:flex;align-items:baseline;gap:8px;margin-top:6px;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c09-sheet .c09-sid b{font-size:calc(14px * var(--tz,1));font-weight:500;color:#14161F}
+.c09-sheet>p{margin-top:12px;font-size:calc(15px * var(--tz,1));line-height:1.65;color:#252b3a}
+.c09-irrev{margin-top:12px;padding:10px 12px;border-left:2px solid #B4233F;background:#fbf0f2;color:#8b1f30;font-size:calc(13px * var(--tz,1));line-height:1.55}
+.c09-sheet .c09-mem>div{color:#535b70}
+.c09-acts{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:18px}
+.c09-acts .c09-weak{color:#535b70}
+.c09-in{display:block;width:100%;height:46px;margin-top:6px;padding:0 12px;border:0;border-radius:10px;background:#f2f3f7;box-shadow:inset 0 0 0 1px rgba(20,22,31,.12);font:inherit;font-size:16px;color:#14161F}
+textarea.c09-in{height:auto;min-height:110px;padding:10px 12px;resize:none;line-height:1.55}
+.c09-fl{display:block;margin-top:12px;font-size:calc(13px * var(--tz,1));color:#535b70}
+.c09-toast{position:absolute;left:22px;right:22px;bottom:calc(84px + var(--sab,0px) + var(--kb,0px));z-index:60;padding:12px 16px;border-radius:14px;background:rgba(18,20,30,.92);color:#F5F6FA;font-size:calc(14px * var(--tz,1));line-height:1.5;animation:c09-toast calc(240ms * var(--k)) var(--c09-ease) both}
+.c09-toast.k-error{background:rgba(120,24,40,.95)}
+@keyframes c09-toast{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+.app.c09:not(.at-home) .c09-toast{bottom:calc(92px + var(--sab,0px) + var(--kb,0px))}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c09{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <div class="ju-env" ref="{{envRef}}"></div>
+      <sc-if value="{{noSkins}}"><div class="c09-envfb"></div></sc-if>
+      <div class="c09-veil"></div>
+
+      <!-- ===================== HOME ===================== -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c09-pg c09-home {{c.nav.cls.home}}" data-surface="home">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool">
+              <div class="c09-seg" role="group" aria-label="身份">
+                <i class="c09-puck" aria-hidden="true"></i>
+                <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c09-segb {{t.cls}}" data-role-tab="{{t.k}}" aria-pressed="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="c09-badge">{{t.badge}}</span></sc-if></button></sc-for>
+              </div>
+            </div>
+            <h1 class="c09-tt">我的局</h1>
+            <span class="c09-tt c09-probe" aria-hidden="true">我的局</span>
+            <div class="c09-secs"><sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c09-sect {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><small>{{t.countText}}</small></sc-if></button></sc-for></div>
+            <p class="c09-meta c09-ix">{{v.home.countText}}<sc-for list="{{v.home.index}}" as="x" hint-placeholder-count="3"> · <button type="button" class="c09-ixb" onClick="{{x.go}}">{{x.zh}}<span>{{x.n}}</span></button></sc-for></p>
+          </header>
+          <div class="c09-sc" data-scroller="home" onScroll="{{v.onScroll}}">
+            <div class="c09-pane">
+              <!-- 先做这件 -->
+              <sc-if value="{{v.home.lead}}">
+                <div class="c09-lead" data-rid="{{v.home.lead.id}}" data-origin="{{v.home.lead.originKey}}" style="--c09-left:{{v.home.lead.ratio}}" onClick="{{v.home.lead.open}}">
+                  <div class="c09-edge" aria-hidden="true"><i></i></div>
+                  <p class="c09-lt"><span>{{v.home.lead.label}}</span><span class="ar">{{v.home.lead.areaZh}}</span></p>
+                  <h2>{{v.home.lead.title}}</h2>
+                  <p class="c09-lm"><b>{{v.home.lead.hood}}</b><span>&nbsp;· {{v.home.lead.when}} · {{v.home.lead.who}}</span></p>
+                  <sc-if value="{{v.home.lead.left}}"><p class="c09-lc {{v.home.lead.leftTone}}">预留还剩 <b>{{v.home.lead.left}}</b></p></sc-if>
+                  <sc-if value="{{v.home.lead.sub}}"><p class="c09-lc">{{v.home.lead.sub}}</p></sc-if>
+                  <button type="button" class="ju-v27-cta ju-action-native21" data-act="cta" onClick="{{v.home.lead.act}}"><span class="gloss"></span><span class="label">{{v.home.lead.cta}}</span></button>
+                  <sc-if value="{{v.home.lead.sec}}"><button type="button" class="c09-lw" data-act="{{v.home.lead.secKey}}" onClick="{{v.home.lead.sec}}">{{v.home.lead.secLabel}}</button></sc-if>
+                  <sc-if value="{{v.home.lead.noSec}}"><div class="c09-lead-pad"></div></sc-if>
+                </div>
+              </sc-if>
+              <!-- 按区分节 -->
+              <sc-for list="{{v.home.areas}}" as="a" hint-placeholder-count="3">
+                <section class="c09-area" data-c09-area="{{a.key}}">
+                  <h3 class="c09-ah {{a.cls}}" data-c09-ah="{{a.key}}"><span class="n">{{a.zh}}</span><span class="sub"><span class="c">{{a.countText}}</span></span><span class="en">{{a.en}}</span></h3>
+                  <sc-for list="{{a.rows}}" as="r" hint-placeholder-count="3">
+                    <div class="c09-row {{r.cls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.aria}}" onClick="{{r.tap}}" onKeyDown="{{r.kd}}">
+                      <p class="c09-rt">{{r.title}}</p>
+                      <p class="c09-rl"><b>{{r.hood}}</b><span>&nbsp;· {{r.when}}<sc-if value="{{r.who}}"> · {{r.who}}</sc-if></span></p>
+                      <p class="c09-rs {{r.tone}}"><i class="c09-g" aria-hidden="true"></i><span class="s">{{r.status}}</span><sc-if value="{{r.note}}"><span class="x">{{r.note}}</span></sc-if><sc-if value="{{r.action}}"><button type="button" class="c09-ra" data-act="{{r.actKey}}" onClick="{{r.action}}">{{r.actLabel}} ›</button></sc-if></p>
+                      <sc-if value="{{r.draft}}"><div class="c09-dr"><button type="button" class="inert" aria-disabled="true" onClick="{{c.inert}}">继续编辑（开局模块）</button><button type="button" data-act="delete" onClick="{{r.del}}">删除</button></div></sc-if>
+                    </div>
+                  </sc-for>
+                </section>
+              </sc-for>
+              <sc-if value="{{v.home.empty}}">
+                <div class="c09-empty"><h3 class="c09-ah"><span class="n">{{v.home.empty.title}}</span></h3><p>{{v.home.empty.body}}</p><button type="button" aria-disabled="{{v.home.empty.inert}}" onClick="{{v.home.empty.go}}">{{v.home.empty.label}}</button></div>
+              </sc-if>
+              <sc-if value="{{v.home.footer}}"><p class="c09-foot-note">{{v.home.footer}}</p></sc-if>
+              <sc-if value="{{v.home.undo}}"><div class="c09-undo" role="status"><span>{{c.hosted.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} {{c.hosted.undo.left}}s</button></div></sc-if>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== TICKET / REPLY ===================== -->
+      <sc-if value="{{v.tk.on}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep c09-tk {{v.tk.cls}}" data-surface="{{v.tk.surface}}">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool">
+              <button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回我的局" onClick="{{c.ticket.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.ticket.canExit}}"><button type="button" class="c09-weak" data-act="{{v.tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if>
+            </div>
+            <h1 class="c09-tt">{{v.tk.title}}</h1>
+            <span class="c09-tt c09-probe" aria-hidden="true">{{v.tk.title}}</span>
+            <p class="c09-meta">{{v.tk.meta}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.tk.area.zh}}</span><span class="sub"><span class="c">{{v.tk.area.countText}}</span><span class="h">{{v.tk.hood}}</span></span><span class="en">{{v.tk.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="ticket" onScroll="{{v.onScroll}}">
+            <div class="c09-body">
+              <sc-if value="{{c.ticket.unavailable}}"><div class="c09-result"><b>{{c.ticket.title}}</b><p>{{c.ticket.unavailable.text}}</p></div></sc-if>
+              <sc-if value="{{v.tk.showStage}}">
+                <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                <div class="c09-stw">
+                  <div class="ju-ticket-stage c09-stage {{v.tk.stageCls}}" data-print-stage="c09" data-state="idle">
+                    <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                    <div class="ju-ticket" data-paper="c09">
+                      <div class="ju-ticket-shadow" data-paper-shadow="c09" data-raster="skip"><div></div></div>
+                      <div class="ju-ticket-shell" data-paper-shell="c09">
+                        <div class="ju-ticket-surface" data-paper-surface="c09">
+                          <div class="ju-ticket-body">
+                            <div class="ju-ticket-face">
+                              <div class="ju-ticket-brand">JU. / 票根</div>
+                              <div class="ju-ticket-title" data-slot="title">{{c.ticket.ritual.title}}</div>
+                              <div class="ju-ticket-when"><span data-slot="time">{{c.ticket.ritual.time}}</span><span data-slot="md">{{c.ticket.ritual.md}}</span></div>
+                              <div class="ju-ticket-previous" data-slot="previous" hidden="{{v.tk.noPrevious}}">{{v.tk.previousText}}</div>
+                              <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.ticket.ritual.loc}}</strong></div>
+                              <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.ticket.ritual.meeting}}</strong></div>
+                              <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.ticket.ritual.host}}</strong></div>
+                            </div>
+                            <div class="ju-ticket-wet" data-wet="c09" data-raster="skip"></div>
+                          </div>
+                          <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{v.tk.noMark}}">{{c.ticket.ritual.mark}}</div>
+                          <div class="ju-ticket-stub" data-tear="c09" data-act="tear"><div class="ju-ticket-bend" data-bend="c09" data-raster="skip"></div></div>
+                        </div>
+                      </div>
+                      <div class="ju-ticket-burn" data-burn="c09" data-raster="skip"></div>
+                    </div>
+                  </div>
+                  <div class="c09-slot" aria-hidden="true">出票中</div>
+                </div>
+                <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
+                  <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+                  <p class="ju-contact-note23"></p>
+                  <p class="ju-form-error"></p>
+                </div>
+                <sc-if value="{{v.tk.peek}}"><button type="button" class="c09-peek" data-act="contact" onClick="{{c.ticket.contact.toggle}}"><span>局主 · {{c.ticket.contact.hostName}}</span><em>查看微信 ›</em></button></sc-if>
+                <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c09-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c09-tbtn" data-act="retry" onClick="{{v.tk.retryCopy}}">重试</button></p></sc-if>
+                <sc-if value="{{v.tk.showClosed}}"><p class="c09-err">{{c.ticket.contact.closedText}}</p></sc-if>
+                <sc-if value="{{c.ticket.contact.error}}"><p class="c09-err">{{c.ticket.contact.error}}</p></sc-if>
+                <sc-if value="{{c.ticket.result}}"><div class="c09-result"><sc-if value="{{v.tk.ashes}}"><div class="c09-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
+                <sc-if value="{{c.ticket.reply}}"><p class="c09-reply"><s>{{c.ticket.reply.oldText}}</s><br>{{c.ticket.reply.newText}}</p></sc-if>
+              </sc-if>
+            </div>
+          </div>
+          <div class="c09-foot">
+            <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta ju-action-native21 ju-print-cta-in" data-act="{{v.tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
+            <sc-if value="{{v.tk.declineOn}}"><button type="button" class="c09-weak" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if>
+            <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta ju-action-native21 ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+            <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta ju-action-native21" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
+            <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta ju-action-native21" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== MANAGE (H1): blocks = sections, block headers = the district-header type ===================== -->
+      <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep c09-mg {{c.nav.cls.manage}}" data-surface="manage">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool">
+              <button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{v.mg.ready}}"><button type="button" class="c09-weak" data-act="card" onClick="{{c.manage.card.open}}">{{c.manage.card.label}}</button></sc-if>
+            </div>
+            <h1 class="c09-tt">{{v.mg.title}}</h1>
+            <span class="c09-tt c09-probe" aria-hidden="true">{{v.mg.title}}</span>
+            <p class="c09-meta {{v.mg.freshHead}}">{{v.mg.meta}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.mg.area.zh}}</span><span class="sub"><span class="c">{{v.mg.area.countText}}</span><span class="h">{{v.mg.hood}}</span></span><span class="en">{{v.mg.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="manage" onScroll="{{v.onScroll}}">
+            <div class="c09-body">
+              <sc-if value="{{c.manage.missing}}"><div class="c09-result"><b>{{c.manage.title}}</b><p>{{c.manage.body}}</p></div></sc-if>
+              <sc-if value="{{v.mg.ready}}">
+                <div class="c09-mh">
+                  <sc-if value="{{v.mg.seatsOn}}"><div class="c09-seats" aria-hidden="true"><sc-for list="{{v.mg.seats}}" as="s" hint-placeholder-count="5"><i class="c09-seat {{s.cls}}"></i></sc-for></div>
+                    <p class="c09-mst {{v.mg.freshHead}}">{{c.manage.head.progress.text}}<sc-if value="{{c.manage.head.progress.more}}"><span>{{c.manage.head.progress.more}}</span></sc-if></p></sc-if>
+                  <sc-if value="{{c.manage.head.progress.attendance}}"><p class="c09-mst">{{c.manage.head.progress.attendance.text}}<span>{{c.manage.head.progress.attendance.sub}}</span></p></sc-if>
+                  <p class="c09-mfl"><span>{{c.manage.head.formedLine}}</span></p>
+                </div>
+                <div class="c09-blocks">
+                  <!-- 申请 -->
+                  <sc-if value="{{c.manage.apps.on}}"><section class="c09-blk {{c.manage.apps.cls}}" data-section="apps" style="--o:{{c.manage.apps.order}}">
+                    <h3 class="c09-ah"><span class="n">申请</span><span class="sub"><span class="c {{v.mg.freshApps}}">{{v.mg.appsCount}}</span></span><span class="r">{{c.manage.apps.sub}}</span></h3>
+                    <div class="c09-bb">
+                      <sc-for list="{{c.manage.apps.rows}}" as="a" hint-placeholder-count="2"><div class="c09-app" data-rid="{{a.id}}">
+                        <p class="c09-an"><b>{{a.nickText}}</b><span>{{a.agoText}}</span></p>
+                        <p class="c09-av {{a.vCls}}">{{a.verifiedLabel}}</p>
+                        <sc-if value="{{a.note}}"><p class="c09-aq">“{{a.note}}”</p></sc-if>
+                        <div class="c09-aa">
+                          <sc-if value="{{a.pendingOpen}}"><button type="button" class="c09-btn-t" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c09-btn-w" data-act="approve" onClick="{{a.approve}}">发出邀请</button></sc-if>
+                          <sc-if value="{{a.busy}}"><p class="c09-busy" role="status">处理中…</p></sc-if>
+                          <sc-if value="{{a.result}}"><p class="c09-res {{a.tone}}" role="status">{{a.resultText}}</p></sc-if>
+                          <sc-if value="{{a.error}}"><p class="c09-err">{{a.error}} <button type="button" class="c09-tbtn" data-act="retry" onClick="{{a.retry}}">知道了</button></p></sc-if>
+                        </div>
+                      </div></sc-for>
+                      <sc-if value="{{c.manage.apps.empty}}"><p class="c09-note">申请都处理完了。</p></sc-if>
+                      <p class="c09-note" style="margin-top:6px">{{c.manage.apps.help}}</p>
+                    </div>
+                  </section></sc-if>
+                  <!-- 改期答复 -->
+                  <sc-if value="{{c.manage.replies.on}}"><section class="c09-blk {{c.manage.replies.cls}}" data-section="replies" style="--o:{{c.manage.replies.order}}">
+                    <h3 class="c09-ah"><span class="n">改期</span><span class="sub"><span class="c">{{c.manage.replies.title}}</span></span><span class="r">{{c.manage.replies.sub}}</span></h3>
+                    <div class="c09-bb">
+                      <p class="c09-reply"><s>原定 {{c.manage.replies.oldWhen.zh}}</s> → 改为 {{c.manage.replies.newWhen.zh}}</p>
+                      <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c09-mem" data-rid="{{r.id}}"><b>{{r.name}}</b><div><span class="st {{r.tone}}">{{r.answerText}}</span><br>{{r.ticketLine}}</div></div></sc-for>
+                      <p class="c09-note">{{c.manage.replies.help}}</p>
+                    </div>
+                  </section></sc-if>
+                  <!-- 成员 + 联系 -->
+                  <sc-if value="{{c.manage.roster.on}}"><section class="c09-blk {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}">
+                    <h3 class="c09-ah"><span class="n">成员</span><span class="sub"><span class="c {{v.mg.freshHeadC}}">{{v.mg.rosterCount}}</span></span><span class="r">{{v.mg.rosterNote}}</span></h3>
+                    <div class="c09-bb">
+                      <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c09-mem {{m.cls}}" data-rid="{{m.id}}"><b>{{m.name}}</b><div><span class="st {{m.tone}}">{{m.stateText}}</span><sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"><br>{{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"><br>{{m.contactText}}</sc-if><sc-if value="{{m.wxText}}"><span class="c09-wx"><code>{{m.wx}}</code><button type="button" class="c09-tbtn" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></span></sc-if><sc-if value="{{m.copyFail}}"><span class="c09-copyfail">未能复制，长按手动复制 <button type="button" class="c09-tbtn" data-act="retry" onClick="{{m.retryCopy}}">重试</button></span></sc-if></div></div></sc-for>
+                      <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><div class="c09-mem open"><b>空位</b><div>{{o.text}}</div></div></sc-for>
+                      <sc-if value="{{c.manage.roster.voidNote}}"><p class="c09-note">{{c.manage.roster.voidNote}}</p></sc-if>
+                    </div>
+                  </section></sc-if>
+                  <!-- 候补 -->
+                  <sc-if value="{{c.manage.queue.on}}"><section class="c09-blk {{c.manage.queue.cls}}" data-section="queue" style="--o:{{c.manage.queue.order}}">
+                    <h3 class="c09-ah"><span class="n">候补</span><span class="sub"><span class="c">{{c.manage.queue.count}} 人</span></span><span class="r">{{c.manage.queue.sub}}</span></h3>
+                    <div class="c09-bb">
+                      <sc-for list="{{c.manage.queue.rows}}" as="q" hint-placeholder-count="2"><div class="c09-q"><i>{{q.no}}</i><b>{{q.nick}}</b><span>{{q.agoText}}</span></div></sc-for>
+                      <p class="c09-note">{{c.manage.queue.help}}</p>
+                    </div>
+                  </section></sc-if>
+                  <!-- 离开记录 -->
+                  <sc-if value="{{c.manage.leaves.on}}"><section class="c09-blk {{c.manage.leaves.cls}}" data-section="leaves" style="--o:{{c.manage.leaves.order}}">
+                    <h3 class="c09-ah"><span class="n">离开</span><span class="sub"><span class="c">{{c.manage.leaves.count}} 条记录</span></span><button type="button" class="tog" aria-expanded="{{c.manage.leaves.open}}" onClick="{{c.manage.leaves.toggle}}">{{v.mg.leavesLabel}}</button></h3>
+                    <div class="c09-bb"><sc-for list="{{c.manage.leaves.rows}}" as="l" hint-placeholder-count="2"><div class="c09-mem"><b>{{l.nick}}</b><div>{{l.text}} · {{l.atText}}</div></div></sc-for></div>
+                  </section></sc-if>
+                  <!-- 出席 -->
+                  <sc-if value="{{c.manage.attendance.on}}"><section class="c09-blk {{c.manage.attendance.cls}}" data-section="attendance" style="--o:{{c.manage.attendance.order}}">
+                    <h3 class="c09-ah"><span class="n">出席</span><span class="sub"><span class="c">已记录 {{c.manage.attendance.rec}}/{{c.manage.attendance.total}}</span></span><span class="r">{{c.manage.attendance.sub}}</span></h3>
+                    <div class="c09-bb">
+                      <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c09-att {{a.nextCls}}" data-rid="{{a.id}}">
+                        <p><b>{{a.name}}</b><span>{{a.label}}</span><sc-if value="{{a.recorded}}"><i class="c09-chop {{a.stamp}} {{a.stampCls}}">{{a.chopText}}</i></sc-if></p>
+                        <sc-if value="{{a.choosing}}"><div class="c09-segs"><button type="button" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></div></sc-if>
+                        <sc-if value="{{a.canCorrect}}"><button type="button" class="c09-tbtn" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
+                        <sc-if value="{{a.error}}"><p class="c09-err">{{a.error}}</p></sc-if>
+                        <sc-if value="{{a.showTrail}}"><div class="c09-trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
+                        <sc-if value="{{a.wxText}}"><p class="c09-note">{{a.wxText}} <button type="button" class="c09-tbtn" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button><sc-if value="{{a.copyFail}}"> <span class="c09-copyfail">未能复制，长按手动复制</span> <button type="button" class="c09-tbtn" data-act="retry" onClick="{{a.retryCopy}}">重试</button></sc-if></p></sc-if>
+                      </div></sc-for>
+                      <sc-if value="{{c.manage.attendance.doneText}}"><p class="c09-ok">{{c.manage.attendance.doneText}}</p></sc-if>
+                      <p class="c09-note">{{c.manage.attendance.help}}</p><p class="c09-note">{{c.manage.attendance.contactLine}}</p>
+                    </div>
+                  </section></sc-if>
+                  <!-- 安排（永远最后） -->
+                  <section class="c09-blk {{c.manage.arrange.cls}}" data-section="arrange" style="--o:{{c.manage.arrange.order}}">
+                    <h3 class="c09-ah"><span class="n">安排</span><span class="sub"><span class="c">{{c.manage.head.life}}</span></span></h3>
+                    <div class="c09-bb">
+                      <sc-if value="{{c.manage.arrange.canReschedule}}"><button type="button" class="c09-arr" data-act="propose" onClick="{{c.manage.arrange.reschedule}}"><b>{{c.manage.arrange.rescheduleLabel}}</b><span>{{c.manage.arrange.rescheduleNote}}</span><i>›</i></button></sc-if>
+                      <sc-if value="{{c.manage.arrange.unansweredHint}}"><p class="c09-note">{{c.manage.arrange.unansweredHint}}</p></sc-if>
+                      <sc-if value="{{c.manage.arrange.canEnd}}"><button type="button" class="c09-arr" data-act="end" onClick="{{c.manage.arrange.end}}"><b>{{c.manage.arrange.endLabel}}</b><span>{{c.manage.arrange.endNote}}</span><i>›</i></button></sc-if>
+                      <sc-if value="{{c.manage.arrange.endHint}}"><p class="c09-note" style="padding:6px 0">{{c.manage.arrange.endHint}}</p></sc-if>
+                      <sc-if value="{{c.manage.arrange.canCancel}}"><button type="button" class="c09-arr danger" data-act="cancel" onClick="{{c.manage.arrange.cancel}}"><b>{{c.manage.arrange.cancelLabel}}</b><span>{{c.manage.arrange.cancelNote}}</span><i>›</i></button></sc-if>
+                      <sc-if value="{{c.manage.arrange.showReopen}}"><button type="button" class="c09-arr inert" aria-disabled="true" onClick="{{c.manage.arrange.reopen}}"><b>{{c.manage.arrange.reopenLabel}}</b><span>{{c.manage.arrange.reopenNote}}（开局模块，本轮不可点）</span></button></sc-if>
+                    </div>
+                  </section>
+                </div>
+              </sc-if>
+            </div>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== DETAIL (participant) + READ + WAITLIST + HISTORY + DRAFT: the same skeleton ===================== -->
+      <sc-if value="{{c.nav.on.detail}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep {{c.nav.cls.detail}}" data-surface="detail">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool"><button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.detail.secondary}}"><button type="button" class="c09-weak" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></sc-if></div>
+            <h1 class="c09-tt">{{v.dt.title}}</h1><span class="c09-tt c09-probe" aria-hidden="true">{{v.dt.title}}</span>
+            <p class="c09-meta">{{v.dt.meta}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.dt.area.zh}}</span><span class="sub"><span class="c">{{v.dt.area.countText}}</span><span class="h">{{v.dt.hood}}</span></span><span class="en">{{v.dt.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="detail" onScroll="{{v.onScroll}}">
+            <sc-if value="{{c.detail.on}}"><div class="c09-body">
+              <dl class="c09-kv"><dt>局名</dt><dd>{{c.detail.title}}</dd><dt>时间</dt><dd>{{c.detail.when.zh}}</dd><dt>地点</dt><dd>{{v.dt.placeFull}}</dd><dt>局主</dt><dd>{{c.detail.host.name}}</dd></dl>
+              <sc-if value="{{c.detail.countdown.on}}"><p class="c09-cd">预留还剩 <b>{{c.detail.countdown.text}}</b>{{c.detail.row.deadlineText}}</p></sc-if>
+              <sc-if value="{{c.detail.receipt}}"><div class="c09-rcpt"><b>{{c.detail.receipt.title}}</b><p>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</p><p>{{c.detail.receipt.note}}</p></div></sc-if>
+              <sc-if value="{{c.detail.result}}"><div class="c09-result"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
+              <div class="c09-sub"><h3 class="c09-ah"><span class="n">成员</span><span class="sub"><span class="c">{{c.detail.seatText}}</span></span></h3>
+                <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><div class="c09-mem"><b>{{m.name}}</b><div><span class="st">{{m.statusText}}</span></div></div></sc-for></div>
+              <sc-if value="{{c.detail.error}}"><p class="c09-err">{{c.detail.error}}</p></sc-if>
+            </div></sc-if>
+          </div>
+          <div class="c09-foot"><sc-if value="{{v.dt.primaryOn}}"><button type="button" class="ju-v27-cta ju-action-native21" data-act="{{c.detail.primary.key}}" aria-disabled="{{c.detail.primary.disabled}}" onClick="{{c.detail.primary.act}}"><span class="gloss"></span><span class="label">{{c.detail.primary.label}}</span></button></sc-if></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep {{c.nav.cls.read}}" data-surface="read">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool"><button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+            <h1 class="c09-tt">参加约定</h1><span class="c09-tt c09-probe" aria-hidden="true">参加约定</span>
+            <p class="c09-meta"><sc-if value="{{c.read.countdown.on}}">剩 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.rd.area.zh}}</span><span class="sub"><span class="c">{{v.rd.area.countText}}</span><span class="h">{{v.rd.hood}}</span></span><span class="en">{{v.rd.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="read" onScroll="{{v.onReadScroll}}">
+            <div class="c09-body">
+              <sc-if value="{{c.read.result}}"><div class="c09-result"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
+              <sc-if value="{{c.read.expired}}"><div class="c09-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
+              <div class="c09-rules"><sc-for list="{{c.read.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div>
+              <p class="c09-endmark">— {{c.read.endMark}} —</p>
+              <sc-if value="{{c.read.error}}"><p class="c09-err">{{c.read.error}}</p></sc-if>
+            </div>
+          </div>
+          <div class="c09-foot"><button type="button" class="ju-v27-cta ju-action-native21" data-act="{{c.read.primary.key}}" aria-disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button><sc-if value="{{c.read.secondary}}"><button type="button" class="c09-weak" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.waitlist}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep {{c.nav.cls.waitlist}}" data-surface="waitlist">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool"><button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回" onClick="{{c.waitlist.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.waitlist.secondary}}"><button type="button" class="c09-weak" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></sc-if></div>
+            <h1 class="c09-tt">{{v.wl.title}}</h1><span class="c09-tt c09-probe" aria-hidden="true">{{v.wl.title}}</span>
+            <p class="c09-meta">{{c.waitlist.seatLine}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.wl.area.zh}}</span><span class="sub"><span class="c">{{v.wl.area.countText}}</span><span class="h">{{v.wl.hood}}</span></span><span class="en">{{v.wl.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="waitlist" onScroll="{{v.onScroll}}">
+            <sc-if value="{{c.waitlist.on}}"><div class="c09-body">
+              <div class="c09-rcpt"><b>{{c.waitlist.receipt.title}}</b><p>{{c.waitlist.receipt.field}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p><sc-if value="{{c.waitlist.receipt.note}}"><p>{{c.waitlist.receipt.note}}</p></sc-if></div>
+              <sc-if value="{{c.waitlist.countdown.on}}"><p class="c09-cd">剩 <b>{{c.waitlist.countdown.text}}</b></p></sc-if>
+              <div class="c09-sub"><h3 class="c09-ah"><span class="n">已进</span></h3><sc-for list="{{c.waitlist.entered}}" as="m" hint-placeholder-count="3"><div class="c09-mem"><b>{{m.name}}</b><div><span class="st">{{m.statusText}}</span></div></div></sc-for></div>
+              <div class="c09-sub"><h3 class="c09-ah"><span class="n">候补</span><span class="sub"><span class="c">{{c.waitlist.total}} 人</span></span></h3><sc-for list="{{c.waitlist.queue}}" as="q" hint-placeholder-count="2"><div class="c09-q"><i>{{q.pos}}</i><b>{{q.name}}</b></div></sc-for><p class="c09-note">{{c.waitlist.hint}}</p></div>
+            </div></sc-if>
+          </div>
+          <div class="c09-foot"><sc-if value="{{c.waitlist.on}}"><button type="button" class="ju-v27-cta ju-action-native21" data-act="ok" onClick="{{c.waitlist.primary.act}}"><span class="gloss"></span><span class="label">{{c.waitlist.primary.label}}</span></button></sc-if></div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.history}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep {{c.nav.cls.history}}" data-surface="history">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool"><button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回" onClick="{{c.history.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+            <h1 class="c09-tt">{{v.hs.title}}</h1><span class="c09-tt c09-probe" aria-hidden="true">{{v.hs.title}}</span>
+            <p class="c09-meta">{{v.hs.meta}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.hs.area.zh}}</span><span class="sub"><span class="c">{{v.hs.area.countText}}</span><span class="h">{{v.hs.hood}}</span></span><span class="en">{{v.hs.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="history" onScroll="{{v.onScroll}}">
+            <sc-if value="{{c.history.on}}"><div class="c09-body">
+              <sc-if value="{{c.history.hasStamp}}"><div class="c09-t08" data-t08-scope="1" aria-label="出席印记"></div><sc-if value="{{v.hs.stampFallback}}"><p class="c09-note">{{v.hs.stampNote}}</p></sc-if><p class="c09-note">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if>
+              <sc-if value="{{c.history.oldWhen}}"><p class="c09-reply"><s>原定 {{c.history.oldWhen.zh}}</s></p></sc-if>
+              <p class="c09-reply">{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="c09-note">{{c.history.closedNote}}</p></sc-if>
+              <sc-if value="{{v.hs.showStage}}">
+                <div class="ju-ticket-stage c09-stage {{v.hs.stageCls}}" data-print-stage="c09h" data-state="idle">
+                  <div class="ju-ticket" data-paper="c09h">
+                    <div class="ju-ticket-shadow" data-paper-shadow="c09h" data-raster="skip"><div></div></div>
+                    <div class="ju-ticket-shell" data-paper-shell="c09h">
+                      <div class="ju-ticket-surface" data-paper-surface="c09h">
+                        <div class="ju-ticket-body"><div class="ju-ticket-face">
+                          <div class="ju-ticket-brand">JU. / 票根</div>
+                          <div class="ju-ticket-title" data-slot="title">{{c.history.ritual.title}}</div>
+                          <div class="ju-ticket-when"><span data-slot="time">{{c.history.ritual.time}}</span><span data-slot="md">{{c.history.ritual.md}}</span></div>
+                          <div class="ju-ticket-previous" data-slot="previous" hidden="{{v.hs.noPrevious}}">{{v.hs.previousText}}</div>
+                          <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.history.ritual.loc}}</strong></div>
+                          <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.history.ritual.meeting}}</strong></div>
+                          <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.history.ritual.host}}</strong></div>
+                        </div></div>
+                        <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{v.hs.noMark}}">{{c.history.ritual.mark}}</div>
+                        <div class="ju-ticket-stub" data-tear="c09h"></div>
+                      </div>
+                    </div>
+                    <div class="ju-ticket-burn" data-burn="c09h" data-raster="skip"></div>
+                  </div>
+                </div>
+                <sc-if value="{{c.history.ashes}}"><p class="c09-note" style="text-align:center">票根已作废</p></sc-if>
+              </sc-if>
+              <sc-if value="{{c.history.contactOpen}}"><p class="c09-reply">局主微信 <b>{{c.history.hostWx}}</b> <button type="button" class="c09-tbtn" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></p><sc-if value="{{c.history.copyFail}}"><p class="c09-copyfail">未能复制，长按手动复制 <button type="button" class="c09-tbtn" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
+              <sc-if value="{{c.history.contactClosedText}}"><p class="c09-note">{{c.history.contactClosedText}}</p></sc-if>
+              <div class="c09-sub"><h3 class="c09-ah"><span class="n">记录</span><span class="sub"><span class="c">{{v.hs.recordCount}} 条</span></span></h3>
+                <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c09-mem"><b>{{x.kindLabel}}</b><div>{{x.text}}<br>{{x.atText}}</div></div></sc-for>
+                <button type="button" class="c09-tbtn" data-act="report" onClick="{{c.history.report.open}}">{{c.history.report.label}} ›</button>
+                <p class="c09-note">{{c.history.footer.lead}} · 我的记录页为账户级，本轮不可点</p></div>
+            </div></sc-if>
+          </div>
+        </section>
+      </sc-if>
+      <sc-if value="{{c.nav.on.draft}}" hint-placeholder-val="{{false}}">
+        <section class="c09-pg c09-deep {{c.nav.cls.draft}}" data-surface="draft">
+          <header class="c09-hd" data-header>
+            <div class="c09-tool"><button type="button" class="ju-v27-back-pill c09-back" data-act="back" aria-label="返回" onClick="{{c.draft.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+            <h1 class="c09-tt">{{c.draft.title}}</h1><span class="c09-tt c09-probe" aria-hidden="true">{{c.draft.title}}</span>
+            <p class="c09-meta">草稿 · {{c.draft.missingText}}</p>
+            <div class="c09-band" data-c09-band><div class="c09-ah"><span class="n">{{v.df.area.zh}}</span><span class="sub"><span class="c">{{v.df.area.countText}}</span><span class="h">{{v.df.hood}}</span></span><span class="en">{{v.df.area.en}}</span></div></div>
+          </header>
+          <div class="c09-sc" data-scroller="draft" onScroll="{{v.onScroll}}">
+            <sc-if value="{{c.draft.on}}"><sc-if value="{{c.draft.row}}"><div class="c09-body">
+              <dl class="c09-kv"><dt>时间</dt><dd>{{c.draft.whenText}}</dd><dt>地点</dt><dd>{{c.draft.placeText}}</dd><dt>人数</dt><dd>{{c.draft.capacity}} 人（含你）</dd><dt>状态</dt><dd>{{c.draft.missingText}}</dd></dl>
+              <p class="c09-note" style="margin-top:12px">{{c.draft.agoText}}<sc-if value="{{c.draft.sourceText}}"> · {{c.draft.sourceText}}</sc-if></p>
+              <button type="button" class="c09-arr inert" aria-disabled="true" onClick="{{c.inert}}" style="margin-top:18px"><b>继续编辑</b><span>开局模块，本轮不可点</span></button>
+              <button type="button" class="c09-arr danger" data-act="delete" onClick="{{c.draft.del}}"><b>删除草稿</b><span>删除后 10 秒内可在列表撤销</span></button>
+            </div></sc-if></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <nav class="c09-nav" aria-label="JU"><sc-for list="{{v.nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" aria-current="{{t.on}}" onClick="{{t.go}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.d}}"></path></svg><span>{{t.label}}</span></button></sc-for></nav>
+
+      <!-- ===================== SHEET (white plane + 2px ink top edge, like the 先做 block) ===================== -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="c09-over {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="c09-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}">
+            <h3>{{c.sheet.title}}</h3>
+            <sc-if value="{{c.sheet.identity}}"><p class="c09-sid"><b>{{c.sheet.identity.title}}</b><span>{{c.sheet.identity.when}} · {{c.sheet.identity.place}}</span></p></sc-if>
+            <sc-if value="{{c.sheet.body}}"><p>{{c.sheet.body}}</p></sc-if>
+            <sc-if value="{{c.sheet.fields}}">
+              <p><s>原定 {{c.sheet.fields.oldWhen.zh}}</s> → {{v.sh.newOrPlaceholder}}</p>
+              <label class="c09-fl">新日期 · {{c.sheet.fields.tz}}<input class="c09-in" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}"></label>
+              <label class="c09-fl">新时间<input class="c09-in" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}"></label>
+              <sc-if value="{{c.sheet.fields.sameHint}}"><p class="c09-err">{{c.sheet.fields.sameHint}}</p></sc-if>
+              <p class="c09-note">{{c.sheet.fields.consequence}}</p>
+            </sc-if>
+            <sc-if value="{{v.sh.hasAffected}}"><p class="c09-fl">{{c.sheet.affectedTitle}}</p><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><div class="c09-mem"><b>{{x.label}}</b><div>{{x.n}}</div></div></sc-for></sc-if>
+            <sc-if value="{{c.sheet.irreversible}}"><p class="c09-irrev">{{c.sheet.irreversible}}</p></sc-if>
+            <sc-if value="{{c.sheet.hint}}"><p class="c09-note">{{c.sheet.hint}}</p></sc-if>
+            <sc-if value="{{c.sheet.card}}"><dl class="c09-kv"><dt>局名</dt><dd>{{c.sheet.card.title}}</dd><dt>时间</dt><dd>{{c.sheet.card.when.zh}}</dd><dt>地点</dt><dd>{{c.sheet.card.place.full}}</dd><dt>状态</dt><dd>{{c.sheet.card.statusLabel}}</dd></dl><p class="c09-note">{{c.sheet.card.caption}}</p></sc-if>
+            <sc-if value="{{v.sh.isRecord}}">
+              <sc-if value="{{c.sheet.done}}"><div class="c09-result"><b>{{c.sheet.doneTitle}}</b><p>{{c.sheet.doneBody}}</p></div></sc-if>
+              <sc-if value="{{v.sh.recordOpen}}"><label class="c09-fl">发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c09-in" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label></sc-if>
+            </sc-if>
+            <sc-if value="{{c.sheet.error}}"><p class="c09-err">{{c.sheet.error}}</p></sc-if>
+            <div class="c09-acts">
+              <sc-if value="{{v.sh.okPrimary}}"><button type="button" class="ju-v27-cta ju-action-native21" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}"><span class="gloss"></span><span class="label">{{c.sheet.okLabel}}</span></button></sc-if>
+              <sc-if value="{{v.sh.okDanger}}"><button type="button" class="ju-v27-danger ju-action-native21" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+              <button type="button" class="c09-weak" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="c09-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"live":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* ---------------- C09 helpers (pure) ---------------- */
+var C09_AREAS = { Manhattan: ['曼哈顿', 'MANHATTAN', 1], Brooklyn: ['布鲁克林', 'BROOKLYN', 2], Queens: ['皇后区', 'QUEENS', 3], Upstate: ['上州', 'UPSTATE', 4] };
+function c09Area(pl) { var k = pl && pl.area || ''; if (!k) return { key: 'none', zh: '地点未定', en: '', o: 9 }; var a = C09_AREAS[k]; return a ? { key: k, zh: a[0], en: a[1], o: a[2] } : { key: k, zh: k, en: String(k).toUpperCase(), o: 8 }; }
+function c09When(w) { return w && w.md ? w.wdZh + ' ' + w.md + ' ' + w.time : '日期未定'; }
+function c09Day(ms) { var d = new Date(ms), dn = Math.floor(ms / 864e5), nn = Math.floor(JU.now() / 864e5); var p = function (n) { return (n < 10 ? '0' : '') + n; }; return (dn === nn ? '今天' : dn === nn + 1 ? '明天' : (d.getUTCMonth() + 1) + '月' + d.getUTCDate() + '日') + ' ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()); }
+var C09_NAV = { find: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20', create: 'M12 5v14M5 12h14', mine: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z', settings: 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4' };
+var C09_JR = { act: 0, soon: 1, wait: 2, kept: 3, closed: 4 };
+var C09_HR = { todo: 0, resched: 1, recruit: 2, formed: 3, ended: 4, cancelled: 5 };
+var C09_HT = { todo: 't-act', resched: 't-amber', recruit: 't-wait', formed: 't-soon', ended: 't-kept', cancelled: 't-void' };
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 320, back: 300, swap: 280, role: 260 };   /* 节内滑入 320ms；返回 300ms；角色 260ms */
+    this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.envRef = { current: null }; this._rit = {}; this._lift = null; this._fresh = {};
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  R() { return window.JURitual || null; }
+  live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
+  componentDidMount() { this._mountEnv(); this._syncTh(); this._syncRituals(null); this._syncReduced(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncTh(); this._syncBand(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncStuck(); }
+  componentWillUnmount() { this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
+  /* ---------------- environment ---------------- */
+  _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
+  _syncEnv(ps) {
+    const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; const r = this.state.review, pr = ps && ps.review;
+    if (!S.state(el)) return this._mountEnv();
+    if (r.skin !== (pr && pr.skin)) S.setSkin(el, r.skin || 'cotton');
+    if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
+  }
+  _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
+  /* ---------------- header: the title's natural two-line height (V27 th) drives meta / band / scroller positions ---------------- */
+  _syncTh() {
+    const root = this.rootRef.current; if (!root) return;
+    root.querySelectorAll('[data-surface]').forEach(sec => { const pr = sec.querySelector(':scope > .c09-hd > .c09-probe'); if (!pr) return; const h = pr.offsetHeight; if (h && Math.abs((sec._th || 0) - h) > 0.5) { sec._th = h; sec.style.setProperty('--th', h + 'px'); } });
+  }
+  _onScroll(ev) {
+    const el = ev.currentTarget; this._c && this._c.nav.onScroll(ev);
+    const sec = el.closest('[data-surface]'); const t = el.scrollTop; if (sec) { sec.classList.toggle('c09-p1', t >= this.headerRange - 0.5); sec.classList.toggle('c09-p5', t >= this.headerRange * 0.5); }
+    if (sec && sec.dataset.surface === 'home') this._stick(el);
+  }
+  /* the district header that is currently pinned under the collapsed title gets a frosted ground (only then: the headers have no container) */
+  _stick(sc) {
+    const hs = sc.querySelectorAll('.c09-area>.c09-ah'); if (!hs.length) return; const top = sc.getBoundingClientRect().top;
+    hs.forEach(h => { const cs = parseFloat(getComputedStyle(h).top) || 0; const y = h.getBoundingClientRect().top - top; h.classList.toggle('is-stuck', sc.scrollTop > 4 && Math.abs(y - cs) < 1.5); });
+  }
+  _syncStuck() { const root = this.rootRef.current; const sc = root && root.querySelector('[data-scroller="home"]'); if (sc && this._c && this._c.nav.cur === 'home') this._stick(sc); }
+  /* ---------------- the band: the tapped row's district header leaves the list and becomes the deep page's breadcrumb ---------------- */
+  _noteBand(ev, eventId) {
+    const root = this.rootRef.current; const el = ev && ev.currentTarget; const sec = el && el.closest && el.closest('[data-c09-area]'); const h = sec && sec.querySelector('[data-c09-ah]');
+    if (!root || !h) { this._band = null; this._lift = null; return; }
+    const rt = root.getBoundingClientRect().top; this._band = { y: h.getBoundingClientRect().top - rt }; this._lift = { eventId: eventId, area: sec.getAttribute('data-c09-area') };
+  }
+  _bandY(band) { const ah = band.firstElementChild; return band.offsetTop + (ah ? ah.offsetTop : 0); }   /* layout position (no transform): the header box top inside the band */
+  _syncBand(ps) {
+    const root = this.rootRef.current, nav = this.state.nav; if (!root || !nav || !ps || !ps.nav) return;
+    const st = nav.stack, top = st[st.length - 1]; const pn = ps.nav;
+    const fresh = nav.phase !== pn.phase || nav.seq !== pn.seq || st.length !== pn.stack.length;
+    if (!fresh) return;
+    const band = root.querySelector('[data-surface="' + top.s + '"] > .c09-hd > .c09-band'); const rt = root.getBoundingClientRect().top;
+    if (nav.phase === 'enter' && nav.dir === 'fwd' && band) {
+      const b = this._band; this._band = null;
+      if (b && st.length === 2) { const y = this._bandY(band); band.style.setProperty('--c09-bfrom', (b.y - y).toFixed(1) + 'px'); band.style.setProperty('--c09-bo', '1'); band.style.setProperty('--c09-bc', '1'); }
+      else { band.style.setProperty('--c09-bfrom', '18px'); band.style.setProperty('--c09-bo', '0'); band.style.setProperty('--c09-bc', '0'); }
+    }
+    if (nav.phase === 'exit' && band) {
+      const under = st[st.length - 2]; const lift = this._lift; let to = null;
+      if (under && under.s === 'home' && lift && top.p && top.p.eventId === lift.eventId) { const h = root.querySelector('[data-surface="home"] [data-c09-ah="' + lift.area + '"]'); if (h) { const hy = h.getBoundingClientRect().top - rt; to = hy - this._bandY(band); } }
+      if (to != null) { band.style.setProperty('--c09-bto', to.toFixed(1) + 'px'); band.style.setProperty('--c09-bo2', '1'); band.style.setProperty('--c09-bc', '1'); }
+      else { band.style.setProperty('--c09-bto', '18px'); band.style.setProperty('--c09-bo2', '0'); band.style.setProperty('--c09-bc', '0'); }
+    }
+    if (nav.phase === 'idle' && top.s === 'home') this._lift = null;
+  }
+  /* ---------------- rituals: the controller wrote the data; these calls only show it (C00 wiring) ---------------- */
+  _syncRituals(ps) {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const stage = root.querySelector('[data-surface="ticket"] .c09-stage,[data-surface="reply"] .c09-stage');
+    if (c.ticket.on && stage) {
+      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) { if (!(c.ticket.state === 'printing' && c.nav.moving)) this._mountTicket(stage, c); }
+      if (this._rit.stage === stage) { const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } } }
+      if (c.ticket.result && c.ticket.result.burning && !this._rit.burn && this._rit.stage === stage) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
+    } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
+    const hstage = root.querySelector('[data-surface="history"] .c09-stage');
+    if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); } else if (this._rit.hstage) this._destroyHistoryStage();
+    const thost = root.querySelector('[data-surface="history"] .c09-t08');
+    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost) this._mountStamp(thost, c); } else if (this._rit.thost) this._destroyStamp();
+    const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
+    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+  }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _mountTicket(stage, c) {
+    this._destroyTicket();
+    const sec = stage.closest('[data-surface]'), cw = sec && sec.querySelector('[data-contact-reveal]');
+    if (cw && !c.ticket.contact.on) { cw.dataset.revealed = 'false'; cw.setAttribute('aria-hidden', 'true'); const act = sec.querySelector('[data-contact-action]'); if (act) act.dataset.shown = 'false'; }
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (R && R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
+    if (!R || !R.print) { stage.dataset.state = st === 'torn' || st === 'fresh' ? 'torn' : 'ready'; if (st === 'printing' || st === 'fresh') this.ticketPrinted(c.ticket.printKey); return; }
+    if (st === 'printing') {
+      const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
+      R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(res => {
+        if (this._rit.stage !== stage) return;
+        const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null);
+        if (!res.ok && res.reason !== 'superseded') this.say(res.message || '纸票未准备好，请重试', 'error');
+        this.ticketPrinted(key);
+      });
+    } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
+    else if (st === 'torn') this._settleTicket(stage, data, 'torn');
+    else if (st === 'fresh') { this._settleTicket(stage, data, 'torn'); this.ticketPrinted(c.ticket.printKey); }   /* an already torn ticket opened from its row: shown torn, recorded as shown */
+  }
+  _settleTicket(stage, data, final, tearOpts) {
+    const R = this.R(); R.fillTicket(stage, data);
+    const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
+    if (final === 'ready' && R.tear) {
+      const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready';
+      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage && this._rit.hstage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
+      if (tearOpts) this.registerTear(h);
+      return h;
+    }
+    stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
+  }
+  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _contact() {
+    if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
+    const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
+    const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+    const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
+    const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+    this._rit.contact = h; return h;
+  }
+  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = isH ? c.history.ritual : c.ticket.ritual; const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _mountHistoryStage(stage, c) {
+    this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = c.history.ritual; if (!R || !data) return;
+    this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
+    if (c.history.ashes) { stage.dataset.state = 'void'; return; }
+    if (c.history.burn.play) { this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: () => { this._rit.hburn = null; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); } }); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  }
+  _destroyHistoryStage() { const t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
+  _mountStamp(host, c) {
+    this._destroyStamp(); this._rit.thost = host; const R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
+    const p = R.stamp(host, c.history.stampData, { adapter: 'v27', active: () => !!(this._c && this._c.history.on), onPhase: () => { } });
+    p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
+  }
+  _destroyStamp() { const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
+  _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
+  /* effects arrive AFTER the data was written: the changed numbers / seats / rows get a short "fresh" mark */
+  onEffect(fx) {
+    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
+    if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
+    if (fx.type === 'invited' || fx.type === 'rejected') { const until = Date.now() + 1400; this._fresh = { event: fx.eventId, apps: until, head: fx.type === 'invited' ? until : 0, slot: fx.type === 'invited' ? fx.slot : -1, nick: fx.type === 'invited' ? fx.nick : '' }; this.holdKey('c09fresh', 1500, () => { this._fresh = {}; this.setState({}); }); }
+    if (fx.type === 'attended') { this._fresh = { att: fx.memberId, until: Date.now() + 2500 }; }
+  }
+  /* ---------------- view model (composition only; behaviour is c.*) ---------------- */
+  _countIn(areas, key) { const a = areas && areas.find(x => x.key === key); return a ? a.countText : ''; }
+  _joinedRow(r, leadId, c) {
+    const st = r.stage; const tone = r.group === 'act' ? 't-act' : r.group === 'soon' ? 't-soon' : r.group === 'wait' ? 't-wait' : r.group === 'kept' ? 't-kept' : 't-void';
+    let status = r.label, note = '', action = null, actLabel = '';
+    if (st === 'invited' || st === 'invited_queue') { if (r.id === leadId) note = '先回应，见上方'; else { note = r.deadline ? c09Day(r.deadline) + ' 截止' : ''; action = r.act; actLabel = r.cta; } }
+    else if (st === 'reschedule') { note = r.oldWhen ? '原定 ' + r.oldWhen.time : ''; if (r.id !== leadId) { action = r.act; actLabel = r.cta; } }
+    else if (st === 'tear') { note = '撕开后联系局主'; if (r.id !== leadId) { action = r.act; actLabel = r.cta; } }
+    else if (st === 'contact') { status = '待联系局主'; note = '撕票后 8 小时内'; if (r.id !== leadId) { action = r.act; actLabel = r.cta; } }
+    else if (st === 'going') note = r.need.indexOf('今天') === 0 ? r.need : (r.contactAdded ? '已加微信' : '');
+    else if (st === 'pending') note = '不占名额';
+    else if (st === 'waitlist') note = '轮到时才开始预留';
+    else if (st === 'gathering') note = '全员确认后出票';
+    else if (st === 'ended') note = r.attendanceText || '';
+    else { const parts = String(r.need || '').split(' · '); note = parts.filter(x => x && x !== r.label)[0] || ''; }
+    const self = this;
+    return { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood || '地点未定', when: c09When(r.when), who: '局主 ' + r.hostName, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
+      cls: (r.landing ? 'is-landing ' : '') + (r.id === leadId ? 'is-lead' : ''), aria: r.title + '，' + r.place.hood + '，' + status, rank: C09_JR[r.group] == null ? 5 : C09_JR[r.group], t: r.sortTime || 0, area: c09Area(r.place),
+      tap: function (ev) { self._noteBand(ev, r.id); r.open(ev); }, kd: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); self._noteBand(ev, r.id); r.open(ev); } } };
+  }
+  _hostRow(r, leadId, hist) {
+    const sec = hist ? (r.event.status === 'cancelled' ? 'cancelled' : 'ended') : r.section; const tone = C09_HT[sec] || 't-wait';
+    let status = r.status, note = '', action = null, actLabel = '';
+    if (sec === 'todo') { status = r.label; if (r.id === leadId) note = '先处理，见上方'; else if (r.cta) { action = r.act; actLabel = r.cta; } }
+    else if (sec === 'resched') { status = '改期中'; note = r.label; }
+    else if (sec === 'recruit') { status = '招募中'; note = r.label; }
+    else if (sec === 'formed') { status = '已成局'; note = r.label; }
+    else if (sec === 'ended') { status = '已散场'; note = r.label; if (r.unrecorded && r.cta) { action = r.act; actLabel = r.cta; } }
+    else { status = '已取消'; note = '票根作废 · 联系已关闭'; }
+    const self = this;
+    return { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood || '地点未定', when: c09When(r.when), who: r.seatText, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
+      cls: (r.landing ? 'is-landing ' : '') + (r.id === leadId ? 'is-lead' : ''), aria: r.title + '，' + r.place.hood + '，' + status, rank: C09_HR[sec] == null ? 6 : C09_HR[sec], t: r.sortTime || 0, area: c09Area(r.place),
+      tap: function (ev) { self._noteBand(ev, r.id); r.open(ev); }, kd: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); self._noteBand(ev, r.id); r.open(ev); } } };
+  }
+  _draftRow(d) {
+    const self = this; const pl = d.place;
+    return { id: d.id, originKey: d.originKey, title: d.title, hood: d.placeText, when: d.whenText === '日期未定' ? '日期未定' : c09When(d.when), who: d.capacity + ' 人', status: d.ready ? '可以发布' : d.missingText, note: d.agoText + (d.sourceText ? ' · ' + d.sourceText : ''), tone: d.ready ? 't-soon' : 't-wait', action: null, draft: true, del: d.del,
+      cls: (d.cls || '') + (d.landing ? ' is-landing' : ''), aria: d.title + '，草稿', rank: 0, t: 0, area: c09Area(pl), tap: function (ev) { self._noteBand(ev, d.id); d.open(ev); }, kd: function (ev) { if (ev.key === 'Enter') { self._noteBand(ev, d.id); d.open(ev); } } };
+  }
+  _areas(rows, sortRows, liftArea) {
+    const by = {}, out = [];
+    rows.forEach(r => { const k = r.area.key; if (!by[k]) { by[k] = { key: k, zh: r.area.zh, en: r.area.en, o: r.area.o, rows: [] }; out.push(by[k]); } by[k].rows.push(r); });
+    out.sort((a, b) => a.o - b.o);
+    out.forEach(a => { if (sortRows) a.rows.sort((x, y) => x.rank - y.rank || x.t - y.t); a.countText = a.rows.length + (a.rows[0] && a.rows[0].draft ? ' 份' : ' 场'); a.cls = liftArea && liftArea === a.key ? 'is-lift' : ''; });
+    return out;
+  }
+  _home(c) {
+    const role = c.role, sec = c.section, self = this;
+    const lift = this._lift && c.nav.cur !== 'home' ? this._lift.area : null;   /* the tapped row's district header is "away" (it is the deep page's band) */
+    let rows = [], lead = null, empty = null, footer = '', countText = '', sortRows = true;
+    if (role === 'joined') {
+      const J = c.joined; const leadRow = sec === 'current' ? J.lead : null; const leadId = leadRow ? leadRow.id : null;
+      rows = (sec === 'current' ? J.current : J.history).map(r => this._joinedRow(r, leadId, c));
+      if (sec === 'history') { rows.forEach(r => { r.t = -r.t; }); footer = c.COPY.historyFooter.lead + '：在每场记录里补充或提出异议。'; }
+      if (J.empty.on) empty = { title: J.empty.title, body: J.empty.body, label: J.empty.action.label, go: J.empty.action.go, inert: !!J.empty.action.inert };
+      countText = rows.length + (sec === 'current' ? ' 场' : ' 场结束');
+      if (leadRow) {
+        const r = leadRow; const act = r.group === 'act';
+        lead = { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: '局主 ' + r.hostName,
+          label: (act ? '先回应这一件' : '下一场') + ' · ' + (r.deadline && (r.stage === 'invited' || r.stage === 'invited_queue') ? c09Day(r.deadline) + ' 截止' : r.label),
+          left: r.left && r.left.on ? r.left.text : '', leftTone: r.left && (r.left.tone === 'red' || r.left.tone === 'expired') ? 'red' : r.left && r.left.tone === 'amber' ? 'amber' : '', ratio: r.left && r.left.on ? r.left.ratio.toFixed(4) : '1',
+          sub: r.left && r.left.on ? '' : r.need, cta: r.cta || '查看', act: r.act, sec: r.secondary, secLabel: r.secondaryLabel, secKey: r.secondaryKey, noSec: !r.secondary,
+          open: function (ev) { const t = ev.target; if (t && t.closest && t.closest('[data-act]')) return; self._band = null; self._lift = null; r.open(ev); } };
+      }
+    } else {
+      const H = c.hosted;
+      if (sec === 'drafts') { rows = H.drafts.map(d => this._draftRow(d)); sortRows = false; countText = rows.length + ' 份草稿'; }
+      else {
+        const leadRow = sec === 'current' ? H.lead : null; const leadId = leadRow ? leadRow.id : null;
+        rows = (sec === 'current' ? H.current : H.history).map(r => this._hostRow(r, leadId, sec === 'history'));
+        if (sec === 'history') rows.forEach(r => { r.t = -r.t; });
+        countText = rows.length + (sec === 'current' ? ' 场' : ' 场结束');
+        if (leadRow) {
+          const r = leadRow;
+          lead = { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: r.seatText, label: '先处理这一件 · ' + r.label, left: '', leftTone: '', ratio: '1',
+            sub: r.seatMore ? r.seatMore + ' · ' + r.formedLine : r.formedLine, cta: r.cta || '管理这局', act: r.act, sec: null, noSec: true,
+            open: function (ev) { const t = ev.target; if (t && t.closest && t.closest('[data-act]')) return; self._band = null; self._lift = null; r.open(ev); } };
+        }
+      }
+      if (H.empty.on) empty = { title: H.empty.title, body: H.empty.body, label: H.empty.action.label, go: H.empty.action.go, inert: !!H.empty.action.inert };
+    }
+    const areas = this._areas(rows, sortRows, lift);
+    const index = areas.filter(a => a.key !== 'none').map(a => ({ zh: a.zh, n: a.rows.length, go: () => { const root = this.rootRef.current; const sc = root && root.querySelector('[data-scroller="home"]'); const el = root && root.querySelector('[data-c09-area="' + a.key + '"]'); if (sc && el) { const y = el.offsetTop - (parseFloat(getComputedStyle(el.firstElementChild).top) || 70) + 6; try { sc.scrollTo({ top: Math.max(0, y), behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop = y; } } } }));
+    return { lead, areas, index, countText: empty ? '' : countText, empty, footer, undo: role === 'hosted' && sec === 'drafts' && c.hosted.undo.on };
+  }
+  _deep(row, homeAreas) { const pl = row && (row.place || (row.event && JU.fmt.place(row.event.loc))) || null; const ar = c09Area(pl); return { area: Object.assign({}, ar, { countText: this._countIn(homeAreas, ar.key) }), hood: pl ? pl.hood : '' }; }
+  renderVals() {
+    const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals(); this._c = c; const s = this.state; const self = this;
+    const home = this._home(c);
+    const v = { home, onScroll: (ev) => this._onScroll(ev), onReadScroll: (ev) => { c.read.onScroll(ev); this._onScroll(ev); } };
+    v.nav = c.rootNav.map(t => Object.assign({}, t, { d: C09_NAV[t.k] || '' }));
+    /* ticket / reply */
+    const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
+    v.tk = { on: ticketOn };
+    if (ticketOn && tk.on) {
+      const row = tk.row; Object.assign(v.tk, this._deep(row, home.areas), {
+        surface: c.nav.on.reply ? 'reply' : 'ticket', cls: (c.nav.cls.ticket || '') + (c.nav.cls.reply || ''), title: tk.title, meta: tk.reply ? tk.reply.newText + ' · ' + tk.reply.oldText : row.label + ' · ' + row.need,
+        exitAct: tk.isReply ? 'decline' : 'exit', showStage: !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !tk.ritual.previous, previousText: tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !tk.ritual.mark,
+        tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', declineOn: !!(tk.reply && tk.tear.canTear), contactAction: !tk.unavailable && !tk.result && tk.state === 'torn',
+        showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), peek: tk.state === 'torn' && !tk.contact.on && tk.contact.available && !tk.contact.closed && !tk.result && !tk.tear.active && tk.stage === 'going',
+        retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } });
+    } else if (ticketOn) Object.assign(v.tk, { surface: c.nav.on.reply ? 'reply' : 'ticket', cls: (c.nav.cls.ticket || '') + (c.nav.cls.reply || ''), area: { zh: '', en: '', countText: '' }, hood: '', title: '', meta: '' });
+    /* manage */
+    const m = c.manage; v.mg = { ready: m.on && !m.missing, area: { zh: '', en: '', countText: '' } };
+    if (m.on && !m.missing) {
+      const f = this._fresh && this._fresh.event === m.eventId ? this._fresh : {}; const now = Date.now();
+      Object.assign(v.mg, this._deep({ place: m.head.place }, home.areas), { title: m.head.title, meta: m.head.meta, seatsOn: !m.head.progress.hidden && !m.head.ended,
+        seats: (m.head.progress.seats || []).map((x, i) => ({ cls: x.kind + (x.attendance ? ' att-' + x.attendance : '') + (f.slot === i && f.head > now ? ' is-fresh' : '') })),
+        freshHead: f.head > now ? 'is-fresh' : '', freshHeadC: f.head > now ? 'is-fresh' : '', freshApps: f.apps > now ? 'is-fresh' : '',
+        appsCount: m.apps.count ? m.apps.count + ' 份待审' + (m.apps.handled ? ' · 已处理 ' + m.apps.handled : '') : (m.apps.handled ? '已处理 ' + m.apps.handled : '没有待审'),
+        rosterCount: '已确认 ' + m.head.progress.confirmed + '/' + m.head.progress.cap + (m.head.progress.reserved ? ' · 预留 ' + m.head.progress.reserved : ''), rosterNote: m.head.formed ? '微信仅你可见' : '含你',
+        leavesLabel: m.leaves && m.leaves.open ? '收起' : '展开' });
+      m.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; a.vCls = a.verified ? 'ok' : ''; });
+      m.roster.rows.forEach(r => { r.cls = f.nick && f.head > now && r.name === f.nick ? 'is-fresh' : ''; });
+      m.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'is-fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; });
+    }
+    /* detail / read / waitlist / history / draft */
+    v.dt = c.detail.on ? Object.assign(this._deep(c.detail.row, home.areas), { title: c.detail.row.detailTitle || c.detail.title, meta: c.detail.title, placeFull: c.detail.place.full, primaryOn: c.detail.primary && c.detail.primary.key !== 'none' }) : { area: {}, primaryOn: false };
+    v.rd = c.read.on ? this._deep(c.read.row, home.areas) : { area: {} };
+    v.wl = c.waitlist.on ? Object.assign(this._deep(c.waitlist.row, home.areas), { title: c.waitlist.receipt ? c.waitlist.receipt.title : c.waitlist.title }) : { area: {} };
+    const hr = c.history.on ? c.history.ritual : null;
+    v.hs = c.history.on ? Object.assign(this._deep(c.history.row, home.areas), { title: c.history.title, meta: c.history.label + ' · ' + c09When(c.history.when), recordCount: c.history.records.length, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '' }) : { area: {} };
+    v.df = c.draft.on && c.draft.row ? this._deep(c.draft.row, home.areas) : { area: {} };
+    v.sh = { hasAffected: !!(c.sheet.affected && c.sheet.affected.length), newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done,
+      okPrimary: c.sheet.on && c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done) && !c.sheet.danger, okDanger: c.sheet.on && !!c.sheet.danger && c.sheet.kind !== 'card', okDisabled: !c.sheet.canOk };
+    return { panel, rootRef: this.rootRef, envRef: this.envRef, c, v, noSkins: !c.ritual.skins };
+  }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>

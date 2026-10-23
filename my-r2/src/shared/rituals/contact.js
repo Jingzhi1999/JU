@@ -70,7 +70,7 @@
         busy = false; if (opts.onCopy) opts.onCopy(ok); return ok;
       },
       add: () => { if (added) return false; added = true; paint(); if (opts.onAdd) opts.onAdd(); return true; },
-      destroy: () => { clearTimeout(timers.reveal); clearTimeout(timers.action); },
+      destroy: () => { handle.hide(); },   /* 主负责人（C04 复核）：同一段 DOM 在跳转 / replace 时会被下一张票复用，销毁时把显示状态（data-revealed / data-shown / 已复制 / 错误行）一并复位 */
     };
     if (copyBtn) copyBtn.onclick = () => handle.copy();
     if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') handle.add(); };

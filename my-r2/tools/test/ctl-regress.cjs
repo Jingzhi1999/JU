@@ -164,7 +164,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await inst(p, `inst.jumpTo('j-d-contact')`); ok('jumped contact layer revealed', await until(p, `return !!root.querySelector('[data-contact-reveal][data-revealed="true"]')`, 3000)); await inst(p, `inst.armCopyFail()`);
     await click(p, '[data-contact-reveal] [data-act="copy"]'); await p.waitForTimeout(300);
     const f = await inst(p, `return { fail: inst.state.ui.copy && inst.state.ui.copy.ok === false, toast: inst.state.toast && inst.state.toast.text, armed: inst.state.data.flags.copyFailNext, retry: !!root.querySelector('.c00-copyfail [data-act="retry"]'), hint: root.querySelector('[data-surface="ticket"]').textContent.indexOf('长按') >= 0, moduleErr: root.querySelector('[data-contact-reveal] .ju-form-error').textContent }`);
-    ok('armed copy failure → the module shows its own error, the controller 未能复制 + manual hint + 重试, flag consumed', f.fail && f.toast === '未能复制，长按手动复制' && !f.armed && f.retry && f.hint && f.moduleErr === '复制失败，请长按账号复制', f);
+    ok('armed copy failure → the module shows its own error (the only message: no toast on top), the controller keeps manual hint + 重试, flag consumed', f.fail && !f.toast && !f.armed && f.retry && f.hint && f.moduleErr === '复制失败，请长按账号复制', f);
     await click(p, '.c00-copyfail [data-act="retry"]'); await p.waitForTimeout(300);
     ok('retry copies for real', (await inst(p, `return inst.state.ui.copy && inst.state.ui.copy.ok`)) === true && (await p.evaluate(() => navigator.clipboard.readText())) === 'dantat.coffee');
   });

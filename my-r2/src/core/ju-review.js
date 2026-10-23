@@ -140,12 +140,12 @@
       var s = this._scrubS; this._scrubS = null; if (!s) return;
       s.zeroed.forEach(function (z) { try { if (z.ct != null && z.a.effect && z.a.effect.target && z.a.effect.target.isConnected) z.a.currentTime = z.ct; } catch (e) { } });
     };
-    p.reset = function (variant) { this.clearTimers(); this._paused = false; this._scrubS = null; this._pendingRestore = null; this._pendingSection = null; this._sheetTrigger = null; this._restoreFocus = null; var st = this.initialState(variant || this.state.variant || 'default'); st.jumpKey = null; this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; }); };
+    p.reset = function (variant) { this.clearTimers(); this._paused = false; this._scrubS = null; this._pendingRestore = null; this._pendingSection = null; this._sheetTrigger = null; this._restoreFocus = null; this._resetScrollers = true; var st = this.initialState(variant || this.state.variant || 'default'); st.jumpKey = null; this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; }); };
     p.loadVariant = function (key) { this.reset(key); };
     p.replay = function () { if (!this.lastMotion) return; var m = this.lastMotion; if (this.beforeReplay) this.beforeReplay(m.name); var self = this; this.after(60, function () { m.fn.call(self); }); };
     p.jumpTo = function (key) {
       var e = JU.INDEX.filter(function (x) { return x.key === key; })[0]; if (!e) return;
-      this.clearTimers(); this._paused = false; this._scrubS = null; this._pendingRestore = null; this._pendingSection = null; this._sheetTrigger = null; this._restoreFocus = null;
+      this.clearTimers(); this._paused = false; this._scrubS = null; this._pendingRestore = null; this._pendingSection = null; this._sheetTrigger = null; this._restoreFocus = null; this._resetScrollers = true;
       var st = this.initialState(e.variant || 'default'); st.jumpKey = e.key;
       this.setState(function (cur) { st.review = Object.assign({}, cur.review, { scrub: null, paused: false, kb: false }); return st; });
       /* the default applyJump (= ctlJump) only writes state, so it is applied in the same tick: one render, no home flash between

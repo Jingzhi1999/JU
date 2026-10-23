@@ -48,7 +48,7 @@
 
 ## 负载规则（主负责人 · 2026-10-23 04:10 起，所有构建者与复核者）
 本机 4 核；无 GPU 的无头 Chromium 用 SwiftShader 画 live 环境（棉糖 three.js 水面），每个页面约占满一个核。八位构建者并行时 1 分钟负载到过 40，帧序列的时间戳因此被拉长，录出来的运动不可信。
-1. 所有 Playwright / Chromium 命令都经共享锁串行：`flock -w 1800 /home/user/JU/.build/chromium.lock timeout 900 node …`；思考与写文件时不持锁。
+1. 所有 Playwright / Chromium 命令都经共享槽位：`my-r2/tools/slot.sh timeout 900 node …`（全机最多两个浏览器任务同时跑；06:05 起取代单锁 `flock … chromium.lock`——单锁时负载只有 2–3 却要排队十几分钟）。一次只为一个任务占槽，长批次拆成多次调用；思考与写文件时不占槽。
 2. 页面挂载、环境画出第一帧（约 1s）后暂停环境引擎：`JU.shared.skins.pause(inst.envRef.current)`（ctl-regress 的同一调用；暂停留当前帧快照，静态截图外观不变）。`setSkin` 会重建 live 层，切换后约 700ms 再暂停一次。只有专门记录环境自身节奏的采集保持 live。
 3. 运动帧序列只在 `uptime` 1 分钟负载 < 8 时录制，日志写明当时负载；高于此值录到的序列要重录。
 4. 一次运行结束就关浏览器，不留常驻会话。

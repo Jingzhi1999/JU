@@ -21,7 +21,8 @@ body{margin:0}
    ============================================================================================================================ */
 .app.c02{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:var(--ink);background:#e8e4ec;font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;
   --ink:#1c1817;--ink2:#3a3431;--ink3:#58514e;--act:#3441a3;--go:#066a4f;--warn:#b92e46;--amber:#93560a;--void:#7b7370;--sh:52,38,80;--ta:#fbe0ec;--tb:#d4ecf4;--hdv:rgba(234,230,241,.92);--foot:rgba(236,233,242,.96);
-  --cink:#1c1817;--cink2:#3d3734;--cink3:#6a6360;--paper:rgba(255,255,255,.96);--q1:#efa9c4;--q2:#93cbe2}
+  --cink:#1c1817;--cink2:#3d3734;--cink3:#6a6360;--paper:rgba(255,255,255,.96);--q1:#efa9c4;--q2:#93cbe2;
+  --pgbg:linear-gradient(180deg,rgba(255,255,255,.36) 0%,rgba(255,255,255,.22) 36%,rgba(255,255,255,.15) 100%)}
 .app.c02[data-skin="halo"]{--ink3:#443a36;--act:#1f2878;--go:#064532;--warn:#8c192e;--amber:#6e3c05;--void:#5b524e;--sh:116,54,12;--ta:#ffd6b8;--tb:#e4d4f0;--hdv:rgba(238,214,196,.92);--foot:rgba(240,222,208,.96);--q1:#f7a46b;--q2:#b9a3dd}
 .app.c02[data-skin="sunset"]{--ink3:#443a38;--act:#1f2878;--go:#064532;--warn:#8c192e;--amber:#6e3c05;--void:#5b524e;--sh:100,50,56;--ta:#ffd2ba;--tb:#cbd9f7;--hdv:rgba(246,212,192,.92);--foot:rgba(204,206,230,.96);--q1:#f9a07a;--q2:#91aeea}
 .app.c02 *,.app.c02 *::before,.app.c02 *::after{box-sizing:border-box}
@@ -40,22 +41,36 @@ body{margin:0}
 .app[data-skin="sunset"] .c02-veil{background:linear-gradient(180deg,rgba(255,244,236,.18) 0%,rgba(255,244,240,.26) 50%,rgba(246,246,255,.2) 100%)}
 /* ---- pages: the page you leave is gone within 90ms; the people fly across on their own layer (.c02-fly, 440ms); the new page
    arrives from 90ms and its words rise in under the people. No frame shows two pages' words at once. ---- */
-.c02-pg{position:absolute;inset:0;z-index:3}
+.c02-pg{position:absolute;inset:0;z-index:2}
 .c02-pg.is-top{z-index:4}
-/* every fade starts from the same commit (CSS animations, not the phase timer), so the hand-over is exact whatever the render cost:
-   the page you leave 1 → 0 in 0–90ms; the page you arrive at 0 → 1 from 76ms; its words rise from 76ms + their own --d */
+.c02-pg.is-under.ph-exit{z-index:6}
+/* page hand-over (M4): the tapped row / card surface grows into the new page's sheet (.c02-morph, a container transform drawn
+   between the two pages), the event title travels as a shared element and the people fly (.c02-fly, above both pages); the old
+   content clears on that sheet within 90ms and the new first block rises on it from 100ms. Every fade starts from the same commit
+   (CSS animations), so no frame shows both pages' words, and no frame is only light + initials (the sheet and the title are always there). */
 @keyframes c02-out{0%{opacity:1}100%{opacity:0}}
 @keyframes c02-op{0%{opacity:0}100%{opacity:1}}
 @keyframes c02-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
 @keyframes c02-slidein{0%{opacity:0;transform:translateX(26px)}100%{opacity:1;transform:none}}
-.c02-pg.is-under.dir-fwd.ph-enter,.c02-pg.is-under.dir-fwd.ph-in,.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both;pointer-events:none}
+/* one page sheet at a time: the deep page on top shows its milky sheet; a page underneath / leaving never does */
+.c02-pgbg{position:absolute;inset:0;z-index:0;pointer-events:none;background:var(--pgbg)}
+.c02-pg.is-under .c02-pgbg,.c02-pg.is-leaving .c02-pgbg,.c02-pg.is-top.ph-exit .c02-pgbg{visibility:hidden}
+.c02-pg.is-under.ph-exit .c02-pgbg{visibility:visible}
+/* the page you leave: its content is gone within 90ms */
+.c02-pg.is-under.dir-fwd.ph-enter>*,.c02-pg.is-under.dir-fwd.ph-in>*,.c02-pg.is-top.ph-exit>*,.c02-pg.is-leaving>*{animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
+.c02-pg.is-under.dir-fwd.ph-enter,.c02-pg.is-under.dir-fwd.ph-in,.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{pointer-events:none}
 .c02-pg.is-under.ph-idle,.c02-pg.is-under.dir-swap{opacity:0;visibility:hidden;pointer-events:none}
-.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit{animation:c02-op calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(76ms * var(--k)) both}
-.c02-pg.is-under.ph-exit{z-index:5}
+/* the page you arrive at: its content from 62ms, as the old content drops below .15; its sheet is the morph until it lands */
+.c02-deep.is-top.dir-fwd.ph-enter>:not(.c02-pgbg),.c02-deep.is-top.dir-fwd.ph-in>:not(.c02-pgbg),.c02-deep.is-top.dir-swap.ph-enter>:not(.c02-pgbg),.c02-deep.is-top.dir-swap.ph-in>:not(.c02-pgbg),.c02-pg.is-under.ph-exit>:not(.c02-pgbg){animation:c02-op calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(62ms * var(--k)) both}
 .c02-pg.c02-skip{animation:none!important;opacity:0!important;visibility:hidden}
 .c02-pg.c02-held{pointer-events:none}
-.c02-deep.is-top.dir-fwd.ph-enter .c02-in,.c02-deep.is-top.dir-fwd.ph-in .c02-in,.c02-deep.is-top.dir-swap.ph-enter .c02-in,.c02-deep.is-top.dir-swap.ph-in .c02-in,.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(380ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc((var(--d,0ms) + 76ms) * var(--k)) both}
-.c02-deep.is-top.dir-fwd.ph-enter .c02-slide,.c02-deep.is-top.dir-fwd.ph-in .c02-slide,.c02-deep.is-top.dir-swap.ph-enter .c02-slide,.c02-deep.is-top.dir-swap.ph-in .c02-slide{animation:c02-slidein calc(380ms * var(--k)) cubic-bezier(.16,.84,.24,1) calc((var(--d,0ms) + 76ms) * var(--k)) both}
+.c02-deep.is-top.dir-fwd.ph-enter .c02-in,.c02-deep.is-top.dir-fwd.ph-in .c02-in,.c02-deep.is-top.dir-swap.ph-enter .c02-in,.c02-deep.is-top.dir-swap.ph-in .c02-in,.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(280ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc((var(--d,0ms) + 62ms) * var(--k)) both}
+.c02-deep.is-top.dir-fwd.ph-enter .c02-slide,.c02-deep.is-top.dir-fwd.ph-in .c02-slide,.c02-deep.is-top.dir-swap.ph-enter .c02-slide,.c02-deep.is-top.dir-swap.ph-in .c02-slide{animation:c02-slidein calc(300ms * var(--k)) cubic-bezier(.16,.84,.24,1) calc((var(--d,0ms) + 62ms) * var(--k)) both}
+/* the morph layer: between the two pages (z 3 entering, z 5 returning; set per flight) */
+.c02-morph{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.c02-morph>i{position:absolute;inset:0;will-change:clip-path}
+.c02-morph>i>b{position:absolute;inset:0}
+.c02-fly>u{position:absolute;left:0;top:0;margin:0;transform-origin:0 0;text-decoration:none;will-change:transform;pointer-events:none}
 /* the flight layer: one circle per person, from where it was to where it lands; the destination circle shows when it lands */
 .c02-fly{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}
 .c02-fly>i{position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;will-change:transform;font-style:normal}
@@ -157,10 +172,14 @@ body{margin:0}
 .c02-gh .note{margin-left:auto;font-size:calc(12px * var(--tz,1));color:var(--ink3);overflow:hidden;text-overflow:ellipsis;min-width:0}
 .c02-row{position:relative;display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:14px;padding:11px 22px 12px;cursor:pointer;touch-action:pan-y;outline:none}
 .c02-row::before{content:'';position:absolute;top:2px;bottom:2px;left:10px;right:10px;border-radius:18px;background:rgba(255,255,255,0);transition:background calc(140ms * var(--k)) ease}
-.c02-row:active::before{background:rgba(255,255,255,.36);transition-duration:60ms}
+.c02-row:active::before,.c02-row.is-pressed::before{background:rgba(255,255,255,.42);transition-duration:0ms}
+.c02-row.is-pressed .c02-clu{transform:scale(.95);transition-duration:60ms}
+.c02-lead{transition:transform calc(180ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c02-lead.is-pressed{transform:scale(.985);transition-duration:60ms}
+.c02-lead.is-pressed .c02-lead-ring{box-shadow:inset 0 0 0 2px rgba(255,255,255,.95),0 0 0 3px rgba(255,255,255,.4)}
 .c02-row:focus-visible::before{background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 2px var(--act)}
 .c02-row.is-landing::before{animation:c02-land 1.1s ease both}
-@keyframes c02-land{0%{background:rgba(255,255,255,.62)}100%{background:rgba(255,255,255,0)}}
+@keyframes c02-land{0%{background:rgba(255,255,255,.42)}100%{background:rgba(255,255,255,0)}}
 .c02-row:active .c02-clu{transform:scale(.95)}
 .c02-clu{transition:transform calc(160ms * var(--k)) ease}
 .c02-txt{position:relative;min-width:0}
@@ -205,6 +224,9 @@ body{margin:0}
 /* ---- deep pages ---- */
 .c02-pplrow{position:absolute;z-index:6;left:22px;right:22px;top:calc(var(--sat,0px) + 77px + (var(--th,31.5px) + 13px) * (1 - var(--hc,0)) - 9px * var(--hc,0));display:flex;align-items:center;gap:12px;opacity:calc(1 - var(--hc,0) * 1.7);min-width:0;pointer-events:none!important}
 .c02-pplrow .c02-clu{flex:none;margin-top:0}
+.c02-pplrow.low{top:calc(var(--sat,0px) + 77px + (var(--th,31.5px) + 19px + 21px * var(--tz,1)) * (1 - var(--hc,0)) - 9px * var(--hc,0))}
+.c02-stl{font-weight:500;color:var(--ink)}
+.c02-stl.act{color:var(--act)}.c02-stl.go{color:var(--go)}.c02-stl.warn{color:var(--warn)}.c02-stl.void{color:var(--void)}.c02-stl.wait{color:var(--ink2)}
 .c02-t14.c02-rdh{z-index:6;top:calc(var(--sat,0px) + 77px + (var(--th,31.5px) + 57px) * (1 - var(--hc,0)) - 9px * var(--hc,0))}
 .c02-pplrow .l{min-width:0;font-size:calc(16px * var(--tz,1));font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c02-deep .c02-sc{--pb:132px;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 118px - var(--sab,0px) - var(--kb,0px)),rgba(0,0,0,0) calc(100% - 58px - var(--sab,0px) - var(--kb,0px)));mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 118px - var(--sab,0px) - var(--kb,0px)),rgba(0,0,0,0) calc(100% - 58px - var(--sab,0px) - var(--kb,0px)))}   /* words dissolve into the light before they reach the footer CTA (a disabled CTA is translucent) */
@@ -450,7 +472,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                 <sc-for list="{{jSecs}}" as="g" hint-placeholder-count="3">
                   <div class="c02-gh c02-in" data-g="{{g.key}}"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
                 <sc-if value="{{g.lead.on}}">
-                  <div class="c02-lead {{g.lead.swapCls}}" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
+                  <div class="c02-lead {{g.lead.swapCls}}" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onPointerDown="{{press}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
                     <div class="c02-lead-bg c02-in"></div><div class="c02-lead-ring"></div>
                     <div class="c02-lead-body">
                       <div class="c02-lead-top {{g.lead.topCls}}">
@@ -467,7 +489,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                   </div>
                 </sc-if>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
-                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onPointerDown="{{press}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
                       <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
                       <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
                     </div>
@@ -481,7 +503,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                 <sc-for list="{{c.joined.sectionsHistory}}" as="g" hint-placeholder-count="2">
                   <div class="c02-gh c02-in"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
-                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onPointerDown="{{press}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
                       <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
                       <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
                     </div>
@@ -496,7 +518,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                 <sc-for list="{{hSecs}}" as="g" hint-placeholder-count="3">
                   <div class="c02-gh c02-in" data-g="{{g.key}}"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
                 <sc-if value="{{g.lead}}">
-                  <div class="c02-lead {{g.lead.swapCls}}" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
+                  <div class="c02-lead {{g.lead.swapCls}}" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onPointerDown="{{press}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
                     <div class="c02-lead-bg c02-in"></div><div class="c02-lead-ring"></div>
                     <div class="c02-lead-body">
                       <div class="c02-lead-top nr">
@@ -511,7 +533,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                   </div>
                 </sc-if>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
-                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onPointerDown="{{press}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
                       <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
                       <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
                     </div>
@@ -523,7 +545,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
               <sc-if value="{{home.hd}}">
                 <sc-if value="{{c.hosted.empty.on}}"><div class="c02-empty c02-in c02-late"><div class="rings"><i></i></div><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c02-chip inert" aria-disabled="true" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
                 <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
-                  <div class="c02-row {{r.cls}} {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.title}}" onClick="{{r.open}}">
+                  <div class="c02-row {{r.cls}} {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.title}}" onPointerDown="{{press}}" onClick="{{r.open}}">
                     <div class="c02-clu" aria-hidden="true"><span class="c02-avw"><span class="c02-av">{{r.c2.g}}</span></span></div>
                     <div class="c02-txt"><p class="c02-ppl">{{r.title}}</p><p class="c02-ttl">{{r.whenText}} · {{r.placeText}}</p><p class="c02-mt"><span class="w">{{r.agoText}}</span><span class="st {{r.c2.tone}}">{{r.missingText}}</span></p>
                       <div class="c02-dacts"><button type="button" class="c02-mini inert" aria-disabled="true" onClick="{{c.inert}}">{{r.continueLabel}}（开局模块）</button><button type="button" class="c02-mini" data-act="delete" onClick="{{r.del}}">删除</button></div>
@@ -538,7 +560,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                 <sc-for list="{{c.hosted.sectionsHistory}}" as="g" hint-placeholder-count="2">
                   <div class="c02-gh c02-in"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
-                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onPointerDown="{{press}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
                       <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
                       <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
                     </div>
@@ -556,8 +578,9 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== DETAIL (participant) ===================== -->
       <sc-if value="{{nv.on.detail}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep {{nv.cls.detail}}" data-surface="detail" style="--th:{{dt.th}};--hdh:{{dt.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.detail.secondary}}"><button type="button" class="c02-weak" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></sc-if></div>
-          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.detail.title}}</h1><p class="c02-t14">{{dt.sub}}</p></header>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{dt.title}}</h1><p class="c02-t14"><b class="c02-stl {{dt.tone}}">{{c.detail.title}}</b> · {{dt.sub}}</p></header>
           <div class="c02-sc" data-scroller="detail" onScroll="{{onScroll}}">
             <sc-if value="{{c.detail.on}}">
               <sc-if value="{{c.detail.result}}"><div class="c02-result c02-in" style="margin:0 20px 14px"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
@@ -573,11 +596,11 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
               <sc-for list="{{dt.open}}" as="o" hint-placeholder-count="1"><div class="c02-prow is-open c02-in"><span class="open"></span><div><p class="nm">{{o}}</p></div><span></span></div></sc-for>
               <sc-if value="{{c.detail.receipt}}"><div class="c02-card c02-in" style="margin-top:10px"><h3>{{c.detail.receipt.title}}</h3><p class="m">{{c.detail.receipt.field}}<sc-if value="{{c.detail.receipt.body}}"> · {{c.detail.receipt.body}}</sc-if></p><p class="s">{{c.detail.receipt.note}}</p></div></sc-if>
               <!-- the event as an object: V27 局卡 at its door size, then the facts at reading size -->
-              <div class="c02-cardblk c02-in" style="--d:70ms">
+              <div class="c02-cardblk c02-in" style="--d:50ms">
                 <div class="c02-v27" role="img" aria-label="局卡 · {{c.detail.event.title}}"><div data-spin-shadow></div><div data-spin-face="front"><div data-c02card="{{dt.cardKey}}"></div><div class="ju-v27-face-dots"></div><div class="ju-v27-sheen-clip"><div data-spin-sheen></div></div><div class="ju-v27-face-ring"></div><div class="ju-v27-punch-top"></div><div class="ju-v27-punch-bottom"></div></div></div>
-                <div class="c02-facts"><p class="t">{{dt.title}}</p><p class="w">{{dt.when}}</p><p class="p">{{c.detail.place.full}}</p><p class="h">局主 {{c.detail.host.name}} · {{dt.cap}} 人局</p><sc-if value="{{c.detail.event.note}}"><p class="n">{{c.detail.event.note}}</p></sc-if></div>
+                <div class="c02-facts"><p class="w">{{dt.when}}</p><p class="p">{{c.detail.place.full}}</p><p class="h">局主 {{c.detail.host.name}} · {{dt.cap}} 人局</p><sc-if value="{{c.detail.event.note}}"><p class="n">{{c.detail.event.note}}</p></sc-if></div>
               </div>
-              <div class="c02-card c02-rules c02-in" style="--d:110ms;margin-top:22px"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><h4>{{g.title}}</h4><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for><p class="s">查看我的记录 · 账户级页面，本轮不可点</p></div>
+              <div class="c02-card c02-rules c02-in" style="--d:70ms;margin-top:22px"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><h4>{{g.title}}</h4><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for><p class="s">查看我的记录 · 账户级页面，本轮不可点</p></div>
               <sc-if value="{{c.detail.error}}"><p class="c02-msg err c02-pad">{{c.detail.error}}</p></sc-if>
             </sc-if>
           </div>
@@ -588,10 +611,11 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== READ (阅读并确认) ===================== -->
       <sc-if value="{{nv.on.read}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep {{nv.cls.read}}" data-surface="read" style="--th:{{rd.th}};--hdh:{{rd.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.read.secondary}}"><button type="button" class="c02-weak" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if></div>
-          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.read.title}}</h1></header>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{rd.title}}</h1></header>
           <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{rd.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{rd.more}}"><span class="c02-more">{{rd.more}}</span></sc-if></div><p class="l c02-in">{{rd.line}}</p></div>
-          <p class="c02-t14 c02-rdh"><sc-if value="{{c.read.countdown.on}}">剩 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</p>
+          <p class="c02-t14 c02-rdh"><b class="c02-stl act">{{c.read.title}}</b> · <sc-if value="{{c.read.countdown.on}}">剩 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</p>
           <div class="c02-sc" data-scroller="read" onScroll="{{readScroll}}">
             <sc-if value="{{c.read.result}}"><div class="c02-result c02-in" style="margin:0 20px 12px"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
             <sc-if value="{{c.read.expired}}"><div class="c02-result c02-in" style="margin:0 20px 12px"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
@@ -605,8 +629,9 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== WAITLIST ===================== -->
       <sc-if value="{{nv.on.waitlist}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep {{nv.cls.waitlist}}" data-surface="waitlist" style="--th:{{wl.th}};--hdh:{{wl.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.waitlist.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.waitlist.secondary}}"><button type="button" class="c02-weak" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></sc-if></div>
-          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.waitlist.title}}</h1><p class="c02-t14">{{c.waitlist.seatLine}}</p></header>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{wl.title}}</h1><p class="c02-t14"><b class="c02-stl">{{c.waitlist.title}}</b> · {{c.waitlist.seatLine}}</p></header>
           <div class="c02-sc" data-scroller="waitlist" onScroll="{{onScroll}}">
             <sc-if value="{{c.waitlist.on}}">
               <div class="c02-card c02-in"><h3>{{c.waitlist.receipt.title}}</h3><p class="m">{{c.waitlist.receipt.field}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p><sc-if value="{{c.waitlist.receipt.note}}"><p class="s">{{c.waitlist.receipt.note}}</p></sc-if>
@@ -624,9 +649,10 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== TICKET / REPLY (shared original stage) ===================== -->
       <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep c02-tk {{nv.cls.ticket}}{{nv.cls.reply}}" data-surface="{{tk.surface}}" style="--th:{{tk.th}};--hdh:{{tk.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.ticket.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.ticket.canExit}}"><button type="button" class="c02-weak" data-act="{{tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if></div>
-          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.ticket.title}}</h1></header>
-          <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{tk.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{tk.more}}"><span class="c02-more">{{tk.more}}</span></sc-if></div><p class="l c02-in">{{tk.line}}</p></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{tk.title}}</h1><p class="c02-t14"><b class="c02-stl {{tk.tone}}">{{c.ticket.title}}</b> · {{tk.when}}</p></header>
+          <div class="c02-pplrow low"><div class="c02-clu"><sc-for list="{{tk.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{tk.more}}"><span class="c02-more">{{tk.more}}</span></sc-if></div><p class="l c02-in">{{tk.line}}</p></div>
           <div class="c02-sc" data-scroller="ticket" onScroll="{{onScroll}}">
             <sc-if value="{{c.ticket.on}}">
               <div class="c02-pad">
@@ -686,15 +712,16 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== HISTORY ===================== -->
       <sc-if value="{{nv.on.history}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep {{nv.cls.history}}" data-surface="history" style="--th:{{hi.th}};--hdh:{{hi.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.history.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
-          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.history.title}}</h1></header>
-          <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{hi.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{hi.more}}"><span class="c02-more">{{hi.more}}</span></sc-if></div><p class="l c02-in">{{hi.line}}</p></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{hi.title}}</h1><p class="c02-t14"><b class="c02-stl {{hi.tone}}">{{c.history.title}}</b> · {{hi.when}}</p></header>
+          <div class="c02-pplrow low"><div class="c02-clu"><sc-for list="{{hi.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{hi.more}}"><span class="c02-more">{{hi.more}}</span></sc-if></div><p class="l c02-in">{{hi.line}}</p></div>
           <div class="c02-sc" data-scroller="history" onScroll="{{onScroll}}">
             <sc-if value="{{c.history.on}}">
               <sc-if value="{{c.history.hasStamp}}"><div class="c02-t08" data-t08-scope="1" aria-label="出席印记"></div>
                 <sc-if value="{{hi.stampFallback}}"><div class="c02-card"><h3>{{c.history.event.title}}</h3><sc-if value="{{c.history.stampText}}"><p style="margin-top:10px"><span class="c02-chop {{c.history.stamp}}">{{c.history.stampText}}</span></p></sc-if></div></sc-if>
               </sc-if>
-              <div class="c02-card c02-in"><h3>{{hi.title}}</h3><p class="m">{{hi.when}} · {{c.history.place.full}} · 局主 {{c.history.host.name}}</p><sc-if value="{{c.history.oldWhen}}"><p class="s">原定 {{c.history.oldWhen.zh}}</p></sc-if><p class="s">{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="s">{{c.history.closedNote}}</p></sc-if><sc-if value="{{c.history.attendanceText}}"><p class="s">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if></div>
+              <div class="c02-card c02-in"><p class="m" style="margin-top:0">{{c.history.place.full}} · 局主 {{c.history.host.name}}</p><sc-if value="{{c.history.oldWhen}}"><p class="s">原定 {{c.history.oldWhen.zh}}</p></sc-if><p class="s">{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="s">{{c.history.closedNote}}</p></sc-if><sc-if value="{{c.history.attendanceText}}"><p class="s">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if></div>
               <sc-if value="{{hi.showStage}}"><div class="c02-pad">
                 <div class="ju-ticket-stage c02-stage {{hi.stageCls}}" data-print-stage="c02h" data-state="idle">
                   <div class="ju-ticket" data-paper="c02h">
@@ -737,6 +764,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== MANAGE (H1) ===================== -->
       <sc-if value="{{nv.on.manage}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep c02-mg {{mg.cls}} {{nv.cls.manage}}" data-surface="manage" style="--th:{{mg.th}};--hdh:{{mg.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{mg.ready}}"><button type="button" class="c02-weak" data-act="card" onClick="{{c.manage.card.open}}">局卡</button></sc-if></div>
           <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{mg.title}}</h1><p class="c02-t14">{{mg.meta}}</p></header>
           <div class="c02-sc" data-scroller="manage" onScroll="{{onScroll}}">
@@ -834,6 +862,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
       <!-- ===================== DRAFT ===================== -->
       <sc-if value="{{nv.on.draft}}" hint-placeholder-val="{{false}}">
         <section class="c02-pg c02-deep {{nv.cls.draft}}" data-surface="draft" style="--th:{{df.th}};--hdh:{{df.hdh}}">
+          <div class="c02-pgbg" aria-hidden="true"></div>
           <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.draft.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
           <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.draft.title}}</h1><p class="c02-t14">草稿 · {{c.draft.missingText}}</p></header>
           <div class="c02-sc" data-scroller="draft" onScroll="{{onScroll}}">
@@ -841,13 +870,14 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
               <div class="c02-gh c02-in" style="margin-top:2px"><span class="t">座位</span><span class="n">{{c.draft.capacity}}</span><span class="note">发布后，来的人坐进这些空位</span></div>
               <div class="c02-seg"><div class="c02-ss"><span class="c02-sv host">你</span><sc-for list="{{df.seats}}" as="v" hint-placeholder-count="3"><span class="c02-sv open"></span></sc-for></div><p class="c02-segtx c02-in"><b>还没有人</b>{{df.seatLine}}</p></div>
               <div class="c02-card c02-in" style="margin-top:14px"><h3>{{c.draft.title}}</h3><p class="m">{{c.draft.whenText}} · {{c.draft.placeText}} · {{c.draft.capacity}} 人（含你）</p><p class="s">{{c.draft.agoText}}<sc-if value="{{c.draft.sourceText}}"> · {{c.draft.sourceText}}</sc-if></p></div>
-              <div class="c02-arr c02-in"><button type="button" class="it" aria-disabled="true" onClick="{{c.inert}}"><span><b>继续编辑</b><small>开局模块，本轮不可点</small></span></button><button type="button" class="it danger" data-act="delete" onClick="{{df.del}}"><span><b>删除草稿</b><small>删除后 10 秒内可撤销</small></span></button></div>
+              <div class="c02-arr c02-in"><button type="button" class="it" aria-disabled="true" onClick="{{c.inert}}"><span><b>继续编辑</b><small>开局模块，本轮不可点</small></span></button><button type="button" class="it danger" data-act="delete" onClick="{{c.draft.del}}"><span><b>删除草稿</b><small>删除后 10 秒内可撤销</small></span></button></div>
             </sc-if></sc-if>
           </div>
         </section>
       </sc-if>
 
       <!-- ===================== SHEET ===================== -->
+      <div class="c02-morph" ref="{{morphRef}}" aria-hidden="true"></div>
       <div class="c02-fly" ref="{{flyRef}}" aria-hidden="true"></div>
       <sc-if value="{{S.on}}">
         <div class="c02-over {{S.cls}}" onKeyDown="{{S.onKeyDown}}">
@@ -940,7 +970,7 @@ class Component extends DCLogic {
     super(p); this.reviewInit(CONCEPT);
     this.motionSpec = { fwd: 400, back: 340, swap: 260, role: 280 };   /* ms at 1×: page words rise in 400ms while the circles fly; back 340 */
     this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
-    this.envRef = { current: null }; this.flyRef = { current: null }; this._rit = {}; this._flip = null; this._c2fx = []; this._fl = []; this._cardVm = {};
+    this.envRef = { current: null }; this.flyRef = { current: null }; this.morphRef = { current: null }; this._rit = {}; this._flip = null; this._c2fx = []; this._fl = []; this._cardVm = {};
     if (p.preset === 'hosted') this.state.role = 'hosted';
   }
   initialState(variant) { return JU.baseState(variant); }
@@ -960,59 +990,118 @@ class Component extends DCLogic {
     if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
   }
   _syncReduced(ps) { if (this.props.panel === false) return; var rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
-  /* ---------------- the people fly between pages on their own layer (.c02-fly); the pages only cross-fade ----------------
-     onNav (before the new page renders) records every [data-pk] circle of the origin: centre, size and look; after the render each
-     matching circle of the destination gets a flying copy that starts as the source and lands as the destination (440ms), while the
-     real circle waits under it. People who were not in the row open out of the cluster one after another. */
+  /* ---------------- page hand-over (M4): surface, title and people carry the eye from one page to the next ----------------
+     onNav (before the new page renders) records what is on screen now: the tapped row / card surface (rect, radius, look), its event
+     title (rect + type) and every [data-pk] circle (centre, size, look). After the render _fly() draws
+       · the surface: .c02-morph grows a sheet from the tapped thing to the full page (clip-path inset, 340ms) — or shrinks it back into
+         the row / card on return (320ms); the page's own sheet is hidden under it until it lands;
+       · the title: two faces (the source's type and the destination's) travel between the two title boxes and cross-fade (360ms);
+       · the people: one circle per person, from where it was to where it lands (440ms); people new to the page open out of the cluster.
+     A circle / title / sheet still in flight when the next hand-over starts is the starting point of the next one. */
   _look(el) {
     var r = el.getBoundingClientRect(); if (!r.width) return null; var av = el.querySelector('.c02-av') || el;
     var a = getComputedStyle(av), w = getComputedStyle(el);
     return { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, el: el, g: av.textContent.trim(), bg: a.backgroundImage !== 'none' ? a.backgroundImage : '', bc: a.backgroundColor, fg: a.color, fs: parseFloat(a.fontSize) || 14, sh: w.boxShadow !== 'none' ? w.boxShadow : (a.boxShadow !== 'none' ? a.boxShadow : 'none') };
   }
-  _rects(scope) { var out = {}, self = this; if (!scope) return out; scope.querySelectorAll('[data-pk]').forEach(function (el) { var k = el.getAttribute('data-pk'); if (!k || out[k]) return; var l = self._look(el); if (l) out[k] = l; }); return out; }
-  _land() { (this._fl || []).forEach(function (f) { try { f.a.cancel(); } catch (e) { } try { f.h.cancel(); } catch (e) { } if (f.i.parentNode) f.i.remove(); }); this._fl = []; }
+  _rects(scope) { var out = {}, self = this, now = this._flyNow || {}; if (!scope) return out; scope.querySelectorAll('[data-pk]').forEach(function (el) { var k = el.getAttribute('data-pk'); if (!k || out[k]) return; var l = self._look(el); if (l) { if (now[k]) { l.cx = now[k].cx; l.cy = now[k].cy; l.w = now[k].w; } out[k] = l; } }); return out; }
+  /* the surface a hand-over starts from / lands on: a home row's pressed highlight (inset 10 / 2, r 18) or the white first-thing card */
+  _surfOf(el) { if (!el) return null; var r = el.getBoundingClientRect(); if (!r.width) return null; var card = el.classList.contains('c02-lead'); return { rect: card ? r : { left: r.left + 10, right: r.right - 10, top: r.top + 2, bottom: r.bottom - 2 }, radius: card ? 24 : 18, look: card ? 'rgba(255,255,255,.96)' : 'rgba(255,255,255,.42)' }; }
+  _titleOf(el) { if (!el) return null; var r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; var c = getComputedStyle(el); var fs = parseFloat(c.fontSize) || 15, lh = parseFloat(c.lineHeight); return { el: el, text: el.textContent, rect: r, w: el.offsetWidth || r.width, fs: fs, lh: isNaN(lh) ? fs * 1.3 : lh, css: 'font-family:' + c.fontFamily + ';font-size:' + c.fontSize + ';font-weight:' + c.fontWeight + ';letter-spacing:' + c.letterSpacing + ';line-height:' + c.lineHeight + ';color:' + c.color + ';white-space:' + c.whiteSpace + ';overflow:hidden;text-overflow:ellipsis;display:' + c.display + ';-webkit-box-orient:vertical;-webkit-line-clamp:' + (c.webkitLineClamp || 'none') + ';text-wrap:' + (c.textWrapStyle === 'balance' || c.textWrap === 'balance' ? 'balance' : 'wrap') + ';overflow-wrap:' + c.overflowWrap }; }
+  _land() {
+    var now = {}, self = this, root = this.rootRef && this.rootRef.current;
+    (this._fl || []).forEach(function (f) { if (f.i && f.i.dataset && f.i.dataset.pk && f.i.getBoundingClientRect) { var r = f.i.getBoundingClientRect(); if (r.width) now[f.i.dataset.pk] = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width }; } if (f.i && f.i.dataset && f.i.dataset.sheet && f.i.isConnected && !f.landed) now.__sheet = getComputedStyle(f.i).clipPath; });
+    this._flyNow = now;
+    (this._fl || []).forEach(function (f) { try { f.a.cancel(); } catch (e) { } try { f.h && f.h.cancel(); } catch (e) { } (f.x || []).forEach(function (x) { try { x.cancel(); } catch (e) { } }); if (f.i && f.i.parentNode) f.i.remove(); }); this._fl = [];
+  }
   onNav(kind, s, params) {
     var root = this.rootRef && this.rootRef.current; this._land(); this._flip = null; if (!root || this.isRM()) return;
-    /* interrupted mid-arrival: the page leaves from the opacity it had reached (the CSS fade-out would restart it at 1) */
-    var top0 = root.querySelector('.c02-pg.is-top'), op = top0 ? +getComputedStyle(top0).opacity : 1;
-    if (top0 && op < 0.98 && top0.animate) { var an = top0.animate([{ opacity: op }, { opacity: 0 }], { duration: Math.max(1, 90 * this._kk() * op), easing: 'cubic-bezier(.2,0,.4,1)', fill: 'forwards' }); this._fl.push({ i: { parentNode: null }, a: an, h: an }); }
+    var top0 = root.querySelector('.c02-pg.is-top'), k = this._kk(), self = this;
+    /* interrupted mid-arrival: what had arrived leaves from the opacity it reached (the CSS fade-out would restart it at 1) */
+    if (top0) Array.prototype.forEach.call(top0.children, function (ch) { if (ch.classList.contains('c02-pgbg') || !ch.animate) return; var op = +getComputedStyle(ch).opacity; if (op < 0.98) { var an = ch.animate([{ opacity: op }, { opacity: 0 }], { duration: Math.max(1, 90 * k * op), easing: 'cubic-bezier(.2,0,.4,1)', fill: 'forwards' }); self._fl.push({ i: null, a: an }); } });
+    var fromHome = !!(top0 && top0.classList.contains('c02-home'));
     if (kind === 'go' || kind === 'replace') {
-      var id = params && params.eventId; var src = id ? root.querySelector('.c02-pg.is-top [data-origin="row-' + id + '"]') : null;
-      if (!src && id) src = root.querySelector('[data-origin="row-' + id + '"]');
-      if (!src && kind === 'replace') src = root.querySelector('.c02-pg.is-top');
-      this._flip = { to: s, back: false, rects: this._rects(src) };
+      var id = params && params.eventId; var src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null;
+      this._flip = { to: s, back: false, rects: this._rects(src || top0), surf: fromHome && src ? this._surfOf(src) : null, title: this._titleOf(src ? src.querySelector('.c02-lt,.c02-ttl') : (top0 && !fromHome ? top0.querySelector('.c02-t30') : null)) };
     } else if (kind === 'back') {
-      var st = this.state.nav.stack; var top = st[st.length - 1]; var cur = root.querySelector('.c02-pg.is-top');
-      this._flip = { to: s, back: true, key: top && top.key, rects: this._rects(cur) };
+      var st = this.state.nav.stack; var top = st[st.length - 1];
+      this._flip = { to: s, back: true, key: top && top.key, rects: this._rects(top0), sheet: !!(top0 && top0.classList.contains('c02-deep')), title: this._titleOf(top0 && top0.querySelector('.c02-t30')) };
     }
+  }
+  _same(a, b) { var n = function (t) { return String(t || '').replace(/[\s ]+/g, ''); }; return !!a && n(a) === n(b); }
+  /* the sheet: from (null = full page) → to (null = full page); look = the small end's colour; z 3 under the arriving page, 5 under the returning list */
+  _sheet(from, to, z, hide, k) {
+    var morph = this.morphRef.current; if (!morph || !morph.animate) return; var L = morph.getBoundingClientRect(), zf = (L.width / (morph.offsetWidth || L.width)) || 1;
+    var ins = function (x) { if (!x) return 'inset(0px 0px 0px 0px round 0px)'; var r = x.rect; return 'inset(' + ((r.top - L.top) / zf) + 'px ' + ((L.right - r.right) / zf) + 'px ' + ((L.bottom - r.bottom) / zf) + 'px ' + ((r.left - L.left) / zf) + 'px round ' + x.radius + 'px)'; };
+    morph.style.zIndex = z; var small = from || to; var mid = this._flyNow && this._flyNow.__sheet && this._flyNow.__sheet !== 'none' ? this._flyNow.__sheet : null;
+    var start = mid || ins(from);
+    var i = document.createElement('i'); i.dataset.sheet = '1'; var page = document.createElement('b'), face = document.createElement('b');
+    page.style.background = 'var(--pgbg)'; face.style.background = small ? small.look : 'transparent'; i.appendChild(page); i.appendChild(face); morph.appendChild(i);
+    var D = (to ? 300 : 320) * k; var a = i.animate([{ clipPath: start }, { clipPath: ins(to) }], { duration: D, easing: to ? 'cubic-bezier(.3,.7,.25,1)' : 'cubic-bezier(.2,.8,.2,1)', fill: 'both' });
+    var f0 = from ? 1 : 0, f1 = to ? 1 : 0; var x = [face.animate([{ opacity: f0 }, { opacity: f0, offset: .12 }, { opacity: f1, offset: .8 }, { opacity: f1 }], { duration: D, fill: 'both' })];
+    var h = hide && hide.animate ? hide.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }) : null;
+    var rec = { i: i, a: a, h: h, x: x }, self = this; this._fl.push(rec);
+    a.onfinish = function () { var done = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); };
+      if (to && i.animate) { rec.landed = true; var o = i.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 180 * k, easing: 'ease', fill: 'forwards' }); rec.x.push(o); o.onfinish = done; } else done(); };
+  }
+  _sheetFade(z, k) { var morph = this.morphRef.current; if (!morph || !morph.animate) return; morph.style.zIndex = z; var i = document.createElement('i'); var b = document.createElement('b'); b.style.background = 'var(--pgbg)'; i.appendChild(b); morph.appendChild(i); var a = i.animate([{ opacity: 1 }, { opacity: 1, offset: .25 }, { opacity: 0 }], { duration: 300 * k, easing: 'ease', fill: 'both' }); var rec = { i: i, a: a, landed: true }, self = this; this._fl.push(rec); a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); }; }
+  /* the event title as a shared element: the source face (its own type) and the destination face travel together and cross-fade */
+  _titleFly(src, dst, k) {
+    var layer = this.flyRef.current; if (!layer || !layer.animate || !src || !dst) return; var d = this._titleOf(dst); if (!d || !this._same(src.text, d.text)) return;
+    var L = layer.getBoundingClientRect(), zf = (L.width / (layer.offsetWidth || L.width)) || 1;
+    var sx = (src.rect.left - L.left) / zf, sy = (src.rect.top - L.top) / zf, dx = (d.rect.left - L.left) / zf, dy = (d.rect.top - L.top) / zf;
+    var sA = sy + (src.lh - src.fs) / 2, dA = dy + (d.lh - d.fs) / 2, up = d.fs / src.fs, dn = src.fs / d.fs;   /* glyph-top anchors */
+    var face = function (t, x, y) { var u = document.createElement('u'); u.textContent = t.text; u.style.cssText = t.css + ';position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + (t.w / 1) + 'px;margin:0;transform-origin:0 0'; layer.appendChild(u); return u; };
+    var A = face(src, sx, sy), B = face(d, dx, dy); var D = 340 * k, E = 'cubic-bezier(.2,.8,.2,1)';
+    var moveA = A.animate([{ transform: 'none' }, { transform: 'translate(' + (dx - sx) + 'px,' + (dA - sy - up * (src.lh - src.fs) / 2) + 'px) scale(' + up + ')' }], { duration: D, easing: E, fill: 'both' });
+    var moveB = B.animate([{ transform: 'translate(' + (sx - dx) + 'px,' + (sA - dy - dn * (d.lh - d.fs) / 2) + 'px) scale(' + dn + ')' }, { transform: 'none' }], { duration: D, easing: E, fill: 'both' });
+    var x = [A.animate([{ opacity: 1 }, { opacity: 1, offset: .15 }, { opacity: 0, offset: .55 }, { opacity: 0 }], { duration: D, fill: 'both' }), B.animate([{ opacity: 0 }, { opacity: 0, offset: .15 }, { opacity: 1, offset: .55 }, { opacity: 1 }], { duration: D, fill: 'both' }), moveB];
+    var h = dst.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }); if (src.el && src.el.isConnected && src.el.animate) x.push(src.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }));
+    var rec = { i: A, a: moveA, h: h, x: x }, self = this; this._fl.push(rec); this._fl.push({ i: B, a: moveB });
+    moveA.onfinish = function () { if (A.parentNode) A.remove(); if (B.parentNode) B.remove(); self._fl = self._fl.filter(function (y) { return y !== rec && y.i !== B; }); };
   }
   _fly() {
     var f = this._flip; if (!f) return; var root = this.rootRef && this.rootRef.current, layer = this.flyRef.current; if (!root || !layer) return;
     var dest = f.back ? root.querySelector('.c02-pg.is-under.ph-exit') : root.querySelector('.c02-pg.is-top[data-surface="' + f.to + '"]');
-    if (!dest) return; this._flip = null; var k = this._kk(); if (!k || !layer.animate) return;
-    var scope = dest; if (f.back && f.key) { var o = dest.querySelector('[data-origin="' + f.key + '"]'); if (o) scope = o; }
+    if (!dest) return; this._flip = null; var k = this._kk(); if (!k || !layer.animate) { this._flyNow = {}; return; }
+    var toHome = dest.classList.contains('c02-home'); var o = f.back && f.key ? dest.querySelector('[data-origin="' + f.key + '"]') : null;
+    /* 1 · the sheet */
+    if (!f.back && f.surf && dest.classList.contains('c02-deep')) this._sheet(f.surf, null, 3, dest.querySelector('.c02-pgbg'), k);
+    else if (f.back && f.sheet && toHome) { var oS = o ? this._surfOf(o) : null; if (oS) this._sheet(null, oS, 5, null, k); else this._sheetFade(5, k); }
+    /* 2 · the title */
+    var dT = f.back ? (toHome ? (o ? o.querySelector('.c02-lt,.c02-ttl') : null) : dest.querySelector('.c02-t30')) : dest.querySelector('.c02-t30');
+    if (f.title && dT) this._titleFly(f.title, dT, k);
+    /* 3 · the people */
+    var scope = o || dest;
     var lr = layer.getBoundingClientRect(), z = (lr.width / (layer.offsetWidth || lr.width)) || 1; var seen = {}, self = this, pops = [];
-    var D = 440 * k, E = 'cubic-bezier(.2,.78,.2,1)';
+    var D = 400 * k, E = 'cubic-bezier(.2,.78,.2,1)';
     scope.querySelectorAll('[data-pk]').forEach(function (el) {
       var key = el.getAttribute('data-pk'); if (!key || seen[key]) return; seen[key] = 1;
       var from = f.rects[key]; if (!from) { pops.push(el); return; } var to = self._look(el); if (!to) return;
       if (Math.abs(from.cx - to.cx) < 1 && Math.abs(from.cy - to.cy) < 1 && Math.abs(from.w - to.w) < 1) return;
       var W = to.w / z, x1 = (to.cx - lr.left) / z - W / 2, y1 = (to.cy - lr.top) / z - W / 2, x0 = (from.cx - lr.left) / z - W / 2, y0 = (from.cy - lr.top) / z - W / 2;
-      var i = document.createElement('i'); i.style.width = i.style.height = W + 'px';
+      var i = document.createElement('i'); i.dataset.pk = key; i.style.width = i.style.height = W + 'px';
       var face = function (l) { var b = document.createElement('b'); b.textContent = l.g; b.style.cssText = 'background:' + (l.bg ? l.bg + ',' : '') + l.bc + ';color:' + l.fg + ';font-size:' + (to.fs / z) + 'px;box-shadow:' + l.sh; return b; };
       var b0 = face(from), b1 = face(to); i.appendChild(b0); i.appendChild(b1); layer.appendChild(i);
       var a = i.animate([{ transform: 'translate(' + x0 + 'px,' + y0 + 'px) scale(' + (from.w / to.w) + ')' }, { transform: 'translate(' + x1 + 'px,' + y1 + 'px) scale(1)' }], { duration: D, easing: E, fill: 'both' });
-      b0.animate([{ opacity: 1 }, { opacity: 1, offset: .2 }, { opacity: 0, offset: .7 }, { opacity: 0 }], { duration: D, fill: 'both' });
-      b1.animate([{ opacity: 0 }, { opacity: 0, offset: .2 }, { opacity: 1, offset: .7 }, { opacity: 1 }], { duration: D, fill: 'both' });
+      var x = [b0.animate([{ opacity: 1 }, { opacity: 1, offset: .2 }, { opacity: 0, offset: .7 }, { opacity: 0 }], { duration: D, fill: 'both' }), b1.animate([{ opacity: 0 }, { opacity: 0, offset: .2 }, { opacity: 1, offset: .7 }, { opacity: 1 }], { duration: D, fill: 'both' })];
       var h = el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D });
-      if (from.el && from.el.isConnected) from.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D });
-      var rec = { i: i, a: a, h: h }; self._fl.push(rec);
-      a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (x) { return x !== rec; }); };
+      if (from.el && from.el.isConnected) x.push(from.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }));
+      var rec = { i: i, a: a, h: h, x: x }; self._fl.push(rec);
+      a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); };
     });
-    pops.forEach(function (el, j) { el.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360 * k, delay: (f.back ? 150 : 170 + j * 55) * k, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' }); });
+    pops.forEach(function (el, j) { el.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 300 * k, delay: (f.back ? 110 : Math.min(200, 110 + j * 30)) * k, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' }); });
+    this._flyNow = {};
   }
-  /* home() (回到列表) drops the stack without an exit phase: let the list arrive instead of snapping in */
-  _homeBack(ps) { var n = this.state.nav, p = ps && ps.nav; if (!p || !n || this.isRM()) return; if (n.stack.length === 1 && p.stack.length > 1 && p.phase !== 'exit' && n.phase === 'idle') { var root = this.rootRef.current, h = root && root.querySelector('.c02-home'); if (h && h.animate) h.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240 * this._kk(), easing: 'cubic-bezier(.2,.6,.3,1)' }); } }
+  /* press feedback within one frame of pointerdown: a home row lights its surface (the one that will grow into the page), a card dips */
+  _press(ev) {
+    var el = ev.currentTarget; if (!el || !el.classList) return; var t = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
+    if (t && t !== el && t.getAttribute('data-act') !== 'cta') return;
+    el.classList.add('is-pressed'); clearTimeout(el.__c02p);
+    var off = function () { el.classList.remove('is-pressed'); window.removeEventListener('pointercancel', off, true); };
+    window.addEventListener('pointercancel', off, true); el.__c02p = setTimeout(off, 900);
+  }
+  /* home() (回到列表) drops the stack without an exit phase: the page sheet thins away while the list arrives (never an empty frame) */
+  _homeBack(ps) { var n = this.state.nav, p = ps && ps.nav; if (!p || !n || this.isRM()) return; if (n.stack.length === 1 && p.stack.length > 1 && p.phase !== 'exit' && n.phase === 'idle') { var root = this.rootRef.current, h = root && root.querySelector('.c02-home'), k = this._kk(); if (h && h.animate) h.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240 * k, delay: 60 * k, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'backwards' }); var morph = this.morphRef.current; if (morph && morph.animate) { morph.style.zIndex = 1; var i = document.createElement('i'); var b = document.createElement('b'); b.style.background = 'var(--pgbg)'; i.appendChild(b); morph.appendChild(i); var a = i.animate([{ opacity: 1 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 320 * k, easing: 'ease', fill: 'both' }); var rec = { i: i, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); }; } } }
   /* the JuCardV2 front faces: rendered from the event's props into hosts the template leaves empty (like the ritual engines' DOM) */
   _syncCards() { var root = this.rootRef && this.rootRef.current, vm = this._cardVm; if (!root) return; root.querySelectorAll('[data-c02card]').forEach(function (el) { var k = el.getAttribute('data-c02card'); if (!k || el.__c02k === k || !vm[k]) return; el.innerHTML = C2.card(vm[k]); el.__c02k = k; }); }
   /* attendance: the V27 stamp face (JURitual.stampFace) pressed onto each recorded person's card; pressed (.55s juStamp) only when fresh */
@@ -1176,7 +1265,7 @@ class Component extends DCLogic {
     var nv = { on: Object.assign({}, c.nav.on), cls: Object.assign({}, c.nav.cls) }, ph = c.nav.phase;
     if (ph === 'idle') this._idleTop = c.nav.cur;
     else if (c.nav.dir === 'fwd' && this._idleTop && this._idleTop !== c.nav.cur) {
-      if (!nv.on[this._idleTop]) { nv.on[this._idleTop] = true; nv.cls[this._idleTop] = 'is-under ph-enter c02-held'; }
+      if (!nv.on[this._idleTop]) { nv.on[this._idleTop] = true; nv.cls[this._idleTop] = 'is-under ph-enter dir-fwd c02-held'; }
       if (c.nav.prev && c.nav.prev !== this._idleTop) nv.cls[c.nav.prev] = (nv.cls[c.nav.prev] || '') + ' c02-skip';
     }
     var tz = rv.zoom ? 1.15 : 1, pw = rv.pw || 390; var now = JU.now(); this._avail = (pw - 114) / tz;
@@ -1233,31 +1322,31 @@ class Component extends DCLogic {
     /* ---- deep pages: the people come first (a list on detail / waitlist / manage; the line under the title on ticket / history) ---- */
     var pplOf = function (r, side) { if (!r) return { avs: [], more: '', line: '' }; var d = side === 'h' ? self._hDeco(r) : self._jDeco(r); return { avs: d.avs, more: d.more, line: d.line }; };
     var ordr = { host: 0, confirmed: 1, invited: 2 };
-    var person = function (m, id, i) { var you = !!m.you; return Object.assign(m, { g: you ? '你' : C2.glyph(m.name), pk: id + ':' + m.name, d: 30 + i * 40, avCls: m.status === 'invited' ? 'is-res' : '', c2cls: (you ? 'me' : '') + (m.status !== 'host' && m.status !== 'confirmed' && m.status !== 'invited' ? ' void' : '') }); };
+    var person = function (m, id, i) { var you = !!m.you; return Object.assign(m, { g: you ? '你' : C2.glyph(m.name), pk: id + ':' + m.name, d: Math.min(92, 20 + i * 24), avCls: m.status === 'invited' ? 'is-res' : '', c2cls: (you ? 'me' : '') + (m.status !== 'host' && m.status !== 'confirmed' && m.status !== 'invited' ? ' void' : '') }); };
     var cardKey = function (pre, e, when, place, avail, extra) { var k = pre + ':' + e.id + ':' + (e.version || 1) + ':' + avail + ':' + (when && when.md) + ':' + (when && when.time) + ':' + (extra || ''); self._cardVm[k] = C2.cardVals(e, when, place, avail, extra); return k; };
     var dt = { th: '31.5px', hdh: '150px', members: [], open: [] };
     if (c.detail.on) { var Dd = c.detail, did = Dd.eventId, dcn = Dd.counts || {};
       var dm = Dd.members.slice().sort(function (a, b) { return (a.you ? 3 : ordr[a.status] != null ? ordr[a.status] : 4) - (b.you ? 3 : ordr[b.status] != null ? ordr[b.status] : 4); }).map(function (m, i) { var p = person(m, did, i); if (m.you && Dd.countdown && Dd.countdown.on) { p.statusText = '已预留 · 读完约定后确认'; p.cd = { text: Dd.countdown.text, ratio: Dd.countdown.ratio, tone: Dd.countdown.tone === 'red' ? 'red' : Dd.countdown.tone === 'amber' ? 'amber' : '', dl: (Dd.row.deadlineText || '').replace(/^请在\s*/, '').replace(/阅读并确认$/, '确认') }; } else p.cd = null; return p; });
-      dt = Object.assign(geo(Dd.title), { title: C2.kd(Dd.event.title), sub: C2.when(Dd.when) + ' · ' + Dd.place.hood, when: C2.when(Dd.when), members: dm, count: dm.length, note: ['已确认 ' + (dcn.confirmed || 0), dcn.reserved ? '预留 ' + dcn.reserved : ''].filter(Boolean).join(' · '), open: dcn.available > 0 ? ['还空 ' + dcn.available + ' 个位置'] : [], cap: Dd.event.capacity, cardKey: cardKey('d', Dd.event, Dd.when, Dd.place, dcn.available || 0) }); }
+      dt = Object.assign(geo(Dd.event.title), { title: C2.kd(Dd.event.title), tone: self._jDeco(Dd.row).tone, sub: C2.when(Dd.when) + ' · ' + Dd.place.hood, when: C2.when(Dd.when), members: dm, count: dm.length, note: ['已确认 ' + (dcn.confirmed || 0), dcn.reserved ? '预留 ' + dcn.reserved : ''].filter(Boolean).join(' · '), open: dcn.available > 0 ? ['还空 ' + dcn.available + ' 个位置'] : [], cap: Dd.event.capacity, cardKey: cardKey('d', Dd.event, Dd.when, Dd.place, dcn.available || 0) }); }
     var rd = { th: '31.5px', hdh: '190px', avs: [] };
-    if (c.read.on) { var rp = pplOf(c.read.row); rd = Object.assign(geo(c.read.title, 13 + 34 + 12 + 21 * tz + 14), rp, { line: rp.line.indexOf('和 ') === 0 ? '确认后' + rp.line + ' 一起' : rp.line }); }
+    if (c.read.on) { var rp = pplOf(c.read.row); rd = Object.assign(geo(c.read.row.title, 13 + 34 + 12 + 21 * tz + 14), rp, { title: C2.kd(c.read.row.title), line: rp.line.indexOf('和 ') === 0 ? '确认后' + rp.line + ' 一起' : rp.line }); }
     var wl = { th: '31.5px', hdh: '150px', entered: [], queue: [] };
-    if (c.waitlist.on) { var Wl = c.waitlist; wl = Object.assign(geo(Wl.title), { entered: Wl.entered.map(function (m, i) { return person(m, Wl.eventId, i); }), inCount: Wl.entered.length, queue: Wl.queue.map(function (q) { return Object.assign(q, { g: q.you ? '你' : C2.glyph(q.name), c2cls: q.you ? 'me' : '', avCls: '', sub: q.you ? (Wl.row.stage === 'invited_queue' ? '位置已留给你' : '轮到你时才开始 6 小时预留') : '候补中' }); }) }); }
+    if (c.waitlist.on) { var Wl = c.waitlist; wl = Object.assign(geo(Wl.row.title), { title: C2.kd(Wl.row.title), entered: Wl.entered.map(function (m, i) { return person(m, Wl.eventId, i); }), inCount: Wl.entered.length, queue: Wl.queue.map(function (q) { return Object.assign(q, { g: q.you ? '你' : C2.glyph(q.name), c2cls: q.you ? 'me' : '', avCls: '', sub: q.you ? (Wl.row.stage === 'invited_queue' ? '位置已留给你' : '轮到你时才开始 6 小时预留') : '候补中' }); }) }); }
     var T = c.ticket, ticketOn = nv.on.ticket || nv.on.reply;
     var tk = { on: ticketOn, surface: nv.on.reply ? 'reply' : 'ticket', exitAct: T.isReply ? 'decline' : 'exit', th: '31.5px', hdh: '160px' };
-    if (T.on) { var tp = pplOf(T.row); Object.assign(tk, geo(T.title, 13 + 34 + 14), tp, { showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark, tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning), showResult: !!(T.result && !T.result.burning), hostPk: T.eventId + ':' + T.row.host.name + ':card', hostG: C2.glyph(T.row.host.name), retryCopy: function () { var h = self._contact(); if (h) self._c.ticket.contact.copyWith(function () { return h.copy(); }); else self._c.ticket.contact.retryCopy(); } }); }
+    if (T.on) { var tp = pplOf(T.row); Object.assign(tk, geo(T.row.title, 9 + 21 * tz + 10 + 34 + 14), tp, { title: C2.kd(T.row.title), tone: self._jDeco(T.row).tone, when: C2.when(T.row.when) + ' · ' + T.row.place.hood, showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark, tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning), showResult: !!(T.result && !T.result.burning), hostPk: T.eventId + ':' + T.row.host.name + ':card', hostG: C2.glyph(T.row.host.name), retryCopy: function () { var h = self._contact(); if (h) self._c.ticket.contact.copyWith(function () { return h.copy(); }); else self._c.ticket.contact.retryCopy(); } }); }
     var H = c.history, hr = H.on ? H.ritual : null; var hi = { th: '31.5px', hdh: '160px', people: [] };
     if (H.on) { var hp = pplOf(H.row); var hpe = (H.members || []).filter(function (m) { return !m.you; }).map(function (m, i) { return person(m, H.eventId, i); });
-      hi = Object.assign(geo(H.title, 13 + 34 + 16), hp, { when: C2.when(H.when), recordCount: H.records.length, showStage: !!(hr && H.burnOnce), stageCls: (hr && hr.reissued ? 'reissued' : '') + (H.ashes ? ' c02-ashes' : ''), noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, title: C2.kd(H.event.title), people: hpe, hasPeople: hpe.length > 0, peopleN: hpe.length, peopleTitle: H.stage === 'ended' ? '那天的人' : H.stage === 'cancelled' ? '原定一起的人' : '这局的人' }); }
+      hi = Object.assign(geo(H.event.title, 9 + 21 * tz + 10 + 34 + 16), hp, { tone: self._jDeco(H.row).tone, when: C2.when(H.when), recordCount: H.records.length, showStage: !!(hr && H.burnOnce), stageCls: (hr && hr.reissued ? 'reissued' : '') + (H.ashes ? ' c02-ashes' : ''), noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, title: C2.kd(H.event.title), people: hpe, hasPeople: hpe.length > 0, peopleN: hpe.length, peopleTitle: H.stage === 'ended' ? '那天的人' : H.stage === 'cancelled' ? '原定一起的人' : '这局的人' }); }
     var mg = { th: '31.5px', hdh: '150px', ready: false };
     if (c.manage.on && !c.manage.missing) { var M = c.manage, mid = M.eventId, pg = M.head.progress;
       var mfx = fxOf(mid); var fresh = mfx.filter(function (x) { return x.type === 'invited' || x.type === 'queue-invited'; }).map(function (x) { return x.nick; });
       var dUp = mfx.filter(function (x) { return x.type === 'invited'; }).length, dQ = mfx.filter(function (x) { return x.type === 'queue-invited'; }).length, dX = mfx.filter(function (x) { return x.type === 'expired'; }).length;
       var delta = [dX ? '预留到期 −' + dX : '', dQ ? '候补补位 +' + dQ : '', dUp ? '预留 +' + dUp : ''].filter(Boolean).join(' · ');
       var drain = mfx.some(function (x) { return x.type === 'cancelled'; });
-      M.apps.rows.forEach(function (a, i) { a.pendingOpen = !a.result && !a.busy && !a.error; a.g = C2.glyph(a.nick || a.nickText); a.pk = mid + ':' + a.nick; a.c2d = 40 + i * 60; a.vfCls = a.verified ? '' : 'no'; a.c2cls = a.result ? (a.status === 'approved' ? 'is-ok' : 'is-no') : ''; a.resCls = a.status === 'approved' ? '' : 'void'; a.resIcon = a.status === 'approved' ? 'M5 12.5l4.2 4.2L19 7' : 'M7 7l10 10 M17 7L7 17'; });
+      M.apps.rows.forEach(function (a, i) { a.pendingOpen = !a.result && !a.busy && !a.error; a.g = C2.glyph(a.nick || a.nickText); a.pk = mid + ':' + a.nick; a.c2d = Math.min(130, 30 + i * 50); a.vfCls = a.verified ? '' : 'no'; a.c2cls = a.result ? (a.status === 'approved' ? 'is-ok' : 'is-no') : ''; a.resCls = a.status === 'approved' ? '' : 'void'; a.resIcon = a.status === 'approved' ? 'M5 12.5l4.2 4.2L19 7' : 'M7 7l10 10 M17 7L7 17'; });
       var roster = M.roster.rows.map(function (m, i) { var nm = m.host ? '你' : m.nick; return Object.assign(m, { i: i, g: m.host ? '你' : C2.glyph(m.nick), pk: mid + ':' + nm, avCls: m.tone === 'res' ? 'is-res' : '', c2cls: (m.host ? 'me' : '') + (m.tone === 'void' ? ' void' : '') + (fresh.indexOf(m.nick) >= 0 ? ' is-fresh' : ''), noWx: !m.wxText, subText: [m.stateText, m.left && m.left.on && !M.head.cancelled && !M.head.ended ? m.left.text : '', m.ticketText, m.contactText].filter(Boolean).join(' · ') }); });
-      M.attendance.rows.forEach(function (a, i) { var rec = a.recorded && !a.editing; a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = rec; a.g = C2.glyph(a.name); a.pk = mid + ':' + a.name; a.c2d = 40 + i * 60; a.recCls = rec ? 'is-rec' : ''; a.showStamp = rec && !self._sfFail; a.showChop = rec && !!self._sfFail; a.stampSeq = a.stampFresh ? '1' : '0'; });
+      M.attendance.rows.forEach(function (a, i) { var rec = a.recorded && !a.editing; a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = rec; a.g = C2.glyph(a.name); a.pk = mid + ':' + a.name; a.c2d = Math.min(130, 30 + i * 50); a.recCls = rec ? 'is-rec' : ''; a.showStamp = rec && !self._sfFail; a.showChop = rec && !!self._sfFail; a.stampSeq = a.stampFresh ? '1' : '0'; });
       mg = Object.assign(geo(M.head.title), { ready: true, title: C2.kd(M.head.title), meta: M.head.status + ' · ' + C2.when(M.head.when) + ' · ' + M.head.place.hood, attSub: pg.attendance ? String(pg.attendance.sub || '').replace(/^\s*·\s*/, '') : '', seatsOn: !pg.hidden && !M.head.ended, attOn: !pg.hidden && !!pg.attendance, seats: this._seats(pg.seats, mid, fresh), seatMain: '已确认 ' + pg.confirmed + '/' + pg.cap + '（含你）', seatMore: [pg.reserved ? '预留 ' + pg.reserved : '', pg.available ? '空 ' + pg.available : ''].filter(Boolean).join(' · ') || '坐满了', seatAria: pg.text + ' ' + (pg.more || ''), delta: delta, deltaCls: dX && !dQ && !dUp ? 'down' : '', roster: roster, replies: M.replies.rows.map(function (r) { return Object.assign(r, { g: C2.glyph(r.name), pk: mid + ':' + r.name, avCls: '' }); }), queue: M.queue.rows.map(function (q, i) { return Object.assign(q, { i: i, g: C2.glyph(q.nick), pk: mid + ':' + q.nick, c2cls: fresh.indexOf(q.nick) >= 0 ? 'is-fresh' : '' }); }), leavesArrow: M.leaves.open ? '收起' : '展开', cls: (M.head.cancelled ? 'is-cancelled' : '') + (drain ? ' fx-drain' : '') });
       M.leaves.rows.forEach(function (l) { l.g = C2.glyph(l.nick); }); }
     var df = { th: '31.5px', hdh: '150px', seats: [] };
@@ -1277,7 +1366,7 @@ class Component extends DCLogic {
         S = Object.assign({}, this._shLast, { cls: (this._shLast.cls || '') + ' is-closing', onKeyDown: null, focusRef: null, on: true }); sh = shOf(this._shLast); }
     }
     var toastOn = c.toast.on;
-    return { panel: panel, rootRef: this.rootRef, envRef: this.envRef, flyRef: this.flyRef, c: c, nv: nv, S: S, noSkins: !c.ritual.skins, toastOn: toastOn, home: home, jSecs: jSecs, hSecs: hSecs, rootNav: rootNav, dt: dt, rd: rd, wl: wl, tk: tk, hi: hi, mg: mg, df: df, sh: sh,
+    return { panel: panel, rootRef: this.rootRef, envRef: this.envRef, flyRef: this.flyRef, morphRef: this.morphRef, press: function (ev) { self._press(ev); }, c: c, nv: nv, S: S, noSkins: !c.ritual.skins, toastOn: toastOn, home: home, jSecs: jSecs, hSecs: hSecs, rootNav: rootNav, dt: dt, rd: rd, wl: wl, tk: tk, hi: hi, mg: mg, df: df, sh: sh,
       onScroll: function (ev) { self._scroll(ev); }, readScroll: function (ev) { c.read.onScroll(ev); var el = ev.currentTarget, surf = el.closest && el.closest('[data-surface]'); if (surf) surf.dataset.c02c = el.scrollTop >= 86 ? '1' : '0'; } };
   }
 }
