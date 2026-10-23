@@ -41,6 +41,8 @@
   JU.CTL_PATHS = DEFAULT_PATHS;
   var TITLES = { home: '我的局', detail: '局内详情', read: '阅读并确认', waitlist: '候补', ticket: '票根', reply: '局主改了时间', history: '历史', manage: '管理这局', draft: '草稿' };
   var FOCUSABLE = 'button:not([disabled]),[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';
+  /* layout position (offset chain): ignores CSS transforms / running animations and scroll offsets */
+  function layoutXY(n) { var x = 0, y = 0; while (n) { x += n.offsetLeft || 0; y += n.offsetTop || 0; n = n.offsetParent; } return { x: x, y: y }; }
   function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
   function assign() { var o = {}; for (var i = 0; i < arguments.length; i++) { var a = arguments[i]; if (a) for (var k in a) if (Object.prototype.hasOwnProperty.call(a, k)) o[k] = a[k]; } return o; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -96,7 +98,20 @@
     p._originRect = function (key, memoKey) {
       var root = this.rootRef && this.rootRef.current; if (!root || !key || !JU.fx) return null;
       var el = root.querySelector('[data-origin="' + key + '"]'); if (!el) return null;
-      this.reveal(el, false, { soft: true, memoKey: memoKey }); return JU.fx.rectIn(el, root);
+      /* opt-in: a concept whose under page is still transformed when back() runs (pushed off-screen, scaled, bands moved away)
+         marks the scroller (or an ancestor) data-measure="layout"; the row and the visible window are then measured in layout
+         coordinates (offset chain, transforms ignored) — where the row will be once the page has settled (C08 report: the
+         transformed home put the soft reveal ~640px off) */
+      var lay = !!(el.closest && el.closest('[data-measure="layout"]'));
+      this.reveal(el, false, { soft: true, memoKey: memoKey, layout: lay }); return lay ? this._layoutRectIn(el, root) : JU.fx.rectIn(el, root);
+    };
+    /* transform-free rect of el inside root (same shape as JU.fx.rectIn): offset chain minus the scroll offsets in between;
+       falls back to the visual rect when el is not laid out (display:none / fixed) */
+    p._layoutRectIn = function (el, root) {
+      if (!el.offsetParent && el !== root) return JU.fx.rectIn(el, root);
+      var a = layoutXY(el), b = layoutXY(root), sx = 0, sy = 0, n = el.parentElement;
+      while (n && n !== root) { sx += n.scrollLeft || 0; sy += n.scrollTop || 0; n = n.parentElement; }
+      return { x: a.x - b.x - sx, y: a.y - b.y - sy, w: el.offsetWidth, h: el.offsetHeight };
     };
     /* put the under page's scrollers back where they were NOW (before measuring the origin), so the return lands on the real
        final position and the settle-time restore has nothing left to move (no visible double scroll) */
@@ -248,6 +263,9 @@
           var hd = sc.querySelector('[data-header]'); if (hd && global.getComputedStyle && /sticky|fixed/.test(getComputedStyle(hd).position)) mt += hd.getBoundingClientRect().height;
           var inUpper = r.top >= t0 + mt - 1 && r.top <= t0 + (b0 - t0) * 0.6;
           if (!inUpper) sc.scrollTop += r.top - t0 - mt;
+        } else if (opts.soft && opts.layout) {
+          var ly = layoutXY(el).y - layoutXY(sc).y, lh = el.offsetHeight, vt = sc.scrollTop, vb = sc.scrollTop + sc.clientHeight;
+          var visL = Math.max(0, Math.min(ly + lh, vb) - Math.max(ly, vt)); if (lh > 0 && visL / lh < 0.5) sc.scrollTop += (ly + lh / 2) - (vt + vb) / 2;
         } else if (opts.soft) {
           var vis = Math.max(0, Math.min(r.bottom, b0) - Math.max(r.top, t0)); if (r.height > 0 && vis / r.height < 0.5) sc.scrollTop += (r.top + r.height / 2) - (t0 + b0) / 2;
         } else if (r.top < t0 + 12 || r.bottom > b0 - 12) sc.scrollTop += (r.top + r.height / 2) - (t0 + b0) / 2;
@@ -558,7 +576,7 @@
         var id = r.id; var intent = r.key === 'review' ? 'review' : (r.key === 'ended' && r.unrecorded) ? 'attendance' : 'manage';
         var open = function (ev) { if (innerAct(ev)) return; self.go('manage', { eventId: id, intent: intent }, ev); };
         var act = function (ev) { stop(ev); self.go('manage', { eventId: id, intent: intent }, ev); };
-        return assign(r, { key: id, title: r.event.title, en: r.event.en, pack: r.event.pack, open: open, act: act, intent: intent, ctaLabel: r.cta, isLead: !!(hostedD.lead && hostedD.lead.id === id), landing: ui.landKey === 'row-' + id, originKey: 'row-' + id, whenText: r.when.zh, placeText: r.place.hood, roster: r.seats });
+        return assign(r, { key: id, stateKey: r.key, title: r.event.title, en: r.event.en, pack: r.event.pack, open: open, act: act, intent: intent, ctaLabel: r.cta, isLead: !!(hostedD.lead && hostedD.lead.id === id), landing: ui.landKey === 'row-' + id, originKey: 'row-' + id, whenText: r.when.zh, placeText: r.place.hood, roster: r.seats });
       };
       var sectionsH = function (list) { return list.map(function (g) { return { key: g.key, title: g.title, note: g.note, count: g.rows.length, rows: g.rows.map(hostRow) }; }); };
       var draftRow = function (dr, cls) { return assign(dr, { key: dr.id, cls: cls || '', sourceText: dr.source ? '由「' + dr.source.title + '」再开' : '', open: function (ev) { if (innerAct(ev)) return; self.go('draft', { draftId: dr.id }, ev); }, del: function (ev) { stop(ev); self.deleteDraft(dr.id); }, continueInert: true, continueLabel: '继续编辑', originKey: 'row-' + dr.id, landing: ui.landKey === 'row-' + dr.id }); };
@@ -585,7 +603,7 @@
       if (sh) {
         var ev1 = d.events[sh.eventId]; var ident = ev1 ? { title: ev1.title, when: JU.fmt.when(ev1.iso).zh, place: JU.fmt.place(ev1.loc).hood, pack: ev1.pack } : null;
         out.sheet = assign(out.sheet, { on: true, kind: sh.kind, sub: sh.sub || '', eventId: sh.eventId, busy: !!sh.busy, error: sh.error || '', done: !!sh.done, identity: ident, cls: 'kind-' + sh.kind + (sh.sub ? ' sub-' + sh.sub : '') });
-        if (sh.kind === 'confirm') { var cp = JU.COPY[sh.sub]; out.sheet = assign(out.sheet, { title: cp.title, body: cp.body, okLabel: sh.busy ? '处理中…' : (sh.error ? '重试' : cp.ok), cancelLabel: cp.cancel, canOk: !sh.busy, danger: sh.sub === 'exit' || sh.sub === 'decline' }); }
+        if (sh.kind === 'confirm') { var cp = JU.COPY[sh.sub]; out.sheet = assign(out.sheet, { title: cp.title, body: cp.body, okLabel: sh.busy ? '处理中…' : (sh.error ? '重试' : cp.ok), cancelLabel: cp.cancel, canOk: !sh.busy, danger: sh.sub === 'exit' || sh.sub === 'decline' || sh.sub === 'release', keepPrimary: sh.sub === 'exit' || sh.sub === 'decline' || sh.sub === 'release', okTone: (sh.sub === 'withdraw' || sh.sub === 'leaveQueue') ? 'ink' : 'danger' }); }
         if (sh.kind === 'reschedule') { var mm = JU.derive.manage(d, sh.eventId); var iso = isoOf(sh.date, sh.time); var valid = /^\d{4}-\d{2}-\d{2}$/.test(sh.date || '') && /^\d{2}:\d{2}$/.test(sh.time || ''); var same = valid && iso === ev1.iso;
           out.sheet = assign(out.sheet, { title: JU.COPY.reschedule.title, okLabel: sh.busy ? '处理中…' : JU.COPY.reschedule.ok, cancelLabel: JU.COPY.reschedule.cancel, canOk: valid && !same && !sh.busy && !mm.unanswered, danger: false,
             fields: { date: sh.date || '', time: sh.time || '', onDate: function (e2) { self.sheetInput('date', e2.target.value); }, onTime: function (e2) { self.sheetInput('time', e2.target.value); }, valid: valid, same: same, sameHint: same ? JU.COPY.reschedule.same : '', placeholder: '选好新的日期和时间', oldWhen: JU.fmt.when(ev1.iso), newWhen: valid && !same ? JU.fmt.when(iso) : null, newText: valid && !same ? JU.fmt.when(iso).zh : '', consequence: mm.rescheduleDesc, tz: '纽约时间', minStep: 15 } }); }

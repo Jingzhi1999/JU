@@ -98,34 +98,46 @@ body{margin:0}
 /* ---- role / section switch inside home: the pane fades without a blank frame ---- */
 .c01-pane{transition:opacity calc(220ms * var(--k)) ease,transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c01-pg.ph-enter.dir-role .c01-pane,.c01-pg.ph-enter.dir-swap .c01-pane{opacity:.35;transform:translateY(8px)}
-/* ---- surface transitions: the right column slides in 24px + fades (320ms); the lead anchor travels along the spine from the row it came from; the page under fades ---- */
+/* ---- surface transitions, both ways without a dissolve: the right column moves whole (opaque, nothing fades) and the page beneath is
+   clipped / uncovered by a wipe on the same curve, so two texts never overlap; the spine swaps its anchors in one frame at the start (the
+   destination's anchors appear, the departing page's vanish); the lead anchor travels along the spine from / back to its row; the two
+   headers are staggered so two titles never overlap ---- */
 .c01-body{transition:opacity calc(280ms * var(--k)) ease}
 .c01-pg .c01-hd .c01-title,.c01-pg .c01-hd .c01-meta,.c01-pg .c01-hd .c01-weak{transition:opacity calc(180ms * var(--k)) ease}
 .c01-pg.is-top.ph-in .c01-hd .c01-title,.c01-pg.is-top.ph-in .c01-hd .c01-meta,.c01-pg.is-top.ph-in .c01-hd .c01-weak,.c01-pg.is-top.ph-in .c01-pill{transition-delay:calc(100ms * var(--k))}
 .c01-pg.is-top.ph-enter.dir-fwd .c01-pill,.c01-pg.is-top.ph-exit .c01-pill{opacity:0}
 .c01-pg.is-top.ph-exit .c01-hd .c01-title,.c01-pg.is-top.ph-exit .c01-hd .c01-meta,.c01-pg.is-top.ph-exit .c01-hd .c01-weak,.c01-pg.is-top.ph-exit .c01-pill{transition-duration:calc(110ms * var(--k))}
 .c01-pg .c01-body .c01-an{transition:opacity calc(180ms * var(--k)) ease}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-ct,.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-mfull{transform:translateX(24px);opacity:0}
-.c01-pg .c01-body .c01-ct,.c01-pg .c01-body .c01-mfull{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(280ms * var(--k)) ease}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-an:not(.lead),.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-title,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-meta,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-weak{opacity:0}
+.c01-pg .c01-body .c01-ct,.c01-pg .c01-body .c01-mfull{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+/* enter: the column starts just off the right edge and decelerates in (its left edge = the wipe edge on the page beneath, frame by frame) */
+.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-ct,.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-mfull{transform:translateX(calc(100% + var(--mx)));transition:none}
+.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-an:not(.lead){transition:none}
+.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-title,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-meta,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-weak{opacity:0}
 .c01-pg .c01-an.lead{transition:transform calc(340ms * var(--k)) cubic-bezier(.25,.8,.25,1),opacity calc(180ms * var(--k)) ease}
 .c01-pg.is-top.ph-enter.dir-fwd .c01-an.lead{transform:translateY(var(--c01-ady,0px));transition:none}
 .c01-pg.is-top.ph-enter.dir-fwd .c01-an.lead.no-travel{transform:none;opacity:0}
 .c01-pg.is-top.ph-enter.dir-swap .c01-body{opacity:0}
+/* return: the column accelerates out to the right; the departing spine anchors vanish at once (the list's are already in place) */
 .c01-pg.is-top.ph-exit .c01-body .c01-ct,.c01-pg.is-top.ph-exit .c01-body .c01-mfull{transform:translateX(calc(100% + var(--mx)));opacity:1;transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
-.c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead){transition-duration:calc(60ms * var(--k))}
+.c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead){transition:none}
 .c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead),.c01-pg.is-top.ph-exit .c01-hd .c01-title,.c01-pg.is-top.ph-exit .c01-hd .c01-meta,.c01-pg.is-top.ph-exit .c01-hd .c01-weak{opacity:0}
 .c01-pg.is-top.ph-exit .c01-an.lead{transform:translateY(var(--c01-ady,0px))}
-.c01-pg.is-top.ph-exit .c01-an.lead.no-travel{transform:none;opacity:0}
+.c01-pg.is-top.ph-exit .c01-an.lead.no-travel{transform:none;opacity:0;transition:none}
+/* the page beneath: never faded — wiped. Its scroller (a clip box) slides left while its content counter-slides right, so the visible part
+   ends exactly at the moving column's left edge; all three are compositor transforms on one curve, so they stay in step even when the
+   main thread is busy (a clip-path wipe is painted on the main thread and fell behind the column under load) */
 .c01-pg.is-under{z-index:1}
-.c01-pg.is-under .c01-body{transition:opacity calc(180ms * var(--k)) ease}
+.c01-pg.is-under .c01-body{transition:none}
 .c01-pg.is-under .c01-hd{transition:opacity calc(110ms * var(--k)) ease}
-.c01-pg.is-under.ph-in .c01-body,.c01-pg.is-under.ph-in .c01-hd,.c01-pg.is-under.ph-idle .c01-body,.c01-pg.is-under.ph-idle .c01-hd{opacity:0}
-.c01-pg.is-under.ph-idle{visibility:hidden}
-/* the return: the page underneath is back at once (its spine anchors already in place); the leaving right column slides out whole and the list is uncovered behind it by a wipe on the same curve; the two headers are staggered so two titles never overlap */
-.c01-pg.is-under.ph-exit .c01-body{opacity:1;transition:none}
-.c01-pg.is-under.ph-in .c01-sc,.c01-pg.is-under.ph-idle .c01-sc{clip-path:inset(0 calc(100% - var(--cx)) 0 0);transition:clip-path 0s linear calc(420ms * var(--k))}
-.c01-pg.is-under.ph-exit .c01-sc{clip-path:inset(0 0 0 0);transition:clip-path calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
+.c01-pg.is-under.ph-in .c01-hd,.c01-pg.is-under.ph-idle .c01-hd,.c01-pg.is-under.ph-idle .c01-body{opacity:0}
+.c01-pg.is-under.ph-idle,.c01-pg.is-under.dir-swap{visibility:hidden}
+.c01-pg.is-under.dir-fwd .c01-body .c01-an{opacity:0;transition:none}
+.c01-pg.is-under .c01-sc,.c01-pg.is-under .c01-sc>.c01-body{transition:none}
+.c01-pg.is-under.ph-in .c01-sc,.c01-pg.is-under.ph-idle .c01-sc{transform:translateX(calc(var(--cx) - 100%))}
+.c01-pg.is-under.ph-in .c01-sc>.c01-body,.c01-pg.is-under.ph-idle .c01-sc>.c01-body{transform:translateX(calc(100% - var(--cx)))}
+.c01-pg.is-under.ph-in .c01-sc,.c01-pg.is-under.ph-in .c01-sc>.c01-body{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c01-pg.is-under.ph-exit .c01-body{opacity:1}
+.c01-pg.is-under.ph-exit .c01-sc,.c01-pg.is-under.ph-exit .c01-sc>.c01-body{transform:none;transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
 .c01-pg.is-under.ph-exit .c01-hd{opacity:1;transition:opacity calc(130ms * var(--k)) ease calc(80ms * var(--k))}
 .c01-pg.is-under .c01-day.is-src>.c01-an{opacity:0}
 .c01-day>.c01-an{transition:none!important}
@@ -244,26 +256,30 @@ body{margin:0}
 .c01-foot{position:absolute;left:0;right:0;bottom:var(--below);z-index:7;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px var(--mx) calc(16px + var(--kb,0px)) var(--cx);background:linear-gradient(0deg,rgba(var(--fog),.94) 0,rgba(var(--fog),.94) calc(100% - 34px),rgba(var(--fog),0) 100%)}
 .c01-foot>*{pointer-events:auto}
 .c01-foot{transition:opacity calc(200ms * var(--k)) ease}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-foot,.c01-pg.is-under .c01-foot{opacity:0}
-.c01-pg.is-top.ph-exit .c01-foot{transform:translateX(calc(100% - var(--cx) + var(--mx)));transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
-.c01-pg.is-top.ph-in .c01-foot{transition-delay:calc(120ms * var(--k))}
+.c01-pg.is-top.ph-enter.dir-fwd .c01-foot{transform:translateX(100%);transition:none}
+.c01-pg.is-top.ph-in.dir-fwd .c01-foot{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c01-pg.is-top.ph-exit .c01-foot{transform:translateX(100%);transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
+.c01-pg.is-under .c01-foot{opacity:0;transition:none}
 .c01-foot .ju-v27-cta{border:0;padding:0;margin:0}
 .c01-foot .c01-link{padding:2px 8px}
 .c01-foot:empty{display:none}
 /* ---- ticket surface: the stage + paper are the shared original (ticket.css); C01 only decides where it stands: centred in the right column,
         the date anchor at the paper's top edge, a second anchor (联系 · 8 小时内) beside the contact layer once it is revealed ---- */
 .c01-stage{margin-top:0}
-.c01-stage[data-print="printing"] .ju-print-mouth,.c01-stage[data-print="printing"] .ju-print-lip{transition:none}
+.c01-stage[data-print="printing"] .ju-print-mouth,.c01-stage[data-print="printing"] .ju-print-lip,.c01-stage.c01-pre .ju-print-mouth,.c01-stage.c01-pre .ju-print-lip{opacity:1;transition:none}
 .c01-stage::before{content:"";position:absolute;left:calc(50% - 129px);top:var(--ju-ticket-top,84px);width:258px;height:var(--c01-bed,0px);border-radius:14px 14px 10px 10px;background:rgba(20,22,31,.035);box-shadow:inset 0 0 0 1px rgba(20,22,31,.06),inset 0 10px 18px -12px rgba(20,22,31,.12);opacity:0;transition:opacity calc(300ms * var(--k)) ease;pointer-events:none}
-.c01-stage[data-print="printing"]::before{opacity:1;transition:none}
+.c01-stage[data-print="printing"]::before,.c01-stage.c01-pre::before{opacity:1;transition:none}
 .c01-stage.reissued{--ju-ticket-top:24px}
 .c01-tk .c01-an.lead{margin-top:84px}
 .c01-tk .c01-stage.reissued ~ .c01-an.lead{margin-top:24px}
 .c01-tk [data-tear]{overflow-x:clip;overflow-y:visible;overflow-clip-margin:88px}
 .c01-cg .c01-an{opacity:0;transform:translateY(10px);transition:opacity calc(500ms * var(--k)) ease calc(300ms * var(--k)),transform calc(600ms * var(--k)) cubic-bezier(.2,.9,.3,1) calc(300ms * var(--k))}
-.c01-cg:has([data-revealed="true"]) .c01-an{opacity:1;transform:none}
+.c01-cg:has([data-revealed="true"]) .c01-an,.c01-cg:has(.c01-openc) .c01-an{opacity:1;transform:none}
+.c01-openc{margin-top:14px;padding:4px 0;font-weight:500}
+.c01-cg:has(.c01-openc) .ju-contact-wrap{display:none}
 .c01-cg .c01-an{padding-top:17px}
 .c01-copyfail{font-size:calc(13px * var(--tz,1));color:var(--red);margin:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+p.c01-copyfail span{color:var(--sec)}
 /* after the burn the empty paper stage closes (the original's own .5s height curve) and the result rises under the date; the second anchor reads 票根 · 已作废 */
 .c01-tk.is-ash .c01-stage{height:0!important;overflow:hidden}
 .c01-tk.is-ash .c01-cg .c01-an,.c01-tk.is-burning .c01-cg .c01-an{opacity:1;transform:none}
@@ -272,7 +288,7 @@ body{margin:0}
 .c01-t08{position:relative;height:520px;margin:4px -14px 0 -60px}
 .c01-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
 /* ---- manage: the head keeps the date anchor; below it the spine shows section anchors ---- */
-.c01-msec{order:var(--o,9);margin:0 var(--mx)}
+.c01-msec{order:var(--o,9);margin:0 var(--mx);padding-left:0;padding-right:0}
 .c01-msec,.c01-mhead + .c01-msec{border-top:1px solid var(--line)}
 .c01-msec .c01-an{padding:17px 0 12px;position:sticky;top:12px}
 .c01-msec .c01-ct{padding:15px 0 14px}
@@ -283,7 +299,7 @@ body{margin:0}
 .c01-msec h4 small{font-weight:400;color:var(--sec);font-size:calc(12px * var(--tz,1));text-align:right}
 .c01-msec h4 button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
 .c01-mwrap{display:flex;flex-direction:column}
-.c01-mhead{margin:0 var(--mx);padding-bottom:16px}
+.c01-mhead{margin:0 var(--mx);padding:0 0 16px}
 .c01-mhead .c01-an{padding-top:1px}
 .c01-status{font-size:calc(16px * var(--tz,1));font-weight:500;color:var(--ink);line-height:1.4}
 .c01-status.red{color:var(--red)}
@@ -370,7 +386,7 @@ body{margin:0}
 .c01-over label{display:block;font-size:calc(13px * var(--tz,1));color:#535b70;margin-top:6px}
 
 /* ===================== stage 2: deep pages on the same spine ===================== */
-.c01-ev{margin:0 var(--mx);padding-bottom:18px}
+.c01-ev{margin:0 var(--mx);padding:0 0 18px}
 .c01-evt{font-size:calc(19px * var(--tz,1));font-weight:500;line-height:1.32;color:var(--ink);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere;text-wrap:balance}
 .c01-evm{margin-top:3px;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--sec)}
 .c01-evm b{font-family:Archivo,"Noto Sans SC",sans-serif;font-weight:500;color:var(--body);font-variant-numeric:tabular-nums}
@@ -393,7 +409,11 @@ body{margin:0}
 .c01-fact b{font-weight:500;color:var(--sec)}
 .c01-fact span{color:var(--sec)}
 .c01-fact.t-act b{color:var(--red)}.c01-fact.t-soon b,.c01-fact.t-kept b{color:var(--green)}.c01-fact.t-amber b{color:var(--amber)}.c01-fact.t-void b{color:var(--body)}
-.c01-hst .c01-t08{height:486px;margin:0 calc(-1 * var(--mx)) 0 -24px}
+.c01-hst .c01-t08{height:486px;margin:0 0 0 -12px}
+/* until the settled scene mounts (once the page has settled): the card's bed, then the scene fades in over it */
+.c01-t08:empty::before{content:"";position:absolute;left:50%;top:50%;width:212px;height:265px;margin:-132px 0 0 -106px;border-radius:12px;background:rgba(20,22,31,.035);box-shadow:inset 0 0 0 1px rgba(20,22,31,.06)}
+.c01-t08>.ju-t08-root{animation:c01-t08in calc(260ms * var(--k)) ease both}
+@keyframes c01-t08in{0%{opacity:0}100%{opacity:1}}
 .c01-htk .c01-stage{--ju-ticket-top:24px}
 .c01-htk.is-void .c01-stage{height:0!important;overflow:hidden}
 .c01-burnnote:empty{display:none}
@@ -670,12 +690,13 @@ body{margin:0}
                 <div class="c01-g c01-cg">
                   <div class="c01-an sec" aria-hidden="true"><div class="c01-an-big">{{ticket.cgBig}}</div><div class="c01-an-s">{{ticket.cgSmall}}</div></div>
                   <div class="c01-ct">
+                    <sc-if value="{{ticket.canOpenContact}}"><button type="button" class="c01-link c01-openc" data-act="contact" onClick="{{c.ticket.contact.open}}">看局主微信 ›</button></sc-if>
                     <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                       <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                       <p class="ju-contact-note23"></p>
                       <p class="ju-form-error"></p>
                     </div>
-                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c01-copyfail"><span>未能复制，长按上方微信号手动复制</span><button type="button" class="c01-btn" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></p></sc-if>
+                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c01-copyfail"><button type="button" class="c01-btn" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button><span>或长按上方微信号</span></p></sc-if>
                     <sc-if value="{{ticket.showClosed}}"><p class="c01-err">{{c.ticket.contact.closedText}}</p></sc-if>
                     <sc-if value="{{c.ticket.contact.error}}"><p class="c01-err">{{c.ticket.contact.error}}</p></sc-if>
                     <sc-if value="{{c.ticket.result}}">
@@ -813,7 +834,7 @@ body{margin:0}
                   <div class="c01-ct"><h4><span>{{manage.appsTitle}}</span><sc-if value="{{manage.appsSub}}"><small>{{manage.appsSub}}</small></sc-if></h4><div class="body">
                     <sc-for list="{{c.manage.apps.rows}}" as="a" hint-placeholder-count="2"><div class="c01-app {{a.doneCls}}" data-rid="{{a.id}}"><div class="n"><span class="av" aria-hidden="true">{{a.initial}}</span><span>{{a.nickText}}</span></div><div class="q"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M8 1.6l5.2 2.1v3.9c0 3.2-2.2 5.7-5.2 6.8-3-1.1-5.2-3.6-5.2-6.8V3.7z"/><path d="M5.6 8.2l1.7 1.7 3.2-3.4"/></svg>{{a.verifiedLabel}} · {{a.agoText}}</div><sc-if value="{{a.note}}"><div class="note">“{{a.note}}”</div></sc-if>
                       <sc-if value="{{a.result}}"><div class="res {{a.resCls}}" role="status"><svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{a.resIcon}}"/></svg><span>{{a.resultText}}</span></div></sc-if>
-                      <sc-if value="{{a.error}}"><div class="c01-err">{{a.error}} <button type="button" class="c01-btn" data-act="retry" onClick="{{a.retry}}">知道了</button></div></sc-if>
+                      <sc-if value="{{a.error}}"><div class="c01-err" role="alert">{{a.error}}</div></sc-if>
                       <sc-if value="{{a.actsOn}}"><div class="acts"><button type="button" class="c01-btn {{a.rejCls}}" data-act="reject" disabled="{{a.busy}}" onClick="{{a.rejectTap}}">{{a.rejLabel}}</button><button type="button" class="c01-btn primary {{a.appCls}}" data-act="approve" disabled="{{a.busy}}" onClick="{{a.approveTap}}">{{a.appLabel}}</button></div></sc-if>
                     </div></sc-for>
                     <p class="c01-note">{{c.manage.apps.help}}</p></div></div></div></sc-if>
@@ -945,7 +966,7 @@ body{margin:0}
           </div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}"><div class="c01-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{toastOn}}"><div class="c01-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -1039,21 +1060,27 @@ class Component extends DCLogic {
     const c = this._c, root = this.rootRef.current; if (!c || !root) return;
     const stage = root.querySelector('[data-surface="ticket"] .c01-stage,[data-surface="reply"] .c01-stage');
     if (c.ticket.on && stage) {
-      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) this._mountTicket(stage, c);
+      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) {
+        /* the mouth and the paper's bed arrive with the right column; the print itself starts the moment the page settles
+           (a software-rendered print holds the main thread for a few hundred ms — started earlier it would stall the slide) */
+        if (c.ticket.state === 'printing' && c.nav.phase !== 'idle') this._preStage(stage); else this._mountTicket(stage, c);
+      }
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
     const hstage = root.querySelector('[data-surface="history"] .c01-stage');
-    if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); }
+    const settled = c.nav.phase === 'idle';
+    if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); else if (this._rit.hburnWait && settled) { this._rit.hburnWait = false; this._startHistoryBurn(hstage); } }
     else if (this._rit.hstage) { this._destroyHistoryStage(); }
     const thost = root.querySelector('[data-surface="history"] .c01-t08');
-    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost) this._mountStamp(thost, c); }
+    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost && settled) this._mountStamp(thost, c); }
     else if (this._rit.thost) this._destroyStamp();
     this._syncStampFaces(c, root);
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
   }
-  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _preStage(stage) { if (stage.classList.contains('c01-pre')) return; stage.classList.add('c01-pre'); const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px'); }
+  _tearOpts() { return { onDetach: () => { this._justTorn = this._c && this._c.ticket.printKey; return this.tearCommit(); }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
   _mountTicket(stage, c) {
     this._destroyTicket();
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
@@ -1061,7 +1088,7 @@ class Component extends DCLogic {
     if (R && R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
     if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
     if (st === 'printing') {
-      const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px');
+      const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px'); stage.classList.remove('c01-pre');
       const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };   /* registered for 重播 only — motion() would RUN it now (ctl-api §14) */
       R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => {
         if (this._rit.stage !== stage) return;
@@ -1094,15 +1121,19 @@ class Component extends DCLogic {
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = isH ? c.history.ritual : c.ticket.ritual; const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
-  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _destroyTicket() { this._justTorn = null; const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = c.history.ritual; if (!R || !data) return;
     if (R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
     this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
     if (c.history.ashes) { stage.dataset.state = 'void'; return; }
-    if (c.history.burn.play) { this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: () => { this._rit.hburn = null; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); } }); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+    if (c.history.burn.play) { if (c.nav.phase === 'idle') this._startHistoryBurn(stage); else this._rit.hburnWait = true; }
   }
-  _destroyHistoryStage() { const t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
+  _startHistoryBurn(stage) {
+    const R = this.R(), c = this._c; if (!R || !R.burn || !c || !c.history.on || !c.history.burn.play || this._rit.hburn) return;
+    this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: () => { this._rit.hburn = null; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); } }); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() };
+  }
+  _destroyHistoryStage() { const t = this._rit; t.hburnWait = false; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
   _mountStamp(host, c) {
     this._destroyStamp(); this._rit.thost = host; const R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
     const data = c.history.stampData; const p = R.stamp(host, data, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: () => { } });
@@ -1383,8 +1414,8 @@ class Component extends DCLogic {
       m.apps.rows.forEach(a => {
         const pr = press[a.id];
         a.doneCls = a.result ? 'is-done' : ''; a.resCls = a.tone === 'void' ? 'grey' : ''; a.resIcon = a.tone === 'void' ? 'M4.5 8h7' : 'M3.4 8.6l3 3 6.2-6.8';
-        a.actsOn = !a.result && !a.error;
-        a.appLabel = a.busy && pr === 'approve' ? '发出中…' : '发出邀请'; a.rejLabel = a.busy && pr === 'reject' ? '谢绝中…' : '谢绝';
+        a.actsOn = !a.result;   /* a failed write keeps both actions in place: the one that failed reads 重试… */
+        a.appLabel = a.busy && pr === 'approve' ? '发出中…' : a.error && pr === 'approve' ? '重试发出' : '发出邀请'; a.rejLabel = a.busy && pr === 'reject' ? '谢绝中…' : a.error && pr === 'reject' ? '重试谢绝' : '谢绝';
         a.appCls = a.busy && pr === 'approve' ? 'busy' : ''; a.rejCls = a.busy && pr === 'reject' ? 'busy' : '';
         a.approveTap = (ev) => { this._press = Object.assign({}, this._press, { [a.id]: 'approve' }); a.approve(ev); };
         a.rejectTap = (ev) => { this._press = Object.assign({}, this._press, { [a.id]: 'reject' }); a.reject(ev); };
@@ -1415,9 +1446,10 @@ class Component extends DCLogic {
     else if (c.detail.on && c.detail.event) cv = this._cardVM(c.detail.event, { counts: c.detail.counts });
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins, sub, cv: cv || {},
+      toastOn: c.toast.on && !(ticketOn && tk.on && tk.contact.copyFail),
       home: { onScroll, meta, due, days, legend, footNote, empty, today, rpill },
       ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
-      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', replyLine: tk.on && tk.reply ? '原定 ' + tk.reply.oldWhen.wdZh + ' ' + tk.reply.oldWhen.md + ' ' + tk.reply.oldWhen.time + ' → 改为 ' + (tk.reply.newWhen.md === tk.reply.oldWhen.md ? '同日 ' : tk.reply.newWhen.wdZh + ' ' + tk.reply.newWhen.md + ' ') + tk.reply.newWhen.time : '', ashCls: tk.result && tk.result.burn ? (tk.result.burning ? 'is-burning' : 'is-ash') : '', cgBig: tk.result && tk.result.burn ? '票根' : '联系', cgSmall: tk.result && tk.result.burn ? (tk.result.burning ? '作废中' : '已作废') : (tk.on && tk.contact.closed ? '已关闭' : '8 小时内'), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
+      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', canOpenContact: !!(tk.on && tk.state === 'torn' && !tk.contact.on && tk.contact.wx && !tk.result && !tk.unavailable && this._justTorn !== tk.printKey), replyLine: tk.on && tk.reply ? '原定 ' + tk.reply.oldWhen.wdZh + ' ' + tk.reply.oldWhen.md + ' ' + tk.reply.oldWhen.time + ' → 改为 ' + (tk.reply.newWhen.md === tk.reply.oldWhen.md ? '同日 ' : tk.reply.newWhen.wdZh + ' ' + tk.reply.newWhen.md + ' ') + tk.reply.newWhen.time : '', ashCls: tk.result && tk.result.burn ? (tk.result.burning ? 'is-burning' : 'is-ash') : '', cgBig: tk.result && tk.result.burn ? '票根' : '联系', cgSmall: tk.result && tk.result.burn ? (tk.result.burning ? '作废中' : '已作废') : (tk.on && tk.contact.closed ? '已关闭' : tk.on && tk.contact.done ? '已加微信' : '8 小时内'), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
       history: hist, manage: mg,
       shOn: shv.on, sh: shv.sh, sheet: shv.sheet
     };

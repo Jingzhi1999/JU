@@ -54,7 +54,7 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 `open`：按 stage 进 detail / waitlist / ticket / reply / history；`act`（主动作）：invited → `read`、contact → `ticket`+联系层、其余同 open；`secondary` → 确认层。行内按钮的点击不会冒泡成 open（控制器的 act / secondary / del 都 `stopPropagation`，`open` 又忽略来自内部 `[data-act]` 的点击）。
 
 **`c.hosted`**：`rows`、`sections[{key:todo∣resched∣recruit∣formed,…}]`、`sectionsHistory[{ended,cancelled}]`、`current`、`history`、`lead`、`drafts`、`badge`、`badgeText`、`counts{current,drafts,history}`、`undo{on,draftId,text,label,act(),left}`、`empty{…}`（有草稿 → 接着改草稿 `go` 到草稿分区；去开局 inert）。
-局主行 = `JU.derive.hostRow` 全部字段（`key,todo,life,label,status,cta,section,pending,unanswered,unrecorded,present,nonHost,formed,contactOpen,formedLine,counts,seats,seatText,seatMore,when,oldWhen,place,canReschedule,canEnd,canCancel,…`）+ `title,en,pack,open(ev),act(ev),intent('review∣attendance∣manage'),ctaLabel,isLead,landing,originKey,whenText,placeText,roster`。
+局主行 = `JU.derive.hostRow` 全部字段（`key` 被换成活动 id 作列表键；derive 原来的状态键在 **`stateKey`**：`cancelled∣ended∣review∣reschedule∣formed∣recruit`；`todo,life,label,status,cta,section,pending,unanswered,unrecorded,present,nonHost,formed,contactOpen,formedLine,counts,seats,seatText,seatMore,when,oldWhen,place,canReschedule,canEnd,canCancel,…`）+ `title,en,pack,open(ev),act(ev),intent('review∣attendance∣manage'),ctaLabel,isLead,landing,originKey,whenText,placeText,roster`。
 草稿行 = derive（`id,title,untitled,whenText,placeText,ready,missingText,agoText,source,seats,capacity,pack`）+ `key,cls('is-deleting'∣'is-restored'∣'')、ghost、sourceText、open(ev)、del(ev)、continueInert:true、continueLabel、originKey、landing`。删除：引擎立刻写入 → 原槽位保留 `ghost` 行 `deleteMs` 供收起 → 撤销条 10s（`holdKey('undo')`）→ `undo.act()` 原槽位恢复并带 `is-restored` 260ms；到期 `commitUndo`。
 
 ## 6. 参加者局内
@@ -216,3 +216,12 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - **列表局名同样的问题**（长标题两行省略时「·」可能起行）：组装交付时会对视图模型里所有局名统一套 `keepDot`。各方案的脚本按文字找元素时请用空白归一的匹配（Playwright `text=` / `hasText` 已归一；自写 `textContent.includes('… · …')` 会因 U+00A0 失配）。
 - **widths.cjs 的最小字号**不再计入 V27 局卡原件的小字：自身或祖先的行内 `font-size` 用 `cqw` 的文字（局卡模板逐字复制，随 4:5 容器缩放，原件就带 5–8px 标注）不进 minFont；方案自己的文字仍须 ≥ 12px。
 - **出票时机（建议，非强制）**：无 GPU 的无头环境里 `JURitual.print` 会占住主线程约 3s；进入票根页时等导航停稳（`nav.phase === 'idle'`）再调用 `print`，入场动画才不被卡住（C05 做法）。出票前的空位要有东西：出纸口 / 票位轮廓先在，不能只剩一行「出票中」。
+
+### 主负责人修正（2026-10-23 · C08 复核发现）
+- **返回时的测量可以不受 transform 影响（选用）**：`back()` 量原点行时，若下层页面此刻还带着 transform（整页被推出屏、色带被移走、缩放），视觉测量会把行看成在屏外而滚动列表（C08：约 640px）。给滚动容器（或其祖先）加 `data-measure="layout"`，控制器就改用布局坐标（offset 链，忽略 transform 与滚动）判断可见度并给出返回落点矩形——也就是页面停稳后的位置。没有加标记的方案行为不变。回归：`reveal-regress.cjs` 新增三项（无标记时复现误滚 / 有标记时列表不动 / 落点矩形为未变换位置），7/7。
+- **局主行的状态键**：`c.hosted` 每行的 `key` 是活动 id（列表键），derive 原来的状态键现在保留在 `stateKey`（`cancelled∣ended∣review∣reschedule∣formed∣recruit`）。
+- **退出类确认层按 V27 的职责区分**（V27 原文核对：放弃预留 `保留位置` 用蓝色主 CTA、`确认退出` 红字红描边；退出已确认的局 `继续赴约` 用蓝色主 CTA；撤回报名 `再想想` 玻璃描边 + `撤回报名` 墨色胶囊，没有蓝 CTA）：
+  - `danger`：`release∣exit∣decline` 为真 → 确认键用 V27 危险构造（`cta.css .ju-v27-danger`）。原先 `release` 为假，「确认退出」被画成蓝色主 CTA，与 V27 相反。
+  - `keepPrimary`：`release∣exit∣decline` 为真 → **取消 / 保留键用主 CTA 原构造**（V27 `q5StayStyle = blueCta`），这一层的蓝色只给「留下」。
+  - `okTone`：`withdraw∣leaveQueue` 为 `'ink'`（V27 撤回报名的墨色胶囊，无蓝 CTA），其余 `'danger'`。
+  各方案在阶段 2 按这三个字段改确认层模板。

@@ -30,6 +30,36 @@ let fails = 0, passes = 0; const ok = (n, c, x) => { if (c) passes++; else { fai
     const uniq = [...new Set(tops.filter(v => v != null))];
     ok('no double scroll on return: list scrollTop constant during the exit and after settle', uniq.length === 1 && Math.abs(uniq[0] - Math.round(r0.top)) <= 1, { before: Math.round(r0.top), during: tops });
   }
+  /* a hidden home whose rows are still transformed when back() runs (C08: the bands inside the list pushed off-screen during the detail). Without the opt-in
+     marker the visual measurement misreads the row as off-screen and scrolls the list; with data-measure="layout" on the scroller
+     the controller measures in layout coordinates and the list stays put. The transform is a test stylesheet, removed right after
+     back() (the concept's exit animation would clear it). */
+  async function transformedReturn(marker) {
+    await L.jump(p, CODE, 'j-many', 700);
+    const pk = await L.E(p, CODE, `
+      var sc = root.querySelector('[data-scroller^="home"]') || root.querySelector('[data-surface="home"] [data-scroller]'); if (!sc) return { err: 'no home scroller' };
+      var rows = [].slice.call(sc.querySelectorAll('[data-origin][data-rid]')); var target = rows[Math.min(rows.length - 1, 6)];
+      var s = sc.getBoundingClientRect(), r = target.getBoundingClientRect(); sc.scrollTop += (r.bottom - (s.bottom - 6)); inst._applyHc && inst._applyHc(sc);
+      if (a) sc.setAttribute('data-measure', 'layout'); else sc.removeAttribute('data-measure');
+      return { name: sc.getAttribute('data-scroller'), origin: target.getAttribute('data-origin'), top: sc.scrollTop };`, marker);
+    if (pk.err) return { err: pk.err };
+    await p.waitForTimeout(200);
+    const bb = await L.E(p, CODE, `var el = root.querySelector('[data-origin="' + a.origin + '"]'); var r = el.getBoundingClientRect(); return { x: r.left + Math.min(r.width / 2, 120), y: r.top + Math.min(r.height / 2, 18) }`, pk);
+    await p.mouse.click(bb.x, bb.y); await p.waitForTimeout(900);
+    const r = await L.E(p, CODE, `
+      var sc = root.querySelector('[data-scroller="' + a.name + '"]'); var row = root.querySelector('[data-origin="' + a.origin + '"]'); var host = (row.parentElement && row.parentElement !== sc) ? row.parentElement : row; host.setAttribute('data-test-hidden', '');
+      var st = document.createElement('style'); st.textContent = '[data-test-hidden]{transform:translateY(700px) !important;transition:none !important}'; (root.getRootNode ? root.getRootNode() : document).appendChild(st);
+      void host.getBoundingClientRect(); inst.ctlVals().nav.back(); var after = sc.scrollTop; st.remove(); host.removeAttribute('data-test-hidden');
+      var top = inst.state.nav.stack[inst.state.nav.stack.length - 1]; return { before: a.top, after: after, from: top.from || null };`, pk);
+    await p.waitForTimeout(900);
+    const settled = await L.E(p, CODE, `var sc = root.querySelector('[data-scroller="' + a.name + '"]'); sc && sc.removeAttribute('data-measure'); return sc ? sc.scrollTop : null`, pk);
+    return Object.assign(r, { settled });
+  }
+  const noMark = await transformedReturn(false);
+  ok('transformed home without the marker reproduces the misread (list scrolled on return)', !noMark.err && Math.abs(noMark.after - noMark.before) > 40, noMark);
+  const withMark = await transformedReturn(true);
+  ok('data-measure="layout": list scrollTop unchanged on return from a transformed home', !withMark.err && Math.abs(withMark.after - withMark.before) <= 1 && Math.abs(withMark.settled - withMark.before) <= 1, withMark);
+  ok('data-measure="layout": return rect is the settled (untransformed) row position', !withMark.err && withMark.from && withMark.from.y > 0 && withMark.from.y < 844, withMark.from);
   ok('no console errors', errors.length === 0, errors.slice(0, 3));
   await b.close();
   console.log(fails ? `FAILED ${fails} / ${passes} passed` : `reveal-regress OK · ${passes} checks passed`); process.exit(fails ? 1 : 0);
