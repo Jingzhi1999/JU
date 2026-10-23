@@ -70,7 +70,7 @@
         if (my === seq) { setCopied(ok); if (!ok && err) err.textContent = '复制失败，请长按账号复制'; }
         busy = false; if (opts.onCopy) opts.onCopy(ok); return ok;
       },
-      add: () => { if (added) return false; added = true; paint(); if (opts.onAdd) opts.onAdd(); return true; },
+      add: () => { if (added) return false; added = true; paint(); if (err) err.textContent = ''; if (opts.onAdd) opts.onAdd(); return true; },   /* 已加微信后，之前的复制失败行已无意义（C05 复核） */
       destroy: () => { handle.hide(); },   /* 主负责人（C04 复核）：同一段 DOM 在跳转 / replace 时会被下一张票复用，销毁时把显示状态（data-revealed / data-shown / 已复制 / 错误行）一并复位 */
     };
     if (copyBtn) copyBtn.onclick = () => handle.copy();

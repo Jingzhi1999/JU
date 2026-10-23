@@ -181,7 +181,7 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - **`this.motion(name, fn)` 会立刻执行 fn**（评审 mixin：运行并登记）。给仪式登记重播只能 `this.lastMotion = {name, fn}`；C00 曾因此在出票一开始就 reset + 重印，第一个 print promise 被 superseded、票面瞬间变「已印」。
 - **引擎拥有的 DOM 不能被模板绑定**：`data-state / data-print`、舞台 `style`（`--ju-paper-height`）、纸的内联样式、`[data-tear]` / `[data-burn]` 里的画布、联系层的 `data-revealed` 与按钮文案都由原件写；模板里只绑静态属性（Preact 只在 vnode 值变化时才写 DOM）与同一份 `data-slot` 文字。`[data-tear]` / `[data-burn]` 不放 vnode 子节点，引擎追加的节点 Preact 不会动。
 - **无头环境的 WebGL**：headless Chromium 走 SwiftShader（`ANGLE / Vulkan / SwiftShader`，WebGL1+2 可用但慢）。live 的 Cotton Candy（three.js 水面）把整页压到 ≈7 rAF/s，所有 rAF 驱动的原件都随之爬行（键盘撕票 357ms → 2s，坠落 1080ms 在 5s 内完不成）；引擎暂停（`JU.shared.skins.pause`）后回到 60 fps。回归与帧序列采集都先 pause 环境引擎（= 面板「暂停」），三环境首屏单独 live 截。真机 / 有 GPU 的浏览器无此问题。出票的 32×128 网格在 SwiftShader 上 ≈2.5–3.5s 完成（原件 2300ms）。
-- `JURitual.stamp` 的引擎脚本（`assets/original/v27/ju-paper-film / ju-envelope / ju-stamp / ju-tickets2.js`）不在 bundle 里，stamp.js 用 `document.currentScript` 的目录（bundle 内为空 → 页面相对路径）按需加载：私有构建靠 `.build/assets → my-r2/src/shared/rituals/assets` 软链；交付单文件里会失败 → C00 退回普通章并显示原因（需要构建把四个引擎并入，或 stamp.js 内联它们）。字体同理（`assets/fonts/fonts.css`，采集时用改写了 url 的副本作 `JU_FONTS_CSS`）。
+- `JURitual.stamp` 的引擎脚本（`assets/original/v27/ju-paper-film / ju-envelope / ju-stamp / ju-tickets2.js`）不在 bundle 里，stamp.js 用 `document.currentScript` 的目录（bundle 内为空 → 页面相对路径）按需加载：私有构建靠 `.build/assets → my-r2/src/shared/rituals/assets` 软链；交付单文件里会失败 → C00 退回普通章并显示原因（需要构建把四个引擎并入，或 stamp.js 内联它们）。字体同理（`assets/fonts/fonts.css`，采集时用改写了 url 的副本作 `JU_FONTS_CSS`）。 **（已解决，2026-10-23：`build.js` 的 `addRitualOriginals()` 按 `rituals/bundle.json` 把四个原件逐字内联在 stamp.js 之前，私有构建与交付单文件都不再按路径加载；08 场景在单文件里可用。）**
 - 08 散场引擎没有「已盖章的静态态」：传 `mode` 就播一次盖章；再次进入历史会重播（规格「进入历史不重放盖章」需要引擎加 settled 选项，已列给主负责人）。
 - 原件读 `prefers-reduced-motion` 或 `html[data-ju-reduced]`（页面级）：C00 只在面板实例把 `review.rm` 镜像到它，比较视图里多实例会互相影响。
 - 关键帧滑杆只能 seek 燃烧（`handle.seek`）；出票 / 撕 / 盖章是 rAF 引擎，用「重播」看。
@@ -251,3 +251,7 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - **联系模块 `labels:false`**：`JURitual.contact(host, data, { labels: false, … })` 时原件不写动作按钮与说明行的文案（它用 `textContent` 改写，会顶掉 Preact 的文本节点，绑定的 `c.ticket.contact.ctaLabel` 从此不再更新），只维护 `aria-disabled` 与显示状态。方案用控制器的 `ctaLabel / ctaDisabled` 显示「已加微信 → 处理中… → 待赴约」时请传它（或像 C10 那样给原件留一个隐藏 slot）。
 - **管理区块分出 `label` 与 `count`**：`c.manage.<区块>` 原有 `title`（如「申请 · 2」）不变，另加 `label`（「申请」）与 `count`（`2`、`'已答复 1/3'`、`'2/3'`；成员 / 安排为 `null`），居中或分栏排版不用再拆字符串。
 - **接触表中文标签**：`_lib.cjs` 的 `tilePy` 用文泉驿正黑写标签（原先 PIL 默认字体把中文画成方块）。
+
+### 主负责人修正（2026-10-23 · C05 阶段 2 汇报）
+- 联系模块 `add()`（已加微信）时清掉原件的复制失败行——之前失败行会一直留到下一次复制。
+- §14「stamp 引擎按路径加载、单文件会退回普通章」已过时：四个原件在构建时内联（见 §14 该条的补注）。
