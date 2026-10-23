@@ -201,3 +201,7 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 | 头less 冒烟 `<scratchpad>/core1/ctl-smoke.cjs` | 通过（引擎 / 视图模型 / 50 跳 / 禁用词） |
 | 帧序列（`my-r2/tools/capture.cjs`，`my-r2/evidence/C00/<flow>/f*.jpg + sheet.jpg`，均 Read 看过） | `print` 10 帧（纸从出纸口推出到落定）· `tear` 28 帧（拖 60px 回位、拖 200px 撕开、坠落、联系层、已加微信）· `tear-keyboard` 11 帧（Enter 同一路径）· `contact` 6 帧（复制在 file:// 下走失败分支、已加微信 → 待赴约）· `burn` 13 帧（主动退出 → C 变体侧向炭边落灰 → 空舞台 + 已退出这局）· `burn-declined` 11 帧（新票 → 去不了了 → B 多点烧穿）· `stamp` 11 帧（08 场景：章落下、出席印、归档）· `skins` 8 帧（cotton / halo / sunset live）· `reissue` 9 帧（新票打印：原定划线 + 时间已改章） |
 禁用词（扣分 / 信用分 / 处罚 / 等级 / 剩余次数）：核心四文件 + C00 = 0（数据里两句「不会自动处罚」改为「不会自动带来任何后果」，语义不变）。
+
+### 主负责人修正（2026-10-23 · C01 复核发现）
+- **返回时不再双重滚动**：`back()` 先把下层页面的滚动恢复到记忆位置（`_restoreNow`），再测量起点；起点行只有在可见部分 < 50% 时才滚进视口（`reveal(el, false, {soft:true, memoKey})`），并同步更新记忆，结算时的恢复不会再把列表拉回原位。回归：`my-r2/tools/test/reveal-regress.cjs`（旧控制器：646 → 391 跳动；新控制器：391 恒定）。
+- **区块聚焦不再遮住页头**：`reveal(sec, true)` 尊重区块自身的 CSS `scroll-margin-top`（默认 8px）并加上滚动容器内 sticky `[data-header]` 的高度；区块已在可视区上部 60% 内时不滚动。方案若需要更大的留白，给 `[data-section]` 写 `scroll-margin-top`。

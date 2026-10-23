@@ -93,10 +93,16 @@
     };
     /* the element that marks `key` as an origin — scrolled into view inside its own scroller when it moved off-screen (a row that
        changed group lands somewhere else); null when it is gone (the concept then fades instead of flying) */
-    p._originRect = function (key) {
+    p._originRect = function (key, memoKey) {
       var root = this.rootRef && this.rootRef.current; if (!root || !key || !JU.fx) return null;
       var el = root.querySelector('[data-origin="' + key + '"]'); if (!el) return null;
-      this.reveal(el); return JU.fx.rectIn(el, root);
+      this.reveal(el, false, { soft: true, memoKey: memoKey }); return JU.fx.rectIn(el, root);
+    };
+    /* put the under page's scrollers back where they were NOW (before measuring the origin), so the return lands on the real
+       final position and the settle-time restore has nothing left to move (no visible double scroll) */
+    p._restoreNow = function (key) {
+      var root = this.rootRef && this.rootRef.current; var memo = key != null && (this._scrollMemo || {})[key]; if (!root || !memo) return;
+      Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el && Math.abs(el.scrollTop - memo[k]) > 0.5) el.scrollTop = memo[k]; });
     };
     p._navSettle = function () {
       var nav = this.state.nav; this.cancelKey('nav');
@@ -146,8 +152,8 @@
       var top = nav.stack[nav.stack.length - 1]; var under = nav.stack[nav.stack.length - 2];
       this.cancelKey('nav'); this._leaveApply(top.s);
       /* the origin may have moved (a row that changed group) or be gone: re-measure it so the exit lands on the real row */
-      var from = top.key ? this._originRect(top.key) : null; var stack = nav.stack.slice(); stack[stack.length - 1] = assign(top, { from: from || null });
-      var self = this; var revealKey = this._scrollKey(under);
+      var self = this; var revealKey = this._scrollKey(under); this._restoreNow(revealKey);
+      var from = top.key ? this._originRect(top.key, revealKey) : null; var stack = nav.stack.slice(); stack[stack.length - 1] = assign(top, { from: from || null });
       this.setState({ nav: assign(nav, { stack: stack, phase: 'exit', dir: 'back', leaving: null }), sheet: null });
       this.afterKey('nav', this.navMs('back'), function () {
         self._pendingRestore = revealKey;
@@ -223,15 +229,29 @@
       if (this._focusAtt) { var sel = '[data-rid="' + this._focusAtt + '"] [data-act="attend-present"],[data-rid="' + this._focusAtt + '"] button'; var b = root.querySelector(sel); this._focusAtt = null; if (b) { this.reveal(b); try { b.focus({ preventScroll: true }); } catch (e) { } } }
       this._tickLoop();
     };
-    p.reveal = function (el, top) {
+    /* reveal(el, top, opts): bring el into view inside its own [data-scroller].
+       top:true  → section focus: its top goes to the visible top + its own CSS scroll-margin-top (default 8px) + the height of a
+                   sticky [data-header] inside the scroller, and only when it is not already in the upper 60% of the view
+       opts.soft → return-to-origin: scroll only when less than half of el is visible (a row 12px from the edge stays put)
+       opts.memoKey → keep the scroll memo of that page in sync with the new position (no fight with the settle restore) */
+    p.reveal = function (el, top, opts) {
+      opts = opts || {};
       var root = this.rootRef && this.rootRef.current; if (!el || !root) return;
       var sc = el.closest && el.closest('[data-scroller]');
       var ph = root.closest ? (root.closest('.ju-phone') || root) : root; var pr = ph.getBoundingClientRect();
       var kb = parseFloat((global.getComputedStyle ? getComputedStyle(root).getPropertyValue('--kb') : '') || '0') || 0;
       if (sc) {
         var s = sc.getBoundingClientRect(), r = el.getBoundingClientRect(); var t0 = Math.max(s.top, pr.top), b0 = Math.min(s.bottom, pr.bottom - kb);
-        if (top) sc.scrollTop += r.top - t0 - 8;
-        else if (r.top < t0 + 12 || r.bottom > b0 - 12) sc.scrollTop += (r.top + r.height / 2) - (t0 + b0) / 2;
+        var before = sc.scrollTop;
+        if (top) {
+          var cs = global.getComputedStyle ? getComputedStyle(el) : null; var mt = cs ? parseFloat(cs.scrollMarginTop) || 0 : 0; if (!mt) mt = 8;
+          var hd = sc.querySelector('[data-header]'); if (hd && global.getComputedStyle && /sticky|fixed/.test(getComputedStyle(hd).position)) mt += hd.getBoundingClientRect().height;
+          var inUpper = r.top >= t0 + mt - 1 && r.top <= t0 + (b0 - t0) * 0.6;
+          if (!inUpper) sc.scrollTop += r.top - t0 - mt;
+        } else if (opts.soft) {
+          var vis = Math.max(0, Math.min(r.bottom, b0) - Math.max(r.top, t0)); if (r.height > 0 && vis / r.height < 0.5) sc.scrollTop += (r.top + r.height / 2) - (t0 + b0) / 2;
+        } else if (r.top < t0 + 12 || r.bottom > b0 - 12) sc.scrollTop += (r.top + r.height / 2) - (t0 + b0) / 2;
+        if (opts.memoKey != null && sc.scrollTop !== before) { var m = (this._scrollMemo = this._scrollMemo || {}); var nm = sc.getAttribute('data-scroller'); (m[opts.memoKey] = m[opts.memoKey] || {})[nm] = sc.scrollTop; }
         this._applyHc(sc);
       }
       if (root.scrollTop) root.scrollTop = 0; if (ph !== root && ph.scrollTop) ph.scrollTop = 0;
