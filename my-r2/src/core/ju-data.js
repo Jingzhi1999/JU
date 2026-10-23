@@ -43,6 +43,9 @@
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function parts(iso) { var d = new Date(t(iso)); return { y: d.getUTCFullYear(), mo: d.getUTCMonth() + 1, d: d.getUTCDate(), h: d.getUTCHours(), mi: d.getUTCMinutes(), wd: d.getUTCDay() }; }
   var fmt = {
+    /* the character that tells people apart in an initials circle: 阿蒋 → 蒋, 小满 → 满, 老杨 → 杨 (a leading 阿 / 小 / 老 / 大 is a
+       prefix, not a name), Latin names → first letter upper-cased, everything else → the first character */
+    initial: function (name) { var n = String(name == null ? '' : name).trim(); if (!n) return '·'; if (/^[A-Za-z]/.test(n)) return n.charAt(0).toUpperCase(); var ch = Array.from(n); return ch.length >= 2 && /^[阿小老大]$/.test(ch[0]) ? ch[1] : ch[0]; },
     when: function (iso) {
       if (!iso) return { en: '', zh: '', md: '', time: '', wdEn: '', wdZh: '', wd1: '', date: '', long: '', meeting: '', month: '', day: '' };
       var p = parts(iso); var md = pad(p.mo) + '.' + pad(p.d), time = pad(p.h) + ':' + pad(p.mi);

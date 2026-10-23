@@ -306,11 +306,11 @@
 
     /* ---------------- feedback ---------------- */
     p.say = function (text, kind) { var self = this; var id = (this._toastSeq = (this._toastSeq || 0) + 1); this.setState({ toast: { text: text, kind: kind || 'info', id: id } }); this.holdKey('toast', kind === 'error' ? 3600 : 2600, function () { self.setState(function (s) { return s.toast && s.toast.id === id ? { toast: null } : null; }); }); };
-    p._copyDone = function (key, text, ok, okText, armed) {
+    p._copyDone = function (key, text, ok, okText, armed, quietOk) {
       var self = this;
       if (armed) { this.setState(function (s) { return { data: JU.engine.setCopyFailNext(s.data, { on: false }).data }; }); ok = false; }
       this._ui({ copy: { key: key, text: text, ok: ok, at: Date.now() } });
-      if (ok) { this.say(okText || '已复制', 'ok'); this.holdKey('copy:' + key, 2600, function () { self._clearCopy(key); }); }
+      if (ok) { if (!quietOk) this.say(okText || '已复制', 'ok'); this.holdKey('copy:' + key, 2600, function () { self._clearCopy(key); }); }   /* quietOk: the shared module already shows「✓ 已复制」in place — no second toast */
       else { this.say('未能复制，长按手动复制', 'error'); this.holdKey('copy:' + key, 8000, function () { self._clearCopy(key); }); }
       return ok;
     };
@@ -327,7 +327,7 @@
       if (armed && clip) { try { Object.defineProperty(clip, 'writeText', { configurable: true, writable: true, value: function () { return Promise.reject(new Error('armed copy failure')); } }); patched = true; } catch (e) { } }
       var restore = function () { if (patched) { patched = false; try { delete clip.writeText; } catch (e) { } } };
       var pr; try { pr = Promise.resolve(run()); } catch (e) { pr = Promise.resolve(false); }
-      return pr.then(function (ok) { restore(); return self._copyDone(key, text, !!ok, okText, armed); }, function () { restore(); return self._copyDone(key, text, false, okText, armed); });
+      return pr.then(function (ok) { restore(); return self._copyDone(key, text, !!ok, okText, armed, true); }, function () { restore(); return self._copyDone(key, text, false, okText, armed, true); });
     };
     p._clearCopy = function (key) { this.setState(function (s) { return s.ui.copy && s.ui.copy.key === key ? { ui: assign(s.ui, { copy: null }) } : null; }); };
     p.copyState = function (key) { var self = this; var c = this.state.ui.copy; var mine = c && c.key === key; return { copied: !!(mine && c.ok), failed: !!(mine && !c.ok), text: mine ? c.text : '', label: mine ? (c.ok ? '已复制' : '未能复制 · 重试') : '复制', retry: function () { if (mine) self.copy(c.text, key); } }; };
@@ -702,15 +702,15 @@
           var order = orderAll.filter(function (k) { return show[k]; }).concat(['arrange']);
           var secV = function (k, extra) { return assign({ key: k, on: show[k], order: Math.max(0, order.indexOf(k)), open: !!mui.open[k], cls: (mui.open[k] ? 'is-open' : 'is-closed') + (mui.focus === k ? ' is-focus' : ''), toggle: function () { self.toggleSection(k); } }, extra); };
           var apps = secV('apps', { title: '申请 · ' + m.pendingApps.length, titleHandled: m.handledCount ? '已处理 ' + m.handledCount : '', count: m.pendingApps.length, handled: m.handledCount, sub: m.handledCount ? '申请 ' + m.pendingApps.length + ' · 已处理 ' + m.handledCount : '通过即发出 6 小时预留', help: JU.COPY.approveHelp, empty: m.pendingApps.length === 0,
-            rows: m.appsToShow.map(function (a) { var k = 'app:' + a.id; return assign(a, { key: a.id, nickText: a.nick || '未填称呼', initial: (a.nick || '·').slice(0, 1), busy: !!ui.busy[k], error: ui.errors[k] || '', result: a.handled, tone: a.status === 'approved' ? 'ok' : a.status === 'rejected' ? 'void' : 'wait', approve: function (ev) { self.approve(mid, a.id); }, reject: function (ev) { self.reject(mid, a.id); }, retry: function () { self.setState(function (st) { var er = assign(st.ui.errors); delete er[k]; return { ui: assign(st.ui, { errors: er }) }; }); } }); }) });
-          var rosterRows = m.roster.map(function (r) { var ck = 'wx:' + r.id; var rcs = self.copyState(ck); return assign(r, { key: r.id, name: r.host ? '你' : r.nick, initial: (r.nick || '·').slice(0, 1), copyWx: function () { if (r.showWx) self.copy(r.wx, ck, '微信号已复制'); }, copied: rcs.copied, copyFail: rcs.failed, copyLabel: rcs.label, retryCopy: rcs.retry, wxText: r.showWx ? '微信 ' + r.wx : '', contactText: r.contactAdded ? '已自报加微信' : '', left: { text: r.leftText, ratio: r.leftRatio, tone: r.leftTone, on: !!r.leftText } }); });
+            rows: m.appsToShow.map(function (a) { var k = 'app:' + a.id; return assign(a, { key: a.id, nickText: a.nick || '未填称呼', initial: JU.fmt.initial(a.nick), busy: !!ui.busy[k], error: ui.errors[k] || '', result: a.handled, tone: a.status === 'approved' ? 'ok' : a.status === 'rejected' ? 'void' : 'wait', approve: function (ev) { self.approve(mid, a.id); }, reject: function (ev) { self.reject(mid, a.id); }, retry: function () { self.setState(function (st) { var er = assign(st.ui.errors); delete er[k]; return { ui: assign(st.ui, { errors: er }) }; }); } }); }) });
+          var rosterRows = m.roster.map(function (r) { var ck = 'wx:' + r.id; var rcs = self.copyState(ck); return assign(r, { key: r.id, name: r.host ? '你' : r.nick, initial: JU.fmt.initial(r.nick), copyWx: function () { if (r.showWx) self.copy(r.wx, ck, '微信号已复制'); }, copied: rcs.copied, copyFail: rcs.failed, copyLabel: rcs.label, retryCopy: rcs.retry, wxText: r.showWx ? '微信 ' + r.wx : '', contactText: r.contactAdded ? '已自报加微信' : '', left: { text: r.leftText, ratio: r.leftRatio, tone: r.leftTone, on: !!r.leftText } }); });
           var openSeats = Math.max(0, m.counts.available);
           var roster = secV('members', { title: '成员', line: ev3.capacity + ' 个座位（含你）· 已确认 ' + m.counts.confirmed + (m.counts.reserved ? ' · 预留 ' + m.counts.reserved : ''), rows: rosterRows, openSeats: openSeats, openText: cancelled ? '' : openSeats ? '还有 ' + openSeats + ' 个空位' : '', openRows: cancelled ? [] : Array.apply(null, Array(openSeats)).map(function (_, i) { return { key: 'open-' + i, text: '等人' }; }), voidNote: cancelled ? '已取消 · 票根作废' : '' });
-          var queue = secV('queue', { title: '候补 · ' + m.queue.length, sub: '不占席位', count: m.queue.length, rows: m.queue.map(function (q, i) { return assign(q, { key: q.nick + i, initial: (q.nick || '·').slice(0, 1) }); }), help: JU.COPY.queueHelp });
+          var queue = secV('queue', { title: '候补 · ' + m.queue.length, sub: '不占席位', count: m.queue.length, rows: m.queue.map(function (q, i) { return assign(q, { key: q.nick + i, initial: JU.fmt.initial(q.nick) }); }), help: JU.COPY.queueHelp });
           var leaves = secV('leaves', { title: '离开记录 · ' + m.leaves.length, count: m.leaves.length, rows: m.leaves.map(function (l, i) { return assign(l, { key: l.nick + i, atText: JU.fmt.abs(l.at) }); }) });
           var replies = secV('replies', { title: '改期答复 · 已答复 ' + m.answered + '/' + m.asked, sub: '没有答复期限', answered: m.answered, total: m.asked, oldWhen: m.oldWhen, newWhen: m.when, rows: m.reschedRoster.map(function (r) { return assign(r, { key: r.id, name: r.nick, tone: r.reschedule === 'ask' ? 'wait' : r.reschedule === 'accepted' ? 'ok' : 'void', ticketLine: r.reschedule === 'accepted' ? '已撕票' : r.reschedule === 'declined' ? '席位已释放' : '旧票不能用' }); }), help: JU.COPY.repliesHelp });
           var attRows = m.attendees.map(function (a) { var editing = !!mui.editing[a.id]; var rec = !!a.attendance; var ack = 'wx:' + a.id; var acs = self.copyState(ack);
-            return assign(a, { key: a.id, name: a.nick, initial: (a.nick || '·').slice(0, 1), value: a.attendance || '', label: a.attLabel, recorded: rec, editing: editing, choosing: !rec || editing, stampFresh: !!mui.fresh[a.id], stamp: a.attendance === 'present' ? 'present' : a.attendance === 'absent' ? 'absent' : a.attendance === 'pending' ? 'pending' : 'none', trail: a.attTrail, showTrail: a.attTrail.length >= 2, error: ui.errors['att:' + a.id] || '', isNext: mui.next === a.id,
+            return assign(a, { key: a.id, name: a.nick, initial: JU.fmt.initial(a.nick), value: a.attendance || '', label: a.attLabel, recorded: rec, editing: editing, choosing: !rec || editing, stampFresh: !!mui.fresh[a.id], stamp: a.attendance === 'present' ? 'present' : a.attendance === 'absent' ? 'absent' : a.attendance === 'pending' ? 'pending' : 'none', trail: a.attTrail, showTrail: a.attTrail.length >= 2, error: ui.errors['att:' + a.id] || '', isNext: mui.next === a.id,
               set: function (v) { self.attend(mid, a.id, v); }, setPresent: function () { self.attend(mid, a.id, 'present'); }, setAbsent: function () { self.attend(mid, a.id, 'absent'); }, setPending: function () { self.attend(mid, a.id, 'pending'); }, correct: function () { self.correct(a.id); }, isPresent: a.attendance === 'present', isAbsent: a.attendance === 'absent', isPending: a.attendance === 'pending',
               copyWx: function () { if (a.showWx) self.copy(a.wx, ack, '微信号已复制'); }, copied: acs.copied, copyFail: acs.failed, copyLabel: acs.label, retryCopy: acs.retry, wxText: a.showWx ? '微信 ' + a.wx : '' }); });
           var attendance = secV('attendance', { title: '出席 · ' + m.recorded + '/' + m.nonHost, sub: '逐人记录 · 可更正', rec: m.recorded, total: m.nonHost, present: m.present, absent: m.absent, undecided: m.undecided, rows: attRows, help: JU.COPY.attendanceHelp, contactLine: m.contactOpen ? '散场 24 小时内仍可查看成员微信' : '散场已超过 24 小时，联系方式已关闭', focusNext: mui.next, allRecorded: m.recorded === m.nonHost && m.nonHost > 0, doneText: m.recorded === m.nonHost ? '都记好了 · ' + m.present + '/' + m.nonHost + ' 人到场' : '' });
@@ -725,6 +725,14 @@
       if (is.draft && top.p.draftId) { var dr0 = hosted.drafts.filter(function (x) { return x.id === top.p.draftId; })[0]; out.draft = dr0 ? assign({ on: true, draftId: dr0.id, row: dr0, back: function () { self.back(); }, del: function (ev) { self.deleteDraft(dr0.id); self.back(); } }, dr0) : { on: true, missing: true, title: '草稿已删除', back: function () { self.back(); } }; }
       else out.draft = { on: false };
       out.surfaceTitle = out.manage.on ? out.manage.head && out.manage.head.title : out.ticket.on ? out.ticket.title : out.history.on ? out.history.title : out.read.on ? out.read.title : out.detail.on ? out.detail.title : out.waitlist.on ? out.waitlist.title : TITLES[top.s];
+      /* a surface that is LEAVING after replace() (read → ticket, ticket ⇄ reply …) keeps the last model it rendered with, so its exit
+         animation never paints an empty frame (C07 review); the cache is per surface and only reused for the same event / draft */
+      var vmCache = (this._vmCache = this._vmCache || {});
+      ['detail', 'read', 'waitlist', 'ticket', 'history', 'manage', 'draft'].forEach(function (k) { if (out[k] && out[k].on && is[k]) vmCache[k] = out[k]; });
+      if (nav.leaving && out[nav.leaving.s] && !out[nav.leaving.s].on) {
+        var cached = vmCache[nav.leaving.s], lp = nav.leaving.p || {};
+        if (cached && ((lp.eventId && cached.eventId === lp.eventId) || (lp.draftId && cached.draftId === lp.draftId))) out[nav.leaving.s] = assign(cached, { leaving: true });
+      }
       return out;
     };
   };

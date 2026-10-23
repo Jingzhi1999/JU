@@ -21,7 +21,9 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
   const surface = (p) => inst(p, 'return inst.state.nav.stack[inst.state.nav.stack.length-1].s');
   const stage = (p, id) => inst(p, 'return inst.state.data.joined.filter(function(x){return x.eventId===arg})[0].stage', id);
   const text = (p) => phone(p).evaluate(el => el.textContent);
-  const settled = (p, ms) => p.waitForTimeout(ms || 450);
+  /* settle = the fixed wait AND the navigation back at rest: under heavy machine load (several Chromium builders, live WebGL
+     backgrounds) a 360ms nav timer can land long after 450ms, and a click measured mid-slide hits empty space */
+  const settled = async (p, ms) => { await p.waitForTimeout(ms || 450); const t0 = Date.now(); while (Date.now() - t0 < 4000) { const ph = await p.evaluate(() => { try { const m = window.JUShell.mounts.stage['stage:' + window.__JU_META[0].code + ':']; return m.instance.state.nav.phase; } catch (e) { return 'idle'; } }); if (ph === 'idle') break; await p.waitForTimeout(100); } };
   const banned = /扣分|信用分|信用等级|剩余次数|(?<!不会自动|不自动|不)处罚/;  /* 「不会自动处罚」是 V27 原文的否定句，允许 */
   /* wait until a condition holds (the shared rituals are async: fonts.ready + rig.ready + rAF + the real 2.3s print) */
   const until = async (p, js, ms, step) => { const t0 = Date.now(); while (Date.now() - t0 < (ms || 4000)) { if (await inst(p, js)) return true; await p.waitForTimeout(step || 100); } return false; };
@@ -56,7 +58,8 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const land = await inst(p, `return inst.state.ui.landKey`); ok('landing key marks the origin row', land === 'row-livehouse', land);
     await inst(p, `root.querySelector('[data-scroller="home"]').scrollTop = 0`);
     await click(p, '[data-rid="brunch"]'); await settled(p); ok('row → detail', await surface(p) === 'detail');
-    await click(p, '[data-surface="detail"] [data-act="back"]'); await settled(p); ok('back → home (detail)', await surface(p) === 'home');
+    /* under heavy machine load (several Chromium builders at once) the 300ms exit timer can land after a fixed 450ms wait: poll */
+    await click(p, '[data-surface="detail"] [data-act="back"]'); ok('back → home (detail)', await until(p, `return inst.state.nav.stack[inst.state.nav.stack.length - 1].s === 'home' && inst.state.nav.phase === 'idle'`, 2500), await inst(p, `return inst.state.nav.phase + ' / ' + inst.state.nav.stack.map(function (e) { return e.s; }).join('>') + ' / ' + inst.state.nav.dir`));
     // (b) read → confirm → formed → ticket printing
     await click(p, '[data-rid="brunch"] [data-act="cta"]'); await settled(p); ok('CTA → read (stack home>detail>read)', await inst(p, `return inst.state.nav.stack.map(function(x){return x.s}).join('>')`) === 'home>detail>read');
     const disabledBefore = await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled(); ok('confirm disabled before reading to the end', disabledBefore);

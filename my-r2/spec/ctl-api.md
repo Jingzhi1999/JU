@@ -205,3 +205,8 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 ### 主负责人修正（2026-10-23 · C01 复核发现）
 - **返回时不再双重滚动**：`back()` 先把下层页面的滚动恢复到记忆位置（`_restoreNow`），再测量起点；起点行只有在可见部分 < 50% 时才滚进视口（`reveal(el, false, {soft:true, memoKey})`），并同步更新记忆，结算时的恢复不会再把列表拉回原位。回归：`my-r2/tools/test/reveal-regress.cjs`（旧控制器：646 → 391 跳动；新控制器：391 恒定）。
 - **区块聚焦不再遮住页头**：`reveal(sec, true)` 尊重区块自身的 CSS `scroll-margin-top`（默认 8px）并加上滚动容器内 sticky `[data-header]` 的高度；区块已在可视区上部 60% 内时不滚动。方案若需要更大的留白，给 `[data-section]` 写 `scroll-margin-top`。
+- **首字**：`JU.fmt.initial(name)`——阿蒋 → 蒋、小满 → 满、老杨 → 杨（前缀 阿 / 小 / 老 / 大 不算名字），拉丁名取首字母大写；控制器里申请人、成员、候补、出席的 `initial` 都用它（C02 复核发现：原先一律取第一个字，阿蒋 / 阿檬 / 阿宽都成了「阿」）。
+- **复制只提示一次**：经 `copyVia`（共享联系模块自带「✓ 已复制」）复制成功时，控制器不再另弹「已复制」toast；失败仍弹「未能复制，长按手动复制」并给重试。
+- **replace 离场页不再空帧**：`replace()`（阅读 → 票根、票根 ⇄ 改期新票等）时，离场的那一页沿用它最后一次渲染的视图模型（同一 eventId / draftId），带 `leaving:true`（C07 复核发现）。
+- **共享 CSS**：`v27/skins-r9.css` 删去 R9 页面外壳规则（`.review-*`、`.device`、`.page`、`.ju-phone{width:390px;height:844px}`）——它曾把所有方案的手机钉死在 390×844、覆盖面板尺寸预设；`rituals/ticket.css` 的局名加 `text-wrap:balance`（唯一偏离原件处：只改折行，不改字号字重间距）。
+- **widths.cjs**：仪式原件刻意超宽的画布（撕票 434 = 258 + 2×88、燃烧 pad 74、出票画布）不计入横向溢出。
