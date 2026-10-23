@@ -65,6 +65,7 @@ body{margin:0}
    paper's edge crosses the last 96px before the band. The scroller's box never changes (no re-clamp oscillation). */
 .c05-pg{position:absolute;inset:0;z-index:2;pointer-events:none;--c05-ptop:524px;--c05-band:calc(84px + var(--sat,0px))}
 .c05-pg.pg-home{--c05-band:calc(104px + var(--sat,0px))}
+.c05-pg.pg-manage{--c05-band:calc(108px + var(--sat,0px))}
 .c05-pg.is-under.ph-idle{visibility:hidden}
 .c05-fc{position:absolute;left:0;right:0;top:0;z-index:1;padding:calc(24px + var(--sat,0px)) 24px 0;pointer-events:none;color:var(--c05-ink);transition:transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
 .c05-fc button,.c05-fc [role=button],.c05-fc a,.c05-fc .ju-contact-wrap,.c05-fc .c05-stage{pointer-events:auto}
@@ -169,6 +170,11 @@ body{margin:0}
 .app.role-joined .c05-err{color:#5a0b1e}
 /* 管理 face column: what to do now → the confirmed count (the face numeral) → seats → the rest of the count */
 .c05-zm .c05-num{display:flex;flex-direction:column;align-items:flex-start}
+/* 管理 band line (collapsed state only): centred under the 18px title, count + thin seat bar */
+.c05-mband{position:absolute;left:0;right:0;top:56px;display:flex;justify-content:center;align-items:center;gap:12px;font-size:calc(13px * var(--tz,1));line-height:20px;color:var(--c05-ink);white-space:nowrap;opacity:calc((var(--c05-p,0) - .55) * 2.2);pointer-events:none}
+.c05-mband b{font:600 calc(14px * var(--tz,1))/1 'Archivo',sans-serif}
+.c05-mbar{display:flex;gap:2px;width:64px;height:5px}
+.c05-mbar .c05-seat{height:5px;border-radius:1px}
 .c05-mst{margin-top:auto;padding-top:14px;font-size:calc(15px * var(--tz,1));line-height:1.35;text-wrap:balance}
 .c05-mst span{display:inline-block}
 .c05-ml{margin-top:2px;font-size:calc(13px * var(--tz,1));font-weight:500;line-height:1.3;color:var(--c05-ink);white-space:nowrap}
@@ -207,6 +213,10 @@ body{margin:0}
 .c05-row .t{font-size:calc(14px * var(--tz,1));font-weight:500;line-height:1.4;color:#14161F;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .c05-row .m{font-size:calc(13px * var(--tz,1));line-height:1.45;color:#535b70;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c05-row .s{flex:0 0 auto;max-width:44%;font-size:calc(13px * var(--tz,1));line-height:1.45;padding-top:1px;text-align:right;overflow-wrap:anywhere}
+/* a row's title takes the full paper width (≥ 268px rule); time · place and the status share the second line */
+.c05-row .ml{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-top:2px}
+.c05-row .ml .m{flex:1 1 auto;min-width:0;margin-top:0}
+.c05-row .ml .s{max-width:58%;padding-top:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c05-row .s.t-act{color:var(--c05-act)}.c05-row .s.t-soon{color:var(--c05-soon)}.c05-row .s.t-wait{color:var(--c05-wait)}.c05-row .s.t-kept{color:var(--c05-kept)}.c05-row .s.t-void{color:var(--c05-void)}
 /* landing: the row the face came back to holds a tint of that face's colour for a moment, then lets it go */
 .c05-row{position:relative;isolation:isolate}
@@ -509,8 +519,7 @@ body{margin:0}
                   <div class="c05-grp {{g.toneCls}}"><i></i>{{g.title}} · {{g.count}}</div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
                     <div class="c05-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
-                      <div class="c"><div class="t">{{r.titleNb}}</div><div class="m">{{r.meta}}</div></div>
-                      <div class="s {{r.toneCls}}">{{r.status}}</div>
+                      <div class="c"><div class="t">{{r.titleNb}}</div><div class="ml"><span class="m">{{r.meta}}</span><span class="s {{r.toneCls}}">{{r.status}}</span></div></div>
                     </div>
                   </sc-for>
                 </sc-for>
@@ -833,6 +842,8 @@ body{margin:0}
               <button type="button" class="ju-v27-back-pill c05-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
               <h1 class="c05-ttl">{{manage.title}}</h1>
               <p class="c05-aux">{{manage.aux}}</p>
+              <!-- collapsed band: the face keeps the count when the sheet is pulled up (fades in with --c05-p) -->
+              <sc-if value="{{manage.seatsOn}}"><div class="c05-mband" aria-hidden="true"><span>已确认 <b>{{c.manage.head.progress.confirmed}}/{{c.manage.head.progress.cap}}</b></span><sc-for list="{{manage.parts}}" as="x" hint-placeholder-count="2"><span>{{x.label}} <b>{{x.n}}</b></span></sc-for><i class="c05-mbar"><sc-for list="{{c.manage.head.progress.seats}}" as="s" hint-placeholder-count="4"><em class="c05-seat {{s.kind}}"></em></sc-for></i></div></sc-if>
             </div>
             <!-- the face body of 管理: the same column + card as home, but its numeral is the confirmed count (the time went up into the
                  aux line); every number that an action changes carries data-settle and settles in place (roll + mark) -->
@@ -1034,14 +1045,13 @@ class Component extends DCLogic {
   _landing(ps) {
     const c = this._c, root = this.rootRef.current; if (!c || !root) return; const st = this.state.nav, pst = ps && ps.nav;
     if (st && st.phase === 'exit' && (!pst || pst.phase !== 'exit')) { const sc = root.querySelector('.c05-pg.is-under [data-scroller]'); this._exitScroll = sc ? { name: sc.getAttribute('data-scroller'), top: sc.scrollTop } : null; }
-    if (st && st.phase === 'idle' && pst && pst.phase === 'exit' && this._exitScroll && c.nav.landKey) {
-      const sc = root.querySelector('[data-scroller="' + this._exitScroll.name + '"]'); const row = sc && sc.querySelector('[data-origin="' + c.nav.landKey + '"]');
-      if (sc && row) { const s = sc.getBoundingClientRect(), r = row.getBoundingClientRect(); if ((r.bottom > s.bottom - 8 || r.top < s.top) && Math.abs(sc.scrollTop - this._exitScroll.top) > 2) {
-        sc.scrollTop = this._exitScroll.top;
-        /* never rest with the face half-collapsed: finish the collapse (the row moves up ≤ 96px and stays in view) */
-        const pg = sc.closest('.c05-pg'), ptop = pg ? parseFloat(pg.style.getPropertyValue('--c05-ptop')) || 524 : 524, travel = ptop - sc.offsetTop;
+    if (st && st.phase === 'idle' && pst && pst.phase === 'exit' && this._exitScroll) {
+      const sc = root.querySelector('[data-scroller="' + this._exitScroll.name + '"]'); const row = sc && c.nav.landKey && sc.querySelector('[data-origin="' + c.nav.landKey + '"]');
+      if (sc && row) { const s = sc.getBoundingClientRect(), r = row.getBoundingClientRect(); if ((r.bottom > s.bottom - 8 || r.top < s.top) && Math.abs(sc.scrollTop - this._exitScroll.top) > 2) sc.scrollTop = this._exitScroll.top; }
+      /* never rest with the face half-collapsed after a return: finish the collapse (the row moves up ≤ 96px and stays in view) */
+      if (sc) { const pg = sc.closest('.c05-pg'), ptop = pg ? parseFloat(pg.style.getPropertyValue('--c05-ptop')) || 524 : 524, travel = ptop - sc.offsetTop;
         if (sc.scrollTop > travel - 96 && sc.scrollTop < travel) sc.scrollTop = travel;
-        this._applyHc && this._applyHc(sc); this._faceP(sc); } }
+        this._applyHc && this._applyHc(sc); this._faceP(sc); }
       this._exitScroll = null;
     }
   }
@@ -1195,7 +1205,7 @@ class Component extends DCLogic {
       caption = cur ? ((rest > 0 ? '还有 ' + rest + ' 场' : (lead.on ? '没有别的了' : '')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')) : drafts ? '草稿 ' + c.hosted.counts.drafts + ' 份' : '历史 ' + c.hosted.counts.history + ' 场';
       aux = cur ? (c.hosted.badge ? c.hosted.badgeText : (c.hosted.counts.current ? c.hosted.counts.current + ' 场在手上' : '')) : drafts ? '没写完的局会留在这里' : '散场和取消的局';
       emptyOn = c.hosted.empty.on; if (emptyOn) { emptyTitle = c.hosted.empty.title; emptyBody = c.hosted.empty.body; emptyLabel = c.hosted.empty.action.label; emptyGo = c.hosted.empty.action.go; emptyInert = !!c.hosted.empty.action.inert; }
-      if (hist) { sumOn = true; sumN = String(c.hosted.counts.history); sumL = '场已结束 · 散场 ' + c.hosted.sections.ended.length + ' · 已取消 ' + c.hosted.sections.cancelled.length; }
+      if (hist) { const hn = function (k) { const g = (c.hosted.sectionsHistory || []).filter(function (x) { return x.key === k; })[0]; return g ? g.rows.length : 0; }; sumOn = true; sumN = String(c.hosted.counts.history); sumL = '场已结束 · 散场 ' + hn('ended') + ' · 已取消 ' + hn('cancelled'); }
       if (drafts) { sumOn = true; sumN = String(c.hosted.counts.drafts); sumL = '份草稿 · 补完就能发布'; c.hosted.drafts.forEach(function (r) { r.landingCls = r.landing ? 'is-landing' : ''; r.readyCls = r.ready ? 't-soon' : 't-wait'; }); }
       if (cur && emptyOn) { sumOn = true; sumN = '0'; sumL = '场在手上'; aux = emptyTitle; }
     }

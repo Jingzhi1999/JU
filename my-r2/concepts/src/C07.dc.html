@@ -13,25 +13,21 @@
 body{margin:0}
 /* @panel-css */
 /* @shared-css */
-/* guard: shared/v27/skins-r9.css carries R9's page rule .ju-phone{width:390px;height:844px;border-radius:34px;background:#e9edf6}, injected
-   after ju-panel.css — it pins every phone at 844px tall, so 360×780 / 375×812 / 430×932 never reflow vertically. Restore the panel's
-   sizing from the review vars (reported to the lead; harmless once the shared file is fixed). */
-.ju-stage .ju-phone{width:var(--pw);height:var(--ph);border-radius:38px;background:#000}
 /* ============================================================================
    C07 「下盘」 · 底部固定的深墨动作盘承载「先处理这一件」与 CTA，列表在上方环境色光里流过；
    盘上升为详情 / 票根 / 阅读层（height 318 → 100%，320ms，列表淡出 160ms）；管理页 = 盘为动作区，上方列表区为名单 / 申请。
    文字角色（5 个）：盘内局名 24/600 · 列表局名 15/500 · 时间与地点 13 · 状态 13（有色）· 标签 12（字距 .04em）。
    颜色：盘 #14161F 不透明；盘内唯一彩色 = 倒计时（绿 / 琥珀 / 红）；CTA 为 V27 原构造（cta.css）；列表区只有环境色光 + 墨字。
    ============================================================================ */
-.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;--th:calc(318px * var(--tz,1) + var(--sab,0px));--navh:calc(56px + var(--sab,0px));background:#dfdfe7;font-size:calc(15px * var(--tz,1));line-height:1.45;
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;--th:calc(var(--thc,318px) + var(--sab,0px));--navh:calc(56px + var(--sab,0px));background:#dfdfe7;font-size:calc(15px * var(--tz,1));line-height:1.45;
   --ink:#14161F;--ink2:#2a3040;--mute:#454b5e;--mute2:#50566a;--line:rgba(20,22,31,.14);
   --st-act:#B4223D;--st-go:#035A43;--st-amber:#8A4B00;--link:#3B47A8;
   --tw:#F4F5FA;--tw2:rgba(244,245,250,.74);--tw3:rgba(244,245,250,.58);--tline:rgba(255,255,255,.11);
   --red:#DA3A52;--green:#0E9B76;--blue:#4553BE;--tred:#FF7A8E;--tamber:#F2B14A;--tgreen:#4AD3A4}
 /* the parked tray height is ONE variable on .app: the tray's resting transform and the list's bottom clearance both read it, so the
-   last row always clears the tray (+ safe area); history / drafts / nothing-to-do park a short tray. It scales with the text size (--tz):
-   at 文字 115% a two-line title + cue + CTA still fit the parked block instead of being clipped */
-.app.c07-compact{--th:calc(152px * var(--tz,1) + var(--sab,0px))}
+   last row always clears the tray (+ safe area). It FOLLOWS ITS CONTENT: the script measures the parked block (lead / action) and
+   writes --thc (block + 56px nav) — a two-line title, 文字 115% or a short history block change the parked height, never clip, and
+   the change itself rides the tray's transform transition */
 /* list text on the colour light, per environment (measured, baseline-v27 §3.4): V27's #535b70 / status hues fall to 2–4:1 on Halo's
    orange and Sunset's peach, so the roles keep their hue but deepen; every 12–14px role on the light stays ≥ 4.5:1 */
 .app[data-skin="halo"]{--mute:#2a2e3b;--mute2:#2f3443;--st-act:#7A0A20;--st-go:#023A2C;--st-amber:#5A3000;--link:#202870}
@@ -133,7 +129,7 @@ body{margin:0}
    sheet does. Rising: they fade out in 90ms and drift up (the page fades in only after 110ms — never two titles on the sheet at once);
    settling back: the old page stays on the sheet for 40ms and clears by 150ms; the block fades in from 110ms (the sheet is ~65% down),
    so the moving sheet always carries content and never two layers at full strength. */
-.c07-lead,.c07-act{position:absolute;left:0;right:0;top:0;height:calc(var(--th) - var(--navh));padding:22px 22px 0;display:flex;flex-direction:column;
+.c07-lead,.c07-act{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;
   transition:opacity calc(180ms * var(--k)) ease calc(110ms * var(--k)),transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(60ms * var(--k));
   animation:c07-in calc(240ms * var(--k)) ease calc(110ms * var(--k)) backwards}
 .c07-lead.is-off,.c07-act.is-off{opacity:0;transform:translateY(-12px);pointer-events:none;transition:opacity calc(90ms * var(--k)) ease-out,transform calc(260ms * var(--k)) ease}
@@ -145,7 +141,18 @@ body{margin:0}
 .c07-lead .t{margin:6px 0 0;font-size:calc(24px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance}
 .c07-lead .m{margin:7px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c07-lead .n{font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:baseline;gap:8px}
-.c07-cue{margin-top:auto;padding-top:12px;min-width:0}
+.c07-cue{padding-top:14px;min-width:0}
+/* the seat line: who is at this table — one disc per seat (局主 filled, 已确认 tinted, 已预留 dashed, 空位 hairline), initials from
+   JU.fmt.initial, then the count; it fills the band between identity and action with the most useful line of the lead */
+.c07-seats2{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:14px;min-width:0}
+.c07-seats2 .ds{display:flex;gap:6px;flex:0 0 auto;align-items:center}
+.c07-seats2 .d{box-sizing:border-box;width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:13px;font-weight:500;line-height:1;color:var(--tw);background:rgba(255,255,255,.15)}
+.c07-seats2 .d.host{background:var(--tw);color:var(--ink)}
+.c07-seats2 .d.res{background:none;border:1px dashed rgba(244,245,250,.62)}
+.c07-seats2 .d.open{background:none;border:1px solid rgba(244,245,250,.2)}
+.c07-seats2 .d.you{box-shadow:0 0 0 2px #14161F,0 0 0 3px rgba(244,245,250,.7)}
+.c07-seats2 .more{font-size:13px;font-weight:500;color:var(--tw2);padding-left:2px}
+.c07-seats2 .tx{min-width:0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c07-lead .n.nt{display:block}   /* a plain line: text-overflow needs a block container, not the flex row the countdown uses */
 .c07-lead .n>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c07-cdbar{height:2px;margin:8px 0 0;border-radius:1px;background:rgba(255,255,255,.1);overflow:hidden}
@@ -154,7 +161,7 @@ body{margin:0}
 .c07-cd{font-family:Archivo,"Noto Sans SC",sans-serif;font-weight:500;font-size:calc(16px * var(--tz,1));letter-spacing:.01em;font-variant-numeric:tabular-nums}
 .c07-cd.green{color:var(--tgreen)}.c07-cd.amber{color:var(--tamber)}.c07-cd.red,.c07-cd.expired{color:var(--tred)}
 .c07-lead .cta{padding:12px 0 16px;display:flex;justify-content:center}
-.c07-lead.is-compact{padding-top:18px}
+.c07-lead.is-compact{padding-top:18px;padding-bottom:20px}
 .c07-none{margin:4px 0 0;font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.4;color:var(--tw)}
 .c07-lead .c07-none + .m{margin-top:2px}
 /* the primary CTA: V27 construction (cta.css) — a button element reset on top of it */
@@ -181,7 +188,8 @@ body{margin:0}
 .c07-surf.is-under{transform:translateX(-8%);opacity:0}
 .c07-surf.is-under.ph-exit{transform:none;opacity:1}
 .c07-surf.is-under.ph-idle{display:none}
-.c07-surf.is-leaving{opacity:0;pointer-events:none!important;transition:opacity calc(180ms * var(--k)) ease calc(80ms * var(--k))}   /* a swap (read → ticket after 成局) holds the old page a beat so the sheet is never empty */
+.c07-surf.is-leaving{opacity:0;pointer-events:none!important;transition:opacity calc(90ms * var(--k)) ease}
+.c07-surf.is-top.ph-in.dir-swap{transition:opacity calc(220ms * var(--k)) ease calc(90ms * var(--k)),transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}   /* a swap (read → ticket after 成局) holds the old page a beat so the sheet is never empty */
 /* the first rise from home and the descent back to it: the sheet carries the page; the page itself neither slides nor fades (the
    surfaces layer does the hand-over: in 220ms after 110ms on the way up, out in 110ms after 40ms on the way down) */
 .c07-tray.first-up .c07-surf.is-top,.c07-tray.is-down .c07-surf{transform:none!important;opacity:1!important;transition:none!important}
@@ -239,8 +247,6 @@ body{margin:0}
 /* the sheet lands before the print engine is ready (fonts, stub rig, raster, WebGL): the original's own exit-slot lip is shown, dimmed,
    while the stage is still idle, so the page arrives with the slot the paper will feed from (the engine takes it over with data-print) */
 .c07-stage[data-state="idle"]:not([data-print]) .ju-print-lip{opacity:.5;transition:opacity calc(300ms * var(--k)) ease calc(200ms * var(--k))}
-/* the original title breaks with overflow-wrap:anywhere (「…喝咖 / 啡」): balance the two lines (same box, same size; layout only) */
-.c07-tray .ju-ticket-title{text-wrap:balance}
 .c07-tray .ju-contact-row{border-top-color:rgba(255,255,255,.16);color:var(--tw)}
 .c07-tray .ju-contact-name{color:var(--tw2)}
 .c07-tray .ju-contact-copy{color:#AEBCFF}
@@ -296,7 +302,7 @@ body{margin:0}
 .c07-act .m{margin:6px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c07-act .q{margin:6px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--tw2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .c07-act .q::before{content:"“"}.c07-act .q::after{content:"”"}
-.c07-act .btns{margin-top:auto;padding:12px 0 16px;display:flex;gap:10px;align-items:center;justify-content:center}
+.c07-act .btns{padding:16px 0 16px;display:flex;gap:10px;align-items:center;justify-content:center}
 /* the V27 CTA keeps its own proportion (min(100%,280px) × 48); the counter-decision is a 44px round outline key beside it (44+10+280 ≤ 346) */
 .c07-key{flex:0 0 44px;width:44px;height:44px;border-radius:50%;border:1px solid rgba(244,245,250,.3);background:rgba(255,255,255,.04);color:var(--tw);font-size:calc(13px * var(--tz,1));font-weight:500;line-height:1;padding:0;cursor:pointer;transition:transform .3s cubic-bezier(.2,1.4,.36,1),background .2s}
 .c07-key:active{transform:scale(.94)}
@@ -304,7 +310,7 @@ body{margin:0}
 .c07-act .btns.stack{flex-direction:column;gap:10px}
 .c07-act .btns.stack .row2{display:flex;gap:10px;justify-content:center}
 .c07-act .btns.stack .row2:empty{display:none}
-.c07-seg{margin:auto 0;padding:14px 0 12px;display:flex;gap:8px}
+.c07-seg{padding:16px 0 16px;display:flex;gap:8px}
 .c07-seg button{flex:1;height:46px;border-radius:999px;border:1px solid rgba(244,245,250,.26);background:rgba(255,255,255,.04);color:var(--tw);font-size:calc(14px * var(--tz,1));font-weight:500;cursor:pointer}
 .c07-seg button[aria-pressed="true"]{background:var(--tw);color:var(--ink);border-color:var(--tw)}
 
@@ -335,7 +341,7 @@ body{margin:0}
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app c07{{panel.rootCls}}{{c.nav.rootCls}}{{trayRootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+    <div class="app c07{{panel.rootCls}}{{c.nav.rootCls}}{{trayRootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};--thc:{{trayThc}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
       <div class="ju-env" ref="{{envRef}}"></div>
       <sc-if value="{{noSkins}}"><div class="c07-env"></div></sc-if>
       <div class="c07-veil"></div>
@@ -504,6 +510,7 @@ body{margin:0}
             <sc-if value="{{lead.on}}">
               <h2 class="t">{{lead.title}}</h2>
               <div class="m">{{lead.meta}}</div>
+              <sc-if value="{{lead.seats}}"><div class="c07-seats2" role="img" aria-label="{{lead.seatText}}"><span class="ds"><sc-for list="{{lead.seats}}" as="d" hint-placeholder-count="4"><i class="d {{d.cls}}">{{d.t}}</i></sc-for><sc-if value="{{lead.seatMore}}"><b class="more">{{lead.seatMore}}</b></sc-if></span><span class="tx">{{lead.seatText}}</span></div></sc-if>
               <!-- the cue that belongs to the action sits on the CTA: remaining reservation (the tray's only colour) or why this is first -->
               <div class="c07-cue">
                 <sc-if value="{{lead.countdown}}"><div class="n"><span class="c07-cd {{lead.cdTone}}">剩 {{lead.cdText}}</span><span>{{lead.cdNote}}</span></div><div class="c07-cdbar {{lead.cdTone}}" style="--ratio:{{lead.cdRatio}}" aria-hidden="true"><i></i></div></sc-if>
@@ -763,8 +770,16 @@ class Component extends DCLogic {
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
-  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); }
+  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); }
+  /* the parked tray follows its content: measure the block that is (or is becoming) visible — action block in manage, else the lead —
+     and write --thc = block + 56px nav (min 160). Height is auto, so the measure never feeds back into itself. */
+  _measureTray() {
+    const root = this.rootRef.current; if (!root) return;
+    const blk = root.querySelector('.c07-act:not(.is-off)') || root.querySelector('.c07-lead:not(.is-off)'); if (!blk) return;
+    const thc = Math.max(160, Math.ceil(blk.offsetHeight) + 56);
+    if (Math.abs(thc - (this.state.thc || 0)) > 1) this.setState({ thc });
+  }
   /* manage: the controller scrolls params.focus to the scroller top (reveal(sec,true)); when that block is already fully readable above
      the parked tray at scrollTop 0, keep 0 — the head (status · 已确认 n/N · seats) must stay in view where its numbers change */
   _fixManageScroll() {
@@ -923,6 +938,11 @@ class Component extends DCLogic {
     const without = (list) => leadRow ? list.map(g => ({ key: g.key, title: g.title, note: g.note, rows: g.rows.filter(r => r.id !== leadRow.id), count: g.rows.filter(r => r.id !== leadRow.id).length })).filter(g => g.rows.length) : list;
     const jsections = without(c.joined.sections), hsections = without(c.hosted.sections);
     const lead = { on: false, none: false, cls: '', rid: '', originKey: '', label: '', secondary: null };
+    /* seat line: one disc per seat (max 7, then +N): 局主 / 已确认 / 已预留 / 空位; initials via JU.fmt.initial; you = 你 */
+    const ini = (n) => (JU.fmt && JU.fmt.initial) ? JU.fmt.initial(n || '') : String(n || '·').slice(0, 1);
+    const seatLine = (row, host) => { const seats = row.seats || [], max = 7; const c = row.counts || {};
+      const ds = seats.slice(0, max).map(x => { const you = !!x.you || (host && x.kind === 'host'); const k = x.kind === 'host' ? 'host' : x.kind === 'ok' ? 'ok' : x.kind === 'res' ? 'res' : 'open'; return { cls: k + (you ? ' you' : ''), t: k === 'open' ? '' : you ? '你' : ini(x.name) }; });
+      return { seats: ds, seatMore: seats.length > max ? '+' + (seats.length - max) : '', seatText: '已确认 ' + c.confirmed + '/' + c.capacity + (c.reserved ? ' · 预留 ' + c.reserved : '') + (host && c.available ? ' · 空 ' + c.available : '') }; };
     if (leadRow) {
       const kindLabel = { act: '先处理这一件', soon: '就快见面', wait: '还在等', todo: '先处理这一件', resched: '改期中', formed: '就快见面', recruit: '招募中' }[leadKind] || '先处理这一件';
       lead.on = true; lead.rid = leadRow.id; lead.originKey = leadRow.originKey; lead.title = nb(leadRow.title);
@@ -930,13 +950,13 @@ class Component extends DCLogic {
         lead.label = kindLabel + ' · ' + leadRow.label; lead.meta = leadRow.whenText + ' · ' + leadRow.placeText + ' · 局主 ' + leadRow.hostName;
         if (leadRow.left.on) { lead.countdown = true; lead.cdText = leadRow.left.text; lead.cdTone = leadRow.left.tone; lead.cdRatio = (+leadRow.left.ratio || 0).toFixed(4); lead.cdNote = leadRow.left.expired ? '预留已到期' : '6 小时预留 · 读完约定再确认'; }
         else lead.note = leadRow.need;
-        lead.cta = leadRow.ctaLabel || '查看详情'; lead.act = leadRow.ctaLabel ? leadRow.act : leadRow.open;
+        lead.cta = leadRow.ctaLabel || '查看详情'; lead.act = leadRow.ctaLabel ? leadRow.act : leadRow.open; Object.assign(lead, seatLine(leadRow, false));
         if (leadRow.secondary) { lead.secondary = leadRow.secondary; lead.secondaryLabel = leadRow.secondaryLabel; lead.secondaryKey = leadRow.secondaryKey; }
       } else {
         lead.label = kindLabel + ' · ' + leadRow.label; lead.meta = leadRow.whenText + ' · ' + leadRow.placeText + ' · 已确认 ' + leadRow.counts.confirmed + '/' + leadRow.counts.capacity + '（含你）';
         const pend = (leadRow.item.applications || []).filter(a => a.status === 'pending').map(a => a.nick || '未填称呼');
         lead.note = leadRow.pending ? (pend.slice(0, 3).join('、') + (pend.length > 3 ? ' 等 ' + pend.length + ' 人' : '') + ' 在等答复 · 通过即发出 6 小时预留') : leadRow.unrecorded ? (leadRow.unrecorded + ' 人出席待记录 · 散场 24 小时内可查看微信') : leadRow.formedLine;
-        lead.cta = leadRow.ctaLabel || '管理这局'; lead.act = leadRow.act;
+        lead.cta = leadRow.ctaLabel || '管理这局'; lead.act = leadRow.act; Object.assign(lead, seatLine(leadRow, true));
       }
     } else if (isCur) { lead.none = true; lead.label = isJ ? '眼下没有要回应的' : '眼下没有要处理的'; lead.noneTitle = isJ ? (c.joined.empty.on ? '还没有加入任何局' : '都安排好了') : (c.hosted.empty.on ? '还没发起过局' : '都安排好了'); lead.noneBody = isJ ? '散场和没成行的都在「历史」里' : '草稿与历史在上方切换'; lead.cls = 'is-compact'; }
     else { lead.none = true; lead.cls = 'is-compact'; lead.label = c.section === 'history' ? '历史' : '草稿'; lead.noneTitle = c.section === 'history' ? ((isJ ? c.joined.counts.history : c.hosted.counts.history) + ' 场已结束') : (c.hosted.counts.drafts + ' 份草稿'); lead.noneBody = c.section === 'history' ? '散场的票根与没成行的记录分开留着' : '补完就能发布 · 删除可在 10 秒内撤销'; }
@@ -963,11 +983,8 @@ class Component extends DCLogic {
       manage = { ready: true, progressOn: !m.head.progress.hidden, seatsOn: !m.head.ended, leavesArrow: m.leaves && m.leaves.open ? '收起' : '展开', pageCls: mVis ? 'is-on' : '', arrInList: mode !== 'arr', arrHint: '处理完上面的事，这局的安排会出现在下方的盘里' };
     } else if (m.on) manage = { ready: false, pageCls: mVis ? 'is-on' : '' };
     const ticketOn = nav.on.ticket || nav.on.reply;
-    /* a page that is leaving (replace: read → ticket after 成局, ticket → 退出结果) is still drawn while it fades, but the controller has
-       already switched its view model off: draw it from its last live model, so it dissolves instead of blanking in one frame */
-    if (c.read.on) this._lastRead = c.read; if (c.ticket.on) this._lastTicket = c.ticket;
-    const rv = c.read.on ? c.read : (nav.on.read && this._lastRead) || c.read;
-    const tv = c.ticket.on ? c.ticket : (ticketOn && this._lastTicket) || c.ticket; const tk = tv;
+    /* a page leaving by replace (read → ticket after 成局, ticket → 退出结果) keeps its last model from the controller (leaving:true) */
+    const rv = c.read, tv = c.ticket, tk = tv;
     const hr = c.history.on ? c.history.ritual : null;
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins,
@@ -976,7 +993,7 @@ class Component extends DCLogic {
         joinedCurrent: isJ && c.section === 'current', joinedHistory: isJ && c.section === 'history', hostedCurrent: !isJ && c.section === 'current', hostedDrafts: !isJ && c.section === 'drafts', hostedHistory: !isJ && c.section === 'history',
         jsections, hsections, onlyLead: isCur && !!leadRow && (isJ ? jsections : hsections).length === 0, onlyLeadText: '只有这一件，在下方处理' },
       tray: { cls: (trayUp ? 'is-up' : 'is-down') + (firstUp ? ' first-up' : ''), leadOn: !(mTop && ph === 'idle') },
-      lead, act, manage, rv, tv,
+      lead, act, manage, rv, tv, trayThc: (s.thc || 318) + 'px',
       read: { showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
       ticketOn, ticketSurface: nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, ashes: !!(tk.result && tk.result.burn && !tk.result.burning), showHome: tk.on && nav.depth > 2 && !tk.result, retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按 Enter' : '') : '' },

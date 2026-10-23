@@ -209,6 +209,8 @@ body{margin:0}
 /* ---- 窗内页面（详情 / 票根 / 管理 …）：x 轴推入，返回原路 ---- */
 .c03-pg{position:absolute;inset:0;display:flex;flex-direction:column;background:var(--c03-paper);transition:transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
 .c03-hs .c03-pg{background:var(--c03-dark);color:var(--c03-fg)}
+/* a page is promoted to its own layer from the enter frame on, so its raster is ready when the slide starts (else the window's face leads it by a few frames) */
+.c03-pg.ph-enter,.c03-pg.ph-in,.c03-pg.ph-exit{will-change:transform}
 .c03-pg.is-top.ph-enter.dir-fwd{transform:translateX(100%)}
 .c03-pg.is-top.ph-exit{transform:translateX(100%)}
 .c03-pg.is-under{transform:translateX(-22%);opacity:.45}
@@ -315,12 +317,19 @@ body{margin:0}
 .c03-arr small{color:var(--c03-fg2);font-size:calc(12px * var(--tz,1));line-height:1.4}
 .c03-in{display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:12px;margin:6px 0;background:#fff;color:var(--c03-ink)}
 /* ---- 根导航：压在底槽那扇窗上（它的纸就是导航的底），文字颜色随底槽里是深墨还是白纸而变（--nk = 底下是深墨的程度） ---- */
-.c03-nav{position:absolute;left:0;right:0;bottom:0;height:var(--c03-nav);padding:0 8px var(--sab,0px);display:flex;z-index:30;--nk:1;
-  box-shadow:0 -1px 0 color-mix(in srgb,rgba(255,255,255,.1) calc(var(--nk) * 100%),rgba(20,22,31,.09))}
-.mv-d .c03-nav{--nk:calc(1 - clamp(0, (var(--c03-t) - .12) / .2, 1))}
-.mv-w .c03-nav{--nk:clamp(0, (.88 - var(--c03-t)) / .2, 1)}
-.c03-nav button{flex:1;border:0;background:none;font-size:calc(12px * var(--tz,1));line-height:1.3;color:color-mix(in srgb,rgba(244,245,250,.58) calc(var(--nk) * 100%),rgba(20,22,31,.5));display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:4px 0 2px}
-.c03-nav button.on{color:color-mix(in srgb,#F4F5FA calc(var(--nk) * 100%),#14161F);font-weight:500}
+/* two copies of the bar, one per floor colour: light labels where the dark paper is under the bar, ink labels where the white paper is.
+   Each is clipped to its own floor, so while a window copy slides up into the bottom slot the labels change colour exactly at the paper's edge.
+   At rest only one is visible and live; the other is clipped away and inert. */
+.c03-nav{position:absolute;left:0;right:0;bottom:0;height:var(--c03-nav);padding:0 8px var(--sab,0px);display:flex;z-index:30}
+.c03-nav-d{box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+.c03-nav-l{box-shadow:inset 0 1px 0 rgba(20,22,31,.09)}
+.mv-d .c03-nav-d{clip-path:inset(0 0 calc(var(--c03-ch) * var(--c03-t)) 0)}
+.mv-d .c03-nav-l{clip-path:inset(max(0px, calc(var(--c03-nav) - var(--c03-ch) * var(--c03-t))) 0 0 0)}
+.mv-w .c03-nav-d{clip-path:inset(max(0px, calc(var(--c03-nav) - var(--c03-ch) * (1 - var(--c03-t)))) 0 0 0)}
+.mv-w .c03-nav-l{clip-path:inset(0 0 calc(var(--c03-ch) * (1 - var(--c03-t))) 0)}
+.c03-nav button{flex:1;border:0;background:none;font-size:calc(12px * var(--tz,1));line-height:1.3;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer;padding:4px 0 2px}
+.c03-nav-d button{color:rgba(244,245,250,.58)}.c03-nav-d button.on{color:#F4F5FA;font-weight:500}
+.c03-nav-l button{color:rgba(20,22,31,.5)}.c03-nav-l button.on{color:#14161F;font-weight:500}
 .c03-nav svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .c03-nav button.on svg{stroke-width:1.9}
 /* ---- 吐司与弹层（覆盖两窗） ---- */
@@ -717,7 +726,8 @@ body{margin:0}
           <div class="c03-catch" data-h="catch" aria-hidden="true" onPointerDown="{{home.hDown}}" onPointerMove="{{home.hMove}}" onPointerUp="{{home.hUp}}" onPointerCancel="{{home.hCancel}}"></div>
         </div>
         <!-- 根导航：压在底槽那扇窗上（找局 / 开局 / 设置 本轮不可点） -->
-        <nav class="c03-nav" aria-label="JU"><sc-for list="{{home.nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}"><sc-if value="{{t.isFind}}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2"></circle><path d="M15.6 15.6 20 20"></path></svg></sc-if><sc-if value="{{t.isCreate}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5.5"></rect><path d="M12 8.6v6.8M8.6 12h6.8"></path></svg></sc-if><sc-if value="{{t.isMine}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.8" width="16" height="9.6" rx="3"></rect><rect x="4" y="15.2" width="16" height="5" rx="2.2"></rect></svg></sc-if><sc-if value="{{t.isSettings}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8h8.2M17.3 8h2.2M4.5 16h2.2M11.3 16h8.2"></path><circle cx="15" cy="8" r="2.3"></circle><circle cx="9" cy="16" r="2.3"></circle></svg></sc-if>{{t.label}}</button></sc-for></nav>
+        <nav class="c03-nav c03-nav-d" aria-label="JU" aria-hidden="{{home.navDHidden}}" inert="{{home.navDHidden}}"><sc-for list="{{home.nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}"><sc-if value="{{t.isFind}}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2"></circle><path d="M15.6 15.6 20 20"></path></svg></sc-if><sc-if value="{{t.isCreate}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5.5"></rect><path d="M12 8.6v6.8M8.6 12h6.8"></path></svg></sc-if><sc-if value="{{t.isMine}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.8" width="16" height="9.6" rx="3"></rect><rect x="4" y="15.2" width="16" height="5" rx="2.2"></rect></svg></sc-if><sc-if value="{{t.isSettings}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8h8.2M17.3 8h2.2M4.5 16h2.2M11.3 16h8.2"></path><circle cx="15" cy="8" r="2.3"></circle><circle cx="9" cy="16" r="2.3"></circle></svg></sc-if>{{t.label}}</button></sc-for></nav>
+        <nav class="c03-nav c03-nav-l" aria-label="JU" aria-hidden="{{home.navLHidden}}" inert="{{home.navLHidden}}"><sc-for list="{{home.nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" onClick="{{t.go}}"><sc-if value="{{t.isFind}}"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6.2"></circle><path d="M15.6 15.6 20 20"></path></svg></sc-if><sc-if value="{{t.isCreate}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="5.5"></rect><path d="M12 8.6v6.8M8.6 12h6.8"></path></svg></sc-if><sc-if value="{{t.isMine}}"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="3.8" width="16" height="9.6" rx="3"></rect><rect x="4" y="15.2" width="16" height="5" rx="2.2"></rect></svg></sc-if><sc-if value="{{t.isSettings}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4.5 8h8.2M17.3 8h2.2M4.5 16h2.2M11.3 16h8.2"></path><circle cx="15" cy="8" r="2.3"></circle><circle cx="9" cy="16" r="2.3"></circle></svg></sc-if>{{t.label}}</button></sc-for></nav>
         <sc-if value="{{c.toast.on}}"><div class="c03-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
       </div>
       <!-- ===== SHEET（弹层覆盖两窗）：根 .c03-over + onKeyDown；对话框 ref=c.sheet.focusRef ===== -->
@@ -818,24 +828,26 @@ class Component extends DCLogic {
     this._applyT(this._t);
     if (this.state.c03mv !== mv || !this.state.c03moving) this.setState({ c03mv: mv, c03moving: true });
   }
-  _rest() {
-    this._stopSpring(); const role = this.state.role, el = this.homeRef.current;
+  /* back to rest for `role` (passed in: right after a release / tap the role write may still be pending in this tick) */
+  _rest(role) {
+    this._stopSpring(); role = role || this.state.role; const el = this.homeRef.current;
     if (el) { el.style.removeProperty('--c03-t'); el.classList.remove('is-moving', 'mv-d', 'mv-w'); el.classList.add('mv-' + this._restMv(role)); }
     this._t = role === 'hosted' ? 1 : 0;
-    if (this.state.c03mv || this.state.c03moving) this.setState({ c03mv: null, c03moving: false });
+    this.setState({ c03mv: null, c03moving: false });
   }
   _stopSpring() { if (this._raf) { cancelAnimationFrame(this._raf); this._raf = 0; } }
   _spring(target, v) {
     this._stopSpring(); this._springTarget = target;
-    if (this.isRM()) { this._applyT(target); this._rest(); return; }
+    const role = target === 1 ? 'hosted' : 'joined';
+    if (this.isRM()) { this._applyT(target); this._rest(role); return; }
     const r = this.state.review || {}; const sp = r.speed === 0.5 ? 0.5 : 1; const w = 17;
     const x0 = this._t - target; v = v || 0;
-    if (Math.abs(x0) < 0.0008 && Math.abs(v) < 0.05) { this._applyT(target); this._rest(); return; }
+    if (Math.abs(x0) < 0.0008 && Math.abs(v) < 0.05) { this._applyT(target); this._rest(role); return; }
     if (v * x0 < 0 && Math.abs(v) > w * Math.abs(x0)) v = -w * x0;
     const self = this, t0 = performance.now();
     const step = function (now) {
       const s = Math.max(0, now - t0) / 1000 * sp; const x = (x0 + (v + w * x0) * s) * Math.exp(-w * s);
-      if (s > 0.05 && Math.abs(x) < 0.0015) { self._raf = 0; self._applyT(target); self._rest(); return; }
+      if (s > 0.05 && Math.abs(x) < 0.0015) { self._raf = 0; self._applyT(target); self._rest(role); return; }
       self._applyT(Math.max(0, Math.min(1, target + x))); self._raf = requestAnimationFrame(step);
     };
     this._raf = requestAnimationFrame(step);
@@ -874,7 +886,7 @@ class Component extends DCLogic {
     if (cancel) target = d.role0 === 'hosted' ? 1 : 0;
     else if (Math.abs(vy) > 0.3) target = vt > 0 ? 1 : 0;
     else target = d.t >= 0.5 ? 1 : 0;
-    const role = target === 1 ? 'hosted' : 'joined';
+    const role = target === 1 ? 'hosted' : 'joined'; this._lastRelease = { t: d.t, vy: vy, vt: vt, n: d.samples.length, target: target };
     if (role !== this.state.role) { this._roleByGesture = role; this.setRole(role); }
     this._spring(target, cancel ? 0 : vt);
   }
@@ -1017,7 +1029,8 @@ class Component extends DCLogic {
       dTo: isJ ? 'hosted' : 'joined', dLabel: isJ ? '展开我发起的' : '收起我发起的，回到我参加的',
       hDown: (ev) => self.hDown(ev), hMove: (ev) => self.hMove(ev), hUp: (ev) => self.hUp(ev, false), hCancel: (ev) => self.hUp(ev, true), hClick: (ev) => self.hClick(ev),
       jExpand: () => self._swapTo('joined'), hExpand: () => self._swapTo('hosted'),
-      nav: c.rootNav.map(t => Object.assign({}, t, { isFind: t.k === 'find', isCreate: t.k === 'create', isMine: t.k === 'mine', isSettings: t.k === 'settings' }))
+      nav: c.rootNav.map(t => Object.assign({}, t, { isFind: t.k === 'find', isCreate: t.k === 'create', isMine: t.k === 'mine', isSettings: t.k === 'settings' })),
+      navDHidden: !isJ, navLHidden: isJ
     };
     const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
     if (c.manage.on && !c.manage.missing) { let firstOpen = true; c.manage.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; a.resCls = a.tone === 'void' ? 'void' : ''; a.ctaMain = a.pendingOpen && firstOpen; a.ctaQuiet = a.pendingOpen && !a.ctaMain; if (a.pendingOpen || a.busy) firstOpen = false; }); c.manage.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fx-stamp' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; }); }

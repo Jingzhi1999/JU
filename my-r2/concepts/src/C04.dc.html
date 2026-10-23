@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C04 叠层</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700;900&family=Archivo:wght@400;500;600;700;800&family=Archivo+Black&family=Space+Mono:wght@400;700&family=Libre+Caslon+Text:wght@400;700&family=Caveat:wght@600;700&family=Oswald:wght@500;600&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* ================================================================================================================================
+   C04 叠层 — every 局 is one opaque sheet of paper whose colour is its own 局卡 pack (desaturated 20%) and whose ink is the pack ink.
+   Sheets overlap; each shows only its top 70px (局名 17/600 + 时间 · 地点 13 + 状态). The first sheet (先做这件) lies fully open.
+   A tapped sheet lifts (−8px, deeper contact shadow) and opens into the whole page; the others are pressed into a 24px stack edge
+   at the bottom (the way back). The environment light shows only in the header and in the gaps between groups.
+   Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual print / tear / contact / burn / stamp, skins.
+   ================================================================================================================================ */
+.app.c04{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;background:#dfdfe7;font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;--hm:#535b70;--gl:#3c4254;--ed:24px}
+.app.c04[data-skin="halo"],.app.c04[data-skin="sunset"]{--hm:#2f3443;--gl:#2a2e3b}
+.c04 *,.c04 *::before,.c04 *::after{box-sizing:border-box}
+.app.c04.rm *,.app.c04.rm *::before,.app.c04.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important;transition-delay:0ms!important}
+.app.c04.paused *,.app.c04.paused *::before,.app.c04.paused *::after{animation-play-state:paused!important}
+.ju-env{position:absolute;inset:0;z-index:0;overflow:hidden}
+.c04-envf{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,#e4dde6,#d6e0e8 45%,#e2e1e9)}
+.app[data-skin="halo"] .c04-envf{background:linear-gradient(180deg,#cfaea9,#db9c66 30%,#e48b3c 55%,#d59c83)}
+.app[data-skin="sunset"] .c04-envf{background:linear-gradient(180deg,#ff9f6b,#f7ac7a 30%,#cfa1a0 55%,#9bacd4)}
+:where(.c04) button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-tap-highlight-color:transparent;text-align:inherit}
+.c04 button:focus-visible,.c04 [role=button]:focus-visible{outline:2.5px solid #4A5AD6;outline-offset:2px}
+.c04-num{font-family:"Archivo","Noto Sans SC",sans-serif;font-variant-numeric:tabular-nums}
+
+/* ---------------------------------------------------------------- HOME ---------------------------------------------------------------- */
+.c04-home{position:absolute;inset:0;z-index:2}
+.c04-home.is-under.ph-idle{visibility:hidden}
+/* header: on the environment light. V27 collapse: p = clamp((scrollTop − 4) / 84); title 30 → 18, top 53 → 12.55 (centre = tool row centre) */
+.c04-hd{position:absolute;left:0;right:0;top:0;height:0;z-index:6;pointer-events:none;--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1);transition:opacity calc(220ms * var(--k)) ease}
+.c04-home.is-under:not(.ph-exit) .c04-hd{opacity:0}
+.c04-tools{position:absolute;left:14px;right:12px;top:calc(24px + var(--sat,0px));height:44px;display:flex;align-items:center;justify-content:space-between;gap:8px;pointer-events:auto;opacity:calc(1 - 2.4 * var(--p));transform:translateY(calc(-10px * var(--p)))}
+.c04-home[data-hc1] .c04-tools{pointer-events:none}
+.c04-roles{position:relative;display:flex;padding:3px;border-radius:13px;background:rgba(255,255,255,.32);box-shadow:inset 0 0 0 1px rgba(255,255,255,.5),inset 0 1px 2px rgba(20,22,31,.07)}
+.c04-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:10px;background:#fbfaf7;box-shadow:inset 0 1px 0 #fff,0 6px 14px -8px rgba(20,22,31,.4),0 1px 2px rgba(20,22,31,.14);transform:translateX(calc(var(--ri,0) * 100%));transition:transform calc(300ms * var(--k)) cubic-bezier(.3,.8,.25,1)}
+.c04-role{position:relative;z-index:1;height:36px;min-width:98px;padding:0 10px;display:flex;align-items:center;justify-content:center;gap:6px;font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--hm);white-space:nowrap;transition:color calc(200ms * var(--k)) ease}
+.c04-role.on{color:#14161F;font-weight:600}
+.c04-badge{display:inline-block;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:#14161F;color:#fff;font:600 12px/18px "Archivo",sans-serif;text-align:center}
+.c04-role:not(.on) .c04-badge{background:rgba(20,22,31,.72)}
+.c04-secs{display:flex;align-items:center}
+.c04-sec{position:relative;height:40px;padding:0 10px;display:flex;align-items:center;gap:3px;font-size:calc(14px * var(--tz,1));color:var(--hm);white-space:nowrap}
+.c04-sec.on{color:#14161F;font-weight:600}
+.c04-sec.on::after{content:"";position:absolute;left:9px;right:9px;bottom:7px;height:2px;border-radius:1px;background:#14161F}
+.c04-sec small{font:500 12px "Archivo",sans-serif;opacity:.85;margin-left:1px}
+.c04-ttl{position:absolute;left:22px;top:calc(77px + var(--sat,0px));margin:0;width:max-content;max-width:calc(100% - 44px);font-size:calc((30px - 12px * var(--p)) * var(--tz,1));font-weight:500;line-height:1.05;color:#14161F;white-space:nowrap;left:calc(22px + (50% - 22px) * var(--p));top:calc(77px + var(--sat,0px) - 40.45px * var(--p));transform:translateX(calc(-50% * var(--p)))}
+.c04-meta{position:absolute;left:22px;right:22px;top:calc(77px + 31.5px * var(--tz,1) + 9px + var(--sat,0px));margin:0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--hm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:calc(1 - 1.7 * var(--p));transform:translateY(calc(-14px * var(--p)))}
+.c04-meta b{font-weight:500;color:#14161F}
+/* the stack scroller: papers fade out under the header (the environment stays the header's ground) */
+.c04-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:calc(152px + 31.5px * (var(--tz,1) - 1) + var(--sat,0px)) 0 calc(104px + var(--sab,0px));--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1);--hb:calc(68px + var(--sat,0px) + 80px * (1 - var(--p)));-webkit-mask-image:linear-gradient(180deg,transparent 0,transparent calc(var(--hb) - 24px),#000 calc(var(--hb) - 4px));mask-image:linear-gradient(180deg,transparent 0,transparent calc(var(--hb) - 24px),#000 calc(var(--hb) - 4px));scrollbar-width:none}
+.c04-sc::-webkit-scrollbar{display:none}
+.c04-grp{display:flex;align-items:baseline;gap:7px;padding:0 22px 8px;font-size:calc(12px * var(--tz,1));line-height:16px;font-weight:500;letter-spacing:.05em;color:var(--gl)}
+.c04-grp b{font:600 12px/16px "Archivo",sans-serif;color:var(--gl)}
+.c04-grp em{font-style:normal;font-weight:400;letter-spacing:.02em;opacity:.9}
+.c04-stack{position:relative}
+.c04-stack + .c04-grp{margin-top:14px}
+/* one sheet = one 局. Overlap: every sheet reaches 18px under the next one (the next sheet's rounded corners show it). */
+.c04-sheet{position:relative;display:block;width:100%;margin:0;padding:13px 16px 30px;background:var(--pp);color:var(--pi);border-radius:18px 18px 0 0;box-shadow:inset 0 1px 0 var(--hl),0 -10px 24px -14px var(--cs,rgba(20,22,31,.5));cursor:pointer;touch-action:pan-y;outline:none;-webkit-tap-highlight-color:transparent;transition:transform calc(160ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c04-sheet + .c04-sheet{margin-top:-18px}
+.c04-sheet.is-last{padding-bottom:13px;border-radius:18px 18px 16px 16px;box-shadow:inset 0 1px 0 var(--hl),0 -10px 24px -14px var(--cs,rgba(20,22,31,.5)),0 16px 24px -20px rgba(20,22,31,.55)}
+.c04-sheet:active{transform:translateY(-3px)}
+.c04-sheet:focus-visible{outline:2.5px solid #4A5AD6;outline-offset:-4px}
+.c04-bt{display:flex;align-items:baseline;gap:12px;min-width:0}
+.c04-btt{flex:1 1 auto;min-width:0;font-size:calc(17px * var(--tz,1));line-height:1.42;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-bst{flex:none;font-size:calc(13px * var(--tz,1));line-height:1.5;font-weight:500;white-space:nowrap}
+.c04-bm{margin-top:2px;font-size:calc(13px * var(--tz,1));line-height:1.46;color:var(--pi2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-bm s{opacity:.85;margin-left:4px;text-decoration-thickness:1px}
+.c04-bm .cd{font-family:"Archivo",sans-serif;font-variant-numeric:tabular-nums;color:var(--pi);font-weight:600}
+/* the open sheet (先做这件) */
+.c04-sheet.is-lead{padding:17px 18px 36px;cursor:default}
+.c04-sheet.is-lead:active{transform:none}
+.c04-lk{display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:calc(13px * var(--tz,1));line-height:1.5;font-weight:500}
+.c04-lk .cd{font:600 calc(15px * var(--tz,1))/1.2 "Archivo",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.c04-lt{margin:5px 0 0;font-size:calc(24px * var(--tz,1));line-height:1.3;font-weight:600;letter-spacing:-.005em;text-wrap:balance;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.c04-lm{margin-top:3px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--pi2)}
+.c04-lbar{margin-top:13px;height:3px;border-radius:2px;background:var(--tr);overflow:hidden}
+.c04-lbar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--pi);border-radius:2px;transition:width 900ms linear}
+.c04-ln{margin-top:7px;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--pi2)}
+.c04-seats{display:flex;gap:5px;margin-top:13px}
+.c04-seat{flex:1 1 0;height:30px;border-radius:9px 9px 4px 4px;display:flex;align-items:center;justify-content:center;font-size:calc(13px * var(--tz,1));font-weight:600;color:var(--pp);background:var(--pi);transition:background calc(300ms * var(--k)) ease,color calc(300ms * var(--k)) ease}
+.c04-seat.ok{background:color-mix(in srgb,var(--pi) 74%,var(--pp))}
+.c04-seat.res{background:transparent;color:var(--pi);box-shadow:inset 0 0 0 1.5px var(--pi);background-image:repeating-linear-gradient(135deg,var(--tr) 0 5px,transparent 5px 10px)}
+.c04-seat.open{background:transparent;color:var(--pi2);box-shadow:inset 0 0 0 1px var(--tr2)}
+.c04-lcta{margin-top:16px;display:flex;align-items:center;gap:12px}
+.c04-bed{flex:none;display:flex;width:min(100%,290px);padding:5px;border-radius:999px;background:var(--pb);box-shadow:inset 0 1px 3px rgba(0,0,0,.4),0 1px 0 var(--hl)}
+.c04 .c04-cta{border:0;padding:0;font:inherit;flex:none}
+.c04-2nd{height:44px;padding:0 6px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--pi2);white-space:nowrap}
+/* role / section switch: the stack fans out from the top sheet (dealt, never blank) */
+.c04-home.dir-role.ph-enter .c04-sheet,.c04-home.dir-swap.ph-enter .c04-sheet{transform:translateY(calc(var(--i,0) * -62px));transition:none}
+.c04-home.dir-role.ph-in .c04-sheet,.c04-home.dir-swap.ph-in .c04-sheet{transition:transform calc(280ms * var(--k)) cubic-bezier(.22,.8,.24,1)}
+.c04-home.dir-role.ph-enter .c04-grp,.c04-home.dir-swap.ph-enter .c04-grp{opacity:0}
+.c04-home.dir-role.ph-in .c04-grp,.c04-home.dir-swap.ph-in .c04-grp{transition:opacity calc(240ms * var(--k)) ease calc(60ms * var(--k))}
+.c04-sheet.is-landing .c04-bst{animation:c04-land calc(1100ms * var(--k)) ease both}
+@keyframes c04-land{0%,30%{opacity:.25}60%{opacity:1}100%{opacity:1}}
+/* empty */
+.c04-empty{margin:24px 16px 0;padding:22px 20px 24px;border-radius:18px;background:#f7f5f0;box-shadow:0 -10px 24px -14px rgba(20,22,31,.4);color:#252b3a}
+.c04-empty b{display:block;font-size:20px;font-weight:600;margin-bottom:6px}
+.c04-empty p{margin:0 0 12px;font-size:14px;color:#535b70}
+.c04-foot-note{margin:16px 22px 0;font-size:12px;color:var(--gl);line-height:1.6}
+/* root nav (找局 / 开局 / 设置 are out of scope: inert) */
+.c04-nav{position:absolute;left:12px;right:12px;bottom:calc(10px + var(--sab,0px));height:58px;display:flex;border-radius:20px;background:rgba(250,249,246,.97);box-shadow:inset 0 1px 0 #fff,0 14px 30px -18px rgba(20,22,31,.55),0 0 0 1px rgba(20,22,31,.06);z-index:20;transition:transform calc(260ms * var(--k)) cubic-bezier(.3,.7,.3,1)}
+.app.c04:not(.at-home) .c04-nav,.app.c04.nav-exit .c04-nav{transform:translateY(calc(100% + 24px))}
+.c04-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:calc(12px * var(--tz,1));color:#5d6375;text-align:center}
+.c04-nav button.on{color:#14161F;font-weight:600}
+.c04-nav button.off{color:#7a8091}
+.c04-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+
+/* ------------------------------------------------- A SHEET OPENED INTO A PAGE (detail / ticket / manage …) ------------------------------------------------- */
+.c04-pg{position:absolute;inset:0;z-index:4}
+.c04-pg.is-under{z-index:3}
+.c04-pg.is-under.ph-idle{visibility:hidden}
+.c04-shape{position:absolute;left:0;right:0;top:0;bottom:calc(var(--ed) + var(--sab,0px));background:var(--pp);border-radius:18px;box-shadow:0 -12px 28px -16px rgba(20,22,31,.5),0 14px 26px -16px rgba(20,22,31,.6)}
+.c04-pgc{position:absolute;left:0;right:0;top:0;bottom:calc(var(--ed) + var(--sab,0px));overflow:hidden;border-radius:18px;color:var(--pi)}
+.c04-ghost{position:absolute;left:0;right:0;top:var(--fx-y,0);height:var(--fx-h,70px);padding:13px 16px 0;color:var(--pi);opacity:0;pointer-events:none;z-index:6}
+/* page header (V27 shared language: back pill at 22,24; title 30/500 → 18 into the tool row; meta 14 fades) */
+.c04-ph{position:absolute;left:0;right:0;top:0;height:0;z-index:5;--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1)}
+.c04-back{position:absolute!important;left:22px;top:calc(24px + var(--sat,0px));z-index:3}
+.c04-weak{position:absolute;right:10px;top:calc(24px + var(--sat,0px));height:44px;padding:0 12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--pi2);z-index:3;white-space:nowrap}
+.c04-phc{position:absolute;left:22px;right:22px;top:calc(77px + var(--sat,0px));transform:translateY(calc(-40.45px * var(--p)));pointer-events:none}
+.c04-pt{position:relative;display:block;margin:0;width:max-content;max-width:calc(100% - 104px * var(--p));left:calc(50% * var(--p));transform:translateX(calc(-50% * var(--p)));font-size:calc((30px - 12px * var(--p)) * var(--tz,1));font-weight:500;line-height:1.05;color:var(--pi);text-wrap:balance;overflow-wrap:anywhere}
+.c04-pg[data-hc1] .c04-pt{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-pm{margin:9px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--pi2);opacity:calc(1 - 1.7 * var(--p));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-pm s{opacity:.85}
+.c04-psc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-top:calc(var(--pt0,160px) + var(--sat,0px));--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1);--hb:calc(68px + var(--sat,0px) + (var(--pt0,160px) - 72px) * (1 - var(--p)));-webkit-mask-image:linear-gradient(180deg,transparent 0,transparent calc(var(--hb) - 22px),#000 calc(var(--hb) - 4px));mask-image:linear-gradient(180deg,transparent 0,transparent calc(var(--hb) - 22px),#000 calc(var(--hb) - 4px));scrollbar-width:none}
+.c04-psc::-webkit-scrollbar{display:none}
+.c04-pad{padding:0 22px}
+/* the stack edge: the other sheets pressed together at the bottom — tap = 返回 */
+.c04-edge{position:absolute!important;left:0;right:0;bottom:0;height:calc(var(--ed) + var(--sab,0px));z-index:2;overflow:hidden;display:block;cursor:pointer}
+.c04-edge i{position:absolute;left:0;right:0;top:calc(var(--j) * var(--sl,3px));height:48px;border-radius:12px 12px 0 0;background:var(--pp);box-shadow:inset 0 1px 0 var(--hl),0 -3px 6px -3px rgba(20,22,31,.45)}
+.c04-edge::after{content:"";position:absolute;left:0;right:0;top:0;height:10px;background:linear-gradient(180deg,rgba(20,22,31,.18),rgba(20,22,31,0));pointer-events:none}
+/* opening: the tapped sheet lifts 8px (deeper shadow) then opens to the whole page; content follows; the edge rises */
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-shape{animation:c04-sh-in calc(420ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pgc{animation:c04-pc-in calc(420ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost{animation:c04-gh-in calc(420ms * var(--k)) both}
+.c04-pg.is-top.dir-fwd:not(.ph-idle) .c04-edge i{animation:c04-edge-in calc(340ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc((90ms + var(--j) * 16ms) * var(--k))}
+@keyframes c04-sh-in{
+  0%{top:var(--fx-y);bottom:calc(100% - var(--fx-y) - var(--fx-h));border-radius:18px 18px 0 0;box-shadow:0 -10px 24px -14px rgba(20,22,31,.45),0 0 0 rgba(20,22,31,0);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  24%{top:calc(var(--fx-y) - 8px);bottom:calc(100% - var(--fx-y) - var(--fx-h) + 8px);border-radius:18px 18px 4px 4px;box-shadow:0 -18px 34px -14px rgba(20,22,31,.62),0 20px 30px -16px rgba(20,22,31,.55);animation-timing-function:cubic-bezier(.2,.78,.16,1)}
+  100%{top:0;bottom:calc(var(--ed) + var(--sab,0px));border-radius:18px;box-shadow:0 -12px 28px -16px rgba(20,22,31,.5),0 14px 26px -16px rgba(20,22,31,.6)}}
+@keyframes c04-pc-in{
+  0%{clip-path:inset(var(--fx-y) 0 calc(100% - var(--fx-y) - var(--fx-h)) 0 round 18px 18px 0 0);opacity:0;animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  24%{clip-path:inset(calc(var(--fx-y) - 8px) 0 calc(100% - var(--fx-y) - var(--fx-h) + 8px) 0 round 18px 18px 4px 4px);opacity:0;animation-timing-function:cubic-bezier(.2,.78,.16,1)}
+  58%{opacity:1}
+  100%{clip-path:inset(0 0 0 0 round 18px);opacity:1}}
+@keyframes c04-gh-in{0%{opacity:1;transform:none}24%{opacity:1;transform:translateY(-8px)}46%{opacity:0;transform:translateY(calc(-8px - var(--fx-y) * .3))}100%{opacity:0;transform:translateY(calc(-8px - var(--fx-y) * .3))}}
+@keyframes c04-edge-in{0%{transform:translateY(100%)}100%{transform:none}}
+/* closing: back into its (re-measured) place in the stack */
+.c04-pg.has-from.is-top.ph-exit .c04-shape{animation:c04-sh-out calc(380ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-pgc{animation:c04-pc-out calc(380ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-ghost{animation:c04-gh-out calc(380ms * var(--k)) both}
+.c04-pg.is-top.ph-exit .c04-edge i{animation:c04-edge-out calc(300ms * var(--k)) cubic-bezier(.4,0,.6,1) both}
+@keyframes c04-sh-out{
+  0%{top:0;bottom:calc(var(--ed) + var(--sab,0px));border-radius:18px;animation-timing-function:cubic-bezier(.4,.1,.2,1)}
+  82%{top:calc(var(--fx-y) - 6px);bottom:calc(100% - var(--fx-y) - var(--fx-h) + 6px);border-radius:18px 18px 4px 4px;box-shadow:0 -16px 30px -14px rgba(20,22,31,.55),0 16px 26px -16px rgba(20,22,31,.5);animation-timing-function:cubic-bezier(.3,.6,.4,1)}
+  100%{top:var(--fx-y);bottom:calc(100% - var(--fx-y) - var(--fx-h));border-radius:18px 18px 0 0;box-shadow:0 -10px 24px -14px rgba(20,22,31,.45),0 0 0 rgba(20,22,31,0)}}
+@keyframes c04-pc-out{
+  0%{clip-path:inset(0 0 0 0 round 18px);opacity:1;animation-timing-function:cubic-bezier(.4,.1,.2,1)}
+  40%{opacity:0}
+  82%{clip-path:inset(calc(var(--fx-y) - 6px) 0 calc(100% - var(--fx-y) - var(--fx-h) + 6px) 0 round 18px 18px 4px 4px);opacity:0}
+  100%{clip-path:inset(var(--fx-y) 0 calc(100% - var(--fx-y) - var(--fx-h)) 0 round 18px 18px 0 0);opacity:0}}
+@keyframes c04-gh-out{0%,44%{opacity:0;transform:translateY(calc(-6px - var(--fx-y) * .25))}82%{opacity:1;transform:translateY(-6px)}100%{opacity:1;transform:none}}
+@keyframes c04-edge-out{0%{transform:none}100%{transform:translateY(100%)}}
+/* no origin rect (index jump / origin gone): the page rises from below / settles down */
+.c04-pg.is-top.dir-fwd:not(.has-from):not(.ph-idle) .c04-shape,.c04-pg.is-top.dir-fwd:not(.has-from):not(.ph-idle) .c04-pgc{animation:c04-rise calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c04-pg.is-top.ph-exit:not(.has-from) .c04-shape,.c04-pg.is-top.ph-exit:not(.has-from) .c04-pgc{animation:c04-sink calc(300ms * var(--k)) cubic-bezier(.4,0,.7,.4) both}
+@keyframes c04-rise{0%{transform:translateY(46%)}100%{transform:none}}
+@keyframes c04-sink{0%{transform:none}100%{transform:translateY(102%)}}
+.c04-pg.is-top.dir-swap:not(.ph-idle) .c04-pgc{animation:c04-swap calc(280ms * var(--k)) ease both}
+.c04-pg.is-leaving{z-index:3;animation:c04-leave calc(280ms * var(--k)) ease both}
+@keyframes c04-swap{0%{opacity:0}100%{opacity:1}}
+@keyframes c04-leave{0%{opacity:1}100%{opacity:0}}
+
+/* footer on a page: the V27 CTA sits in a dark bed (the light-blue pill would wash out on light paper) */
+.c04-foot{position:absolute;left:0;right:0;bottom:0;z-index:4;display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 22px calc(16px + var(--kb,0px));background:linear-gradient(0deg,var(--fg0) 64%,var(--fg1));pointer-events:none}
+.c04-foot>*{pointer-events:auto}
+.c04-foot:empty{display:none}
+.c04-foot .c04-2nd{height:36px}
+
+/* ------------------------------------------------------------ TICKET / REPLY ------------------------------------------------------------ */
+/* the ticket sheet (票底 #edeff7) laid on the 局's own sheet, which stays visible above it as the header band */
+.c04-tkp{position:relative;margin-top:10px;min-height:calc(100% - var(--pt0,160px) + 30px);padding:0 22px 160px;background:#edeff7;border-radius:18px 18px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.85),0 -10px 24px -14px rgba(10,12,26,.6);color:#22283b;--fg0:#edeff7;--fg1:rgba(237,239,247,0)}
+.c04-tkpg .c04-foot{--fg0:#edeff7;--fg1:rgba(237,239,247,0)}
+.c04-stage{margin:0}
+.c04-stage.reissued{--ju-ticket-top:24px}
+.c04-tkhint{margin:4px 0 0;text-align:center;font-size:13px;line-height:1.6;color:#596177}
+.c04-tkres{margin:6px 0 0;text-align:center}
+.c04-tkres b{display:block;font-size:20px;font-weight:600;color:#22283b}
+.c04-tkres p{margin:4px 0 0;font-size:14px;color:#535b70}
+.c04-ash{height:46px;margin:0 44px;border-radius:0 0 10px 10px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.55}
+.c04-copyfail{margin:6px 0 0;font-size:13px;color:#C2364C;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.c04-mini{height:32px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:500;box-shadow:inset 0 0 0 1px currentColor}
+.c04-err{font-size:13px;line-height:1.5;color:#C2364C}
+.c04-reply{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:rgba(69,83,190,.07);font-size:13px;line-height:1.6;color:#3b4157}
+.c04-reply s{color:#7a8094}
+
+/* ------------------------------------------------------------ DETAIL / READ / WAITLIST / HISTORY ------------------------------------------------------------ */
+.c04-dtop{display:flex;gap:14px;align-items:flex-start;padding:4px 18px 0 22px}
+.c04-dinfo{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px;padding-top:2px}
+.c04-dinfo .k{font-size:12px;letter-spacing:.04em;color:var(--pi2)}
+.c04-dinfo .v{font-size:15px;line-height:1.45;color:var(--pi)}
+.c04-dinfo .big{font:500 32px/1.05 "Archivo",sans-serif;font-variant-numeric:tabular-nums;letter-spacing:-.01em;color:var(--pi)}
+.c04-cardbox{flex:none;width:196px;border-radius:10px;overflow:hidden;box-shadow:0 22px 34px -20px rgba(12,14,30,.55),0 4px 10px -6px rgba(12,14,30,.35),0 0 0 1px rgba(20,22,31,.06)}
+.c04-dsec{margin:22px 0 0;padding:0 22px}
+.c04-dsec h3{margin:0 0 8px;font-size:12px;font-weight:500;letter-spacing:.05em;color:var(--pi2)}
+.c04-mem{display:flex;justify-content:space-between;gap:12px;padding:10px 0;border-top:1px solid var(--tr2);font-size:15px}
+.c04-mem span:last-child{color:var(--pi2);font-size:14px;text-align:right}
+.c04-mem.you{font-weight:600}
+.c04-rules h4{margin:16px 0 4px;font-size:15px;font-weight:600}
+.c04-rules p{margin:0 0 6px;font-size:14px;line-height:1.6;color:var(--pi2)}
+.c04-dres{margin:16px 22px 0;padding:14px 16px;border-radius:14px;background:var(--tr)}
+.c04-dres b{display:block;font-size:18px;font-weight:600}
+.c04-dres p{margin:4px 0 0;font-size:14px;color:var(--pi2)}
+.c04-endmark{text-align:center;color:var(--pi2);font-size:12px;padding:18px 0 4px}
+
+/* ------------------------------------------------------------ MANAGE: section sheets stacked, 56px bands ------------------------------------------------------------ */
+.c04-mh{padding:2px 22px 18px}
+.c04-mh .c04-seats{margin-top:0}
+.c04-mhl{margin-top:9px;display:flex;justify-content:space-between;align-items:baseline;gap:12px;font-size:13px;line-height:1.5;color:var(--pi2)}
+.c04-mhl b{font-weight:600;color:var(--pi)}
+.c04-link{height:32px;font-size:13px;font-weight:500;color:var(--pi);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;white-space:nowrap}
+.c04-msec{position:relative;background:var(--sp);color:var(--si);border-radius:18px 18px 0 0;padding-bottom:18px;box-shadow:inset 0 1px 0 rgba(255,255,255,.6),0 -10px 24px -14px rgba(20,22,31,.45);scroll-margin-top:84px}
+.c04-msec + .c04-msec{margin-top:-18px}
+.c04-msec.is-last{padding-bottom:150px;min-height:calc(100% - 40px)}
+.c04-mband{display:flex;align-items:center;gap:10px;width:100%;height:56px;padding:0 18px 0 22px;text-align:left}
+.c04-mband b{font-size:calc(16px * var(--tz,1));font-weight:600;white-space:nowrap}
+.c04-mband span{flex:1 1 auto;min-width:0;font-size:calc(13px * var(--tz,1));color:var(--si2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-mband svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;transition:transform calc(240ms * var(--k)) ease;opacity:.7}
+.c04-msec.is-open .c04-mband svg{transform:rotate(180deg)}
+.c04-mbody{padding:0 22px 6px}
+.c04-app{display:flex;gap:12px;padding:14px 0;border-top:1px solid var(--sl2)}
+.c04-av{flex:none;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:600;color:var(--sp);background:var(--si)}
+.c04-apb{flex:1 1 auto;min-width:0}
+.c04-apn{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.c04-apn b{font-size:16px;font-weight:600}
+.c04-apn small{font-size:12px;color:var(--si2);white-space:nowrap}
+.c04-apv{margin-top:1px;font-size:13px;color:var(--si2)}
+.c04-apq{margin:6px 0 0;font-size:14px;line-height:1.55}
+.c04-apa{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-top:10px}
+.c04-ink{height:38px;padding:0 18px;border-radius:999px;background:var(--si);color:var(--sp);font-size:14px;font-weight:600;box-shadow:0 8px 16px -12px rgba(0,0,0,.6)}
+.c04-ink:active{transform:scale(.96)}
+.c04-quiet{height:38px;padding:0 14px;border-radius:999px;font-size:14px;font-weight:500;color:var(--si2)}
+.c04-apres{margin-top:9px;display:flex;align-items:center;gap:7px;font-size:14px;font-weight:500;animation:c04-settle calc(420ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c04-apres i{width:18px;height:18px;border-radius:50%;flex:none;display:inline-flex;align-items:center;justify-content:center;background:#0E9B76;color:#fff}
+.c04-apres.void i{background:var(--si2)}
+.c04-apres svg{width:12px;height:12px;fill:none;stroke:currentColor;stroke-width:2.2}
+.c04-busy{margin-top:10px;font-size:13px;color:var(--si2)}
+@keyframes c04-settle{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+.c04-row{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--sl2);font-size:15px}
+.c04-row .r{font-size:13px;color:var(--si2);text-align:right}
+.c04-row.you b{font-weight:600}
+.c04-mhelp{margin:8px 0 12px;font-size:13px;line-height:1.6;color:var(--si2)}
+.c04-arr{display:flex;flex-direction:column}
+.c04-arr button{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:54px;padding:8px 0;border-top:1px solid var(--sl2);text-align:left}
+.c04-arr button b{font-size:15px;font-weight:600}
+.c04-arr button span{font-size:13px;color:var(--si2);text-align:right}
+.c04-arr button.danger b{color:#B42E44}
+.c04-arr button.inert{opacity:.5;cursor:default}
+.c04-count{transition:opacity calc(200ms * var(--k)) ease}
+
+/* ------------------------------------------------------------ SHEETS (弹层): one more sheet laid on top ------------------------------------------------------------ */
+.c04-over{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(14,16,28,.32);animation:c04-dim calc(260ms * var(--k)) ease both}
+@keyframes c04-dim{0%{background:rgba(14,16,28,0)}100%{background:rgba(14,16,28,.32)}}
+.c04-dlg{position:relative;max-height:calc(100% - 60px);overflow:auto;border-radius:20px 20px 0 0;background:#f7f5f0;color:#22283b;box-shadow:0 -16px 40px -18px rgba(10,12,24,.6);animation:c04-up calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;padding-bottom:calc(18px + var(--kb,0px) + var(--sab,0px))}
+@keyframes c04-up{0%{transform:translateY(60%)}100%{transform:none}}
+.c04-dband{padding:14px 20px 12px;background:var(--pp);color:var(--pi);border-radius:20px 20px 0 0;box-shadow:inset 0 1px 0 var(--hl)}
+.c04-dband b{display:block;font-size:16px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c04-dband span{display:block;margin-top:1px;font-size:13px;color:var(--pi2)}
+.c04-dbody{padding:18px 20px 4px}
+.c04-dbody h3{margin:0 0 6px;font-size:20px;font-weight:600}
+.c04-dbody p{margin:0 0 10px;font-size:14px;line-height:1.6;color:#3d4458}
+.c04-dacts{display:flex;flex-direction:column;align-items:center;gap:6px;padding:8px 20px 0}
+.c04-dacts .c04-2nd{color:#535b70}
+.c04-danger{width:min(100%,280px);height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:500;color:#fff;background:#C2364C;box-shadow:0 12px 24px -14px rgba(194,54,76,.8)}
+.c04-danger:disabled{opacity:.6}
+.c04-irrev{margin:6px 0 10px;padding:10px 12px;border-radius:10px;background:#f6e4e6;color:#8b1f30;font-size:13px;line-height:1.5}
+.c04-aff{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(20,22,31,.08);font-size:14px}
+.c04-in{display:block;width:100%;margin:6px 0 10px;padding:11px 12px;border-radius:12px;border:1px solid rgba(20,22,31,.18);background:#fff;font:inherit;font-size:16px;color:#14161F}
+.c04-lbl{display:block;font-size:13px;color:#535b70}
+.c04-toast{position:absolute;left:50%;bottom:calc(84px + var(--kb,0px) + var(--sab,0px));transform:translateX(-50%);max-width:calc(100% - 40px);padding:11px 16px;border-radius:14px;background:rgba(20,22,31,.92);color:#f6f6fa;font-size:14px;line-height:1.45;z-index:60;box-shadow:0 14px 30px -16px rgba(0,0,0,.6);animation:c04-toast calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app.c04:not(.at-home) .c04-toast{bottom:calc(var(--ed) + 96px + var(--kb,0px) + var(--sab,0px))}
+.c04-toast.k-error{background:#8b1f30}
+@keyframes c04-toast{0%{opacity:0;transform:translate(-50%,8px)}100%{opacity:1;transform:translate(-50%,0)}}
+.c04-t08{position:relative;height:520px;margin:8px 0 0}
+.c04-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c04{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <div class="ju-env" ref="{{envRef}}"></div>
+      <sc-if value="{{noSkins}}"><div class="c04-envf"></div></sc-if>
+
+      <!-- ================= HOME: the stack ================= -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c04-home {{c.nav.cls.home}}" data-surface="home">
+          <header class="c04-hd" data-header>
+            <div class="c04-tools">
+              <div class="c04-roles" role="tablist" aria-label="我的局 · 角色" style="--ri:{{home.ri}}">
+                <i class="c04-thumb" aria-hidden="true"></i>
+                <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c04-role {{t.cls}}" data-role-tab="{{t.k}}" role="tab" aria-selected="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="c04-badge">{{t.badge}}</span></sc-if></button></sc-for>
+              </div>
+              <div class="c04-secs">
+                <sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c04-sec {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><small>{{t.countText}}</small></sc-if></button></sc-for>
+              </div>
+            </div>
+            <h1 class="c04-ttl">我的局</h1>
+            <p class="c04-meta">{{home.meta}}</p>
+          </header>
+          <div class="c04-sc" data-scroller="home" onScroll="{{home.onScroll}}">
+            <sc-if value="{{home.empty.on}}"><div class="c04-empty"><b>{{home.empty.title}}</b><p>{{home.empty.body}}</p><sc-if value="{{home.empty.action}}"><button type="button" class="c04-2nd" aria-disabled="{{home.empty.inert}}" onClick="{{home.empty.action.go}}">{{home.empty.action.label}}</button></sc-if></div></sc-if>
+            <sc-for list="{{home.groups}}" as="g" hint-placeholder-count="3">
+              <div class="c04-grp">{{g.title}}<b>{{g.count}}</b><em>{{g.note}}</em></div>
+              <div class="c04-stack">
+                <sc-for list="{{g.rows}}" as="x" hint-placeholder-count="3">
+                  <div class="c04-sheet {{x.cls}}" style="{{x.sty}}" data-rid="{{x.id}}" data-origin="{{x.origin}}" role="button" tabindex="0" aria-label="{{x.aria}}" onClick="{{x.open}}" onKeyDown="{{x.key}}">
+                    <sc-if value="{{x.band}}">
+                      <div class="c04-bt"><b class="c04-btt">{{x.title}}</b><span class="c04-bst">{{x.status}}</span></div>
+                      <div class="c04-bm">{{x.metaA}}<sc-if value="{{x.old}}"><s>{{x.old}}</s></sc-if>{{x.metaB}}<sc-if value="{{x.cdOn}}"> · <span class="cd">{{x.cdText}}</span></sc-if></div>
+                    </sc-if>
+                    <sc-if value="{{x.lead}}">
+                      <div class="c04-lk"><span>{{x.kick}}</span><sc-if value="{{x.cdOn}}"><span class="cd">剩 {{x.cdText}}</span></sc-if><sc-if value="{{x.kickR}}"><span>{{x.kickR}}</span></sc-if></div>
+                      <h2 class="c04-lt">{{x.title}}</h2>
+                      <div class="c04-lm">{{x.when}}</div>
+                      <sc-if value="{{x.cdOn}}"><div class="c04-lbar" style="--ratio:{{x.cdRatio}}"><i></i></div></sc-if>
+                      <sc-if value="{{x.seatsOn}}"><div class="c04-seats"><sc-for list="{{x.seats}}" as="s" hint-placeholder-count="4"><span class="c04-seat {{s.kind}}">{{s.t}}</span></sc-for></div></sc-if>
+                      <div class="c04-ln">{{x.need}}</div>
+                      <div class="c04-lcta">
+                        <sc-if value="{{x.cta}}"><span class="c04-bed"><button type="button" class="ju-v27-cta c04-cta" data-act="cta" onClick="{{x.act}}"><span class="gloss"></span><span class="label">{{x.cta}}</span></button></span></sc-if>
+                        <sc-if value="{{x.sec}}"><button type="button" class="c04-2nd" data-act="{{x.secKey}}" onClick="{{x.sec}}">{{x.secLabel}}</button></sc-if>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{x.draft}}">
+                      <div class="c04-bt"><b class="c04-btt">{{x.title}}</b><span class="c04-bst">{{x.status}}</span></div>
+                      <div class="c04-bm">{{x.metaA}}</div>
+                      <div class="c04-lcta" style="margin-top:8px"><button type="button" class="c04-2nd" aria-disabled="true" onClick="{{x.inert}}">继续编辑 · 开局模块</button><button type="button" class="c04-2nd" data-act="delete" onClick="{{x.del}}">删除</button></div>
+                    </sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-for>
+            <sc-if value="{{home.undo.on}}"><div class="c04-empty" role="status" style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span>{{home.undo.text}}</span><button type="button" class="c04-mini" data-act="undo" onClick="{{home.undo.act}}">{{home.undo.label}} {{home.undo.left}}s</button></div></sc-if>
+            <sc-if value="{{home.footNote}}"><p class="c04-foot-note">{{home.footNote}}</p></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ================= DETAIL (参加者局内) / READ / WAITLIST / HISTORY / DRAFT share the opened-sheet frame ================= -->
+      <sc-for list="{{pages}}" as="pg" hint-placeholder-count="1">
+        <section class="c04-pg {{pg.cls}}" data-surface="{{pg.surface}}" style="{{pg.sty}}">
+          <div class="c04-shape"></div>
+          <div class="c04-ghost" aria-hidden="true"><div class="c04-bt"><b class="c04-btt">{{pg.bandTitle}}</b><span class="c04-bst">{{pg.bandStatus}}</span></div><div class="c04-bm">{{pg.bandMeta}}</div></div>
+          <div class="c04-pgc">
+            <div class="c04-psc" data-scroller="{{pg.scroller}}" onScroll="{{pg.onScroll}}">
+              <!-- detail -->
+              <sc-if value="{{pg.isDetail}}">
+                <div class="c04-dtop">
+                  <div class="c04-dinfo">
+                    <sc-if value="{{d.cdOn}}"><div><div class="k">预留剩余</div><div class="big">{{d.cdText}}</div></div><div class="c04-lbar" style="--ratio:{{d.cdRatio}};margin-top:-4px"><i></i></div><div class="v" style="font-size:13px;color:var(--pi2)">{{d.deadline}}</div></sc-if>
+                    <div><div class="k">时间</div><div class="v">{{d.when}}</div></div>
+                    <div><div class="k">地点</div><div class="v">{{d.place}}</div></div>
+                    <div><div class="k">局主</div><div class="v">{{d.host}}</div></div>
+                  </div>
+                  <div class="c04-cardbox" aria-label="局卡">CARD</div>
+                </div>
+                <sc-if value="{{d.result}}"><div class="c04-dres"><b>{{d.result.title}}</b><p>{{d.result.body}}</p></div></sc-if>
+                <div class="c04-dsec"><h3>成员 · {{d.seatText}}</h3><sc-for list="{{d.members}}" as="m" hint-placeholder-count="3"><div class="c04-mem {{m.cls}}"><span>{{m.name}}</span><span>{{m.statusText}}</span></div></sc-for></div>
+                <div class="c04-dsec c04-rules"><h3>参加约定</h3><sc-for list="{{d.rules}}" as="g" hint-placeholder-count="2"><h4>{{g.title}}</h4><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="2"><p>{{l}}</p></sc-for></sc-for></div>
+                <div style="height:150px"></div>
+              </sc-if>
+            </div>
+            <header class="c04-ph" data-header>
+              <button type="button" class="ju-v27-back-pill c04-back" data-act="back" aria-label="返回" onClick="{{pg.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{pg.weak}}"><button type="button" class="c04-weak" data-act="{{pg.weakKey}}" onClick="{{pg.weak}}">{{pg.weakLabel}}</button></sc-if>
+              <div class="c04-phc"><h1 class="c04-pt">{{pg.title}}</h1><p class="c04-pm">{{pg.meta}}</p></div>
+            </header>
+            <div class="c04-foot">
+              <sc-if value="{{pg.cta}}"><span class="c04-bed"><button type="button" class="ju-v27-cta c04-cta" data-act="{{pg.ctaKey}}" aria-disabled="{{pg.ctaOff}}" onClick="{{pg.cta}}"><span class="gloss"></span><span class="label">{{pg.ctaLabel}}</span></button></span></sc-if>
+              <sc-if value="{{pg.sec}}"><button type="button" class="c04-2nd" data-act="{{pg.secKey}}" onClick="{{pg.sec}}">{{pg.secLabel}}</button></sc-if>
+            </div>
+          </div>
+          <button type="button" class="c04-edge" data-act="back" aria-label="返回我的局" onClick="{{pg.back}}"><sc-for list="{{edge}}" as="e" hint-placeholder-count="4"><i style="{{e.sty}}"></i></sc-for></button>
+        </section>
+      </sc-for>
+
+      <!-- ================= TICKET / REPLY: the 票底 sheet laid on the 局's own sheet; the stage is the shared original ================= -->
+      <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
+        <section class="c04-pg c04-tkpg {{tk.cls}}" data-surface="{{tk.surface}}" style="{{tk.sty}}">
+          <div class="c04-shape"></div>
+          <div class="c04-ghost" aria-hidden="true"><div class="c04-bt"><b class="c04-btt">{{tk.bandTitle}}</b><span class="c04-bst">{{tk.bandStatus}}</span></div><div class="c04-bm">{{tk.bandMeta}}</div></div>
+          <div class="c04-pgc">
+            <div class="c04-psc" data-scroller="ticket" onScroll="{{tk.onScroll}}">
+              <div class="c04-tkp">
+                <sc-if value="{{c.ticket.unavailable}}"><div class="c04-tkres" style="padding-top:40px"><b>{{c.ticket.title}}</b><p>{{c.ticket.unavailable.text}}</p></div></sc-if>
+                <sc-if value="{{tk.showStage}}">
+                  <div class="ju-ticket-stage c04-stage {{tk.stageCls}}" data-print-stage="c04" data-state="idle">
+                    <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                    <div class="ju-ticket" data-paper="c04">
+                      <div class="ju-ticket-shadow" data-paper-shadow="c04" data-raster="skip"><div></div></div>
+                      <div class="ju-ticket-shell" data-paper-shell="c04">
+                        <div class="ju-ticket-surface" data-paper-surface="c04">
+                          <div class="ju-ticket-body">
+                            <div class="ju-ticket-face">
+                              <div class="ju-ticket-brand">JU. / 票根</div>
+                              <div class="ju-ticket-title" data-slot="title">{{c.ticket.ritual.title}}</div>
+                              <div class="ju-ticket-when"><span data-slot="time">{{c.ticket.ritual.time}}</span><span data-slot="md">{{c.ticket.ritual.md}}</span></div>
+                              <div class="ju-ticket-previous" data-slot="previous" hidden="{{tk.noPrevious}}">{{tk.previousText}}</div>
+                              <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.ticket.ritual.loc}}</strong></div>
+                              <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.ticket.ritual.meeting}}</strong></div>
+                              <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.ticket.ritual.host}}</strong></div>
+                            </div>
+                            <div class="ju-ticket-wet" data-wet="c04" data-raster="skip"></div>
+                          </div>
+                          <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{tk.noMark}}">{{c.ticket.ritual.mark}}</div>
+                          <div class="ju-ticket-stub" data-tear="c04" data-act="tear"><div class="ju-ticket-bend" data-bend="c04" data-raster="skip"></div></div>
+                        </div>
+                      </div>
+                      <div class="ju-ticket-burn" data-burn="c04" data-raster="skip"></div>
+                    </div>
+                  </div>
+                  <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                  <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
+                    <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+                    <p class="ju-contact-note23"></p>
+                    <p class="ju-form-error"></p>
+                  </div>
+                  <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c04-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c04-mini" data-act="retry" onClick="{{tk.retryCopy}}">重试</button></p></sc-if>
+                  <sc-if value="{{tk.showClosed}}"><p class="c04-err">{{c.ticket.contact.closedText}}</p></sc-if>
+                  <sc-if value="{{c.ticket.contact.error}}"><p class="c04-err">{{c.ticket.contact.error}}</p></sc-if>
+                  <sc-if value="{{c.ticket.result}}"><div class="c04-tkres"><sc-if value="{{tk.ashes}}"><div class="c04-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
+                  <sc-if value="{{tk.replyLine}}"><p class="c04-reply">原定 <s>{{tk.replyOld}}</s> → 改到 <b>{{tk.replyNew}}</b><br>{{tk.replyNote}}</p></sc-if>
+                  <p class="c04-tkhint">{{tk.hint}}</p>
+                </sc-if>
+              </div>
+            </div>
+            <header class="c04-ph" data-header>
+              <button type="button" class="ju-v27-back-pill c04-back" data-act="back" aria-label="返回" onClick="{{tk.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button>
+              <sc-if value="{{c.ticket.canExit}}"><button type="button" class="c04-weak" data-act="{{tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if>
+              <div class="c04-phc"><h1 class="c04-pt">{{tk.title}}</h1><p class="c04-pm">{{tk.meta}}</p></div>
+            </header>
+            <div class="c04-foot">
+              <sc-if value="{{c.ticket.tear.canTear}}"><span class="c04-bed ju-print-cta-in"><button type="button" class="ju-v27-cta c04-cta" data-act="{{tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></span></sc-if>
+              <sc-if value="{{tk.declineOn}}"><button type="button" class="c04-2nd" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if>
+              <sc-if value="{{tk.contactAction}}"><span class="c04-bed c04-bedc"><button type="button" class="ju-v27-cta c04-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></span></sc-if>
+              <sc-if value="{{c.ticket.result}}"><span class="c04-bed"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></span></sc-if>
+              <sc-if value="{{c.ticket.unavailable}}"><span class="c04-bed"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></span></sc-if>
+            </div>
+          </div>
+          <button type="button" class="c04-edge" data-act="back" aria-label="返回我的局" onClick="{{tk.back}}"><sc-for list="{{edge}}" as="e" hint-placeholder-count="4"><i style="{{e.sty}}"></i></sc-for></button>
+        </section>
+      </sc-if>
+
+      <nav class="c04-nav" aria-label="JU"><sc-for list="{{nav}}" as="t" hint-placeholder-count="4"><button type="button" class="{{t.cls}}" aria-disabled="{{t.inert}}" aria-current="{{t.cur}}" onClick="{{t.go}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.icon}}"></path></svg>{{t.label}}</button></sc-for></nav>
+
+      <sc-if value="{{c.toast.on}}"><div class="c04-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"live":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* ---- C04 palette: paper = the pack's card colour with saturation × 0.8; ink = the pack's ink ---- */
+var C04P = { invite: ['#EFE4CC', '#241F17', 0.70, 0], riso: ['#B7BCD9', '#2A2C33', 0.82, 0], acid: ['#C9F23C', '#14150F', 0.70, 0], street: ['#5f4f3c', '#FFFDF6', 0.78, 1], grain: ['#1d2347', '#EDE6D2', 0.68, 1], mono: ['#70301a', '#F3EAD8', 0.76, 1] };
+function c04hx(h) { h = h.replace('#', ''); return [0, 2, 4].map(function (i) { return parseInt(h.slice(i, i + 2), 16) / 255; }); }
+function c04he(c) { return '#' + c.map(function (v) { var n = Math.round(Math.max(0, Math.min(1, v)) * 255); return (n < 16 ? '0' : '') + n.toString(16); }).join(''); }
+function c04desat(h, k) { var c = c04hx(h), r = c[0], g = c[1], b = c[2]; var mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2, d = mx - mn; if (!d) return h; var s = d / (1 - Math.abs(2 * l - 1)); var hh = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; hh = hh * 60; if (hh < 0) hh += 360; s *= k; var C = (1 - Math.abs(2 * l - 1)) * s, X = C * (1 - Math.abs((hh / 60) % 2 - 1)), m = l - C / 2; var o = hh < 60 ? [C, X, 0] : hh < 120 ? [X, C, 0] : hh < 180 ? [0, C, X] : hh < 240 ? [0, X, C] : hh < 300 ? [X, 0, C] : [C, 0, X]; return c04he([o[0] + m, o[1] + m, o[2] + m]); }
+function c04mix(a, b, t) { var A = c04hx(a), B = c04hx(b); return c04he(A.map(function (v, i) { return v * (1 - t) + B[i] * t; })); }
+var C04PAL = {};
+function c04pal(pack) {
+  pack = C04P[pack] ? pack : 'invite'; if (C04PAL[pack]) return C04PAL[pack];
+  var p = C04P[pack], pp = c04desat(p[0], 0.8), dark = !!p[3];
+  var o = { pack: pack, dark: dark, pp: pp, pi: p[1], pi2: c04mix(pp, p[1], p[2]), hl: dark ? 'rgba(255,255,255,.13)' : 'rgba(255,255,255,.55)', pb: dark ? c04mix(pp, '#000', 0.34) : c04mix(p[1], pp, 0.06), tr: dark ? 'rgba(255,255,255,.16)' : 'rgba(20,22,31,.12)', tr2: dark ? 'rgba(255,255,255,.22)' : 'rgba(20,22,31,.16)' };
+  o.sty = '--pp:' + o.pp + ';--pi:' + o.pi + ';--pi2:' + o.pi2 + ';--hl:' + o.hl + ';--pb:' + o.pb + ';--tr:' + o.tr + ';--tr2:' + o.tr2 + ';--fg0:' + o.pp + ';--fg1:' + o.pp + '00';
+  /* manage: section sheets in light steps of the same colour; their ink is the pack ink (light packs) or the paper darkened (dark packs) */
+  o.si = dark ? c04mix(pp, '#0b0c14', 0.45) : p[1]; o.secs = [0.82, 0.7, 0.58, 0.48, 0.4, 0.34].map(function (t) { return c04mix(pp, '#fbfaf6', t); });
+  return (C04PAL[pack] = o);
+}
+var C04ICON = { find: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13z M15.5 15.5 20 20', create: 'M12 5v14 M5 12h14', mine: 'M4 9.5h16v9.5H4z M6 6.5h12 M8 3.5h8', settings: 'M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M19 12l1.8-1-1.6-3.2-2 .3-1.3-1.2.2-2L13 4h-2l-.9 1.9.2 2-1.3 1.2-2-.3L5.4 11l1.6 1-1.6 1 1.6 3.2 2-.3 1.3 1.2-.2 2L11 20h2l.9-1.9-.2-2 1.3-1.2 2 .3 1.6-3.2z' };
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 420, back: 380, swap: 280, role: 300 };
+    this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.envRef = { current: null }; this._rit = {};
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  R() { return window.JURitual || null; }
+  live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
+  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); }
+  componentWillUnmount() { this._destroyTicket(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
+  _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
+  _syncEnv(ps) { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; const r = this.state.review, pr = ps && ps.review; if (!S.state(el)) return this._mountEnv(); if (r.skin !== (pr && pr.skin)) S.setSkin(el, r.skin || 'cotton'); if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); } }
+  _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
+  /* ---- rituals (C00 call sites; the controller wrote the data first) ---- */
+  _syncRituals(ps) {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const stage = root.querySelector('[data-surface="ticket"] .c04-stage,[data-surface="reply"] .c04-stage');
+    if (c.ticket.on && stage) {
+      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) this._mountTicket(stage, c);
+      const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
+    } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
+  }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _mountTicket(stage, c) {
+    this._destroyTicket(); this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
+    if (st === 'printing') {
+      const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
+      R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => { if (this._rit.stage !== stage) return; const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error'); this.ticketPrinted(key); });
+    } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
+    else if (st === 'torn') this._settleTicket(stage, data, 'torn');
+  }
+  _settleTicket(stage, data, final, tearOpts) {
+    const R = this.R(); R.fillTicket(stage, data); const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
+    if (final === 'ready' && R.tear) { const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready'; if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); } if (tearOpts) this.registerTear(h); return h; }
+    stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
+  }
+  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _contact() {
+    if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
+    const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
+    const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+    const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
+    const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+    this._rit.contact = h; return h;
+  }
+  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R || !c.ticket.on) return; R.burn.reset(stage); this._settleTicket(stage, c.ticket.ritual, 'torn'); this._rit.burn = R.burn(stage, { reason: c.ticket.result ? c.ticket.result.reason : 'withdrawn' }, { onDone: () => { this._rit.burn = null; } }); }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  onEffect(fx) {
+    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
+    if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
+  }
+  /* scroll: the controller writes --hc; the concept flags the collapsed state (pointer events / nowrap) */
+  _scroll(ev) { const el = ev.currentTarget; this._c.nav.onScroll(ev); const surf = el.closest('[data-surface]'); if (!surf) return; const hc = el.scrollTop / 88; const v = hc >= 0.6 ? '1' : ''; if ((surf.dataset.hc1 || '') !== v) { if (v) surf.dataset.hc1 = v; else delete surf.dataset.hc1; } }
+  /* ---- view model ---- */
+  _band(r, joined) {
+    const P = c04pal(r.pack); const st = r.stage;
+    const short = joined ? ({ invited: '已预留', invited_queue: '候补轮到', gathering: '待全员确认', pending: '待审核', tear: '待撕票', contact: '待联系', going: '待赴约', reschedule: '待确认新时间', ended: '已散场' }[st] || r.label) : r.life;
+    let metaA = r.whenText, old = '', metaB = ' · ' + r.placeText;
+    if (joined && st === 'reschedule' && r.oldWhen) { old = r.oldWhen.md === r.newWhen.md ? r.oldWhen.time : r.oldWhen.zh; metaA = r.newWhen.zh; }
+    if (joined && st === 'gathering') metaB += ' · 已确认 ' + r.counts.confirmed + '/' + r.counts.capacity;
+    if (joined && st === 'waitlist') metaB += ' · 不占名额';
+    if (joined && (r.group === 'kept' || r.group === 'closed')) metaB += r.attendanceText ? ' · ' + r.attendanceText : '';
+    if (!joined) metaB += ' · ' + r.label;
+    return { P: P, status: short, metaA: metaA, old: old, metaB: metaB };
+  }
+  _rowVM(r, joined, gi, isLast, leadOn) {
+    const self = this; const b = this._band(r, joined); const P = b.P; const lead = !!(leadOn && r.isLead);
+    const x = { id: r.id, origin: r.originKey, open: r.open, act: r.act, title: r.title, status: b.status, metaA: b.metaA, old: b.old, metaB: b.metaB, band: !lead, lead: lead,
+      cls: (lead ? 'is-lead ' : '') + (isLast ? 'is-last ' : '') + (P.dark ? 'pk-dark ' : 'pk-light ') + (r.landing ? 'is-landing' : ''),
+      sty: P.sty + ';--i:' + gi, aria: r.title + ' · ' + b.status + ' · ' + r.whenText + ' · ' + r.placeText,
+      key: function (ev) { if (ev.target !== ev.currentTarget) return; if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); r.open(ev); } } };
+    const left = r.left || {}; x.cdOn = !!(joined && left.on && !left.expired); x.cdText = left.text || ''; x.cdRatio = left.ratio || 0;
+    if (lead) {
+      if (joined) { x.kick = r.detailTitle || r.label; x.when = r.whenText + ' · ' + r.place.full; x.need = r.deadlineText ? r.deadlineText.replace('阅读并确认', '确认') + ' · 局主 ' + r.hostName : r.need + ' · 局主 ' + r.hostName; }
+      else { x.kick = r.label; x.kickR = r.life; x.when = r.whenText + ' · ' + r.place.full; x.need = r.seatText + '（含你）' + (r.seatMore ? ' · ' + r.seatMore : ''); x.seatsOn = true; x.seats = (r.seats || []).map(function (s) { return { kind: s.kind, t: s.kind === 'host' ? '你' : s.kind === 'open' ? '' : JU.fmt.initial(s.name) }; }); }
+      x.cta = r.ctaLabel || ''; x.sec = r.secondary || null; x.secKey = r.secondaryKey || ''; x.secLabel = r.secondaryLabel || '';
+    }
+    return x;
+  }
+  renderVals() {
+    const self = this; const panel = this.panelVals(); panel.show = this.props.panel !== false;
+    const c = this.ctlVals(); this._c = c; const s = this.state;
+    /* ---- home: one stack per group ---- */
+    const joined = c.role === 'joined'; let gi = 0; let groups = [];
+    const mk = (secs, isJ, leadOn) => secs.map(g => { const rows = g.rows.map((r, i) => this._rowVM(r, isJ, gi++, i === g.rows.length - 1, leadOn)); return { key: g.key, title: g.title, count: g.count, note: g.note, rows: rows }; });
+    if (joined) groups = mk(c.section === 'history' ? c.joined.sectionsHistory : c.joined.sections, true, c.section === 'current');
+    else if (c.section === 'drafts') groups = c.hosted.drafts.length ? [{ key: 'drafts', title: '草稿', count: c.hosted.drafts.length, note: '只在本机 · 发布前别人看不到', rows: c.hosted.drafts.map((d, i, a) => { const P = c04pal(d.pack); return { id: d.id, origin: d.originKey, open: d.open, draft: true, title: d.title, status: d.ready ? '可以发布' : '还差信息', metaA: d.whenText + ' · ' + d.placeText + ' · ' + d.agoText, cls: (i === a.length - 1 ? 'is-last ' : '') + d.cls, sty: P.sty + ';--i:' + (gi++), del: d.del, inert: c.inert, aria: d.title, key: function () { } }; }) }] : [];
+    else groups = mk(c.section === 'history' ? c.hosted.sectionsHistory : c.hosted.sections, false, c.section === 'current');
+    const J = c.joined, Hd = c.hosted;
+    let meta = '';
+    if (joined && c.section === 'current') meta = J.sections.map(g => g.title + ' ' + g.count).join(' · ');
+    else if (!joined && c.section === 'current') meta = Hd.sections.map(g => g.title + ' ' + g.count).join(' · ');
+    else if (c.section === 'history') meta = (joined ? J.counts.history : Hd.counts.history) + ' 场已结束 · 新的在前';
+    else meta = Hd.counts.drafts + ' 份草稿 · 只在本机';
+    const empty = joined ? J.empty : Hd.empty;
+    const home = { ri: joined ? 0 : 1, meta: meta, groups: groups, empty: { on: !!empty.on, title: empty.title, body: empty.body, action: empty.action, inert: !!(empty.action && empty.action.inert) }, undo: Hd.undo, onScroll: (ev) => this._scroll(ev),
+      footNote: c.section === 'history' ? (c.COPY.historyFooter && c.COPY.historyFooter.lead ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '') : '' };
+    /* ---- the stack edge on an opened page: every other sheet of the list, pressed together ---- */
+    const curId = c.nav.params && c.nav.params.eventId; const flat = [].concat.apply([], groups.map(g => g.rows)).filter(x => x.id !== curId);
+    const n = Math.min(9, flat.length); const edge = flat.slice(0, n).map((x, j) => ({ sty: c04pal((this._rowById(c, x.id) || {}).pack).sty + ';--j:' + j + ';--sl:' + (n > 1 ? Math.min(4, 18 / (n - 1)).toFixed(2) : 0) + 'px' }));
+    /* ---- opened pages ---- */
+    const pages = []; const fromCls = c.nav.fromStyle ? ' has-from' : '';
+    const titleLines = (t) => { let w = 0; for (const ch of String(t || '')) w += /[⺀-鿿＀-￯]/.test(ch) ? 30 : /\s/.test(ch) ? 8 : 17; return w > 340 ? 2 : 1; };
+    const frame = (surface, row, title, meta, extra) => {
+      const P = c04pal(row ? row.pack || (row.event && row.event.pack) : 'invite'); const lines = titleLines(title);
+      const b = row && row.whenText ? this._band(row, !!row.stage && !row.life) : null;
+      return Object.assign({ surface: surface, scroller: surface, cls: (c.nav.cls[surface] || '') + fromCls + (P.dark ? ' pk-dark' : ' pk-light'), sty: (c.nav.fromStyle ? c.nav.fromStyle + ';' : '') + P.sty + ';--pt0:' + (lines === 2 ? 196 : 164) + 'px', title: title, meta: meta,
+        bandTitle: row ? row.title : '', bandStatus: b ? b.status : '', bandMeta: b ? b.metaA + (b.old ? ' ' + b.old : '') + b.metaB : '', back: () => this.back(), onScroll: (ev) => this._scroll(ev), weak: null, cta: null, sec: null }, extra || {});
+    };
+    let d = { on: false };
+    if (c.nav.on.detail && c.detail.on) {
+      const D = c.detail, r = D.row; const cd = D.countdown || {};
+      d = { cdOn: !!(cd.on && !cd.expired), cdText: cd.text, cdRatio: cd.ratio || 0, deadline: r.deadlineText || '', when: D.when.long || D.when.zh, place: D.place.full, host: D.host.name, result: D.result, seatText: D.seatText, members: D.members.map(m => Object.assign({ cls: m.you ? 'you' : '' }, m)), rules: D.rules };
+      pages.push(frame('detail', r, r.title, D.title + ' · ' + D.need, { isDetail: true, weak: D.secondary ? D.secondary.act : null, weakKey: D.secondary ? D.secondary.key : '', weakLabel: D.secondary ? D.secondary.label : '', cta: D.primary.disabled ? null : D.primary.act, ctaKey: D.primary.key, ctaLabel: D.primary.label, ctaOff: !!D.primary.disabled }));
+    }
+    /* ---- ticket / reply ---- */
+    const T = c.ticket; const tkOn = !!((c.nav.on.ticket || c.nav.on.reply) && T.on); let tk = { on: false };
+    if (tkOn) {
+      const r = T.row; const P = c04pal(r.pack); const b = this._band(r, true); const rp = T.reply;
+      const w = r.when; const lines = titleLines(r.title);
+      tk = { on: true, surface: c.nav.on.reply ? 'reply' : 'ticket', cls: (c.nav.cls.ticket || '') + (c.nav.cls.reply || '') + fromCls + (P.dark ? ' pk-dark' : ' pk-light'),
+        sty: (c.nav.fromStyle ? c.nav.fromStyle + ';' : '') + P.sty + ';--pt0:' + (lines === 2 ? 196 : 164) + 'px',
+        bandTitle: r.title, bandStatus: b.status, bandMeta: b.metaA + (b.old ? ' ' + b.old : '') + b.metaB,
+        title: r.title, meta: T.title + ' · ' + (rp ? rp.newWhen.zh : w.zh) + ' · ' + r.place.hood,
+        back: () => this.back(), onScroll: (ev) => this._scroll(ev), exitAct: T.isReply ? 'decline' : 'exit',
+        showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark,
+        tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', declineOn: !!(rp && T.tear.canTear),
+        contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning),
+        retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
+        replyLine: !!(rp && !rp.answered), replyOld: rp ? rp.oldWhen.zh : '', replyNew: rp ? rp.newWhen.wdZh + ' ' + rp.newWhen.time : '', replyNote: '撕下新票的副券 = 接受新时间；旧票随之作废。',
+        hint: T.state === 'printing' ? '新票正在出纸…' : T.tear.canTear ? (T.isReply ? '把副券向右撕下，或按下方按钮接受' : '把副券向右撕下，或按 Enter / 下方按钮') : '' };
+    }
+    const nav = c.rootNav.map(t => ({ cls: t.cls, inert: t.inert, cur: t.on ? 'page' : null, go: t.go, label: t.label, icon: C04ICON[t.k] || '' }));
+    return { panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins, home, pages, d, edge, nav, tk };
+  }
+  _rowById(c, id) { const all = c.joined.current.concat(c.joined.history, c.hosted.current, c.hosted.history, c.hosted.drafts); return all.filter(r => r.id === id)[0] || null; }
+}
+JU.mixin(Component);
+</script>
+</body>
+</html>
