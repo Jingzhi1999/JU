@@ -34,7 +34,7 @@ MODERN_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 OFFLINE = '--offline' in sys.argv
 LICENSE = 'SIL Open Font License 1.1'
 # the families the ten concepts share (fonts.md §2–3 + baseline-rituals.md §1); Noto Serif SC 900 is only ever 出 / 席 / 未
-DEFAULT_REQUIRED = 'Noto Sans SC:400,500,700;Space Mono:400,700;Archivo:400,500,700;Noto Serif SC:900@出席未;Libre Caslon Text:700'
+DEFAULT_REQUIRED = 'Noto Sans SC:400,500,700;Space Mono:400,700;Archivo:400,500,700;Noto Serif SC:900@出席未;Noto Serif SC:600;Libre Caslon Text:700'   # Serif 600 = C06 字排 的局名（全字集）
 VARIABLE = {}  # family -> list of raw specs that use a width (wdth) axis: embedded as subset variable woff2
 
 class Offline(Exception):
@@ -116,8 +116,17 @@ def parse_required(spec, fams):
         f = fams.setdefault(name, {'weights': set(), 'ital': False})
         f['weights'] |= set(int(w) for w in ws.split(',') if w.strip())
         if chars.strip():
-            own[name] = chars.strip()
+            # the subset belongs to the weights named in THIS part only (Noto Serif SC:900@出席未 must not shrink a 600 face)
+            for w in [int(w) for w in ws.split(',') if w.strip()]:
+                own[(name, w)] = chars.strip()
+            if not ws.strip():
+                own[name] = chars.strip()
     return own
+
+def own_for(own, name, weight, default):
+    try: w = int(weight)
+    except Exception: w = 400
+    return own.get((name, w), own.get(name, default))
 
 def css_for(name, weights, ital):
     fam = name.replace(' ', '+')
@@ -304,9 +313,10 @@ def main():
                 ttf = fetch(m.group(1))
             except Offline:
                 missing.append('%s %s %s: font file not in the cache (offline)' % (name, style, weight)); continue
-            data = subset_bytes(ttf, ftext)
+            wtext = own_for(own_text, name, weight, ftext)
+            data = subset_bytes(ttf, wtext)
             face_rule(name, style, weight, data)
-            report.append({'family': name, 'style': style, 'weight': weight, 'ttfKB': len(ttf) // 1024, 'woff2KB': len(data) // 1024, 'chars': len(ftext)})
+            report.append({'family': name, 'style': style, 'weight': weight, 'ttfKB': len(ttf) // 1024, 'woff2KB': len(data) // 1024, 'chars': len(wtext)})
     open(out, 'w', encoding='utf-8').write('\n'.join(rules))
     total = sum(r['woff2KB'] for r in report)
     families = {}
@@ -316,7 +326,7 @@ def main():
         if label not in fam['weights']: fam['weights'].append(label)
         fam['woff2KB'] += r['woff2KB']
     for name, fam in families.items():
-        fam['subset'] = ('仅「%s」' % own_text[name]) if name in own_text else ('%d 字（源文件出现的字符%s）' % (len(text), ' + GB2312 一级常用字' if common else ''))
+        fam['subset'] = ('仅「%s」' % own_text[name]) if name in own_text else ('900 仅「%s」，其余全字集' % own_text[(name, 900)]) if (name, 900) in own_text else ('%d 字（源文件出现的字符%s）' % (len(text), ' + GB2312 一级常用字' if common else ''))
     want = sorted(set(fams.keys()) | set(VARIABLE.keys()))
     side = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'chars': len(text), 'common': common, 'offline': OFFLINE, 'required': req_spec, 'wanted': want,
             'faces': len(report), 'totalKB': total, 'license': LICENSE, 'families': list(families.values()), 'missing': missing, 'faces_detail': report,
