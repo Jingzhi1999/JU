@@ -299,6 +299,12 @@ body{margin:0}
 .c01-app .res.grey{color:var(--sec)}
 .c01-app .res svg{flex:0 0 auto}
 @keyframes c01-settle{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+/* M7 on the spine: after 改时间 the old day number falls away struck through, the new one drops into the anchor */
+.c01-an.lead{position:relative}
+.c01-an.lead.is-moved .c01-an-big,.c01-an.lead.is-moved .c01-an-s{animation:c01-redate calc(640ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c01-an.lead.is-moved::before{content:attr(data-old);position:absolute;left:0;top:0;font:600 calc(22px * var(--tz,1))/1 Archivo,"Noto Sans SC",sans-serif;color:var(--sec);text-decoration:line-through;text-decoration-thickness:1.5px;animation:c01-unredate calc(640ms * var(--k)) cubic-bezier(.4,0,.2,1) both;pointer-events:none}
+@keyframes c01-redate{0%,22%{opacity:0;transform:translateY(-12px)}100%{opacity:1;transform:none}}
+@keyframes c01-unredate{0%{opacity:1;transform:none}100%{opacity:0;transform:translateY(18px)}}
 .c01-app .acts{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;align-items:center}
 .c01-app.is-done .n .av{background:rgba(14,155,118,.14);color:var(--green)}
 .c01-btn{font:inherit;font-size:calc(14px * var(--tz,1));font-weight:500;border:0;box-shadow:inset 0 0 0 1px rgba(20,22,31,.16);background:rgba(255,255,255,.55);border-radius:999px;padding:0 16px;height:36px;color:var(--ink);cursor:pointer;transition:transform .2s cubic-bezier(.2,1.4,.36,1)}
@@ -782,7 +788,7 @@ body{margin:0}
               <sc-if value="{{manage.ready}}"><div class="c01-mwrap">
                 <!-- head: the date anchor stays on the spine; the state of this event first, then its seats -->
                 <div class="c01-g c01-mhead" style="order:-1">
-                  <div class="c01-an lead {{sub.manageAn.cls}}"><div class="c01-an-big">{{sub.manageAn.big}}</div><div class="c01-an-s">{{sub.manageAn.wd}}</div><div class="c01-an-s">{{sub.manageAn.month}}</div></div>
+                  <div class="c01-an lead {{sub.manageAn.cls}}" data-old="{{sub.manageAn.old}}"><div class="c01-an-big">{{sub.manageAn.big}}</div><div class="c01-an-s">{{sub.manageAn.wd}}</div><div class="c01-an-s">{{sub.manageAn.month}}</div></div>
                   <div class="c01-ct">
                     <div class="c01-status {{manage.statusCls}}" aria-live="polite">{{c.manage.head.status}}</div>
                     <div class="c01-where">{{manage.headWhere}}</div>
@@ -1206,6 +1212,11 @@ class Component extends DCLogic {
       r.freshCls = this._freshAt[k] > now ? 'is-fresh' : '';
     });
   }
+  _anMoved(id, when) {
+    this._am = this._am || {}; const now = Date.now(); const iso = when && when.iso ? when.iso : ''; const prev = this._am[id];
+    if (!prev || prev.iso !== iso) this._am[id] = { iso: iso, old: prev && prev.iso && when ? String(+prev.day) : '', day: when ? when.day : '', until: prev && prev.iso ? now + 900 : 0 };
+    const a = this._am[id]; return a.until > now ? { cls: ' is-moved', old: a.old } : { cls: '', old: '' };
+  }
   _statusFresh(id, st) { this._hs = this._hs || {}; const now = Date.now(); const prev = this._hs[id]; if (!prev || prev.st !== st) this._hs[id] = { st: st, until: prev ? now + 900 : 0 }; return this._hs[id].until > now; }
   /* JuCardV2 props (the original template's own renderVals, fed from the event) */
   _cardVM(ev, x) {
@@ -1328,8 +1339,10 @@ class Component extends DCLogic {
       ticketStyle: this._pageStyle(tk.on ? tk.title : '', fs), ticketAn: this._anchor(tk.on && tk.row ? tk.row.when : null, { cls: tr + (tk.isReply ? ' re' : '') }),
       historyStyle: this._pageStyle(c.history.on ? c.history.title : '', fs), historyAn: this._anchor(c.history.on ? c.history.when : null, { cls: tr }),
       manageStyle: this._pageStyle(c.manage.on && !c.manage.missing ? c.manage.head.title : '', fs), manageAn: this._anchor(c.manage.on && !c.manage.missing ? c.manage.head.when : null, { cls: tr }),
+      manageMv: c.manage.on && !c.manage.missing ? this._anMoved(c.manage.eventId, c.manage.head.when) : { cls: '', old: '' },
       draftStyle: this._pageStyle(c.draft.on ? c.draft.title : '', fs), draftAn: dr ? { big: dr.big, bigCls: dr.bigCls, wd: dr.wd, month: dr.mo, cls: tr + ' edit' } : { big: '草稿', bigCls: 'zh', wd: '', month: '', cls: tr },
       draftFactCls: c.draft.on && c.draft.ready ? 't-soon' : 't-amber' };
+    sub.manageAn.cls += sub.manageMv.cls; sub.manageAn.old = sub.manageMv.old;
     /* manage decorations */
     const mg = { ready: c.manage.on && !c.manage.missing };
     if (mg.ready) {

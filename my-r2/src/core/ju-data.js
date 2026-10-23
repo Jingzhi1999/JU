@@ -45,6 +45,9 @@
   var fmt = {
     /* the character that tells people apart in an initials circle: 阿蒋 → 蒋, 小满 → 满, 老杨 → 杨 (a leading 阿 / 小 / 老 / 大 is a
        prefix, not a name), Latin names → first letter upper-cased, everything else → the first character */
+    // keepDot: glue the middle dot of 「A · B」 to the word before it (no-break space before, normal space after), so a wrapped title
+    // breaks as 「A ·」/「B」 and never starts a line with 「·」 (ticket titles use text-wrap: balance, which otherwise picks that space).
+    keepDot: function (s) { return String(s == null ? '' : s).replace(/ \u00B7 /g, '\u00A0\u00B7 '); },
     initial: function (name) { var n = String(name == null ? '' : name).trim(); if (!n) return '·'; if (/^[A-Za-z]/.test(n)) return n.charAt(0).toUpperCase(); var ch = Array.from(n); return ch.length >= 2 && /^[阿小老大]$/.test(ch[0]) ? ch[1] : ch[0]; },
     when: function (iso) {
       if (!iso) return { en: '', zh: '', md: '', time: '', wdEn: '', wdZh: '', wd1: '', date: '', long: '', meeting: '', month: '', day: '' };

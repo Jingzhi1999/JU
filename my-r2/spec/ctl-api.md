@@ -210,3 +210,9 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - **replace 离场页不再空帧**：`replace()`（阅读 → 票根、票根 ⇄ 改期新票等）时，离场的那一页沿用它最后一次渲染的视图模型（同一 eventId / draftId），带 `leaving:true`（C07 复核发现）。
 - **共享 CSS**：`v27/skins-r9.css` 删去 R9 页面外壳规则（`.review-*`、`.device`、`.page`、`.ju-phone{width:390px;height:844px}`）——它曾把所有方案的手机钉死在 390×844、覆盖面板尺寸预设；`rituals/ticket.css` 的局名加 `text-wrap:balance`（唯一偏离原件处：只改折行，不改字号字重间距）。
 - **widths.cjs**：仪式原件刻意超宽的画布（撕票 434 = 258 + 2×88、燃烧 pad 74、出票画布）不计入横向溢出。
+
+### 主负责人修正（2026-10-23 · C05 复核发现）
+- **票根局名不再以「·」起行**：`text-wrap:balance` 会挑「 · 」前的空格折行，得到「公园慢跑 3K / · 跑完喝咖啡」。控制器交给 `JURitual.fillTicket` 的 `ritual.title` 现在经 `JU.fmt.keepDot`（点前换成不换行空格、点后保留普通空格），折行变成「公园慢跑 3K · / 跑完喝咖啡」（C00 实测两行）。方案自己的替换可以删掉，留着也无害（已替换过的串不再匹配）。
+- **列表局名同样的问题**（长标题两行省略时「·」可能起行）：组装交付时会对视图模型里所有局名统一套 `keepDot`。各方案的脚本按文字找元素时请用空白归一的匹配（Playwright `text=` / `hasText` 已归一；自写 `textContent.includes('… · …')` 会因 U+00A0 失配）。
+- **widths.cjs 的最小字号**不再计入 V27 局卡原件的小字：自身或祖先的行内 `font-size` 用 `cqw` 的文字（局卡模板逐字复制，随 4:5 容器缩放，原件就带 5–8px 标注）不进 minFont；方案自己的文字仍须 ≥ 12px。
+- **出票时机（建议，非强制）**：无 GPU 的无头环境里 `JURitual.print` 会占住主线程约 3s；进入票根页时等导航停稳（`nav.phase === 'idle'`）再调用 `print`，入场动画才不被卡住（C05 做法）。出票前的空位要有东西：出纸口 / 票位轮廓先在，不能只剩一行「出票中」。
