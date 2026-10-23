@@ -282,6 +282,9 @@ body{margin:0}
 .c01-cg .c01-an{opacity:0;transform:translateY(10px);transition:opacity calc(500ms * var(--k)) ease calc(300ms * var(--k)),transform calc(600ms * var(--k)) cubic-bezier(.2,.9,.3,1) calc(300ms * var(--k))}
 .c01-cg:has([data-revealed="true"]) .c01-an,.c01-cg:has(.c01-openc) .c01-an{opacity:1;transform:none}
 .c01-openc{margin-top:14px;padding:4px 0;font-weight:500}
+/* 已加微信 rises with the contact layer (the original's 850ms beat); label and disabled state come from the view model */
+.c01-foot .c01-cact{opacity:0;transform:translateY(12px);pointer-events:none;transition:opacity calc(500ms * var(--k)) ease,transform calc(550ms * var(--k)) cubic-bezier(.2,.9,.3,1)}
+.c01-foot .c01-cact.on{opacity:1;transform:none;pointer-events:auto;transition-delay:calc(850ms * var(--k))}
 .c01-cg:has(.c01-openc) .ju-contact-wrap{display:none}
 .c01-cg .c01-an{padding-top:17px}
 .c01-copyfail{font-size:calc(13px * var(--tz,1));color:var(--red);margin:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
@@ -710,9 +713,9 @@ p.c01-copyfail span{color:var(--sec)}
                     <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                       <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                       <p class="ju-contact-note23"></p>
-                      <p class="ju-form-error"></p>
+                      <p class="ju-form-error" role="alert"></p>
                     </div>
-                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c01-copyfail"><button type="button" class="c01-btn" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button><span>或长按上方微信号</span></p></sc-if>
+                    <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c01-copyfail"><button type="button" class="c01-btn" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button></p></sc-if>
                     <sc-if value="{{ticket.showClosed}}"><p class="c01-err">{{c.ticket.contact.closedText}}</p></sc-if>
                     <sc-if value="{{c.ticket.contact.error}}"><p class="c01-err">{{c.ticket.contact.error}}</p></sc-if>
                     <sc-if value="{{c.ticket.result}}">
@@ -728,7 +731,7 @@ p.c01-copyfail span{color:var(--sec)}
           <div class="c01-foot">
             <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta" data-act="{{ticket.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button></sc-if>
             <sc-if value="{{c.ticket.reply}}"><sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="c01-link" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if></sc-if>
-            <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+            <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta c01-cact {{ticket.cactCls}}" data-act="contacted" aria-disabled="{{c.ticket.contact.ctaDisabled}}" onClick="{{ticket.markContacted}}"><span class="gloss"></span><span class="label">{{c.ticket.contact.ctaLabel}}</span></button></sc-if>
             <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
             <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
           </div>
@@ -1140,7 +1143,7 @@ class Component extends DCLogic {
     const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
     const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
     const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
-    const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+
     this._rit.contact = h; return h;
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
@@ -1474,7 +1477,7 @@ class Component extends DCLogic {
       toastOn: c.toast.on && !(ticketOn && tk.on && tk.contact.copyFail),
       home: { onScroll, meta, due, days, legend, footNote, empty, today, rpill },
       ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
-      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', canOpenContact: !!(tk.on && tk.state === 'torn' && !tk.contact.on && tk.contact.wx && !tk.result && !tk.unavailable && this._justTorn !== tk.printKey), replyLine: tk.on && tk.reply ? '原定 ' + tk.reply.oldWhen.wdZh + ' ' + tk.reply.oldWhen.md + ' ' + tk.reply.oldWhen.time + ' → 改为 ' + (tk.reply.newWhen.md === tk.reply.oldWhen.md ? '同日 ' : tk.reply.newWhen.wdZh + ' ' + tk.reply.newWhen.md + ' ') + tk.reply.newWhen.time : '', ashCls: tk.result && tk.result.burn ? (tk.result.burning ? 'is-burning' : 'is-ash') : '', cgBig: tk.result && tk.result.burn ? '票根' : '联系', cgSmall: tk.result && tk.result.burn ? (tk.result.burning ? '作废中' : '已作废') : (tk.on && tk.contact.closed ? '已关闭' : tk.on && tk.contact.done ? '已加微信' : '8 小时内'), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
+      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', cactCls: tk.on && tk.contact.on ? 'on' : '', markContacted: () => { const k = this._c && this._c.ticket; if (k && k.on && !k.contact.ctaDisabled) k.contact.markContacted(); }, canOpenContact: !!(tk.on && tk.state === 'torn' && !tk.contact.on && tk.contact.wx && !tk.result && !tk.unavailable && this._justTorn !== tk.printKey), replyLine: tk.on && tk.reply ? '原定 ' + tk.reply.oldWhen.wdZh + ' ' + tk.reply.oldWhen.md + ' ' + tk.reply.oldWhen.time + ' → 改为 ' + (tk.reply.newWhen.md === tk.reply.oldWhen.md ? '同日 ' : tk.reply.newWhen.wdZh + ' ' + tk.reply.newWhen.md + ' ') + tk.reply.newWhen.time : '', ashCls: tk.result && tk.result.burn ? (tk.result.burning ? 'is-burning' : 'is-ash') : '', cgBig: tk.result && tk.result.burn ? '票根' : '联系', cgSmall: tk.result && tk.result.burn ? (tk.result.burning ? '作废中' : '已作废') : (tk.on && tk.contact.closed ? '已关闭' : tk.on && tk.contact.done ? '已加微信' : '8 小时内'), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
       history: hist, manage: mg,
       shOn: shv.on, sh: shv.sh, sheet: shv.sheet
     };

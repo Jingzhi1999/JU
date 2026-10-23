@@ -748,6 +748,7 @@ textarea.c09-in{height:auto;min-height:110px;padding:10px 12px;resize:none;line-
 /* ---------------- C09 helpers (pure) ---------------- */
 var C09_AREAS = { Manhattan: ['曼哈顿', 'MANHATTAN', 1], Brooklyn: ['布鲁克林', 'BROOKLYN', 2], Queens: ['皇后区', 'QUEENS', 3], Upstate: ['上州', 'UPSTATE', 4] };
 function c09Area(pl) { var k = pl && pl.area || ''; if (!k) return { key: 'none', zh: '地点未定', en: '', o: 9 }; var a = C09_AREAS[k]; return a ? { key: k, zh: a[0], en: a[1], o: a[2] } : { key: k, zh: k, en: String(k).toUpperCase(), o: 8 }; }
+function c09T(t) { return JU.fmt && JU.fmt.keepDot ? JU.fmt.keepDot(t) : t; }   /* a wrapped title never starts a line with 「·」 */
 function c09When(w) { return w && w.md ? w.wdZh + ' ' + w.md + ' ' + w.time : '日期未定'; }
 function c09Day(ms) { var d = new Date(ms), dn = Math.floor(ms / 864e5), nn = Math.floor(JU.now() / 864e5); var p = function (n) { return (n < 10 ? '0' : '') + n; }; return (dn === nn ? '今天' : dn === nn + 1 ? '明天' : (d.getUTCMonth() + 1) + '月' + d.getUTCDate() + '日') + ' ' + p(d.getUTCHours()) + ':' + p(d.getUTCMinutes()); }
 var C09_NAV = { find: 'M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13zM15.5 15.5 20 20', create: 'M12 5v14M5 12h14', mine: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 12.2a2.2 2.2 0 1 0 0-4.4 2.2 2.2 0 0 0 0 4.4z', settings: 'M4 7h10M18 7h2M4 17h4M12 17h8M16 5v4M10 15v4' };
@@ -916,7 +917,7 @@ class Component extends DCLogic {
     else if (st === 'ended') note = r.attendanceText || '';
     else { const parts = String(r.need || '').split(' · '); note = parts.filter(x => x && x !== r.label)[0] || ''; }
     const self = this;
-    return { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood || '地点未定', when: c09When(r.when), who: '局主 ' + r.hostName, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
+    return { id: r.id, originKey: r.originKey, title: c09T(r.title), hood: r.place.hood || '地点未定', when: c09When(r.when), who: '局主 ' + r.hostName, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
       cls: (r.landing ? 'is-landing ' : '') + (r.id === leadId ? 'is-lead' : ''), aria: r.title + '，' + r.place.hood + '，' + status, rank: C09_JR[r.group] == null ? 5 : C09_JR[r.group], t: r.sortTime || 0, area: c09Area(r.place),
       tap: function (ev) { self._noteBand(ev, r.id); r.open(ev); }, kd: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); self._noteBand(ev, r.id); r.open(ev); } } };
   }
@@ -930,13 +931,13 @@ class Component extends DCLogic {
     else if (sec === 'ended') { status = '已散场'; note = r.label; if (r.unrecorded && r.cta) { action = r.act; actLabel = r.cta; } }
     else { status = '已取消'; note = '票根作废 · 联系已关闭'; }
     const self = this;
-    return { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood || '地点未定', when: c09When(r.when), who: r.seatText, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
+    return { id: r.id, originKey: r.originKey, title: c09T(r.title), hood: r.place.hood || '地点未定', when: c09When(r.when), who: r.seatText, status, note, tone, action: action ? function (ev) { self._noteBand(ev, r.id); action(ev); } : null, actKey: 'cta', actLabel,
       cls: (r.landing ? 'is-landing ' : '') + (r.id === leadId ? 'is-lead' : ''), aria: r.title + '，' + r.place.hood + '，' + status, rank: C09_HR[sec] == null ? 6 : C09_HR[sec], t: r.sortTime || 0, area: c09Area(r.place),
       tap: function (ev) { self._noteBand(ev, r.id); r.open(ev); }, kd: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); self._noteBand(ev, r.id); r.open(ev); } } };
   }
   _draftRow(d) {
     const self = this; const pl = d.place;
-    return { id: d.id, originKey: d.originKey, title: d.title, hood: d.placeText, when: d.whenText === '日期未定' ? '日期未定' : c09When(d.when), who: d.capacity + ' 人', status: d.ready ? '可以发布' : d.missingText, note: d.agoText + (d.sourceText ? ' · ' + d.sourceText : ''), tone: d.ready ? 't-soon' : 't-wait', action: null, draft: true, del: d.del,
+    return { id: d.id, originKey: d.originKey, title: c09T(d.title), hood: d.placeText, when: d.whenText === '日期未定' ? '日期未定' : c09When(d.when), who: d.capacity + ' 人', status: d.ready ? '可以发布' : d.missingText, note: d.agoText + (d.sourceText ? ' · ' + d.sourceText : ''), tone: d.ready ? 't-soon' : 't-wait', action: null, draft: true, del: d.del,
       cls: (d.cls || '') + (d.landing ? ' is-landing' : ''), aria: d.title + '，草稿', rank: 0, t: 0, area: c09Area(pl), tap: function (ev) { self._noteBand(ev, d.id); d.open(ev); }, kd: function (ev) { if (ev.key === 'Enter') { self._noteBand(ev, d.id); d.open(ev); } } };
   }
   _areas(rows, sortRows, liftArea) {
@@ -958,7 +959,7 @@ class Component extends DCLogic {
       countText = rows.length + (sec === 'current' ? ' 场' : ' 场结束');
       if (leadRow) {
         const r = leadRow; const act = r.group === 'act';
-        lead = { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: '局主 ' + r.hostName,
+        lead = { id: r.id, originKey: r.originKey, title: c09T(r.title), hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: '局主 ' + r.hostName,
           label: (act ? '先回应这一件' : '下一场') + ' · ' + (r.deadline && (r.stage === 'invited' || r.stage === 'invited_queue') ? c09Day(r.deadline) + ' 截止' : r.label),
           left: r.left && r.left.on ? r.left.text : '', leftTone: r.left && (r.left.tone === 'red' || r.left.tone === 'expired') ? 'red' : r.left && r.left.tone === 'amber' ? 'amber' : '', ratio: r.left && r.left.on ? r.left.ratio.toFixed(4) : '1',
           sub: r.left && r.left.on ? '' : r.need, cta: r.cta || '查看', act: r.act, sec: r.secondary, secLabel: r.secondaryLabel, secKey: r.secondaryKey, noSec: !r.secondary,
@@ -974,7 +975,7 @@ class Component extends DCLogic {
         countText = rows.length + (sec === 'current' ? ' 场' : ' 场结束');
         if (leadRow) {
           const r = leadRow;
-          lead = { id: r.id, originKey: r.originKey, title: r.title, hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: r.seatText, label: '先处理这一件 · ' + r.label, left: '', leftTone: '', ratio: '1',
+          lead = { id: r.id, originKey: r.originKey, title: c09T(r.title), hood: r.place.hood, areaZh: c09Area(r.place).zh, when: c09When(r.when), who: r.seatText, label: '先处理这一件 · ' + r.label, left: '', leftTone: '', ratio: '1',
             sub: r.seatMore ? r.seatMore + ' · ' + r.formedLine : r.formedLine, cta: r.cta || '管理这局', act: r.act, sec: null, noSec: true,
             open: function (ev) { const t = ev.target; if (t && t.closest && t.closest('[data-act]')) return; self._band = null; self._lift = null; r.open(ev); } };
         }
@@ -1007,7 +1008,7 @@ class Component extends DCLogic {
     const m = c.manage; v.mg = { ready: m.on && !m.missing, area: { zh: '', en: '', countText: '' } };
     if (m.on && !m.missing) {
       const f = this._fresh && this._fresh.event === m.eventId ? this._fresh : {}; const now = Date.now();
-      Object.assign(v.mg, this._deep({ place: m.head.place }, home.areas), { title: m.head.title, meta: m.head.meta, seatsOn: !m.head.progress.hidden && !m.head.ended,
+      Object.assign(v.mg, this._deep({ place: m.head.place }, home.areas), { title: c09T(m.head.title), meta: m.head.meta, seatsOn: !m.head.progress.hidden && !m.head.ended,
         seats: (m.head.progress.seats || []).map((x, i) => ({ cls: x.kind + (x.attendance ? ' att-' + x.attendance : '') + (f.slot === i && f.head > now ? ' is-fresh' : '') })),
         freshHead: f.head > now ? 'is-fresh' : '', freshHeadC: f.head > now ? 'is-fresh' : '', freshApps: f.apps > now ? 'is-fresh' : '',
         appsCount: m.apps.count ? m.apps.count + ' 份待审' + (m.apps.handled ? ' · 已处理 ' + m.apps.handled : '') : (m.apps.handled ? '已处理 ' + m.apps.handled : '没有待审'),

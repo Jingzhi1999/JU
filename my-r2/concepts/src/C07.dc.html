@@ -282,6 +282,9 @@ body{margin:0}
 .c07-tray .ju-contact-copy{color:#AEBCFF}
 .c07-tray .ju-contact-note23{color:var(--tw3)}
 .c07-tray .ju-form-error{color:#FF8DA0}
+.c07-errrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.c07-errrow .ju-form-error:empty{display:none}
+.c07-errrow .c07-link{padding:4px 0}
 .c07-tray .ju-tear-error24{text-align:center}
 .c07-ash{height:40px;margin:10px auto 0;width:258px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.6}
 .c07-t08{position:relative;height:520px;margin:8px -22px 0}
@@ -817,9 +820,8 @@ body{margin:0}
                     <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                       <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{tv.contact.hostName}}</span><span class="ju-contact-account">{{tv.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                       <p class="ju-contact-note23"></p>
-                      <p class="ju-form-error"></p>
+                      <div class="c07-errrow"><p class="ju-form-error" role="alert"></p><sc-if value="{{tv.contact.copyFail}}"><button type="button" class="c07-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></sc-if></div>
                     </div>
-                    <sc-if value="{{tv.contact.copyFail}}"><p class="c07-err c07-copyfail"><button type="button" class="c07-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button></p></sc-if>
                     <sc-if value="{{tv.contact.closed}}"><p class="c07-err">{{tv.contact.closedText}}</p></sc-if>
                     <sc-if value="{{tv.contact.error}}"><p class="c07-err">{{tv.contact.error}}</p></sc-if>
                     <sc-if value="{{tv.result}}"><div class="c07-result" style="text-align:center"><sc-if value="{{tv.result.burning}}"><p class="c07-hint">票根正在作废…</p></sc-if><sc-if value="{{ticket.ashes}}"><div class="c07-ash" aria-hidden="true"></div></sc-if><b>{{tv.result.title}}</b><p>{{tv.result.body}}</p></div></sc-if>
@@ -831,7 +833,7 @@ body{margin:0}
               <div class="c07-sfoot">
                 <sc-if value="{{tv.tear.canTear}}"><button type="button" class="c07-cta ju-v27-cta ju-print-cta-in" data-act="{{ticket.tearAct}}" onClick="{{tv.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button></sc-if>
                 <sc-if value="{{tv.reply}}"><sc-if value="{{tv.tear.canTear}}"><button type="button" class="c07-link" data-act="decline" onClick="{{tv.reply.decline}}">去不了了</button></sc-if></sc-if>
-                <sc-if value="{{ticket.contactAction}}"><button type="button" class="c07-cta ju-v27-cta ju-contact-action {{ticket.actionCls}}" data-contact-action data-act="contacted" aria-disabled="false" inert="{{ticket.actionInert}}"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+                <sc-if value="{{ticket.contactAction}}"><button type="button" class="c07-cta ju-v27-cta ju-contact-action {{ticket.actionCls}}" data-contact-action data-act="contacted" aria-disabled="{{ticket.ctaDisabled}}" inert="{{ticket.actionInert}}"><span class="gloss"></span><span class="label">{{ticket.ctaLabel}}</span><span data-slot="actionLabel" hidden></span></button></sc-if>
                 <sc-if value="{{tv.result}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" onClick="{{tv.result.act}}"><span class="gloss"></span><span class="label">{{tv.result.label}}</span></button></sc-if>
                 <sc-if value="{{tv.unavailable}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" onClick="{{tv.unavailable.act}}"><span class="gloss"></span><span class="label">{{tv.unavailable.label}}</span></button></sc-if>
                 <sc-if value="{{ticket.showHome}}"><button type="button" class="c07-link" data-act="home" onClick="{{goHome}}">回到列表</button></sc-if>
@@ -966,7 +968,7 @@ class Component extends DCLogic {
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
   componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
-    { const root = this.rootRef.current, cf = root && root.querySelector('.c07-copyfail'); if (cf && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
+    { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
     if (ps && (ps.role !== this.state.role || ps.section !== this.state.section)) {
       /* a role / section seen for the first time starts at its top (the list scroller is shared: without a memo it would keep the
@@ -1330,7 +1332,8 @@ class Component extends DCLogic {
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result,
         /* the contact action exists from the start (the shared contact handle wires it once), but it is unreachable until the stub is
            torn and the contact layer opens — before that a stray tap could mark 已加微信 on an untorn ticket (the engine has no guard) */
-        actionCls: tk.on && tk.contact && tk.contact.on ? 'is-on' : '', actionInert: !(tk.on && tk.contact && tk.contact.on), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), showHome: tk.on && nav.depth > 2 && !tk.result, retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按 Enter' : '') : '' },
+        actionCls: tk.on && tk.contact && tk.contact.on ? 'is-on' : '', actionInert: !(tk.on && tk.contact && tk.contact.on),
+        ctaLabel: tk.on && tk.contact ? (tk.contact.ctaLabel || '已加微信') : '已加微信', ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ashes: !!(tk.result && tk.result.burn && !tk.result.burning), showHome: tk.on && nav.depth > 2 && !tk.result, retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按 Enter' : '') : '' },
       draft: (() => { const d = dv, miss = (d.on && d.draft && d.draft.missing) || [], w = d.on ? d.when : null, has = (k) => miss.indexOf(k) >= 0;
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
           locText: has('地点') || !d.placeText ? '待定' : d.placeText, locCls: has('地点') || !d.placeText ? 'c07-gap' : '', titleCls: d.untitled ? 'c07-gap' : '' }; })(),
