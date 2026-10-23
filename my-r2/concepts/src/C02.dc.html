@@ -403,6 +403,12 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
 .c02-lbl{display:block;margin-top:12px;font-size:calc(13px * var(--tz,1));color:var(--cink3)}
 .c02-sacts{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
 .c02-sacts .ju-v27-cta{flex:1 1 auto}
+.c02-sacts.keep{flex-direction:column;align-items:center;gap:10px;margin-top:20px}
+.c02-sacts.keep .ju-v27-cta{flex:none}
+.app.c02 .c02-dgr{border:0;font-family:inherit;flex:none}
+.c02-dgr[aria-disabled="true"]{opacity:.55;cursor:default}
+.c02-sacts.even .c02-btn{flex:1 1 0;height:48px}
+.c02-btn.glass{background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(20,22,31,.1);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);color:var(--cink)}
 .c02-toast{position:absolute;left:50%;top:calc(var(--sat,0px) + 28px);z-index:60;transform:translateX(-50%);width:max-content;max-width:calc(100% - 150px);min-height:36px;padding:8px 16px;border-radius:18px;background:rgba(28,24,23,.88);color:#fff;font-size:calc(14px * var(--tz,1));line-height:1.45;text-align:center;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);animation:c02-toast calc(280ms * var(--k)) cubic-bezier(.2,.9,.3,1) both}
 @keyframes c02-toast{0%{opacity:0;transform:translate(-50%,-10px) scale(.96)}100%{opacity:1;transform:translate(-50%,0)}}
 .c02-toast.k-error{background:#7f1d2e}
@@ -863,10 +869,16 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
               <sc-if value="{{sh.recordOpen}}"><label class="c02-lbl">发生了什么（{{S.count}}/{{S.max}}）<textarea class="c02-in-f" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{S.onInput}}">{{S.text}}</textarea></label></sc-if>
             </sc-if>
             <sc-if value="{{S.error}}"><p class="c02-msg err">{{S.error}}</p></sc-if>
-            <div class="c02-sacts">
-              <button type="button" class="c02-btn ghost" data-act="close" onClick="{{S.cancel}}">{{S.cancelLabel}}</button>
+            <!-- V27 roles: leaving a seat / an event keeps the blue CTA for 「留下」 and draws the leave as the V27 danger pill (stacked);
+                 撤回报名 / 退出候补 pair a glass 「再想想」 with the ink pill; host sheets keep a quiet pair -->
+            <sc-if value="{{sh.keep}}"><div class="c02-sacts keep">
+              <button type="button" class="ju-v27-cta c02-cta" data-act="close" onClick="{{S.cancel}}"><span class="gloss"></span><span class="label">{{S.cancelLabel}}</span></button>
+              <button type="button" class="ju-v27-danger c02-dgr" data-act="ok" aria-disabled="{{sh.okDisabled}}" onClick="{{S.ok}}">{{S.okLabel}}</button>
+            </div></sc-if>
+            <sc-if value="{{sh.pair}}"><div class="c02-sacts {{sh.pairCls}}">
+              <button type="button" class="c02-btn {{sh.cancelCls}}" data-act="close" onClick="{{S.cancel}}">{{S.cancelLabel}}</button>
               <sc-if value="{{sh.showOk}}"><button type="button" class="c02-btn {{sh.okCls}}" data-act="ok" aria-disabled="{{sh.okDisabled}}" onClick="{{S.ok}}">{{S.okLabel}}</button></sc-if>
-            </div>
+            </div></sc-if>
           </div>
         </div>
       </sc-if>
@@ -1250,7 +1262,7 @@ class Component extends DCLogic {
     /* 删除草稿 on the summary page: delete, then back to the list where the undo bar waits (ctl's c.draft.del is the row's del — no back) */
     if (c.draft.on) { var cap = Math.max(2, +c.draft.capacity || 4), did0 = c.draft.draftId; df = Object.assign(geo(c.draft.title || '草稿'), { del: function (ev) { if (ev && ev.stopPropagation) ev.stopPropagation(); self.deleteDraft(did0); self.back(); }, seats: Array.apply(null, Array(cap - 1)).map(function (x, i) { return { i: i }; }), seatLine: ' · ' + (cap - 1) + ' 个空位' }); }
     /* sheets: the controller drops a closed sheet at once; C02 keeps its last frame 220ms so it sinks back (M6 close) */
-    var shOf = function (S) { var o = { hasAffected: S.affected && S.affected.length > 0, newOrPlaceholder: S.fields ? (S.fields.newText || S.fields.placeholder) : '', isRecord: S.kind === 'record', recordOpen: S.kind === 'record' && !S.done, showOk: S.kind !== 'card' && S.kind !== 'contact' && !(S.kind === 'record' && S.done), okCls: S.danger ? 'danger' : 'ink', okDisabled: !S.canOk, avs: [], more: '', hasAvs: false };
+    var shOf = function (S) { var conf = S.kind === 'confirm', ink = conf && S.okTone === 'ink'; var o = { keep: conf && !!S.keepPrimary, pair: !(conf && S.keepPrimary), pairCls: ink ? 'even' : '', cancelCls: ink ? 'glass' : 'ghost', hasAffected: S.affected && S.affected.length > 0, newOrPlaceholder: S.fields ? (S.fields.newText || S.fields.placeholder) : '', isRecord: S.kind === 'record', recordOpen: S.kind === 'record' && !S.done, showOk: S.kind !== 'card' && S.kind !== 'contact' && !(S.kind === 'record' && S.done), okCls: ink ? 'ink' : S.danger ? 'danger' : 'ink', okDisabled: !S.canOk, avs: [], more: '', hasAvs: false };
       var row = S.eventId ? (c.joined.current.concat(c.joined.history).filter(function (r) { return r.id === S.eventId; })[0] || null) : null; var hrow = !row && S.eventId ? (c.hosted.current.concat(c.hosted.history).filter(function (r) { return r.id === S.eventId; })[0] || null) : null;
       if ((row || hrow) && S.identity) { var d = row ? self._jDeco(row) : self._hDeco(hrow); o.avs = d.avs; o.more = d.more; o.hasAvs = d.avs.length > 0; }
       if (S.card) { o.cardTitle = C2.kd(S.card.title); var ce = s.data && s.data.events ? s.data.events[S.eventId] : null; var crow = row || hrow; var ev0 = (crow && crow.event) || ce || { id: S.eventId, pack: S.card.pack, title: S.card.title, en: S.card.en, host: { name: S.card.host } }; o.cardKey = cardKey('s', Object.assign({}, ev0, { pack: S.card.pack, title: S.card.title, en: S.card.en }), S.card.when, S.card.place, crow && crow.counts ? crow.counts.available : 0, S.card.statusLabel); }

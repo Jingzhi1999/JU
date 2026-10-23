@@ -473,6 +473,11 @@ body{margin:0}
 .c03-fields label,.c03-ta{display:flex;flex-direction:column;font-size:calc(13px * var(--tz,1));color:var(--c03-ink2)}
 .c03-ta span{display:flex;justify-content:space-between}.c03-ta i{font-style:normal;font-variant-numeric:tabular-nums}.c03-ta i.over{color:var(--c03-red)}
 .c03-sacts{display:flex;flex-direction:column;align-items:center;gap:6px;margin-top:14px}
+.c03-sacts.is-keep{gap:9px}.c03-sacts.is-row{flex-direction:row;gap:10px}
+.c03-glass,.c03-ink{flex:1;min-height:48px;border:0;border-radius:999px;padding:0 15px;font-size:calc(13.5px * var(--tz,1));cursor:pointer}
+.c03-glass{background:rgba(255,255,255,.72);box-shadow:inset 0 0 0 1px rgba(20,22,31,.1);color:var(--c03-ink);font-weight:500;-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px)}
+.c03-ink{background:#14161F;color:#F8F9FF;font-weight:600;box-shadow:0 16px 32px -10px rgba(20,22,31,.6)}
+.c03-glass:active,.c03-ink:active{transform:scale(.97)}.c03-ink:disabled{opacity:.6;cursor:default}
 .c03-close{border:0;background:none;min-height:44px;padding:8px 18px;border-radius:999px;font-size:calc(14px * var(--tz,1));color:var(--c03-ink2);cursor:pointer}
 .c03-close.solo{min-width:min(100%,280px);height:48px;background:#fff;color:var(--c03-ink);box-shadow:inset 0 0 0 1px rgba(20,22,31,.14)}
 .c03-sheet :focus-visible,.c03-pg :focus-visible,.c03-win :focus-visible{outline:2px solid #4A5AD6;outline-offset:2px}
@@ -1131,9 +1136,13 @@ body{margin:0}
               <sc-if value="{{sheet.recordOpen}}"><label class="c03-ta"><span>发生了什么 <i class="{{sheet.countCls}}">{{sv.count}}/{{sv.max}}</i></span><textarea class="c03-in" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{sv.onInput}}">{{sv.text}}</textarea></label><p class="c03-help">谁：局主 / 同局成员 / 其他 · 截图 ≤ 6（本机不上传）</p></sc-if>
             </sc-if>
             <sc-if value="{{sv.error}}"><p class="c03-err">{{sv.error}}</p></sc-if>
-            <div class="c03-sacts">
-              <sc-if value="{{sheet.showOk}}"><sc-if value="{{sheet.okDanger}}"><button type="button" class="ju-v27-danger" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{sv.ok}}">{{sheet.okLabel}}</button></sc-if><sc-if value="{{sheet.okBlue}}"><button type="button" class="ju-v27-cta" data-act="ok" aria-disabled="{{sheet.okDisabled}}" disabled="{{sheet.okDisabled}}" onClick="{{sv.ok}}"><span class="gloss"></span><span class="label">{{sheet.okLabel}}</span></button></sc-if></sc-if>
-              <button type="button" class="c03-close {{sheet.closeCls}}" data-act="close" onClick="{{sv.cancel}}">{{sv.cancelLabel}}</button>
+            <!-- 动作按 V27 的职责：放弃预留 / 退出 / 拒绝改期 = 「留下」走蓝色主 CTA、确认走危险构造；撤回 / 退出候补 = 玻璃「再想想」+ 墨色胶囊，无蓝 CTA -->
+            <div class="c03-sacts {{sheet.actsCls}}">
+              <sc-if value="{{sheet.keepPrimary}}"><button type="button" class="ju-v27-cta" data-act="close" onClick="{{sv.cancel}}"><span class="gloss"></span><span class="label">{{sv.cancelLabel}}</span></button></sc-if>
+              <sc-if value="{{sheet.okInk}}"><button type="button" class="c03-glass" data-act="close" onClick="{{sv.cancel}}">{{sv.cancelLabel}}</button><button type="button" class="c03-ink" data-act="ok" aria-disabled="{{sheet.okDisabled}}" disabled="{{sheet.okDisabled}}" onClick="{{sv.ok}}">{{sheet.okLabel}}</button></sc-if>
+              <sc-if value="{{sheet.okDanger}}"><button type="button" class="ju-v27-danger" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{sv.ok}}">{{sheet.okLabel}}</button></sc-if>
+              <sc-if value="{{sheet.okBlue}}"><button type="button" class="ju-v27-cta" data-act="ok" aria-disabled="{{sheet.okDisabled}}" disabled="{{sheet.okDisabled}}" onClick="{{sv.ok}}"><span class="gloss"></span><span class="label">{{sheet.okLabel}}</span></button></sc-if>
+              <sc-if value="{{sheet.closeText}}"><button type="button" class="c03-close {{sheet.closeCls}}" data-act="close" data-autofocus="{{sheet.focusClose}}" onClick="{{sv.cancel}}">{{sv.cancelLabel}}</button></sc-if>
             </div>
           </div>
         </div>
@@ -1551,7 +1560,7 @@ class Component extends DCLogic {
       history: { recordCount: c.history.on ? c.history.records.length : 0, memberCount: c.history.on && c.history.members ? c.history.members.length : 0, showSum: c.history.on && !c.history.hasStamp, toneCls: c.history.on && (c.history.burnOnce || (c.history.event && c.history.event.status === 'cancelled')) ? 't-red' : '', voidNote: hr && !c.history.burn.play ? '这张票根已作废，只留下这条记录' : '', showStage: !!(hr && c.history.burn.play), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
       manage: { ready: mReady, progressOn: mReady && !c.manage.head.progress.hidden, seatsOn: mReady && !c.manage.head.ended, seats: mSeats, appsDone: mReady ? (c.manage.apps.handled ? '本次处理了 ' + c.manage.apps.handled + ' 份 · ' : '') + c.manage.head.progress.text : '' },
       sv: sv,
-      sheet: { closing: closing, closingCls: closing ? 'is-closing' : '', focusRef: closing ? this._noRef : sh.focusRef, hasAffected: !!(sv.affected && sv.affected.length), newOrPlaceholder: sv.fields ? (sv.fields.newText || sv.fields.placeholder) : '', newCls: sv.fields && sv.fields.newText ? '' : 'ph', isRecord: svKind === 'record', recordOpen: svKind === 'record' && !sv.done, showOk: !svSolo, okDanger: !!sv.danger, okBlue: !sv.danger, okDisabled: !sv.canOk, okLabel: sv.okLabel || '', countCls: sv.max && sv.count > sv.max ? 'over' : '', closeCls: svSolo ? 'solo' : '' }
+      sheet: { closing: closing, closingCls: closing ? 'is-closing' : '', focusRef: closing ? this._noRef : sh.focusRef, keepPrimary: !!sv.keepPrimary && !svSolo, okInk: !svSolo && sv.okTone === 'ink' && svKind === 'confirm', actsCls: sv.keepPrimary && !svSolo ? 'is-keep' : (!svSolo && sv.okTone === 'ink' && svKind === 'confirm' ? 'is-row' : ''), closeText: !(sv.keepPrimary && !svSolo) && !(!svSolo && sv.okTone === 'ink' && svKind === 'confirm'), focusClose: !!sv.danger && !sv.keepPrimary, hasAffected: !!(sv.affected && sv.affected.length), newOrPlaceholder: sv.fields ? (sv.fields.newText || sv.fields.placeholder) : '', newCls: sv.fields && sv.fields.newText ? '' : 'ph', isRecord: svKind === 'record', recordOpen: svKind === 'record' && !sv.done, showOk: !svSolo, okDanger: !svSolo && !!sv.danger && !(sv.okTone === 'ink' && svKind === 'confirm'), okBlue: !svSolo && !sv.danger && !(sv.okTone === 'ink' && svKind === 'confirm'), okDisabled: !sv.canOk, okLabel: sv.okLabel || '', countCls: sv.max && sv.count > sv.max ? 'over' : '', closeCls: svSolo ? 'solo' : '' }
     };
   }
 }
