@@ -1028,9 +1028,15 @@ class Component extends DCLogic {
   /* the free span of the collapsed home tool row: from the role switch (spine head) to the section tabs */
   _homeTc() {
     const c = this._c, r = this.state.review || {}; if (!c || c.nav.cur !== 'home' || c.nav.phase !== 'idle') return;
-    const key = [r.pw, r.fit ? 'fit' : '', r.zoom ? 1 : 0, c.role, c.section, (c.sectionTabs || []).map(t => t.countText).join(',')].join('|'); if (this._tcKey === key) return;
-    const root = this.rootRef.current; const hd = root && root.querySelector('[data-surface="home"] .c01-hd'); const secs = hd && hd.querySelector(':scope > .c01-secs'); if (!secs) return; this._tcKey = key;
-    const a = 12 + 4 + 44 + 10, b = secs.offsetLeft - 10; const tc = Math.round((a + b) / 2) + 'px', tw = Math.max(80, b - a) + 'px';
+    const root = this.rootRef.current; const hd = root && root.querySelector('[data-surface="home"] .c01-hd'); const secs = hd && hd.querySelector(':scope > .c01-secs'); if (!secs) return;
+    /* only a laid-out header is measured (a jump / remount can render it before layout: offsetLeft 0 put the title on the role pill);
+       otherwise try again shortly. The value is kept per width / zoom / tabs and re-measured once the web fonts have loaded */
+    const W = hd.clientWidth, Lx = secs.offsetLeft, Wt = secs.offsetWidth;
+    if (!W || !Wt || Lx <= 80 || Lx + Wt > W + 1) { if ((this._tcTry = (this._tcTry || 0) + 1) <= 20) this.hold(150, () => this._homeTc()); return; }
+    this._tcTry = 0; const fontsOk = typeof document === 'undefined' || !document.fonts || document.fonts.status === 'loaded';
+    const key = [W, r.zoom ? 1 : 0, c.role, c.section, (c.sectionTabs || []).map(t => t.countText).join(','), fontsOk ? 1 : 0, Lx].join('|'); if (this._tcKey === key) return;
+    this._tcKey = fontsOk ? key : null; if (!fontsOk && document.fonts && !this._tcFonts) { this._tcFonts = true; document.fonts.ready.then(() => { this._tcKey = null; this._homeTc(); }); }
+    const a = 12 + 4 + 44 + 10, b = Lx - 10; const tc = Math.round((a + b) / 2) + 'px', tw = Math.max(80, b - a) + 'px';
     if (hd.style.getPropertyValue('--tcx') !== tc) hd.style.setProperty('--tcx', tc); if (hd.style.getPropertyValue('--tcw') !== tw) hd.style.setProperty('--tcw', tw);
   }
   /* a failed copy's retry line must not hide under the footer CTA: bring it into view once when it appears */
