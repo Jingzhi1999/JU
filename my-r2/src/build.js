@@ -79,6 +79,18 @@ function sharedFiles(ext) {
   return files.filter(f => f.endsWith(ext));
 }
 const sharedCssFiles = sharedFiles('.css'), sharedJsFiles = sharedFiles('.js').filter(f => parses(read(f), f)), sharedSvgFiles = sharedFiles('.svg');
+/* rituals/bundle.json lists original engine scripts that live under rituals/assets/original/ (skipped by the walk above) but must
+   ship inside the single-file deliverable: the 08 散场 stamp engine (JuFilm / JuEnvelope / JuStamp / JuTickets). Entries marked
+   "verbatim" are inserted, in manifest order, just before rituals/stamp.js, so the runtime never fetches assets/original/*.js. */
+(function addRitualOriginals() {
+  const man = path.join(SHARED_DIR, 'rituals', 'bundle.json');
+  if (!exists(man)) { warn('rituals/bundle.json missing — the stamp engine originals are not bundled (runtime fetch fallback)'); return; }
+  let list = [];
+  try { list = (JSON.parse(read(man)).scripts || []).filter(e => e.verbatim).map(e => path.join(SHARED_DIR, 'rituals', e.path)); } catch (e) { warn('rituals/bundle.json unreadable: ' + e.message); return; }
+  const ok = list.filter(f => { if (!exists(f)) { warn('bundle.json names a missing file: ' + f); return false; } return parses(read(f), f); });
+  const at = sharedJsFiles.findIndex(f => /rituals[\\/]stamp\.js$/.test(f));
+  sharedJsFiles.splice(at < 0 ? sharedJsFiles.length : at, 0, ...ok);
+})();
 const rel = (f) => path.relative(ROOT, abs(f));
 /* Shared JS is injected ONCE: in the offline deliverable (and a JU_STANDALONE private build) it lives in the shell as one
    window-level bundle (three.js, the skins, the ritual engines); a concept's /* @core *​/ then holds only ju-fx + ju-data +
