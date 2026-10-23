@@ -57,11 +57,16 @@ body{margin:0}
 .c02-pg.is-under .c02-pgbg,.c02-pg.is-leaving .c02-pgbg,.c02-pg.is-top.ph-exit .c02-pgbg{visibility:hidden}
 .c02-pg.is-under.ph-exit .c02-pgbg{visibility:visible}
 /* the page you leave: its content is gone within 90ms */
-.c02-pg.is-under.dir-fwd.ph-enter>*,.c02-pg.is-under.dir-fwd.ph-in>*,.c02-pg.is-top.ph-exit>*,.c02-pg.is-leaving>*{animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
+.c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>:not(.c02-hd),.c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>.c02-hd>:not(.c02-hdv){animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
+/* the header glass fades from where it was (hc) on its own — an ancestor's opacity would cut its backdrop blur and show the rows under it */
+.c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>.c02-hd>.c02-hdv{animation:c02-hdvout calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
+@keyframes c02-hdvout{0%{opacity:var(--hc,0)}100%{opacity:0}}
+@keyframes c02-hdvin{0%{opacity:0}100%{opacity:var(--hc,0)}}
 .c02-pg.is-under.dir-fwd.ph-enter,.c02-pg.is-under.dir-fwd.ph-in,.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{pointer-events:none}
 .c02-pg.is-under.ph-idle,.c02-pg.is-under.dir-swap{opacity:0;visibility:hidden;pointer-events:none}
 /* the page you arrive at: its content from 62ms, as the old content drops below .15; its sheet is the morph until it lands */
-.c02-deep.is-top.dir-fwd.ph-enter>:not(.c02-pgbg),.c02-deep.is-top.dir-fwd.ph-in>:not(.c02-pgbg),.c02-deep.is-top.dir-swap.ph-enter>:not(.c02-pgbg),.c02-deep.is-top.dir-swap.ph-in>:not(.c02-pgbg),.c02-pg.is-under.ph-exit>:not(.c02-pgbg){animation:c02-op calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(62ms * var(--k)) both}
+:is(.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit)>:not(.c02-pgbg):not(.c02-hd),:is(.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit)>.c02-hd>:not(.c02-hdv){animation:c02-op calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(62ms * var(--k)) both}
+:is(.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit)>.c02-hd>.c02-hdv{animation:c02-hdvin calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(62ms * var(--k)) both}
 .c02-pg.c02-skip{animation:none!important;opacity:0!important;visibility:hidden}
 .c02-pg.c02-held{pointer-events:none}
 .c02-deep.is-top.dir-fwd.ph-enter .c02-in,.c02-deep.is-top.dir-fwd.ph-in .c02-in,.c02-deep.is-top.dir-swap.ph-enter .c02-in,.c02-deep.is-top.dir-swap.ph-in .c02-in,.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(190ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc((var(--d,0ms) + 62ms) * var(--k)) both}
@@ -1014,7 +1019,8 @@ class Component extends DCLogic {
     var root = this.rootRef && this.rootRef.current; this._land(); this._flip = null; if (!root || this.isRM()) return;
     var top0 = root.querySelector('.c02-pg.is-top'), k = this._kk(), self = this;
     /* interrupted mid-arrival: what had arrived leaves from the opacity it reached (the CSS fade-out would restart it at 1) */
-    if (top0) Array.prototype.forEach.call(top0.children, function (ch) { if (ch.classList.contains('c02-pgbg') || !ch.animate) return; var op = +getComputedStyle(ch).opacity; if (op < 0.98) { var an = ch.animate([{ opacity: op }, { opacity: 0 }], { duration: Math.max(1, 90 * k * op), easing: 'cubic-bezier(.2,0,.4,1)', fill: 'forwards' }); self._fl.push({ i: null, a: an }); } });
+    var kids = top0 ? Array.prototype.reduce.call(top0.children, function (l, ch) { return l.concat(ch.classList.contains('c02-hd') ? Array.prototype.slice.call(ch.children) : [ch]); }, []) : [];
+    kids.forEach(function (ch) { if (ch.classList.contains('c02-pgbg') || !ch.animate) return; var op = +getComputedStyle(ch).opacity; if (op < 0.98) { var an = ch.animate([{ opacity: op }, { opacity: 0 }], { duration: Math.max(1, 90 * k * op), easing: 'cubic-bezier(.2,0,.4,1)', fill: 'forwards' }); self._fl.push({ i: null, a: an }); } });
     var fromHome = !!(top0 && top0.classList.contains('c02-home'));
     if (kind === 'go' || kind === 'replace') {
       var id = params && params.eventId; var src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null;

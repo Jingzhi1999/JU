@@ -211,6 +211,17 @@ body{margin:0}
 .app.over-home .c08-pg.is-top.t1.ph-enter.dir-fwd .c08-ft,.app.over-home .c08-pg.is-top.t1.ph-in .c08-ft{white-space:nowrap;display:block;overflow:hidden;text-overflow:clip;max-width:100%;min-height:calc(63px * var(--tz,1))}   /* the one-line traveller keeps the settled two-line height: the meta below it and the face's lower edge (and its print slot) never jump at idle */
 .app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ft{opacity:0;transition:left calc(380ms * var(--k)) var(--tA),top calc(380ms * var(--k)) var(--tA),font-size calc(380ms * var(--k)) var(--tA),opacity calc(70ms * var(--k)) linear calc(285ms * var(--k))}
 .app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ftx{opacity:1;transition:opacity calc(70ms * var(--k)) linear calc(285ms * var(--k))}
+/* the fold (titles that settle on exactly two lines): no second copy at all — the travelling line breaks where its settled self breaks; the
+   words after the break (.c08-tb) slide down onto the second line during the travel's last 260ms (main-thread left / top, in step with the
+   title's own left / top), and back up behind the first line on the way home, so the title lands as the strip's one line */
+.c08-tb{position:relative;left:0;top:0}
+.app.over-home .c08-pg.is-top.t1.f1.ph-enter.dir-fwd .c08-tb,.app.over-home .c08-pg.is-top.t1.f1.ph-in .c08-tb{display:inline-block}
+.app.over-home .c08-pg.is-top.t1.f1.ph-in .c08-tb{left:calc(var(--fbx,0) * 1em);top:calc(var(--fby,0) * 1em);transition:left calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k)),top calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k))}
+.app.over-home .c08-pg.is-top.t1.f1.ph-in.dir-fwd .c08-ft{opacity:1;transition:left calc(380ms * var(--k)) var(--tA),top calc(380ms * var(--k)) var(--tA),font-size calc(380ms * var(--k)) var(--tA)}
+.app.over-home .c08-pg.is-top.t1.f1.ph-in.dir-fwd .c08-ftx{opacity:0;transition:none}
+.app.over-home .c08-pg.is-top.ph-exit.has-back.f1 .c08-ft{white-space:nowrap;display:block;text-overflow:clip;max-width:100%;min-height:calc(63px * var(--tz,1))}
+.app.over-home .c08-pg.is-top.ph-exit.has-back.f1 .c08-tb{display:inline-block;animation:c08-unfold calc(250ms * var(--k)) var(--tB) both}
+@keyframes c08-unfold{from{left:calc(var(--fbx,0) * 1em);top:calc(var(--fby,0) * 1em)}to{left:0;top:0}}
 .c08-fm{margin-top:calc(9px * (1 - var(--hc,0)));max-height:calc(44px * (1 - var(--hc,0)) * var(--tz,1));opacity:calc(1 - var(--hc,0) * 1.4);overflow:hidden;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--bs);white-space:nowrap;text-overflow:ellipsis}
 .c08-fx{max-height:calc(150px * (1 - var(--hc,0)) * var(--tz,1));opacity:calc(1 - var(--hc,0) * 1.4);overflow:hidden}
 .c08-fh .c08-fx,.c08-fh .c08-fx *{pointer-events:auto}
@@ -516,11 +527,11 @@ body{margin:0}
 
       <!-- ================= TICKET / REPLY: the band's face on top, the ticket (shared original, 258 wide) comes out from under its lower edge ================= -->
       <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
-        <section class="c08-pg {{c.nav.cls.ticket}}{{c.nav.cls.reply}}{{fx.backCls}}" data-surface="{{tk.surface}}">
+        <section class="c08-pg {{c.nav.cls.ticket}}{{c.nav.cls.reply}}{{fx.backCls}}{{tk.f1}}" data-surface="{{tk.surface}}">
           <div class="c08-face {{tk.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="返回我的局" onClick="{{c.ticket.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{tk.crumb}}</span><sc-if value="{{c.ticket.canExit}}"><button type="button" class="c08-weak" data-act="{{tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if><sc-if value="{{tk.noExit}}"><span class="sp"></span></sc-if></div>
-            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft">{{tk.title}}</h2><div class="c08-ftx" aria-hidden="true">{{tk.title}}</div><div class="c08-fm">{{tk.meta}}</div></div>
+            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft"><span class="c08-ta">{{tk.ta}}</span><span class="c08-tb">{{tk.tb}}</span></h2><div class="c08-ftx" aria-hidden="true">{{tk.title}}</div><div class="c08-fm">{{tk.meta}}</div></div>
           </div>
           <div class="c08-body" data-scroller="ticket" onScroll="{{x.faceScroll}}">
             <div class="c08-spacer" aria-hidden="true"><div class="c08-fh"><div class="c08-ft">{{tk.title}}</div><div class="c08-fm">{{tk.meta}}</div></div></div>
@@ -580,11 +591,11 @@ body{margin:0}
 
       <!-- ================= MANAGE: the band's face (局名 · 状态 · 席位) and one band per block ================= -->
       <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
-        <section class="c08-pg {{c.nav.cls.manage}}{{fx.backCls}}" data-surface="manage">
+        <section class="c08-pg {{c.nav.cls.manage}}{{fx.backCls}}{{mg.f1}}" data-surface="manage">
           <div class="c08-face {{mg.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{mg.crumb}}</span><span class="sp"></span></div>
-            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft">{{mg.title}}</h2><div class="c08-ftx" aria-hidden="true">{{mg.title}}</div><div class="c08-fm">{{mg.meta}}</div>
+            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft"><span class="c08-ta">{{mg.ta}}</span><span class="c08-tb">{{mg.tb}}</span></h2><div class="c08-ftx" aria-hidden="true">{{mg.title}}</div><div class="c08-fm">{{mg.meta}}</div>
               <sc-if value="{{mg.ready}}"><div class="c08-fx">
                 <sc-if value="{{mg.seatsOn}}"><div class="c08-mhead"><div class="c08-seats" aria-hidden="true"><sc-for list="{{mg.seats}}" as="s" hint-placeholder-count="4"><i class="{{s.kind}}"></i></sc-for></div></div><div class="c08-mline"><span><b>{{mg.progText}}</b><sc-if value="{{mg.progMore}}"> · {{mg.progMore}}</sc-if></span></div></sc-if>
                 <sc-if value="{{mg.att}}"><div class="c08-mline"><span><b>{{mg.att.text}}</b> · {{mg.att.sub}}</span></div></sc-if>
@@ -675,11 +686,11 @@ body{margin:0}
 
       <!-- ================= DETAIL / READ / WAITLIST / HISTORY / DRAFT: the band expanded — its face on top, bands under it ================= -->
       <sc-for list="{{pages}}" as="pg" hint-placeholder-count="0">
-        <section class="c08-pg {{pg.cls}}{{fx.backCls}}" data-surface="{{pg.s}}">
+        <section class="c08-pg {{pg.cls}}{{fx.backCls}}{{pg.f1}}" data-surface="{{pg.s}}">
           <div class="c08-face {{pg.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="返回" onClick="{{pg.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{pg.crumb}}</span><sc-if value="{{pg.weak}}"><button type="button" class="c08-weak" data-act="{{pg.weak.key}}" onClick="{{pg.weak.act}}">{{pg.weak.label}}</button></sc-if><sc-if value="{{pg.noWeak}}"><span class="sp"></span></sc-if></div>
-            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft">{{pg.title}}</h2><div class="c08-ftx" aria-hidden="true">{{pg.title}}</div><div class="c08-fm">{{pg.meta}}</div></div>
+            <div class="c08-fh" style="{{fx.title}}"><h2 class="c08-ft"><span class="c08-ta">{{pg.ta}}</span><span class="c08-tb">{{pg.tb}}</span></h2><div class="c08-ftx" aria-hidden="true">{{pg.title}}</div><div class="c08-fm">{{pg.meta}}</div></div>
           </div>
           <div class="c08-body" data-scroller="{{pg.s}}" onScroll="{{pg.onScroll}}">
             <div class="c08-spacer" aria-hidden="true"><div class="c08-fh"><div class="c08-ft">{{pg.title}}</div><div class="c08-fm">{{pg.meta}}</div></div></div>
@@ -824,6 +835,28 @@ class Component extends DCLogic {
     const list = Array.prototype.slice.call(sc.querySelectorAll('[data-seg]')).map(el => { const band = el.closest('[data-band]'); const tm = band ? (band.className.match(/t-(act|soon|wait|kept|closed|draft)/) || [])[0] : null; return { key: el.getAttribute('data-seg'), rid: el.getAttribute('data-rid'), band: band ? band.getAttribute('data-band') : '', tone: tm, el, y: top + el.offsetTop - sc.scrollTop, h: el.offsetHeight }; });
     const hd = home.querySelector('.c08-hd'); return { list, H, hdH: hd ? hd.offsetHeight : 0, sc };
   }
+  /* the title's fold: where its settled two-line self breaks (a hidden twin in the head title's own type and width) and how far the second
+     line's first character sits from its place on the one travelling line — in em, so it holds at every size of the travel. null when the
+     title settles on one line or needs more than two (those keep the cross-fade) */
+  _fold(text, tz) {
+    const root = this._root(); if (!root || !text) return null; const fs = 30 * tz;
+    const m = document.createElement('div'); m.setAttribute('aria-hidden', 'true');
+    m.style.cssText = 'position:absolute;left:0;top:0;visibility:hidden;pointer-events:none;margin:0;padding:0;width:max-content;max-width:' + (root.clientWidth - 44) + 'px;font-size:' + fs + 'px;line-height:1.05;font-weight:500;text-wrap:balance;white-space:normal;letter-spacing:normal';
+    m.textContent = text; root.appendChild(m);
+    try {
+      const tn = m.firstChild, rg = document.createRange(), n = text.length;
+      const box = i => { rg.setStart(tn, i); rg.setEnd(tn, i + 1); const rs = rg.getClientRects(); return rs.length ? rs[0] : null; };
+      const r0 = box(0); if (!r0) return null; let k = -1;
+      for (let i = 1; i < n; i++) { const cc = text.charCodeAt(i); if (cc >= 0xDC00 && cc <= 0xDFFF) continue; const b = box(i); if (!b) continue;
+        if (k < 0 && b.top > r0.top + fs * 0.5) k = i; else if (k >= 0 && b.top > box(k).top + fs * 0.5) return null; }
+      if (k < 1) return null;
+      const mr = m.getBoundingClientRect(), b2 = box(k); const x2 = b2.left - mr.left, y2 = b2.top - mr.top;
+      m.style.whiteSpace = 'nowrap'; m.style.maxWidth = 'none';
+      const mr1 = m.getBoundingClientRect(), b1 = box(k); const x1 = b1.left - mr1.left, y1 = b1.top - mr1.top;
+      const r = v => Math.round(v * 10000) / 10000;
+      return { full: text, a: text.slice(0, k), b: text.slice(k), x: r((x2 - x1) / fs), y: r((y2 - y1) / fs), tz };
+    } catch (e) { return null; } finally { m.remove(); }
+  }
   /* the controller calls onNav synchronously inside go() / back(), before its own state lands: the DOM still shows where things are */
   onNav(kind, s, params) {
     const stack = this.state.nav.stack; const top = stack[stack.length - 1];
@@ -845,7 +878,8 @@ class Component extends DCLogic {
         tt = { tx: Math.round(r.left - pr.left - 22), ty: Math.round(r.top - pr.top + (lh - fs * 1.05) / 2 - (sat + 77)), fs: Math.round(fs * 10) / 10 }; }
       /* hand-over only when the one-line strip title will need two lines at 30px (otherwise the title simply travels — no double image) */
       if (tt && t) { const lh = parseFloat(getComputedStyle(t).lineHeight) || 22; const one = t.offsetHeight < lh * 1.5; let w = 0; try { const rg = document.createRange(); rg.selectNodeContents(t); w = rg.getBoundingClientRect().width; } catch (e) { }
-        const tz = this.state.review && this.state.review.zoom ? 1.15 : 1; tt.one = one && w * (30 * tz / tt.fs) > (this._root().clientWidth - 44) * 0.98; }
+        const tz = this.state.review && this.state.review.zoom ? 1.15 : 1; tt.one = one && w * (30 * tz / tt.fs) > (this._root().clientWidth - 44) * 0.98;
+        if (tt.one) tt.fold = this._fold(t.textContent, tz); }
       const bfx = { id, srcKey: src ? src.key : null, band: src ? src.band : null, tone: src ? src.tone : null, y0, h0, push, hdPush, counts, tt, role: this.state.role, section: this.state.section, srcH: src ? src.h : 0 };
       this._fx = bfx; this.setState({ bfx, ghost: null, cntFx: null });
     }
@@ -872,7 +906,10 @@ class Component extends DCLogic {
         const fcs = getComputedStyle(ft); const cl = parseFloat(fcs.left) || 0, ctp = parseFloat(fcs.top) || 0;   /* offsets from the title's static place */
         tt1 = { tx: Math.round(tEl.offsetLeft - (fr.left - pr.left - cl - mx.m41)), ty: Math.round(tgt.y + tEl.offsetTop + (lh - fs * 1.05) / 2 - (fr.top - pr.top - ctp - mx.m42)), fs: Math.round(fs * 10) / 10 }; }
       const landTone = tgt ? tgt.tone : ghost ? ghost.tone : fx.tone;   /* the face takes the colour of what it lands on (a drained head lands back on its band) */
-      this._fx = Object.assign({}, fx, { y1: Math.round(y1), h1: Math.round(h1), tgtKey, tt1, landTone });
+      /* a two-line head title unfolds on the way home: its second line slides back up behind the first, landing as the strip's one line */
+      let fold1 = null; if (tt1 && ft) { const hc = parseFloat(getComputedStyle(ft).getPropertyValue('--hc')) || 0; const lhp = parseFloat(getComputedStyle(ft).lineHeight) || 31;
+        if (hc < 0.001 && ft.offsetHeight > lhp * 1.5) fold1 = this._fold(ft.textContent, this.state.review && this.state.review.zoom ? 1.15 : 1); }
+      this._fx = Object.assign({}, fx, { y1: Math.round(y1), h1: Math.round(h1), tgtKey, tt1, landTone, fold1 });
       this.setState({ bfx: this._fx, ghost, cntFx: Object.keys(cnt).length ? { map: cnt } : null });
       const self = this; const ms = this.navMs('back');
       if (ghost) this.after(ms + 560, function () { self.setState({ ghost: null }); });
@@ -1147,8 +1184,11 @@ class Component extends DCLogic {
     };
     /* ---- face geometry (enter from the tapped segment, exit into the re-measured one) ---- */
     const tt = bfx && bfx.tt; const tz = this.state.review && this.state.review.zoom ? 1.15 : 1;
-    const fx = { bg: '--y0:' + (bfx ? bfx.y0 : 0) + 'px;--h0:' + (bfx ? bfx.h0 : 0) + 'px;--y1:' + (bfx && bfx.y1 != null ? bfx.y1 : (bfx ? bfx.y0 : 0)) + 'px;--h1:' + (bfx && bfx.h1 != null ? bfx.h1 : (bfx ? bfx.h0 : 0)) + 'px',
-      title: (tt ? '--tx:' + tt.tx + 'px;--ty:' + tt.ty + 'px;--tfs:' + tt.fs + 'px' : '--tfs:' + (30 * tz) + 'px') + (bfx && bfx.tt1 ? ';--tx1:' + bfx.tt1.tx + 'px;--ty1:' + bfx.tt1.ty + 'px;--tfs1:' + bfx.tt1.fs + 'px' : ''),
+    const fold = bfx ? (bfx.y1 != null ? bfx.fold1 : (tt && tt.one ? tt.fold : null)) : null; const foldOk = !!(fold && fold.tz === tz);
+    /* the head title as two runs: before / after the line break of its settled two-line self (one run when no fold is travelling) */
+    const tsplit = o => { if (!o) return o; const on = foldOk && o.title === fold.full; o.ta = on ? fold.a : o.title; o.tb = on ? fold.b : ''; o.f1 = on ? ' f1' : ''; return o; };
+    const fx = { bg:'--y0:' + (bfx ? bfx.y0 : 0) + 'px;--h0:' + (bfx ? bfx.h0 : 0) + 'px;--y1:' + (bfx && bfx.y1 != null ? bfx.y1 : (bfx ? bfx.y0 : 0)) + 'px;--h1:' + (bfx && bfx.h1 != null ? bfx.h1 : (bfx ? bfx.h0 : 0)) + 'px',
+      title: (tt ? '--tx:' + tt.tx + 'px;--ty:' + tt.ty + 'px;--tfs:' + tt.fs + 'px' : '--tfs:' + (30 * tz) + 'px') + (bfx && bfx.tt1 ? ';--tx1:' + bfx.tt1.tx + 'px;--ty1:' + bfx.tt1.ty + 'px;--tfs1:' + bfx.tt1.fs + 'px' : '') + (foldOk ? ';--fbx:' + fold.x + ';--fby:' + fold.y : ''),
       backCls: (bfx && bfx.tt1 && bfx.y1 != null ? ' has-back' : '') + (tt && tt.one && !(bfx && bfx.y1 != null) ? ' t1' : '') };
     /* a page keeps the colour of the band it was opened from for the whole visit (a 局 that moves group while its page is open does not
        repaint the head — the list shows the move on return); only a cancellation drains the head to the closed tone (manage, below) */
@@ -1244,6 +1284,7 @@ class Component extends DCLogic {
       backdrop: (ev) => { if (ev.target === ev.currentTarget && !S.busy) S.cancel(); } };
     const navItems = c.rootNav.map(n => ({ label: n.label, cls: n.on ? 'on' : '', inert: !!n.inert, cur: n.on ? 'page' : 'false', go: n.go, icon: C08_ICONS[n.k] }));
     const x = { appCls: '', faceScroll, nav: navItems };
+    tsplit(tk); tsplit(mg); pages.forEach(tsplit);
     return { panel, rootRef: this.rootRef, envRef: this.envRef, c, home, fx, tk, mg, pages, sh, sv: S, x };
   }
 }
