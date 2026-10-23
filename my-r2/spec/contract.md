@@ -93,7 +93,7 @@
 ## 7. 验证（必须做；不能只看源码）
 
 ```
-JU_STANDALONE=/home/user/JU/.build/CNN.html JU_ONLY=CNN node my-r2/src/build.js
+JU_FONTS_CSS=/home/user/JU/my-r2/.fonts/fonts-embed.css JU_STANDALONE=/home/user/JU/.build/CNN.html JU_ONLY=CNN node my-r2/src/build.js   # 内嵌字体（撕票原件依赖）
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/coverage.cjs CNN /home/user/JU/my-r2/evidence/CNN/coverage      # 50/50, errors []
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/widths.cjs CNN                                                  # 360/375/390/430 + zoom：overflow []，minFont ≥ 12
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/kb-check.cjs CNN

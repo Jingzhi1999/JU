@@ -24,7 +24,7 @@
 
 ## 命令（契约 §7）
 ```
-JU_STANDALONE=/home/user/JU/.build/CNN.html JU_ONLY=CNN node my-r2/src/build.js
+JU_FONTS_CSS=/home/user/JU/my-r2/.fonts/fonts-embed.css JU_STANDALONE=/home/user/JU/.build/CNN.html JU_ONLY=CNN node my-r2/src/build.js   # 必须内嵌字体：撕票原件在字体未载入时不响应拖拽
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/capture.cjs CNN <outdir> '<actions json>'
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/coverage.cjs CNN <outdir>
 JU_STANDALONE=/home/user/JU/.build/CNN.html node my-r2/tools/widths.cjs CNN <outdir> [states]
