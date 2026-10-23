@@ -379,6 +379,10 @@ body{margin:0}
 .c05-contact .ju-contact-row{border-top:0;padding:6px 0 10px;min-height:76px}
 .c05-contact .ju-contact-account{font-family:'Archivo','Noto Sans SC',sans-serif;font-weight:500;letter-spacing:.01em}
 .c05-contact .ju-contact-action{margin:12px auto 0;align-self:center}
+.c05-errrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px}
+.c05-errrow .ju-form-error{margin:0}
+.c05-errrow .ju-form-error:empty{display:none}
+.c05-errrow .c05-mini{margin-left:0}
 /* ---- 票根页：面变为票底色，整面承载票根原件（舞台 + 纸票 258 + 副券 84）；纸只留底部一条（CTA 在纸上） ---- */
 /* the ticket sits IN the face (the same face, now the colour of the ticket's paper); the face content is above the paper so the
    torn stub falls over the paper as in V27; the paper's edge moves from under the stub to under the torn edge (the paper rises to
@@ -470,7 +474,6 @@ body{margin:0}
 /* off home the toast takes the tool row (between ← and the weak action): it covers neither the face title nor the paper's action */
 .app:not(.at-home) .c05-toast{top:calc(24px + var(--sat,0px));bottom:auto;left:98px;right:98px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:22px;line-height:1.35;animation-name:c05-toast-top}
 @keyframes c05-toast-top{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:none}}
-.c05-cf-tk{margin:2px 0 0}
 @keyframes c05-toast{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 </style>
 </helmet>
@@ -823,11 +826,11 @@ body{margin:0}
                 <div class="ju-contact-wrap c05-contact" data-contact-reveal aria-hidden="true">
                   <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                   <p class="ju-contact-note23"></p>
-                  <p class="ju-form-error"></p>
-                  <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c05-copyfail c05-cf-tk"><button type="button" class="c05-mini" data-act="retry" onClick="{{ticket.retryCopy}}">再复制一次</button></p></sc-if>
+                  <!-- a failed copy is said once, by the original's own line (role=alert); the retry sits beside it -->
+                  <div class="c05-errrow"><p class="ju-form-error" role="alert"></p><sc-if value="{{c.ticket.contact.copyFail}}"><button type="button" class="c05-mini" data-act="retry" onClick="{{ticket.retryCopy}}">再复制一次</button></sc-if></div>
                   <sc-if value="{{c.ticket.contact.closed}}"><p class="c05-err">{{c.ticket.contact.closedText}}</p></sc-if>
                   <sc-if value="{{c.ticket.contact.error}}"><p class="c05-err">{{c.ticket.contact.error}}</p></sc-if>
-                  <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+                  <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="{{c.ticket.contact.ctaDisabled}}"><span class="gloss"></span><span class="label" data-slot="actionLabel">{{c.ticket.contact.ctaLabel}}</span></button></sc-if>
                 </div>
               </sc-if>
               <sc-if value="{{c.ticket.result}}"><div class="c05-result"><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>

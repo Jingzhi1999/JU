@@ -1090,6 +1090,8 @@ class Component extends DCLogic {
            (a software-rendered print holds the main thread for a few hundred ms — started earlier it would stall the slide) */
         if (c.ticket.state === 'printing' && c.nav.phase !== 'idle') this._preStage(stage); else this._mountTicket(stage, c);
       }
+      /* the data and the original disagree (a jump / reset rewound 已加微信): rebuild the contact layer from the data */
+      if (this._rit.contact && this._rit.contactAdded !== !!c.ticket.ritual.added) { try { this._rit.contact.hide(); this._rit.contact.destroy(); } catch (e) { } this._rit.contact = null; this._rit.contactShown = false; }
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
@@ -1144,7 +1146,7 @@ class Component extends DCLogic {
     const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
     const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
 
-    this._rit.contact = h; return h;
+    this._rit.contact = h; this._rit.contactAdded = !!c.ticket.ritual.added; return h;
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = isH ? c.history.ritual : c.ticket.ritual; const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
@@ -1185,7 +1187,7 @@ class Component extends DCLogic {
   }
   /* effects arrive AFTER the data was written (replay = the same effect again with replay:true) */
   onEffect(fx) {
-    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();                       /* the write succeeded → the original paints 待赴约 */
+    if (fx.type === 'contacted' && this._rit.contact) { this._rit.contact.add(); this._rit.contactAdded = true; }   /* the write succeeded → the original's note says so */
     if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
     if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
     /* 审核通过: the freed seat pops on the head strip, the new member's row glows once in 成员 */
