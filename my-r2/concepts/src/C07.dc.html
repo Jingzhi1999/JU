@@ -953,14 +953,13 @@ class Component extends DCLogic {
         lead.cta = leadRow.ctaLabel || '查看详情'; lead.act = leadRow.ctaLabel ? leadRow.act : leadRow.open; Object.assign(lead, seatLine(leadRow, false));
         if (leadRow.secondary) { lead.secondary = leadRow.secondary; lead.secondaryLabel = leadRow.secondaryLabel; lead.secondaryKey = leadRow.secondaryKey; }
       } else {
-        lead.label = kindLabel + ' · ' + leadRow.label; lead.meta = leadRow.whenText + ' · ' + leadRow.placeText + ' · 已确认 ' + leadRow.counts.confirmed + '/' + leadRow.counts.capacity + '（含你）';
+        lead.label = kindLabel + ' · ' + leadRow.label; lead.meta = leadRow.whenText + ' · ' + leadRow.placeText + ((leadRow.seats || []).length ? '' : ' · 已确认 ' + leadRow.counts.confirmed + '/' + leadRow.counts.capacity + '（含你）');
         const pend = (leadRow.item.applications || []).filter(a => a.status === 'pending').map(a => a.nick || '未填称呼');
         lead.note = leadRow.pending ? (pend.slice(0, 3).join('、') + (pend.length > 3 ? ' 等 ' + pend.length + ' 人' : '') + ' 在等答复 · 通过即发出 6 小时预留') : leadRow.unrecorded ? (leadRow.unrecorded + ' 人出席待记录 · 散场 24 小时内可查看微信') : leadRow.formedLine;
         lead.cta = leadRow.ctaLabel || '管理这局'; lead.act = leadRow.act; Object.assign(lead, seatLine(leadRow, true));
       }
     } else if (isCur) { lead.none = true; lead.label = isJ ? '眼下没有要回应的' : '眼下没有要处理的'; lead.noneTitle = isJ ? (c.joined.empty.on ? '还没有加入任何局' : '都安排好了') : (c.hosted.empty.on ? '还没发起过局' : '都安排好了'); lead.noneBody = isJ ? '散场和没成行的都在「历史」里' : '草稿与历史在上方切换'; lead.cls = 'is-compact'; }
     else { lead.none = true; lead.cls = 'is-compact'; lead.label = c.section === 'history' ? '历史' : '草稿'; lead.noneTitle = c.section === 'history' ? ((isJ ? c.joined.counts.history : c.hosted.counts.history) + ' 场已结束') : (c.hosted.counts.drafts + ' 份草稿'); lead.noneBody = c.section === 'history' ? '散场的票根与没成行的记录分开留着' : '补完就能发布 · 删除可在 10 秒内撤销'; }
-    const compact = !!lead.none && !mTop;
     /* the parked lead stays mounted while the sheet is up (hidden + inert), so it can fade back in as the sheet settles */
     lead.cls = (lead.cls || '') + ((trayUp || mVis) ? ' is-off' : ''); lead.inert = trayUp || mVis;
     /* ---- manage: focus = the application / attendee handled in the tray ---- */
@@ -988,7 +987,7 @@ class Component extends DCLogic {
     const hr = c.history.on ? c.history.ritual : null;
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins,
-      toastOn: this._toastHere(c), trayRootCls: (trayUp ? ' c07-up' : '') + (compact ? ' c07-compact' : '') + (mVis ? ' c07-mng' : ''), goHome: () => this._goHome(),
+      toastOn: this._toastHere(c), trayRootCls: (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : ''), goHome: () => this._goHome(),
       home: { pageCls: (mVis ? 'is-away' : '') + (isJ ? '' : ' three'), meta: isJ ? (c.joined.badgeText || (c.joined.counts.current ? c.joined.counts.current + ' 场进行中' : '眼下没有进行中的局')) : ((c.hosted.badgeText || (c.hosted.counts.current ? c.hosted.counts.current + ' 场进行中' : '眼下没有进行中的局')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')),
         joinedCurrent: isJ && c.section === 'current', joinedHistory: isJ && c.section === 'history', hostedCurrent: !isJ && c.section === 'current', hostedDrafts: !isJ && c.section === 'drafts', hostedHistory: !isJ && c.section === 'history',
         jsections, hsections, onlyLead: isCur && !!leadRow && (isJ ? jsections : hsections).length === 0, onlyLeadText: '只有这一件，在下方处理' },
