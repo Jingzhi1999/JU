@@ -282,8 +282,8 @@ body{margin:0}
 .c08-outline span{position:absolute;left:0;right:0;top:38%;text-align:center;font-size:calc(13px * var(--tz,1));color:var(--mute);letter-spacing:.06em;animation:c08-breathe 1.6s ease-in-out infinite}
 .c08-stagewrap.is-out .c08-outline{opacity:0}
 @keyframes c08-breathe{0%,100%{opacity:.45}50%{opacity:1}}
-.c08-copyfail{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 0;font-size:calc(13px * var(--tz,1));color:var(--red)}
-.c08-copyfail button{appearance:none;border:1px solid currentColor;background:none;border-radius:999px;min-height:34px;padding:0 12px;font-size:calc(13px * var(--tz,1));color:inherit;cursor:pointer}
+.c08-copyretry{display:flex;justify-content:flex-end;margin:-34px 0 0;position:relative}
+.c08-copyretry button{appearance:none;border:1px solid currentColor;background:#F6F4F1;border-radius:999px;min-height:34px;padding:0 12px;font-size:calc(13px * var(--tz,1));color:#a32b3e;cursor:pointer}
 .c08-err{color:var(--red);font-size:calc(13px * var(--tz,1));margin:8px 0 0}
 .c08-result{padding:22px 0 0}
 .c08-result b{display:block;font-size:calc(20px * var(--tz,1));font-weight:500;line-height:1.4}
@@ -557,9 +557,10 @@ body{margin:0}
                 <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                   <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                   <p class="ju-contact-note23"></p>
-                  <p class="ju-form-error"></p>
+                  <p class="ju-form-error" role="alert"></p>
                 </div>
-                <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c08-copyfail"><span>或者再试一次</span><button type="button" data-act="retry" onClick="{{tk.retryCopy}}">重试复制</button></p></sc-if>
+                <!-- copy failure: the original's own line says it (role=alert); only the retry sits beside it — no second sentence -->
+                <sc-if value="{{c.ticket.contact.copyFail}}"><div class="c08-copyretry"><button type="button" data-act="retry" onClick="{{tk.retryCopy}}">重试复制</button></div></sc-if>
                 <sc-if value="{{tk.showClosed}}"><p class="c08-err">{{c.ticket.contact.closedText}}</p></sc-if>
                 <sc-if value="{{c.ticket.contact.error}}"><p class="c08-err" role="alert">{{c.ticket.contact.error}}</p></sc-if>
                 <sc-if value="{{c.ticket.result}}"><div class="c08-result"><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
@@ -947,6 +948,9 @@ class Component extends DCLogic {
       const paper = stage.querySelector('[data-paper]'), wrap = stage.parentElement; if (paper && wrap && paper.offsetHeight) { wrap.style.setProperty('--c08-tkh', paper.offsetHeight + 'px'); wrap.style.setProperty('--c08-tkt', paper.offsetTop + 'px'); }
       if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) { if (!(c.ticket.state === 'printing' && c.nav.phase !== 'idle')) this._mountTicket(stage, c); }
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      /* 已加微信 while the write runs: the controller's label / disabled state (处理中…), not the original's synchronous add(); add() paints 待赴约 after the write */
+      const act = stage.closest('[data-surface]') && stage.closest('[data-surface]').querySelector('[data-contact-action]');
+      if (act && c.ticket.contact.ctaLabel) { const lab = act.querySelector('[data-slot="actionLabel"]') || act; if (lab.textContent !== c.ticket.contact.ctaLabel) lab.textContent = c.ticket.contact.ctaLabel; act.setAttribute('aria-disabled', c.ticket.contact.ctaDisabled ? 'true' : 'false'); }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
     /* history: a voided ticket burns once on its first real opening (JURitual.burn B / C), ash after that */

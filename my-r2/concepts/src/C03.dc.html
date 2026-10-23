@@ -315,7 +315,7 @@ body{margin:0}
 .c03-tk-sc .ju-tear-error24{display:none}
 .c03-stage.is-ash::after{content:"";position:absolute;left:22%;right:22%;top:13px;height:2px;border-radius:1px;background:linear-gradient(90deg,transparent,rgba(74,60,52,.32),transparent)}
 .c03-tkc{text-align:center}
-.c03-copyfail{font-size:calc(13px * var(--tz,1));color:var(--c03-red)}
+.c03-cferr{display:flex;align-items:baseline;gap:10px}.c03-cferr .ju-form-error{margin:0}.c03-cferr .c03-link{padding:2px 0;flex:0 0 auto}.c03-cferr .ju-form-error:empty+.c03-link{display:none}
 .c03-t08{position:relative;height:520px;margin:0}
 .c03-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
 /* 历史 */
@@ -770,9 +770,8 @@ body{margin:0}
                           <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                             <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                             <p class="ju-contact-note23"></p>
-                            <p class="ju-form-error"></p>
+                            <div class="c03-cferr"><p class="ju-form-error" role="alert"></p><sc-if value="{{c.ticket.contact.copyFail}}"><button type="button" class="c03-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></sc-if></div>
                           </div>
-                          <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c03-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c03-btn" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></p></sc-if>
                           <sc-if value="{{ticket.showClosed}}"><p class="c03-err">{{c.ticket.contact.closedText}}</p></sc-if>
                           <sc-if value="{{c.ticket.contact.error}}"><p class="c03-err">{{c.ticket.contact.error}}</p></sc-if>
                           <sc-if value="{{c.ticket.result}}"><div class="c03-result"><sc-if value="{{c.ticket.result.burning}}"><p class="c03-help">票根正在作废…</p></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
@@ -784,7 +783,7 @@ body{margin:0}
                     <div class="c03-foot">
                       <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta ju-print-cta-in" data-act="{{ticket.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button></sc-if>
                       <sc-if value="{{c.ticket.reply}}"><sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="c03-link c03-quiet" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if></sc-if>
-                      <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+                      <sc-if value="{{ticket.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="{{c.ticket.contact.ctaDisabled}}"><span class="gloss"></span><span class="label"><span data-slot="actionLabel" hidden></span>{{c.ticket.contact.ctaLabel}}</span></button></sc-if>
                       <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
                       <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
                     </div>
@@ -829,7 +828,7 @@ body{margin:0}
                         </sc-if>
                         <sc-if value="{{history.showSum}}"><div class="c03-hsum {{history.toneCls}}"><div class="tt">{{history.title}}</div><div class="c03-hf"><span class="d">{{c.history.when.wdZh}} {{c.history.when.md}}</span><span class="tm">{{c.history.when.time}}</span><span class="pl">{{c.history.place.hood}}</span><span class="hs">{{c.history.place.area}} · 局主 {{c.history.host.name}}</span></div><sc-if value="{{c.history.oldWhen}}"><div class="mt"><s>原定 {{c.history.oldWhen.zh}}</s></div></sc-if><div class="rs">{{c.history.reason}}</div><sc-if value="{{c.history.closedNote}}"><div class="nt">{{c.history.closedNote}}</div></sc-if><sc-if value="{{history.voidNote}}"><div class="nt">{{history.voidNote}}</div></sc-if></div><div class="c03-grp"><b>成员</b> · {{history.memberCount}} 人</div><sc-for list="{{c.history.members}}" as="m" hint-placeholder-count="3"><div class="c03-mem {{m.youCls}}"><span>{{m.name}}</span><span class="r">{{m.statusText}}</span></div></sc-for></sc-if>
                         
-                        <sc-if value="{{c.history.contactOpen}}"><div class="c03-wxrow"><span>局主微信</span><b class="ju-contact-account">{{c.history.hostWx}}</b><button type="button" class="c03-link" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></div><sc-if value="{{c.history.copyFail}}"><p class="c03-copyfail">未能复制，长按手动复制 <button type="button" class="c03-btn" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
+                        <sc-if value="{{c.history.contactOpen}}"><div class="c03-wxrow"><span>局主微信</span><b class="ju-contact-account">{{c.history.hostWx}}</b><button type="button" class="c03-link" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></div></sc-if>
                         <sc-if value="{{c.history.contactClosedText}}"><p class="c03-help">{{c.history.contactClosedText}}</p></sc-if>
                         <div class="c03-grp"><b>本场相关记录</b> · {{history.recordCount}}</div>
                         <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c03-mem"><span>{{x.kindLabel}} · {{x.text}}</span><span class="r">{{x.atText}}</span></div></sc-for>
@@ -931,7 +930,7 @@ body{margin:0}
                             <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c03-mem" data-rid="{{r.id}}"><span>{{r.name}}</span><span class="r tn-{{r.tone}}">{{r.answerText}} · {{r.ticketLine}}</span></div></sc-for>
                             <p class="c03-help">{{c.manage.replies.help}}</p></div></div></sc-if>
                           <sc-if value="{{c.manage.roster.on}}"><div class="c03-sec {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}"><h4><span>{{c.manage.roster.title}}</span><small>{{c.manage.roster.line}}</small></h4><div class="body">
-                            <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c03-mem c03-mrow" data-rid="{{m.id}}"><span class="nm"><b>{{m.name}}</b><sc-if value="{{m.wxText}}"><small>{{m.wxText}} <button type="button" class="c03-link" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></small></sc-if><sc-if value="{{m.copyFail}}"><small class="c03-copyfail">未能复制，长按手动复制 <button type="button" class="c03-link" data-act="retry" onClick="{{m.retryCopy}}">重试</button></small></sc-if></span><span class="r">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"><br>{{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"><br>{{m.contactText}}</sc-if></span></div></sc-for>
+                            <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c03-mem c03-mrow" data-rid="{{m.id}}"><span class="nm"><b>{{m.name}}</b><sc-if value="{{m.wxText}}"><small>{{m.wxText}} <button type="button" class="c03-link" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></small></sc-if></span><span class="r">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"><br>{{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"><br>{{m.contactText}}</sc-if></span></div></sc-for>
                             <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><div class="c03-mem c03-dim"><span>{{o.text}}</span></div></sc-for>
                             <sc-if value="{{c.manage.roster.openText}}"><p class="c03-help">{{c.manage.roster.openText}}</p></sc-if></div></div></sc-if>
                           <sc-if value="{{c.manage.queue.on}}"><div class="c03-sec {{c.manage.queue.cls}}" data-section="queue" style="--o:{{c.manage.queue.order}}"><h4><span>{{c.manage.queue.title}}</span><small>{{c.manage.queue.sub}}</small></h4><div class="body">
@@ -948,7 +947,7 @@ body{margin:0}
                                 <sc-if value="{{a.canCorrect}}"><button type="button" class="c03-link c03-corr" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
                                 <sc-if value="{{a.error}}"><div class="c03-err">{{a.error}}</div></sc-if>
                                 <sc-if value="{{a.showTrail}}"><div class="c03-trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
-                                <sc-if value="{{a.wxText}}"><div class="c03-wxl">{{a.wxText}} <button type="button" class="c03-link" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button><sc-if value="{{a.copyFail}}"> <span class="c03-copyfail">未能复制，长按手动复制</span> <button type="button" class="c03-link" data-act="retry" onClick="{{a.retryCopy}}">重试</button></sc-if></div></sc-if>
+                                <sc-if value="{{a.wxText}}"><div class="c03-wxl">{{a.wxText}} <button type="button" class="c03-link" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button></div></sc-if>
                               </div></sc-for>
                               <sc-if value="{{c.manage.attendance.doneText}}"><div class="c03-regdone">{{c.manage.attendance.doneText}}</div></sc-if>
                             </div>
@@ -1187,6 +1186,8 @@ class Component extends DCLogic {
     if (lk && lk !== plk) this._landInView(lk); else if (pn && pn.phase === 'exit' && nav.phase === 'idle') this._snap(this._list(), false);
     /* a role change that no handle drove (index jump, reset, variant): the windows snap to it */
     if (ps && ps.role !== this.state.role) { if (this._roleByGesture === this.state.role) this._roleByGesture = null; else if (!this._raf && !this._drag) this._rest(); }
+    /* a jump / reset starts both windows' lists at the top (the controller zeroes only the scroller it knows: the expanded one) */
+    if (ps && (this.state.jumpKey !== ps.jumpKey || this.state.variant !== ps.variant)) ['joined', 'hosted'].forEach(r => { const sc = this._list(r); if (sc && sc.scrollTop) { sc.scrollTop = 0; this._cut(sc); } });
     if (this._lifts) this._applyT(this._t);          /* the controller re-applied a list's --hc in this commit; the swap's glide wins */
     /* the sheet closes: keep its last frame for 220 ms as an inert copy that sinks */
     if (ps && ps.sheet && !this.state.sheet && !this.state.c03sheetClosing) { if (this.isRM()) { } else { this.setState({ c03sheetClosing: true }); this.afterKey('c03sheet', 220, () => this.setState({ c03sheetClosing: false })); } }
@@ -1286,7 +1287,7 @@ class Component extends DCLogic {
   _fit(sc, now) {
     if (now) { sc.style.transition = 'none'; sc._fitV = null; this._fit(sc); void getComputedStyle(sc).getPropertyValue('--c03-fit'); sc.style.transition = ''; return; }
     const box = sc.getBoundingClientRect(); if (!box.height) return; const edge = box.bottom; let y = Infinity;
-    const els = sc.querySelectorAll(sc.classList.contains('c03-hsc') ? '.c03-lead>*,.c03-dlead>*,.c03-grp,.c03-row,.c03-empty>*,.c03-list>.c03-help' : '.c03-dtitle,.c03-facts>*,.c03-cd>*,.c03-receipt>*,.c03-result>*,.c03-grp,.c03-mem,.c03-dhead,.c03-rules h5,.c03-rules p,.c03-endmark,.c03-help,.c03-err,.c03-copyfail,.c03-hsum>*,.c03-hnote,.c03-wxrow,.c03-mhead>*,.c03-sec>h4,.c03-app>*,.c03-chg,.c03-done>*,.c03-att>*,.c03-regdone,.c03-arr,.c03-dsum>*,.ju-contact-row,.ju-contact-note23,.c03-empty>*,.c03-tkc');
+    const els = sc.querySelectorAll(sc.classList.contains('c03-hsc') ? '.c03-lead>*,.c03-dlead>*,.c03-grp,.c03-row,.c03-empty>*,.c03-list>.c03-help' : '.c03-dtitle,.c03-facts>*,.c03-cd>*,.c03-receipt>*,.c03-result>*,.c03-grp,.c03-mem,.c03-dhead,.c03-rules h5,.c03-rules p,.c03-endmark,.c03-help,.c03-err,.c03-cferr,.c03-hsum>*,.c03-hnote,.c03-wxrow,.c03-mhead>*,.c03-sec>h4,.c03-app>*,.c03-chg,.c03-done>*,.c03-att>*,.c03-regdone,.c03-arr,.c03-dsum>*,.ju-contact-row,.ju-contact-note23,.c03-empty>*,.c03-tkc');
     for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (!r.height || r.height > 150) continue; if (r.top < edge - 1 && r.bottom > edge + 0.5 && r.top < y) y = r.top; }
     /* the line itself must not cut a block beside the one it hides */
     for (let k = 0; k < 6 && y !== Infinity; k++) { let moved = false; for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (r.height && r.height <= 150 && r.top < y - 0.5 && r.bottom > y + 0.5) { y = r.top; moved = true; } } if (!moved) break; }
