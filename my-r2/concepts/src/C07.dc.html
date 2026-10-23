@@ -1070,7 +1070,7 @@ class Component extends DCLogic {
          data says "printed", the original still shows the torn paper → mount it afresh (cannot happen mid-tear: data turns torn first) */
       const stale = this._rit.stage === stage && c.ticket.state === 'printed' && stage.dataset.state === 'torn';
       if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey || stale) this._mountTicket(stage, c);
-      const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      const want = this._contactWant(c); if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
     const hstage = root.querySelector('[data-surface="history"] .c07-stage');
@@ -1085,10 +1085,13 @@ class Component extends DCLogic {
   /* the ritual's text slots get the title with " · " glued to the word before it (a no-break space), so a two-line title never
      starts its second line with the dot; same characters, only the break opportunity moves */
   _rd(d) { return d ? Object.assign({}, d, { title: String(d.title || '').replace(/ · /g, '\u00a0· ') }) : d; }
-  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _tearOpts() { return { onDetach: () => { this._rit.tornHere = true; const ok = this.tearCommit(); if (!ok) this._rit.tornHere = false; return ok; }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  /* the contact layer: torn in this visit → after the stub has fallen (onDone, V27 timing); entered already torn (from a row, a jump or
+     the 联系局主 key) → at once — a torn ticket is the contact step, it is never shown without its contact */
+  _contactWant(c) { const t = c.ticket; return !!(t && t.on && t.contact && (t.contact.on || (t.state === 'torn' && !this._rit.tornHere))); }
   _mountTicket(stage, c) {
     this._destroyTicket();
-    this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = this._rd(c.ticket.ritual), st = c.ticket.state;
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; this._rit.tornHere = false; const R = this.R(), data = this._rd(c.ticket.ritual), st = c.ticket.state;
     /* a fresh contact handle repaints its labels from the data; hide() clears any reveal / shown state a previous mount left on the
        engine-owned DOM (the same stage is reused when a review jump resets the data) */
     { const ch = this._contact(); if (ch && !c.ticket.contact.on) ch.hide(); }
@@ -1332,7 +1335,7 @@ class Component extends DCLogic {
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result,
         /* the contact action exists from the start (the shared contact handle wires it once), but it is unreachable until the stub is
            torn and the contact layer opens — before that a stray tap could mark 已加微信 on an untorn ticket (the engine has no guard) */
-        actionCls: tk.on && tk.contact && tk.contact.on ? 'is-on' : '', actionInert: !(tk.on && tk.contact && tk.contact.on),
+        actionCls: this._contactWant(c) ? 'is-on' : '', actionInert: !this._contactWant(c),
         ctaLabel: tk.on && tk.contact ? (tk.contact.ctaLabel || '已加微信') : '已加微信', ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ashes: !!(tk.result && tk.result.burn && !tk.result.burning), showHome: tk.on && nav.depth > 2 && !tk.result, retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按 Enter' : '') : '' },
       draft: (() => { const d = dv, miss = (d.on && d.draft && d.draft.missing) || [], w = d.on ? d.when : null, has = (k) => miss.indexOf(k) >= 0;
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
