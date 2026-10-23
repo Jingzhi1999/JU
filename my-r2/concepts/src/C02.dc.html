@@ -42,20 +42,21 @@ body{margin:0}
    arrives from 90ms and its words rise in under the people. No frame shows two pages' words at once. ---- */
 .c02-pg{position:absolute;inset:0;z-index:3}
 .c02-pg.is-top{z-index:4}
-.c02-pg.is-under.ph-enter,.c02-pg.is-under.ph-in{opacity:0;transition:opacity calc(90ms * var(--k)) cubic-bezier(.4,0,1,1);pointer-events:none}
-.c02-pg.is-under.ph-idle{opacity:0;visibility:hidden;pointer-events:none}
-.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{opacity:0;transition:opacity calc(90ms * var(--k)) cubic-bezier(.4,0,1,1);pointer-events:none}
-.c02-pg.is-under.ph-exit{z-index:5;animation:c02-op calc(190ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(90ms * var(--k)) both}
-.c02-deep.is-top.ph-enter.dir-fwd,.c02-deep.is-top.ph-enter.dir-swap{opacity:0;transition:none}
-.c02-deep.is-top.ph-in.dir-fwd,.c02-deep.is-top.ph-in.dir-swap{transition:opacity calc(190ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(70ms * var(--k))}
+/* every fade starts from the same commit (CSS animations, not the phase timer), so the hand-over is exact whatever the render cost:
+   the page you leave 1 → 0 in 0–90ms; the page you arrive at 0 → 1 from 76ms; its words rise from 76ms + their own --d */
+@keyframes c02-out{0%{opacity:1}100%{opacity:0}}
 @keyframes c02-op{0%{opacity:0}100%{opacity:1}}
-.c02-in{transition:opacity calc(210ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc((var(--d,0ms) + 70ms) * var(--k)),transform calc(380ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc((var(--d,0ms) + 70ms) * var(--k))}
-.c02-pg.is-top.ph-enter.dir-fwd .c02-in,.c02-pg.c02-deep.is-top.ph-enter.dir-swap .c02-in{opacity:0;transform:translateY(12px);transition:none}
-.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(90ms * var(--k)) both}
-@keyframes c02-in{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+@keyframes c02-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes c02-slidein{0%{opacity:0;transform:translateX(26px)}100%{opacity:1;transform:none}}
+.c02-pg.is-under.ph-enter,.c02-pg.is-under.ph-in,.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both;pointer-events:none}
+.c02-pg.is-under.ph-idle{opacity:0;visibility:hidden;pointer-events:none}
+.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit{animation:c02-op calc(200ms * var(--k)) cubic-bezier(.25,.7,.35,1) calc(76ms * var(--k)) both}
+.c02-pg.is-under.ph-exit{z-index:5}
+.c02-deep.is-top.dir-fwd.ph-enter .c02-in,.c02-deep.is-top.dir-fwd.ph-in .c02-in,.c02-deep.is-top.dir-swap.ph-enter .c02-in,.c02-deep.is-top.dir-swap.ph-in .c02-in,.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(380ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc((var(--d,0ms) + 76ms) * var(--k)) both}
+.c02-deep.is-top.dir-fwd.ph-enter .c02-slide,.c02-deep.is-top.dir-fwd.ph-in .c02-slide,.c02-deep.is-top.dir-swap.ph-enter .c02-slide,.c02-deep.is-top.dir-swap.ph-in .c02-slide{animation:c02-slidein calc(380ms * var(--k)) cubic-bezier(.16,.84,.24,1) calc((var(--d,0ms) + 76ms) * var(--k)) both}
 /* the flight layer: one circle per person, from where it was to where it lands; the destination circle shows when it lands */
 .c02-fly{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}
-.c02-fly>i{position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;will-change:transform}
+.c02-fly>i{position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;will-change:transform;font-style:normal}
 .c02-fly>i>b{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;line-height:1;letter-spacing:0}
 .c02-pane{transition:opacity calc(240ms * var(--k)) ease,transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c02-home.ph-enter.dir-role .c02-pane{opacity:.18;transform:translateX(var(--rx,18px));transition:none}
@@ -209,6 +210,8 @@ body{margin:0}
 .c02-stage.reissued{--ju-ticket-top:24px}
 /* the printer's mouth is part of the page: its lip is there as the page arrives, and the paper comes out of it once the page settles */
 .c02-stage[data-state="idle"] .ju-print-mouth,.c02-stage[data-state="idle"] .ju-print-lip{opacity:1;transition:none}
+.c02-slotline{position:absolute;left:50%;top:var(--ju-ticket-top,84px);width:258px;height:352px;margin-left:-129px;z-index:1;border-radius:10px;border:1.5px dashed rgba(28,24,23,.18);background:rgba(255,255,255,.14);opacity:0;transition:opacity .4s ease;pointer-events:none}
+.c02-stage[data-state="idle"] .c02-slotline,.c02-stage[data-print="printing"] .c02-slotline{opacity:1}
 .c02-hostcard{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:14px;align-items:center;margin-top:16px;padding:0 16px 14px;border-radius:22px;background:var(--paper);box-shadow:0 1px 1px rgba(var(--sh),.05),0 16px 34px -20px rgba(var(--sh),.45)}
 .c02-hostcard>.c02-avw{position:relative;grid-column:1;grid-row:1;width:44px;height:44px}
 .c02-hostcard>.c02-avw .c02-av{font-size:calc(18px * var(--tz,1))}
@@ -250,9 +253,6 @@ body{margin:0}
 .c02-pc>.c02-avw{left:16px;top:16px;width:44px;height:44px;z-index:2}
 .c02-pc>.c02-avw .c02-av{font-size:calc(18px * var(--tz,1))}
 .c02-pc-in{position:relative}
-.c02-pg.is-top.ph-enter .c02-slide{opacity:0;transform:translateX(26px);transition:none}
-.c02-slide{transition:opacity calc(200ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(var(--d,0ms) * var(--k)),transform calc(380ms * var(--k)) cubic-bezier(.16,.84,.24,1) calc(var(--d,0ms) * var(--k))}
-.c02-pg.is-under.ph-exit .c02-slide{animation:c02-in calc(280ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k)) both}
 .c02-pc .nm{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;font-size:calc(17px * var(--tz,1));font-weight:600;line-height:1.35;color:var(--cink)}
 .c02-vf{display:inline-flex;align-items:center;gap:3px;font-size:calc(12px * var(--tz,1));font-weight:500;color:#0b7458}
 .c02-vf svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -606,7 +606,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
                 <sc-if value="{{tk.showStage}}">
                   <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
                   <div class="ju-ticket-stage c02-stage {{tk.stageCls}}" data-print-stage="c02" data-state="idle">
-                    <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                    <div class="ju-print-mouth"></div><div class="ju-print-lip"></div><div class="c02-slotline" aria-hidden="true"></div>
                     <div class="ju-ticket" data-paper="c02">
                       <div class="ju-ticket-shadow" data-paper-shadow="c02" data-raster="skip"><div></div></div>
                       <div class="ju-ticket-shell" data-paper-shell="c02">
@@ -838,7 +838,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
             <sc-if value="{{sh.hasAffected}}"><div class="c02-aff"><p class="c02-lbl">{{S.affectedTitle}}</p><sc-for list="{{S.affected}}" as="x" hint-placeholder-count="2"><div><span>{{x.label}}</span><b>{{x.n}}</b></div></sc-for></div></sc-if>
             <sc-if value="{{S.irreversible}}"><p class="c02-irrev">{{S.irreversible}}</p></sc-if>
             <sc-if value="{{S.hint}}"><p class="c02-msg">{{S.hint}}</p></sc-if>
-            <sc-if value="{{S.card}}"><div class="c02-v27" role="img" aria-label="局卡 · {{S.card.title}}"><div data-spin-shadow></div><div data-spin-face="front"><div data-c02card="{{sh.cardKey}}"></div><div class="ju-v27-face-dots"></div><div class="ju-v27-sheen-clip"><div data-spin-sheen></div></div><div class="ju-v27-face-ring"></div><div class="ju-v27-punch-top"></div><div class="ju-v27-punch-bottom"></div></div></div><div class="c02-facts"><p class="w">{{S.card.when.zh}}</p><p class="p">{{S.card.place.full}}</p><p class="h">局主 {{S.card.host}} · {{S.card.statusLabel}} · {{S.card.caption}}</p></div></sc-if></div></sc-if>
+            <sc-if value="{{S.card}}"><div class="c02-v27" role="img" aria-label="局卡 · {{S.card.title}}"><div data-spin-shadow></div><div data-spin-face="front"><div data-c02card="{{sh.cardKey}}"></div><div class="ju-v27-face-dots"></div><div class="ju-v27-sheen-clip"><div data-spin-sheen></div></div><div class="ju-v27-face-ring"></div><div class="ju-v27-punch-top"></div><div class="ju-v27-punch-bottom"></div></div></div><div class="c02-facts"><p class="w">{{S.card.when.zh}}</p><p class="p">{{S.card.place.full}}</p><p class="h">局主 {{S.card.host}}</p><p class="h">{{S.card.statusLabel}} · {{S.card.caption}}</p><sc-if value="{{S.card.note}}"><p class="n">{{S.card.note}}</p></sc-if></div></sc-if>
             <sc-if value="{{sh.isRecord}}">
               <sc-if value="{{S.done}}"><div class="c02-result" style="box-shadow:none;background:rgba(28,24,23,.04)"><b>{{S.doneTitle}}</b><p>{{S.doneBody}}</p><p>查看进度 · 不在本次范围</p></div></sc-if>
               <sc-if value="{{sh.recordOpen}}"><label class="c02-lbl">发生了什么（{{S.count}}/{{S.max}}）<textarea class="c02-in-f" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{S.onInput}}">{{S.text}}</textarea></label></sc-if>
@@ -1209,6 +1209,11 @@ class Component extends DCLogic {
   }
 }
 JU.mixin(Component);
+(function () {
+  /* a review jump starts from the top of every page: the previous state's scroll positions and flights never leak into the next */
+  var baseJump = Component.prototype.jumpTo;
+  if (baseJump) Component.prototype.jumpTo = function (key) { var root = this.rootRef && this.rootRef.current; this._land(); this._flip = null; this._scrollMemo = {}; this._shLast = null; this._shClosing = 0; if (root) root.querySelectorAll('[data-scroller]').forEach(function (el) { el.scrollTop = 0; var sf = el.closest('[data-surface]'); if (sf) sf.dataset.c02c = '0'; }); return baseJump.apply(this, arguments); };
+})();
 (function () {
   /* section focus (reveal(el, true)) must clear C02's overlay header (V27 constant-height header + tool row = sat + 76px) and never
      move a section that is already fully in view; every other call (soft return-to-origin, memo sync) is the shared controller's */

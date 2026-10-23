@@ -264,7 +264,11 @@ body{margin:0}
 .c01-cg:has([data-revealed="true"]) .c01-an{opacity:1;transform:none}
 .c01-cg .c01-an{padding-top:17px}
 .c01-copyfail{font-size:calc(13px * var(--tz,1));color:var(--red);margin:6px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.c01-ash{height:40px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.55;margin:8px 0}
+/* after the burn the empty paper stage closes (the original's own .5s height curve) and the result rises under the date; the second anchor reads 票根 · 已作废 */
+.c01-tk.is-ash .c01-stage{height:0!important;overflow:hidden}
+.c01-tk.is-ash .c01-cg .c01-an,.c01-tk.is-burning .c01-cg .c01-an{opacity:1;transform:none}
+.c01-tk.is-ash .c01-cg .c01-an .c01-an-s{color:var(--red)}
+.c01-tk.is-ash .ju-contact-wrap,.c01-tk.is-burning .ju-contact-wrap{display:none}
 .c01-t08{position:relative;height:520px;margin:4px -14px 0 -60px}
 .c01-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
 /* ---- manage: the head keeps the date anchor; below it the spine shows section anchors ---- */
@@ -303,7 +307,7 @@ body{margin:0}
 .c01-app .res svg{flex:0 0 auto}
 @keyframes c01-settle{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
 /* M7 on the spine: after 改时间 the old day number falls away struck through, the new one drops into the anchor */
-.c01-an.lead{position:relative}
+.c01-an.lead:not(.c01-prog-an){position:relative}
 .c01-an.lead.is-moved .c01-an-big,.c01-an.lead.is-moved .c01-an-s{animation:c01-redate calc(640ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .c01-an.lead.is-moved::before{content:attr(data-old);position:absolute;left:0;top:0;font:600 calc(22px * var(--tz,1))/1 Archivo,"Noto Sans SC",sans-serif;color:var(--sec);text-decoration:line-through;text-decoration-thickness:1.5px;animation:c01-unredate calc(640ms * var(--k)) cubic-bezier(.4,0,.2,1) both;pointer-events:none}
 @keyframes c01-redate{0%,22%{opacity:0;transform:translateY(-12px)}100%{opacity:1;transform:none}}
@@ -383,6 +387,7 @@ body{margin:0}
 .c01-rules h6:first-child{margin-top:0}
 .c01-rmore{margin:2px 0 0}
 .c01-prog-an{position:sticky;top:16px}
+.c01-read .c01-rules{margin-top:16px;padding-top:14px;border-top:1px solid var(--line2)}
 .c01-prog-an.done .c01-an-big,.c01-prog-an.done .c01-an-s{color:var(--green)}
 .c01-fact{margin-top:10px;font-size:calc(13px * var(--tz,1));line-height:1.5;display:flex;flex-wrap:wrap;column-gap:10px}
 .c01-fact b{font-weight:500;color:var(--sec)}
@@ -616,7 +621,7 @@ body{margin:0}
 
       <!-- ===== TICKET / REPLY (one template). The stage is the SHARED ORIGINAL (ticket.html contract) handed to JURitual.print / tear / contact / burn ===== -->
       <sc-if value="{{ticketOn}}" hint-placeholder-val="{{false}}">
-        <section class="c01-pg c01-tk {{c.nav.cls.ticket}}{{c.nav.cls.reply}}" data-surface="{{ticketSurface}}" style="{{sub.ticketStyle}}">
+        <section class="c01-pg c01-tk {{c.nav.cls.ticket}}{{c.nav.cls.reply}} {{ticket.ashCls}}" data-surface="{{ticketSurface}}" style="{{sub.ticketStyle}}">
           <header class="c01-hd" data-header>
             <button type="button" class="c01-pill" data-act="back" aria-label="返回" onClick="{{c.ticket.back}}"><i></i><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(20,22,31,.8)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></button>
             <sc-if value="{{c.ticket.canExit}}"><button type="button" class="c01-weak" data-act="{{ticketExitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if>
@@ -663,7 +668,7 @@ body{margin:0}
               <sc-if value="{{ticket.showStage}}">
                 <!-- the contact layer gets its own anchor on the spine (联系 · 8 小时内) once the original reveals it -->
                 <div class="c01-g c01-cg">
-                  <div class="c01-an sec" aria-hidden="true"><div class="c01-an-big">联系</div><div class="c01-an-s">{{ticket.contactAn}}</div></div>
+                  <div class="c01-an sec" aria-hidden="true"><div class="c01-an-big">{{ticket.cgBig}}</div><div class="c01-an-s">{{ticket.cgSmall}}</div></div>
                   <div class="c01-ct">
                     <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                       <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
@@ -674,9 +679,9 @@ body{margin:0}
                     <sc-if value="{{ticket.showClosed}}"><p class="c01-err">{{c.ticket.contact.closedText}}</p></sc-if>
                     <sc-if value="{{c.ticket.contact.error}}"><p class="c01-err">{{c.ticket.contact.error}}</p></sc-if>
                     <sc-if value="{{c.ticket.result}}">
-                      <div class="c01-result"><sc-if value="{{c.ticket.result.burning}}"><p class="c01-note">票根正在作废…</p></sc-if><sc-if value="{{ticket.ashes}}"><div class="c01-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div>
+                      <div class="c01-result"><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div>
                     </sc-if>
-                    <sc-if value="{{c.ticket.reply}}"><p class="c01-note">{{c.ticket.reply.oldText}} → {{c.ticket.reply.newText}}</p></sc-if>
+                    <sc-if value="{{c.ticket.reply}}"><p class="c01-note">{{ticket.replyLine}}</p></sc-if>
                     <sc-if value="{{ticket.hint}}"><p class="c01-note">{{ticket.hint}}</p></sc-if>
                   </div>
                 </div>
@@ -1052,6 +1057,8 @@ class Component extends DCLogic {
   _mountTicket(stage, c) {
     this._destroyTicket();
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    /* the same stage node may have held a burnt ticket a moment ago (Preact reuses it): clear the burn's clip / canvases first */
+    if (R && R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
     if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
     if (st === 'printing') {
       const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px');
@@ -1090,6 +1097,7 @@ class Component extends DCLogic {
   _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = c.history.ritual; if (!R || !data) return;
+    if (R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
     this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
     if (c.history.ashes) { stage.dataset.state = 'void'; return; }
     if (c.history.burn.play) { this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: () => { this._rit.hburn = null; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); } }); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
@@ -1337,7 +1345,7 @@ class Component extends DCLogic {
     days.forEach(g => g.rows.forEach(r => { r.openTap = tapper(r.open, r.originKey); r.actTap = tapper(r.act, r.originKey); }));
     /* ---- sub surfaces ---- */
     const youCls = (m) => Object.assign(m, { youCls: m.you ? 'you' : '' });
-    if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(q => { youCls(q); q.tag = q.you ? '你' : ''; }); }
+    if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(q => { youCls(q); q.tag = q.pos === 1 ? (q.you ? '你是下一位' : '下一位获邀') : ''; }); }
     const tk = c.ticket; const ticketOn = c.nav.on.ticket || c.nav.on.reply;
     const tr = srcKey ? '' : 'no-travel'; const fs = c.nav.fromStyle;
     const evLine = (r) => r && r.when ? r.when.time + ' · ' + (r.place ? r.place.full : '') + (r.hostName ? ' · 局主 ' + r.hostName : '') : '';
@@ -1349,7 +1357,7 @@ class Component extends DCLogic {
       dCount: c.detail.on && c.detail.counts ? c.detail.counts.confirmed + '/' + c.detail.counts.capacity : '',
       rules: rd.map(g => ({ title: g.title, shown: rulesOpen ? g.lines : g.lines.slice(0, 1) })), rulesCount: rd.length + ' 组', rulesOpen, rulesLabel: rulesOpen ? '收起约定' : '展开全部约定', rulesToggle: () => this.setState({ c01Rules: !this.state.c01Rules }),
       readStyle: this._pageStyle(c.read.on ? c.read.title : '', ''),
-      readAn: c.read.done ? { big: '读完', bigCls: 'zh', wd: '可以确认', cls: 'done no-travel' } : { big: String(pct), bigCls: '', wd: '% 已读', cls: 'no-travel' },
+      readAn: c.read.confirmed ? { big: '入局', bigCls: 'zh', wd: '已确认', cls: 'done no-travel' } : c.read.expired ? { big: '到期', bigCls: 'zh', wd: '已释放', cls: 'no-travel' } : c.read.done ? { big: '读完', bigCls: 'zh', wd: '可以确认', cls: 'done no-travel' } : { big: String(pct), bigCls: '', wd: '% 已读', cls: 'no-travel' },
       readTitle: c.read.on && c.read.row ? c.read.row.title : '', readMeta: c.read.on ? evLine(c.read.row) : '',
       waitStyle: this._pageStyle(c.waitlist.on ? c.waitlist.title : '', fs), waitAn: this._anchor(c.waitlist.on && c.waitlist.row ? c.waitlist.row.when : null, { cls: tr }),
       waitTitle: c.waitlist.on && c.waitlist.row ? c.waitlist.row.title : '', waitMeta: c.waitlist.on ? evLine(c.waitlist.row) : '',
@@ -1409,7 +1417,7 @@ class Component extends DCLogic {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins, sub, cv: cv || {},
       home: { onScroll, meta, due, days, legend, footNote, empty, today, rpill },
       ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
-      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
+      ticket: { showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result, contactAn: tk.on && tk.contact.closed ? '已关闭' : '8 小时内', replyLine: tk.on && tk.reply ? '原定 ' + tk.reply.oldWhen.wdZh + ' ' + tk.reply.oldWhen.md + ' ' + tk.reply.oldWhen.time + ' → 改为 ' + (tk.reply.newWhen.md === tk.reply.oldWhen.md ? '同日 ' : tk.reply.newWhen.wdZh + ' ' + tk.reply.newWhen.md + ' ') + tk.reply.newWhen.time : '', ashCls: tk.result && tk.result.burn ? (tk.result.burning ? 'is-burning' : 'is-ash') : '', cgBig: tk.result && tk.result.burn ? '票根' : '联系', cgSmall: tk.result && tk.result.burn ? (tk.result.burning ? '作废中' : '已作废') : (tk.on && tk.contact.closed ? '已关闭' : '8 小时内'), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), ashes: !!(tk.result && tk.result.burn && !tk.result.burning), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: '' },
       history: hist, manage: mg,
       shOn: shv.on, sh: shv.sh, sheet: shv.sheet
     };

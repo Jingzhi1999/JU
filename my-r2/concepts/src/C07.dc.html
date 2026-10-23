@@ -98,17 +98,20 @@ body{margin:0}
 .c07-row.is-landing::before{content:"";position:absolute;left:-12px;right:-12px;top:3px;bottom:3px;border-radius:12px;background:rgba(255,255,255,.42);box-shadow:inset 3px 0 0 var(--ink);animation:c07-land calc(1100ms * var(--k)) ease both;pointer-events:none;z-index:-1}
 .c07-row.is-landing{z-index:0}
 @keyframes c07-land{0%{opacity:0}14%{opacity:1}62%{opacity:1}100%{opacity:0}}
-.c07-row.is-deleting{opacity:0;transform:translateX(24px)}
-.c07-row.is-restored{animation:c07-restore calc(260ms * var(--k)) ease}
-@keyframes c07-restore{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.c07-row.c07-draft .t{padding-right:52px}
+.c07-del{position:absolute;right:-8px;top:3px;height:40px;min-width:48px;padding:0 8px;border:0;background:none;border-radius:10px;font-size:calc(13px * var(--tz,1));color:var(--mute);cursor:pointer}
+.c07-del:active{background:rgba(20,22,31,.06)}
+/* M10: the deleted row slides out (180ms) and collapses (to 440ms) so the neighbours close the gap; 撤销 re-opens the same slot */
+.c07-row.is-deleting{overflow:hidden;pointer-events:none;animation:c07-rowout calc(440ms * var(--k)) cubic-bezier(.4,0,.2,1) forwards}
+@keyframes c07-rowout{0%{opacity:1;transform:none;max-height:120px}40%{opacity:0;transform:translateX(32px);max-height:120px;padding-top:13px;padding-bottom:12px}100%{opacity:0;transform:translateX(32px);max-height:0;padding-top:0;padding-bottom:0;border-top-width:0}}
+.c07-row.is-restored{overflow:hidden;animation:c07-restore calc(440ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+@keyframes c07-restore{0%{opacity:0;max-height:0;padding-top:0;padding-bottom:0;transform:translateX(32px)}55%{opacity:0;max-height:120px;padding-top:13px;padding-bottom:12px;transform:translateX(32px)}100%{opacity:1;max-height:120px;transform:none}}
 .c07-empty{padding:28px 0 10px}
 .c07-empty b{display:block;font-size:calc(20px * var(--tz,1));font-weight:500;line-height:1.3;margin-bottom:6px}
 .c07-empty p{margin:0;font-size:calc(14px * var(--tz,1));color:var(--mute)}
 .c07-pane{transition:opacity calc(240ms * var(--k)) ease}
 .ph-enter.dir-role .c07-pane,.ph-enter.dir-swap .c07-pane{opacity:0}
 .c07-foot-note{margin:22px 0 0;font-size:calc(13px * var(--tz,1));color:var(--mute2)}
-.c07-undo{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:14px 0 0;padding:12px 14px;border-radius:14px;background:rgba(20,22,31,.08);font-size:calc(14px * var(--tz,1))}
-.c07-undo button{border:0;background:var(--ink);color:#fff;border-radius:999px;padding:8px 14px;font-size:13px;font-weight:500;cursor:pointer}
 
 /* ======================= the tray: ONE rigid deep-ink sheet, full height, parked so that only its top --th shows =======================
    M4 is a spatial move of that sheet (transform, no reflow): up 340ms cubic-bezier(.22,.9,.24,1) (fast start, no overshoot — a tap gets
@@ -157,11 +160,14 @@ body{margin:0}
 .c07-lead .n>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c07-cdbar{height:2px;margin:8px 0 0;border-radius:1px;background:rgba(255,255,255,.1);overflow:hidden}
 .c07-cdbar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--tgreen)}
+.c07-cdbar.tick i{transition:width 1s linear}
 .c07-cdbar.amber i{background:var(--tamber)}.c07-cdbar.red i,.c07-cdbar.expired i{background:var(--tred)}
 .c07-cd{font-family:Archivo,"Noto Sans SC",sans-serif;font-weight:500;font-size:calc(16px * var(--tz,1));letter-spacing:.01em;font-variant-numeric:tabular-nums}
 .c07-cd.green{color:var(--tgreen)}.c07-cd.amber{color:var(--tamber)}.c07-cd.red,.c07-cd.expired{color:var(--tred)}
 .c07-lead .cta{padding:12px 0 16px;display:flex;justify-content:center}
 .c07-lead.is-compact{padding-top:18px;padding-bottom:20px}
+.c07-lead.sw-a:not(.is-off){animation:c07-swapA calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c07-lead.sw-b:not(.is-off){animation:c07-swapB calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-none{margin:4px 0 0;font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.4;color:var(--tw)}
 .c07-lead .c07-none + .m{margin-top:2px}
 /* the primary CTA: V27 construction (cta.css) — a button element reset on top of it */
@@ -336,6 +342,7 @@ body{margin:0}
 .c07-form{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;animation:c07-in calc(240ms * var(--k)) ease calc(60ms * var(--k)) backwards}
 .c07-form .t{margin:6px 0 0;font-size:calc(22px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance}
 .c07-fbody{margin:8px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--tw2)}
+.c07-fid{margin:8px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw3);border-left:2px solid #8FA2FF;padding-left:9px}
 .c07-fnote{margin:10px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--tw3)}
 .c07-when{margin:6px 0 0;display:flex;flex-direction:column;gap:2px;min-width:0}
 .c07-when s{font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw3);text-decoration-color:rgba(244,245,250,.5)}
@@ -364,23 +371,29 @@ body{margin:0}
 .c07-act .c07-burnnote{margin:4px 0 0;text-align:center;font-size:calc(13px * var(--tz,1));color:var(--tw3)}
 
 /* ======================= sheet + toast ======================= */
-.c07-over{position:absolute;inset:0;z-index:40;background:rgba(8,10,20,.5);display:flex;align-items:flex-end;animation:c07-fade calc(260ms * var(--k)) ease}
-@keyframes c07-fade{0%{background:rgba(8,10,20,0)}100%{background:rgba(8,10,20,.5)}}
-.c07-sheet{width:100%;background:#F6F6FA;color:var(--ink);border-radius:24px 24px 0 0;padding:22px 22px calc(20px + var(--kb,0px) + var(--sab,0px));max-height:calc(100% - 40px);overflow:auto;animation:c07-up calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+/* the overlay (opened over a risen page): a second sheet of the same ink, a step lighter, rising from the bottom over a darker scrim */
+.c07-ovl{position:absolute;inset:0;z-index:40;background:rgba(6,8,14,.56);display:flex;align-items:flex-end;animation:c07-fade calc(260ms * var(--k)) ease}
+@keyframes c07-fade{0%{background:rgba(6,8,14,0)}100%{background:rgba(6,8,14,.56)}}
+.c07-sheet{width:100%;box-sizing:border-box;background:#1D2130;color:var(--tw);border-radius:24px 24px 0 0;box-shadow:inset 0 1px 0 rgba(255,255,255,.1),0 -24px 48px -24px rgba(0,0,0,.6);padding:22px 22px calc(14px + var(--kb,0px) + var(--sab,0px));max-height:calc(100% - 40px);overflow:auto;animation:c07-up calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 @keyframes c07-up{0%{transform:translateY(40%)}100%{transform:none}}
-.c07-sheet h3{margin:0 0 8px;font-size:calc(20px * var(--tz,1));font-weight:600;line-height:1.3}
-.c07-sheet p{margin:0 0 10px;font-size:calc(14px * var(--tz,1));color:var(--ink2);line-height:1.6}
-.c07-sheet .id{font-size:calc(13px * var(--tz,1));color:var(--mute);border-left:3px solid var(--blue);padding-left:8px;margin:0 0 12px}
-.c07-sheet .irrev{background:#fbe9ec;color:#8b1f30;padding:8px 10px;border-radius:8px;font-size:calc(13px * var(--tz,1));margin:8px 0}
-.c07-sheet label{display:block;font-size:calc(13px * var(--tz,1));color:var(--mute);margin:8px 0}
-.c07-sheet .in{display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:12px;margin:4px 0 0;background:#fff;color:var(--ink)}
-.c07-sheet .acts{display:flex;flex-direction:column-reverse;gap:6px;justify-content:center;align-items:center;margin-top:16px}
-.c07-sheet .acts .c07-pill{color:var(--ink);border-color:transparent;background:none}
+.c07-sheet h3{margin:0 0 8px;font-size:calc(22px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw)}
+.c07-sheet p{margin:0 0 10px;font-size:calc(14px * var(--tz,1));color:var(--tw2);line-height:1.6}
+.c07-sheet .id{font-size:calc(13px * var(--tz,1));color:var(--tw3);border-left:2px solid #8FA2FF;padding-left:9px;margin:0 0 12px}
+.c07-sheet .irrev{color:#FF9DAE;padding-left:10px;border-left:2px solid rgba(255,141,160,.5);font-size:calc(13px * var(--tz,1));margin:10px 0}
+.c07-sheet label{display:block;font-size:calc(13px * var(--tz,1));color:var(--tw3);margin:8px 0}
+.c07-sheet .in{display:block;width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(244,245,250,.24);border-radius:12px;margin:6px 0 0;background:rgba(255,255,255,.06);color:var(--tw);color-scheme:dark}
+.c07-sheet .in::placeholder{color:rgba(244,245,250,.5)}
+.c07-sheet .acts{display:flex;flex-direction:column-reverse;gap:4px;justify-content:center;align-items:center;margin-top:16px}
+.c07-sheet .acts .c07-pill{height:44px;color:var(--tw2);border-color:transparent;background:none}
 .c07-dz{border:0;padding:0 18px;font-family:inherit}   /* V27 danger construction (cta.css .ju-v27-danger) on a button */
 .c07-dz:disabled{opacity:.5;cursor:default}
-.c07-sheet .kv{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid var(--line);font-size:calc(14px * var(--tz,1))}
-.c07-sheet .help{font-size:calc(13px * var(--tz,1));color:var(--mute);margin:6px 0 0}
-.c07-sheet .err{color:var(--red);font-size:calc(13px * var(--tz,1));margin:6px 0 0}
+.c07-sheet .c07-dz{background:rgba(255,141,160,.08);color:#FF9DAE;box-shadow:inset 0 0 0 1px rgba(255,141,160,.46)}
+.c07-sheet .ju-v27-cta[aria-disabled="true"]{background:rgba(255,255,255,.08);background-image:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:rgba(244,245,250,.6)}
+.c07-sheet .ju-v27-cta[aria-disabled="true"]>.gloss{display:none}
+.c07-sheet .kv{display:flex;justify-content:space-between;padding:8px 0;border-top:1px solid rgba(255,255,255,.1);font-size:calc(14px * var(--tz,1))}
+.c07-sheet .help{font-size:calc(13px * var(--tz,1));color:var(--tw3);margin:6px 0 0}
+.c07-sheet .err{color:#FF9DAE;font-size:calc(13px * var(--tz,1));margin:6px 0 0}
+.c07-sheet :focus-visible{outline-color:#8FA2FF}
 /* toasts never sit on a CTA: above the parked tray at home / in manage, above the footer CTA on a risen page */
 .c07-toast{pointer-events:none;position:absolute;left:22px;right:22px;bottom:calc(var(--th) + 12px + var(--kb,0px));z-index:45;background:#F6F6FA;color:var(--ink);padding:12px 16px;border-radius:14px;font-size:calc(14px * var(--tz,1));box-shadow:0 14px 34px -14px rgba(0,0,0,.6);animation:c07-toast calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .app.c07-up .c07-toast{bottom:calc(var(--navh) + 96px + var(--kb,0px))}
@@ -396,7 +409,7 @@ body{margin:0}
       <div class="c07-veil"></div>
 
       <!-- ===== upper region · HOME list on the colour light (role × section live in state; never on the stack) ===== -->
-      <section class="c07-page {{home.pageCls}} {{c.nav.cls.home}}" data-surface="home">
+      <section class="c07-page {{home.pageCls}} {{c.nav.cls.home}}" data-surface="home" inert="{{formOn}}">
         <header class="c07-head" data-header>
           <h1 class="c07-title">我的局</h1>
           <div class="c07-meta">{{home.meta}}</div>
@@ -447,13 +460,13 @@ body{margin:0}
             <sc-if value="{{home.hostedDrafts}}">
               <sc-if value="{{c.hosted.empty.on}}"><div class="c07-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p></div></sc-if>
               <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
-                <div class="c07-row {{r.cls}} {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                <div class="c07-row c07-draft {{r.cls}} {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
                   <span class="t">{{r.title}}</span>
                   <span class="l"><span class="m">{{r.whenText}} · {{r.placeText}} · {{r.agoText}}</span><span class="st {{r.readyCls}}">{{r.missingText}}</span></span>
                   <sc-if value="{{r.sourceText}}"><span class="x">{{r.sourceText}}</span></sc-if>
+                  <sc-if value="{{r.canDel}}"><button type="button" class="c07-del" data-act="delete" aria-label="删除草稿 {{r.title}}" onClick="{{r.del}}">删除</button></sc-if>
                 </div>
               </sc-for>
-              <sc-if value="{{c.hosted.undo.on}}"><div class="c07-undo" role="status"><span>{{c.hosted.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} {{c.hosted.undo.left}}s</button></div></sc-if>
             </sc-if>
             <sc-if value="{{home.hostedHistory}}">
               <sc-if value="{{c.hosted.empty.on}}"><div class="c07-empty"><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p></div></sc-if>
@@ -526,7 +539,7 @@ body{margin:0}
                 </div></sc-if>
                 <sc-if value="{{c.manage.attendance.on}}"><div class="c07-msec {{c.manage.attendance.cls}}" data-section="attendance" style="--o:{{c.manage.attendance.order}}">
                   <div class="c07-grp"><span>{{c.manage.attendance.title}}</span><i>{{c.manage.attendance.sub}}</i></div>
-                  <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c07-mrow pick att {{a.focusCls}}" data-rid="{{a.id}}" role="button" tabindex="0" aria-label="{{a.ariaText}}" onClick="{{a.pick}}">
+                  <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c07-mrow pick att {{a.focusCls}}" data-rid="{{a.id}}" data-act="{{a.rowAct}}" role="button" tabindex="0" aria-label="{{a.ariaText}}" onClick="{{a.pick}}">
                     <div class="n"><span>{{a.name}}</span><span class="r">{{a.rightText}}</span></div>
                     <span class="c07-rslot" data-stamp-slot="{{a.id}}" data-mode="{{a.stampMode}}" aria-hidden="true"></span>
                     <sc-if value="{{a.showTrail}}"><div class="trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
@@ -556,7 +569,7 @@ body{margin:0}
         <!-- lead (home): 先处理这一件 — stays mounted while the sheet is up (hidden, inert) so it can fade back in as the sheet settles -->
         <sc-if value="{{tray.leadOn}}">
           <div class="c07-lead {{lead.cls}}" data-rid="{{lead.rid}}" data-origin="{{lead.originKey}}" inert="{{lead.inert}}" aria-hidden="{{lead.inert}}">
-            <div class="c07-lab"><span>{{lead.label}}</span><sc-if value="{{lead.secondary}}"><button type="button" class="w" data-act="{{lead.secondaryKey}}" onClick="{{lead.secondary}}">{{lead.secondaryLabel}}</button></sc-if></div>
+            <div class="c07-lab"><span>{{lead.label}}</span><sc-if value="{{lead.okNote}}"><span class="ok" role="status">{{lead.okNote}}</span></sc-if><sc-if value="{{lead.secondaryOn}}"><button type="button" class="w" data-act="{{lead.secondaryKey}}" onClick="{{lead.secondary}}">{{lead.secondaryLabel}}</button></sc-if></div>
             <sc-if value="{{lead.on}}">
               <h2 class="t">{{lead.title}}</h2>
               <div class="m">{{lead.meta}}</div>
@@ -568,7 +581,12 @@ body{margin:0}
               </div>
               <sc-if value="{{lead.cta}}"><div class="cta"><button type="button" class="c07-cta ju-v27-cta" data-act="cta" onClick="{{lead.act}}"><span class="gloss"></span><span class="label">{{lead.cta}}</span></button></div></sc-if>
             </sc-if>
-            <sc-if value="{{lead.none}}"><div class="c07-none">{{lead.noneTitle}}</div><div class="m">{{lead.noneBody}}</div></sc-if>
+            <sc-if value="{{lead.undo}}">
+              <h2 class="t">{{lead.undoTitle}}</h2>
+              <div class="c07-cue"><div class="n"><span class="c07-cd green">剩 {{lead.undoLeft}} 秒</span><span>撤销后回到原来的位置</span></div><div class="c07-cdbar tick green" style="--ratio:{{lead.undoRatio}}" aria-hidden="true"><i></i></div></div>
+              <div class="cta"><button type="button" class="c07-cta ju-v27-cta" data-act="undo" onClick="{{lead.undoAct}}"><span class="gloss"></span><span class="label">撤销删除</span></button></div>
+            </sc-if>
+            <sc-if value="{{lead.none}}"><div class="c07-none">{{lead.noneTitle}}</div><div class="m">{{lead.noneBody}}</div><sc-if value="{{lead.noneCta}}"><div class="cta"><button type="button" class="c07-cta ju-v27-cta" data-act="{{lead.noneKey}}" onClick="{{lead.noneAct}}"><span class="gloss"></span><span class="label">{{lead.noneCta}}</span></button></div></sc-if></sc-if>
           </div>
         </sc-if>
 
@@ -612,7 +630,7 @@ body{margin:0}
 
         <!-- a manage sheet as the tray's own block (改时间 / 取消这局 / 记为散场 / 局卡): same controller sheet, same focus trap / Esc -->
         <sc-if value="{{form.on}}">
-          <div class="c07-form k-{{form.kind}}" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="c07-over c07-form k-{{form.kind}}" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}" onKeyDown="{{c.sheet.onKeyDown}}">
             <div class="c07-lab"><span>{{form.label}}</span><sc-if value="{{form.side}}"><span>{{form.side}}</span></sc-if></div>
             <sc-if value="{{form.title}}"><h2 class="t">{{form.title}}</h2></sc-if>
             <sc-if value="{{form.isResched}}">
@@ -629,6 +647,7 @@ body{margin:0}
               <sc-if value="{{sheet.hasAffected}}"><div class="c07-aff"><span class="h">{{c.sheet.affectedTitle}}</span><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><span class="x">{{x.label}}<b>{{x.n}}</b></span></sc-for></div></sc-if>
               <p class="c07-irrev">{{c.sheet.irreversible}}</p>
             </sc-if>
+            <sc-if value="{{form.isConfirm}}"><sc-if value="{{form.ident}}"><p class="c07-fid">{{form.ident}}</p></sc-if><p class="c07-fbody">{{c.sheet.body}}</p></sc-if>
             <sc-if value="{{form.isEnd}}"><p class="c07-fbody">{{c.sheet.body}}</p><sc-if value="{{c.sheet.hint}}"><p class="c07-fnote">{{c.sheet.hint}}</p></sc-if></sc-if>
             <sc-if value="{{form.isCard}}">
               <div class="c07-card"><div class="ju-ticket-face">
@@ -823,7 +842,7 @@ body{margin:0}
 
       <!-- ===== SHEET (one overlay for every kind) ===== -->
       <sc-if value="{{sheet.overlay}}">
-        <div class="c07-over {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+        <div class="c07-over c07-ovl {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
           <div class="c07-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}">
             <h3>{{c.sheet.title}}</h3>
             <sc-if value="{{c.sheet.identity}}"><p class="id">{{c.sheet.identity.title}} · {{c.sheet.identity.when}} · {{c.sheet.identity.place}}</p></sc-if>
@@ -864,7 +883,7 @@ class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
     this.motionSpec = { fwd: 340, back: 320, swap: 300, role: 280 };
-    this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 440;   /* M10: slide out 180ms + collapse to 440ms */
     this.envRef = { current: null }; this._rit = {};
     this.state.mfocus = null; this.state.mArr = false; this.state.seatSeen = {};
     /* the lead's 阅读并确认 rises straight into the reading layer (no unseen detail page under it): back from read — or from the ticket
@@ -872,12 +891,15 @@ class Component extends DCLogic {
     this.paths = { read: ['home', 'read'] };
     if (p.preset === 'hosted') this.state.role = 'hosted';
   }
-  initialState(variant) { return JU.baseState(variant); }
+  /* a review jump / reset starts the tray's own state over as well (receipts, holds, the cancel ceremony, the form's touched flag) */
+  initialState(variant) { return Object.assign(JU.baseState(variant), { mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null, leadNote: '', seatNew: null, fTouched: null }); }
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._syncCardBurn(); this._syncTrayFocus(ps); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker(); }
+  /* the undo countdown in the tray ticks every second (the shared tick loop only runs for deadlines) */
+  _undoTicker() { const u = this.state.ui && this.state.ui.undo; if (!u || this._undoTick) return; this._undoTick = true; this.holdKey('c07-undotick', 1000, () => { this._undoTick = false; this.setState(st => ({ undoTick: (st.undoTick || 0) + 1 })); }); }
   /* stamp faces (JURitual.stampFace): the slip in the tray and one per recorded roster row; a slot is (re)mounted only when its mode /
      seq changes; data-press="1" (the record just written) plays juStamp .55s, everything else is mounted settled */
   _syncFaces() {
@@ -1049,6 +1071,8 @@ class Component extends DCLogic {
       const id = fx.memberId; this.setState(st => ({ mfocus: id, attHold: { id: id, seq: ((st.attHold && st.attHold.seq) || 0) + 1 } }));
       this.holdKey('c07-att', this.isRM() ? 650 : 1050, () => { this._c07FocusAct = '[data-act="attend-present"]'; this.setState(st => { const nx = this._c && this._c.manage.on ? (this._c.manage.attendance.rows.filter(a => !a.recorded)[0] || null) : null; this._c07RevealRow = nx ? nx.id : null; return { attHold: null, mfocus: null, actSwap: (st.actSwap || 0) + 1 }; }); });
     }
+    const homeNote = { withdrawn: '已撤回申请', released: '已放弃预留 · 不记主动失约', exited: '已退出这局', 'reschedule-declined': '已退出 · 位置已释放', queue_left: '已退出候补' }[fx.type];
+    if (homeNote && !fx.replay && this._c && this._c.nav.cur === 'home') { this.setState(st => ({ leadNote: homeNote, leadSwap: (st.leadSwap || 0) + 1 })); this.holdKey('c07-leadnote', 2800, () => this.setState({ leadNote: '' })); }
     if (fx.type === 'cancelled' && !fx.replay) this.setState({ cburn: { eventId: fx.eventId, seq: Date.now() }, actNote: '' });
     if (fx.type === 'ended' && !fx.replay) { this._c07FocusAct = '[data-act="attend-present"]'; this.setState(st => ({ actSwap: (st.actSwap || 0) + 1, actNote: '已记为散场', mfocus: null, mArr: false })); this.holdKey('c07-actnote', 2600, () => this.setState({ actNote: '' })); }
     if (fx.type === 'invited' || fx.type === 'rejected') {
@@ -1078,8 +1102,24 @@ class Component extends DCLogic {
     const firstUp = trayUp && nav.depth === 2 && nav.dir === 'fwd' && ph !== 'idle';
     if (this._pendingSection) this._c07Pending = this._pendingSection;   /* see _fixManageScroll */
     const nb = (t) => String(t || '').replace(/ · /g, '\u00a0· ');
+    /* a sheet opened while the tray is parked is drawn as the tray's own block (manage: 改时间 / 取消这局 / 记为散场 / 局卡; home: the
+       lead's 去不了了 / 撤回 / 退出候补 confirm); over a risen page it is a second ink sheet (.c07-ovl) */
+    const sh = c.sheet; const trayForm = !!(sh.on && ((mTop && ['reschedule', 'cancel', 'end', 'card'].indexOf(sh.kind) >= 0) || (cur === 'home' && !trayUp && sh.kind === 'confirm')));
+    if (trayForm) this._c07FormKind = sh.kind;
+    const form = { on: trayForm };
+    if (trayForm) {
+      const idn = sh.identity || {}; form.kind = sh.kind; form.closeLabel = sh.cancelLabel || '关闭';
+      if (sh.kind === 'reschedule') { const f = sh.fields; form.isResched = true; form.label = '改时间 · ' + f.tz; form.side = '已确认的人各自答复'; form.oldText = '原定 ' + f.oldWhen.zh; form.newText = f.newText ? '改到 ' + f.newText : f.placeholder; form.newCls = f.newText ? '' : 'ph'; form.primary = true;
+        const sid = s.sheet && s.sheet.id; const touched = !!sid && s.fTouched === sid; form.sameHint = touched ? f.sameHint : ''; if (f.same && !touched) form.newText = '选一个新的日期或时间';
+        const touch = () => { if (this.state.fTouched !== sid) this.setState({ fTouched: sid }); };
+        form.onDate = (e) => { touch(); f.onDate(e); }; form.onTime = (e) => { touch(); f.onTime(e); }; }
+      else if (sh.kind === 'cancel') { form.isCancel = true; form.safeFirst = true; form.label = '取消这局'; form.side = '不能撤销'; form.title = nb('取消「' + idn.title + '」？'); form.danger = true; }
+      else if (sh.kind === 'end') { form.isEnd = true; form.label = '记为散场'; form.side = idn.when || ''; form.title = nb('「' + idn.title + '」散场了？'); form.primary = true; }
+      else if (sh.kind === 'confirm') { form.isConfirm = true; form.label = { withdraw: '撤回申请', release: '去不了了', exit: '去不了了', decline: '不接受新时间', leaveQueue: '退出候补' }[sh.sub] || ''; form.side = '不影响其他局'; form.title = sh.title; form.ident = idn.title ? nb(idn.title) + ' · ' + idn.when + ' · ' + idn.place : ''; form.danger = !!sh.danger; form.primary = !sh.danger; form.safeFirst = !!sh.danger; }
+      else { form.isCard = true; form.label = '局卡'; form.side = '成员看到的是同一张'; form.cardTitle = nb(sh.card ? sh.card.title : ''); form.closeLabel = '关闭'; }
+    }
     const rowCls = (r) => Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', readyCls: r.ready ? 'go' : 'wait', toneCls: r.todo ? 'act' : (r.section === 'formed' ? 'go' : 'wait'), seatShort: r.counts ? (r.counts.confirmed + '/' + r.counts.capacity) : '' });
-    [c.joined.sections, c.joined.sectionsHistory, c.hosted.sections, c.hosted.sectionsHistory].forEach(ss => ss.forEach(g => g.rows.forEach(rowCls))); c.hosted.drafts.forEach(rowCls);
+    [c.joined.sections, c.joined.sectionsHistory, c.hosted.sections, c.hosted.sectionsHistory].forEach(ss => ss.forEach(g => g.rows.forEach(rowCls))); c.hosted.drafts.forEach(rowCls); c.hosted.drafts.forEach(r => { r.canDel = !r.ghost; });
     [c.detail, c.read, c.waitlist, c.ticket, c.history].forEach(x => { if (x && x.on && x.row) x.row.titleNb = nb(x.row.title); });
     const youCls = (m) => Object.assign(m, { youCls: m.you ? 'you' : '' });
     if (c.detail.on) c.detail.members.forEach(youCls); if (c.waitlist.on) { c.waitlist.entered.forEach(youCls); c.waitlist.queue.forEach(youCls); }
@@ -1114,25 +1154,21 @@ class Component extends DCLogic {
         lead.note = leadRow.pending ? (pend.slice(0, 3).join('、') + (pend.length > 3 ? ' 等 ' + pend.length + ' 人' : '') + ' 在等答复 · 通过即发出 6 小时预留') : leadRow.unrecorded ? (leadRow.unrecorded + ' 人出席待记录 · 散场 24 小时内可查看微信') : leadRow.formedLine;
         lead.cta = leadRow.ctaLabel || '管理这局'; lead.act = leadRow.act; Object.assign(lead, seatLine(leadRow, true));
       }
-    } else if (isCur) { lead.none = true; lead.label = isJ ? '眼下没有要回应的' : '眼下没有要处理的'; lead.noneTitle = isJ ? (c.joined.empty.on ? '还没有加入任何局' : '都安排好了') : (c.hosted.empty.on ? '还没发起过局' : '都安排好了'); lead.noneBody = isJ ? '散场和没成行的都在「历史」里' : '草稿与历史在上方切换'; lead.cls = 'is-compact'; }
-    else { lead.none = true; lead.cls = 'is-compact'; lead.label = c.section === 'history' ? '历史' : '草稿'; lead.noneTitle = c.section === 'history' ? ((isJ ? c.joined.counts.history : c.hosted.counts.history) + ' 场已结束') : (c.hosted.counts.drafts + ' 份草稿'); lead.noneBody = c.section === 'history' ? '散场的票根与没成行的记录分开留着' : '补完就能发布 · 删除可在 10 秒内撤销'; }
+    } else if (isCur) { lead.none = true; lead.cls = 'is-compact'; lead.label = isJ ? '眼下没有要回应的' : '眼下没有要处理的';
+      const em = isJ ? c.joined.empty : c.hosted.empty, nh = isJ ? c.joined.counts.history : c.hosted.counts.history;
+      if (!em.on) { lead.noneTitle = '都安排好了'; lead.noneBody = isJ ? '有变化会先出现在这里' : '有新的申请或答复会先出现在这里'; }
+      else if (!isJ && em.kind === 'drafts') { lead.label = '眼下没有进行中的局'; lead.noneTitle = c.hosted.counts.drafts + ' 份草稿还在'; lead.noneBody = '补完就能发布'; lead.noneCta = em.action.label; lead.noneAct = em.action.go; lead.noneKey = 'drafts'; lead.cls = ''; }
+      else if (nh) { lead.label = '眼下没有进行中的局'; lead.noneTitle = '都结束了 · ' + nh + ' 场在历史里'; lead.noneBody = isJ ? '散场的票根和没成行的记录分开留着' : '散场和取消的局都留着记录'; lead.noneCta = '看历史'; lead.noneAct = () => c.setSection('history'); lead.noneKey = 'history'; lead.cls = ''; }
+      else { lead.label = isJ ? '还没有加入任何局' : '还没发起过局'; lead.noneTitle = isJ ? '加入的局会排在这里' : '开的局会排在这里'; lead.noneBody = isJ ? '要你回应的排最前，其次是就快见面的' : '要处理的排最前，审核、成员和出席都在这里管'; } }
+    else { lead.none = true; lead.cls = 'is-compact'; lead.label = c.section === 'history' ? '历史' : '草稿'; lead.noneTitle = c.section === 'history' ? ((isJ ? c.joined.counts.history : c.hosted.counts.history) + ' 场已结束') : (c.hosted.counts.drafts + ' 份草稿'); lead.noneBody = c.section === 'history' ? '散场的票根与没成行的记录分开留着' : '补完就能发布 · 删除可在 10 秒内撤销';
+      if (c.section === 'history' && !(isJ ? c.joined.counts.history : c.hosted.counts.history)) { lead.noneTitle = '还没有结束的局'; lead.noneBody = '散场和没成行的会分开留在这里'; lead.noneCta = '回到当前'; lead.noneAct = () => c.setSection('current'); lead.noneKey = 'current'; lead.cls = ''; }
+      if (c.section === 'drafts' && !c.hosted.counts.drafts) { lead.noneTitle = '没有草稿'; lead.noneBody = '开局时随时可以先存一份'; } }
+    /* a deleted draft: for 10 s the tray is the undo (the list closes the gap; 撤销 re-opens the same slot) */
+    if (!isJ && c.hosted.undo.on) { const u = c.hosted.undo; Object.assign(lead, { on: false, none: false, undo: true, cls: '', label: '草稿 · 10 秒内可撤销', undoTitle: nb(u.text), undoLeft: u.left, undoRatio: (u.left / 10).toFixed(3), undoAct: u.act, secondary: null }); }
+    lead.secondaryOn = !!lead.secondary && !s.leadNote;
     /* the parked lead stays mounted while the sheet is up (hidden + inert), so it can fade back in as the sheet settles */
-    lead.cls = (lead.cls || '') + ((trayUp || mVis) ? ' is-off' : ''); lead.inert = trayUp || mVis;
+    lead.cls = (lead.cls || '') + ((trayUp || mVis || trayForm) ? ' is-off' : '') + (s.leadSwap ? (s.leadSwap % 2 ? ' sw-a' : ' sw-b') : ''); lead.inert = trayUp || mVis || trayForm; lead.okNote = s.leadNote || '';
     /* ---- manage: focus = the application / attendee handled in the tray ---- */
-    /* a manage sheet (改时间 / 取消这局 / 记为散场 / 局卡) is drawn as the tray's own block; the others keep the overlay */
-    const sh = c.sheet; const trayForm = !!(sh.on && mTop && ['reschedule', 'cancel', 'end', 'card'].indexOf(sh.kind) >= 0);
-    if (trayForm) this._c07FormKind = sh.kind;
-    const form = { on: trayForm };
-    if (trayForm) {
-      const idn = sh.identity || {}; form.kind = sh.kind; form.closeLabel = sh.cancelLabel || '关闭';
-      if (sh.kind === 'reschedule') { const f = sh.fields; form.isResched = true; form.label = '改时间 · ' + f.tz; form.side = '已确认的人各自答复'; form.oldText = '原定 ' + f.oldWhen.zh; form.newText = f.newText ? '改到 ' + f.newText : f.placeholder; form.newCls = f.newText ? '' : 'ph'; form.primary = true;
-        const sid = s.sheet && s.sheet.id; const touched = !!sid && s.fTouched === sid; form.sameHint = touched ? f.sameHint : ''; if (f.same && !touched) form.newText = '选一个新的日期或时间';
-        const touch = () => { if (this.state.fTouched !== sid) this.setState({ fTouched: sid }); };
-        form.onDate = (e) => { touch(); f.onDate(e); }; form.onTime = (e) => { touch(); f.onTime(e); }; }
-      else if (sh.kind === 'cancel') { form.isCancel = true; form.safeFirst = true; form.label = '取消这局'; form.side = '不能撤销'; form.title = nb('取消「' + idn.title + '」？'); form.danger = true; }
-      else if (sh.kind === 'end') { form.isEnd = true; form.label = '记为散场'; form.side = idn.when || ''; form.title = nb('「' + idn.title + '」散场了？'); form.primary = true; }
-      else { form.isCard = true; form.label = '局卡'; form.side = '成员看到的是同一张'; form.cardTitle = nb(sh.card ? sh.card.title : ''); form.closeLabel = '关闭'; }
-    }
     const m = c.manage; const act = { on: false }; let manage = { ready: false };
     if (m.on && !m.missing) {
       const apps = m.apps.rows; const pending = apps.filter(a => !a.result);
@@ -1145,7 +1181,7 @@ class Component extends DCLogic {
       apps.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; a.focusCls = mode === 'app' && focusApp && a.id === focusApp.id ? 'is-focus' : ''; a.pickCls = a.pendingOpen ? 'pick' : ''; a.role = a.pendingOpen ? 'button' : null; a.tabindex = a.pendingOpen ? '0' : null; a.resCls = a.tone === 'void' ? 'void' : ''; a.pickText = (focusApp && a.id === focusApp.id) ? '在下方处理' : ''; a.pick = () => { if (a.pendingOpen) this.setState({ mfocus: a.id, mArr: false }); }; });
       att.forEach(a => { a.focusCls = mode === 'att' && focusAtt && a.id === focusAtt.id ? 'is-focus' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.rightText = a.recorded ? (a.editing ? '更正中' : '更正') : '待记录';
         /* the roster's face appears once the slip has handed over (during the hold the stamp is on the slip only) */
-        a.stampMode = a.recorded && !(held && held.id === a.id) ? a.stamp : ''; a.ariaText = a.name + ' · ' + (a.recorded ? '已记为' + a.chopText + ' · 更正' : '待记录');
+        a.stampMode = a.recorded && !(held && held.id === a.id) ? a.stamp : ''; a.rowAct = a.recorded ? 'correct' : null; a.ariaText = a.name + ' · ' + (a.recorded ? '已记为' + a.chopText + ' · 更正' : '待记录');
         a.pick = () => { this.cancelKey('c07-att'); if (a.recorded && !a.editing) a.correct(); this._c07FocusAct = '[data-act="attend-present"]'; this.setState({ mfocus: a.id, mArr: false, attHold: null }); }; });
       const seats = m.head.progress.seats; seats.forEach((x, i) => { x.newCls = (s.seatNew != null && i === s.seatNew) ? 'is-new' : ''; });
       act.on = true; act.cls = 'k-' + mode + (mVis && !trayForm ? '' : ' is-off'); act.inert = !mVis || trayForm; act.rid = ''; act.swapCls = s.actSwap ? (s.actSwap % 2 ? 'sw-a' : 'sw-b') : ''; act.okNote = s.actNote || ''; act.plainHead = mode !== 'att' && mode !== 'burn';
@@ -1186,6 +1222,8 @@ class Component extends DCLogic {
   }
 }
 JU.mixin(Component);
+/* the list scrollers run behind the parked tray: a row brought into view must clear the tray's top edge, not the phone's bottom */
+(function () { const base = Component.prototype.reveal; Component.prototype.reveal = function (el, top, opts) { base.call(this, el, top, opts); const root = this.rootRef && this.rootRef.current; if (!el || !root || !el.closest) return; const sc = el.closest('[data-scroller]'); if (!sc || sc.closest('.c07-tray')) return; const tray = root.querySelector('.c07-tray'); if (!tray || tray.classList.contains('is-up')) return; const tt = tray.getBoundingClientRect().top, r = el.getBoundingClientRect(), st = sc.getBoundingClientRect().top; if (r.bottom > tt - 12 && r.height < tt - st - 24) { sc.scrollTop += r.bottom - (tt - 12); this._applyHc(sc); } }; })();
 </script>
 </body>
 </html>
