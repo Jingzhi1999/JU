@@ -46,8 +46,9 @@ body{margin:0}
 /* ---- the page: one scroller under an overlaid V27 header (constant header box — the title shrinks inside the tool row) ---- */
 .c06-pg{position:absolute;left:0;right:0;top:0;bottom:calc(var(--navh) + var(--sab,0px));z-index:2}
 .c06-sc{position:absolute;left:0;right:0;top:calc(var(--tt) + 44px);bottom:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none;
-  padding:calc(38px + 52.5px * var(--tz,1)) var(--gx) calc(30px + var(--kb,0px));
-  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 22px);mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 22px)}
+  padding:calc(38px + 52.5px * var(--tz,1)) var(--gx) calc(30px + var(--kb,0px))}
+/* the 22px fade under the tool row exists only once the title has collapsed into it (a static mask: no per-frame repaint while scrolling) */
+.app.c06-hcon .c06-sc{-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 22px);mask-image:linear-gradient(180deg,transparent 0,#000 22px)}
 .c06-sc::-webkit-scrollbar{display:none}
 /* V27 header: title 30px/500 → 18px into the tool-row centre (p = --hc), meta 14px fades; back pill 44×44 at (gx, tt) */
 .c06-hd{position:absolute;left:0;right:0;top:0;height:calc(var(--tt) + 44px);z-index:8;pointer-events:none}
@@ -116,6 +117,7 @@ body{margin:0}
 /* landing after a collapse: a soft highlighter under the status, in the environment's light */
 .c06-item.is-landing .c06-lab::after{content:"";position:absolute;left:-4px;right:-4px;bottom:0;height:.7em;z-index:-1;background:var(--gB);border-radius:2px;animation:c06-land calc(1100ms * var(--k,1)) ease both}
 .c06-item.is-landing .c06-lab{z-index:0}
+.c06-item.is-landing[data-moved] .c06-lab::after{animation-duration:calc(660ms * var(--k,1));animation-delay:calc(440ms * var(--k,1))}   /* a row that changed group: the mark is drawn once it has been set */
 @keyframes c06-land{0%{transform:scaleX(0);transform-origin:0 50%;opacity:1}28%{transform:scaleX(1);opacity:1}72%{transform:scaleX(1);opacity:.9}100%{transform:scaleX(1);opacity:0}}
 /* the lead (先做这件): countdown rule + the only CTA, which rests on a band of environment light */
 .c06-lx{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(380ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k,1)) ease}
@@ -157,10 +159,17 @@ body{margin:0}
 .c06-xin{padding:0 0 30px}
 .c06-lede{font-size:calc(15px * var(--tz,1));line-height:1.7;color:var(--body);text-wrap:pretty;margin:0 0 4px}
 .c06-lede b{font-family:var(--num);font-weight:500}
+.c06-lede .c06-fld{margin-right:.3em}
 .c06-note{margin:8px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--sec)}
 .c06-err{margin:8px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--warn)}
 .c06-err .c06-ta{padding:6px 8px;min-height:32px;font-size:calc(13px * var(--tz,1))}
-.c06-fig{margin:12px 0 0}
+.c06-fig{position:relative;margin:12px 0 0}
+/* before and during the first moments of the print the place is already set: the mouth as a hairline slot and the ticket's own outline (258 × 351, the paper's shape), like an image frame in a layout */
+.c06-await{position:absolute;left:0;right:0;top:0;height:400px;pointer-events:none;z-index:0;opacity:0;transition:opacity calc(420ms * var(--k,1)) ease}
+.c06-fig.is-await .c06-await{opacity:1}
+.c06-await-mouth{position:absolute;left:50%;top:0;width:290px;margin-left:-145px;height:10px;background:radial-gradient(60% 100% at 50% 0,rgba(20,22,31,.16),rgba(20,22,31,0));border-top:1px solid rgba(20,22,31,.32)}
+.c06-await-paper{position:absolute;left:50%;top:24px;width:258px;margin-left:-129px;height:351px;border:1px dashed rgba(20,22,31,.2);border-radius:14px}
+.c06-stage{z-index:1}
 /* the paper sits 24px under the mouth (V27's own reissued / short-phone value): the 24px of air the paragraph gives every object */
 .c06-stage{margin:0;--ju-ticket-top:24px}
 .c06-x .ju-contact-wrap{margin-top:6px}
@@ -170,6 +179,7 @@ body{margin:0}
 .c06-slot{position:sticky;bottom:calc(10px + var(--kb,0px));z-index:7;margin-top:10px;padding-top:16px}
 .c06-slot:has(.c06-cta:not(.ju-contact-action)),.c06-slot:has(.ju-contact-action[data-shown="true"]){background:linear-gradient(180deg,var(--paper0) 0,var(--paper) 22px)}
 .c06-slot .c06-ctaw{padding-top:4px}
+.c06-item.has-x:not(.is-x) .c06-slot{opacity:0;transition:opacity calc(140ms * var(--k,1)) ease}   /* folding: the action leaves first, it does not ride up over the paper */
 .c06-slot .c06-ctaw::before{top:-14px}
 .c06-h4{display:flex;align-items:baseline;gap:10px;margin:0;padding:28px 0 6px;font-family:var(--serif);font-weight:600;font-size:calc(17px * var(--tz,1));line-height:1.4;color:var(--ink)}
 .c06-h4 small{margin-left:auto;font-family:var(--ju-font-ui);font-weight:400;font-size:calc(13px * var(--tz,1));color:var(--sec);text-align:right}
@@ -273,6 +283,12 @@ body{margin:0}
 .c06-sh-acts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
 .c06-sh-acts .ju-v27-cta,.c06-sh-acts .ju-v27-danger{width:min(100%,230px);margin:0;border:0;font-family:inherit}
 .c06-sh-acts .ju-v27-danger{padding:0 10px}
+/* exit-type confirmations (V27 roles): the blue construction only for 「留下」, the consequence in the danger outline; withdraw / leave-queue: outline + ink pill */
+.c06-sh-acts.is-stack{flex-direction:column;align-items:center;gap:10px;margin-top:24px}
+.c06-sh-acts.is-stack>button{width:min(100%,280px)}
+.c06-ink{appearance:none;border:0;height:48px;width:min(100%,230px);border-radius:999px;background:var(--ink);color:#F6F5F1;font:inherit;font-size:calc(15px * var(--tz,1));font-weight:500;cursor:pointer;transition:transform .2s}
+.c06-ink:active{transform:scale(.97)}.c06-ink:disabled{opacity:.5}
+.c06-ta.outline{height:48px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(20,22,31,.18);background:rgba(255,255,255,.55);color:var(--ink);font-weight:500}
 .c06-fld{display:block;margin:14px 0 0;font-size:calc(13px * var(--tz,1));color:var(--sec)}
 .c06-in{display:block;width:100%;margin:6px 0 0;padding:10px 0;border:0;border-bottom:1px solid var(--rule);background:transparent;font:inherit;font-family:var(--num);font-size:16px;color:var(--ink);border-radius:0}
 .c06-in:focus{outline:none;border-bottom-color:var(--focus);box-shadow:0 1px 0 var(--focus)}
@@ -347,8 +363,9 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                       <div class="c06-xin">
                         <p class="c06-lede">{{v.tk.lede}}</p>
                         <sc-if value="{{v.tk.showStage}}">
-                          <div class="c06-fig">
+                          <div class="c06-fig {{v.tk.figCls}}">
                             <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                            <div class="c06-await" aria-hidden="true"><i class="c06-await-mouth"></i><i class="c06-await-paper"></i></div>
                             <div class="ju-ticket-stage c06-stage {{v.tk.stageCls}}" data-print-stage="c06" data-state="idle">
                               <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
                               <div class="ju-ticket" data-paper="c06">
@@ -420,7 +437,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                   <sc-if value="{{it.xW}}">
                     <div class="c06-x" data-xb="{{it.r.id}}" data-surface="waitlist">
                       <div class="c06-xin">
-                        <p class="c06-lede"><b>{{c.waitlist.receipt.field}}</b> {{c.waitlist.receipt.title}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p>
+                        <p class="c06-lede"><sc-if value="{{v.wlField}}"><b class="c06-fld">{{v.wlField}}</b></sc-if>{{c.waitlist.receipt.title}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p>
                         <sc-if value="{{c.waitlist.receipt.note}}"><p class="c06-note">{{c.waitlist.receipt.note}}</p></sc-if>
                         <sc-if value="{{c.waitlist.countdown.on}}"><p class="c06-left {{c.waitlist.countdown.tone}}" style="--ratio:{{c.waitlist.countdown.ratio}}"><b>剩 {{c.waitlist.countdown.text}}</b><span>6 小时预留</span><i></i></p></sc-if>
                         <h4 class="c06-h4">已经在局里<small>{{c.waitlist.seatLine}}</small></h4>
@@ -670,9 +687,11 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
               <sc-if value="{{v.sh.recordOpen}}"><label class="c06-fld">发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c06-in" data-field="text" rows="4" maxlength="120" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label></sc-if>
             </sc-if>
             <sc-if value="{{c.sheet.error}}"><p class="c06-err">{{c.sheet.error}}</p></sc-if>
-            <div class="c06-sh-acts">
-              <button type="button" class="c06-ta" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+            <div class="c06-sh-acts {{v.sh.stack}}">
+              <sc-if value="{{v.sh.keepMain}}"><button type="button" class="ju-v27-cta c06-cta" data-act="close" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button></sc-if>
+              <sc-if value="{{v.sh.keepText}}"><button type="button" class="c06-ta {{v.sh.keepCls}}" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button></sc-if>
               <sc-if value="{{v.sh.okDanger}}"><button type="button" class="ju-v27-danger" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+              <sc-if value="{{v.sh.okInk}}"><button type="button" class="c06-ink" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
               <sc-if value="{{v.sh.okMain}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}"><span class="gloss"></span><span class="label">{{c.sheet.okLabel}}</span></button></sc-if>
             </div>
           </div>
@@ -694,6 +713,7 @@ function c06Bez(x1, y1, x2, y2) {
   return function (x) { if (x <= 0) return 0; if (x >= 1) return 1; let t = x; for (let i = 0; i < 6; i++) { const s = slope(t, x1, x2); if (Math.abs(s) < 1e-6) break; t -= (calc(t, x1, x2) - x) / s; } return calc(Math.max(0, Math.min(1, t)), y1, y2); };
 }
 const C06_INLINE = { detail: 1, waitlist: 1, ticket: 1, reply: 1, history: 1, manage: 1, draft: 1 };
+const C06_HOLD = { detail: 'detail', waitlist: 'waitlist', ticket: 'ticket', reply: 'ticket', history: 'history', manage: 'manage', draft: 'draft' };
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
@@ -724,7 +744,14 @@ class Component extends DCLogic {
   /* leaving an open item: remember where every row and label stood in the frozen order, so the re-sort that follows can slide */
   getSnapshotBeforeUpdate(pp, ps) {
     const has = (st) => !!(st && st.nav && st.nav.stack.some((e, i) => i > 0 && C06_INLINE[e.s]));
-    if (has(ps) && !has(this.state) && ps.role === this.state.role && ps.section === this.state.section) this._flipFrom = this._positions();
+    if (has(ps) && !has(this.state) && ps.role === this.state.role && ps.section === this.state.section) {
+      /* a fold still running when the stack pops (a starved main thread) is finished first: the re-sort starts from the folded list, never from an empty band */
+      const fa = this._foldAnims(); const root = this.rootRef.current;
+      if (fa.length) fa.forEach(a => { if (a.playState !== 'finished') a.finish(); });
+      /* left without a fold (a deeper stack sent home at once): the re-sort starts from the closed list, not from under an empty band */
+      else if (root) root.querySelectorAll('[data-xb]').forEach(b => { b.style.display = 'none'; });
+      this._flipFrom = this._positions();
+    }
     return null;
   }
   _positions() { const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return null; const o = sc.getBoundingClientRect().top - sc.scrollTop; const out = {}; root.querySelectorAll('.c06-list [data-k]').forEach(el => { out[el.getAttribute('data-k')] = el.getBoundingClientRect().top - o; }); return out; }
@@ -732,11 +759,15 @@ class Component extends DCLogic {
   _syncFlip() {
     const from = this._flipFrom; if (!from) return; this._flipFrom = null; const k = this.kf(); const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return;
     const to = this._positions() || {}; const lk = this.state.ui && this.state.ui.landKey ? 'r:' + String(this.state.ui.landKey).replace(/^row-/, '') : null;
-    /* rows slide to their new place; a row that changed group does not travel across the others — it fades out where it was and is set again where it belongs */
+    /* a row that changed group never travels across the others: it lets go where it was (0–130ms), the others close up and open
+       its new place (110–570ms), and only then is it set there (440–740ms) — no frame has two lines of type on top of each other */
     if (k > 0) root.querySelectorAll('.c06-list [data-k]').forEach(el => { const key = el.getAttribute('data-k'); const d = from[key] == null ? null : from[key] - to[key];
-      if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 320 * k, easing: 'ease' }); return; }
-      if (key === lk && Math.abs(d) > 1) { el.animate([{ transform: 'translateY(' + d + 'px)', opacity: 1 }, { opacity: 0, offset: .3 }, { opacity: 0, offset: .6 }, { transform: 'none', opacity: 1 }], { duration: 640 * k, easing: 'cubic-bezier(.3,.7,.2,1)' }); return; }
-      if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 480 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
+      if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 * k, delay: 300 * k, easing: 'ease', fill: 'backwards' }); return; }
+      if (key === lk && Math.abs(d) > 1) {
+        el.setAttribute('data-moved', ''); clearTimeout(this._movedT); this._movedT = setTimeout(() => el.removeAttribute('data-moved'), 1150 * k);
+        el.animate([{ transform: 'translateY(' + d + 'px)', opacity: 1, easing: 'ease-out' }, { transform: 'translateY(' + d + 'px)', opacity: 0, offset: .18, easing: 'step-end' }, { transform: 'translateY(8px)', opacity: 0, offset: .6, easing: 'cubic-bezier(.2,.8,.2,1)' }, { transform: 'none', opacity: 1 }], { duration: 740 * k, easing: 'linear' });
+        return; }
+      if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 460 * k, delay: 110 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); });
     if (lk && to[lk] != null && from[lk] != null && Math.abs(from[lk] - to[lk]) > 1) {
       const el = root.querySelector('.c06-list [data-k="' + lk + '"]'); const h = el ? el.offsetHeight : 120; const view = sc.clientHeight; const y = to[lk] - sc.scrollTop;
       if (y < 0 || y + h * .5 > view) { const t = Math.max(0, Math.round(to[lk] - view * .42)); if (k > 0) this._tween(sc, t, 480 * k, this._ezO); else sc.scrollTop = t; }
@@ -755,11 +786,12 @@ class Component extends DCLogic {
   _syncExpand() {
     const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc || !this.state.nav) return;
     const nav = this.state.nav, x = this._expOf(), k = this.kf();
-    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); if (!x) { sc.scrollTop = 0; this._c && this._c.nav.onScroll({ currentTarget: sc }); } }
+    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); this._unfold(); if (!x) { sc.scrollTop = 0; this._c && this._c.nav.onScroll({ currentTarget: sc }); } }
     const prev = this._xp;
     const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home');
     this._xp = x ? { id: x.id, s: x.s, collapsing } : null;
     const block = x ? root.querySelector('[data-xb="' + x.id + '"]') : null;
+    if (!x && this._fold) this._unfold();
     if (x && (!prev || prev.id !== x.id)) {
       const memo = this._scrollMemo && this._scrollMemo['home:' + this.state.role + ':' + this.state.section];
       const target = this._targetFor(x.id);
@@ -770,39 +802,63 @@ class Component extends DCLogic {
       else { cancelAnimationFrame(this._tw); if (target != null) { sc.scrollTop = target; this._c && this._c.nav.onScroll({ currentTarget: sc }); } }
     } else if (x && prev && prev.id === x.id && prev.s !== x.s && !collapsing) {
       if (block && k > 0) this._grow(block, this._lastH || 0, this.motionSpec.swap * k);
-    } else if (x && collapsing && !(prev && prev.collapsing)) {
-      cancelAnimationFrame(this._tw);
-      const left = k > 0 ? Math.max(90, this.motionSpec.back * k - (this._backAt ? performance.now() - this._backAt : 0)) : 0;
-      if (block) this._shrink(block, left);
-      /* back to where the list was before the item opened; opened by an index jump (no memory) → stay, but never past the end of the shorter list */
-      let y0 = this._y0 && this._y0.id === x.id && !this._moved ? this._y0.y : null;
-      if (y0 == null) { const tail = root.querySelector('.c06-tail'); const bh = block ? block.getBoundingClientRect().height : 0; y0 = Math.max(0, Math.min(sc.scrollTop, sc.scrollHeight - bh - (tail ? tail.offsetHeight : 0) - sc.clientHeight)); }
-      /* the controller restores the list's scroll memory when the stack settles: make that memory the place this collapse lands on */
-      const mk = 'home:' + this.state.role + ':' + this.state.section; const mm = (this._scrollMemo = this._scrollMemo || {}); mm[mk] = Object.assign({}, mm[mk], { home: y0 });
-      this._tween(sc, y0, left, this._ezC);
-    }
+    } else if (x && collapsing && !(prev && prev.collapsing)) this._collapse(x);
     if (block) this._lastH = block.getBoundingClientRect().height;
+  }
+  /* the fold starts on the tap itself (onNav, before the exit render) and ends just before the controller pops the stack */
+  _collapse(x) {
+    const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return; const k = this.kf();
+    cancelAnimationFrame(this._tw); this._xp = { id: x.id, s: x.s, collapsing: true };
+    const block = root.querySelector('[data-xb="' + x.id + '"]');
+    const left = k > 0 ? Math.max(90, (this.motionSpec.back - 24) * k - (this._backAt ? performance.now() - this._backAt : 0)) : 0;
+    /* back to where the list was before the item opened; opened by an index jump (no memory) → stay, but never past the end of the shorter list */
+    let y0 = this._y0 && this._y0.id === x.id && !this._moved ? this._y0.y : null;
+    if (y0 == null) { const tail = root.querySelector('.c06-tail'); const bh = block ? block.getBoundingClientRect().height : 0; y0 = Math.max(0, Math.min(sc.scrollTop, sc.scrollHeight - bh - (tail ? tail.offsetHeight : 0) - sc.clientHeight)); }
+    if (block) this._shrink(block, left);
+    /* the controller restores the list's scroll memory when the stack settles: make that memory the place this collapse lands on */
+    const mk = 'home:' + this.state.role + ':' + this.state.section; const mm = (this._scrollMemo = this._scrollMemo || {}); mm[mk] = Object.assign({}, mm[mk], { home: y0 });
+    this._tween(sc, y0, left, this._ezC);
   }
   _targetFor(id) {
     const root = this.rootRef.current, sc = this.scRef.current; const row = root && root.querySelector('.c06-row[data-rid="' + id + '"]'); if (!row || !sc) return null;
     const item = row.closest('.c06-item') || row; const top = sc.scrollTop + item.getBoundingClientRect().top - sc.getBoundingClientRect().top;
     return Math.max(this.headerRange + 2, Math.round(top - 12));
   }
-  _grow(block, from, ms) {
-    this._stop(block); const to = block.getBoundingClientRect().height; if (!(ms > 0) || to < 1) return;
+  /* opening and folding are one figure played both ways: a clipping window over paper that never moves. The box moves by s,
+     its paper moves back by s (so it stays put), and everything after the item travels with the window's lower edge — compositor
+     transforms only, no layout per frame, so the motion keeps its pace on a busy main thread. (A swap between two paragraphs of
+     different height, rare, still animates the height.) */
+  _sibs(block) { const out = [], item = block.closest('.c06-item'); for (let n = item && item.nextElementSibling; n; n = n.nextElementSibling) out.push(n); return out; }
+  _window(block, s0, s1, ms, ez, fill) {
+    const inner = block.firstElementChild, o = { duration: ms, easing: ez, fill: fill || 'none' };
+    const up = (v) => ({ transform: v ? 'translateY(' + (-v) + 'px)' : 'none' }), down = (v) => ({ transform: v ? 'translateY(' + v + 'px)' : 'none' });
     block.style.overflow = 'hidden';
-    const a = block.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: ms, easing: 'cubic-bezier(.2,.8,.2,1)' });
-    a.onfinish = a.oncancel = () => { block.style.overflow = ''; };
-    const inner = block.firstElementChild; if (inner) inner.animate([{ opacity: 0, transform: 'translateY(-8px)' }, { opacity: 1, transform: 'none' }], { duration: ms * .82, delay: ms * .14, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' });
+    const a = block.animate([up(s0), up(s1)], o); if (inner) inner.animate([down(s0), down(s1)], o);
+    const sibs = this._sibs(block); sibs.forEach(el => el.animate([up(s0), up(s1)], o)); this._fold = sibs; return a;
+  }
+  _grow(block, from, ms) {
+    this._stop(block); this._unfold(); const to = block.getBoundingClientRect().height; if (!(ms > 0) || to < 1) return;
+    const ez = 'cubic-bezier(.2,.8,.2,1)', inner = block.firstElementChild; let a;
+    if (from > 0) { block.style.overflow = 'hidden'; a = block.animate([{ height: from + 'px' }, { height: to + 'px' }], { duration: ms, easing: ez }); }
+    else a = this._window(block, to, 0, ms, ez);
+    a.onfinish = () => { block.style.overflow = ''; if (this._fold && !(this._xp && this._xp.collapsing)) this._fold = null; };
+    if (inner) inner.animate([{ opacity: 0 }, { opacity: 1 }], { duration: ms * .82, delay: ms * .14, easing: ez, fill: 'backwards' });
   }
   _shrink(block, ms) {
-    const from = parseFloat(getComputedStyle(block).height) || block.getBoundingClientRect().height; this._stop(block); if (!(ms > 0)) return;
-    block.style.overflow = 'hidden';
-    block.animate([{ height: from + 'px' }, { height: '0px' }], { duration: ms, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-    /* the paragraph folds up under its title: the shrinking box clips it from below while it stays legible, and only the last third fades */
-    const inner = block.firstElementChild; if (inner) inner.animate([{ opacity: 1, transform: 'none' }, { opacity: .9, transform: 'translateY(-6px)', offset: .62 }, { opacity: 0, transform: 'translateY(-10px)' }], { duration: ms, easing: 'ease-in', fill: 'forwards' });
+    /* read where the box is right now (a fold can start while the opening is still running) */
+    const cs = getComputedStyle(block); const live = block.getAnimations().filter(a => !a.animationName && !a.transitionProperty && a.playState === 'running');
+    const hGrow = live.some(a => a.effect && a.effect.getKeyframes().some(kf => kf.height != null)); const from = parseFloat(cs.height) || block.getBoundingClientRect().height;
+    let s0 = 0; try { if (cs.transform && cs.transform !== 'none') s0 = Math.max(0, -new DOMMatrixReadOnly(cs.transform).m42); } catch (e) { }
+    this._stop(block); this._unfold(); if (!(ms > 0)) return;
+    const ez = 'cubic-bezier(.4,0,.2,1)';
+    if (hGrow) { block.style.overflow = 'hidden'; block.animate([{ height: from + 'px' }, { height: '0px' }], { duration: ms, easing: ez, fill: 'forwards' }); return; }
+    const H = block.getBoundingClientRect().height; if (H < 1) return;
+    this._window(block, Math.min(s0, H), H, ms, ez, 'forwards');
   }
   _stop(block) { [block, block.firstElementChild].forEach(el => { if (el && el.getAnimations) el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) a.cancel(); }); }); block.style.overflow = ''; }
+  _foldAnims() { const out = []; const root = this.rootRef.current; const els = (this._fold || []).slice(); if (root) root.querySelectorAll('[data-xb]').forEach(b => { els.push(b); if (b.firstElementChild) els.push(b.firstElementChild); }); els.forEach(el => el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) out.push(a); })); return out; }
+  /* the rows that rose with the fold go back to plain layout (the stack has popped: the paragraph is gone, the layout now matches) */
+  _unfold() { const f = this._fold; this._fold = null; if (f) f.forEach(el => el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) a.cancel(); })); }
   _tween(sc, to, ms, ez, delay) {
     cancelAnimationFrame(this._tw); const from = sc.scrollTop; if (!(ms > 0) || Math.abs(to - from) < 1) { sc.scrollTop = to; return; }
     const t0 = performance.now() + (delay || 0), E = ez || this._ezO;
@@ -817,10 +873,11 @@ class Component extends DCLogic {
   }
   /* ---------------- rituals: the controller wrote the data; these calls only show it (C00 call sites) ---------------- */
   _syncRituals(ps) {
-    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const c = this._cv || this._c, root = this.rootRef.current; if (!c || !root) return;
     const stage = root.querySelector('[data-surface="ticket"] .c06-stage,[data-surface="reply"] .c06-stage');
     if (c.ticket.on && stage) {
-      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) this._mountTicket(stage, c);
+      const opening = c.ticket.state === 'printing' && this.state.nav.phase !== 'idle' && this.kf() > 0;
+      if ((this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) && !opening) this._mountTicket(stage, c);
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
@@ -886,7 +943,10 @@ class Component extends DCLogic {
   }
   _destroyStamp() { const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
   _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
-  onNav(kind) { if (kind === 'back') this._backAt = performance.now(); }
+  onNav(kind) {
+    if (kind !== 'back') return; this._backAt = performance.now();
+    const x = this._expOf(); if (x && x.top && x.under === 'home' && this._xp && this._xp.id === x.id && !this._xp.collapsing) this._collapse(x);
+  }
   onEffect(fx) {
     if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
     if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
@@ -971,8 +1031,12 @@ class Component extends DCLogic {
   }
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
-    const c = this.ctlVals(); this._c = c; const s = this.state, nav = s.nav;
+    const c0 = this.ctlVals(); this._c = c0; const s = this.state, nav = s.nav;
     const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing;
+    /* the paragraph being folded keeps the words it had: back() has already cleared its transient state (a result, the open
+       contact layer), and those must not flip to another sentence while the paper closes */
+    const hk = x ? C06_HOLD[x.s] : null; if (x && !collapsing && hk) this._held = { id: x.id, k: hk, obj: c0[hk] }; else if (!x) this._held = null;
+    const c = collapsing && this._held && this._held.id === x.id && this._held.k === hk ? Object.assign({}, c0, { [hk]: this._held.obj }) : c0; this._cv = c;
     const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim };
     v.scName = x ? x.s : 'home';
     v.appCls = (open ? ' c06-open' : '') + (s.hcOn ? ' c06-hcon' : '');
@@ -997,7 +1061,8 @@ class Component extends DCLogic {
     v.foot = sec === 'history' && !v.empty ? (role === 'joined' ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '再开一局只带入活动内容，成员与记录不复制（开局模块，本轮不可点）') : '';
     /* ticket / reply paragraph */
     const tk = c.ticket;
-    v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),
+    const rc = c.waitlist && c.waitlist.receipt; v.wlField = rc && rc.field && String(rc.title || '').indexOf(rc.field) < 0 ? rc.field : '';   /* 「已预留 位置已预留」→ the field only when the title does not already say it */
+    v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), figCls: tk.on && (tk.state === 'printing' || tk.state === 'fresh') ? 'is-await' : '', stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),
       tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', contactAction: !!(tk.on && !tk.unavailable && !tk.result), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable),
       resultNote: tk.result ? (tk.result.burning ? '票根正在作废…' : '票根已作废。') : '', retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } };
     /* detail paragraph */
@@ -1025,14 +1090,19 @@ class Component extends DCLogic {
     v.rd = { reading: !!(c.read.on !== false && !c.read.result && !c.read.expired), kick: c.read.result && c.read.result.formed ? '成局 · 出票' : '已确认', lede: c.read.title ? '确认前请读完这份约定。读到末尾，确认按钮才会亮起。' : '' };
     /* sheets */
     const sh = c.sheet;
+    const ink = sh.okTone === 'ink', keep = !!sh.keepPrimary, noOk = sh.kind === 'card' || sh.kind === 'contact' || (sh.kind === 'record' && sh.done);
     v.sh = { hasAffected: !!(sh.affected && sh.affected.length), newText: sh.fields ? (sh.fields.newText || sh.fields.placeholder) : '', isRecord: sh.kind === 'record', recordOpen: sh.kind === 'record' && !sh.done,
-      okDanger: !!(sh.on && sh.danger && sh.kind !== 'card' && sh.kind !== 'contact') || sh.kind === 'cancel', okMain: !!(sh.on && !sh.danger && sh.kind !== 'cancel' && sh.kind !== 'card' && sh.kind !== 'contact' && !(sh.kind === 'record' && sh.done)), okDisabled: !sh.canOk };
+      stack: sh.kind === 'confirm' && (keep || ink) ? 'is-stack' : '', keepMain: !!(sh.on && keep), keepText: !(sh.on && keep), keepCls: ink ? 'outline' : '',
+      okInk: !!(sh.on && ink && !noOk), okDanger: !!(sh.on && !ink && !noOk && (sh.danger || sh.kind === 'cancel')), okMain: !!(sh.on && !ink && !noOk && !sh.danger && sh.kind !== 'cancel'), okDisabled: !sh.canOk };
     return { panel, rootRef: this.rootRef, envRef: this.envRef, scRef: this.scRef, c, v, noSkins: !c.ritual.skins };
   }
 }
 JU.mixin(Component);
 /* a fresh dataset (index jump / reset / variant) starts the one scroller from the top */
 (function (P) { ['jumpTo', 'reset'].forEach(function (m) { const f = P[m]; if (f) P[m] = function () { this._fresh = true; return f.apply(this, arguments); }; }); })(Component.prototype);
+/* 回到列表 / the 我的局 tab while a paragraph is open: the list is already underneath, so going home is folding the paragraph —
+   route home() through back() (exit phase, onNav, landing mark) when the stack is exactly [home, open paragraph] */
+(function (P) { const f = P.home; if (!f) return; P.home = function () { const n = this.state && this.state.nav; const x = n && n.stack.length === 2 && n.phase !== 'exit' ? this._expOf() : null; if (x && x.top && x.under === 'home') return this.back(); return f.apply(this, arguments); }; })(Component.prototype);
 </script>
 </body>
 </html>

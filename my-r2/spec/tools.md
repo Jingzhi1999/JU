@@ -45,3 +45,10 @@
 | `test/build.cjs` | `node my-r2/tools/test/build.cjs` | 缺核心 / 缺列表不崩；标记齐全时注入正确；缺标记跳过；`JU_ONLY` 与 internal；`@shared-css`；索引 50；字体内嵌 |
 
 选择器优先级：工具与外壳的「`a, b`」是**按顺序的备选**（第一个有可见匹配的生效），不是一个 CSS 组；同一备选里多个匹配时优先 `.cNN-over` 内的那个，否则第一个有尺寸的（`last:true` 取最后一个）。
+
+## 负载规则（主负责人 · 2026-10-23 04:10 起，所有构建者与复核者）
+本机 4 核；无 GPU 的无头 Chromium 用 SwiftShader 画 live 环境（棉糖 three.js 水面），每个页面约占满一个核。八位构建者并行时 1 分钟负载到过 40，帧序列的时间戳因此被拉长，录出来的运动不可信。
+1. 所有 Playwright / Chromium 命令都经共享锁串行：`flock -w 1800 /home/user/JU/.build/chromium.lock timeout 900 node …`；思考与写文件时不持锁。
+2. 页面挂载、环境画出第一帧（约 1s）后暂停环境引擎：`JU.shared.skins.pause(inst.envRef.current)`（ctl-regress 的同一调用；暂停留当前帧快照，静态截图外观不变）。`setSkin` 会重建 live 层，切换后约 700ms 再暂停一次。只有专门记录环境自身节奏的采集保持 live。
+3. 运动帧序列只在 `uptime` 1 分钟负载 < 8 时录制，日志写明当时负载；高于此值录到的序列要重录。
+4. 一次运行结束就关浏览器，不留常驻会话。

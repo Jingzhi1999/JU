@@ -35,6 +35,9 @@ body{margin:0}
 .app *,.app *::before,.app *::after{box-sizing:border-box}
 :where(.app) button{font-family:inherit;color:inherit}
 .app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important}
+.app.c07-snap .c07-tray,.app.c07-snap .c07-page,.app.c07-snap .c07-scrim,.app.c07-snap .c07-surfs,.app.c07-snap .c07-surf,.app.c07-snap .c07-lead,.app.c07-snap .c07-act,.app.c07-snap .c07-mpage,.app.c07-snap .c07-over,.app.c07-snap .c07-sheet,.app.c07-snap .c07-form{transition:none!important;animation:none!important}
+/* the keyboard comes up over a sheet that is already there: whatever is still sliding in takes its keyboard-aware place at once */
+.ju-phone.kb .c07-sheet,.ju-phone.kb .c07-form,.ju-phone.kb .c07-ovl{animation:none}
 .c07-vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .app :focus{outline:none}
 .app :focus-visible{outline:2px solid #4A5AD6;outline-offset:2px}
@@ -425,6 +428,18 @@ body{margin:0}
 .c07-sheet .help{font-size:calc(13px * var(--tz,1));color:var(--tw3);margin:6px 0 0}
 .c07-sheet .err{color:#FF9DAE;font-size:calc(13px * var(--tz,1));margin:6px 0 0}
 .c07-sheet :focus-visible{outline-color:#8FA2FF}
+/* confirm layers by role (V27, shared keepPrimary / okTone): leaving a seat (release / exit / decline) — the KEEP key is the only blue
+   (V27 q5StayStyle = blueCta), the leave key is the danger construction below it; withdraw / leave queue — 再想想 glass + the ink capsule
+   side by side, no blue at all. On C07's ink sheets the ink capsule keeps V27 inkCta's geometry (48 high, pill, .04em, 13.5/600) with
+   its fill inverted to paper — an #14161F capsule on the #14161F tray would vanish. */
+.c07-cbtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding:16px 0 12px}
+.c07-cbtns.pair{flex-direction:row;align-items:stretch}
+.c07-cbtns.pair>button{flex:1;min-width:0;height:48px;border-radius:999px;font-family:inherit;font-size:13.5px;letter-spacing:.04em;cursor:pointer;white-space:nowrap}
+.c07-glass{border:0;background:rgba(255,255,255,.1);color:var(--tw);font-weight:500;box-shadow:inset 0 0 0 1px rgba(244,245,250,.3);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.c07-inkcap{border:0;background:#F4F5FA;color:#14161F;font-weight:600;box-shadow:0 16px 32px -14px rgba(0,0,0,.6)}
+.c07-glass:active,.c07-inkcap:active{transform:scale(.97)}
+.c07-inkcap:disabled{opacity:.5;cursor:default}
+.c07-sheet .c07-cbtns{padding:16px 0 0}
 /* toasts never sit on a CTA: above the parked tray at home / in manage, above the footer CTA on a risen page */
 .c07-toast{pointer-events:none;position:absolute;left:22px;right:22px;bottom:calc(var(--th) + 12px + var(--kb,0px));z-index:45;background:#F6F6FA;color:var(--ink);padding:12px 16px;border-radius:14px;font-size:calc(14px * var(--tz,1));box-shadow:0 14px 34px -14px rgba(0,0,0,.6);animation:c07-toast calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .app.c07-up .c07-toast{bottom:calc(var(--navh) + 96px + var(--kb,0px))}
@@ -449,7 +464,7 @@ body{margin:0}
             <div class="c07-secs"><sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c07-sec {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.pressed}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><small>{{t.countText}}</small></sc-if></button></sc-for></div>
           </div>
         </header>
-        <div class="c07-sc" data-scroller="home" onScroll="{{c.nav.onScroll}}">
+        <div class="c07-sc" data-scroller="home" data-measure="layout" onScroll="{{c.nav.onScroll}}">
           <div class="c07-pane {{home.paneCls}}">
             <sc-if value="{{home.joinedCurrent}}">
               <sc-if value="{{c.joined.empty.on}}"><div class="c07-empty"><b>{{c.joined.empty.title}}</b><p>{{c.joined.empty.body}}</p></div></sc-if>
@@ -690,11 +705,13 @@ body{margin:0}
               </div></div>
             </sc-if>
             <sc-if value="{{c.sheet.error}}"><p class="c07-err" role="alert">{{c.sheet.error}}</p></sc-if>
-            <div class="btns">
+            <sc-if value="{{form.keepFirst}}"><div class="c07-cbtns"><button type="button" class="c07-cta ju-v27-cta" data-act="close" data-autofocus="true" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button><button type="button" class="ju-v27-danger c07-dz" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></div></sc-if>
+            <sc-if value="{{form.inkPair}}"><div class="c07-cbtns pair"><button type="button" class="c07-glass" data-act="close" data-autofocus="true" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="c07-inkcap" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></div></sc-if>
+            <sc-if value="{{form.plainActs}}"><div class="btns">
               <sc-if value="{{form.danger}}"><button type="button" class="ju-v27-danger c07-dz" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
               <sc-if value="{{form.primary}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" aria-disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}"><span class="gloss"></span><span class="label">{{c.sheet.okLabel}}</span></button></sc-if>
               <button type="button" class="c07-quiet" data-act="close" data-autofocus="{{form.safeFirst}}" onClick="{{c.sheet.cancel}}">{{form.closeLabel}}</button>
-            </div>
+            </div></sc-if>
           </div>
         </sc-if>
 
@@ -794,7 +811,7 @@ body{margin:0}
                       <p class="ju-contact-note23"></p>
                       <p class="ju-form-error"></p>
                     </div>
-                    <sc-if value="{{tv.contact.copyFail}}"><p class="c07-err c07-copyfail">长按上方微信号手动复制，或 <button type="button" class="c07-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button></p></sc-if>
+                    <sc-if value="{{tv.contact.copyFail}}"><p class="c07-err c07-copyfail"><button type="button" class="c07-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试复制</button></p></sc-if>
                     <sc-if value="{{tv.contact.closed}}"><p class="c07-err">{{tv.contact.closedText}}</p></sc-if>
                     <sc-if value="{{tv.contact.error}}"><p class="c07-err">{{tv.contact.error}}</p></sc-if>
                     <sc-if value="{{tv.result}}"><div class="c07-result" style="text-align:center"><sc-if value="{{tv.result.burning}}"><p class="c07-hint">票根正在作废…</p></sc-if><sc-if value="{{ticket.ashes}}"><div class="c07-ash" aria-hidden="true"></div></sc-if><b>{{tv.result.title}}</b><p>{{tv.result.body}}</p></div></sc-if>
@@ -903,10 +920,12 @@ body{margin:0}
               <sc-if value="{{sheet.recordOpen}}"><label>发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="in" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label><p class="help">谁：局主 / 同局成员 / 其他 · 截图 ≤ 6（本机不上传）</p></sc-if>
             </sc-if>
             <sc-if value="{{c.sheet.error}}"><p class="err">{{c.sheet.error}}</p></sc-if>
-            <div class="acts">
+            <sc-if value="{{sheet.keepFirst}}"><div class="c07-cbtns"><button type="button" class="c07-cta ju-v27-cta" data-act="close" data-autofocus="true" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button><button type="button" class="ju-v27-danger c07-dz" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></div></sc-if>
+            <sc-if value="{{sheet.inkPair}}"><div class="c07-cbtns pair"><button type="button" class="c07-glass" data-act="close" data-autofocus="true" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button><button type="button" class="c07-inkcap" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></div></sc-if>
+            <sc-if value="{{sheet.plainActs}}"><div class="acts">
               <button type="button" class="c07-pill" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
               <sc-if value="{{sheet.showOk}}"><sc-if value="{{c.sheet.danger}}"><button type="button" class="ju-v27-danger c07-dz" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if><sc-if value="{{sheet.okBlue}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" aria-disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}"><span class="gloss"></span><span class="label">{{c.sheet.okLabel}}</span></button></sc-if></sc-if>
-            </div>
+            </div></sc-if>
           </div>
         </div>
       </sc-if>
@@ -938,6 +957,7 @@ class Component extends DCLogic {
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
   componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
+    if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
     { const root = this.rootRef.current, cf = root && root.querySelector('.c07-copyfail'); if (cf && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
     if (ps && (ps.role !== this.state.role || ps.section !== this.state.section)) {
@@ -1018,7 +1038,8 @@ class Component extends DCLogic {
      row that just landed) */
   _toastHere(c) { if (!c.toast.on) return false;
     /* a copy failure is said where it happened (the inline line with 重试 on the ticket / roster / history) — no second toast */
-    if (c.toast.kind === 'error' && /复制/.test(c.toast.text || '') && ((c.ticket.on && c.ticket.contact && c.ticket.contact.copyFail) || (c.history.on && c.history.copyFail) || (c.manage.on && c.manage.roster && (c.manage.roster.rows || []).some(m => m.copyFail)))) return false; const where = c.nav.cur + ':' + c.nav.depth; if (this._toastId !== c.toast.id) { this._toastId = c.toast.id; this._toastWhere = where; } return this._toastWhere === where && c.nav.phase !== 'exit'; }
+    if (this._toastMuted === c.toast.id) return false;
+    if (c.toast.kind === 'error' && /复制/.test(c.toast.text || '') && ((c.ticket.on && c.ticket.contact && c.ticket.contact.copyFail) || (c.history.on && c.history.copyFail) || (c.manage.on && c.manage.roster && (c.manage.roster.rows || []).some(m => m.copyFail)))) { this._toastMuted = c.toast.id; return false; } const where = c.nav.cur + ':' + c.nav.depth; if (this._toastId !== c.toast.id) { this._toastId = c.toast.id; this._toastWhere = where; } return this._toastWhere === where && c.nav.phase !== 'exit'; }
   /* 回到列表 from a deeper page: collapse the stack to home + this page, then the ordinary back — so the sheet settles in one move */
   _goHome() { const nav = this.state.nav; if (!nav || nav.stack.length < 2) return; if (nav.phase !== 'idle' && this._navSettle) this._navSettle(); const n = this.state.nav; if (n.stack.length > 2) this.state.nav = Object.assign({}, n, { stack: [n.stack[0], n.stack[n.stack.length - 1]] }); this.back(); }
   componentWillUnmount() { if (this._ro) { this._ro.disconnect(); this._ro = null; } this._destroyCardBurn(); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
@@ -1109,11 +1130,14 @@ class Component extends DCLogic {
   _destroyHistoryStage() { const t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
   _mountStamp(host, c) {
     this._destroyStamp(); this._rit.thost = host; const R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
-    const data = c.history.stampData; const p = R.stamp(host, data, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: () => { } });   /* entering history never replays the press; 重播 does */
-    this._rit.stampPromise = p;
-    p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
+    const go = () => { if (this._rit.thost !== host || !this._c || !this._c.history.on) return;
+      const data = this._c.history.stampData; const p = R.stamp(host, data, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: () => { } });   /* entering history never replays the press; 重播 does */
+      this._rit.stampPromise = p;
+      p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); }); };
+    /* the first mount of the stamp scene (WebGL2 + 720×900 card textures) holds the main thread: start it after the sheet's 340ms rise */
+    if (this.isRM() || this._snap) go(); else this.afterKey('c07-stampmount', 380, go);
   }
-  _destroyStamp() { const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
+  _destroyStamp() { this.cancelKey('c07-stampmount'); const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
   _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
   onNav(kind, surface, params) { this.cancelKey('c07-formed'); this.cancelKey('c07-att'); if (surface === 'manage' && kind !== 'back') this.setState({ mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null }); else this.setState({ attHold: null, cburn: null }); }
   onEffect(fx) {
@@ -1174,16 +1198,17 @@ class Component extends DCLogic {
        lead's 去不了了 / 撤回 / 退出候补 confirm); over a risen page it is a second ink sheet (.c07-ovl) */
     const sh = c.sheet; const trayForm = !!(sh.on && ((mTop && ['reschedule', 'cancel', 'end', 'card'].indexOf(sh.kind) >= 0) || (cur === 'home' && !trayUp && sh.kind === 'confirm')));
     if (trayForm) this._c07FormKind = sh.kind;
-    const form = { on: trayForm };
+    const form = { on: trayForm, plainActs: true };
     if (trayForm) {
       const idn = sh.identity || {}; form.kind = sh.kind; form.closeLabel = sh.cancelLabel || '关闭';
+      form.plainActs = !(sh.kind === 'confirm' && (sh.keepPrimary || sh.okTone === 'ink'));
       if (sh.kind === 'reschedule') { const f = sh.fields; form.isResched = true; form.label = '改时间 · ' + f.tz; form.side = '已确认的人各自答复'; form.oldText = '原定 ' + f.oldWhen.zh; form.newText = f.newText ? '改到 ' + f.newText : f.placeholder; form.newCls = f.newText ? '' : 'ph'; form.primary = true;
         const sid = s.sheet && s.sheet.id; const touched = !!sid && s.fTouched === sid; form.sameHint = touched ? f.sameHint : ''; if (f.same && !touched) form.newText = '选一个新的日期或时间';
         const touch = () => { if (this.state.fTouched !== sid) this.setState({ fTouched: sid }); };
         form.onDate = (e) => { touch(); f.onDate(e); }; form.onTime = (e) => { touch(); f.onTime(e); }; }
       else if (sh.kind === 'cancel') { form.isCancel = true; form.safeFirst = true; form.label = '取消这局'; form.side = '不能撤销'; form.title = nb('取消「' + idn.title + '」？'); form.danger = true; }
       else if (sh.kind === 'end') { form.isEnd = true; form.label = '记为散场'; form.side = idn.when || ''; form.title = nb('「' + idn.title + '」散场了？'); form.primary = true; }
-      else if (sh.kind === 'confirm') { form.isConfirm = true; form.label = { withdraw: '撤回申请', release: '去不了了', exit: '去不了了', decline: '不接受新时间', leaveQueue: '退出候补' }[sh.sub] || ''; form.side = '不影响其他局'; form.title = sh.title; form.ident = idn.title ? nb(idn.title) + ' · ' + idn.when + ' · ' + idn.place : ''; form.danger = !!sh.danger; form.primary = !sh.danger; form.safeFirst = true; }   /* every leave-type confirm opens on the safe key */
+      else if (sh.kind === 'confirm') { form.isConfirm = true; form.label = { withdraw: '撤回申请', release: '去不了了', exit: '去不了了', decline: '不接受新时间', leaveQueue: '退出候补' }[sh.sub] || ''; form.side = '不影响其他局'; form.title = sh.title; form.ident = idn.title ? nb(idn.title) + ' · ' + idn.when + ' · ' + idn.place : ''; form.keepFirst = !!sh.keepPrimary; form.inkPair = sh.okTone === 'ink'; form.danger = !!sh.danger; form.primary = !sh.danger; form.safeFirst = true; }   /* V27 roles: keep = blue / leave = danger; withdraw = glass + ink */
       else { form.isCard = true; form.label = '局卡'; form.side = '成员看到的是同一张'; form.cardTitle = nb(sh.card ? sh.card.title : ''); form.closeLabel = '关闭'; }
     }
     const rowCls = (r) => Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', readyCls: r.ready ? 'go' : 'wait', toneCls: r.todo ? 'act' : (r.section === 'formed' ? 'go' : 'wait'), seatShort: r.counts ? (r.counts.confirmed + '/' + r.counts.capacity) : '' });
@@ -1284,7 +1309,7 @@ class Component extends DCLogic {
     const hr = c.history.on ? c.history.ritual : null;
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins,
-      toastOn: this._toastHere(c), trayRootCls: (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
+      toastOn: this._toastHere(c), trayRootCls: (this._snap ? ' c07-snap' : '') + (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
       home: { pageCls: (mVis ? 'is-away' : '') + (isJ ? '' : ' three'), meta: isJ ? (c.joined.badgeText || (c.joined.counts.current ? c.joined.counts.current + ' 场进行中' : '眼下没有进行中的局')) : ((c.hosted.badgeText || (c.hosted.counts.current ? c.hosted.counts.current + ' 场进行中' : '眼下没有进行中的局')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')),
         joinedCurrent: isJ && c.section === 'current', joinedHistory: isJ && c.section === 'history', hostedCurrent: !isJ && c.section === 'current', hostedDrafts: !isJ && c.section === 'drafts', hostedHistory: !isJ && c.section === 'history',
         jsections, hsections, onlyLead: isCur && !!leadRow && (isJ ? jsections : hsections).length === 0, onlyLeadTitle: isJ ? '只有这一件' : '只有这一局',
@@ -1302,14 +1327,24 @@ class Component extends DCLogic {
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
           locText: has('地点') || !d.placeText ? '待定' : d.placeText, locCls: has('地点') || !d.placeText ? 'c07-gap' : '', titleCls: d.untitled ? 'c07-gap' : '' }; })(),
       history: { titleNb: hr ? nb(hr.title) : '', recordCount: c.history.on ? c.history.records.length : 0, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), showCard: c.history.on && !c.history.hasStamp && !!hr, paperCard: c.history.on && !c.history.hasStamp && !hr, stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
-      sheet: { overlay: c.sheet.on && !trayForm, hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okBlue: !c.sheet.danger, okDisabled: !c.sheet.canOk }
+      sheet: { overlay: c.sheet.on && !trayForm, keepFirst: c.sheet.on && !!c.sheet.keepPrimary, inkPair: c.sheet.on && c.sheet.okTone === 'ink', plainActs: !(c.sheet.on && (c.sheet.keepPrimary || c.sheet.okTone === 'ink')), hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okBlue: !c.sheet.danger, okDisabled: !c.sheet.canOk }
     };
   }
 }
 JU.mixin(Component);
+/* a review jump (or reset) shows the target state at once: one or two frames with transitions and entry animations off */
+(function () { ['jumpTo', 'reset'].forEach(k => { const base = Component.prototype[k]; if (!base) return; Component.prototype[k] = function () { this._snap = true; return base.apply(this, arguments); }; }); })();
 /* the list scrollers run behind the parked tray: a row brought into view must clear the tray's top edge, not the phone's bottom */
-(function () { const base = Component.prototype.reveal; Component.prototype.reveal = function (el, top, opts) { base.call(this, el, top, opts); const root = this.rootRef && this.rootRef.current; if (!el || !root || !el.closest) return; const sc = el.closest('[data-scroller]'); if (!sc) return;
-  if (sc.closest('.c07-tray')) { const surf = sc.closest('.c07-surf'), foot = surf && surf.querySelector('.c07-sfoot'); if (!foot || top) return; const kids = Array.prototype.filter.call(foot.children, k => k.getBoundingClientRect().height > 0); if (!kids.length) return; const ft = Math.min.apply(null, kids.map(k => k.getBoundingClientRect().top)), r = el.getBoundingClientRect(); if (r.bottom > ft - 12 && !foot.contains(el)) { sc.scrollTop += r.bottom - (ft - 12); this._applyHc(sc); } return; } const tray = root.querySelector('.c07-tray'); if (!tray || tray.classList.contains('is-up')) return; const tt = tray.getBoundingClientRect().top, r = el.getBoundingClientRect(), st = sc.getBoundingClientRect().top; if (r.bottom > tt - 12 && r.height < tt - st - 24) { sc.scrollTop += r.bottom - (tt - 12); this._applyHc(sc); } }; })();
+(function () { const base = Component.prototype.reveal;
+  /* layout y of el inside root (offset chain, transforms ignored) minus the scroll offsets between them; null if root is not on the chain */
+  const layTop = (el, root) => { let y = 0, n = el; while (n && n !== root) { y += n.offsetTop || 0; n = n.offsetParent; } if (n !== root) return null; let sy = 0, q = el.parentElement; while (q && q !== root) { sy += q.scrollTop || 0; q = q.parentElement; } return y - sy; };
+  Component.prototype.reveal = function (el, top, opts) { base.call(this, el, top, opts); const root = this.rootRef && this.rootRef.current; if (!el || !root || !el.closest) return; const sc = el.closest('[data-scroller]'); if (!sc) return;
+  if (sc.closest('.c07-tray')) { const surf = sc.closest('.c07-surf'), foot = surf && surf.querySelector('.c07-sfoot'); if (!foot || top) return; const kids = Array.prototype.filter.call(foot.children, k => k.getBoundingClientRect().height > 0); if (!kids.length) return; const ft = Math.min.apply(null, kids.map(k => k.getBoundingClientRect().top)), r = el.getBoundingClientRect(); if (r.bottom > ft - 12 && !foot.contains(el)) { sc.scrollTop += r.bottom - (ft - 12); this._applyHc(sc); } return; }
+  /* a list behind the parked tray: the element must clear the tray's top edge (= root height − --thc − --sab), measured in layout
+     coordinates so it also holds while back() runs with the sheet still up and the home page still scaled */
+  const cs = getComputedStyle(root), th = (parseFloat(cs.getPropertyValue('--thc')) || 318) + (parseFloat(cs.getPropertyValue('--sab')) || 0);
+  const trayTop = root.clientHeight - th, et = layTop(el, root), st = layTop(sc, root); if (et == null || st == null) return;
+  const eb = et + el.offsetHeight; if (eb > trayTop - 12 && el.offsetHeight < trayTop - st - 24) { sc.scrollTop += eb - (trayTop - 12); this._applyHc(sc); } }; })();
 </script>
 </body>
 </html>

@@ -44,8 +44,10 @@ body{margin:0}
 .c01-field{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:var(--field);background:linear-gradient(90deg,rgba(251,250,253,0) calc(var(--cx) - 40px),#fbfafd calc(var(--cx) - 8px))}
 /* ---- pages: one absolute page per surface; the scroller starts under the 44px tool row so nothing ever scrolls behind the collapsed title ---- */
 .c01-pg{position:absolute;left:0;right:0;top:0;bottom:0;z-index:2;--hc:0;--below:calc(var(--navh) + var(--sab,0px))}
-.c01-sc{position:absolute;left:0;right:0;top:var(--top);bottom:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(var(--th,31.5px) * var(--tz,1) + 57px * var(--tz,1)) 0 calc(36px + var(--below) + var(--kb,0px));
-  -webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 16px);mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 16px)}
+.c01-sc{position:absolute;left:0;right:0;top:var(--top);bottom:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding:calc(var(--th,31.5px) * var(--tz,1) + 57px * var(--tz,1)) 0 calc(36px + var(--below) + var(--kb,0px))}
+/* the soft top edge under a collapsing header: only on a settled, scrolled page (a mask is a separate render pass every frame; measured,
+   it doubled frame times during page transitions in software rendering) */
+.c01-pg.is-top.ph-idle[data-hcs="1"]>.c01-sc{-webkit-mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 16px);mask-image:linear-gradient(180deg,rgba(0,0,0,calc(1 - var(--hc,0))) 0,#000 16px)}
 .c01-sc.foot{padding-bottom:calc(128px + var(--below) + var(--kb,0px))}
 /* grid: spine | gutter | content */
 .c01-g{display:grid;grid-template-columns:var(--sp) var(--gut) minmax(0,1fr);padding:0 var(--mx)}
@@ -378,6 +380,14 @@ p.c01-copyfail span{color:var(--sec)}
 .c01-id{font-size:calc(13px * var(--tz,1));color:#535b70;border-left:3px solid var(--blue);padding-left:10px;margin:0 0 12px;line-height:1.5}
 .c01-acts{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:14px;flex-wrap:wrap}
 .c01-acts .ju-v27-cta{border:0;padding:0;width:min(100%,280px)}
+.c01-acts .ju-v27-danger{border:0;padding:0;font-family:inherit}
+.c01-acts .ju-v27-danger:disabled{opacity:.5;cursor:default}
+.c01-inkrow{display:flex;gap:10px;width:100%;align-self:stretch}
+.c01-inkrow button{flex:1;border:0;border-radius:999px;padding:15px;text-align:center;font-family:inherit;font-size:13.5px;cursor:pointer;transition:transform .2s ease}
+.c01-inkrow button:active{transform:scale(.97)}
+.c01-glass{font-weight:500;color:#14161F;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);box-shadow:inset 0 0 0 1px rgba(20,22,31,.1)}
+.c01-ink{font-weight:600;color:#F8F9FF;background:#14161F;box-shadow:0 16px 32px -10px rgba(20,22,31,.6)}
+.c01-ink:disabled{opacity:.55;cursor:default}
 .c01-acts .c01-danger{width:min(100%,280px);height:48px;border-radius:999px;display:flex;align-items:center;justify-content:center;font:500 calc(14px * var(--tz,1)) inherit;letter-spacing:.04em;color:#C0392B;background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(192,57,43,.3);border:0;cursor:pointer}
 .c01-acts .c01-danger:active{transform:scale(.97)}
 .c01-acts .c01-danger:disabled{opacity:.5}
@@ -436,6 +446,8 @@ p.c01-copyfail span{color:var(--sec)}
 .c01-over .b>.c01-g{align-items:start}
 .c01-over .b .c01-an{padding-top:3px}
 .c01-over .b h3{margin:0 0 4px}
+/* with the keyboard up the sheet stands at its final place at once (it re-lays out for the keyboard anyway) */
+.ju-phone.kb .c01-over,.ju-phone.kb .c01-over .b{animation:none}
 .c01-over.is-closing{animation:c01-fadeout calc(200ms * var(--k)) ease forwards;pointer-events:none}
 .c01-over.is-closing .b{animation:c01-down calc(220ms * var(--k)) cubic-bezier(.4,0,1,1) forwards}
 @keyframes c01-fadeout{0%{background:rgba(14,16,30,.28)}100%{background:rgba(14,16,30,0)}}
@@ -448,7 +460,7 @@ p.c01-copyfail span{color:var(--sec)}
 .c01-afh{margin:12px 0 2px;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--ink)}
 .c01-tl{display:block}
 .c01-tl span{float:right;font-family:Archivo,sans-serif;font-variant-numeric:tabular-nums}
-.c01-over .b .c01-acts{flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;margin-top:16px}
+.c01-over .b .c01-acts{flex-direction:column;align-items:center;justify-content:flex-start;gap:9px;margin-top:16px}
 .c01-over .b .c01-acts .cancel{padding:10px 18px;min-height:44px;border-radius:999px}
 .c01-over .b .c01-id{border-left:0;padding-left:0;margin:0 0 10px}
 </style>
@@ -479,7 +491,7 @@ p.c01-copyfail span{color:var(--sec)}
             <h1 class="c01-title">我的局</h1>
             <p class="c01-meta">{{home.meta}}</p>
           </header>
-          <div class="c01-sc" data-scroller="home" onScroll="{{home.onScroll}}">
+          <div class="c01-sc" data-scroller="home" data-measure="layout" onScroll="{{home.onScroll}}">
             <div class="c01-body"><div class="c01-pane">
               <!-- the one thing to do first: its own anchor (deadline / now), an information plate, and the only primary CTA standing on the light below it -->
               <sc-if value="{{home.due.on}}">
@@ -957,9 +969,11 @@ p.c01-copyfail span{color:var(--sec)}
                 </sc-if>
                 <sc-if value="{{sh.error}}"><p class="c01-err">{{sh.error}}</p></sc-if>
                 <div class="c01-acts">
-                  <sc-if value="{{sheet.showOkDanger}}"><button type="button" class="c01-danger" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{sh.ok}}">{{sheet.okLabel}}</button></sc-if>
+                  <sc-if value="{{sheet.keepFirst}}"><button type="button" class="ju-v27-cta" data-act="close" onClick="{{sh.cancel}}"><span class="gloss"></span><span class="label">{{sh.cancelLabel}}</span></button></sc-if>
+                  <sc-if value="{{sheet.inkRow}}"><div class="c01-inkrow"><button type="button" class="c01-glass" data-act="close" onClick="{{sh.cancel}}">{{sh.cancelLabel}}</button><button type="button" class="c01-ink" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{sh.ok}}">{{sheet.okLabel}}</button></div></sc-if>
+                  <sc-if value="{{sheet.showOkDanger}}"><button type="button" class="ju-v27-danger" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{sh.ok}}">{{sheet.okLabel}}</button></sc-if>
                   <sc-if value="{{sheet.showOkBlue}}"><button type="button" class="ju-v27-cta" data-act="ok" aria-disabled="{{sheet.okDisabled}}" disabled="{{sheet.okDisabled}}" onClick="{{sh.ok}}"><span class="gloss"></span><span class="label">{{sheet.okLabel}}</span></button></sc-if>
-                  <button type="button" class="cancel" data-act="close" onClick="{{sh.cancel}}">{{sh.cancelLabel}}</button>
+                  <sc-if value="{{sheet.cancelLink}}"><button type="button" class="cancel" data-act="close" onClick="{{sh.cancel}}">{{sh.cancelLabel}}</button></sc-if>
                 </div>
               </div>
             </div>
@@ -978,7 +992,9 @@ p.c01-copyfail span{color:var(--sec)}
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
-    this.motionSpec = { fwd: 320, back: 300, swap: 260, role: 240 };
+    /* phase lengths carry slack over the CSS motion (enter 320ms, return 270ms): a busy main thread can start a transition late, and the
+       phase timer (started at the tap) must not cut it; when the motion ends first the page simply sits settled until the phase flips */
+    this.motionSpec = { fwd: 380, back: 380, swap: 260, role: 240 };
     this.headerRange = 84; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this._rit = {};
     if (p.preset === 'hosted') this.state.role = 'hosted';
@@ -1004,7 +1020,9 @@ class Component extends DCLogic {
   }
   /* the free span of the collapsed home tool row: from the role switch (spine head) to the section tabs */
   _homeTc() {
-    const root = this.rootRef.current; const hd = root && root.querySelector('[data-surface="home"] .c01-hd'); const secs = hd && hd.querySelector(':scope > .c01-secs'); if (!secs) return;
+    const c = this._c, r = this.state.review || {}; if (!c || c.nav.cur !== 'home' || c.nav.phase !== 'idle') return;
+    const key = [r.pw, r.fit ? 'fit' : '', r.zoom ? 1 : 0, c.role, c.section, (c.sectionTabs || []).map(t => t.countText).join(',')].join('|'); if (this._tcKey === key) return;
+    const root = this.rootRef.current; const hd = root && root.querySelector('[data-surface="home"] .c01-hd'); const secs = hd && hd.querySelector(':scope > .c01-secs'); if (!secs) return; this._tcKey = key;
     const a = 12 + 4 + 44 + 10, b = secs.offsetLeft - 10; const tc = Math.round((a + b) / 2) + 'px', tw = Math.max(80, b - a) + 'px';
     if (hd.style.getPropertyValue('--tcx') !== tc) hd.style.setProperty('--tcx', tc); if (hd.style.getPropertyValue('--tcw') !== tw) hd.style.setProperty('--tcw', tw);
   }
@@ -1029,7 +1047,7 @@ class Component extends DCLogic {
   }
   _syncReduced(ps) { if (this.props.panel === false) return; const rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
   /* the collapsed-title flag (nowrap + ellipsis once the header has fully collapsed) lives in a data attribute the template never binds */
-  _hcFlag(el) { const surf = el && el.closest ? el.closest('[data-surface]') : null; if (!surf) return; const hc = parseFloat(el.style.getPropertyValue('--hc')) || 0; const v = hc >= 0.985 ? '1' : '', h = hc >= 0.45 ? '1' : ''; if (surf.dataset.hc1 !== v) surf.dataset.hc1 = v; if (surf.dataset.hch !== h) surf.dataset.hch = h; }
+  _hcFlag(el) { const surf = el && el.closest ? el.closest('[data-surface]') : null; if (!surf) return; const hc = parseFloat(el.style.getPropertyValue('--hc')) || 0; const v = hc >= 0.985 ? '1' : '', h = hc >= 0.45 ? '1' : '', m = hc > 0.01 ? '1' : ''; if (surf.dataset.hc1 !== v) surf.dataset.hc1 = v; if (surf.dataset.hch !== h) surf.dataset.hch = h; if (surf.dataset.hcs !== m) surf.dataset.hcs = m; }
   /* the lead anchor of a pushed page travels along the spine: from the day anchor of the row it was opened from (enter) and back to it (exit).
      The distance is measured once per phase and written as --c01-ady on the anchor element (its style is never bound by the template). */
   _travel() {
@@ -1073,7 +1091,9 @@ class Component extends DCLogic {
     if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); else if (this._rit.hburnWait && settled) { this._rit.hburnWait = false; this._startHistoryBurn(hstage); } }
     else if (this._rit.hstage) { this._destroyHistoryStage(); }
     const thost = root.querySelector('[data-surface="history"] .c01-t08');
-    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost && settled) this._mountStamp(thost, c); }
+    /* the settled attendance scene is heavy to build (software rendering holds the main thread for over a second): it is built once the
+       page has settled (never on the slide-in) and not while a sheet is open over it */
+    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost && settled && !c.sheet.on) this._mountStamp(thost, c); }
     else if (this._rit.thost) this._destroyStamp();
     this._syncStampFaces(c, root);
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
@@ -1318,10 +1338,11 @@ class Component extends DCLogic {
     const idw = (S.identity && S.identity.when) || ''; const dm = /(\d{1,2})\.(\d{2})/.exec(idw); const wd = /周[一二三四五六日]/.exec(idw);
     let big = dm ? String(+dm[2]) : '—', bigCls = dm ? '' : 'zh', small = wd ? wd[0] : '', anCls = S.danger ? 'red' : '';
     if (S.kind === 'reschedule') small = '原定';
-    const sheet = { phCls: closing ? 'is-closing' : '', big, bigCls, small, anCls,
+    const conf = S.kind === 'confirm', keep = conf && !!S.keepPrimary, ink = conf && S.okTone === 'ink';
+    const sheet = { phCls: closing ? 'is-closing' : '', big, bigCls, small, anCls, keepFirst: keep, inkRow: ink, cancelLink: !keep && !ink,
       hasAffected: !!(S.affected && S.affected.length), newOrPlaceholder: S.fields ? (S.fields.newText || S.fields.placeholder) : '',
-      isRecord: S.kind === 'record', recordOpen: S.kind === 'record' && !S.done, showOkDanger: !!S.danger,
-      showOkBlue: !S.danger && S.kind !== 'card' && S.kind !== 'contact' && !(S.kind === 'record' && S.done), okDisabled: !S.canOk || closing, okLabel: S.busy ? '处理中…' : S.okLabel };
+      isRecord: S.kind === 'record', recordOpen: S.kind === 'record' && !S.done, showOkDanger: !!S.danger && !ink,
+      showOkBlue: !S.danger && !ink && S.kind !== 'card' && S.kind !== 'contact' && !(S.kind === 'record' && S.done), okDisabled: !S.canOk || closing, okLabel: S.busy ? '处理中…' : S.okLabel };
     return { on: true, sh: S, sheet };
   }
   renderVals() {
