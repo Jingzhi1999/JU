@@ -205,12 +205,12 @@ body{margin:0}
 .c08-fh{position:relative;z-index:1;padding:calc(var(--sat) + 24px + 53px - 40.45px * var(--hc,0)) 22px calc(20px - 8px * var(--hc,0));pointer-events:none}
 .c08-ft{margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;position:relative;top:0;left:calc(50% * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));width:max-content;max-width:calc(100% - 104px * var(--hc,0));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));line-height:1.05;font-weight:500;text-wrap:balance;max-height:calc((63px - 44.1px * var(--hc,0)) * var(--tz,1))}
 .c08-fh.is-c .c08-ft{white-space:nowrap;text-overflow:ellipsis;display:block}
-/* the title's last stretch: the travelling title grows as the strip's one line (no mid-flight re-wrap); at 270ms it hands over to its settled
-   two-line self at the final place (90ms cross-fade at 270ms, when the travelling line is at ~29px on its final spot) — no mid-flight re-wrap jump */
+/* the title's last stretch: the travelling title grows as the strip's one line (no mid-flight re-wrap); at 285ms it hands over to its settled
+   two-line self at the final place (70ms cross-fade at 285ms, when the travelling line is at ~29px on its final spot) — no mid-flight re-wrap jump */
 .c08-ftx{position:absolute;left:22px;top:calc(var(--sat) + 77px);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;width:max-content;max-width:calc(100% - 44px);font-size:calc(30px * var(--tz,1));line-height:1.05;font-weight:500;text-wrap:balance;max-height:calc(63px * var(--tz,1));opacity:0;pointer-events:none}
-.app.over-home .c08-pg.is-top.t1.ph-enter.dir-fwd .c08-ft,.app.over-home .c08-pg.is-top.t1.ph-in .c08-ft{white-space:nowrap;display:block;overflow:hidden;text-overflow:clip;max-width:100%}
-.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ft{opacity:0;transition:left calc(380ms * var(--k)) var(--tA),top calc(380ms * var(--k)) var(--tA),font-size calc(380ms * var(--k)) var(--tA),opacity calc(90ms * var(--k)) linear calc(270ms * var(--k))}
-.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ftx{opacity:1;transition:opacity calc(90ms * var(--k)) linear calc(270ms * var(--k))}
+.app.over-home .c08-pg.is-top.t1.ph-enter.dir-fwd .c08-ft,.app.over-home .c08-pg.is-top.t1.ph-in .c08-ft{white-space:nowrap;display:block;overflow:hidden;text-overflow:clip;max-width:100%;min-height:calc(63px * var(--tz,1))}   /* the one-line traveller keeps the settled two-line height: the meta below it and the face's lower edge (and its print slot) never jump at idle */
+.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ft{opacity:0;transition:left calc(380ms * var(--k)) var(--tA),top calc(380ms * var(--k)) var(--tA),font-size calc(380ms * var(--k)) var(--tA),opacity calc(70ms * var(--k)) linear calc(285ms * var(--k))}
+.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ftx{opacity:1;transition:opacity calc(70ms * var(--k)) linear calc(285ms * var(--k))}
 .c08-fm{margin-top:calc(9px * (1 - var(--hc,0)));max-height:calc(44px * (1 - var(--hc,0)) * var(--tz,1));opacity:calc(1 - var(--hc,0) * 1.4);overflow:hidden;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--bs);white-space:nowrap;text-overflow:ellipsis}
 .c08-fx{max-height:calc(150px * (1 - var(--hc,0)) * var(--tz,1));opacity:calc(1 - var(--hc,0) * 1.4);overflow:hidden}
 .c08-fh .c08-fx,.c08-fh .c08-fx *{pointer-events:auto}
@@ -1049,12 +1049,13 @@ class Component extends DCLogic {
     const prev = this._bandH; this._bandH = { sig, order, map: {} }; order.forEach(k => { this._bandH.map[k] = { h: now[k].h, ids: now[k].ids, tone: now[k].tone, title: now[k].title }; });
     if (!prev || prev.sig !== sig || !idle || this.state.ghost || root.classList.contains('rm')) return;
     const k2 = parseFloat(getComputedStyle(root).getPropertyValue('--k')) || 1;
+    order.forEach(k => { if (!prev.map[k]) now[k].el.querySelectorAll('.c08-st').forEach(x => x.classList.add('is-in')); });   /* a band that appears in place fades in */
     order.forEach(k => { const p = prev.map[k], n = now[k]; if (!p || p.ids.join() === n.ids.join()) return;
       n.el.querySelectorAll('[data-rid]').forEach(x => { if (p.ids.indexOf(x.getAttribute('data-rid')) < 0) x.classList.add('is-in'); });
       if (Math.abs(p.h - n.h) < 2) return; const el = n.el;
-      el.style.overflow = 'hidden'; el.style.height = p.h + 'px'; void el.offsetHeight;
+      el.style.overflow = 'hidden'; el.style.background = 'var(--bg)'; el.style.height = p.h + 'px'; void el.offsetHeight;   /* the band itself shrinks / grows */
       el.style.transition = 'height ' + Math.round(320 * k2) + 'ms cubic-bezier(.32,.72,.2,1)'; el.style.height = n.h + 'px';
-      const done = () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; el.removeEventListener('transitionend', done); };
+      const done = () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; el.style.background = ''; el.removeEventListener('transitionend', done); };
       el.addEventListener('transitionend', done); setTimeout(done, 420 * k2); });
     const gone = prev.order.filter(k => !now[k]);
     if (gone.length && c.section === 'current') { const k = gone[0], p = prev.map[k]; this.setState({ ghost: { key: k, tone: p.tone, title: p.title, gd: 0, index: prev.order.indexOf(k), h: p.h } }); this.after(560, () => this.setState({ ghost: null })); }

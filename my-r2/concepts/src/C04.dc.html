@@ -127,7 +127,6 @@ body{margin:0}
 .c04-pg.is-under.ph-idle{visibility:hidden}
 .c04-shape{position:absolute;left:0;right:0;top:0;bottom:calc(var(--ed) + var(--sab,0px));background:var(--pp);border-radius:18px;box-shadow:0 -12px 28px -16px rgba(20,22,31,.5),0 14px 26px -16px rgba(20,22,31,.6)}
 .c04-pgc{position:absolute;left:0;right:0;top:0;bottom:calc(var(--ed) + var(--sab,0px));overflow:hidden;border-radius:18px;color:var(--pi)}
-.c04-ghost{display:none;position:absolute;left:var(--fx-x,8px);width:var(--fx-w,calc(100% - 16px));top:var(--fx-y,0);height:var(--fx-h,70px);padding:13px 14px 0;color:var(--pi);opacity:0;pointer-events:none;z-index:6}
 /* page header (V27 shared language: back pill at 22,24; title 30/500 → 18 into the tool row; meta 14 fades) */
 .c04-ph{position:absolute;left:0;right:0;top:0;height:0;z-index:5;--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1)}
 .c04-back{position:absolute!important;left:22px;top:calc(24px + var(--sat,0px));z-index:3}
@@ -145,31 +144,53 @@ body{margin:0}
 .c04-edge{position:absolute!important;left:0;right:0;bottom:0;height:calc(var(--ed) + var(--sab,0px));z-index:2;overflow:hidden;display:block;cursor:pointer}
 .c04-edge i{position:absolute;left:8px;right:8px;top:calc(var(--j) * var(--sl,3px));height:48px;border-radius:14px 14px 0 0;background:var(--pp);box-shadow:inset 0 1px 0 var(--hl),0 -3px 6px -3px rgba(20,22,31,.45)}
 .c04-edge::after{content:"";position:absolute;left:0;right:0;top:0;height:9px;background:linear-gradient(180deg,rgba(20,22,31,.22),rgba(20,22,31,0));pointer-events:none}
-/* opening: the tapped sheet lifts 8px (deeper shadow) then opens to the whole page; content follows; the edge rises */
+/* ================= opening / closing: one paper, and its own words travel with it =================
+   open (400ms): the tapped paper lifts 8px (0–24%), then grows into the page (24–100%). The band's title, meta and status are a shared
+   element (.c04-ghost, filled from the band itself at the tap): the title rides the growing paper to the page head and re-wraps there
+   (two spans glide into the page's own line break), the meta rides under it, the status word lets go first. The page's own title and
+   meta take over only on the last frames, at the same place and size. Ticket / section sheets slide in from 40%. No frame is a bare field.
+   close (440ms): the content clears first (0–34%: the sheets slide down, the body fades, the pressed edge drops) while the paper keeps its
+   size; then the paper sinks into its band (34–100%) carrying the same title back into it. Two layers at most: the closing paper and the list. */
 .c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-shape{animation:c04-sh-in calc(400ms * var(--k)) both}
 .c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pgc{animation:c04-pc-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top:is(.dir-fwd:not(.ph-idle),.ph-exit) .c04-ghost{display:block}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost{animation:c04-gh-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pt{animation:c04-pt-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) :is(.c04-pm,.c04-back,.c04-weak){animation:c04-fade-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) :is(.c04-back,.c04-weak){animation:c04-fade-in calc(400ms * var(--k)) both}
 .c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-psc>*{animation:c04-body-in calc(400ms * var(--k)) both}
 .c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-psc>:is(.c04-tkp,.c04-mstack){animation:c04-sheet-in calc(400ms * var(--k)) both}
 .c04-pg.is-top.dir-fwd:not(.ph-idle) .c04-edge i{animation:c04-edge-in calc(340ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc((90ms + var(--j) * 16ms) * var(--k))}
-/* the rest of the stack sinks toward the bottom edge while the sheet opens, and rises back on 返回 */
+/* page title / meta: with a measured ghost they take over on the last frames; without one (index jump, button origin) they settle in place */
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gh="in"]) .c04-pt{animation:c04-ptx-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gh="in"]) .c04-pm{animation:c04-pmx-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gm="fade"]) .c04-pt{animation:c04-ptf-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):not(:has(.c04-ghost[data-gh="in"])) .c04-pt{animation:c04-pt2-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):not(:has(.c04-ghost[data-gh="in"])) .c04-pm{animation:c04-fade-in calc(400ms * var(--k)) both}
 .c04-sheet.is-origin{visibility:hidden}
-/* a lead (fully open) sheet lifts itself — content and all — and the page's paper fades in over it as it opens; on 返回 the paper lands on it and dissolves */
+/* a lead (fully open) sheet lifts itself — content and all — and the page's paper fades in over it; its title / meta / kicker are the ghost's from the first frame */
 .c04-sheet.is-lifting{z-index:3;animation:c04-lift calc(400ms * var(--k)) both}
+.app.c04:has(.c04-pg.is-top .c04-ghost[data-gh]) .c04-sheet.is-olead :is(.c04-lt,.c04-lm,.c04-lk>span:first-child){visibility:hidden}
 @keyframes c04-lift{0%{scroll-margin-bottom:0px;transform:none;animation-timing-function:cubic-bezier(.25,.7,.35,1)}24%,100%{scroll-margin-bottom:0px;transform:translateY(-8px);box-shadow:inset 0 1px 0 var(--hl),0 -18px 34px -14px rgba(20,22,31,.62),0 20px 30px -16px rgba(20,22,31,.55)}}
-.c04-pg:is(.from-lead,.from-btn) .c04-ghost{display:none!important}
-/* a page opened from a button (not from a sheet of the stack) has no band to morph from: its title settles in place */
-.c04-pg.from-btn.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pt{animation:c04-pt2-in calc(400ms * var(--k)) both}
-.c04-pg.from-btn.has-from.is-top.ph-exit .c04-pt{animation:c04-pt2-out calc(380ms * var(--k)) both}
 .c04-pg.has-from.is-top.from-lead.dir-fwd:not(.ph-idle) .c04-shape{animation:c04-sh-in calc(400ms * var(--k)) both,c04-lead-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.from-lead.ph-exit .c04-shape{animation:c04-sh-out calc(380ms * var(--k)) both,c04-lead-out calc(380ms * var(--k)) both}
+.c04-pg.has-from.is-top.from-lead.ph-exit .c04-shape{animation:c04-sh-out calc(440ms * var(--k)) both,c04-lead-out calc(440ms * var(--k)) both}
 @keyframes c04-lead-in{0%,20%{scroll-margin-bottom:0px;opacity:0}40%,100%{scroll-margin-bottom:0px;opacity:1}}
-@keyframes c04-lead-out{0%,76%{scroll-margin-bottom:0px;opacity:1}100%{scroll-margin-bottom:0px;opacity:0}}
+@keyframes c04-lead-out{0%,88%{scroll-margin-bottom:0px;opacity:1}100%{scroll-margin-bottom:0px;opacity:0}}
+/* the shared element. Coordinates are page px written by _gFill on the ghost (0 = the band side, 1 = the page head); the title's spans keep
+   the band's own font and get the page's line height ÷ scale, so the last frame is the page title's line box exactly */
+.c04-ghost{display:none;position:absolute;inset:0;pointer-events:none;z-index:6;overflow:visible}
+.c04-ghost>*{position:absolute;left:0;top:0;margin:0;transform-origin:0 0;white-space:pre}
+.c04-gt span{position:absolute;left:0;top:0;white-space:pre}
+.c04-gm s{opacity:.85;margin-left:4px;text-decoration-thickness:1px}
+.c04-gm .cd{font-family:"Archivo",sans-serif;font-variant-numeric:tabular-nums;font-weight:600}
+.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost[data-gh="in"],.c04-pg.has-from.is-top.ph-exit .c04-ghost[data-gh="out"]{display:block}
+.c04-ghost[data-gh="in"] .c04-gt{animation:c04-gt-in calc(400ms * var(--k)) both}
+.c04-ghost[data-gh="in"][data-gm="fade"] .c04-gt{animation:c04-gt-in calc(400ms * var(--k)) both,c04-gtf-in calc(400ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gt .g2{animation:c04-g2-in calc(400ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gm{animation:c04-gm-in calc(400ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gs{animation:c04-gs-in calc(400ms * var(--k)) both}
+.c04-ghost[data-gh="out"] .c04-gt{animation:c04-gt-out calc(440ms * var(--k)) both}
+.c04-ghost[data-gh="out"] .c04-gt .g2{animation:c04-g2-out calc(440ms * var(--k)) both}
+.c04-ghost[data-gh="out"] .c04-gm{animation:c04-gm-out calc(440ms * var(--k)) both}
+.c04-ghost[data-gh="out"] .c04-gs{animation:c04-gs-out calc(440ms * var(--k)) both}
 /* every opening / closing keyframe also carries a constant scroll-margin-bottom: a property the compositor cannot run, so the whole choreography
-   (shape, clip, title, sheets) stays on one thread and in lockstep even when the main thread is busy — no sheet running ahead of its clip */
+   (shape, clip, ghost, sheets) stays on one thread and in lockstep even when the main thread is busy */
 @keyframes c04-sh-in{
   0%{scroll-margin-bottom:0px;top:var(--fx-y);bottom:calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)));left:var(--fx-x);right:calc(100% - var(--fx-x) - var(--fx-w));border-radius:18px 18px 0 0;box-shadow:0 -10px 24px -14px rgba(20,22,31,.45),0 0 0 rgba(20,22,31,0);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
   24%{top:calc(var(--fx-y) - 8px);bottom:calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)) + 8px);left:var(--fx-x);right:calc(100% - var(--fx-x) - var(--fx-w));border-radius:18px 18px 8px 8px;box-shadow:0 -18px 34px -14px rgba(20,22,31,.62),0 20px 30px -16px rgba(20,22,31,.55);animation-timing-function:cubic-bezier(.22,.74,.16,1)}
@@ -178,86 +199,69 @@ body{margin:0}
   0%{scroll-margin-bottom:0px;clip-path:inset(var(--fx-y) calc(100% - var(--fx-x) - var(--fx-w)) calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h))) var(--fx-x) round 18px 18px 0 0);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
   24%{clip-path:inset(calc(var(--fx-y) - 8px) calc(100% - var(--fx-x) - var(--fx-w)) calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)) + 8px) var(--fx-x) round 18px 18px 8px 8px);animation-timing-function:cubic-bezier(.22,.74,.16,1)}
   100%{scroll-margin-bottom:0px;clip-path:inset(0 0 0 0 round 18px)}}
-/* the band's own title rides the opening edge and becomes the page title (uniform scale + crossfade, never a non-uniform squash) */
-@keyframes c04-gh-in{
-  0%{scroll-margin-bottom:0px;transform:none;opacity:1;animation-timing-function:cubic-bezier(.25,.7,.35,1)}
-  24%{transform:translateY(-8px);opacity:1;animation-timing-function:cubic-bezier(.22,.74,.16,1)}
-  52%{opacity:1}
-  80%{opacity:0}
-  100%{scroll-margin-bottom:0px;transform:translate(calc(8px - var(--fx-x)),calc(64px + var(--sat,0px) - var(--fx-y))) scale(1.765);opacity:0}}
-@keyframes c04-pt-in{
-  0%,24%{scroll-margin-bottom:0px;transform:translate(calc(var(--fx-x) - 8px),calc(var(--fx-y) - 72px - var(--sat,0px))) scale(.567);opacity:0;animation-timing-function:cubic-bezier(.22,.74,.16,1)}
-  52%{opacity:0}
-  80%{opacity:1}
-  100%{scroll-margin-bottom:0px;transform:none;opacity:1}}
+@keyframes c04-gt-in{
+  0%{scroll-margin-bottom:0px;transform:translate(var(--gx0),var(--gy0)) scale(1);animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  24%{transform:translate(var(--gx0),calc(var(--gy0) - 8px)) scale(1);animation-timing-function:cubic-bezier(.22,.74,.16,1)}
+  100%{scroll-margin-bottom:0px;transform:translate(var(--gx1),var(--gy1)) scale(var(--gs))}}
+@keyframes c04-gtf-in{0%,70%{opacity:1}92%,100%{opacity:0}}
+@keyframes c04-g2-in{0%,24%{scroll-margin-bottom:0px;transform:translate(var(--g2x0),var(--g2y0));animation-timing-function:cubic-bezier(.3,.6,.3,1)}44%{transform:translate(var(--g2x0),var(--g2y1));animation-timing-function:cubic-bezier(.3,.7,.2,1)}100%{scroll-margin-bottom:0px;transform:translate(var(--g2x1),var(--g2y1))}}
+@keyframes c04-gm-in{
+  0%{scroll-margin-bottom:0px;transform:translate(var(--mx0),var(--my0)) scale(1);opacity:1;animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  24%{transform:translate(var(--mx0),calc(var(--my0) - 8px)) scale(1);animation-timing-function:cubic-bezier(.22,.74,.16,1)}
+  58%{opacity:1}
+  76%{opacity:0}
+  100%{scroll-margin-bottom:0px;transform:translate(var(--mx1),var(--my1)) scale(var(--ms));opacity:0}}
+@keyframes c04-gs-in{
+  0%{scroll-margin-bottom:0px;transform:translate(var(--sx0),var(--sy0));opacity:1;animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+  14%{opacity:1}
+  24%{transform:translate(var(--sx0),calc(var(--sy0) - 8px))}
+  32%{opacity:0}
+  100%{scroll-margin-bottom:0px;transform:translate(var(--sx0),calc(var(--sy0) - 8px));opacity:0}}
+@keyframes c04-ptx-in{0%,86%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-ptf-in{0%,72%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-pmx-in{0%,80%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-pt2-in{0%,40%{scroll-margin-bottom:0px;opacity:0;transform:translateY(16px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
 @keyframes c04-fade-in{0%,52%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
-@keyframes c04-body-in{0%,38%{scroll-margin-bottom:0px;opacity:0;transform:translateY(56px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
-@keyframes c04-sheet-in{0%,40%{scroll-margin-bottom:0px;transform:translateY(105%);animation-timing-function:cubic-bezier(.16,.84,.24,1)}100%{scroll-margin-bottom:0px;transform:none}}
+@keyframes c04-body-in{0%,32%{scroll-margin-bottom:0px;opacity:0;transform:translateY(56px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
+@keyframes c04-sheet-in{0%,26%{scroll-margin-bottom:0px;transform:translateY(105%);animation-timing-function:cubic-bezier(.2,.8,.24,1)}100%{scroll-margin-bottom:0px;transform:none}}
 @keyframes c04-edge-in{0%{scroll-margin-bottom:0px;transform:translateY(100%)}100%{scroll-margin-bottom:0px;transform:none}}
-/* closing: the content leaves first, the title rides back down to the band, the paper sinks into its slot */
-.c04-pg.has-from.is-top.ph-exit .c04-shape{animation:c04-sh-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-pgc{animation:c04-pc-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-ghost{animation:c04-gh-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-pt{animation:c04-pt-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit :is(.c04-pm,.c04-back,.c04-weak,.c04-foot){animation:c04-fade-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-psc>*{animation:c04-body-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-psc>:is(.c04-tkp,.c04-mstack){animation:c04-sheet-out calc(380ms * var(--k)) both}
-.c04-pg.is-top.ph-exit .c04-edge i{animation:c04-edge-out calc(300ms * var(--k)) cubic-bezier(.4,0,.6,1) both}
+/* closing */
+.c04-pg.has-from.is-top.ph-exit .c04-shape{animation:c04-sh-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-pgc{animation:c04-pc-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit :is(.c04-back,.c04-weak,.c04-foot){animation:c04-fade-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-pm{animation:c04-pm-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-psc>*{animation:c04-body-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-psc>:is(.c04-tkp,.c04-mstack){animation:c04-sheet-out calc(440ms * var(--k)) both}
+.c04-pg.is-top.ph-exit .c04-edge i{animation:c04-edge-out calc(150ms * var(--k)) cubic-bezier(.4,0,.6,1) both}
+.c04-pg.has-from.is-top.ph-exit:has(.c04-ghost[data-gh="out"]) .c04-pt{animation:c04-ptx-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit:not(:has(.c04-ghost[data-gh="out"])) .c04-pt{animation:c04-pt2-out calc(440ms * var(--k)) both}
 @keyframes c04-sh-out{
-  0%{scroll-margin-bottom:0px;top:0;bottom:calc(var(--ed) + var(--sab,0px));left:0;right:0;border-radius:18px;animation-timing-function:cubic-bezier(.45,.05,.2,1)}
-  82%{top:calc(var(--fx-y) - 6px);bottom:calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)) + 6px);left:var(--fx-x);right:calc(100% - var(--fx-x) - var(--fx-w));border-radius:18px 18px 8px 8px;box-shadow:0 -16px 30px -14px rgba(20,22,31,.55),0 16px 26px -16px rgba(20,22,31,.5);animation-timing-function:cubic-bezier(.3,.6,.4,1)}
+  0%,34%{scroll-margin-bottom:0px;top:0;bottom:calc(var(--ed) + var(--sab,0px));left:0;right:0;border-radius:18px;box-shadow:0 -12px 28px -16px rgba(20,22,31,.5),0 14px 26px -16px rgba(20,22,31,.6);animation-timing-function:cubic-bezier(.45,.05,.2,1)}
   100%{scroll-margin-bottom:0px;top:var(--fx-y);bottom:calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)));left:var(--fx-x);right:calc(100% - var(--fx-x) - var(--fx-w));border-radius:18px 18px 0 0;box-shadow:0 -10px 24px -14px rgba(20,22,31,.45),0 0 0 rgba(20,22,31,0)}}
 @keyframes c04-pc-out{
-  0%{scroll-margin-bottom:0px;clip-path:inset(0 0 0 0 round 18px);animation-timing-function:cubic-bezier(.45,.05,.2,1)}
-  82%{clip-path:inset(calc(var(--fx-y) - 6px) calc(100% - var(--fx-x) - var(--fx-w)) calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)) + 6px) var(--fx-x) round 18px 18px 8px 8px);animation-timing-function:cubic-bezier(.3,.6,.4,1)}
+  0%,34%{scroll-margin-bottom:0px;clip-path:inset(0 0 0 0 round 18px);animation-timing-function:cubic-bezier(.45,.05,.2,1)}
   100%{scroll-margin-bottom:0px;clip-path:inset(var(--fx-y) calc(100% - var(--fx-x) - var(--fx-w)) calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h))) var(--fx-x) round 18px 18px 0 0)}}
-/* title and band title ride the closing edge together from the first frame (same path, same easing as the shape), crossfading on the way */
-@keyframes c04-gh-out{
-  0%{scroll-margin-bottom:0px;transform:translate(calc(8px - var(--fx-x)),calc(64px + var(--sat,0px) - var(--fx-y))) scale(1.765);opacity:0;animation-timing-function:cubic-bezier(.45,.05,.2,1)}
-  12%{opacity:0}
-  40%{opacity:1}
-  82%{transform:translateY(-6px);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.4,1)}
-  100%{scroll-margin-bottom:0px;transform:none;opacity:1}}
-@keyframes c04-pt-out{
-  0%{scroll-margin-bottom:0px;transform:none;opacity:1;animation-timing-function:cubic-bezier(.45,.05,.2,1)}
-  12%{opacity:1}
-  40%{opacity:0}
-  82%,100%{scroll-margin-bottom:0px;transform:translate(calc(var(--fx-x) - 8px),calc(var(--fx-y) - 70px - var(--sat,0px))) scale(.567);opacity:0}}
-@keyframes c04-fade-out{0%{scroll-margin-bottom:0px;opacity:1}30%,100%{scroll-margin-bottom:0px;opacity:0}}
-@keyframes c04-body-out{0%{scroll-margin-bottom:0px;opacity:1;transform:none}40%,100%{scroll-margin-bottom:0px;opacity:0;transform:translateY(48px)}}
-@keyframes c04-edge-out{0%{scroll-margin-bottom:0px;transform:none}100%{scroll-margin-bottom:0px;transform:translateY(100%)}}
-@keyframes c04-sheet-out{0%{scroll-margin-bottom:0px;transform:none;animation-timing-function:cubic-bezier(.5,0,.8,.4)}42%,100%{scroll-margin-bottom:0px;transform:translateY(105%)}}
-.c04-ghost{transform-origin:14px 13px}
-/* the band's status word sits at the far right: it leaves before the ghost grows past the paper's edge, and returns only once it has landed */
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost :is(.c04-bst,.c04-bm){animation:c04-bst-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-ghost :is(.c04-bst,.c04-bm){animation:c04-bst-out calc(380ms * var(--k)) both}
-@keyframes c04-bst-in{0%,16%{scroll-margin-bottom:0px;opacity:1}34%,100%{scroll-margin-bottom:0px;opacity:0}}
-/* a title that wraps to two lines on the page cannot morph from the one-line band without doubling: the band rides the opening edge at its own size
-   and dissolves early; the page title settles in place after it */
-.c04-pg.tl2.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost{animation:c04-gh2-in calc(400ms * var(--k)) both}
-.c04-pg.tl2.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pt{animation:c04-pt2-in calc(400ms * var(--k)) both}
-.c04-pg.tl2.has-from.is-top.ph-exit .c04-ghost{animation:c04-gh2-out calc(380ms * var(--k)) both}
-.c04-pg.tl2.has-from.is-top.ph-exit .c04-pt{animation:c04-pt2-out calc(380ms * var(--k)) both}
-@keyframes c04-gh2-in{
-  0%{scroll-margin-bottom:0px;transform:none;opacity:1;animation-timing-function:cubic-bezier(.25,.7,.35,1)}
-  24%{transform:translateY(-8px);opacity:1;animation-timing-function:cubic-bezier(.22,.74,.16,1)}
-  42%{opacity:0}
-  100%{scroll-margin-bottom:0px;transform:translateY(calc(0px - var(--fx-y)));opacity:0}}
-@keyframes c04-pt2-in{0%,40%{scroll-margin-bottom:0px;opacity:0;transform:translateY(16px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
-@keyframes c04-gh2-out{
-  0%{scroll-margin-bottom:0px;transform:translateY(calc(0px - var(--fx-y)));opacity:0;animation-timing-function:cubic-bezier(.45,.05,.2,1)}
-  38%{opacity:0}
-  60%{opacity:1}
-  82%{transform:translateY(-6px);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.4,1)}
-  100%{scroll-margin-bottom:0px;transform:none;opacity:1}}
+@keyframes c04-gt-out{
+  0%,30%{scroll-margin-bottom:0px;transform:translate(var(--gx1),var(--gy1)) scale(var(--gs));opacity:0}
+  33%{opacity:1}
+  34%{transform:translate(var(--gx1),var(--gy1)) scale(var(--gs));animation-timing-function:cubic-bezier(.45,.05,.2,1)}
+  100%{scroll-margin-bottom:0px;transform:translate(var(--gx0),var(--gy0)) scale(1);opacity:1}}
+@keyframes c04-g2-out{0%,34%{scroll-margin-bottom:0px;transform:translate(var(--g2x1),var(--g2y1));animation-timing-function:cubic-bezier(.45,.05,.4,1)}78%{transform:translate(var(--g2x0),var(--g2y1));animation-timing-function:cubic-bezier(.4,0,.4,1)}100%{scroll-margin-bottom:0px;transform:translate(var(--g2x0),var(--g2y0))}}
+@keyframes c04-gm-out{
+  0%,34%{scroll-margin-bottom:0px;transform:translate(var(--mx1),var(--my1)) scale(var(--ms));opacity:0;animation-timing-function:cubic-bezier(.45,.05,.2,1)}
+  62%{opacity:0}
+  84%{opacity:1}
+  100%{scroll-margin-bottom:0px;transform:translate(var(--mx0),var(--my0)) scale(1);opacity:1}}
+@keyframes c04-gs-out{0%,86%{scroll-margin-bottom:0px;transform:translate(var(--sx0),var(--sy0));opacity:0}100%{scroll-margin-bottom:0px;transform:translate(var(--sx0),var(--sy0));opacity:1}}
+@keyframes c04-ptx-out{0%,31%{scroll-margin-bottom:0px;opacity:1}35%,100%{scroll-margin-bottom:0px;opacity:0}}
 @keyframes c04-pt2-out{0%{scroll-margin-bottom:0px;opacity:1;transform:translateX(calc(-50% * var(--p)))}30%,100%{scroll-margin-bottom:0px;opacity:0;transform:translateX(calc(-50% * var(--p))) translateY(12px)}}
-/* a page scrolled away from its top closes without the morph: title and band only fade along the closing edge, starting from where they are */
-.c04-pg[data-hs].has-from.is-top.ph-exit .c04-pt{animation:c04-pt2-out calc(380ms * var(--k)) both}
-.c04-pg[data-hs].has-from.is-top.ph-exit .c04-ghost{animation:c04-gh2-out calc(380ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit .c04-pm{animation:c04-pm-out calc(380ms * var(--k)) both}
-@keyframes c04-pm-out{0%{scroll-margin-bottom:0px;opacity:calc(1 - 1.7 * var(--p))}30%,100%{scroll-margin-bottom:0px;opacity:0}}
-@keyframes c04-bst-out{0%,62%{scroll-margin-bottom:0px;opacity:0}86%,100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-pm-out{0%{scroll-margin-bottom:0px;opacity:calc(1 - 1.7 * var(--p))}20%,100%{scroll-margin-bottom:0px;opacity:0}}
+@keyframes c04-fade-out{0%{scroll-margin-bottom:0px;opacity:1}24%,100%{scroll-margin-bottom:0px;opacity:0}}
+@keyframes c04-body-out{0%{scroll-margin-bottom:0px;opacity:1;transform:none;animation-timing-function:cubic-bezier(.4,0,.8,.5)}30%,100%{scroll-margin-bottom:0px;opacity:0;transform:translateY(40px)}}
+@keyframes c04-edge-out{0%{scroll-margin-bottom:0px;transform:none}100%{scroll-margin-bottom:0px;transform:translateY(100%)}}
+@keyframes c04-sheet-out{0%{scroll-margin-bottom:0px;transform:none;animation-timing-function:cubic-bezier(.5,0,.8,.4)}32%,100%{scroll-margin-bottom:0px;transform:translateY(105%)}}
 .c04-pt{transform-origin:left top}
+
 /* no origin rect (index jump / origin gone): the page rises from below / settles down */
 .c04-pg.is-top.dir-fwd:not(.has-from):not(.ph-idle) .c04-shape,.c04-pg.is-top.dir-fwd:not(.has-from):not(.ph-idle) .c04-pgc{animation:c04-rise calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .c04-pg.is-top.ph-exit:not(.has-from) .c04-shape,.c04-pg.is-top.ph-exit:not(.has-from) .c04-pgc{animation:c04-sink calc(300ms * var(--k)) cubic-bezier(.4,0,.7,.4) both}
@@ -488,7 +492,7 @@ body{margin:0}
       <sc-for list="{{pages}}" as="pg" hint-placeholder-count="1">
         <section class="c04-pg {{pg.cls}}" data-surface="{{pg.surface}}" style="{{pg.sty}}">
           <div class="c04-shape"></div>
-          <div class="c04-ghost" aria-hidden="true"><div class="c04-bt"><b class="c04-btt">{{pg.bandTitle}}</b><span class="c04-bst">{{pg.bandStatus}}</span></div><div class="c04-bm">{{pg.bandMetaA}}<sc-if value="{{pg.bandOld}}"><s>{{pg.bandOld}}</s></sc-if>{{pg.bandMetaB}}</div></div>
+          <div class="c04-ghost" aria-hidden="true"><div class="c04-gt"></div><div class="c04-gm"></div><div class="c04-gs"></div></div>
           <div class="c04-pgc">
             <div class="c04-psc" data-scroller="{{pg.scroller}}" onScroll="{{pg.onScroll}}">
               <!-- detail -->
@@ -554,7 +558,7 @@ body{margin:0}
       <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
         <section class="c04-pg c04-tkpg {{tk.cls}}" data-surface="{{tk.surface}}" style="{{tk.sty}}">
           <div class="c04-shape"></div>
-          <div class="c04-ghost" aria-hidden="true"><div class="c04-bt"><b class="c04-btt">{{tk.bandTitle}}</b><span class="c04-bst">{{tk.bandStatus}}</span></div><div class="c04-bm">{{tk.bandMetaA}}<sc-if value="{{tk.bandOld}}"><s>{{tk.bandOld}}</s></sc-if>{{tk.bandMetaB}}</div></div>
+          <div class="c04-ghost" aria-hidden="true"><div class="c04-gt"></div><div class="c04-gm"></div><div class="c04-gs"></div></div>
           <div class="c04-pgc">
             <div class="c04-psc" data-scroller="ticket" onScroll="{{tk.onScroll}}">
               <div class="c04-tkp">
@@ -622,7 +626,7 @@ body{margin:0}
       <sc-if value="{{mg.on}}" hint-placeholder-val="{{false}}">
         <section class="c04-pg c04-mgpg {{mg.cls}}" data-surface="manage" style="{{mg.sty}}">
           <div class="c04-shape"></div>
-          <div class="c04-ghost" aria-hidden="true"><div class="c04-bt"><b class="c04-btt">{{mg.bandTitle}}</b><span class="c04-bst">{{mg.bandStatus}}</span></div><div class="c04-bm">{{mg.bandMetaA}}<sc-if value="{{mg.bandOld}}"><s>{{mg.bandOld}}</s></sc-if>{{mg.bandMetaB}}</div></div>
+          <div class="c04-ghost" aria-hidden="true"><div class="c04-gt"></div><div class="c04-gm"></div><div class="c04-gs"></div></div>
           <div class="c04-pgc">
             <div class="c04-psc" data-scroller="manage" onScroll="{{mg.onScroll}}">
               <sc-if value="{{mg.ready}}">
@@ -745,7 +749,7 @@ function c04card(e, w, place, host, seatsLeft, statusLabel) {
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
-    this.motionSpec = { fwd: 400, back: 380, swap: 280, role: 300 };
+    this.motionSpec = { fwd: 400, back: 440, swap: 280, role: 300 };
     this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this._rit = {};
     if (p.preset === 'hosted') this.state.role = 'hosted';
@@ -754,7 +758,7 @@ class Component extends DCLogic {
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._placeHint(); const c = this._c; if (this._flip && c && c.nav.cur === 'home' && c.nav.phase === 'idle') this._flipSlide(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._placeHint(); const c = this._c; if (this._flip && c && c.nav.cur === 'home' && c.nav.phase === 'idle') this._flipSlide(); if (this._gPending && c && c.nav.cur !== 'home') { this._gPending = false; this._gIn(); } }
   /* the gesture hint hangs 8px under the stub (its height depends on the printed ticket), clear of the footer CTA */
   _placeHint() {
     const root = this.rootRef.current; const sec = root && root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec) return;
@@ -842,9 +846,81 @@ class Component extends DCLogic {
   }
   onNav(kind, s, p) {
     const root = this.rootRef.current; if (!root) return;
-    if (kind === 'go' && s !== 'home') { this._flipEnd(); const h = this._homePos(); const key = p && (p.eventId || p.draftId) ? 'row-' + (p.eventId || p.draftId) : null; const last = key && root.querySelector('[data-flip="' + key + '"].is-last'), lead = key && root.querySelector('[data-flip="' + key + '"].is-lead'); this._snap = h ? { role: this.state.role, section: this.state.section, pos: h.pos, key: key, last: !!last, lead: !!lead } : null; }
-    if (kind === 'back' && s === 'home') this._flipHome();
+    if (kind === 'go' && s !== 'home') { this._gPending = true; this._gsrc = null; if (this._c && this._c.nav.cur === 'home' && p && (p.eventId || p.draftId)) { try { this._gsrc = this._gMeasure(root.querySelector('.c04-home [data-flip="row-' + (p.eventId || p.draftId) + '"]')); } catch (e) { this._gsrc = null; } }
+      this._flipEnd(); const h = this._homePos(); const key = p && (p.eventId || p.draftId) ? 'row-' + (p.eventId || p.draftId) : null; const last = key && root.querySelector('[data-flip="' + key + '"].is-last'), lead = key && root.querySelector('[data-flip="' + key + '"].is-lead'); this._snap = h ? { role: this.state.role, section: this.state.section, pos: h.pos, key: key, last: !!last, lead: !!lead } : null; }
+    if (kind === 'back' && s === 'home') { this._flipHome(); this._gOut(); }
     if (kind === 'role' || kind === 'section') { this._snap = null; this._flipEnd(); }
+  }
+  /* ---- the shared element: a band's (or the lead's) own title / meta / status travel with the paper between the list and the page head ----
+     _gMeasure reads the origin at the tap (fonts, boxes, line starts); _gFill writes the ghost (two spans when the page breaks the title onto
+     a second line) and its coordinates; the CSS runs gt / g2 / gm / gs on the same clock and curve as the paper. */
+  _gLines(el) {
+    const out = [0], r = document.createRange(); let idx = 0, top0 = null;
+    const w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n;
+    while ((n = w.nextNode())) { for (let i = 0; i < n.length; i++, idx++) { r.setStart(n, i); r.setEnd(n, i + 1); const rc = r.getClientRects()[0]; if (!rc || !rc.width) continue; if (top0 === null) top0 = rc.top; else if (rc.top > top0 + rc.height * 0.6) { out.push(idx); top0 = rc.top; } } }
+    return out;
+  }
+  _gFont(e) { const cs = getComputedStyle(e), fs = parseFloat(cs.fontSize); return { fs: fs, lh: parseFloat(cs.lineHeight) || fs * 1.4, fw: cs.fontWeight, ls: cs.letterSpacing, col: cs.color }; }
+  _gMeasure(el) {
+    const root = this.rootRef.current; if (!root || !el) return null; const R = root.getBoundingClientRect(), lead = el.classList.contains('is-lead');
+    const t = el.querySelector(lead ? '.c04-lt' : '.c04-btt'), m = el.querySelector(lead ? '.c04-lm' : '.c04-bm'), s = el.querySelector(lead ? '.c04-lk>span' : '.c04-bst'); if (!t) return null;
+    const box = e => { const b = e.getBoundingClientRect(); return { x: b.left - R.left, y: b.top - R.top, w: b.width, h: b.height }; };
+    return { lead: lead, text: t.textContent, tb: box(t), tf: this._gFont(t), tl: this._gLines(t), meta: m ? m.innerHTML : '', mb: m ? box(m) : null, mf: m ? this._gFont(m) : null, status: s ? s.textContent : '', sb: s ? box(s) : null, sf: s ? this._gFont(s) : null };
+  }
+  /* g = band side (measured), pt / pm = the page head (visual boxes); mode 'in' | 'out'. Returns false when the title cannot be carried exactly. */
+  _gFill(gh, g, pt, pm, mode) {
+    const root = this.rootRef.current, R = root.getBoundingClientRect(); delete gh.dataset.gm;
+    const pb = pt.getBoundingClientRect(), pf = this._gFont(pt), text = pt.textContent.trim(); delete gh.dataset.gh; if (!text || !pb.width) return false;
+    const pl = this._gLines(pt), tl = g.tl, S = pf.fs / g.tf.fs; let lhG = pf.lh / S, fade = false;
+    let t1 = text, t2 = '', g2a = null, g2b = null;
+    if (pl.length === 2 && (tl.length === 1 || (tl.length === 2 && tl[1] === pl[1]))) { t1 = text.slice(0, pl[1]).replace(/\s+$/, ''); t2 = text.slice(pl[1]).replace(/^\s+/, ''); }
+    else if (pl.length > 2 || tl.length > 1) fade = true;
+    const gt = gh.querySelector('.c04-gt'), gm = gh.querySelector('.c04-gm'), gs = gh.querySelector('.c04-gs'); if (!gt) return false;
+    const fontCss = f => 'font-size:' + f.fs + 'px;font-weight:' + f.fw + ';letter-spacing:' + f.ls + ';color:' + f.col + ';';
+    if (fade) { t1 = g.text; lhG = g.tf.lh; }
+    gt.style.cssText = fontCss(g.tf) + 'line-height:' + lhG + 'px'; gt.textContent = '';
+    const a = document.createElement('span'); a.className = 'g1'; a.textContent = t1; gt.appendChild(a);
+    if (t2) {
+      const b = document.createElement('span'); b.className = 'g2'; b.textContent = t2; gt.appendChild(b);
+      const sp = document.createElement('span'); sp.textContent = t1 + ' '; sp.style.visibility = 'hidden'; gt.appendChild(sp); gh.style.display = 'block'; const wsp = sp.getBoundingClientRect().width; gh.style.removeProperty('display'); gt.removeChild(sp);
+      g2a = tl.length === 2 ? [0, g.tf.lh] : [wsp, 0]; g2b = [0, lhG];
+    }
+    const sFit = fade ? Math.min(S, Math.max(1, (pb.width + 1) / Math.max(1, g.tb.w))) : S;
+    const v = {}, px = n => (Math.round(n * 10) / 10) + 'px';
+    v['--gx0'] = px(g.tb.x); v['--gy0'] = px(g.tb.y + (g.tf.lh - lhG) / 2); v['--gx1'] = px(pb.left - R.left); v['--gy1'] = px(pb.top - R.top); v['--gs'] = String(Math.round(sFit * 10000) / 10000);
+    if (g2a) { v['--g2x0'] = px(g2a[0]); v['--g2y0'] = px(g2a[1]); v['--g2x1'] = px(g2b[0]); v['--g2y1'] = px(g2b[1]); }
+    if (gm) {
+      gm.innerHTML = ''; gm.style.cssText = '';
+      if (g.mb && pm) {
+        const qb = pm.getBoundingClientRect(), qf = this._gFont(pm), Sm = qf.fs / g.mf.fs, lhM = qf.lh / Sm;
+        gm.innerHTML = g.meta; gm.style.cssText = fontCss(g.mf) + 'line-height:' + lhM + 'px';
+        v['--mx0'] = px(g.mb.x); v['--my0'] = px(g.mb.y + (g.mf.lh - lhM) / 2); v['--mx1'] = px(qb.left - R.left); v['--my1'] = px(qb.top - R.top); v['--ms'] = String(Math.round(Sm * 10000) / 10000);
+      }
+    }
+    if (gs) { gs.textContent = g.sb ? g.status : ''; gs.style.cssText = g.sf ? fontCss(g.sf) + 'line-height:' + g.sf.lh + 'px' : ''; if (g.sb) { v['--sx0'] = px(g.sb.x); v['--sy0'] = px(g.sb.y); } }
+    for (const k in v) gh.style.setProperty(k, v[k]);
+    gh.dataset.gh = mode; if (fade) gh.dataset.gm = 'fade';
+    return true;
+  }
+  /* open: the page has just mounted (phase enter) — carry the origin measured at the tap */
+  _gIn() {
+    const g = this._gsrc; this._gsrc = null; const root = this.rootRef.current; if (!root) return;
+    const sec = root.querySelector('.c04-pg.is-top'), gh = sec && sec.querySelector('.c04-ghost'); if (!gh) return;
+    delete gh.dataset.gh; if (!g || this.isRM() || !sec.classList.contains('has-from')) return;
+    const pt = sec.querySelector('.c04-pt'), pm = sec.querySelector('.c04-pm'); if (!pt) return;
+    gh.dataset.gh = 'in'; void sec.offsetHeight;   /* the head's own fallback entrance (translateY 16px) must not be in the measurement */
+    try { if (!this._gFill(gh, g, pt, pm, 'in')) delete gh.dataset.gh; } catch (e) { delete gh.dataset.gh; }
+  }
+  /* close: measure the band where the paper will land (held at its old slot while the list re-sorts) and the page head as it is now */
+  _gOut() {
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    const sec = root.querySelector('.c04-pg.is-top'), gh = sec && sec.querySelector('.c04-ghost'); if (!gh) return; delete gh.dataset.gh; delete gh.dataset.gm;
+    if (this.isRM() || !sec.classList.contains('has-from')) return; const key = c.nav.fromKey; if (!key || !/^row-/.test(key)) return;
+    const el = root.querySelector('.c04-home [data-flip="' + key + '"]'), pt = sec.querySelector('.c04-pt'), pm = sec.querySelector('.c04-pm'); if (!el || !pt) return;
+    if (pt.scrollWidth > pt.clientWidth + 1) return;          /* a collapsed, ellipsised head: no exact carry — the title fades */
+    const g = this._gMeasure(el); if (!g) return;
+    if (this._landY != null) { const R = root.getBoundingClientRect(), dy = this._landY - (el.getBoundingClientRect().top - R.top); if (Math.abs(dy) > 1) { g.tb.y += dy; if (g.mb) g.mb.y += dy; if (g.sb) g.sb.y += dy; } }
+    try { if (!this._gFill(gh, g, pt, pm, 'out')) delete gh.dataset.gh; else if (gh.dataset.gm === 'fade') { delete gh.dataset.gh; delete gh.dataset.gm; } } catch (e) { delete gh.dataset.gh; }
   }
   _flipHome() {
     const snap = this._snap; this._landY = null; this._flipEnd(); if (!snap || snap.role !== this.state.role || snap.section !== this.state.section || this.isRM()) return;

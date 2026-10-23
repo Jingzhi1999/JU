@@ -471,6 +471,7 @@ body{margin:0}
 /* ---- toast ---- */
 .c05-toast{position:absolute;left:20px;right:20px;bottom:calc(72px + var(--kb,0px) + var(--sab,0px));background:rgba(16,18,30,.92);color:#F8F9FF;padding:12px 16px;border-radius:14px;font-size:calc(14px * var(--tz,1));z-index:60;animation:c05-toast calc(220ms * var(--k)) ease;text-align:center}
 .c05-toast.k-error{background:#8b1f30}
+.c05-toast{word-break:keep-all;overflow-wrap:anywhere;text-wrap:balance}
 /* off home the toast takes the tool row (between ← and the weak action): it covers neither the face title nor the paper's action */
 .app:not(.at-home) .c05-toast{top:calc(24px + var(--sat,0px));bottom:auto;left:98px;right:98px;min-height:44px;display:flex;align-items:center;justify-content:center;padding:8px 14px;border-radius:22px;line-height:1.35;animation-name:c05-toast-top}
 @keyframes c05-toast-top{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:none}}
@@ -638,7 +639,7 @@ body{margin:0}
                 <sc-for list="{{home.groups}}" as="g" hint-placeholder-count="3">
                   <div class="c05-grp {{g.toneCls}}"><i></i>{{g.title}} · {{g.count}}</div>
                   <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
-                    <div class="c05-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.open}}">
+                    <div class="c05-row {{r.landingCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" onClick="{{r.go}}">
                       <div class="c"><div class="t">{{r.titleNb}}</div><div class="ml"><span class="m">{{r.meta}}</span><span class="s {{r.toneCls}}">{{r.status}}</span></div></div>
                     </div>
                   </sc-for>
@@ -1130,7 +1131,7 @@ body{margin:0}
           </div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}"><div class="c05-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{c.toast.on}}"><div class="c05-toast {{c.toast.cls}}" role="status">{{toastText}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -1524,8 +1525,9 @@ class Component extends DCLogic {
   _hKind(c) { const H = c.history; if (!H || !H.on) return ''; if (H.hasStamp) return 'stamp'; if (H.ritual && H.burnOnce) return 'void'; return 'drained'; }
   /* a separator dot stays with the word before it (never starts a line) */
   _nb(t) { return String(t || '').replace(/ · /g, '\u00a0· '); }
-  _rowJ(r) { return Object.assign(r, { titleNb: this._nb(r.title), landingCls: r.landing ? 'is-landing' : '', toneCls: 't-' + (r.tone === 'go' ? 'soon' : r.tone), meta: r.whenText + ' · ' + r.placeText, status: r.label + (r.left && r.left.on ? ' · ' + r.left.text : '') }); }
-  _rowH(r, gk) { const sk = r.stateKey || gk; return Object.assign(r, { titleNb: this._nb(r.title), landingCls: r.landing ? 'is-landing' : '', toneCls: r.todo || gk === 'todo' || sk === 'review' ? 't-act' : sk === 'formed' ? 't-soon' : sk === 'cancelled' ? 't-void' : sk === 'ended' ? 't-kept' : 't-wait', meta: r.whenText + ' · ' + r.placeText, status: r.label }); }
+  /* a 待联系 row opens its ticket with the contact layer up (the row's act): opening a torn ticket only to look at it would leave the paper empty */
+  _rowJ(r) { return Object.assign(r, { go: r.stage === 'contact' ? r.act : r.open, titleNb: this._nb(r.title), landingCls: r.landing ? 'is-landing' : '', toneCls: 't-' + (r.tone === 'go' ? 'soon' : r.tone), meta: r.whenText + ' · ' + r.placeText, status: r.label + (r.left && r.left.on ? ' · ' + r.left.text : '') }); }
+  _rowH(r, gk) { const sk = r.stateKey || gk; return Object.assign(r, { go: r.open, titleNb: this._nb(r.title), landingCls: r.landing ? 'is-landing' : '', toneCls: r.todo || gk === 'todo' || sk === 'review' ? 't-act' : sk === 'formed' ? 't-soon' : sk === 'cancelled' ? 't-void' : sk === 'ended' ? 't-kept' : 't-wait', meta: r.whenText + ' · ' + r.placeText, status: r.label }); }
   _lead(c) {
     const joined = c.role === 'joined'; const r = c.section === 'current' ? (joined ? c.joined.lead : c.hosted.lead) : null;
     if (!r) return { on: false, secondary: null };
@@ -1617,7 +1619,7 @@ class Component extends DCLogic {
       detail: { label: c.detail.on ? this._nb(c.detail.label) : '', name: c.detail.on ? this._nb(c.detail.event.title) : '', wd: dw ? dw.wdZh + ' ' + dw.md : '', time: dw ? dw.time : '', sub: c.detail.on ? c.detail.place.full + ' · ' + c.detail.seatText : '' },
       read: { progressPct: Math.round((c.read.progress || 0) * 100) },
       wl: { label: c.waitlist.on ? this._nb(c.waitlist.row.label) : '', name: c.waitlist.on ? this._nb(c.waitlist.row.event.title) : '', wd: ww ? ww.wdZh + ' ' + ww.md : '', time: ww ? ww.time : '' },
-      faceCls,
+      faceCls, toastText: c.toast.on ? this._nb(c.toast.text) : '',
       history: { name: H.on ? this._nb(H.event.title) : '', recordCount: H.on ? H.records.length : 0, wd: hw ? hw.wdZh + ' ' + hw.md : '', time: hw ? hw.time : '', md: hw ? hw.md : '',
         isVoid: hk === 'void', notVoid: H.on && hk !== 'void', pgCls: hk === 'void' ? 'pg-hvoid' : '',
         hvCls: (hr && hr.torn ? 'torn' : '') + (H.on && H.ashes && s.hReplayOn !== H.eventId ? ' is-ash' : ''), impHidden: 'true',

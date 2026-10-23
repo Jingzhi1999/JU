@@ -1,10 +1,10 @@
 # C02 人先 · 覆盖表草稿（阶段 2，构建者自填）
 
-只勾我自己亲眼看过 / 亲手点过的。✓ = 看过或做过；— = 没有单独做；「跳转」= 只经索引跳转到达、没有从首页真实点进去。证据都在 `my-r2/evidence/C02/stage2/`：`coverage/`（50 态接触表）、`rm/`（系统减少动态下 11 条流程终态）、`kb/`（键盘态）、`widths/` 与 `widths-deep/`（四宽 + 115% + 安全区），其余为正常速度帧序列（CDP 录屏，帧名带毫秒）与静帧。
+只勾我自己亲眼看过 / 亲手点过的。✓ = 看过或做过；— = 没有单独做；「跳转」= 只经索引跳转到达、没有从首页真实点进去。证据都在 `my-r2/evidence/C02/stage2/`：`coverage/`（50 态接触表）、`rm/`（系统减少动态下 11 条流程终态）、`kb/`（键盘态）、`widths/` 与 `widths-deep/`（四宽 + 115% + 安全区），其余为正常速度帧序列（CDP 录屏，帧名带毫秒）与静帧。修正轮 A 的证据在 `stage2/roundA/`：`handover/`（按下 +40ms 静帧、详情 / 管理 / 票根的进入与返回、`home()` 一层与两层，帧名即距 pointerdown 的毫秒）、`copy/`（复制失败 + 重试、已加微信处理中）、`timeline.txt`（页面内逐帧采样）。
 
 | 索引 | 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |
 |---|---|---|---|---|---|---|
-| j-home | 参加者 · 当前 | ✓ | ✓ 点行进详情 / 票根、角色与分区切换、先做这件 CTA 直达阅读层 | ✓ s12/01 | ✓ motion/M1 M2、extra2/list-to-read、extra/tap+back-mid-flight | 第一眼「人先」是否成立 |
+| j-home | 参加者 · 当前 | ✓ | ✓ 点行进详情 / 票根、角色与分区切换、先做这件 CTA 直达阅读层 | ✓ s12/01 | ✓ roundA/handover detail-*、motion/M1 M2、extra2/list-to-read、extra/tap+back-mid-flight | 第一眼「人先」是否成立 |
 | j-history | 参加者 · 历史 | ✓ | ✓ 点开被取消的那局（第一次真实打开才烧） | ✓ extra2/history-list | ✓ extra2/burn-cancelled | — |
 | j-many | 当前较多（13 局） | ✓ | ✓ 滚到底再滚回 | ✓ motion/M3-* | ✓ M3（滚动驱动，逐位置截图） | 深处是否像通讯录（spec/motion/C02.md §三） |
 | j-history-many | 历史较多 | ✓ | ✓ 滚到底再滚回 | ✓ extra/M3h-* | ✓ M3（逐位置截图） | — |
@@ -13,8 +13,8 @@
 | j-d-waitlist | 候补等待 | ✓ | ✓ 查看候补（人物行）、退出候补（rm） | ✓ | — | — |
 | j-d-invitedq | 候补轮到 | 跳转 | — | ✓ coverage | — | — |
 | j-d-gathering | 已确认待成局 | ✓ | ✓ 进入 / 返回 / 入场途中返回 | ✓ s12/03 | ✓ extra/tap、back-mid-flight（打断） | 局卡只写「·」前的局名，全名在卡下 |
-| j-d-tear | 已出票待撕 | ✓ | ✓ 拖过阈值撕下；拖一半放手回位且不写入（torn=false） | ✓ | ✓ print/、tear/、extra/half-drag | 无头 SwiftShader 下出纸前准备 ≈0.75s |
-| j-d-contact | 已撕票待联系 | ✓ | ✓ 复制（http 真实剪贴板）、「下一次复制失败」→ 原件那一行（role=alert）+ 旁边的「重试」、已加微信 → 待赴约 | ✓ | ✓ tear/、fail/copy-* | — |
+| j-d-tear | 已出票待撕 | ✓ | ✓ 拖过阈值撕下；拖一半放手回位且不写入（torn=false） | ✓ | ✓ roundA/handover ticket-*、print/、tear/、extra/half-drag | 无头 SwiftShader 下出纸前准备 ≈0.75s |
+| j-d-contact | 已撕票待联系 | ✓ | ✓ 复制（http 真实剪贴板）、「下一次复制失败」→ 原件那一行（role=alert）+ 旁边的「重试」、已加微信（写入期间「处理中…」并锁住）→ 待赴约 | ✓ roundA/copy | ✓ tear/、fail/copy-* | — |
 | j-d-going | 已联系待赴约 | ✓ | ✓ 去不了了 → 确认 → 燃烧 C → 查看退出结果 → 历史灰烬 | ✓ | ✓ burn/burnC、to-history | — |
 | j-d-reschedule | 改期待答复 | ✓ | ✓ 接受（rm）、拒绝 → 燃烧 B | ✓ | ✓ burn/burnB | — |
 | j-d-withdraw | 退出确认层 | ✓ | ✓ 确认 / Esc / 焦点回到触发 | ✓ | ✓ burn/confirm | — |
@@ -28,7 +28,7 @@
 | j-d-released | 放弃预留 | 跳转 | — | ✓ coverage | — | — |
 | j-d-withdrawn | 撤回申请 | ✓ | ✓（extra/withdraw 之后） | ✓ | — | — |
 | j-d-absent | 散场 · 未出席待核实 | 跳转 | — | ✓ coverage | — | — |
-| h-home | 局主 · 当前 | ✓ | ✓ | ✓ s12/02 | ✓ path/ | — |
+| h-home | 局主 · 当前 | ✓ | ✓ 点先做这件卡进管理、返回落回卡上 | ✓ s12/02 | ✓ roundA/handover manage-*、path/ | — |
 | h-drafts | 局主 · 草稿 | ✓ | ✓ 删掉唯一的草稿 → 空态 + 撤销条 | ✓ extra2/M11-* | ✓ extra2/M11-last-draft | — |
 | h-history | 局主 · 历史 | ✓ | — | ✓ coverage | — | — |
 | h-pending | 待处理较多 | ✓ | ✓ 滚动 | ✓ variants/ | — | — |

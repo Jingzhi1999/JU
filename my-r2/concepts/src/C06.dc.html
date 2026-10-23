@@ -92,6 +92,7 @@ body{margin:0}
 .c06-grp + .c06-item{border-top:0}
 .c06-list.is-open .c06-item:not(.has-x),.c06-list.is-open .c06-grp,.c06-list.is-open .c06-tabs,.c06-list.is-open .c06-foot{opacity:.28}
 .c06-list.is-open .c06-grp:has(+ .c06-item.is-x){opacity:0}   /* the label right above the open paragraph steps away (it would sit in the header's fade) */
+.c06-list.is-open>:has(~ .c06-item.is-x){opacity:0;transition:opacity calc(110ms * var(--k,1)) ease}   /* everything above the open paragraph leaves at once: no line of type ghosts over its title as the list carries it up */
 .c06-row{padding:18px 0 19px;cursor:pointer;outline:none;touch-action:pan-y}
 .c06-row:focus-visible{box-shadow:inset 3px 0 0 var(--focus)}
 .c06-row:active .c06-ti{color:#41444f}
@@ -103,28 +104,26 @@ body{margin:0}
 .c06-item.is-quiet .c06-ti{font-size:calc(18px * var(--tz,1));line-height:1.38}
 .c06-item.is-quiet .c06-row{padding:15px 0 16px}
 .c06-item.is-quiet .c06-when{margin-top:6px}
-.c06-when{margin:8px 0 0;display:flex;flex-wrap:wrap;align-items:baseline;column-gap:12px;font-size:calc(14px * var(--tz,1));line-height:1.45;color:var(--sec)}
+.c06-when{margin:8px 0 0;display:flex;flex-wrap:nowrap;align-items:baseline;column-gap:12px;font-size:calc(14px * var(--tz,1));line-height:1.45;color:var(--sec);min-width:0}
 .c06-tm{font-family:var(--num);font-weight:500;color:var(--body);font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:.01em}
 .c06-tm b{font-weight:500;margin-left:.45em}
-.c06-pl{min-width:0;overflow-wrap:anywhere}
-.c06-old{white-space:nowrap;color:var(--faint);font-size:calc(13px * var(--tz,1))}
+.c06-pl{flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c06-item.has-x .c06-when{flex-wrap:wrap}.c06-item.has-x .c06-pl{white-space:normal;overflow-wrap:anywhere}
+.c06-old{flex:0 0 auto;white-space:nowrap;color:var(--faint);font-size:calc(13px * var(--tz,1))}
 .c06-old s{font-family:var(--num);text-decoration-thickness:1px}
 .c06-st{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;min-width:0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--sec)}
 .c06-lab{display:inline-block;flex:0 0 auto;font-weight:500;white-space:nowrap;position:relative}
 .c06-need{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c06-need::before{content:"·";margin-right:6px;color:var(--faint)}
 .c06-t-act{color:var(--act)}.c06-t-go{color:var(--go)}.c06-t-wait{color:var(--wait)}.c06-t-amber{color:var(--amber)}.c06-t-kept{color:var(--body)}.c06-t-void{color:var(--void)}.c06-t-red{color:var(--warn)}
-/* landing after a collapse: a soft highlighter under the status, in the environment's light */
-.c06-item.is-landing .c06-lab::after{content:"";position:absolute;left:-4px;right:-4px;bottom:0;height:.7em;z-index:-1;background:var(--gB);border-radius:2px;animation:c06-land calc(1100ms * var(--k,1)) ease both}
-.c06-item.is-landing .c06-lab{z-index:0}
-.c06-item.is-landing[data-moved] .c06-lab::after{animation-duration:calc(660ms * var(--k,1));animation-delay:calc(440ms * var(--k,1))}   /* a row that changed group: the mark is drawn once it has been set */
-@keyframes c06-land{0%{transform:scaleX(0);transform-origin:0 50%;opacity:1}28%{transform:scaleX(1);opacity:1}72%{transform:scaleX(1);opacity:.9}100%{transform:scaleX(1);opacity:0}}
 /* the lead (先做这件): countdown rule + the only CTA, which rests on a band of environment light */
-.c06-lx{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(380ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k,1)) ease}
+.c06-lx{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(160ms * var(--k,1)) ease}
 .c06-lx>div{min-height:0;overflow:clip;overflow-clip-margin:24px}   /* the CTA's light band runs to the page edges; only the height is clipped while the lead folds */
-.c06-item.is-x .c06-lx{grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows calc(240ms * var(--k,1)) cubic-bezier(.4,0,.2,1),opacity calc(140ms * var(--k,1)) ease,visibility 0s linear calc(240ms * var(--k,1))}
-/* folding back: the countdown and its button make room at once but only come back once the paragraph has folded (no light band over folding text) */
-.c06-item.has-x:not(.is-x) .c06-lx{transition:grid-template-rows calc(320ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(220ms * var(--k,1)) ease calc(250ms * var(--k,1))}
+.c06-item.has-x .c06-lx>div{overflow-clip-margin:0}   /* while it folds or unfolds, the band stays inside its own row (never over the paragraph) */
+/* opening: the row closes from below while its words stay legible (opacity holds, then goes in the last third) — no empty bar */
+.c06-item.is-x .c06-lx{grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows calc(240ms * var(--k,1)) cubic-bezier(.4,0,.2,1),opacity calc(240ms * var(--k,1)) cubic-bezier(.75,0,.9,.3),visibility 0s linear calc(240ms * var(--k,1))}
+/* folding back: the row opens with the fold and its words are there from the start (140ms) — no empty bar */
+.c06-item.has-x:not(.is-x) .c06-lx{transition:grid-template-rows calc(280ms * var(--k,1)) cubic-bezier(.4,0,.2,1),opacity calc(140ms * var(--k,1)) ease}
 .c06-lxin{padding:0 0 20px}
 .c06-left{position:relative;display:flex;flex-wrap:wrap;align-items:baseline;gap:0 10px;margin:12px 0 0;padding:0 0 9px;font-size:calc(13px * var(--tz,1));color:var(--sec)}
 .c06-left b{font-family:var(--num);font-weight:500;font-size:calc(15px * var(--tz,1));font-variant-numeric:tabular-nums;color:var(--go);letter-spacing:.01em}
@@ -177,6 +176,9 @@ body{margin:0}
 .c06-x .ju-contact-wrap{margin-top:6px}
 .c06-x .ju-contact-row{border-top-color:var(--line)}
 .c06-x .ju-form-error:empty{display:none}
+.c06-errline{display:flex;align-items:baseline;gap:4px}
+.c06-errline .ju-form-error{margin:0}
+.c06-errline .c06-ta{padding:6px 8px;min-height:32px;font-size:calc(13px * var(--tz,1))}
 /* the action slot follows the paragraph and sticks above the root nav while its paragraph is on screen */
 .c06-slot{position:sticky;bottom:calc(10px + var(--kb,0px));z-index:7;margin-top:10px;padding-top:16px}
 .c06-slot:has(.c06-cta:not(.ju-contact-action)),.c06-slot:has(.ju-contact-action[data-shown="true"]){background:linear-gradient(180deg,var(--paper0) 0,var(--paper) 22px)}
@@ -241,7 +243,13 @@ body{margin:0}
 /* history */
 .c06-t08{position:relative;height:520px;margin:18px -12px 0}
 .c06-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
-.c06-ash{margin:10px auto 0;width:258px;height:2px;background:linear-gradient(90deg,rgba(60,42,32,0),rgba(60,42,32,.55) 20%,rgba(60,42,32,.55) 80%,rgba(60,42,32,0))}
+/* a burnt ticket: once the fire has finished, its empty place folds away (420ms) and a line of ash with one sentence is what remains */
+.c06-figwrap{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(420ms * var(--k,1)) cubic-bezier(.4,0,.2,1)}
+.c06-figwrap>div{min-height:0}   /* no clip while the ticket lives: the torn stub falls and the burn's canvas runs past the stage */
+.c06-figwrap.is-gone>div{overflow:clip}
+.c06-figwrap.is-gone{grid-template-rows:0fr}
+.c06-void{display:flex;align-items:center;gap:12px;margin:16px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sec)}
+.c06-ash{display:block;flex:0 0 64px;height:2px;background:linear-gradient(90deg,rgba(60,42,32,0),rgba(60,42,32,.6) 30%,rgba(60,42,32,.45) 75%,rgba(60,42,32,0))}
 .c06-rec{padding:10px 0;border-top:1px solid var(--line);display:flex;gap:12px;align-items:baseline;font-size:calc(14px * var(--tz,1));line-height:1.55}
 .c06-rec b{font-weight:500;color:var(--ink);white-space:nowrap}
 .c06-rec span{min-width:0}
@@ -282,15 +290,17 @@ body{margin:0}
 .c06-sh-id b{font-weight:500;color:var(--body);margin-right:8px}
 .c06-sh-b{margin:14px 0 0;font-size:calc(15px * var(--tz,1));line-height:1.75;color:var(--body)}
 .c06-sh-irr{margin:14px 0 0;padding:10px 0 0;border-top:1px solid rgba(173,35,64,.35);font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--warn)}
-.c06-sh-acts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:22px}
-.c06-sh-acts .ju-v27-cta,.c06-sh-acts .ju-v27-danger{width:min(100%,230px);margin:0;border:0;font-family:inherit}
-.c06-sh-acts .ju-v27-danger{padding:0 10px}
-/* exit-type confirmations (V27 roles): the blue construction only for 「留下」, the consequence in the danger outline; withdraw / leave-queue: outline + ink pill */
-.c06-sh-acts.is-stack{flex-direction:column;align-items:center;gap:10px;margin-top:24px}
-.c06-sh-acts.is-stack>button{width:min(100%,280px)}
-.c06-ink{appearance:none;border:0;height:48px;width:min(100%,230px);border-radius:999px;background:var(--ink);color:#F6F5F1;font:inherit;font-size:calc(15px * var(--tz,1));font-weight:500;cursor:pointer;transition:transform .2s}
-.c06-ink:active{transform:scale(.97)}.c06-ink:disabled{opacity:.5}
-.c06-ta.outline{height:48px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(20,22,31,.18);background:rgba(255,255,255,.55);color:var(--ink);font-weight:500}
+/* two actions as words on the paper: the quiet one left, the consequence right; a blue CTA only where it is the one thing to do */
+.c06-sh-acts{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:22px -12px 0}
+.c06-sh-acts .ju-v27-cta{width:min(100%,230px);margin:0 12px 0 0;border:0;font-family:inherit}
+.c06-sh-acts .c06-ta{font-size:calc(15px * var(--tz,1));padding:12px}
+.c06-sh-keep{color:var(--sec)}
+.c06-sh-danger{color:var(--warn);font-weight:500;text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:6px;text-decoration-color:rgba(173,35,64,.5)}
+.c06-sh-ink{color:var(--ink);font-weight:600;text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:6px}
+/* exit-type confirmations (V27 roles): 「留下」 is the CTA; the consequence is the red words under it */
+.c06-sh-acts.is-stack{flex-direction:column;align-items:center;gap:6px;margin:26px 0 0}
+.c06-sh-acts.is-stack .ju-v27-cta{width:min(100%,280px);margin:0}
+.c06-sh-acts.is-solo{justify-content:center}
 .c06-fld{display:block;margin:14px 0 0;font-size:calc(13px * var(--tz,1));color:var(--sec)}
 .c06-in{display:block;width:100%;margin:6px 0 0;padding:10px 0;border:0;border-bottom:1px solid var(--rule);background:transparent;font:inherit;font-family:var(--num);font-size:16px;color:var(--ink);border-radius:0}
 .c06-in:focus{outline:none;border-bottom-color:var(--focus);box-shadow:0 1px 0 var(--focus)}
@@ -298,8 +308,12 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
 .c06-new{margin:12px 0 0;font-size:calc(15px * var(--tz,1));color:var(--body)}
 .c06-new s{color:var(--faint)}
 .c06-new b{font-family:var(--num);font-weight:600;color:var(--act)}
-.c06-card{margin:16px 0 0;padding:16px 0 0;border-top:1px solid var(--line)}
-.c06-card h4{font-family:var(--serif);font-weight:600;font-size:calc(21px * var(--tz,1));color:var(--ink)}
+/* the 局卡 as an inset illustration: original face (13px radius, 1px light ring, V27 face shadow), original size, 24px of air */
+.c06-jc{position:relative;width:212px;margin:26px auto 30px;border-radius:13px;overflow:hidden;background:#F2E8D5;box-shadow:0 42px 84px -28px rgba(18,22,48,.55),0 10px 26px -12px rgba(18,22,48,.35)}
+.c06-jc::after{content:"";position:absolute;inset:0;border-radius:13px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.5);pointer-events:none}
+.c06-jc:empty{aspect-ratio:4/5}
+.c06-jc.is-big{width:296px;margin:22px auto 26px}
+.c06-cap{text-align:center}
 /* toast */
 .c06-toast{position:absolute;left:var(--gx);right:var(--gx);bottom:calc(var(--navh) + var(--sab,0px) + 14px + var(--kb,0px));z-index:60;background:var(--ink);color:#F6F5F1;padding:12px 16px;border-radius:10px;font-size:calc(14px * var(--tz,1));line-height:1.5;animation:c06-toast calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
 .c06-toast.k-error{background:#7c1a2e}
@@ -327,7 +341,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
           </div>
           <sc-if value="{{v.weak}}"><button type="button" class="c06-weak {{v.weak.cls}}" data-act="{{v.weak.key}}" onClick="{{v.weak.act}}">{{v.weak.label}}</button></sc-if>
         </header>
-        <div class="c06-sc" data-scroller="{{v.scName}}" ref="{{scRef}}" onScroll="{{v.onScroll}}">
+        <div class="c06-sc" data-scroller="home" data-restore="manual" ref="{{scRef}}" onScroll="{{v.onScroll}}">
           <div class="c06-list {{v.listCls}}">
             <div class="c06-tabs" role="tablist" aria-label="分区">
               <sc-for list="{{v.tabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c06-tab {{t.cls}}" role="tab" data-section-tab="{{t.k}}" aria-selected="{{t.on}}" onClick="{{t.go}}">{{t.label}}<i>{{t.n}}</i></button></sc-for>
@@ -365,6 +379,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                       <div class="c06-xin">
                         <p class="c06-lede">{{v.tk.lede}}</p>
                         <sc-if value="{{v.tk.showStage}}">
+                          <div class="c06-figwrap {{v.tk.goneCls}}"><div>
                           <div class="c06-fig {{v.tk.figCls}}">
                             <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
                             <div class="c06-await" aria-hidden="true"><i class="c06-await-mouth"></i><i class="c06-await-paper"></i></div>
@@ -394,13 +409,13 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                               </div>
                             </div>
                           </div>
+                          </div></div>
                           <!-- contact layer (original DOM; JURitual.contact owns data-revealed, the note and the button labels) -->
                           <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
                             <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                             <p class="ju-contact-note23"></p>
-                            <p class="ju-form-error"></p>
+                            <div class="c06-errline"><p class="ju-form-error" role="alert"></p><sc-if value="{{c.ticket.contact.copyFail}}"><button type="button" class="c06-ta danger" data-act="retry" onClick="{{v.tk.retryCopy}}">重试</button></sc-if></div>
                           </div>
-                          <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c06-err">未能复制 · 长按上面的微信号手动复制<button type="button" class="c06-ta danger" data-act="retry" onClick="{{v.tk.retryCopy}}">重试</button></p></sc-if>
                           <sc-if value="{{v.tk.showClosed}}"><p class="c06-note">{{c.ticket.contact.closedText}}</p></sc-if>
                           <sc-if value="{{c.ticket.contact.error}}"><p class="c06-err">{{c.ticket.contact.error}}</p></sc-if>
                           <sc-if value="{{c.ticket.result}}"><p class="c06-note">{{v.tk.resultNote}}</p></sc-if>
@@ -408,7 +423,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                         <div class="c06-slot">
                           <div class="c06-ctaw">
                             <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta c06-cta ju-print-cta-in" data-act="{{v.tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
-                            <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta c06-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+                            <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta c06-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="{{v.tk.ctaDisabled}}" aria-busy="{{v.tk.ctaBusy}}"><span class="gloss"></span><span class="label">{{c.ticket.contact.ctaLabel}}</span><span data-slot="actionLabel" hidden></span></button></sc-if>
                             <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
                             <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
                           </div>
@@ -424,7 +439,8 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                         <sc-if value="{{c.detail.result}}"><p class="c06-res c06-t-go">{{c.detail.result.title}}</p><p class="c06-lede">{{c.detail.result.body}}</p></sc-if>
                         <p class="c06-lede">{{v.dt.lede}}</p>
                         <sc-if value="{{c.detail.countdown.on}}"><p class="c06-left {{c.detail.countdown.tone}}" style="--ratio:{{c.detail.countdown.ratio}}"><b>剩 {{c.detail.countdown.text}}</b><span>{{c.detail.row.deadlineText}}</span><i></i></p></sc-if>
-                        <sc-if value="{{c.detail.receipt}}"><p class="c06-lede"><b>{{c.detail.receipt.field}}</b> · {{c.detail.receipt.body}}</p><p class="c06-note">{{c.detail.receipt.note}}</p></sc-if>
+                        <sc-if value="{{c.detail.receipt}}"><p class="c06-lede"><sc-if value="{{c.detail.receipt.field}}"><b class="c06-lf">{{c.detail.receipt.field}}</b></sc-if>{{c.detail.receipt.body}}</p><p class="c06-note">{{c.detail.receipt.note}}</p></sc-if>
+                        <div class="c06-jc" data-c06card="{{v.dt.card}}" role="img" aria-label="局卡 · {{c.detail.title}}"></div>
                         <h4 class="c06-h4">同局的人<small>{{c.detail.seatText}}</small></h4>
                         <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><p class="c06-line {{m.youCls}}"><b>{{m.name}}</b><span>{{m.statusText}}</span></p></sc-for>
                         <h4 class="c06-h4">参加约定<small>{{v.dt.rulesNote}}</small></h4>
@@ -439,9 +455,10 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                   <sc-if value="{{it.xW}}">
                     <div class="c06-x" data-xb="{{it.r.id}}" data-surface="waitlist">
                       <div class="c06-xin">
-                        <p class="c06-lede"><sc-if value="{{v.wlField}}"><b class="c06-lf">{{v.wlField}}</b></sc-if>{{c.waitlist.receipt.title}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p>
+                        <p class="c06-lede"><sc-if value="{{c.waitlist.receipt.field}}"><b class="c06-lf">{{c.waitlist.receipt.field}}</b></sc-if>{{c.waitlist.receipt.title}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p>
                         <sc-if value="{{c.waitlist.receipt.note}}"><p class="c06-note">{{c.waitlist.receipt.note}}</p></sc-if>
                         <sc-if value="{{c.waitlist.countdown.on}}"><p class="c06-left {{c.waitlist.countdown.tone}}" style="--ratio:{{c.waitlist.countdown.ratio}}"><b>剩 {{c.waitlist.countdown.text}}</b><span>6 小时预留</span><i></i></p></sc-if>
+                        <div class="c06-jc" data-c06card="{{v.wl.card}}" role="img" aria-label="局卡 · {{c.waitlist.row.title}}"></div>
                         <h4 class="c06-h4">已经在局里<small>{{c.waitlist.seatLine}}</small></h4>
                         <sc-for list="{{c.waitlist.entered}}" as="m" hint-placeholder-count="3"><p class="c06-line {{m.youCls}}"><b>{{m.name}}</b><span>{{m.statusText}}</span></p></sc-for>
                         <h4 class="c06-h4">候补顺位<small>{{c.waitlist.total}} 人</small></h4>
@@ -463,6 +480,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                           <p class="c06-note">出席记录：{{c.history.attendanceText}} · 局主记录的事实，不评分</p>
                         </sc-if>
                         <sc-if value="{{v.hs.showStage}}">
+                          <div class="c06-figwrap {{v.hs.goneCls}}"><div>
                           <div class="c06-fig">
                             <div class="ju-ticket-stage c06-stage {{v.hs.stageCls}}" data-print-stage="c06h" data-state="idle">
                               <div class="ju-ticket" data-paper="c06h">
@@ -488,7 +506,8 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                               </div>
                             </div>
                           </div>
-                          <sc-if value="{{c.history.ashes}}"><div class="c06-ash" aria-hidden="true"></div><p class="c06-note">票根已作废。</p></sc-if>
+                          </div></div>
+                          <sc-if value="{{c.history.ashes}}"><p class="c06-void"><i class="c06-ash" aria-hidden="true"></i>{{v.hs.voidText}}</p></sc-if>
                         </sc-if>
                         <sc-if value="{{c.history.contactOpen}}"><p class="c06-line"><b>局主微信</b><span>{{c.history.hostWx}}<button type="button" class="c06-ta act" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></span></p></sc-if>
                         <sc-if value="{{c.history.contactClosedText}}"><p class="c06-note">{{c.history.contactClosedText}}</p></sc-if>
@@ -521,7 +540,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                       <div class="c06-xin">
                         <sc-if value="{{c.manage.missing}}"><p class="c06-lede">{{c.manage.body}}</p></sc-if>
                         <sc-if value="{{v.mg.ready}}">
-                          <p class="c06-mlede"><b>{{c.manage.head.life}}</b> · {{c.manage.head.formedLine}}</p>
+                          <p class="c06-mlede"><b>{{v.mg.ledeB}}</b><sc-if value="{{v.mg.ledeR}}"> · {{v.mg.ledeR}}</sc-if></p>
                           <sc-if value="{{c.manage.error}}"><p class="c06-err">{{c.manage.error}}</p></sc-if>
                           <div class="c06-secs">
                             <!-- 申请 -->
@@ -554,7 +573,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                               <h4 class="c06-h4">成员<small>{{c.manage.roster.line}}</small></h4>
                               <div class="c06-secb">
                                 <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c06-mem {{m.freshCls}}" data-rid="{{m.id}}">
-                                  <p class="c06-mem-n"><b>{{m.name}}</b><span>{{m.stateLbl}}</span><sc-if value="{{m.left.on}}"><em>{{m.left.text}}</em></sc-if></p>
+                                  <p class="c06-mem-n"><b>{{m.name}}</b><span>{{m.stateText}}</span><sc-if value="{{m.left.on}}"><em>{{m.left.text}}</em></sc-if></p>
                                   <sc-if value="{{m.subOn}}"><p class="c06-mem-s"><sc-if value="{{m.ticketText}}"><span>{{m.ticketText}}</span></sc-if><sc-if value="{{m.contactText}}"><span>{{m.contactText}}</span></sc-if><sc-if value="{{m.wxText}}"><span>{{m.wxText}}</span><button type="button" class="c06-ta act" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></sc-if><sc-if value="{{m.copyFail}}"><button type="button" class="c06-ta danger" data-act="retry" onClick="{{m.retryCopy}}">重试</button></sc-if></p></sc-if>
                                 </div></sc-for>
                                 <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><p class="c06-open-seat">空位 · {{o.text}}</p></sc-for>
@@ -683,7 +702,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
             <sc-if value="{{v.sh.hasAffected}}"><h4 class="c06-h4">{{c.sheet.affectedTitle}}</h4><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><p class="c06-line"><b>{{x.label}}</b><span>{{x.n}}</span></p></sc-for></sc-if>
             <sc-if value="{{c.sheet.irreversible}}"><p class="c06-sh-irr">{{c.sheet.irreversible}}</p></sc-if>
             <sc-if value="{{c.sheet.hint}}"><p class="c06-help">{{c.sheet.hint}}</p></sc-if>
-            <sc-if value="{{c.sheet.card}}"><div class="c06-card"><h4>{{c.sheet.card.title}}</h4><p class="c06-sh-id">{{c.sheet.card.when.zh}} · {{c.sheet.card.place.full}} · 局主 {{c.sheet.card.host}}</p><p class="c06-help">{{c.sheet.card.caption}}</p><sc-if value="{{c.sheet.card.note}}"><p class="c06-sh-b">{{c.sheet.card.note}}</p></sc-if></div></sc-if>
+            <sc-if value="{{c.sheet.card}}"><div class="c06-jc is-big" data-c06card="{{v.sh.card}}" role="img" aria-label="局卡 · {{c.sheet.card.title}}"></div><p class="c06-help c06-cap">{{c.sheet.card.caption}}</p><sc-if value="{{c.sheet.card.note}}"><p class="c06-sh-b c06-cap">「{{c.sheet.card.note}}」</p></sc-if></sc-if>
             <sc-if value="{{v.sh.isRecord}}">
               <sc-if value="{{c.sheet.done}}"><p class="c06-res c06-t-go">{{c.sheet.doneTitle}}</p><p class="c06-sh-b">{{c.sheet.doneBody}}</p></sc-if>
               <sc-if value="{{v.sh.recordOpen}}"><label class="c06-fld">发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c06-in" data-field="text" rows="4" maxlength="120" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label></sc-if>
@@ -691,9 +710,9 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
             <sc-if value="{{c.sheet.error}}"><p class="c06-err">{{c.sheet.error}}</p></sc-if>
             <div class="c06-sh-acts {{v.sh.stack}}">
               <sc-if value="{{v.sh.keepMain}}"><button type="button" class="ju-v27-cta c06-cta" data-act="close" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button></sc-if>
-              <sc-if value="{{v.sh.keepText}}"><button type="button" class="c06-ta {{v.sh.keepCls}}" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button></sc-if>
-              <sc-if value="{{v.sh.okDanger}}"><button type="button" class="ju-v27-danger" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
-              <sc-if value="{{v.sh.okInk}}"><button type="button" class="c06-ink" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+              <sc-if value="{{v.sh.keepText}}"><button type="button" class="c06-ta c06-sh-keep" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button></sc-if>
+              <sc-if value="{{v.sh.okDanger}}"><button type="button" class="c06-ta c06-sh-danger" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+              <sc-if value="{{v.sh.okInk}}"><button type="button" class="c06-ta c06-sh-ink" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
               <sc-if value="{{v.sh.okMain}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" aria-disabled="{{v.sh.okDisabled}}" disabled="{{v.sh.okDisabled}}" onClick="{{c.sheet.ok}}"><span class="gloss"></span><span class="label">{{c.sheet.okLabel}}</span></button></sc-if>
             </div>
           </div>
@@ -715,11 +734,34 @@ function c06Bez(x1, y1, x2, y2) {
   return function (x) { if (x <= 0) return 0; if (x >= 1) return 1; let t = x; for (let i = 0; i < 6; i++) { const s = slope(t, x1, x2); if (Math.abs(s) < 1e-6) break; t -= (calc(t, x1, x2) - x) / s; } return calc(Math.max(0, Math.min(1, t)), y1, y2); };
 }
 const C06_INLINE = { detail: 1, waitlist: 1, ticket: 1, reply: 1, history: 1, manage: 1, draft: 1 };
-const C06_HOLD = { detail: 'detail', waitlist: 'waitlist', ticket: 'ticket', reply: 'ticket', history: 'history', manage: 'manage', draft: 'draft' };
+/* V27 局卡 JuCardV2 (src/shared/v27/ju-card.html): the six visual packs, transcribed by script, markup and cqw sizes unchanged
+   (the gender tag and QR strip are never on in 我的局). In this concept the card is an inset illustration inside the open
+   paragraph (212 × 265, V27's 门口 size) and the full card in its sheet (296 × 370, V27's large size). */
+const C06_N = "url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23g)'/%3E%3C/svg%3E&quot;)";
+const C06_CARD = {
+  invite: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(174deg,#F4EBD9 0%,#EFE4CC 70%,#EADDC2 100%);color:#241F17;display:flex;flex-direction:column;padding:6.5cqw 7cqw 5.5cqw;box-sizing:border-box"><div style="font-family:'Libre Caslon Text',serif;font-weight:700;font-size:7.6cqw;letter-spacing:0.22cqw;color:#A8281F;text-align:center;line-height:1;white-space:nowrap;overflow:hidden">${v.en}</div><div style="display:flex;align-items:center;gap:2cqw;margin:2.8cqw 0 3.6cqw"><div style="flex:1;height:0.35cqw;background:#A8281F"></div><div style="font-family:'Space Mono',monospace;font-size:2.4cqw;letter-spacing:0.5cqw;color:#A8281F">JU ${v.num}</div><div style="flex:1;height:0.35cqw;background:#A8281F"></div></div><div style="display:flex;align-items:flex-end;gap:2cqw;font-family:'Space Mono',monospace;font-size:2.9cqw;color:#A8281F;letter-spacing:0.2cqw"><span style="padding-bottom:1cqw">TO:</span><span style="flex:1;border-bottom:0.3cqw solid #CDAF93;font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6.6cqw;color:#241F17;line-height:1;text-align:center">${v.toWho}</span><span style="padding-bottom:1cqw">DATE:</span><span style="border-bottom:0.3cqw solid #CDAF93;font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6cqw;line-height:1;padding:0 1cqw">${v.date}</span></div><div style="margin-top:4cqw;flex:1;border:0.4cqw solid #A8281F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6cqw;padding:3cqw;min-height:0;position:relative"><div style="position:absolute;top:1.4cqw;left:1.4cqw;width:2.6cqw;height:2.6cqw;border-top:0.4cqw solid #A8281F;border-left:0.4cqw solid #A8281F"></div><div style="position:absolute;bottom:1.4cqw;right:1.4cqw;width:2.6cqw;height:2.6cqw;border-bottom:0.4cqw solid #A8281F;border-right:0.4cqw solid #A8281F"></div><div style="font-family:'Caveat','Zhi Mang Xing',cursive;font-size:11.5cqw;color:#241F17;text-align:center;line-height:1.12;transform:rotate(-2deg)">${v.title}</div><div style="font-family:'Caveat','Zhi Mang Xing',cursive;font-size:6.6cqw;color:#A8281F;transform:rotate(-2deg)">来不来！！</div></div><div style="margin-top:4.2cqw;display:flex;flex-direction:column;gap:1.9cqw;font-family:'Space Mono',monospace;font-size:2.85cqw"><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">SEATS</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">${v.seatLong}</span></div><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">WHERE</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">${v.loc} · NEW YORK</span></div><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">TIME</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">${v.date} · ${v.time} 开吃</span></div></div><div style="margin-top:3.4cqw;display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.6cqw;color:#A8281F;letter-spacing:0.24cqw"><span>BY ${v.host} · NYC</span><span>REAL PLANS ONLY</span></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.14;mix-blend-mode:multiply;background-image:${N}"></div></div>`,
+  street: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(168deg,#96825f 0%,#6f5d46 32%,#473d30 60%,#221e18 100%);color:#FFFDF6;display:flex;flex-direction:column;justify-content:space-between;padding:6cqw;box-sizing:border-box"><div style="position:absolute;left:14%;top:32%;width:70%;height:30%;background:radial-gradient(ellipse at center,rgba(255,242,208,0.35),rgba(255,242,208,0) 70%)"></div><div style="position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(180deg,rgba(20,16,10,0) 0%,rgba(20,16,10,0.55) 100%)"></div><div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:3cqw"><div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:8cqw;line-height:1.12;letter-spacing:-0.12cqw;text-wrap:balance;max-width:80%">${v.title}</div><div style="font-family:'Space Mono',monospace;font-size:2.8cqw;opacity:0.75;padding-top:1cqw;white-space:nowrap">${v.num}</div></div><div style="position:relative;margin-top:-14cqw;font-family:'Archivo',sans-serif;font-weight:400;font-size:3.7cqw;opacity:0.82;align-self:flex-start">Hosted by ${v.host} · ${v.seatMid}</div><div style="position:relative;align-self:center;border:0.28cqw dashed rgba(255,253,246,0.5);border-radius:1cqw;padding:1.6cqw 3cqw;font-family:'Space Mono',monospace;font-size:2.8cqw;letter-spacing:0.2cqw;color:rgba(255,253,246,0.8)">[ 官方图库 · 街拍 / 夜市_02 ]</div><div style="position:relative"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:3cqw"><div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;letter-spacing:-0.08cqw">In ${v.loc}<br>纽约</div><div style="font-family:'Archivo',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;text-align:right;letter-spacing:-0.08cqw">${v.date}<br>${v.time}</div></div><div style="margin-top:3cqw;padding-top:2.4cqw;border-top:0.24cqw solid rgba(255,253,246,0.3);display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.7cqw;opacity:0.78;letter-spacing:0.2cqw"><span>PUBLISHED ON JU</span><span>ju.app</span></div></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.32;mix-blend-mode:overlay;background-image:${N}"></div></div>`,
+  grain: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:radial-gradient(130% 95% at 50% 28%,#26305e 0%,#151a36 46%,#0a0b16 100%);color:#EDE6D2;display:flex;flex-direction:column;padding:5.5cqw;box-sizing:border-box"><div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:3.2cqw;letter-spacing:1cqw;color:#D8D0B8"><span>JU PRESENTS ⤵</span><span style="letter-spacing:0.2cqw">${v.num}</span></div><div style="flex:1;display:flex;align-items:flex-end;min-height:0"><div style="font-family:'Archivo Black',sans-serif;font-size:13.5cqw;line-height:0.96;letter-spacing:0.08cqw;color:#F0E9D6;text-shadow:0.55cqw 0.55cqw 0 rgba(0,0,0,0.6);width:72%;overflow-wrap:anywhere">${v.en}</div></div><div style="position:absolute;right:5.5cqw;bottom:17cqw;text-align:right;font-family:'Space Mono',monospace;font-weight:700;font-size:3.5cqw;line-height:2.05;letter-spacing:0.4cqw;color:#E4DCC4">${v.seatShort}<br>[${v.dateNum}]<br>${v.time}</div><div style="margin-top:3.4cqw;padding-top:2.6cqw;border-top:0.24cqw solid rgba(237,230,210,0.22);display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-size:2.9cqw;letter-spacing:0.3cqw;color:#B7B096"><span>${v.title}</span><span>AT ${v.loc}…</span></div><div style="position:absolute;left:28%;top:6%;width:44%;height:42%;background:radial-gradient(ellipse at center,rgba(96,116,230,0.38),rgba(96,116,230,0) 70%)"></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.55;mix-blend-mode:soft-light;background-image:${N}"></div></div>`,
+  mono: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(175deg,#5d2314 0%,#8f4726 36%,#70301a 62%,#2e1109 100%);color:#F3EAD8;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.7cqw;padding:7cqw;box-sizing:border-box;text-align:center"><div style="position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(255,230,190,0.05) 0 1.5cqw,rgba(0,0,0,0.07) 1.5cqw 3cqw)"></div><div style="position:absolute;left:20%;top:20%;width:60%;height:34%;background:radial-gradient(ellipse at center,rgba(255,180,110,0.22),rgba(255,180,110,0) 70%)"></div><div style="position:relative;font-family:'Space Mono',monospace;font-size:3cqw;letter-spacing:1.1cqw;opacity:0.85">JU ${v.num}</div><div style="position:relative;font-family:'Space Mono','Noto Sans SC',monospace;font-weight:700;font-size:6cqw;letter-spacing:0.9cqw;line-height:1.7;white-space:nowrap;max-width:100%;overflow:hidden">${v.title}</div><div style="position:relative;font-family:'Space Mono',monospace;font-weight:700;font-size:4.3cqw;letter-spacing:1cqw">IN ${v.locEn}, NYC</div><div style="position:relative;font-family:'Space Mono',monospace;font-weight:700;font-size:4.3cqw;letter-spacing:1cqw">${v.date} · ${v.time}</div><div style="position:relative;font-family:'Space Mono',monospace;font-size:3.1cqw;letter-spacing:0.8cqw;border:0.28cqw solid rgba(243,234,216,0.55);padding:1.5cqw 3.2cqw;border-radius:999px">${v.seatAsk}</div><div style="position:relative;font-family:'Space Mono',monospace;font-size:2.7cqw;letter-spacing:0.7cqw;opacity:0.72">JU.APP · BY ${v.host}</div><div style="position:absolute;bottom:4cqw;left:50%;transform:translateX(-50%);white-space:nowrap;border:0.28cqw dashed rgba(243,234,216,0.4);border-radius:1cqw;padding:1.2cqw 2.6cqw;font-family:'Space Mono',monospace;font-size:2.5cqw;color:rgba(243,234,216,0.72)">[ 官方图库 · 蒸汽 / 纹理_04 ]</div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.42;mix-blend-mode:overlay;background-image:${N}"></div></div>`,
+  riso: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:#B7BCD9;color:#2A2C33;display:flex;flex-direction:column;padding:6cqw;box-sizing:border-box"><div style="display:flex;justify-content:space-between;align-items:baseline"><span style="font-family:'Archivo',sans-serif;font-weight:800;font-size:6.5cqw;letter-spacing:-0.2cqw">JU<span style="color:#A8281F">.</span></span><span style="font-family:'Space Mono',monospace;font-weight:700;font-size:4cqw">${v.date}</span></div><div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:4.2cqw;min-height:0"><div style="font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:11.5cqw;line-height:1.12;letter-spacing:0.2cqw;text-wrap:balance;text-shadow:0.4cqw 0 0 rgba(168,40,31,0.28)">${v.title}</div><div style="display:flex;gap:3cqw;justify-content:center"><div style="width:37cqw;height:27cqw;background:repeating-linear-gradient(45deg,#989eBE 0 2cqw,#a9aec9 2cqw 4cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.5cqw;color:#5d6076;box-shadow:inset 0 0 0 0.28cqw rgba(42,44,51,0.25)">PHOTO_01</div><div style="width:37cqw;height:27cqw;background:repeating-linear-gradient(45deg,#989eBE 0 2cqw,#a9aec9 2cqw 4cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.5cqw;color:#5d6076;box-shadow:inset 0 0 0 0.28cqw rgba(42,44,51,0.25)">PHOTO_02</div></div></div><div style="display:flex;justify-content:space-between;align-items:flex-end"><div style="font-family:'Archivo',sans-serif;font-weight:800;font-size:7.5cqw;letter-spacing:-0.1cqw;line-height:1">${v.time} 见</div><div style="font-family:'Space Mono',monospace;font-size:2.9cqw;text-align:right;line-height:1.75">${v.loc} · 纽约<br>${v.seatShort} · JU ${v.num}</div></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.2;mix-blend-mode:multiply;background-image:${N}"></div></div>`,
+  acid: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:#C9F23C;color:#14150F;display:flex;flex-direction:column;padding:0;box-sizing:border-box"><div style="height:20cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.6cqw;color:#5d7413;letter-spacing:0.3cqw">[ 官方图库 · 餐桌 / 沸腾_01 ]</div><div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2.4cqw;padding:5cqw 6cqw;min-height:0"><div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.3cqw"><span>${v.num}</span><span>${v.en}</span></div><div style="display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-weight:500;font-size:4.5cqw;letter-spacing:0.6cqw;text-transform:uppercase;opacity:0.85"><span>HOSTED</span><span>BY ${v.host}</span></div><div style="font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:12.2cqw;line-height:1.08;letter-spacing:0.15cqw">${v.title}</div><div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.2cqw"><span>${v.dateNum}</span><span style="font-size:5cqw">${v.time} – LATE</span></div><div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-weight:700;font-size:3.3cqw"><span style="white-space:nowrap">${v.loc} · NYC</span><span style="white-space:nowrap">${v.seatShort}</span></div></div><div style="height:14cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw)"></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.16;mix-blend-mode:multiply;background-image:${N}"></div></div>`,
+};
+function c06Esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
+/* the template's own renderVals, from this event's facts: seats = places still open; the card's lettering carries the short name */
+function c06CardVm(ev, when, place, host, avail, statusLabel, seatCaption) {
+  const cut = (t, n) => { t = String(t || '').split(' · ')[0].trim(); const a = Array.from(t); return a.length <= n ? t : a.slice(0, n).join('') + '…'; };
+  const w = when || {}, md = w.md || '', mm = md.split('.'), full = !(avail > 0);
+  const v = { pack: (ev && ev.pack) || 'invite', title: cut(ev && ev.title, 10), en: (ev && ev.en) || '', num: 'NYC', date: (w.wdEn ? w.wdEn + ' ' : '') + md, dateNum: mm.length === 2 ? mm[0] + '-' + mm[1] + '-2026' : md, time: w.time || '',
+    loc: cut(place && place.hood, 10), locEn: String((place && place.area) || 'NYC').toUpperCase(), host: (host && host.name) || '',
+    toWho: full ? '在局里的你' : '缺' + avail + '人的你', seatLong: seatCaption || (full ? '已成局 · 位子满了' : '还缺 ' + avail + ' 人 · 不算局主'), seatMid: statusLabel || (full ? '已成局' : '还缺 ' + avail + ' 人'),
+    seatShort: statusLabel || (full ? '已满员' : '缺 ' + avail + ' 人'), seatAsk: seatCaption || (full ? '已成局 · 名单锁定' : '缺 ' + avail + ' 人 · 报名后等确认') };
+  Object.keys(v).forEach((k) => { if (k !== 'pack') v[k] = c06Esc(v[k]); }); return v;
+}
+function c06CardHtml(v) { return '<div style="position:relative;width:100%;container-type:inline-size;font-family:\'Noto Sans SC\',sans-serif;background:#F2E8D5">' + (C06_CARD[v.pack] || C06_CARD.invite)(v, C06_N) + '</div>'; }
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
-    this.motionSpec = { fwd: 380, back: 320, swap: 280, role: 280 };   /* 1× ms: open in place 380, close 320 */
+    this.motionSpec = { fwd: 380, back: 300, swap: 280, role: 280 };   /* 1× ms: open in place 380, fold 300 (a row that changes group is set again by ~640) */
     this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this.scRef = { current: null };
     this._rit = {}; this._freeze = null; this._xp = null; this._labs = {}; this._y0 = null; this._ezO = c06Bez(.2, .8, .2, 1); this._ezC = c06Bez(.4, 0, .2, 1);
@@ -741,10 +783,18 @@ class Component extends DCLogic {
     return null;
   }
   /* ---------------- environment (JU.shared.skins) ---------------- */
-  componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncExpand(); this._syncFlip(); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
+  componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncCards(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
+  _card(kind, id, ev, when, place, host, avail, status, caption) { const vm = c06CardVm(ev, when, place, host, avail, status, caption); const key = [kind, id, vm.pack, vm.title, vm.date, vm.time, avail, status || ''].join('|'); this._cards[key] = vm; return key; }
+  _syncCards() { const root = this.rootRef.current, vm = this._cards || {}; if (!root) return; root.querySelectorAll('[data-c06card]').forEach((el) => { const k = el.getAttribute('data-c06card'); if (!k || el.__c06k === k || !vm[k]) return; el.innerHTML = c06CardHtml(vm[k]); el.__c06k = k; }); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
+  _syncScroll(ps) {
+    const s = this.state, sc = this.scRef.current; if (!ps || !sc || (ps.role === s.role && ps.section === s.section) || this._expOf()) return;
+    const m = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section]; sc.scrollTop = m && m.home != null ? m.home : 0;
+    if (this._c) this._c.nav.onScroll({ currentTarget: sc });
+  }
   /* leaving an open item: remember where every row and label stood in the frozen order, so the re-sort that follows can slide */
   getSnapshotBeforeUpdate(pp, ps) {
+    if (this._resetScrollers) this._fresh = true;   /* jumpTo / reset (the controller zeroes every list after this render) */
     const has = (st) => !!(st && st.nav && st.nav.stack.some((e, i) => i > 0 && C06_INLINE[e.s]));
     if (has(ps) && !has(this.state) && ps.role === this.state.role && ps.section === this.state.section) {
       /* a fold still running when the stack pops (a starved main thread) is finished first: the re-sort starts from the folded list, never from an empty band */
@@ -761,18 +811,16 @@ class Component extends DCLogic {
   _syncFlip() {
     const from = this._flipFrom; if (!from) return; this._flipFrom = null; const k = this.kf(); const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return;
     const to = this._positions() || {}; const lk = this.state.ui && this.state.ui.landKey ? 'r:' + String(this.state.ui.landKey).replace(/^row-/, '') : null;
-    /* a row that changed group never travels across the others: it lets go where it was (0–130ms), the others close up and open
-       its new place (110–570ms), and only then is it set there (440–740ms) — no frame has two lines of type on top of each other */
+    /* the row that changes place has already let go of its old place during the fold: the others close up at once (300ms) and it is
+       set in its new place from 140ms (220ms, a 8px rise) — the list never waits, and no frame has two lines of type on top of each other */
+    const moved = !!(lk && to[lk] != null && from[lk] != null && Math.abs(from[lk] - to[lk]) > 1);
     if (k > 0) root.querySelectorAll('.c06-list [data-k]').forEach(el => { const key = el.getAttribute('data-k'); const d = from[key] == null ? null : from[key] - to[key];
-      if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 300 * k, delay: 300 * k, easing: 'ease', fill: 'backwards' }); return; }
-      if (key === lk && Math.abs(d) > 1) {
-        el.setAttribute('data-moved', ''); clearTimeout(this._movedT); this._movedT = setTimeout(() => el.removeAttribute('data-moved'), 1150 * k);
-        el.animate([{ transform: 'translateY(' + d + 'px)', opacity: 1, easing: 'ease-out' }, { transform: 'translateY(' + d + 'px)', opacity: 0, offset: .18, easing: 'step-end' }, { transform: 'translateY(8px)', opacity: 0, offset: .6, easing: 'cubic-bezier(.2,.8,.2,1)' }, { transform: 'none', opacity: 1 }], { duration: 740 * k, easing: 'linear' });
-        return; }
-      if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 460 * k, delay: 110 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); });
-    if (lk && to[lk] != null && from[lk] != null && Math.abs(from[lk] - to[lk]) > 1) {
+      if (moved && key === lk) { el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220 * k, delay: 140 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); return; }
+      if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 * k, delay: 120 * k, easing: 'ease', fill: 'backwards' }); return; }
+      if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 300 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
+    if (moved) {
       const el = root.querySelector('.c06-list [data-k="' + lk + '"]'); const h = el ? el.offsetHeight : 120; const view = sc.clientHeight; const y = to[lk] - sc.scrollTop;
-      if (y < 0 || y + h * .5 > view) { const t = Math.max(0, Math.round(to[lk] - view * .42)); if (k > 0) this._tween(sc, t, 480 * k, this._ezO); else sc.scrollTop = t; }
+      if (y < 0 || y + h * .5 > view) { const t = Math.max(0, Math.round(to[lk] - view * .42)); if (k > 0) this._tween(sc, t, 300 * k, this._ezO); else sc.scrollTop = t; }
     }
   }
   componentWillUnmount() { cancelAnimationFrame(this._tw); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
@@ -788,12 +836,13 @@ class Component extends DCLogic {
   _syncExpand() {
     const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc || !this.state.nav) return;
     const nav = this.state.nav, x = this._expOf(), k = this.kf();
-    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); this._unfold(); if (!x) { sc.scrollTop = 0; this._c && this._c.nav.onScroll({ currentTarget: sc }); } }
+    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); this._unfold(); this._unfade(); }
     const prev = this._xp;
     const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home');
     this._xp = x ? { id: x.id, s: x.s, collapsing } : null;
     const block = x ? root.querySelector('[data-xb="' + x.id + '"]') : null;
     if (!x && this._fold) this._unfold();
+    if (!x && this._fadeRow) this._unfade();
     if (x && (!prev || prev.id !== x.id)) {
       const memo = this._scrollMemo && this._scrollMemo['home:' + this.state.role + ':' + this.state.section];
       const target = this._targetFor(x.id);
@@ -812,13 +861,14 @@ class Component extends DCLogic {
     const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return; const k = this.kf();
     cancelAnimationFrame(this._tw); this._xp = { id: x.id, s: x.s, collapsing: true };
     const block = root.querySelector('[data-xb="' + x.id + '"]');
-    const left = k > 0 ? Math.max(90, (this.motionSpec.back - 24) * k - (this._backAt ? performance.now() - this._backAt : 0)) : 0;
+    const left = k > 0 ? Math.max(90, (this.motionSpec.back - 20) * k - (this._backAt ? performance.now() - this._backAt : 0)) : 0;
     /* back to where the list was before the item opened; opened by an index jump (no memory) → stay, but never past the end of the shorter list */
     let y0 = this._y0 && this._y0.id === x.id && !this._moved ? this._y0.y : null;
     if (y0 == null) { const tail = root.querySelector('.c06-tail'); const bh = block ? block.getBoundingClientRect().height : 0; y0 = Math.max(0, Math.min(sc.scrollTop, sc.scrollHeight - bh - (tail ? tail.offsetHeight : 0) - sc.clientHeight)); }
     if (block) this._shrink(block, left);
-    /* the controller restores the list's scroll memory when the stack settles: make that memory the place this collapse lands on */
-    const mk = 'home:' + this.state.role + ':' + this.state.section; const mm = (this._scrollMemo = this._scrollMemo || {}); mm[mk] = Object.assign({}, mm[mk], { home: y0 });
+    /* a row that will change place lets go of its old one while its paper folds (the last 130ms), so the list can close up at once */
+    this._unfade(); const row = this._moved && k > 0 ? root.querySelector('.c06-row[data-rid="' + x.id + '"]') : null;
+    if (row) { const fd = Math.min(130 * k, left); this._fadeRow = row.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fd, delay: Math.max(0, left - fd), easing: 'ease-in', fill: 'forwards' }); }
     this._tween(sc, y0, left, this._ezC);
   }
   _targetFor(id) {
@@ -860,6 +910,7 @@ class Component extends DCLogic {
   _stop(block) { [block, block.firstElementChild].forEach(el => { if (el && el.getAnimations) el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) a.cancel(); }); }); block.style.overflow = ''; }
   _foldAnims() { const out = []; const root = this.rootRef.current; const els = (this._fold || []).slice(); if (root) root.querySelectorAll('[data-xb]').forEach(b => { els.push(b); if (b.firstElementChild) els.push(b.firstElementChild); }); els.forEach(el => el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) out.push(a); })); return out; }
   /* the rows that rose with the fold go back to plain layout (the stack has popped: the paragraph is gone, the layout now matches) */
+  _unfade() { const a = this._fadeRow; this._fadeRow = null; if (a) a.cancel(); }
   _unfold() { const f = this._fold; this._fold = null; if (f) f.forEach(el => el.getAnimations().forEach(a => { if (!a.animationName && !a.transitionProperty) a.cancel(); })); }
   _tween(sc, to, ms, ez, delay) {
     cancelAnimationFrame(this._tw); const from = sc.scrollTop; if (!(ms > 0) || Math.abs(to - from) < 1) { sc.scrollTop = to; return; }
@@ -875,7 +926,7 @@ class Component extends DCLogic {
   }
   /* ---------------- rituals: the controller wrote the data; these calls only show it (C00 call sites) ---------------- */
   _syncRituals(ps) {
-    const c = this._cv || this._c, root = this.rootRef.current; if (!c || !root) return;
+    const c = this._c, root = this.rootRef.current; if (!c || !root) return;
     const stage = root.querySelector('[data-surface="ticket"] .c06-stage,[data-surface="reply"] .c06-stage');
     if (c.ticket.on && stage) {
       const opening = c.ticket.state === 'printing' && this.state.nav.phase !== 'idle' && this.kf() > 0;
@@ -1033,14 +1084,9 @@ class Component extends DCLogic {
   }
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
-    const c0 = this.ctlVals(); this._c = c0; const s = this.state, nav = s.nav;
+    const c = this.ctlVals(); this._c = c; const s = this.state, nav = s.nav;
     const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing;
-    /* the paragraph being folded keeps the words it had: back() has already cleared its transient state (a result, the open
-       contact layer), and those must not flip to another sentence while the paper closes */
-    const hk = x ? C06_HOLD[x.s] : null; if (x && !collapsing && hk) this._held = { id: x.id, k: hk, obj: c0[hk] }; else if (!x) this._held = null;
-    const c = collapsing && this._held && this._held.id === x.id && this._held.k === hk ? Object.assign({}, c0, { [hk]: this._held.obj }) : c0; this._cv = c;
-    const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim };
-    v.scName = x ? x.s : 'home';
+    const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim }; this._cards = {};
     v.appCls = (open ? ' c06-open' : '') + (s.hcOn ? ' c06-hcon' : '');
     v.listCls = open ? 'is-open' : ''; v.tail = !!x;
     v.backCls = open ? '' : 'off'; v.backTab = open ? '0' : '-1';
@@ -1054,35 +1100,40 @@ class Component extends DCLogic {
     if (role === 'joined') (sec === 'history' ? c.joined.sectionsHistory : c.joined.sections).forEach(g => { pushG(g); g.rows.forEach(r => live.push({ key: 'r:' + r.id, kind: 'j', r: r })); });
     else if (sec === 'drafts') c.hosted.drafts.forEach(r => live.push({ key: 'd:' + r.id, kind: 'd', r: r }));
     else (sec === 'history' ? c.hosted.sectionsHistory : c.hosted.sections).forEach(g => { pushG(g); g.rows.forEach(r => live.push({ key: 'r:' + r.id, kind: 'h', r: r })); });
-    if (this._fresh) this._freeze = null;
+    if (this._resetScrollers) this._freeze = null;
     const items = this._frozen(role + ':' + sec, live, x);
-    if (x) { const grpOf = (arr) => { let g = null, at = -1; arr.forEach((it, i) => { if (it.isG) g = it.key; if (it.key === 'r:' + x.id || it.key === 'd:' + x.id) at = i, this._g = g; }); return at < 0 ? null : this._g; }; const a = grpOf(live), b = grpOf(items); this._moved = a !== b; } else this._moved = false;
+    if (x) { const at = (arr) => { let g = null, n = -1, i0 = -1; arr.forEach((it) => { if (it.isG) { g = it.key; return; } n++; if (it.key === 'r:' + x.id || it.key === 'd:' + x.id) i0 = n, this._g = g; }); return i0 < 0 ? null : this._g + '#' + i0; }; const a = at(live), b = at(items); this._moved = !!(a && b && a !== b); } else this._moved = false;
     v.items = items.map(it => it.isG ? it : it.kind === 'j' ? this._decorJ(it, c, x, collapsing) : it.kind === 'h' ? this._decorH(it, c, x, collapsing) : this._decorD(it, c, x, collapsing));
     const em = role === 'joined' ? c.joined.empty : c.hosted.empty;
     v.empty = em && em.on && !x ? { title: em.title, body: em.body, label: em.action ? em.action.label : '', go: em.action ? em.action.go : null, inert: em.action && em.action.inert ? 'true' : 'false', cls: em.action && em.action.inert ? 'inert' : 'act' } : null;
     v.foot = sec === 'history' && !v.empty ? (role === 'joined' ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '再开一局只带入活动内容，成员与记录不复制（开局模块，本轮不可点）') : '';
     /* ticket / reply paragraph */
     const tk = c.ticket;
-    const rc = c.waitlist && c.waitlist.receipt; v.wlField = rc && rc.field && String(rc.title || '').indexOf(rc.field) < 0 ? rc.field : '';   /* 「已预留 位置已预留」→ the field only when the title does not already say it */
     v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), figCls: tk.on && (tk.state === 'printing' || tk.state === 'fresh') ? 'is-await' : '', stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),
+      ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ctaBusy: tk.on && tk.contact && tk.contact.busy ? 'true' : 'false',
       tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', contactAction: !!(tk.on && !tk.unavailable && !tk.result), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable),
-      resultNote: tk.result ? (tk.result.burning ? '票根正在作废…' : '票根已作废。') : '', retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } };
+      resultNote: tk.result ? (tk.result.burning ? '票根正在作废…' : '票根已作废。') : '', goneCls: tk.result && tk.result.burn && !tk.result.burning ? 'is-gone' : '', retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } };
     /* detail paragraph */
     if (c.detail.on) {
       c.detail.members.forEach(m => { m.youCls = m.you ? 'you' : ''; });
       const d = c.detail; const st = d.stage;
       v.dt = { lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : (d.need || ''),
-        rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '' };
-    } else v.dt = { lede: '', rules: [], rulesNote: '' };
-    if (c.waitlist.on) { (c.waitlist.entered || []).forEach(m => { m.youCls = m.you ? 'you' : ''; }); (c.waitlist.queue || []).forEach(q => { q.youCls = q.you ? 'you' : ''; }); }
+        rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '',
+        card: this._card('d', d.eventId, d.event, d.when, d.place, d.host, d.counts ? d.counts.available : 0) };
+    } else v.dt = { lede: '', rules: [], rulesNote: '', card: '' };
+    v.wl = { card: '' };
+    if (c.waitlist.on) { (c.waitlist.entered || []).forEach(m => { m.youCls = m.you ? 'you' : ''; }); (c.waitlist.queue || []).forEach(q => { q.youCls = q.you ? 'you' : ''; });
+      const wr = c.waitlist.row || {}; v.wl.card = this._card('w', c.waitlist.eventId, wr.event, wr.when, wr.place, wr.host, c.waitlist.counts ? c.waitlist.counts.available : 0); }
     /* history paragraph */
     const hr = c.history.on ? c.history.ritual : null;
-    v.hs = { showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), recCount: c.history.on ? c.history.records.length + ' 条' : '' };
+    const hwhy = { cancelled: '局主取消', withdrawn: '主动退出', 'reschedule-declined': '拒绝改期' }[c.history.on && c.history.burn ? c.history.burn.reason : ''] || '';
+    v.hs = { showStage: !!(hr && c.history.burnOnce), goneCls: c.history.on && c.history.ashes ? 'is-gone' : '', voidText: '票根已作废' + (hwhy ? ' · ' + hwhy : ''), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), recCount: c.history.on ? c.history.records.length + ' 条' : '' };
     /* manage paragraph */
-    const mg = c.manage; v.mg = { ready: !!(mg.on && !mg.missing), appsSub: '', leavesArrow: '' };
+    const mg = c.manage; v.mg = { ready: !!(mg.on && !mg.missing), appsSub: '', leavesArrow: '', ledeB: '', ledeR: '' };
+    if (v.mg.ready) { const life = mg.head.life || '', fl = String(mg.head.formedLine || ''); if (life && fl.indexOf(life) === 0) { const rest = fl.slice(life.length).replace(/^\s*·\s*/, ''); v.mg.ledeB = life; v.mg.ledeR = rest; } else { v.mg.ledeB = life; v.mg.ledeR = fl; } }
     if (v.mg.ready) {
       mg.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; a.resCls = a.tone === 'ok' ? 'c06-t-go' : a.tone === 'void' ? 'c06-t-void' : 'c06-t-wait'; a.vCls = a.verified ? '' : 'no'; });
-      mg.roster.rows.forEach(m => { m.stateLbl = m.host ? '局主' : m.stateText; m.subOn = !!(m.ticketText || m.contactText || m.wxText || m.copyFail); m.freshCls = s.ui && s.ui.fx && s.ui.fx.type === 'invited' && s.ui.fx.slot != null && m.slot === s.ui.fx.slot ? 'is-fresh' : ''; });
+      mg.roster.rows.forEach(m => { m.subOn = !!(m.ticketText || m.contactText || m.wxText || m.copyFail); m.freshCls = s.ui && s.ui.fx && s.ui.fx.type === 'invited' && s.ui.fx.slot != null && m.slot === s.ui.fx.slot ? 'is-fresh' : ''; });
       mg.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; });
       v.mg.appsSub = mg.apps.count ? mg.apps.count + ' 份待审' + (mg.apps.handled ? ' · 已处理 ' + mg.apps.handled : '') : (mg.apps.handled ? '都处理完了 · ' + mg.apps.handled + ' 份' : '');
       v.mg.leavesArrow = mg.leaves && mg.leaves.open ? '−' : '+';
@@ -1092,19 +1143,18 @@ class Component extends DCLogic {
     v.rd = { reading: !!(c.read.on !== false && !c.read.result && !c.read.expired), kick: c.read.result && c.read.result.formed ? '成局 · 出票' : '已确认', lede: c.read.title ? '确认前请读完这份约定。读到末尾，确认按钮才会亮起。' : '' };
     /* sheets */
     const sh = c.sheet;
+    /* roles (V27, ctl-api 「C08 复核发现」) in this concept's text actions: keepPrimary → 「留下」 is the page's one CTA and the consequence
+       is a red text action under it; okTone ink → both are words (再想想 · 撤回报名 in ink), no blue; danger → the red text action */
     const ink = sh.okTone === 'ink', keep = !!sh.keepPrimary, noOk = sh.kind === 'card' || sh.kind === 'contact' || (sh.kind === 'record' && sh.done);
+    const danger = !!(sh.on && !ink && !noOk && (sh.danger || sh.kind === 'cancel'));
     v.sh = { hasAffected: !!(sh.affected && sh.affected.length), newText: sh.fields ? (sh.fields.newText || sh.fields.placeholder) : '', isRecord: sh.kind === 'record', recordOpen: sh.kind === 'record' && !sh.done,
-      stack: sh.kind === 'confirm' && (keep || ink) ? 'is-stack' : '', keepMain: !!(sh.on && keep), keepText: !(sh.on && keep), keepCls: ink ? 'outline' : '',
-      okInk: !!(sh.on && ink && !noOk), okDanger: !!(sh.on && !ink && !noOk && (sh.danger || sh.kind === 'cancel')), okMain: !!(sh.on && !ink && !noOk && !sh.danger && sh.kind !== 'cancel'), okDisabled: !sh.canOk };
+      stack: sh.on && keep ? 'is-stack' : (noOk ? 'is-solo' : ''), keepMain: !!(sh.on && keep), keepText: !(sh.on && keep),
+      okInk: !!(sh.on && ink && !noOk), okDanger: danger, okMain: !!(sh.on && !ink && !noOk && !danger), okDisabled: !sh.canOk, card: '' };
+    if (sh.on && sh.card) { const cd = sh.card; const mm = c.manage && c.manage.on ? c.manage : null; v.sh.card = this._card('s', sh.eventId, { title: cd.title, en: cd.en, pack: cd.pack }, cd.when, cd.place, typeof cd.host === 'string' ? { name: cd.host } : cd.host, mm && mm.head.progress ? mm.head.progress.available : 0, cd.statusLabel); }
     return { panel, rootRef: this.rootRef, envRef: this.envRef, scRef: this.scRef, c, v, noSkins: !c.ritual.skins };
   }
 }
 JU.mixin(Component);
-/* a fresh dataset (index jump / reset / variant) starts the one scroller from the top */
-(function (P) { ['jumpTo', 'reset'].forEach(function (m) { const f = P[m]; if (f) P[m] = function () { this._fresh = true; return f.apply(this, arguments); }; }); })(Component.prototype);
-/* 回到列表 / the 我的局 tab while a paragraph is open: the list is already underneath, so going home is folding the paragraph —
-   route home() through back() (exit phase, onNav, landing mark) when the stack is exactly [home, open paragraph] */
-(function (P) { const f = P.home; if (!f) return; P.home = function () { const n = this.state && this.state.nav; const x = n && n.stack.length === 2 && n.phase !== 'exit' ? this._expOf() : null; if (x && x.top && x.under === 'home') return this.back(); return f.apply(this, arguments); }; })(Component.prototype);
 </script>
 </body>
 </html>

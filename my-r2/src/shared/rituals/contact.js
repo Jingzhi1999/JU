@@ -28,7 +28,8 @@
 
   /* host：包含 [data-contact-reveal]（联系层）与可选 [data-contact-action]（页脚主按钮）的容器
      data：{host:'老杨', account:'laoyang.ju', added:false}
-     opts：{onCopy(ok), onAdd()} */
+     opts：{onCopy(ok), onAdd(), labels}——labels:false 时不写动作按钮与说明行的文案（方案用 Preact 绑定 c.ticket.contact.ctaLabel 等，
+     原件改写 textContent 会顶掉 Preact 的文本节点；C10 复核发现），只维护 aria-disabled 与显示状态 */
   NS.contact = function (host, data, opts) {
     opts = opts || {}; data = data || {};
     const wrap = host.querySelector('[data-contact-reveal]') || host;
@@ -39,8 +40,8 @@
     if (name && data.host) name.textContent = '局主 · ' + data.host;
     if (account && data.account) account.textContent = data.account;
     const paint = () => {
-      if (note) note.textContent = added ? NOTE.added : NOTE.before;
-      if (action) { const t = action.querySelector('[data-slot="actionLabel"]') || action; t.textContent = added ? ACTION.added : ACTION.before; action.setAttribute('aria-disabled', String(added)); }
+      if (note && opts.labels !== false) note.textContent = added ? NOTE.added : NOTE.before;
+      if (action) { if (opts.labels !== false) { const t = action.querySelector('[data-slot="actionLabel"]') || action; t.textContent = added ? ACTION.added : ACTION.before; } action.setAttribute('aria-disabled', String(added)); }
     };
     const setCopied = ok => {
       if (!copyBtn) return;

@@ -246,3 +246,8 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - **票根局名**加 `word-break:keep-all`：中文词不拆（「手冲咖啡品 / 鉴」→「手冲咖啡品鉴 ·」/「三款豆子」）；没有空格的超长局名仍按原件的 `overflow-wrap:anywhere` 折行。
 - **widths.cjs** 不再把票根原件的「时间已改 / 已取消」章（`.ju-ticket-mark`，10–11px）计入最小字号。
 - 回归：新增 `my-r2/tools/test/shared-regress.cjs`（已撕票入口、home 一层退场、退场冻结视图模型、跳转归零、回执去重）。
+
+### 主负责人修正（2026-10-23 · C10 阶段 1 汇报）
+- **联系模块 `labels:false`**：`JURitual.contact(host, data, { labels: false, … })` 时原件不写动作按钮与说明行的文案（它用 `textContent` 改写，会顶掉 Preact 的文本节点，绑定的 `c.ticket.contact.ctaLabel` 从此不再更新），只维护 `aria-disabled` 与显示状态。方案用控制器的 `ctaLabel / ctaDisabled` 显示「已加微信 → 处理中… → 待赴约」时请传它（或像 C10 那样给原件留一个隐藏 slot）。
+- **管理区块分出 `label` 与 `count`**：`c.manage.<区块>` 原有 `title`（如「申请 · 2」）不变，另加 `label`（「申请」）与 `count`（`2`、`'已答复 1/3'`、`'2/3'`；成员 / 安排为 `null`），居中或分栏排版不用再拆字符串。
+- **接触表中文标签**：`_lib.cjs` 的 `tilePy` 用文泉驿正黑写标签（原先 PIL 默认字体把中文画成方块）。
