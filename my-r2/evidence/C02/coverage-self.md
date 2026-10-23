@@ -14,7 +14,7 @@
 | j-d-invitedq | 候补轮到 | 跳转 | — | ✓ coverage | — | — |
 | j-d-gathering | 已确认待成局 | ✓ | ✓ 进入 / 返回 / 入场途中返回 | ✓ s12/03 | ✓ extra/tap、back-mid-flight（打断） | 局卡只写「·」前的局名，全名在卡下 |
 | j-d-tear | 已出票待撕 | ✓ | ✓ 拖过阈值撕下；拖一半放手回位且不写入（torn=false） | ✓ | ✓ print/、tear/、extra/half-drag | 无头 SwiftShader 下出纸前准备 ≈0.75s |
-| j-d-contact | 已撕票待联系 | ✓ | ✓ 复制（http 真实剪贴板）、「下一次复制失败」→ 卡内重试复制、已加微信 → 待赴约 | ✓ | ✓ tear/、fail/copy-* | — |
+| j-d-contact | 已撕票待联系 | ✓ | ✓ 复制（http 真实剪贴板）、「下一次复制失败」→ 原件那一行（role=alert）+ 旁边的「重试」、已加微信 → 待赴约 | ✓ | ✓ tear/、fail/copy-* | — |
 | j-d-going | 已联系待赴约 | ✓ | ✓ 去不了了 → 确认 → 燃烧 C → 查看退出结果 → 历史灰烬 | ✓ | ✓ burn/burnC、to-history | — |
 | j-d-reschedule | 改期待答复 | ✓ | ✓ 接受（rm）、拒绝 → 燃烧 B | ✓ | ✓ burn/burnB | — |
 | j-d-withdraw | 退出确认层 | ✓ | ✓ 确认 / Esc / 焦点回到触发 | ✓ | ✓ burn/confirm | — |
