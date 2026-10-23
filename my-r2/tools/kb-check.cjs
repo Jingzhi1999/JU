@@ -15,14 +15,24 @@ if (!code) { console.error('usage: node my-r2/tools/kb-check.cjs <CODE> [outdir]
   const ok = await L.openConcept(p, L.fileFor(code), code, 900);
   if (!ok) { console.log(JSON.stringify({ code, error: 'concept not mounted', errors })); await b.close(); process.exit(1); }
   const findings = []; let n = 0; const detail = [];
+  /* wait for the sheet / keyboard motion to finish instead of a fixed delay (a fixed 700ms measured mid-entry under load and
+     reported false findings — C02 report): finite animations only; infinite ones (spinners, live skins) are ignored; cap 4s */
+  async function settle(maxMs) {
+    const t0 = Date.now(); await p.waitForTimeout(250);
+    while (Date.now() - t0 < (maxMs || 4000)) {
+      const left = await L.E(p, code, "var ph = sr.querySelector('.ju-phone'); if (!ph || !ph.getAnimations) return 0; return ph.getAnimations({ subtree: true }).filter(function (an) { var t = an.effect && an.effect.getTiming ? an.effect.getTiming() : null; return an.playState === 'running' && t && t.iterations !== Infinity && (typeof t.duration === 'number' ? t.duration : 0) > 1; }).length;");
+      if (!left) return true; await p.waitForTimeout(120);
+    }
+    return false;
+  }
   for (const spec of states) {
     const [st, pre] = spec.split('+');
     /* jump first and let it settle: jumpTo lowers the keyboard in its own render, so reading review.kb in the same tick would
        see the previous state's value; then open the sheet (if asked), then raise the keyboard */
     await L.jump(p, code, st, 450);
-    if (pre) { const r = await L.clickSel(p, code, pre); const issue = L.clickIssue(r, pre); if (issue) findings.push(`${st}: ${issue}`); await p.waitForTimeout(500); }
+    if (pre) { const r = await L.clickSel(p, code, pre); const issue = L.clickIssue(r, pre); if (issue) findings.push(`${st}: ${issue}`); await settle(); }
     const kb = await L.setToggle(p, code, 'kb', true); if (kb !== 'ok') { findings.push(`${st}: no toggleKb on the instance`); continue; }
-    await p.waitForTimeout(700);
+    await settle();
     const r = await L.E(p, code, "var ph = sr.querySelector('.ju-phone'); var pr = ph.getBoundingClientRect(); var kbPx = parseFloat(getComputedStyle(ph).getPropertyValue('--kb')) || 300; var kbTop = pr.bottom - kbPx;\n" +
       "var inputs = Array.prototype.slice.call(ph.querySelectorAll('input:not([type=hidden]):not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]),textarea')).filter(function (el) { var cs = getComputedStyle(el); return cs.display !== 'none' && cs.visibility !== 'hidden' && el.getBoundingClientRect().width > 0 && !el.closest('.ju-panel'); });\n" +
       "var out = []; inputs.forEach(function (el) { try { el.focus({ preventScroll: true }); } catch (e) { el.focus(); } if (inst.reveal) inst.reveal(el); else el.scrollIntoView({ block: 'nearest' }); var b = el.getBoundingClientRect(); out.push({ name: el.getAttribute('data-field') || el.name || el.placeholder || el.tagName.toLowerCase(), bottom: Math.round(b.bottom - pr.top), top: Math.round(b.top - pr.top), kbTop: Math.round(kbTop - pr.top), hidden: b.bottom > kbTop || b.top < pr.top }); });\n" +

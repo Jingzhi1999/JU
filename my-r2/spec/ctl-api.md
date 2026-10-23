@@ -225,3 +225,9 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
   - `keepPrimary`：`release∣exit∣decline` 为真 → **取消 / 保留键用主 CTA 原构造**（V27 `q5StayStyle = blueCta`），这一层的蓝色只给「留下」。
   - `okTone`：`withdraw∣leaveQueue` 为 `'ink'`（V27 撤回报名的墨色胶囊，无蓝 CTA），其余 `'danger'`。
   各方案在阶段 2 按这三个字段改确认层模板。
+
+### 主负责人修正（2026-10-23 · C02 阶段 2 汇报）
+- **草稿摘要页「删除草稿」不返回**：`c.draft` 原先把草稿行自带的 `del`（列表里的删除 + 撤销条）合并在页面字段之后，覆盖了页面的 `del`（删除并返回）。现在页面字段在后：`c.draft.del(ev)` = 删除并返回；行自己的删除仍可用 `c.draft.rowDel`。方案里「先 deleteDraft 再 back」的绕法可以删掉。
+- **widths.cjs** 不再把 08 散场场景（`[data-t08-scope]` 内：舞台左右各外扩 20px、画布再外扩 24px，原件如此）算作横向溢出。
+- **kb-check.cjs** 不再固定等 700ms：打开弹层、升起键盘后等到有限时长的动画全部结束（无限循环的转圈 / live 环境不计，最多 4s）再测，负载高时不再误报入场途中的位置。
+- **重初始化的原件**（出票准备约 0.75s；08 场景、燃烧引擎的初始化）在无 GPU 环境会占住主线程：一律等导航停稳再启动（同 C05 的出票做法）。

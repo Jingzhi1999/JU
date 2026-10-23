@@ -17,14 +17,17 @@
 结论只有三种：**视觉通过 / 需修改后复核 / 不通过（整体构图问题）**。不通过时后面的功能检查可以简化。
 
 ## 构建与工具（只用你自己的路径）
+复核的是主负责人冻结的**快照**（`/home/user/JU/.build/verify/CNN/src/CNN.dc.html`，构建者此时可能还在改自己的源文件——不要读、不要用 `my-r2/concepts/src/CNN.dc.html`）。构建**必须内嵌字体**（撕票原件在字体未载入时不响应拖拽）：
 ```
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html JU_ONLY=CNN node my-r2/src/build.js
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html node my-r2/tools/coverage.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/coverage
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html node my-r2/tools/widths.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/widths
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html node my-r2/tools/kb-check.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/kb
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html node my-r2/tools/rm-check.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/rm
-JU_STANDALONE=/home/user/JU/.build/verify-CNN.html node my-r2/tools/capture.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/<flow> '<actions json>'
+JU_FONTS_CSS=/home/user/JU/my-r2/.fonts/fonts-embed.css JU_CONCEPTS_DIR=/home/user/JU/.build/verify/CNN/src JU_STANDALONE=/home/user/JU/.build/verify-CNN.html JU_ONLY=CNN node my-r2/src/build.js
+LOCK="flock -w 1800 /home/user/JU/.build/chromium.lock timeout 900 env JU_STANDALONE=/home/user/JU/.build/verify-CNN.html"
+$LOCK node my-r2/tools/coverage.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/coverage
+$LOCK node my-r2/tools/widths.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/widths
+$LOCK node my-r2/tools/kb-check.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/kb
+$LOCK node my-r2/tools/rm-check.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/rm
+$LOCK node my-r2/tools/capture.cjs CNN /home/user/JU/my-r2/evidence/CNN/verify/<flow> '<actions json>'
 ```
+**负载规则**（`my-r2/spec/tools.md` 末节）：所有 Playwright / Chromium 命令都经上面的共享锁（思考与写文件时不持锁）；静态截图前 `JU.shared.skins.pause(inst.envRef.current)` 暂停环境引擎（只有看环境自身节奏时保持 live）；运动帧序列只在 `uptime` 1 分钟负载 < 8 时录，日志写明负载——高负载下录到的帧不能作为动效判断依据。跑完就关浏览器。
 
 ## 必须亲自做的操作（真实点击 / 拖拽 / 键盘，不用 jump 串联；每个都 Read 接触表，1× 看一遍，再 0.5× 或关键帧看落点）
 1. 参加者首页 → 向下滚动（标题 30→18 连续收拢）→ 回滚恢复；切换到局主再切回：分区与滚动位置是否记忆（M1 / M2 / M3）。

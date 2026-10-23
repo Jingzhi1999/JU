@@ -740,7 +740,7 @@
         }
       } else out.manage = { on: false };
       /* draft summary */
-      if (is.draft && top.p.draftId) { var dr0 = hosted.drafts.filter(function (x) { return x.id === top.p.draftId; })[0]; out.draft = dr0 ? assign({ on: true, draftId: dr0.id, row: dr0, back: function () { self.back(); }, del: function (ev) { self.deleteDraft(dr0.id); self.back(); } }, dr0) : { on: true, missing: true, title: '草稿已删除', back: function () { self.back(); } }; }
+      if (is.draft && top.p.draftId) { var dr0 = hosted.drafts.filter(function (x) { return x.id === top.p.draftId; })[0]; out.draft = dr0 ? assign({}, dr0, { on: true, draftId: dr0.id, row: dr0, rowDel: dr0.del, back: function () { self.back(); }, del: function (ev) { self.deleteDraft(dr0.id); self.back(); } }) : { on: true, missing: true, title: '草稿已删除', back: function () { self.back(); } }; }
       else out.draft = { on: false };
       out.surfaceTitle = out.manage.on ? out.manage.head && out.manage.head.title : out.ticket.on ? out.ticket.title : out.history.on ? out.history.title : out.read.on ? out.read.title : out.detail.on ? out.detail.title : out.waitlist.on ? out.waitlist.title : TITLES[top.s];
       /* a surface that is LEAVING after replace() (read → ticket, ticket ⇄ reply …) keeps the last model it rendered with, so its exit
