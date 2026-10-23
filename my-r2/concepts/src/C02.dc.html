@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>C02 人先</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&family=Archivo:wght@500;600;700&family=Space+Mono:wght@400;700&display=swap">
+<style>
+body{margin:0}
+/* @panel-css */
+/* @shared-css */
+/* ============================================================================================================================
+   C02 人先 — every row starts with the people you will meet (white initial circles floating on the colour light); the event name
+   is the second line. The first thing to do is a white card whose circles are tinted with the light. Detail / ticket / manage keep
+   the same people: circles fly between pages (FLIP on [data-pk]); the review page is a stack of people cards.
+   Shared originals (V27 header / CTA / back pill, ticket print / tear / contact / burn, attendance stamp) are used as they are.
+   ============================================================================================================================ */
+.app.c02{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:var(--ink);background:#e8e4ec;font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;
+  --ink:#1c1817;--ink2:#3a3431;--ink3:#625a57;--act:#3946ad;--go:#066a4f;--warn:#b92e46;--amber:#93560a;--void:#7b7370;--sh:52,38,80;--ta:#fbe0ec;--tb:#d4ecf4;--hdv:rgba(234,230,241,.92);--foot:rgba(236,233,242,.96);
+  --cink:#1c1817;--cink2:#3d3734;--cink3:#6a6360;--paper:rgba(255,255,255,.96);--q1:#efa9c4;--q2:#93cbe2}
+.app.c02[data-skin="halo"]{--ink3:#443a36;--act:#27308a;--go:#064532;--warn:#8c192e;--amber:#6e3c05;--void:#5b524e;--sh:116,54,12;--ta:#ffd6b8;--tb:#e4d4f0;--hdv:rgba(238,214,196,.92);--foot:rgba(240,222,208,.96);--q1:#f7a46b;--q2:#b9a3dd}
+.app.c02[data-skin="sunset"]{--ink3:#443a38;--act:#27308a;--go:#064532;--warn:#8c192e;--amber:#6e3c05;--void:#5b524e;--sh:100,50,56;--ta:#ffd2ba;--tb:#cbd9f7;--hdv:rgba(246,212,192,.92);--foot:rgba(204,206,230,.96);--q1:#f9a07a;--q2:#91aeea}
+.app.c02 *,.app.c02 *::before,.app.c02 *::after{box-sizing:border-box}
+:where(.app.c02) :where(p,h1,h2,h3,h4,blockquote){margin:0}
+:where(.app.c02) :where(button){font-family:inherit;color:inherit;-webkit-tap-highlight-color:transparent}
+.app.c02 .ju-v27-cta{color:#fff}.app.c02 .ju-v27-cta[aria-disabled="true"]{color:#626777}
+.app.rm *,.app.rm *::before,.app.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important;transition-delay:0ms!important}
+/* ---- environment: JU.shared.skins mounts the live light into .ju-env; the veil only lifts Halo / Sunset so the warm ink stays ≥ 4.5:1 ---- */
+.ju-env{position:absolute;inset:0;z-index:0;overflow:hidden}
+.c02-envfb{position:absolute;inset:0;z-index:0}
+.app[data-skin="cotton"] .c02-envfb{background:linear-gradient(160deg,#fbe1ec,#ececf4 50%,#d3edf3)}
+.app[data-skin="halo"] .c02-envfb{background:linear-gradient(135deg,#ff5005,#dbba95 58%,#d0bce1)}
+.app[data-skin="sunset"] .c02-envfb{background:linear-gradient(180deg,#fea669,#f99674 32%,#cb9ca3 58%,#9ca2d1 80%,#85a2e8)}
+.c02-veil{position:absolute;inset:0;z-index:1;pointer-events:none}
+.app[data-skin="halo"] .c02-veil{background:linear-gradient(180deg,rgba(255,246,238,.14) 0%,rgba(255,240,228,.34) 40%,rgba(255,242,232,.34) 72%,rgba(255,246,240,.26) 100%)}
+.app[data-skin="sunset"] .c02-veil{background:linear-gradient(180deg,rgba(255,244,236,.18) 0%,rgba(255,244,240,.26) 50%,rgba(246,246,255,.2) 100%)}
+/* ---- pages: the destination page sits on top; its words rise in while the people (circles) fly from where they were ---- */
+.c02-pg{position:absolute;inset:0;z-index:3}
+.c02-pg.is-top{z-index:4}
+.c02-pg.is-under.ph-enter,.c02-pg.is-under.ph-in{opacity:0;transition:opacity calc(150ms * var(--k)) cubic-bezier(.4,0,.6,1) calc(30ms * var(--k));pointer-events:none}
+.c02-pg.is-under.ph-idle{opacity:0;visibility:hidden;pointer-events:none}
+.c02-pg.is-top.ph-exit{opacity:0;transition:opacity calc(170ms * var(--k)) cubic-bezier(.4,0,.6,1);pointer-events:none}
+.c02-pg.is-under.ph-exit{z-index:5}
+.c02-pg.is-leaving{opacity:0;transition:opacity calc(200ms * var(--k)) ease;pointer-events:none}
+.c02-in,.c02-hd{transition:opacity calc(210ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(var(--d,0ms) * var(--k)),transform calc(380ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(var(--d,0ms) * var(--k))}
+.c02-pg.is-top.ph-enter.dir-fwd .c02-hd,.c02-pg.c02-deep.is-top.ph-enter.dir-swap .c02-hd{opacity:0;transition:none}
+.c02-pg.is-under.ph-exit .c02-hd{animation:c02-op calc(230ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(20ms * var(--k)) both}
+@keyframes c02-op{0%{opacity:0}100%{opacity:1}}
+.c02-pg.is-top.ph-enter.dir-fwd .c02-in,.c02-pg.c02-deep.is-top.ph-enter.dir-swap .c02-in{opacity:0;transform:translateY(12px);transition:none}
+.c02-pg.is-under.ph-exit .c02-in{animation:c02-in calc(280ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k)) both}
+@keyframes c02-in{0%{opacity:0;transform:translateY(10px)}100%{opacity:1;transform:none}}
+.c02-pane{transition:opacity calc(240ms * var(--k)) ease,transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c02-home.ph-enter.dir-role .c02-pane{opacity:.18;transform:translateX(var(--rx,18px));transition:none}
+.c02-home.ph-enter.dir-swap .c02-pane{opacity:.22;transform:translateY(10px);transition:none}
+/* ---- outer header (V27): title 30 → 18 continuously into the tool row; the helper line fades; constant box, so the scroller never changes height ---- */
+.c02-hd{position:absolute;left:0;right:0;top:0;height:calc(var(--sat,0px) + 140px);z-index:6;pointer-events:none}
+.c02-hd>*{pointer-events:auto}
+.c02-hdv{position:absolute;left:0;right:0;top:0;height:calc(var(--sat,0px) + 100px);opacity:var(--hc,0);background:linear-gradient(180deg,var(--hdv) 0%,var(--hdv) 50%,rgba(255,255,255,0) 100%);-webkit-backdrop-filter:blur(12px) saturate(1.15);backdrop-filter:blur(12px) saturate(1.15);-webkit-mask-image:linear-gradient(#000 56%,transparent);mask-image:linear-gradient(#000 56%,transparent);pointer-events:none!important}
+.c02-t30{position:absolute;margin:0;left:calc(22px + (100% - 44px) * var(--hc,0) / 2);top:calc(var(--sat,0px) + 77px - 40.45px * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));line-height:1.05;font-weight:500;color:var(--ink);letter-spacing:0;width:max-content;max-width:calc(100% - 44px - 104px * var(--hc,0));display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance;pointer-events:none!important}
+[data-c02c="1"] .c02-t30{display:block;white-space:nowrap;text-overflow:ellipsis}
+.c02-t14{position:absolute;left:22px;right:22px;top:calc(var(--sat,0px) + 77px + (var(--th,31.5px) + 9px) * (1 - var(--hc,0)) - 9px * var(--hc,0));opacity:calc(1 - var(--hc,0) * 1.7);font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none!important}
+.c02-tools{position:absolute;left:0;right:0;top:calc(var(--sat,0px) + 24px);height:44px;z-index:8;pointer-events:none}
+.c02-tools>*{pointer-events:auto}
+.app.c02 .c02-back{position:absolute;left:22px;top:0;border:0;padding:0}
+.c02-weak{position:absolute;right:12px;top:0;height:44px;padding:0 10px;border:0;background:none;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink2);cursor:pointer;border-radius:12px}
+.c02-weak:active{background:rgba(255,255,255,.35)}
+/* ---- home header: role switch (white pill) on the title row ---- */
+.c02-roles{position:absolute;right:22px;top:calc(var(--sat,0px) + 72px);display:grid;grid-template-columns:1fr 1fr;height:calc(40px * var(--tz,1));padding:3px;border-radius:999px;background:rgba(255,255,255,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.62),0 8px 18px -12px rgba(var(--sh),.4);opacity:calc(1 - var(--hc,0) * 1.8)}
+[data-c02c="1"] .c02-roles{visibility:hidden}
+.c02-pill{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(var(--sh),.14),0 6px 14px -6px rgba(var(--sh),.34);transition:transform calc(320ms * var(--k)) cubic-bezier(.3,.9,.3,1)}
+.c02-roles.is-hosted .c02-pill{transform:translateX(100%)}
+.c02-role{position:relative;z-index:1;min-width:0;border:0;background:transparent;padding:0 12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;cursor:pointer;border-radius:999px;transition:color calc(220ms * var(--k))}
+.c02-role.on{color:var(--ink)}
+.c02-badge{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font:600 calc(12px * var(--tz,1))/18px Archivo,sans-serif;text-align:center}
+/* ---- scroller ---- */
+.c02-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;scrollbar-width:none;padding:calc(var(--sat,0px) + var(--hdh,150px)) 0 calc(var(--sab,0px) + var(--kb,0px) + var(--pb,108px))}
+.c02-sc::-webkit-scrollbar{display:none}
+/* home: rows dissolve into the light before they reach the tab bar, so the bar never sits on words */
+.c02-home .c02-sc{--pb:132px;-webkit-mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 112px - var(--sab,0px)),rgba(0,0,0,0) calc(100% - 54px - var(--sab,0px)));mask-image:linear-gradient(180deg,#000 0,#000 calc(100% - 112px - var(--sab,0px)),rgba(0,0,0,0) calc(100% - 54px - var(--sab,0px)))}
+.c02-secs{display:flex;align-items:center;gap:20px;height:calc(34px * var(--tz,1));margin:0 22px 10px}
+.c02-sec{position:relative;border:0;background:none;padding:6px 0;font-size:calc(14px * var(--tz,1));color:var(--ink3);cursor:pointer;display:flex;align-items:baseline;gap:4px;white-space:nowrap}
+.c02-sec.on{color:var(--ink);font-weight:500}
+.c02-sec.on::after{content:'';position:absolute;left:0;right:0;bottom:1px;height:2px;border-radius:2px;background:var(--ink)}
+.c02-sec .n{font:500 calc(12px * var(--tz,1))/1 Archivo,sans-serif;color:var(--ink3)}
+.c02-ints{margin-left:auto;display:flex;align-items:baseline;gap:12px;min-width:0}
+.c02-int{border:0;background:none;padding:6px 0;display:flex;align-items:baseline;gap:3px;font-size:calc(12px * var(--tz,1));color:var(--ink3);white-space:nowrap;cursor:pointer}
+.c02-int b{font:600 calc(13px * var(--tz,1))/1 Archivo,sans-serif}
+.c02-int b.act{color:var(--act)}.c02-int b.go{color:var(--go)}.c02-int b.wait{color:var(--ink2)}
+/* ---- circles: white on the light, tinted with the light on white; overlap −10 with a 2px gap cut from the circle behind ---- */
+.c02-clu{position:relative;width:56px;height:36px;margin-top:2px}
+.c02-avw{position:absolute;top:0;left:0;width:32px;height:32px;border-radius:50%;box-shadow:0 1px 1.5px rgba(var(--sh),.12),0 6px 12px -5px rgba(var(--sh),.34)}
+.c02-clu .c02-avw:nth-child(1){z-index:2}
+.c02-clu .c02-avw:nth-child(2){left:22px;z-index:1}
+.c02-av{position:absolute;inset:0;border-radius:50%;background:#fff;color:var(--cink);display:flex;align-items:center;justify-content:center;font-size:calc(14px * var(--tz,1));font-weight:500;line-height:1;letter-spacing:0;user-select:none}
+.c02-clu .c02-avw:nth-child(2) .c02-av{-webkit-mask:radial-gradient(circle at -6px 16px,transparent 17.4px,#000 18.2px);mask:radial-gradient(circle at -6px 16px,transparent 17.4px,#000 18.2px)}
+.c02-av.is-res::after,.c02-sv.res::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px dashed var(--act);opacity:.85}
+.c02-more{position:absolute;left:41px;top:20px;z-index:3;min-width:22px;height:18px;padding:0 5px;border-radius:9px;background:#fff;color:var(--cink2);font:600 calc(12px * var(--tz,1))/16px Archivo,sans-serif;text-align:center;border:1px solid rgba(28,24,23,.14);box-shadow:0 2px 5px -2px rgba(var(--sh),.35)}
+.c02-c52{position:relative;height:52px;flex:none}
+.c02-c52.n1{width:52px}.c02-c52.n2{width:88px}.c02-c52.n3{width:124px}
+.c02-c52 .c02-avw{width:52px;height:52px;box-shadow:0 1px 2px rgba(var(--sh),.12),0 10px 20px -9px rgba(var(--sh),.42)}
+.c02-c52 .c02-avw:nth-child(1){z-index:3}.c02-c52 .c02-avw:nth-child(2){left:36px;z-index:2}.c02-c52 .c02-avw:nth-child(3){left:72px;z-index:1}
+.c02-c52 .c02-av,.c02-tint{background:linear-gradient(150deg,var(--ta) 8%,var(--tb) 92%);font-size:calc(21px * var(--tz,1))}
+.c02-c52 .c02-avw:nth-child(n+2) .c02-av{-webkit-mask:radial-gradient(circle at -10px 26px,transparent 28.2px,#000 29px);mask:radial-gradient(circle at -10px 26px,transparent 28.2px,#000 29px)}
+.c02-c52 .c02-more{left:auto;right:-6px;top:34px}
+.c02-tag{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);z-index:4;height:18px;padding:0 7px;border-radius:9px;background:var(--cink);color:#fff;font-size:calc(12px * var(--tz,1));line-height:18px;font-weight:500;white-space:nowrap;box-shadow:0 0 0 2px #fff}
+/* ---- the first thing to do: a white card; its foot is glass so the V27 CTA keeps a colour light under it ---- */
+.c02-lead{position:relative;margin:2px 20px 12px;border-radius:24px;cursor:pointer;touch-action:pan-y;outline:none;--trayh:calc(76px)}
+.c02-lead-bg{position:absolute;inset:0;border-radius:24px;overflow:hidden;box-shadow:0 1px 1px rgba(var(--sh),.06),0 22px 44px -26px rgba(var(--sh),.5),0 8px 16px -10px rgba(var(--sh),.18)}
+.c02-lead-bg::before{content:'';position:absolute;left:0;right:0;top:0;bottom:var(--trayh);background:var(--paper)}
+.c02-lead-bg::after{content:'';position:absolute;left:0;right:0;bottom:0;height:var(--trayh);background:linear-gradient(180deg,rgba(255,255,255,.5),rgba(255,255,255,.24) 70%,rgba(255,255,255,.3));box-shadow:inset 0 1px 0 rgba(255,255,255,.9),inset 0 10px 14px -12px rgba(var(--sh),.22)}
+.c02-lead-ring{position:absolute;inset:0;border-radius:24px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.8);pointer-events:none}
+.c02-lead:focus-visible .c02-lead-ring{box-shadow:inset 0 0 0 2px var(--act)}
+.c02-lead-body{position:relative;padding:18px 18px 16px}
+.c02-lead-top{display:flex;align-items:center;gap:14px;min-height:52px;padding-right:64px}
+.c02-lead-top.nr{padding-right:0}
+.c02-lp{min-width:0}
+.c02-lp .l1{font-size:calc(16px * var(--tz,1));font-weight:500;line-height:1.5;color:var(--cink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-lp .l2{font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--cink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-lead .c02-weak{top:10px;right:8px;color:var(--cink3);font-size:calc(13px * var(--tz,1))}
+.c02-lead .c02-weak:active{background:rgba(28,24,23,.05)}
+.c02-lt{margin-top:16px;font-size:calc(21px * var(--tz,1));font-weight:600;line-height:1.32;color:var(--cink);display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;text-wrap:balance;overflow-wrap:anywhere}
+.c02-lw{margin-top:4px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--cink2);display:flex;min-width:0;white-space:nowrap}
+.c02-lw .w{flex:none}.c02-lw .pl{min-width:0;overflow:hidden;text-overflow:ellipsis}.c02-lw .pl::before{content:'·';margin:0 6px;color:var(--cink3)}
+.c02-cd{display:flex;align-items:center;gap:10px;margin-top:12px;min-width:0}
+.c02-cd .bar{flex:1 1 auto;height:4px;border-radius:2px;background:rgba(28,24,23,.08);overflow:hidden;min-width:40px}
+.c02-cd .bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);border-radius:2px;background:#0b8a68;transition:width 900ms linear}
+.c02-cd.amber .bar i{background:#c27a12}.c02-cd.red .bar i{background:#cf3550}
+.c02-cd .t{flex:none;font:600 calc(15px * var(--tz,1))/1 Archivo,sans-serif;font-variant-numeric:tabular-nums;color:#0b7458;letter-spacing:.01em}
+.c02-cd.amber .t{color:#93560a}.c02-cd.red .t{color:#b92e46}
+.c02-cd .d{flex:none;font-size:calc(13px * var(--tz,1));color:var(--cink3)}
+.c02-seats{display:flex;align-items:center;gap:6px;margin-top:12px;min-width:0}
+.c02-sv{position:relative;flex:none;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:calc(12px * var(--tz,1));font-weight:500;line-height:1;color:var(--cink)}
+.c02-sv.host{background:var(--cink);color:#fff}
+.c02-sv.ok,.c02-sv.res{background:linear-gradient(150deg,var(--ta) 8%,var(--tb) 92%);box-shadow:0 1px 1px rgba(var(--sh),.12),0 3px 6px -3px rgba(var(--sh),.3)}
+.c02-sv.res::after{inset:-3px}
+.c02-sv.open{border:1.5px dashed rgba(28,24,23,.22)}
+.c02-seats .tx{margin-left:6px;font-size:calc(13px * var(--tz,1));color:var(--cink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.c02-tray{position:relative;height:var(--trayh);display:flex;align-items:center;justify-content:center;padding:0 18px}
+.app.c02 .c02-cta{border:0;padding:0;font-family:inherit;flex:none}
+.app.c02 .c02-cta .label{font-size:calc(15px * var(--tz,1))}
+/* ---- rows: 56px people column + text column (≥ 268px at 390) ---- */
+.c02-gh{display:flex;align-items:baseline;gap:8px;margin:26px 22px 6px;font-size:calc(13px * var(--tz,1));color:var(--ink2);white-space:nowrap}
+.c02-gh .t{font-weight:600;color:var(--ink)}
+.c02-gh .n{font:600 calc(13px * var(--tz,1))/1 Archivo,sans-serif;color:var(--ink3)}
+.c02-gh .note{margin-left:auto;font-size:calc(12px * var(--tz,1));color:var(--ink3);overflow:hidden;text-overflow:ellipsis;min-width:0}
+.c02-row{position:relative;display:grid;grid-template-columns:56px minmax(0,1fr);column-gap:14px;padding:11px 22px 12px;cursor:pointer;touch-action:pan-y;outline:none}
+.c02-row::before{content:'';position:absolute;top:2px;bottom:2px;left:10px;right:10px;border-radius:18px;background:rgba(255,255,255,0);transition:background calc(140ms * var(--k)) ease}
+.c02-row:active::before{background:rgba(255,255,255,.36);transition-duration:60ms}
+.c02-row:focus-visible::before{background:rgba(255,255,255,.3);box-shadow:inset 0 0 0 2px var(--act)}
+.c02-row.is-landing::before{animation:c02-land 1.1s ease both}
+@keyframes c02-land{0%{background:rgba(255,255,255,.62)}100%{background:rgba(255,255,255,0)}}
+.c02-row:active .c02-clu{transform:scale(.95)}
+.c02-clu{transition:transform calc(160ms * var(--k)) ease}
+.c02-txt{position:relative;min-width:0}
+.c02-ppl{font-size:calc(16px * var(--tz,1));font-weight:500;line-height:1.5;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-ttl{font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.c02-mt{display:flex;align-items:baseline;min-width:0;overflow:hidden;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--ink3);margin-top:2px;white-space:nowrap}
+.c02-mt .w{flex:none}
+.c02-mt .pl{flex:0 100 auto;min-width:0;overflow:hidden;text-overflow:ellipsis}
+.c02-mt .pl::before,.c02-mt .st::before{content:'·';margin:0 5px;color:var(--ink3);font-weight:400}
+.c02-mt .st{flex:none;font-weight:500}
+.st.act{color:var(--act)}.st.go{color:var(--go)}.st.wait{color:var(--ink3)}.st.warn{color:var(--warn)}.st.void{color:var(--void)}
+/* ---- empty / undo ---- */
+.c02-empty{margin:18px 22px 0;padding:28px 22px 26px;border-radius:24px;background:rgba(255,255,255,.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);text-align:center}
+.c02-empty .rings{display:flex;justify-content:center;gap:8px;margin-bottom:16px}
+.c02-empty .rings i{width:40px;height:40px;border-radius:50%;border:1.5px dashed rgba(28,24,23,.28)}
+.c02-empty b{display:block;font-size:calc(18px * var(--tz,1));font-weight:600;color:var(--ink)}
+.c02-empty p{margin:6px 0 14px;font-size:calc(14px * var(--tz,1));color:var(--ink3)}
+.c02-chip{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:999px;border:0;background:#fff;color:var(--cink);font-size:calc(14px * var(--tz,1));font-weight:500;box-shadow:0 6px 14px -8px rgba(var(--sh),.4);cursor:pointer}
+.c02-chip.inert,.c02-chip[aria-disabled="true"]{background:rgba(255,255,255,.45);color:var(--ink3);box-shadow:none;cursor:default}
+.c02-note{margin:14px 22px 0;font-size:calc(12px * var(--tz,1));line-height:1.6;color:var(--ink3)}
+.c02-row.is-deleting{opacity:0;transform:translateX(28px);transition:opacity calc(260ms * var(--k)),transform calc(260ms * var(--k))}
+.c02-row.is-restored{animation:c02-restore calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes c02-restore{0%{opacity:0;transform:translateY(-8px)}100%{opacity:1;transform:none}}
+.c02-dacts{display:flex;gap:8px;margin-top:8px}
+.c02-mini{height:32px;padding:0 12px;border-radius:999px;border:0;background:rgba(255,255,255,.55);font-size:calc(13px * var(--tz,1));color:var(--ink2);cursor:pointer}
+.c02-mini.inert{opacity:.55;cursor:default}
+.c02-undo{position:absolute;left:16px;right:16px;bottom:calc(var(--sab,0px) + 82px);z-index:9;display:flex;align-items:center;gap:10px;padding:10px 10px 10px 16px;border-radius:18px;background:rgba(28,24,23,.9);color:#fff;font-size:calc(14px * var(--tz,1))}
+.c02-undo span{flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c02-undo button{border:0;height:34px;padding:0 14px;border-radius:999px;background:#fff;color:var(--cink);font-weight:500;font-size:calc(14px * var(--tz,1))}
+/* ---- root tabs ---- */
+.c02-root{position:absolute;left:16px;right:16px;bottom:calc(var(--sab,0px) + 12px);height:58px;z-index:7;display:grid;grid-template-columns:repeat(4,1fr);border-radius:29px;background:rgba(255,255,255,.72);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 14px 30px -18px rgba(var(--sh),.5)}
+.c02-rt{border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:calc(12px * var(--tz,1));color:var(--cink3);cursor:pointer;border-radius:24px}
+.c02-rt svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.c02-rt.on{color:var(--cink);font-weight:500}
+.c02-rt.off{opacity:.5}
+/* ---- deep pages ---- */
+.c02-pplrow{position:absolute;z-index:6;left:22px;right:22px;top:calc(var(--sat,0px) + 77px + (var(--th,31.5px) + 13px) * (1 - var(--hc,0)) - 9px * var(--hc,0));display:flex;align-items:center;gap:12px;opacity:calc(1 - var(--hc,0) * 1.7);min-width:0;pointer-events:none!important}
+.c02-pplrow .c02-clu{flex:none;margin-top:0}
+.c02-pplrow .l{min-width:0;font-size:calc(16px * var(--tz,1));font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-deep .c02-sc{--pb:132px}
+.c02-pad{padding:0 22px}
+.c02-foot{position:absolute;left:0;right:0;bottom:0;z-index:8;display:grid;justify-items:center;align-items:end;gap:6px;padding:30px 22px calc(var(--sab,0px) + 20px + var(--kb,0px));background:linear-gradient(0deg,var(--foot) 42%,rgba(255,255,255,0));pointer-events:none}
+.c02-foot>*{grid-area:1/1}
+.c02-foot>:not(.ju-contact-action){pointer-events:auto}   /* the contact action stays under the original's control (pointer-events only once data-shown) */
+.c02-foot .c02-sub{grid-area:auto}
+.c02-sub{border:0;background:none;height:40px;padding:0 14px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink2);cursor:pointer}
+.c02-stage.reissued{--ju-ticket-top:24px}
+/* the tear rig draws its 434px canvas 88px past each side of the stub and 220px below it; the scroller already clips at the phone edge.
+   overflow:clip with a 240px clip margin renders exactly the same and states that bound on the stub host itself */
+.c02-stage .ju-ticket-stub{overflow:clip;overflow-clip-margin:240px}
+.c02-hostcard{display:grid;grid-template-columns:44px minmax(0,1fr);column-gap:14px;align-items:center;margin-top:16px;padding:0 16px 14px;border-radius:22px;background:var(--paper);box-shadow:0 1px 1px rgba(var(--sh),.05),0 16px 34px -20px rgba(var(--sh),.45)}
+.c02-hostcard>.c02-avw{position:relative;grid-column:1;grid-row:1;width:44px;height:44px}
+.c02-hostcard>.c02-avw .c02-av{font-size:calc(18px * var(--tz,1))}
+.c02-hostcard .ju-contact-row{grid-column:2;grid-row:1;border-top-color:transparent}
+.c02-hostcard .ju-contact-note23,.c02-hostcard .ju-form-error{grid-column:1/-1}
+.c02-copyfail{margin-top:10px;display:flex;align-items:center;gap:10px;font-size:calc(13px * var(--tz,1));color:var(--warn)}
+.c02-msg{margin-top:12px;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--ink3)}
+.c02-msg.err{color:var(--warn)}
+.c02-result{margin:8px 0 0;padding:20px 18px;border-radius:22px;background:var(--paper);text-align:center;box-shadow:0 14px 30px -20px rgba(var(--sh),.4)}
+.c02-result b{display:block;font-size:calc(19px * var(--tz,1));font-weight:600;color:var(--cink)}
+.c02-result p{margin-top:6px;font-size:calc(14px * var(--tz,1));color:var(--cink3)}
+.c02-ash{height:46px;margin:0 auto;width:258px;border-radius:0 0 10px 10px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.55}
+/* ---- manage: the table of seats is people; applications are people cards ---- */
+.c02-seg{display:flex;align-items:center;flex-wrap:wrap;gap:10px 14px;margin:2px 22px 6px}
+.c02-ss{display:flex;gap:7px;flex:none}
+.c02-ss .c02-sv{width:32px;height:32px;font-size:calc(14px * var(--tz,1));box-shadow:0 1px 1.5px rgba(var(--sh),.12),0 6px 12px -5px rgba(var(--sh),.3)}
+.c02-ss .c02-sv.open{box-shadow:none}
+.c02-ss .c02-sv.ok{background:#fff}
+.c02-ss .c02-sv.res{background:rgba(255,255,255,.8)}
+.c02-ss .c02-sv.open{border-color:rgba(28,24,23,.3)}
+.c02-sv.is-fresh{animation:c02-stamp calc(560ms * var(--k)) cubic-bezier(.2,1.5,.4,1) both}
+@keyframes c02-stamp{0%{transform:scale(1.7);opacity:0}45%{transform:scale(.9);opacity:1}100%{transform:none;opacity:1}}
+.c02-segtx{min-width:0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--ink2)}
+.c02-segtx b{display:block;font-size:calc(15px * var(--tz,1));font-weight:600;color:var(--ink)}
+.c02-delta{display:inline-block;margin-left:4px;padding:0 6px;border-radius:8px;background:var(--act);color:#fff;font:600 calc(12px * var(--tz,1))/18px Archivo,sans-serif;animation:c02-delta 1.9s ease both}
+@keyframes c02-delta{0%{opacity:0;transform:translateY(6px)}12%{opacity:1;transform:none}80%{opacity:1}100%{opacity:0}}
+.c02-msecs{display:flex;flex-direction:column}
+.c02-ms{order:var(--o,9)}
+.c02-ms .c02-gh{margin-top:24px}
+.c02-pc{position:relative;margin:0 20px 12px;padding:16px 16px 14px 76px;min-height:116px}
+.c02-pc-bg{position:absolute;inset:0;border-radius:22px;background:var(--paper);box-shadow:0 1px 1px rgba(var(--sh),.05),0 16px 32px -20px rgba(var(--sh),.42),0 4px 10px -6px rgba(var(--sh),.12)}
+.c02-pc>.c02-avw{left:16px;top:16px;width:44px;height:44px;z-index:2}
+.c02-pc>.c02-avw .c02-av{font-size:calc(18px * var(--tz,1))}
+.c02-pc-in{position:relative}
+.c02-pg.is-top.ph-enter .c02-slide{opacity:0;transform:translateX(26px);transition:none}
+.c02-slide{transition:opacity calc(200ms * var(--k)) cubic-bezier(.2,.6,.3,1) calc(var(--d,0ms) * var(--k)),transform calc(380ms * var(--k)) cubic-bezier(.16,.84,.24,1) calc(var(--d,0ms) * var(--k))}
+.c02-pg.is-under.ph-exit .c02-slide{animation:c02-in calc(280ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k)) both}
+.c02-pc .nm{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;font-size:calc(17px * var(--tz,1));font-weight:600;line-height:1.35;color:var(--cink)}
+.c02-vf{display:inline-flex;align-items:center;gap:3px;font-size:calc(12px * var(--tz,1));font-weight:500;color:#0b7458}
+.c02-vf svg{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.c02-vf.no{color:var(--cink3)}
+.c02-pc .ago{margin-top:2px;font-size:calc(13px * var(--tz,1));color:var(--cink3)}
+.c02-q{position:relative;margin-top:10px;padding:1px 0 1px 13px;font-size:calc(15px * var(--tz,1));line-height:1.6;color:var(--cink2);overflow-wrap:anywhere}
+.c02-q::before{content:'';position:absolute;left:0;top:3px;bottom:3px;width:3px;border-radius:2px;background:linear-gradient(var(--q1),var(--q2))}
+.c02-acts{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:12px;min-height:40px}
+.c02-btn{height:40px;padding:0 16px;border-radius:999px;border:0;font-size:calc(14px * var(--tz,1));font-weight:500;cursor:pointer;white-space:nowrap;transition:transform .3s cubic-bezier(.2,1.4,.36,1),background .2s}
+.c02-btn:active{transform:scale(.95)}
+.c02-btn.ghost{background:rgba(28,24,23,.055);color:var(--cink2)}
+.c02-btn.ink{background:var(--cink);color:#f8f7ff;box-shadow:0 12px 24px -14px rgba(28,24,23,.7)}
+.c02-btn.danger{background:rgba(185,46,70,.08);color:#a1263c}
+.c02-btn[aria-disabled="true"],.c02-btn:disabled{opacity:.45;cursor:default;transform:none}
+.c02-res{display:flex;align-items:center;gap:8px;margin-top:12px;min-height:40px;font-size:calc(14px * var(--tz,1));font-weight:500;color:#0b7458;animation:c02-res calc(420ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c02-res svg{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.c02-res.void{color:var(--cink3)}
+.c02-res span{min-width:0}
+@keyframes c02-res{0%{opacity:0;transform:translateY(6px)}100%{opacity:1;transform:none}}
+.c02-pc.is-no .c02-avw{opacity:.5}
+.c02-pc.is-ok .c02-av::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1.5px dashed var(--act);animation:c02-ring calc(520ms * var(--k)) cubic-bezier(.2,1.3,.4,1) both}
+@keyframes c02-ring{0%{transform:scale(1.35);opacity:0}100%{transform:none;opacity:.9}}
+.c02-busy{display:inline-flex;align-items:center;gap:8px}
+.c02-busy i{width:14px;height:14px;border-radius:50%;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;animation:c02-spin .8s linear infinite}
+@keyframes c02-spin{to{transform:rotate(360deg)}}
+.c02-err{margin-top:10px;font-size:calc(13px * var(--tz,1));color:var(--warn);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.c02-help{margin:4px 22px 0;font-size:calc(12px * var(--tz,1));line-height:1.6;color:var(--ink3)}
+.c02-mrow{position:relative;display:grid;grid-template-columns:32px minmax(0,1fr) auto;column-gap:14px;align-items:center;padding:9px 22px;min-height:52px}
+.c02-mrow>.c02-avw{position:relative}
+.c02-mrow .nm{font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-mrow .sb{font-size:calc(13px * var(--tz,1));color:var(--ink3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c02-mrow .rt{font-size:calc(13px * var(--tz,1));color:var(--ink2);text-align:right;white-space:nowrap}
+.c02-mrow.is-fresh{animation:c02-res calc(420ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c02-mrow .open{width:32px;height:32px;border-radius:50%;border:1.5px dashed rgba(28,24,23,.28)}
+.c02-mrow.me .c02-av{background:var(--cink);color:#fff}
+.c02-link{border:0;background:none;padding:6px 0;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--act);cursor:pointer}
+.c02-arr{margin:6px 20px 0;border-radius:22px;background:rgba(255,255,255,.42);box-shadow:inset 0 0 0 1px rgba(255,255,255,.6);overflow:hidden}
+.c02-arr button.it{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;padding:10px 18px;border:0;background:none;text-align:left;cursor:pointer;border-top:1px solid rgba(255,255,255,.55)}
+.c02-arr button.it:first-child{border-top:0}
+.c02-arr .it b{display:block;font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--ink)}
+.c02-arr .it small{display:block;font-size:calc(12px * var(--tz,1));color:var(--ink3)}
+.c02-arr .it.danger b{color:var(--warn)}
+.c02-arr .it[aria-disabled="true"]{cursor:default}
+.c02-arr .it[aria-disabled="true"] b{color:var(--ink3)}
+.c02-att{position:relative;margin:0 20px 12px;padding:14px 16px 14px 72px;min-height:96px}
+.c02-att>.c02-avw{left:16px;top:14px;width:40px;height:40px;z-index:2}
+.c02-att.is-next .c02-pc-bg{box-shadow:0 0 0 2px var(--act),0 16px 32px -20px rgba(var(--sh),.42)}
+.c02-segb{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+.c02-segb button{height:38px;border-radius:12px;border:0;background:rgba(28,24,23,.05);font-size:calc(14px * var(--tz,1));color:var(--cink2);cursor:pointer}
+.c02-segb button[aria-pressed="true"]{background:var(--cink);color:#fff}
+.c02-chop{display:inline-flex;align-items:center;justify-content:center;min-width:52px;height:30px;padding:0 10px;border:2px solid #b3263d;border-radius:8px;color:#b3263d;font:900 calc(15px * var(--tz,1))/1 "Noto Serif SC",serif;transform:rotate(-8deg);letter-spacing:.06em}
+.c02-chop.absent{border-color:#6b6360;color:#6b6360}.c02-chop.pending{border-style:dashed;border-color:#93560a;color:#93560a}
+.c02-chop.fresh{animation:c02-chop calc(560ms * var(--k)) cubic-bezier(.2,1.5,.4,1) both}
+@keyframes c02-chop{0%{transform:rotate(-8deg) scale(1.8);opacity:0}50%{transform:rotate(-8deg) scale(.9);opacity:1}100%{transform:rotate(-8deg) scale(1)}}
+.c02-trail{margin-top:6px;font-size:calc(12px * var(--tz,1));color:var(--cink3)}
+/* ---- generic white sheet on deep pages (detail / read / waitlist / history / draft) ---- */
+.c02-card{position:relative;margin:0 20px 12px;padding:18px;border-radius:22px;background:var(--paper);box-shadow:0 1px 1px rgba(var(--sh),.05),0 16px 32px -20px rgba(var(--sh),.42);color:var(--cink)}
+.c02-card h3{font-size:calc(19px * var(--tz,1));font-weight:600;line-height:1.35;overflow-wrap:anywhere}
+.c02-card .m{margin-top:4px;font-size:calc(14px * var(--tz,1));color:var(--cink2)}
+.c02-card .s{margin-top:8px;font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--cink3)}
+.c02-rules h4{margin:16px 0 4px;font-size:calc(15px * var(--tz,1));font-weight:600}
+.c02-rules p{margin:0 0 6px;font-size:calc(14px * var(--tz,1));line-height:1.7;color:var(--cink2)}
+.c02-end{padding:18px 0 4px;text-align:center;font-size:calc(12px * var(--tz,1));color:var(--cink3)}
+.c02-t08{position:relative;height:520px;margin:0 0 8px}
+.c02-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
+/* ---- sheet / toast ---- */
+.c02-over{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-end;background:rgba(24,18,30,.26);animation:c02-fade calc(260ms * var(--k)) ease both}
+@keyframes c02-fade{0%{background:rgba(24,18,30,0)}100%{background:rgba(24,18,30,.26)}}
+.c02-sheet{position:relative;width:100%;max-height:calc(100% - 40px);overflow:auto;padding:22px 22px calc(22px + var(--sab,0px) + var(--kb,0px));border-radius:28px 28px 0 0;background:#fff;color:var(--cink);box-shadow:0 -20px 40px -24px rgba(var(--sh),.5);animation:c02-up calc(340ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;outline:none}
+@keyframes c02-up{0%{transform:translateY(46%);opacity:.4}100%{transform:none;opacity:1}}
+.c02-sheet h3{font-size:calc(19px * var(--tz,1));font-weight:600;line-height:1.35}
+.c02-sheet .bd{margin-top:8px;font-size:calc(14px * var(--tz,1));line-height:1.65;color:var(--cink2)}
+.c02-id{display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 12px;border-radius:14px;background:rgba(28,24,23,.04);font-size:calc(13px * var(--tz,1));color:var(--cink2)}
+.c02-id b{font-weight:600;color:var(--cink)}
+.c02-irrev{margin-top:12px;padding:10px 12px;border-radius:12px;background:rgba(185,46,70,.08);color:#8c192e;font-size:calc(13px * var(--tz,1))}
+.c02-aff{margin-top:12px}
+.c02-aff div{display:flex;justify-content:space-between;padding:7px 0;border-top:1px solid rgba(28,24,23,.07);font-size:calc(14px * var(--tz,1))}
+.c02-in-f{display:block;width:100%;margin-top:6px;height:46px;padding:0 12px;border-radius:12px;border:1px solid rgba(28,24,23,.14);background:#fff;font:inherit;font-size:16px;color:var(--cink)}
+textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
+.c02-lbl{display:block;margin-top:12px;font-size:calc(13px * var(--tz,1));color:var(--cink3)}
+.c02-sacts{display:flex;justify-content:flex-end;gap:10px;margin-top:18px}
+.c02-sacts .ju-v27-cta{flex:1 1 auto}
+.c02-toast{position:absolute;left:50%;top:calc(var(--sat,0px) + 28px);z-index:60;transform:translateX(-50%);width:max-content;max-width:calc(100% - 150px);min-height:36px;padding:8px 16px;border-radius:18px;background:rgba(28,24,23,.88);color:#fff;font-size:calc(14px * var(--tz,1));line-height:1.45;text-align:center;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);animation:c02-toast calc(280ms * var(--k)) cubic-bezier(.2,.9,.3,1) both}
+@keyframes c02-toast{0%{opacity:0;transform:translate(-50%,-10px) scale(.96)}100%{opacity:1;transform:translate(-50%,0)}}
+.c02-toast.k-error{background:#7f1d2e}
+.c02-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</helmet>
+<div class="ju-stage">
+  <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
+    <div class="app c02{{panel.rootCls}}{{c.nav.rootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+      <div class="ju-env" ref="{{envRef}}"></div>
+      <sc-if value="{{noSkins}}"><div class="c02-envfb"></div></sc-if>
+      <div class="c02-veil" aria-hidden="true"></div>
+
+      <!-- ===================== HOME ===================== -->
+      <sc-if value="{{c.nav.on.home}}" hint-placeholder-val="{{true}}">
+        <section class="c02-pg c02-home {{c.nav.cls.home}}" data-surface="home" style="--rx:{{home.rx}};--th:{{home.th}};--hdh:{{home.hdh}}">
+          <header class="c02-hd" data-header>
+            <div class="c02-hdv"></div>
+            <h1 class="c02-t30">我的局</h1>
+            <p class="c02-t14">{{home.sentence}}</p>
+            <div class="c02-roles {{home.rolesCls}}" role="tablist" aria-label="我的局 · 角色">
+              <span class="c02-pill" aria-hidden="true"></span>
+              <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" class="c02-role {{t.cls}}" data-role-tab="{{t.k}}" aria-selected="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.c2badge}}"><i class="c02-badge">{{t.badge}}</i></sc-if></button></sc-for>
+            </div>
+          </header>
+          <div class="c02-sc" data-scroller="home" onScroll="{{onScroll}}">
+            <nav class="c02-secs" aria-label="分区">
+              <sc-for list="{{c.sectionTabs}}" as="t" hint-placeholder-count="2"><button type="button" class="c02-sec {{t.cls}}" data-section-tab="{{t.k}}" aria-pressed="{{t.on}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.countText}}"><span class="n">{{t.countText}}</span></sc-if></button></sc-for>
+              <sc-if value="{{home.ints}}"><span class="c02-ints" aria-label="按意图"><sc-for list="{{home.ints}}" as="x" hint-placeholder-count="3"><button type="button" class="c02-int" aria-label="{{x.aria}}" onClick="{{x.go}}"><b class="{{x.tone}}">{{x.n}}</b>{{x.label}}</button></sc-for></span></sc-if>
+            </nav>
+            <div class="c02-pane">
+
+              <!-- 我参加的 · 当前 -->
+              <sc-if value="{{home.jc}}">
+                <sc-if value="{{c.joined.empty.on}}"><div class="c02-empty c02-in"><div class="rings"><i></i><i></i><i></i></div><b>{{c.joined.empty.title}}</b><p>{{c.joined.empty.body}}</p><button type="button" class="c02-chip inert" aria-disabled="true" onClick="{{c.joined.empty.action.go}}">{{c.joined.empty.action.label}}</button></div></sc-if>
+                <sc-for list="{{jSecs}}" as="g" hint-placeholder-count="3">
+                  <div class="c02-gh c02-in" data-g="{{g.key}}"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
+                <sc-if value="{{g.lead.on}}">
+                  <div class="c02-lead" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
+                    <div class="c02-lead-bg c02-in"></div><div class="c02-lead-ring"></div>
+                    <div class="c02-lead-body">
+                      <div class="c02-lead-top {{g.lead.topCls}}">
+                        <div class="c02-c52 {{g.lead.n}}" aria-hidden="true"><sc-for list="{{g.lead.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span><sc-if value="{{a.tag}}"><span class="c02-tag">{{a.tag}}</span></sc-if></span></sc-for><sc-if value="{{g.lead.more}}"><span class="c02-more">{{g.lead.more}}</span></sc-if></div>
+                        <div class="c02-lp c02-in"><p class="l1">{{g.lead.line}}</p><sc-if value="{{g.lead.sub}}"><p class="l2">{{g.lead.sub}}</p></sc-if></div>
+                      </div>
+                      <sc-if value="{{g.lead.weak}}"><button type="button" class="c02-weak" data-act="{{g.lead.weak.key}}" onClick="{{g.lead.weak.act}}">{{g.lead.weak.label}}</button></sc-if>
+                      <h3 class="c02-lt c02-in">{{g.lead.r.title}}</h3>
+                      <p class="c02-lw c02-in"><span class="w">{{g.lead.when}}</span><span class="pl">{{g.lead.place}}</span></p>
+                      <sc-if value="{{g.lead.cd}}"><div class="c02-cd {{g.lead.cd.tone}} c02-in" role="timer" aria-label="预留剩余 {{g.lead.cd.text}}"><span class="bar" style="--ratio:{{g.lead.cd.ratio}}"><i></i></span><span class="t">剩 {{g.lead.cd.text}}</span><span class="d">{{g.lead.cd.dl}}</span></div></sc-if>
+                      <sc-if value="{{g.lead.seats}}"><div class="c02-seats" aria-label="{{g.lead.seatText}}"><sc-for list="{{g.lead.seats}}" as="v" hint-placeholder-count="5"><span class="c02-sv {{v.cls}}" data-pk="{{v.pk}}">{{v.g}}</span></sc-for><span class="tx c02-in">{{g.lead.seatText}}</span></div></sc-if>
+                    </div>
+                    <sc-if value="{{g.lead.cta}}"><div class="c02-tray c02-in"><button type="button" class="ju-v27-cta c02-cta" data-act="cta" onClick="{{g.lead.cta.act}}"><span class="gloss"></span><span class="label">{{g.lead.cta.label}}</span></button></div></sc-if>
+                  </div>
+                </sc-if>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                      <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
+                      <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
+                    </div>
+                  </sc-for>
+                </sc-for>
+              </sc-if>
+
+              <!-- 我参加的 · 历史 -->
+              <sc-if value="{{home.jh}}">
+                <sc-if value="{{c.joined.empty.on}}"><div class="c02-empty c02-in"><div class="rings"><i></i><i></i></div><b>{{c.joined.empty.title}}</b><p>{{c.joined.empty.body}}</p><button type="button" class="c02-chip" onClick="{{c.joined.empty.action.go}}">{{c.joined.empty.action.label}}</button></div></sc-if>
+                <sc-for list="{{c.joined.sectionsHistory}}" as="g" hint-placeholder-count="2">
+                  <div class="c02-gh c02-in"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="3">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                      <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
+                      <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
+                    </div>
+                  </sc-for>
+                </sc-for>
+                <p class="c02-note">{{c.COPY.historyFooter.lead}} · 账户级记录页不在本次范围</p>
+              </sc-if>
+
+              <!-- 我发起的 · 当前 -->
+              <sc-if value="{{home.hc}}">
+                <sc-if value="{{c.hosted.empty.on}}"><div class="c02-empty c02-in"><div class="rings"><i></i><i></i><i></i></div><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c02-chip {{home.hEmptyCls}}" aria-disabled="{{home.hEmptyInert}}" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+                <sc-for list="{{hSecs}}" as="g" hint-placeholder-count="3">
+                  <div class="c02-gh c02-in" data-g="{{g.key}}"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
+                <sc-if value="{{g.lead}}">
+                  <div class="c02-lead" data-rid="{{g.lead.r.id}}" data-origin="{{g.lead.r.originKey}}" role="button" tabindex="0" aria-label="{{g.lead.aria}}" onClick="{{g.lead.open}}" onKeyDown="{{g.lead.key}}">
+                    <div class="c02-lead-bg c02-in"></div><div class="c02-lead-ring"></div>
+                    <div class="c02-lead-body">
+                      <div class="c02-lead-top nr">
+                        <div class="c02-c52 {{g.lead.n}}" aria-hidden="true"><sc-for list="{{g.lead.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{g.lead.more}}"><span class="c02-more">{{g.lead.more}}</span></sc-if></div>
+                        <div class="c02-lp c02-in"><p class="l1">{{g.lead.line}}</p><sc-if value="{{g.lead.sub}}"><p class="l2">{{g.lead.sub}}</p></sc-if></div>
+                      </div>
+                      <h3 class="c02-lt c02-in">{{g.lead.r.title}}</h3>
+                      <p class="c02-lw c02-in"><span class="w">{{g.lead.when}}</span><span class="pl">{{g.lead.place}}</span></p>
+                      <div class="c02-seats" aria-label="{{g.lead.seatText}}"><sc-for list="{{g.lead.seats}}" as="v" hint-placeholder-count="5"><span class="c02-sv {{v.cls}}" data-pk="{{v.pk}}">{{v.g}}</span></sc-for><span class="tx c02-in">{{g.lead.seatText}}</span></div>
+                    </div>
+                    <sc-if value="{{g.lead.cta}}"><div class="c02-tray c02-in"><button type="button" class="ju-v27-cta c02-cta" data-act="cta" onClick="{{g.lead.cta.act}}"><span class="gloss"></span><span class="label">{{g.lead.cta.label}}</span></button></div></sc-if>
+                  </div>
+                </sc-if>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                      <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
+                      <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
+                    </div>
+                  </sc-for>
+                </sc-for>
+              </sc-if>
+
+              <!-- 草稿 -->
+              <sc-if value="{{home.hd}}">
+                <sc-if value="{{c.hosted.empty.on}}"><div class="c02-empty c02-in"><div class="rings"><i></i></div><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c02-chip inert" aria-disabled="true" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+                <sc-for list="{{c.hosted.drafts}}" as="r" hint-placeholder-count="3">
+                  <div class="c02-row {{r.cls}} {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.title}}" onClick="{{r.open}}">
+                    <div class="c02-clu" aria-hidden="true"><span class="c02-avw"><span class="c02-av">{{r.c2.g}}</span></span></div>
+                    <div class="c02-txt"><p class="c02-ppl">{{r.title}}</p><p class="c02-ttl">{{r.whenText}} · {{r.placeText}}</p><p class="c02-mt"><span class="w">{{r.agoText}}</span><span class="st {{r.c2.tone}}">{{r.missingText}}</span></p>
+                      <div class="c02-dacts"><button type="button" class="c02-mini inert" aria-disabled="true" onClick="{{c.inert}}">{{r.continueLabel}}（开局模块）</button><button type="button" class="c02-mini" data-act="delete" onClick="{{r.del}}">删除</button></div>
+                    </div>
+                  </div>
+                </sc-for>
+              </sc-if>
+
+              <!-- 我发起的 · 历史 -->
+              <sc-if value="{{home.hh}}">
+                <sc-if value="{{c.hosted.empty.on}}"><div class="c02-empty c02-in"><div class="rings"><i></i><i></i></div><b>{{c.hosted.empty.title}}</b><p>{{c.hosted.empty.body}}</p><button type="button" class="c02-chip" onClick="{{c.hosted.empty.action.go}}">{{c.hosted.empty.action.label}}</button></div></sc-if>
+                <sc-for list="{{c.hosted.sectionsHistory}}" as="g" hint-placeholder-count="2">
+                  <div class="c02-gh c02-in"><span class="t">{{g.title}}</span><span class="n">{{g.count}}</span><span class="note">{{g.note}}</span></div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                    <div class="c02-row {{r.c2.rowCls}}" data-rid="{{r.id}}" data-origin="{{r.originKey}}" role="button" tabindex="0" aria-label="{{r.c2.aria}}" onClick="{{r.open}}" onKeyDown="{{r.c2.key}}">
+                      <div class="c02-clu" aria-hidden="true"><sc-for list="{{r.c2.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{r.c2.more}}"><span class="c02-more">{{r.c2.more}}</span></sc-if></div>
+                      <div class="c02-txt c02-in"><p class="c02-ppl">{{r.c2.line}}</p><p class="c02-ttl">{{r.title}}</p><p class="c02-mt"><span class="w">{{r.c2.when}}</span><sc-if value="{{r.c2.place}}"><span class="pl">{{r.c2.place}}</span></sc-if><span class="st {{r.c2.tone}}">{{r.c2.status}}</span></p></div>
+                    </div>
+                  </sc-for>
+                </sc-for>
+                <p class="c02-note">再开一局 · 只带入活动内容，成员与记录不复制（开局模块，本轮不可点）</p>
+              </sc-if>
+            </div>
+          </div>
+          <sc-if value="{{c.hosted.undo.on}}"><div class="c02-undo" role="status"><span>{{c.hosted.undo.text}}</span><button type="button" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} {{c.hosted.undo.left}}s</button></div></sc-if>
+          <nav class="c02-root" aria-label="JU"><sc-for list="{{rootNav}}" as="t" hint-placeholder-count="4"><button type="button" class="c02-rt {{t.cls}}" aria-disabled="{{t.inert}}" aria-current="{{t.cur}}" onClick="{{t.go}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.icon}}"></path></svg><span>{{t.label}}</span></button></sc-for></nav>
+        </section>
+      </sc-if>
+
+      <!-- ===================== DETAIL (participant) ===================== -->
+      <sc-if value="{{c.nav.on.detail}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep {{c.nav.cls.detail}}" data-surface="detail" style="--th:{{dt.th}};--hdh:{{dt.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.detail.title}}</h1></header>
+          <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{dt.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{dt.more}}"><span class="c02-more">{{dt.more}}</span></sc-if></div><p class="l c02-in">{{dt.line}}</p></div>
+          <div class="c02-sc" data-scroller="detail" onScroll="{{onScroll}}">
+            <sc-if value="{{c.detail.on}}">
+              <div class="c02-card c02-in">
+                <p class="s" style="margin-top:0">{{c.detail.label}} · {{c.detail.seatText}}</p>
+                <sc-for list="{{dt.members}}" as="m" hint-placeholder-count="3"><div class="c02-mrow {{m.c2cls}}" style="padding-left:0;padding-right:0"><span class="c02-avw"><span class="c02-av c02-tint">{{m.g}}</span></span><div><p class="nm" style="color:var(--cink)">{{m.name}}</p><p class="sb" style="color:var(--cink3)">{{m.statusText}}</p></div><span></span></div></sc-for>
+              </div>
+              <div class="c02-card c02-in" style="--d:60ms"><h3>{{c.detail.event.title}}</h3><p class="m">{{dt.when}} · {{c.detail.place.full}} · 局主 {{c.detail.host.name}}</p><sc-if value="{{c.detail.event.note}}"><p class="s">{{c.detail.event.note}}</p></sc-if>
+                <sc-if value="{{c.detail.countdown.on}}"><div class="c02-cd {{c.detail.countdown.tone}}"><span class="bar" style="--ratio:{{c.detail.countdown.ratio}}"><i></i></span><span class="t">剩 {{c.detail.countdown.text}}</span></div><p class="s">{{c.detail.row.deadlineText}}</p></sc-if>
+              </div>
+              <sc-if value="{{c.detail.receipt}}"><div class="c02-card c02-in"><h3>{{c.detail.receipt.title}}</h3><p class="m">{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</p><p class="s">{{c.detail.receipt.note}}</p></div></sc-if>
+              <sc-if value="{{c.detail.result}}"><div class="c02-result c02-in" style="margin:0 20px 12px"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
+              <div class="c02-card c02-rules c02-in" style="--d:100ms"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><h4>{{g.title}}</h4><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for><p class="s">查看我的记录 · 账户级页面，本轮不可点</p></div>
+              <sc-if value="{{c.detail.error}}"><p class="c02-msg err c02-pad">{{c.detail.error}}</p></sc-if>
+            </sc-if>
+          </div>
+          <sc-if value="{{c.detail.on}}"><div class="c02-foot"><button type="button" class="ju-v27-cta c02-cta" data-act="{{c.detail.primary.key}}" aria-disabled="{{c.detail.primary.disabled}}" onClick="{{c.detail.primary.act}}"><span class="gloss"></span><span class="label">{{c.detail.primary.label}}</span></button></div></sc-if>
+          <sc-if value="{{c.detail.secondary}}"><div class="c02-tools"><button type="button" class="c02-weak" data-act="{{c.detail.secondary.key}}" onClick="{{c.detail.secondary.act}}">{{c.detail.secondary.label}}</button></div></sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ===================== READ (阅读并确认) ===================== -->
+      <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep {{c.nav.cls.read}}" data-surface="read" style="--th:{{rd.th}};--hdh:{{rd.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.read.secondary}}"><button type="button" class="c02-weak" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.read.title}}</h1><p class="c02-t14"><sc-if value="{{c.read.countdown.on}}">剩 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</p></header>
+          <div class="c02-sc" data-scroller="read" onScroll="{{readScroll}}">
+            <sc-if value="{{c.read.result}}"><div class="c02-result c02-in" style="margin:0 20px 12px"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
+            <sc-if value="{{c.read.expired}}"><div class="c02-result c02-in" style="margin:0 20px 12px"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
+            <div class="c02-card c02-rules c02-in"><sc-for list="{{c.read.rules}}" as="g" hint-placeholder-count="3"><h4>{{g.title}}</h4><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for><p class="c02-end">— {{c.read.endMark}} —</p></div>
+            <sc-if value="{{c.read.error}}"><p class="c02-msg err c02-pad">{{c.read.error}}</p></sc-if>
+          </div>
+          <div class="c02-foot"><button type="button" class="ju-v27-cta c02-cta" data-act="{{c.read.primary.key}}" aria-disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button></div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== WAITLIST ===================== -->
+      <sc-if value="{{c.nav.on.waitlist}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep {{c.nav.cls.waitlist}}" data-surface="waitlist" style="--th:{{wl.th}};--hdh:{{wl.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.waitlist.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.waitlist.secondary}}"><button type="button" class="c02-weak" data-act="leave-queue" onClick="{{c.waitlist.secondary.act}}">{{c.waitlist.secondary.label}}</button></sc-if></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.waitlist.title}}</h1><p class="c02-t14">{{c.waitlist.seatLine}}</p></header>
+          <div class="c02-sc" data-scroller="waitlist" onScroll="{{onScroll}}">
+            <sc-if value="{{c.waitlist.on}}">
+              <div class="c02-card c02-in"><h3>{{c.waitlist.receipt.title}}</h3><p class="m">{{c.waitlist.receipt.field}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p><sc-if value="{{c.waitlist.receipt.note}}"><p class="s">{{c.waitlist.receipt.note}}</p></sc-if>
+                <sc-if value="{{c.waitlist.countdown.on}}"><div class="c02-cd {{c.waitlist.countdown.tone}}"><span class="bar" style="--ratio:{{c.waitlist.countdown.ratio}}"><i></i></span><span class="t">剩 {{c.waitlist.countdown.text}}</span></div></sc-if></div>
+              <div class="c02-gh c02-in"><span class="t">已在局里</span></div>
+              <sc-for list="{{wl.entered}}" as="m" hint-placeholder-count="3"><div class="c02-mrow c02-in"><span class="c02-avw"><span class="c02-av {{m.cls}}">{{m.g}}</span></span><div><p class="nm">{{m.name}}</p><p class="sb">{{m.statusText}}</p></div><span></span></div></sc-for>
+              <div class="c02-gh c02-in"><span class="t">候补</span><span class="n">{{c.waitlist.total}}</span><span class="note">{{c.waitlist.hint}}</span></div>
+              <sc-for list="{{c.waitlist.queue}}" as="q" hint-placeholder-count="2"><div class="c02-mrow c02-in"><span class="c02-avw"><span class="c02-av">{{q.pos}}</span></span><div><p class="nm">{{q.name}}</p><p class="sb">候补第 {{q.pos}} 位</p></div><span></span></div></sc-for>
+            </sc-if>
+          </div>
+          <sc-if value="{{c.waitlist.on}}"><div class="c02-foot"><button type="button" class="ju-v27-cta c02-cta" data-act="ok" onClick="{{c.waitlist.primary.act}}"><span class="gloss"></span><span class="label">{{c.waitlist.primary.label}}</span></button></div></sc-if>
+        </section>
+      </sc-if>
+
+      <!-- ===================== TICKET / REPLY (shared original stage) ===================== -->
+      <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep c02-tk {{c.nav.cls.ticket}}{{c.nav.cls.reply}}" data-surface="{{tk.surface}}" style="--th:{{tk.th}};--hdh:{{tk.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.ticket.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{c.ticket.canExit}}"><button type="button" class="c02-weak" data-act="{{tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.ticket.title}}</h1></header>
+          <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{tk.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{tk.more}}"><span class="c02-more">{{tk.more}}</span></sc-if></div><p class="l c02-in">{{tk.line}}</p></div>
+          <div class="c02-sc" data-scroller="ticket" onScroll="{{onScroll}}">
+            <sc-if value="{{c.ticket.on}}">
+              <div class="c02-pad">
+                <sc-if value="{{c.ticket.unavailable}}"><div class="c02-result c02-in"><b>{{c.ticket.title}}</b><p>{{c.ticket.unavailable.text}}</p></div></sc-if>
+                <sc-if value="{{tk.showStage}}">
+                  <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
+                  <div class="ju-ticket-stage c02-stage {{tk.stageCls}}" data-print-stage="c02" data-state="idle">
+                    <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
+                    <div class="ju-ticket" data-paper="c02">
+                      <div class="ju-ticket-shadow" data-paper-shadow="c02" data-raster="skip"><div></div></div>
+                      <div class="ju-ticket-shell" data-paper-shell="c02">
+                        <div class="ju-ticket-surface" data-paper-surface="c02">
+                          <div class="ju-ticket-body">
+                            <div class="ju-ticket-face">
+                              <div class="ju-ticket-brand">JU. / 票根</div>
+                              <div class="ju-ticket-title" data-slot="title">{{c.ticket.ritual.title}}</div>
+                              <div class="ju-ticket-when"><span data-slot="time">{{c.ticket.ritual.time}}</span><span data-slot="md">{{c.ticket.ritual.md}}</span></div>
+                              <div class="ju-ticket-previous" data-slot="previous" hidden="{{tk.noPrevious}}">{{tk.previousText}}</div>
+                              <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.ticket.ritual.loc}}</strong></div>
+                              <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.ticket.ritual.meeting}}</strong></div>
+                              <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.ticket.ritual.host}}</strong></div>
+                            </div>
+                            <div class="ju-ticket-wet" data-wet="c02" data-raster="skip"></div>
+                          </div>
+                          <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{tk.noMark}}">{{c.ticket.ritual.mark}}</div>
+                          <div class="ju-ticket-stub" data-tear="c02" data-act="tear"><div class="ju-ticket-bend" data-bend="c02" data-raster="skip"></div></div>
+                        </div>
+                      </div>
+                      <div class="ju-ticket-burn" data-burn="c02" data-raster="skip"></div>
+                    </div>
+                  </div>
+                  <!-- the host's card = the contact layer (original DOM; JURitual.contact owns data-revealed, note and labels) -->
+                  <div class="ju-contact-wrap c02-hostcard" data-contact-reveal aria-hidden="true">
+                    <span class="c02-avw" data-pk="{{tk.hostPk}}"><span class="c02-av c02-tint">{{tk.hostG}}</span></span>
+                    <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
+                    <p class="ju-contact-note23"></p>
+                    <p class="ju-form-error"></p>
+                  </div>
+                  <sc-if value="{{c.ticket.contact.copyFail}}"><p class="c02-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c02-btn ghost" data-act="retry" onClick="{{tk.retryCopy}}">重试</button></p></sc-if>
+                  <sc-if value="{{tk.showClosed}}"><p class="c02-msg err">{{c.ticket.contact.closedText}}</p></sc-if>
+                  <sc-if value="{{c.ticket.contact.error}}"><p class="c02-msg err">{{c.ticket.contact.error}}</p></sc-if>
+                  <sc-if value="{{c.ticket.result}}"><div class="c02-result c02-in"><sc-if value="{{tk.ashes}}"><div class="c02-ash" aria-hidden="true"></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
+                  <sc-if value="{{c.ticket.reply}}"><p class="c02-msg">{{c.ticket.reply.oldText}} → {{c.ticket.reply.newText}}</p></sc-if>
+                </sc-if>
+              </div>
+            </sc-if>
+          </div>
+          <div class="c02-foot">
+            <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta c02-cta" data-act="{{tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></sc-if>
+            <sc-if value="{{tk.contactAction}}"><button type="button" class="ju-v27-cta c02-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
+            <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta c02-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
+            <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta c02-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== HISTORY ===================== -->
+      <sc-if value="{{c.nav.on.history}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep {{c.nav.cls.history}}" data-surface="history" style="--th:{{hi.th}};--hdh:{{hi.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.history.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.history.title}}</h1></header>
+          <div class="c02-pplrow"><div class="c02-clu"><sc-for list="{{hi.avs}}" as="a" hint-placeholder-count="2"><span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av {{a.cls}}">{{a.g}}</span></span></sc-for><sc-if value="{{hi.more}}"><span class="c02-more">{{hi.more}}</span></sc-if></div><p class="l c02-in">{{hi.line}}</p></div>
+          <div class="c02-sc" data-scroller="history" onScroll="{{onScroll}}">
+            <sc-if value="{{c.history.on}}">
+              <sc-if value="{{c.history.hasStamp}}"><div class="c02-t08" data-t08-scope="1" aria-label="出席印记"></div>
+                <sc-if value="{{hi.stampFallback}}"><div class="c02-card"><h3>{{c.history.event.title}}</h3><sc-if value="{{c.history.stampText}}"><p style="margin-top:10px"><span class="c02-chop {{c.history.stamp}}">{{c.history.stampText}}</span></p></sc-if></div></sc-if>
+              </sc-if>
+              <div class="c02-card c02-in"><h3>{{c.history.event.title}}</h3><p class="m">{{hi.when}} · {{c.history.place.full}} · 局主 {{c.history.host.name}}</p><sc-if value="{{c.history.oldWhen}}"><p class="s">原定 {{c.history.oldWhen.zh}}</p></sc-if><p class="s">{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="s">{{c.history.closedNote}}</p></sc-if><sc-if value="{{c.history.attendanceText}}"><p class="s">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if></div>
+              <sc-if value="{{hi.showStage}}"><div class="c02-pad">
+                <div class="ju-ticket-stage c02-stage {{hi.stageCls}}" data-print-stage="c02h" data-state="idle">
+                  <div class="ju-ticket" data-paper="c02h">
+                    <div class="ju-ticket-shadow" data-paper-shadow="c02h" data-raster="skip"><div></div></div>
+                    <div class="ju-ticket-shell" data-paper-shell="c02h">
+                      <div class="ju-ticket-surface" data-paper-surface="c02h">
+                        <div class="ju-ticket-body">
+                          <div class="ju-ticket-face">
+                            <div class="ju-ticket-brand">JU. / 票根</div>
+                            <div class="ju-ticket-title" data-slot="title">{{c.history.ritual.title}}</div>
+                            <div class="ju-ticket-when"><span data-slot="time">{{c.history.ritual.time}}</span><span data-slot="md">{{c.history.ritual.md}}</span></div>
+                            <div class="ju-ticket-previous" data-slot="previous" hidden="{{hi.noPrevious}}">{{hi.previousText}}</div>
+                            <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{c.history.ritual.loc}}</strong></div>
+                            <div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{c.history.ritual.meeting}}</strong></div>
+                            <div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{c.history.ritual.host}}</strong></div>
+                          </div>
+                        </div>
+                        <div class="ju-ticket-mark" data-raster="stamp" data-slot="mark" hidden="{{hi.noMark}}">{{c.history.ritual.mark}}</div>
+                        <div class="ju-ticket-stub" data-tear="c02h"></div>
+                      </div>
+                    </div>
+                    <div class="ju-ticket-burn" data-burn="c02h" data-raster="skip"></div>
+                  </div>
+                </div>
+                <sc-if value="{{c.history.ashes}}"><div class="c02-ash" aria-label="票根灰烬"></div><p class="c02-msg" style="text-align:center">票根已作废</p></sc-if>
+              </div></sc-if>
+              <sc-if value="{{c.history.contactOpen}}"><div class="c02-card c02-in"><p class="m">局主微信 <span class="ju-contact-account">{{c.history.hostWx}}</span></p><button type="button" class="c02-btn ghost" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button><sc-if value="{{c.history.copyFail}}"><p class="c02-copyfail">未能复制，长按手动复制 <button type="button" class="c02-btn ghost" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></div></sc-if>
+              <sc-if value="{{c.history.contactClosedText}}"><p class="c02-help">{{c.history.contactClosedText}}</p></sc-if>
+              <div class="c02-gh c02-in"><span class="t">本场相关记录</span><span class="n">{{hi.recordCount}}</span></div>
+              <sc-for list="{{c.history.records}}" as="x" hint-placeholder-count="2"><div class="c02-mrow c02-in"><span></span><div><p class="nm">{{x.kindLabel}}</p><p class="sb">{{x.text}}</p></div><span class="rt">{{x.atText}}</span></div></sc-for>
+              <p class="c02-pad"><button type="button" class="c02-link" data-act="report" onClick="{{c.history.report.open}}">{{c.history.report.label}}</button></p>
+              <p class="c02-note">{{c.history.footer.lead}} · 我的举报 / 记录页为账户级，本轮不可点</p>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== MANAGE (H1) ===================== -->
+      <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep c02-mg {{c.nav.cls.manage}}" data-surface="manage" style="--th:{{mg.th}};--hdh:{{mg.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{mg.ready}}"><button type="button" class="c02-weak" data-act="card" onClick="{{c.manage.card.open}}">局卡</button></sc-if></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{mg.title}}</h1><p class="c02-t14">{{mg.meta}}</p></header>
+          <div class="c02-sc" data-scroller="manage" onScroll="{{onScroll}}">
+            <sc-if value="{{c.manage.missing}}"><div class="c02-empty"><b>{{c.manage.title}}</b><p>{{c.manage.body}}</p></div></sc-if>
+            <sc-if value="{{mg.ready}}">
+              <sc-if value="{{mg.seatsOn}}"><div class="c02-seg" aria-label="{{mg.seatAria}}"><div class="c02-ss"><sc-for list="{{mg.seats}}" as="v" hint-placeholder-count="5"><span class="c02-sv {{v.cls}}" data-pk="{{v.pk}}">{{v.g}}</span></sc-for></div><p class="c02-segtx c02-in"><b>{{mg.seatMain}}</b>{{mg.seatMore}}<sc-if value="{{mg.delta}}"><span class="c02-delta">{{mg.delta}}</span></sc-if></p></div></sc-if>
+              <sc-if value="{{mg.attOn}}"><div class="c02-seg"><p class="c02-segtx c02-in"><b>{{c.manage.head.progress.attendance.text}}</b> · {{c.manage.head.progress.attendance.sub}}</p></div></sc-if>
+              <p class="c02-help c02-in">{{c.manage.head.formedLine}}</p>
+              <div class="c02-msecs">
+                <!-- 申请审核: each application is a person's card -->
+                <sc-if value="{{c.manage.apps.on}}"><div class="c02-ms {{c.manage.apps.cls}}" data-section="apps" style="--o:{{c.manage.apps.order}}">
+                  <div class="c02-gh c02-in"><span class="t">申请</span><span class="n">{{c.manage.apps.count}}</span><span class="note">{{c.manage.apps.sub}}</span></div>
+                  <sc-for list="{{c.manage.apps.rows}}" as="a" hint-placeholder-count="2">
+                    <div class="c02-pc {{a.c2cls}}" data-rid="{{a.id}}" style="--d:{{a.c2d}}ms">
+                      <div class="c02-pc-bg c02-slide"></div>
+                      <span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av c02-tint">{{a.g}}</span></span>
+                      <div class="c02-pc-in c02-slide">
+                        <p class="nm"><span>{{a.nickText}}</span><span class="c02-vf {{a.vfCls}}"><sc-if value="{{a.verified}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.2 4.2L19 7"></path></svg></sc-if>{{a.verifiedLabel}}</span></p>
+                        <p class="ago">{{a.agoText}}</p>
+                        <sc-if value="{{a.note}}"><blockquote class="c02-q">“{{a.note}}”</blockquote></sc-if>
+                        <sc-if value="{{a.pendingOpen}}"><div class="c02-acts"><button type="button" class="c02-btn ghost" data-act="reject" onClick="{{a.reject}}">谢绝</button><button type="button" class="c02-btn ink" data-act="approve" onClick="{{a.approve}}">发出邀请</button></div></sc-if>
+                        <sc-if value="{{a.busy}}"><div class="c02-acts"><button type="button" class="c02-btn ghost" aria-disabled="true">谢绝</button><button type="button" class="c02-btn ink" aria-disabled="true"><span class="c02-busy"><i></i>处理中…</span></button></div></sc-if>
+                        <sc-if value="{{a.result}}"><p class="c02-res {{a.resCls}}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="{{a.resIcon}}"></path></svg><span>{{a.resultText}}</span></p></sc-if>
+                        <sc-if value="{{a.error}}"><div class="c02-err"><span>{{a.error}}</span><button type="button" class="c02-btn ghost" data-act="retry" onClick="{{a.retry}}">知道了</button></div></sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <p class="c02-help">{{c.manage.apps.help}}</p>
+                </div></sc-if>
+                <!-- 改期答复 -->
+                <sc-if value="{{c.manage.replies.on}}"><div class="c02-ms {{c.manage.replies.cls}}" data-section="replies" style="--o:{{c.manage.replies.order}}">
+                  <div class="c02-gh c02-in"><span class="t">改期答复</span><span class="n">{{c.manage.replies.answered}}/{{c.manage.replies.total}}</span><span class="note">{{c.manage.replies.sub}}</span></div>
+                  <p class="c02-help c02-in">原定 {{c.manage.replies.oldWhen.zh}} → 改为 {{c.manage.replies.newWhen.zh}}</p>
+                  <sc-for list="{{mg.replies}}" as="r" hint-placeholder-count="2"><div class="c02-mrow c02-in" data-rid="{{r.id}}"><span class="c02-avw"><span class="c02-av">{{r.g}}</span></span><div><p class="nm">{{r.name}}</p><p class="sb">{{r.ticketLine}}</p></div><span class="rt st {{r.tone}}">{{r.answerText}}</span></div></sc-for>
+                  <p class="c02-help">{{c.manage.replies.help}}</p>
+                </div></sc-if>
+                <!-- 成员与席位 + 联系信息 -->
+                <sc-if value="{{c.manage.roster.on}}"><div class="c02-ms {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}">
+                  <div class="c02-gh c02-in"><span class="t">成员</span><span class="note">{{c.manage.roster.line}}</span></div>
+                  <sc-for list="{{mg.roster}}" as="m" hint-placeholder-count="3"><div class="c02-mrow c02-in {{m.c2cls}}" data-rid="{{m.id}}"><span class="c02-avw"><span class="c02-av {{m.avCls}}">{{m.g}}</span></span><div><p class="nm">{{m.name}}</p><p class="sb">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"> · {{m.ticketText}}</sc-if><sc-if value="{{m.contactText}}"> · {{m.contactText}}</sc-if></p></div>
+                    <sc-if value="{{m.wxText}}"><button type="button" class="c02-link" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button></sc-if><sc-if value="{{m.noWx}}"><span></span></sc-if>
+                    <sc-if value="{{m.copyFail}}"><p class="c02-copyfail" style="grid-column:2/-1">未能复制，长按手动复制 <button type="button" class="c02-btn ghost" data-act="retry" onClick="{{m.retryCopy}}">重试</button></p></sc-if>
+                  </div></sc-for>
+                  <sc-for list="{{c.manage.roster.openRows}}" as="o" hint-placeholder-count="1"><div class="c02-mrow c02-in"><span class="open"></span><div><p class="sb">{{o.text}}</p></div><span></span></div></sc-for>
+                  <sc-if value="{{c.manage.roster.voidNote}}"><p class="c02-help">{{c.manage.roster.voidNote}}</p></sc-if>
+                </div></sc-if>
+                <!-- 候补 -->
+                <sc-if value="{{c.manage.queue.on}}"><div class="c02-ms {{c.manage.queue.cls}}" data-section="queue" style="--o:{{c.manage.queue.order}}">
+                  <div class="c02-gh c02-in"><span class="t">候补</span><span class="n">{{c.manage.queue.count}}</span><span class="note">{{c.manage.queue.sub}}</span></div>
+                  <sc-for list="{{mg.queue}}" as="q" hint-placeholder-count="2"><div class="c02-mrow c02-in"><span class="c02-avw"><span class="c02-av is-res">{{q.g}}</span></span><div><p class="nm">{{q.nick}}</p><p class="sb">{{q.no}} · {{q.agoText}}</p></div><span></span></div></sc-for>
+                  <p class="c02-help">{{c.manage.queue.help}}</p>
+                </div></sc-if>
+                <!-- 离开记录 -->
+                <sc-if value="{{c.manage.leaves.on}}"><div class="c02-ms {{c.manage.leaves.cls}}" data-section="leaves" style="--o:{{c.manage.leaves.order}}">
+                  <div class="c02-gh c02-in"><button type="button" class="c02-link" aria-expanded="{{c.manage.leaves.open}}" onClick="{{c.manage.leaves.toggle}}">{{c.manage.leaves.title}} {{mg.leavesArrow}}</button></div>
+                  <sc-if value="{{c.manage.leaves.open}}"><sc-for list="{{c.manage.leaves.rows}}" as="l" hint-placeholder-count="2"><div class="c02-mrow c02-in"><span class="c02-avw"><span class="c02-av">{{l.g}}</span></span><div><p class="nm">{{l.nick}}</p><p class="sb">{{l.text}}</p></div><span class="rt">{{l.atText}}</span></div></sc-for></sc-if>
+                </div></sc-if>
+                <!-- 出席 -->
+                <sc-if value="{{c.manage.attendance.on}}"><div class="c02-ms {{c.manage.attendance.cls}}" data-section="attendance" style="--o:{{c.manage.attendance.order}}">
+                  <div class="c02-gh c02-in"><span class="t">出席</span><span class="n">{{c.manage.attendance.rec}}/{{c.manage.attendance.total}}</span><span class="note">{{c.manage.attendance.sub}}</span></div>
+                  <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c02-att {{a.nextCls}}" data-rid="{{a.id}}">
+                    <div class="c02-pc-bg c02-slide"></div>
+                    <span class="c02-avw" data-pk="{{a.pk}}"><span class="c02-av c02-tint">{{a.g}}</span></span>
+                    <div class="c02-pc-in c02-slide">
+                      <p class="nm" style="display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:calc(16px * var(--tz,1));font-weight:600;color:var(--cink)"><span>{{a.name}}</span><sc-if value="{{a.recorded}}"><span class="c02-chop {{a.stamp}} {{a.stampCls}}">{{a.chopText}}</span></sc-if></p>
+                      <p class="ago" style="font-size:calc(13px * var(--tz,1));color:var(--cink3)">{{a.label}}</p>
+                      <sc-if value="{{a.choosing}}"><div class="c02-segb"><button type="button" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></div></sc-if>
+                      <sc-if value="{{a.canCorrect}}"><button type="button" class="c02-link" data-act="correct" onClick="{{a.correct}}">更正</button></sc-if>
+                      <sc-if value="{{a.error}}"><p class="c02-err">{{a.error}}</p></sc-if>
+                      <sc-if value="{{a.showTrail}}"><div class="c02-trail"><sc-for list="{{a.trail}}" as="t" hint-placeholder-count="2"><div>{{t}}</div></sc-for></div></sc-if>
+                      <sc-if value="{{a.wxText}}"><p class="c02-trail">{{a.wxText}} <button type="button" class="c02-link" data-act="copy" onClick="{{a.copyWx}}">{{a.copyLabel}}</button></p></sc-if>
+                    </div>
+                  </div></sc-for>
+                  <sc-if value="{{c.manage.attendance.doneText}}"><p class="c02-help" style="color:var(--go)">{{c.manage.attendance.doneText}}</p></sc-if>
+                  <p class="c02-help">{{c.manage.attendance.help}}</p><p class="c02-help">{{c.manage.attendance.contactLine}}</p>
+                </div></sc-if>
+                <!-- 这局的安排 (always last) -->
+                <div class="c02-ms {{c.manage.arrange.cls}}" data-section="arrange" style="--o:{{c.manage.arrange.order}}">
+                  <div class="c02-gh c02-in"><span class="t">{{c.manage.arrange.title}}</span></div>
+                  <div class="c02-arr c02-in">
+                    <sc-if value="{{c.manage.arrange.canReschedule}}"><button type="button" class="it" data-act="propose" onClick="{{c.manage.arrange.reschedule}}"><span><b>{{c.manage.arrange.rescheduleLabel}}</b><small>{{c.manage.arrange.rescheduleNote}}</small></span></button></sc-if>
+                    <sc-if value="{{c.manage.arrange.canEnd}}"><button type="button" class="it" data-act="end" onClick="{{c.manage.arrange.end}}"><span><b>{{c.manage.arrange.endLabel}}</b><small>{{c.manage.arrange.endNote}}</small></span></button></sc-if>
+                    <sc-if value="{{c.manage.arrange.endHint}}"><button type="button" class="it" aria-disabled="true"><span><b>{{c.manage.arrange.endLabel}}</b><small>{{c.manage.arrange.endHint}}</small></span></button></sc-if>
+                    <sc-if value="{{c.manage.arrange.canCancel}}"><button type="button" class="it danger" data-act="cancel" onClick="{{c.manage.arrange.cancel}}"><span><b>{{c.manage.arrange.cancelLabel}}</b><small>{{c.manage.arrange.cancelNote}}</small></span></button></sc-if>
+                    <sc-if value="{{c.manage.arrange.showReopen}}"><button type="button" class="it" aria-disabled="true" onClick="{{c.manage.arrange.reopen}}"><span><b>{{c.manage.arrange.reopenLabel}}</b><small>{{c.manage.arrange.reopenNote}}（开局模块，本轮不可点）</small></span></button></sc-if>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== DRAFT ===================== -->
+      <sc-if value="{{c.nav.on.draft}}" hint-placeholder-val="{{false}}">
+        <section class="c02-pg c02-deep {{c.nav.cls.draft}}" data-surface="draft" style="--th:{{df.th}};--hdh:{{df.hdh}}">
+          <div class="c02-tools"><button type="button" class="ju-v27-back-pill c02-back" data-act="back" aria-label="返回" onClick="{{c.draft.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button></div>
+          <header class="c02-hd" data-header><div class="c02-hdv"></div><h1 class="c02-t30">{{c.draft.title}}</h1><p class="c02-t14">草稿 · {{c.draft.missingText}}</p></header>
+          <div class="c02-sc" data-scroller="draft" onScroll="{{onScroll}}">
+            <sc-if value="{{c.draft.on}}"><sc-if value="{{c.draft.row}}">
+              <div class="c02-card c02-in"><h3>{{c.draft.title}}</h3><p class="m">{{c.draft.whenText}} · {{c.draft.placeText}} · {{c.draft.capacity}} 人（含你）</p><p class="s">{{c.draft.agoText}}<sc-if value="{{c.draft.sourceText}}"> · {{c.draft.sourceText}}</sc-if></p></div>
+              <div class="c02-arr c02-in"><button type="button" class="it" aria-disabled="true" onClick="{{c.inert}}"><span><b>继续编辑</b><small>开局模块，本轮不可点</small></span></button><button type="button" class="it danger" data-act="delete" onClick="{{c.draft.del}}"><span><b>删除草稿</b><small>删除后 10 秒内可撤销</small></span></button></div>
+            </sc-if></sc-if>
+          </div>
+        </section>
+      </sc-if>
+
+      <!-- ===================== SHEET ===================== -->
+      <sc-if value="{{c.sheet.on}}">
+        <div class="c02-over {{c.sheet.cls}}" onKeyDown="{{c.sheet.onKeyDown}}">
+          <div class="c02-sheet" role="dialog" aria-modal="true" aria-label="{{c.sheet.title}}" ref="{{c.sheet.focusRef}}" tabindex="-1">
+            <h3>{{c.sheet.title}}</h3>
+            <sc-if value="{{c.sheet.identity}}"><div class="c02-id"><b>{{c.sheet.identity.title}}</b><span>{{c.sheet.identity.when}} · {{c.sheet.identity.place}}</span></div></sc-if>
+            <sc-if value="{{c.sheet.body}}"><p class="bd">{{c.sheet.body}}</p></sc-if>
+            <sc-if value="{{c.sheet.fields}}">
+              <p class="bd">原定 <s>{{c.sheet.fields.oldWhen.zh}}</s> → 改为 · {{c.sheet.fields.tz}} <b>{{sh.newOrPlaceholder}}</b></p>
+              <label class="c02-lbl">新日期<input class="c02-in-f" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}"></label>
+              <label class="c02-lbl">新时间<input class="c02-in-f" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}"></label>
+              <sc-if value="{{c.sheet.fields.sameHint}}"><p class="c02-msg err">{{c.sheet.fields.sameHint}}</p></sc-if>
+              <p class="c02-msg">{{c.sheet.fields.consequence}}</p>
+            </sc-if>
+            <sc-if value="{{sh.hasAffected}}"><div class="c02-aff"><p class="c02-lbl">{{c.sheet.affectedTitle}}</p><sc-for list="{{c.sheet.affected}}" as="x" hint-placeholder-count="2"><div><span>{{x.label}}</span><b>{{x.n}}</b></div></sc-for></div></sc-if>
+            <sc-if value="{{c.sheet.irreversible}}"><p class="c02-irrev">{{c.sheet.irreversible}}</p></sc-if>
+            <sc-if value="{{c.sheet.hint}}"><p class="c02-msg">{{c.sheet.hint}}</p></sc-if>
+            <sc-if value="{{c.sheet.card}}"><div class="c02-card" style="margin:14px 0 0"><h3>{{c.sheet.card.title}}</h3><p class="m">{{c.sheet.card.when.zh}} · {{c.sheet.card.place.full}} · 局主 {{c.sheet.card.host}}</p><p class="s">{{c.sheet.card.statusLabel}} · {{c.sheet.card.caption}}</p><sc-if value="{{c.sheet.card.note}}"><p class="s">{{c.sheet.card.note}}</p></sc-if></div></sc-if>
+            <sc-if value="{{sh.isRecord}}">
+              <sc-if value="{{c.sheet.done}}"><div class="c02-result" style="box-shadow:none;background:rgba(28,24,23,.04)"><b>{{c.sheet.doneTitle}}</b><p>{{c.sheet.doneBody}}</p><p>查看进度 · 不在本次范围</p></div></sc-if>
+              <sc-if value="{{sh.recordOpen}}"><label class="c02-lbl">发生了什么（{{c.sheet.count}}/{{c.sheet.max}}）<textarea class="c02-in-f" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{c.sheet.onInput}}">{{c.sheet.text}}</textarea></label></sc-if>
+            </sc-if>
+            <sc-if value="{{c.sheet.error}}"><p class="c02-msg err">{{c.sheet.error}}</p></sc-if>
+            <div class="c02-sacts">
+              <button type="button" class="c02-btn ghost" data-act="close" onClick="{{c.sheet.cancel}}">{{c.sheet.cancelLabel}}</button>
+              <sc-if value="{{sh.showOk}}"><button type="button" class="c02-btn {{sh.okCls}}" data-act="ok" aria-disabled="{{sh.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></sc-if>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{toastOn}}"><div class="c02-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+    </div>
+    <!-- @fx-svg -->
+  </div>
+  <!-- @panel -->
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"panel":{"editor":"boolean","default":true},"preset":{"editor":"enum","options":["joined","hosted"],"default":"joined"},"idle":{"editor":"boolean","default":false},"live":{"editor":"boolean","default":true},"$preview":{"width":780,"height":884}}'>
+/* @core */
+/* ---- people helpers: the initial = the name's distinctive character (阿檬 → 檬, 小面 → 面, Momo → M) ---- */
+var C2 = {
+  glyph: function (n) { n = String(n || '').trim(); if (!n) return '·'; if (/^[A-Za-z]/.test(n)) return n.charAt(0).toUpperCase(); var a = Array.from(n); return (a.length >= 2 && /[阿小老大]/.test(a[0])) ? a[1] : a[0]; },
+  names: function (list, max) { max = max || 3; if (list.length <= max) return list.join('、'); return list.slice(0, max).join('、') + ' 等 ' + list.length + ' 人'; },
+  rank: { host: 0, confirmed: 1, invited: 2 },
+  when: function (w) { return w && w.md ? w.wdZh + ' ' + w.md + ' ' + w.time : ''; },
+  left: function (t) { var m = /^(\d+):(\d+):\d+$/.exec(t || ''); return m ? (+m[1]) + ':' + m[2] : (t || ''); },
+  w13: function (t) { var w = 0; Array.from(String(t || '')).forEach(function (ch) { w += /[\u2e80-\u9fff\uff00-\uffef\u3000-\u303f]/.test(ch) ? 13 : /[0-9]/.test(ch) ? 7.4 : /[A-Za-z]/.test(ch) ? 7.6 : 3.8; }); return w; },
+  /* the place keeps at least ~3 characters or leaves the line: time never wraps, the status is the fact the row exists for */
+  /* how many 52px circles the lead card can lead with (≤ 3) while its people line keeps its full width */
+  n52: function (line, count, textW) { var w = C2.w13(line) * 16 / 13; var n = Math.min(3, count); while (n > 1 && w > textW - (52 + (n - 1) * 36)) n--; return Math.max(1, n); },
+  fit: function (when, place, status, avail) { var base = C2.w13(when) + 23 + C2.w13(status); return place && base + 23 + Math.min(C2.w13(place), 39) <= avail ? place : ''; },
+  /* a status that cannot sit beside the time keeps its first clause (剩余时间 / 人数 stay in the detail) */
+  fitSt: function (when, status, avail) { return C2.w13(when) + 23 + C2.w13(status) > avail && status.indexOf(' · ') > 0 ? status.split(' · ')[0] : status; },
+  /* 「Momo 申请加入」 but 「等 6 人申请加入」: a space only after Latin letters or digits */
+  cat: function (a, b) { return /[A-Za-z0-9]$/.test(a) ? a + ' ' + b : a + b; },
+  /* the title box height at 30px (1 or 2 lines) for the V27 header geometry: estimated from the text, never measured from the DOM */
+  th: function (t, pw, tz) { var w = 0; Array.from(String(t || '')).forEach(function (ch) { w += /[⺀-鿿＀-￯　-〿]/.test(ch) ? 30 : 16.5; }); var lines = w * tz > (pw - 44) ? 2 : 1; return Math.round(lines * 31.5 * tz * 10) / 10; },
+  ICON: { find: 'M10.5 4.5a6 6 0 1 0 0 12a6 6 0 1 0 0-12z M15 15l5 5', create: 'M12 5.5v13 M5.5 12h13', mine: 'M9 11a3.2 3.2 0 1 0 0-6.4a3.2 3.2 0 1 0 0 6.4z M16 11.5a2.6 2.6 0 1 0 0-5.2 M3.5 19.5c.9-3.3 3-5 5.5-5s4.6 1.7 5.5 5 M15.5 14.6c2.5-.2 4.4 1.4 5 4.9', settings: 'M4 7h9 M17 7h3 M15 4.8v4.4 M4 17h3 M11 17h9 M9 14.8v4.4' }
+};
+class Component extends DCLogic {
+  constructor(p) {
+    super(p); this.reviewInit(CONCEPT);
+    this.motionSpec = { fwd: 400, back: 340, swap: 260, role: 280 };   /* ms at 1×: page words rise in 400ms while the circles fly; back 340 */
+    this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
+    this.envRef = { current: null }; this._rit = {}; this._flip = null; this._c2fx = null;
+    if (p.preset === 'hosted') this.state.role = 'hosted';
+  }
+  initialState(variant) { return JU.baseState(variant); }
+  R() { return window.JURitual || null; }
+  live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
+  _kk() { var r = this.state.review || {}; return this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); }
+  /* ---------------- environment ---------------- */
+  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._flipPlay(); this._landInView(); }
+  _landInView() { var lk = this.state.ui && this.state.ui.landKey; if (!lk || lk === this._landSeen || this.state.nav.phase !== 'idle') { if (!lk) this._landSeen = null; return; } this._landSeen = lk; var root = this.rootRef.current; var el = root && root.querySelector('.c02-pg.is-top [data-origin="' + lk + '"]'); var sc = el && el.closest('[data-scroller]'); if (!sc) return; var ph = root.closest('.ju-phone') || root; var pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect(); var top = pr.top + 80, bot = pr.bottom - (sc.closest('.c02-home') ? 96 : 110); var d = r.bottom > bot ? r.bottom - bot + 12 : r.top < top ? r.top - top - 12 : 0; if (d) { try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } } }
+  componentWillUnmount() { this._destroyTicket(); this._destroyHistory(); var S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
+  _mountEnv() { var S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
+  _syncEnv(ps) {
+    var S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; var r = this.state.review, pr = ps && ps.review;
+    if (!S.state(el)) return this._mountEnv();
+    if (r.skin !== (pr && pr.skin)) S.setSkin(el, r.skin || 'cotton');
+    if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
+  }
+  _syncReduced(ps) { if (this.props.panel === false) return; var rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
+  /* ---------------- people fly between pages (FLIP on [data-pk]); words rise in with CSS ---------------- */
+  _rects(scope) { var out = {}; if (!scope) return out; scope.querySelectorAll('[data-pk]').forEach(function (el) { var k = el.getAttribute('data-pk'); if (!k || out[k]) return; var r = el.getBoundingClientRect(); if (r.width) out[k] = { cx: r.left + r.width / 2, cy: r.top + r.height / 2, w: r.width, el: el }; }); return out; }
+  onNav(kind, s, params) {
+    var root = this.rootRef && this.rootRef.current; this._flip = null; if (!root || this.isRM()) return;
+    if (kind === 'go' || kind === 'replace') {
+      var id = params && params.eventId; var src = id ? root.querySelector('.c02-pg.is-top [data-origin="row-' + id + '"]') : null;
+      if (!src && id) src = root.querySelector('[data-origin="row-' + id + '"]');
+      this._flip = { to: s, back: false, rects: this._rects(src) };
+    } else if (kind === 'back') {
+      var st = this.state.nav.stack; var top = st[st.length - 1]; var cur = root.querySelector('.c02-pg.is-top');
+      this._flip = { to: s, back: true, key: top && top.key, rects: this._rects(cur) };
+    }
+  }
+  _flipPlay() {
+    var f = this._flip; if (!f) return; var root = this.rootRef && this.rootRef.current; if (!root) return;
+    var dest = f.back ? root.querySelector('.c02-pg.is-under.ph-exit') : root.querySelector('.c02-pg.is-top[data-surface="' + f.to + '"]');
+    if (!dest) return; this._flip = null; var k = this._kk(); if (!k || !dest.animate) return;
+    var scope = dest; if (f.back && f.key) { var o = dest.querySelector('[data-origin="' + f.key + '"]'); if (o) scope = o; }
+    var seen = {};
+    scope.querySelectorAll('[data-pk]').forEach(function (el) {
+      var key = el.getAttribute('data-pk'); if (!key || seen[key]) return; seen[key] = 1;
+      var r = el.getBoundingClientRect(); if (!r.width) return; var from = f.rects[key];
+      if (from) {
+        var dx = from.cx - (r.left + r.width / 2), dy = from.cy - (r.top + r.height / 2), sc = from.w / r.width;
+        if (Math.abs(dx) < 1 && Math.abs(dy) < 1 && Math.abs(sc - 1) < 0.02) return;
+        el.animate([{ transform: 'translate(' + dx + 'px,' + dy + 'px) scale(' + sc + ')', opacity: 1 }, { transform: 'none', opacity: 1 }], { duration: 440 * k, easing: 'cubic-bezier(.2,.78,.2,1)', fill: 'backwards' });
+        if (from.el && from.el.isConnected && from.el.animate) from.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: 440 * k });
+        el.setAttribute('data-flown', '1');
+      } else if (f.back) {
+        el.animate([{ transform: 'scale(.55)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 360 * k, delay: 140 * k, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' });
+        el.setAttribute('data-flown', '1');
+      }
+    });
+    if (f.back) dest.querySelectorAll('.c02-clu,.c02-c52,.c02-seats,.c02-ss').forEach(function (cl) { if (cl.querySelector('[data-flown]')) return; cl.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 240 * k, delay: 30 * k, easing: 'ease', fill: 'backwards' }); });
+    dest.querySelectorAll('[data-flown]').forEach(function (el) { el.removeAttribute('data-flown'); });
+  }
+  /* ---------------- rituals (the controller wrote the data; these calls only show it) — same call sites as C00 ---------------- */
+  _syncRituals(ps) {
+    var c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    var stage = root.querySelector('[data-surface="ticket"] .c02-stage,[data-surface="reply"] .c02-stage');
+    if (c.ticket.on && stage) {
+      if (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) this._mountTicket(stage, c);
+      var want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; var h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
+    } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
+    var hstage = root.querySelector('[data-surface="history"] .c02-stage');
+    if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); }
+    else if (this._rit.hstage) this._destroyHistoryStage();
+    var thost = root.querySelector('[data-surface="history"] .c02-t08');
+    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost) this._mountStamp(thost, c); }
+    else if (this._rit.thost) this._destroyStamp();
+    var r = this.state.review, pr = ps && ps.review; var burn = this._rit.burn || this._rit.hburn;
+    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+  }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _mountTicket(stage, c) {
+    this._destroyTicket();
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; var R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
+    if (st === 'printing') {
+      var key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
+      R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => {
+        if (this._rit.stage !== stage) return;
+        var el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null);
+        if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error');
+        this.ticketPrinted(key);
+      });
+    } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
+    else if (st === 'torn') this._settleTicket(stage, data, 'torn');
+  }
+  _settleTicket(stage, data, final, tearOpts) {
+    var R = this.R(); R.fillTicket(stage, data);
+    var paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
+    if (final === 'ready' && R.tear) {
+      var h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready';
+      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage && this._rit.hstage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
+      if (tearOpts) this.registerTear(h);
+      return h;
+    }
+    stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
+  }
+  _reprint() { var stage = this._rit.stage, c = this._c; var R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); var torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { var el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _contact() {
+    if (this._rit.contact) return this._rit.contact; var R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
+    var sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
+    var h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+    var copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
+    var action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
+    this._rit.contact = h; return h;
+  }
+  _burnTicket(stage, reason, onDone) { var R = this.R(); if (!R || !R.burn) return; var h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  _replayBurn() { var stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; var isH = stage === this._rit.hstage; var data = isH ? c.history.ritual : c.ticket.ritual; var torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); var reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; } }); }
+  _destroyTicket() { var t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } var el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _mountHistoryStage(stage, c) {
+    this._destroyHistoryStage(); this._rit.hstage = stage; var R = this.R(), data = c.history.ritual; if (!R || !data) return;
+    this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
+    if (c.history.ashes) { stage.dataset.state = 'void'; return; }
+    if (c.history.burn.play) { this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: () => { this._rit.hburn = null; var cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); } }); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  }
+  _destroyHistoryStage() { var t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } var el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
+  _mountStamp(host, c) {
+    this._destroyStamp(); this._rit.thost = host; var R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
+    var p = R.stamp(host, c.history.stampData, { adapter: 'v27', active: () => !!(this._c && this._c.history.on), onPhase: function () { } });
+    p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
+  }
+  _destroyStamp() { var t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
+  _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
+  /* effects arrive AFTER the data was written */
+  onEffect(fx) {
+    if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.replay && fx.type === 'torn') { var h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
+    if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
+    if (fx.type === 'invited' || fx.type === 'rejected') { this._c2fx = { type: fx.type, eventId: fx.eventId, nick: fx.nick, at: Date.now() }; this.holdKey('c02fx', 1900, () => { this._c2fx = null; this.setState({ c02t: Date.now() }); }); }
+  }
+  /* ---------------- view model: the people of every row ---------------- */
+  _jDeco(r) {
+    var it = r.item, st = r.stage, id = r.id, closed = r.group === 'closed' || r.group === 'kept';
+    var ms = it.members.filter(function (m) { return !m.you && m.name && C2.rank[m.status] != null; }).sort(function (a, b) { return C2.rank[a.status] - C2.rank[b.status]; });
+    var names = ms.map(function (m) { return m.name; }); var ppl = ms; var line;
+    if (st === 'pending') { line = '等 ' + r.host.name + ' 回复申请'; ppl = ms.filter(function (m) { return m.status === 'host'; }); }
+    else if (st === 'waitlist') line = C2.cat(C2.names(names), '已在局里');
+    else if (r.group === 'closed') line = ms.length <= 1 ? r.host.name + ' 发起的局' : '原定和 ' + C2.names(names);
+    else line = names.length ? '和 ' + C2.names(names) : r.host.name + ' 的局';
+    var avs = ppl.slice(0, 2).map(function (m) { return { g: C2.glyph(m.name), pk: id + ':' + m.name, cls: m.status === 'invited' ? 'is-res' : '' }; });
+    var when = C2.when(r.when);
+    var status = r.label, tone = r.group === 'act' ? 'act' : r.group === 'soon' ? 'go' : closed ? 'void' : 'wait';
+    if (r.left && r.left.on) { status = r.label.replace(/ · 已预留$/, '') + ' · 剩 ' + C2.left(r.left.text); tone = r.left.tone === 'red' ? 'warn' : 'act'; }
+    if (st === 'ended') { status = r.attendanceText || r.label; tone = r.attendance === 'present' ? 'go' : 'void'; }
+    var self = this;
+    return { line: line, ppl: ppl, avs: avs, more: ppl.length > 2 ? '+' + (ppl.length - 2) : '', when: when, place: C2.fit(when, r.place.hood, (status = C2.fitSt(when, status, this._avail || 276)), this._avail || 276), status: status, tone: tone, rowCls: (r.landing ? 'is-landing ' : ''), aria: line + '，' + r.title + '，' + when + '，' + r.place.hood + '，' + status, key: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); r.open(ev); } } };
+  }
+  _hDeco(r) {
+    var it = r.item, e = r.event, id = r.id; var mem = it.members.filter(function (m) { return !m.host; });
+    var conf = mem.filter(function (m) { return m.status === 'confirmed'; }), res = mem.filter(function (m) { return m.status === 'invited'; });
+    var P = function (list, st) { return list.map(function (m) { return { name: m.nick || m.name, status: st || m.status }; }); };
+    var N = function (list) { return C2.names(list.map(function (x) { return x.name; })); };
+    var line, ppl;
+    if (e.status === 'cancelled') { ppl = P(conf.concat(res)); line = ppl.length ? '已告知 ' + N(ppl) : '这局已取消'; }
+    else if (r.pending) { ppl = it.applications.filter(function (a) { return a.status === 'pending'; }).map(function (a) { return { name: a.nick, status: 'apply' }; }); line = C2.cat(N(ppl), '申请加入'); }
+    else if (e.status === 'ended') { if (r.unrecorded) { ppl = P(conf.filter(function (m) { return !m.attendance; })); line = C2.cat(N(ppl), '待记录出席'); } else { ppl = P(conf); line = ppl.length ? '和 ' + N(ppl) : '已散场'; } }
+    else if (r.unanswered) { ppl = P(conf.filter(function (m) { return m.reschedule === 'ask'; })); line = C2.cat(N(ppl), '还没答复新时间'); }
+    else if (r.formed) { ppl = P(conf); line = '和 ' + N(ppl); }
+    else if (res.length) { ppl = P(res); line = C2.cat(N(ppl), '已预留 · 等确认'); }
+    else if (conf.length) { ppl = P(conf); line = '和 ' + N(ppl) + ' · 还有 ' + r.counts.available + ' 个空位'; }
+    else { ppl = []; line = '还没有人加入 · ' + e.capacity + ' 个座位'; }
+    var avs = ppl.slice(0, 2).map(function (m) { return { g: C2.glyph(m.name), pk: id + ':' + m.name, cls: m.status === 'invited' ? 'is-res' : '' }; });
+    var sec = r.section; var tone = sec === 'todo' ? 'act' : sec === 'formed' ? 'go' : sec === 'ended' || sec === 'cancelled' ? 'void' : 'wait';
+    var status = sec === 'recruit' ? r.life + ' ' + r.counts.confirmed + '/' + e.capacity : sec === 'todo' ? r.label : r.life;
+    var when = C2.when(r.when);
+    return { line: line, ppl: ppl, avs: avs, more: ppl.length > 2 ? '+' + (ppl.length - 2) : '', when: when, place: C2.fit(when, r.place.hood, (status = C2.fitSt(when, status, this._avail || 276)), this._avail || 276), status: status, tone: tone, rowCls: (r.landing ? 'is-landing ' : ''), aria: line + '，' + r.title + '，' + when + '，' + r.place.hood + '，' + status, key: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); r.open(ev); } } };
+  }
+  _seats(list, id, fresh) { return (list || []).map(function (v) { var nm = v.kind === 'host' ? '你' : v.name; return { cls: v.kind + (fresh && v.name && v.name === fresh ? ' is-fresh' : ''), g: v.kind === 'host' ? '你' : v.kind === 'open' ? '' : C2.glyph(v.name), pk: v.kind === 'open' ? '' : id + ':' + nm }; }); }
+  _toGroup(k) { var root = this.rootRef.current; var sc = root && root.querySelector('[data-scroller="home"]'); if (!sc) return; var el = k === 'act' ? sc.querySelector('.c02-secs') : sc.querySelector('[data-g="' + k + '"]'); if (!el) return; var ph = root.closest('.ju-phone') || root; var d = el.getBoundingClientRect().top - (ph.getBoundingClientRect().top + 84); if (k === 'act') d = -sc.scrollTop; try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } }
+  _scroll(ev) { var el = ev.currentTarget; this._c.nav.onScroll(ev); var surf = el.closest && el.closest('[data-surface]'); if (surf) { var on = el.scrollTop >= (this.headerRange || 88) - 2 ? '1' : '0'; if (surf.dataset.c02c !== on) surf.dataset.c02c = on; } }
+  renderVals() {
+    var panel = this.panelVals(); panel.show = this.props.panel !== false;
+    var c = this.ctlVals(); this._c = c; var s = this.state; var rv = s.review || {}; var self = this;
+    var tz = rv.zoom ? 1.15 : 1, pw = rv.pw || 390; var now = JU.now(); this._avail = (pw - 114) / tz;
+    var fx = this._c2fx && Date.now() - this._c2fx.at < 1900 ? this._c2fx : null;
+    var geo = function (title, extra) { var th = C2.th(title, pw, tz); return { th: th + 'px', hdh: Math.round(77 + th + (extra != null ? extra : 9 + 24 * tz + 14)) + 'px' }; };
+    /* ---- home ---- */
+    var isJ = c.role === 'joined', isH = c.role === 'hosted';
+    [c.joined.sections, c.joined.sectionsHistory].forEach(function (ss) { ss.forEach(function (g) { g.rows.forEach(function (r) { r.c2 = self._jDeco(r); }); }); });
+    [c.hosted.sections, c.hosted.sectionsHistory].forEach(function (ss) { ss.forEach(function (g) { g.rows.forEach(function (r) { r.c2 = self._hDeco(r); }); }); });
+    c.hosted.drafts.forEach(function (r) { r.c2 = { g: C2.glyph(r.title || '草'), tone: r.ready ? 'go' : 'wait', rowCls: r.landing ? 'is-landing' : '' }; });
+    c.roleTabs.forEach(function (t) { t.c2badge = !t.on && !!t.badge; });
+    /* the sentence under 我的局: who you will meet this week / who is waiting on you */
+    var weekEnd = (function () { var d = new Date(now); var day = d.getUTCDay(); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + ((7 - day) % 7), 23, 59); })();
+    var uniq = function (a) { var o = {}, out = []; a.forEach(function (x) { if (x && !o[x]) { o[x] = 1; out.push(x); } }); return out; };
+    var sentence;
+    if (isJ) { var inStages = { reschedule: 1, tear: 1, contact: 1, going: 1, gathering: 1 }; var wk = [], all = []; c.joined.current.forEach(function (r) { if (!inStages[r.stage]) return; var ns = r.item.members.filter(function (m) { return !m.you && m.name && m.status !== 'open'; }).map(function (m) { return m.name; }); all = all.concat(ns); if (JU.t(r.event.iso) <= weekEnd) wk = wk.concat(ns); }); wk = uniq(wk); all = uniq(all); sentence = wk.length ? '这周要见 ' + wk.length + ' 个人' : all.length ? '接下来要见 ' + all.length + ' 个人' : (c.joined.current.length ? '还在等人回应' : '还没有约好的见面'); }
+    else { var pend = [], unrec = [], mem = []; c.hosted.current.forEach(function (r) { r.item.applications.forEach(function (a) { if (a.status === 'pending' && r.event.status === 'open') pend.push(a.nick); }); r.item.members.forEach(function (m) { if (m.host) return; if (r.event.status === 'ended' && m.status === 'confirmed' && !m.attendance) unrec.push(m.nick); if (m.status === 'confirmed' || m.status === 'invited') mem.push(m.nick); }); }); pend = uniq(pend); unrec = uniq(unrec); mem = uniq(mem); sentence = pend.length ? pend.length + ' 个人在等你回复' : unrec.length ? unrec.length + ' 个人的出席还没记' : mem.length ? '你的局里有 ' + mem.length + ' 个人' : '还没有人加入你的局'; }
+    var home = { jc: isJ && c.section === 'current', jh: isJ && c.section === 'history', hc: isH && c.section === 'current', hd: isH && c.section === 'drafts', hh: isH && c.section === 'history', sentence: sentence, rolesCls: isH ? 'is-hosted' : 'is-joined', rx: (isH ? '' : '-') + '18px', th: (31.5 * tz) + 'px', hdh: Math.round(77 + 31.5 * tz + 9 + 21 * tz + 12) + 'px', hEmptyCls: c.hosted.empty.action && c.hosted.empty.action.inert ? 'inert' : '', hEmptyInert: !!(c.hosted.empty.action && c.hosted.empty.action.inert) };
+    /* the first thing to do (participant) */
+    if (home.jc && !c.joined.empty.on) { var tones = { act: 'act', soon: 'go', wait: 'wait' }, labs = { act: '要回应', soon: '快见面', wait: '在等' };
+      home.ints = c.joined.sections.map(function (g) { return { n: g.rows.length, label: labs[g.key] || g.title, tone: tones[g.key] || 'wait', aria: g.title + ' ' + g.rows.length, go: function () { self._toGroup(g.key); } }; }); }
+    var lead = { on: false }, jl = home.jc && !c.joined.empty.on ? c.joined.lead : null;
+    if (jl) { var dj = this._jDeco(jl); var you = jl.item.members.filter(function (m) { return m.you; })[0];
+      var jline = '和 ' + C2.names(dj.ppl.map(function (m) { return m.name; }), 2); var jn = C2.n52(jline, dj.ppl.length, (pw - 76) / tz - 14 - (jl.secondary ? 64 : 0));
+      var lavs = dj.ppl.slice(0, jn).map(function (m) { return { g: C2.glyph(m.name), pk: jl.id + ':' + m.name, cls: m.status === 'invited' ? 'is-res' : '', tag: m.status === 'host' ? '局主' : '' }; });
+      var dl = (jl.deadlineText || '').replace(/^请在\s*/, '').replace(/阅读并确认$/, '确认');
+      lead = { on: true, r: jl, avs: lavs, n: 'n' + lavs.length, more: dj.ppl.length > lavs.length ? '+' + (dj.ppl.length - lavs.length) : '', line: jline, sub: jl.event.capacity + ' 人局 · ' + (you ? (you.status === 'invited' ? '你已预留' : you.status === 'confirmed' ? '你已确认' : '') : ''), when: C2.when(jl.when), place: jl.place.hood, cd: jl.left && jl.left.on ? { text: jl.left.text, ratio: jl.left.ratio, tone: jl.left.tone === 'red' ? 'red' : jl.left.tone === 'amber' ? 'amber' : '', dl: dl } : null, cta: jl.cta ? { label: jl.ctaLabel, act: jl.act } : null, weak: jl.secondary ? { label: jl.secondaryLabel, key: jl.secondaryKey, act: jl.secondary } : null, topCls: jl.secondary ? '' : 'nr', open: jl.open, key: dj.key, aria: '先做这件：' + dj.line + '，' + jl.title + '，' + jl.label };
+      if (lead.line === '和 ') lead.line = jl.host.name + ' 的局'; }
+    var jSecs = c.joined.sections.map(function (g) { var has = !!jl && g.rows.some(function (r) { return r.id === jl.id; }); return { key: g.key, title: g.title, note: g.note, count: g.rows.length, lead: has ? lead : null, rows: g.rows.filter(function (r) { return !jl || r.id !== jl.id; }) }; }).filter(function (g) { return g.rows.length || g.lead; });
+    /* the first thing to do (host) */
+    var hlead = { on: false }, hl = home.hc && !c.hosted.empty.on ? c.hosted.lead : null;
+    if (hl) { var dh = this._hDeco(hl); var apps = hl.item.applications.filter(function (a) { return a.status === 'pending'; });
+      var hn3 = C2.names(dh.ppl.map(function (m) { return m.name; })), hn2 = C2.names(dh.ppl.map(function (m) { return m.name; }), 2); var hline = dh.line.indexOf(hn3) === 0 ? C2.cat(hn2, dh.line.slice(hn3.length).replace(/^ /, '')) : dh.line; var hn = C2.n52(hline, dh.ppl.length, (pw - 76) / tz - 14);
+      var hav = dh.ppl.slice(0, hn).map(function (m) { return { g: C2.glyph(m.name), pk: hl.id + ':' + m.name, cls: m.status === 'invited' ? 'is-res' : '' }; });
+      var sub = ''; if (apps.length) { var ver = apps.filter(function (a) { return a.verified; }).length; var first = apps.reduce(function (m, a) { return Math.min(m, a.appliedAt); }, Infinity); sub = (ver === apps.length ? (apps.length > 1 ? '都已验证邮箱' : '已验证邮箱') : ver + ' 人已验证邮箱') + ' · 最早 ' + JU.fmt.ago(first); }
+      var cn = hl.counts; hlead = { on: true, r: hl, avs: hav, n: 'n' + Math.max(1, hav.length), more: dh.ppl.length > hav.length ? '+' + (dh.ppl.length - hav.length) : '', line: hline, sub: sub, when: C2.when(hl.when), place: hl.place.hood, seats: this._seats(hl.seats, hl.id, null), seatText: '已确认 ' + cn.confirmed + '/' + hl.event.capacity + (cn.reserved ? ' · 预留 ' + cn.reserved : ''), cta: hl.cta ? { label: hl.ctaLabel, act: hl.act } : null, open: hl.open, key: dh.key, aria: '先做这件：' + dh.line + '，' + hl.title + '，' + hl.label }; }
+    var hSecs = c.hosted.sections.map(function (g) { var has = !!hl && g.rows.some(function (r) { return r.id === hl.id; }); return { key: g.key, title: g.title, note: g.note, count: g.rows.length, lead: has ? hlead : null, rows: g.rows.filter(function (r) { return !hl || r.id !== hl.id; }) }; }).filter(function (g) { return g.rows.length || g.lead; });
+    var rootNav = c.rootNav.map(function (t) { return Object.assign(t, { icon: C2.ICON[t.k] || '', cur: t.on ? 'page' : null }); });
+    /* ---- deep pages: the people line under the title ---- */
+    var pplOf = function (r, side) { if (!r) return { avs: [], more: '', line: '' }; var d = side === 'h' ? self._hDeco(r) : self._jDeco(r); return { avs: d.avs, more: d.more, line: d.line }; };
+    var dt = { th: '31.5px', hdh: '160px' }; if (c.detail.on) { var dp = pplOf(c.detail.row); dt = Object.assign(geo(c.detail.title, 13 + 34 + 16), dp, { when: C2.when(c.detail.when), members: c.detail.members.map(function (m) { return Object.assign(m, { g: m.you ? '你' : C2.glyph(m.name), c2cls: m.you ? 'me' : '' }); }) }); }
+    var rd = c.read.on ? geo(c.read.title) : { th: '31.5px', hdh: '150px' };
+    var wl = { th: '31.5px', hdh: '150px', entered: [] }; if (c.waitlist.on) { wl = Object.assign(geo(c.waitlist.title), { entered: c.waitlist.entered.map(function (m) { return Object.assign(m, { g: m.you ? '你' : C2.glyph(m.name), cls: m.status === 'invited' ? 'is-res' : '' }); }) }); }
+    var T = c.ticket, ticketOn = c.nav.on.ticket || c.nav.on.reply;
+    var tk = { on: ticketOn, surface: c.nav.on.reply ? 'reply' : 'ticket', exitAct: T.isReply ? 'decline' : 'exit', th: '31.5px', hdh: '160px' };
+    if (T.on) { var tp = pplOf(T.row); Object.assign(tk, geo(T.title, 13 + 34 + 14), tp, { showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark, tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning), hostPk: T.eventId + ':' + T.row.host.name + ':card', hostG: C2.glyph(T.row.host.name), retryCopy: function () { var h = self._contact(); if (h) self._c.ticket.contact.copyWith(function () { return h.copy(); }); else self._c.ticket.contact.retryCopy(); } }); }
+    var H = c.history, hr = H.on ? H.ritual : null; var hi = { th: '31.5px', hdh: '160px' };
+    if (H.on) { var hp = pplOf(H.row); hi = Object.assign(geo(H.title, 13 + 34 + 16), hp, { when: C2.when(H.when), recordCount: H.records.length, showStage: !!(hr && H.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback }); }
+    var mg = { th: '31.5px', hdh: '150px', ready: false };
+    if (c.manage.on && !c.manage.missing) { var M = c.manage, mid = M.eventId, pg = M.head.progress; var fresh = fx && fx.type === 'invited' && fx.eventId === mid ? fx.nick : null;
+      M.apps.rows.forEach(function (a, i) { a.pendingOpen = !a.result && !a.busy && !a.error; a.g = C2.glyph(a.nick || a.nickText); a.pk = mid + ':' + a.nick; a.c2d = 40 + i * 60; a.vfCls = a.verified ? '' : 'no'; a.c2cls = a.result ? (a.status === 'approved' ? 'is-ok' : 'is-no') : ''; a.resCls = a.status === 'approved' ? '' : 'void'; a.resIcon = a.status === 'approved' ? 'M5 12.5l4.2 4.2L19 7' : 'M7 7l10 10 M17 7L7 17'; });
+      var roster = M.roster.rows.map(function (m) { return Object.assign(m, { g: m.host ? '你' : C2.glyph(m.nick), avCls: m.tone === 'res' ? 'is-res' : '', c2cls: (m.host ? 'me' : '') + (fresh && m.nick === fresh ? ' is-fresh' : ''), noWx: !m.wxText }); });
+      M.attendance.rows.forEach(function (a) { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; a.g = C2.glyph(a.name); a.pk = mid + ':' + a.name; });
+      mg = Object.assign(geo(M.head.title), { ready: true, title: M.head.title, meta: M.head.status + ' · ' + C2.when(M.head.when) + ' · ' + M.head.place.hood, seatsOn: !pg.hidden && !M.head.ended, attOn: !pg.hidden && !!pg.attendance, seats: this._seats(pg.seats, mid, fresh), seatMain: '已确认 ' + pg.confirmed + '/' + pg.cap + '（含你）', seatMore: [pg.reserved ? '预留 ' + pg.reserved : '', pg.available ? '空 ' + pg.available : ''].filter(Boolean).join(' · ') || '坐满了', seatAria: pg.text + ' ' + (pg.more || ''), delta: fresh ? '预留 +1' : '', roster: roster, replies: M.replies.rows.map(function (r) { return Object.assign(r, { g: C2.glyph(r.name) }); }), queue: M.queue.rows.map(function (q) { return Object.assign(q, { g: C2.glyph(q.nick) }); }), leavesArrow: M.leaves.open ? '收起' : '展开' });
+      M.leaves.rows.forEach(function (l) { l.g = C2.glyph(l.nick); }); }
+    var df = c.draft.on ? geo(c.draft.title || '草稿') : { th: '31.5px', hdh: '150px' };
+    var sh = { hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okCls: c.sheet.danger ? 'danger' : 'ink', okDisabled: !c.sheet.canOk };
+    /* the shared contact layer already says 已复制 on its own button: no second copy-success toast over the host's card */
+    var toastOn = c.toast.on && !(T.on && c.toast.kind !== 'error' && /^已复制/.test(c.toast.text || ''));
+    return { panel: panel, rootRef: this.rootRef, envRef: this.envRef, c: c, noSkins: !c.ritual.skins, toastOn: toastOn, home: home, jSecs: jSecs, hSecs: hSecs, rootNav: rootNav, dt: dt, rd: rd, wl: wl, tk: tk, hi: hi, mg: mg, df: df, sh: sh,
+      onScroll: function (ev) { self._scroll(ev); }, readScroll: function (ev) { c.read.onScroll(ev); var el = ev.currentTarget, surf = el.closest && el.closest('[data-surface]'); if (surf) surf.dataset.c02c = el.scrollTop >= 86 ? '1' : '0'; } };
+  }
+}
+JU.mixin(Component);
+(function () {
+  /* section focus (reveal(el, true)) must clear C02's overlay header (V27 constant-height header + tool row = sat + 76px) and never
+     move a section that is already fully in view; every other call (soft return-to-origin, memo sync) is the shared controller's */
+  var base = Component.prototype.reveal;
+  Component.prototype.reveal = function (el, top, opts) {
+    var root = this.rootRef && this.rootRef.current; var sc = el && el.closest && el.closest('[data-scroller]');
+    if (!top || !root || !sc) return base.call(this, el, top, opts);
+    var ph = root.closest ? (root.closest('.ju-phone') || root) : root; var pr = ph.getBoundingClientRect(); var cs = getComputedStyle(root);
+    var sat = parseFloat(cs.getPropertyValue('--sat')) || 0, kb = parseFloat(cs.getPropertyValue('--kb')) || 0, sab = parseFloat(cs.getPropertyValue('--sab')) || 0;
+    var t0 = pr.top + sat + 76, b0 = pr.bottom - Math.max(kb, sab) - 96; var r = el.getBoundingClientRect(); var before = sc.scrollTop;
+    if (!(r.top >= t0 && r.bottom <= b0)) sc.scrollTop += r.top - t0;
+    if (opts && opts.memoKey != null && sc.scrollTop !== before) { var m = (this._scrollMemo = this._scrollMemo || {}); (m[opts.memoKey] = m[opts.memoKey] || {})[sc.getAttribute('data-scroller')] = sc.scrollTop; }
+    this._applyHc(sc);
+  };
+})();
+</script>
+</body>
+</html>
