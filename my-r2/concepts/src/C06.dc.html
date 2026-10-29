@@ -112,7 +112,7 @@ body{margin:0}
 .c06-old{flex:0 0 auto;white-space:nowrap;color:var(--faint);font-size:calc(13px * var(--tz,1))}
 .c06-old s{font-family:var(--num);text-decoration-thickness:1px}
 .c06-st{margin:6px 0 0;display:flex;align-items:baseline;gap:6px;min-width:0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--sec)}
-.c06-lab{display:inline-block;flex:0 0 auto;font-weight:500;white-space:nowrap;position:relative}
+.c06-lab{display:inline-block;flex:0 0 auto;font-weight:500;white-space:nowrap;position:relative;transition:color calc(600ms * var(--k,1)) ease}
 .c06-need{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c06-need::before{content:"·";margin-right:6px;color:var(--faint)}
 .c06-t-act{color:var(--act)}.c06-t-go{color:var(--go)}.c06-t-wait{color:var(--wait)}.c06-t-amber{color:var(--amber)}.c06-t-kept{color:var(--body)}.c06-t-void{color:var(--void)}.c06-t-red{color:var(--warn)}
@@ -183,7 +183,7 @@ body{margin:0}
 .c06-errline .ju-form-error{margin:0}
 .c06-errline .c06-ta{padding:6px 8px;min-height:32px;font-size:calc(13px * var(--tz,1))}
 /* the action slot follows the paragraph and sticks above the root nav while its paragraph is on screen */
-.c06-slot{position:sticky;bottom:calc(10px + var(--kb,0px));z-index:7;margin-top:10px;padding-top:16px}
+.c06-slot{position:sticky;bottom:0;z-index:7;margin-top:10px;padding-top:16px;padding-bottom:calc(10px + var(--kb,0px))}
 .c06-slot:has(.c06-cta:not(.ju-contact-action)),.c06-slot:has(.ju-contact-action[data-shown="true"]){background:linear-gradient(180deg,var(--paper0) 0,var(--paper) 22px)}
 .c06-slot .c06-ctaw{padding-top:4px}
 .c06-item.has-x:not(.is-x) .c06-slot{opacity:0;transition:opacity calc(140ms * var(--k,1)) ease}   /* folding: the action leaves first, it does not ride up over the paper */
@@ -238,10 +238,8 @@ body{margin:0}
 .c06-att-n span{font-size:calc(13px * var(--tz,1));color:var(--sec)}
 .c06-seg{display:flex;gap:4px;margin:4px 0 0 -12px}
 .c06-seg .c06-ta[aria-pressed="true"]{color:var(--ink);font-weight:500;text-decoration:underline;text-underline-offset:5px}
-.c06-chop{display:inline-block;margin-left:auto;font-family:var(--serif);font-weight:600;font-size:calc(15px * var(--tz,1));color:var(--go);border:1.5px solid currentColor;padding:1px 8px;transform:rotate(-6deg)}
-.c06-chop.absent{color:var(--warn)}.c06-chop.pending{color:var(--sec);border-style:dashed}
-.c06-chop.fresh{animation:c06-chop calc(560ms * var(--k,1)) cubic-bezier(.2,1.3,.4,1) both}
-@keyframes c06-chop{0%{opacity:0;transform:rotate(-6deg) scale(1.6)}60%{opacity:1;transform:rotate(-6deg) scale(.94)}100%{transform:rotate(-6deg) scale(1)}}
+.c06-att{position:relative}
+.c06-stampslot{position:absolute!important;right:8px;top:4px}   /* the stamp sits on the person's line like ink on paper (multiply) */
 .c06-trail{margin:4px 0 0;font-size:12px;line-height:1.6;color:var(--faint)}
 /* history */
 .c06-t08{position:relative;height:520px;margin:18px -12px 0}
@@ -603,7 +601,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                               <h4 class="c06-h4">出席<small><b>{{c.manage.attendance.rec}}/{{c.manage.attendance.total}}</b> 已记录</small></h4>
                               <div class="c06-secb">
                                 <sc-for list="{{c.manage.attendance.rows}}" as="a" hint-placeholder-count="3"><div class="c06-att {{a.nextCls}}" data-rid="{{a.id}}">
-                                  <p class="c06-att-n"><b>{{a.name}}</b><span>{{a.label}}</span><sc-if value="{{a.recorded}}"><span class="c06-chop {{a.stamp}} {{a.stampCls}}">{{a.chopText}}</span></sc-if></p>
+                                  <p class="c06-att-n"><b>{{a.name}}</b><span>{{a.label}}</span></p><sc-if value="{{a.showStamp}}"><span class="ju-stamp-slot c06-stampslot" data-stamp="{{a.stampKey}}" role="img" aria-label="{{a.chopText}}"></span></sc-if>
                                   <sc-if value="{{a.choosing}}"><p class="c06-seg"><button type="button" class="c06-ta" data-act="attend-present" aria-pressed="{{a.isPresent}}" onClick="{{a.setPresent}}">出席</button><button type="button" class="c06-ta" data-act="attend-absent" aria-pressed="{{a.isAbsent}}" onClick="{{a.setAbsent}}">未出席</button><button type="button" class="c06-ta" data-act="attend-pending" aria-pressed="{{a.isPending}}" onClick="{{a.setPending}}">待定</button></p></sc-if>
                                   <sc-if value="{{a.canCorrect}}"><p class="c06-seg"><button type="button" class="c06-ta" data-act="correct" onClick="{{a.correct}}">更正</button></p></sc-if>
                                   <sc-if value="{{a.error}}"><p class="c06-err">{{a.error}}</p></sc-if>
@@ -787,10 +785,24 @@ class Component extends DCLogic {
     return null;
   }
   /* ---------------- environment (JU.shared.skins) ---------------- */
-  componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncCards(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
+  _syncSheetGhost() {
+    const g = this._ghost, root = this.rootRef.current; this._ghost = null; if (!g || !root) return; const k = this.kf();
+    g.setAttribute('aria-hidden', 'true'); g.inert = true; g.style.pointerEvents = 'none'; g.style.animation = 'none'; g.classList.add('is-ghost');
+    const sh = g.querySelector('.c06-sheet'); if (sh) { sh.style.animation = 'none'; sh.removeAttribute('role'); }
+    root.appendChild(g);
+    const a = g.animate([{ backgroundColor: 'rgba(20,22,31,.3)' }, { backgroundColor: 'rgba(20,22,31,0)' }], { duration: 220 * k, easing: 'ease', fill: 'forwards' });
+    if (sh) sh.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(40px)', opacity: 0 }], { duration: 220 * k, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    a.onfinish = a.oncancel = () => g.remove(); setTimeout(() => g.remove(), 400 * k + 60);
+  }
+  _syncStamps() {
+    const R = this.R(), root = this.rootRef.current; if (!R || !R.stampFace || !root) return;
+    root.querySelectorAll('[data-stamp]').forEach((el) => { const k = el.getAttribute('data-stamp'); if (!k || el.__c06s === k) return; el.__c06s = k; const p = k.split(':'), mode = p[1], fresh = p[2] === 'fresh' && this.kf() > 0;
+      R.stampFace.ready().then(() => { if (el.__c06s !== k || !el.isConnected) return; try { R.stampFace.mount(el, mode === 'absent' ? 'absent' : mode === 'pending' ? 'pending' : 'present', { diameter: 64, pressed: fresh }); } catch (e) { } }); });
+  }
+  componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncCards(); this._syncStamps(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
   _card(kind, id, ev, when, place, host, avail, status, caption) { const vm = c06CardVm(ev, when, place, host, avail, status, caption); const key = [kind, id, vm.pack, vm.title, vm.date, vm.time, avail, status || ''].join('|'); this._cards[key] = vm; return key; }
   _syncCards() { const root = this.rootRef.current, vm = this._cards || {}; if (!root) return; root.querySelectorAll('[data-c06card]').forEach((el) => { const k = el.getAttribute('data-c06card'); if (!k || el.__c06k === k || !vm[k]) return; el.innerHTML = c06CardHtml(vm[k]); el.__c06k = k; }); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncStamps(); this._syncSheetGhost(); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
   _syncScroll(ps) {
     const s = this.state, sc = this.scRef.current; if (!ps || !sc || (ps.role === s.role && ps.section === s.section) || this._expOf()) return;
     const m = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section]; sc.scrollTop = m && m.home != null ? m.home : 0;
@@ -798,7 +810,8 @@ class Component extends DCLogic {
   }
   /* leaving an open item: remember where every row and label stood in the frozen order, so the re-sort that follows can slide */
   getSnapshotBeforeUpdate(pp, ps) {
-    if (this._resetScrollers) this._fresh = true;   /* jumpTo / reset (the controller zeroes every list after this render) */
+    if (this._resetScrollers) this._fresh = true;
+    if (ps && ps.sheet && !this.state.sheet && !this._resetScrollers && this.kf() > 0) { const root = this.rootRef.current, ov = root && root.querySelector('.c06-over'); if (ov) this._ghost = ov.cloneNode(true); }   /* jumpTo / reset (the controller zeroes every list after this render) */
     const has = (st) => !!(st && st.nav && st.nav.stack.some((e, i) => i > 0 && C06_INLINE[e.s]));
     if (has(ps) && !has(this.state) && ps.role === this.state.role && ps.section === this.state.section) {
       /* a fold still running when the stack pops (a starved main thread) is finished first: the re-sort starts from the folded list, never from an empty band */
@@ -996,7 +1009,7 @@ class Component extends DCLogic {
   _destroyHistoryStage() { const t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
   _mountStamp(host, c) {
     this._destroyStamp(); this._rit.thost = host; const R = this.R(); if (!R || !R.stamp) return;
-    const p = R.stamp(host, c.history.stampData, { adapter: 'v27', active: () => !!(this._c && this._c.history.on), onPhase: () => { } });
+    const p = R.stamp(host, c.history.stampData, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: () => { } });
     p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; }).catch(e => { this._rit.stampErr = String(e && e.message || e); });
   }
   _destroyStamp() { const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
@@ -1148,7 +1161,7 @@ class Component extends DCLogic {
     if (v.mg.ready) {
       mg.apps.rows.forEach(a => { a.pendingOpen = !a.result && !a.busy && !a.error; a.resCls = a.tone === 'ok' ? 'c06-t-go' : a.tone === 'void' ? 'c06-t-void' : 'c06-t-wait'; a.vCls = a.verified ? '' : 'no'; });
       mg.roster.rows.forEach(m => { m.subOn = !!(m.ticketText || m.contactText || m.wxText || m.copyFail); m.freshCls = s.ui && s.ui.fx && s.ui.fx.type === 'invited' && s.ui.fx.slot != null && m.slot === s.ui.fx.slot ? 'is-fresh' : ''; });
-      mg.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; });
+      mg.attendance.rows.forEach(a => { a.nextCls = a.isNext ? 'is-next' : ''; a.stampCls = a.stampFresh ? 'fresh' : ''; a.chopText = a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定'; a.canCorrect = a.recorded && !a.editing; a.showStamp = !!(a.recorded && !a.choosing && a.stamp && a.stamp !== 'none'); a.stampKey = a.id + ':' + a.stamp + ':' + (a.stampFresh ? 'fresh' : 'set'); });
       v.mg.appsSub = mg.apps.count ? mg.apps.count + ' 份待审' + (mg.apps.handled ? ' · 已处理 ' + mg.apps.handled : '') : (mg.apps.handled ? '都处理完了 · ' + mg.apps.handled + ' 份' : '');
       v.mg.leavesArrow = mg.leaves && mg.leaves.open ? '−' : '+';
     }

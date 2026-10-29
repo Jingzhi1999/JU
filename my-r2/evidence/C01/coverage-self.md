@@ -43,7 +43,7 @@
 | `h-m-replies` | 改期答复 | ✓ 改时间提交后 | — | ✓ | ✓ motion/m7-host | — |
 | `h-m-cancel` | 取消这局 | ✓ 安排 → 取消这局 | ✓ 确认取消 → 已取消稳定态 → 首页移入历史 | ✓ | ✓ motion/m8-cancel、motion/m6 | — |
 | `h-m-end` | 记为散场 | ✓ 安排 → 记为散场 | ✓ 记为散场 → 出席区 → 第一枚章 | ✓ | ✓ motion/m9-end | — |
-| `h-m-attendance` | 出席记录 | ✓ 行「记录出席」 | ✓ 逐人落章、焦点下一位、都记好了、更正留轨迹；失败 → 重试 | ✓ | ✓ motion/m9-attendance、failure/ | — |
+| `h-m-attendance` | 出席记录 | ✓ 行「记录出席」 | ✓ 逐人落章、焦点下一位、都记好了、更正留轨迹；失败 → 重试 | ✓ | ✓ motion/m9-attendance、motion/m9-correct、failure/ | — |
 | `h-m-card` | 完整局卡 | ✓ 头部「查看局卡」 | ✓ 打开 / Esc 关闭回到触发元素 | ✓ | ✓ motion/m6、keyboard/sheets | — |
 | `h-m-cancelled` | 已取消的局 | ✓ 历史已取消行 | — | ✓ | ✓ motion/m8-cancel（同一稳定态） | — |
 | `h-draft` | 草稿摘要 | ✓ 草稿行 | — | ✓ | — | — |

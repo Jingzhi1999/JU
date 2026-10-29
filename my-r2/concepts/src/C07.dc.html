@@ -993,7 +993,17 @@ class Component extends DCLogic {
     cv.__c07card = k; const R = this.R();
     const ready = this._filmReady || (this._filmReady = (R && R.stampFace ? R.stampFace.ready() : Promise.resolve()).catch(() => { }));
     return (cv.__c07paint = ready.then(() => { const F = window.JuFilm; if (!F || cv.__c07card !== k) return false; const card = JSON.parse(k);
-      return (F.loadFonts ? F.loadFonts([card]).catch(() => { }) : Promise.resolve()).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
+      return this._cardFonts(card).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
+  }
+  /* the faces paintCard draws with, loaded for this card's text. JuFilm.loadFonts would wait 24 s for every family it lists to be
+     declared and then reject — the embedded font set has no Zhi Mang Xing — so only the declared ones are loaded here, capped at 1.5 s */
+  _cardFonts(card) {
+    if (!document.fonts || !document.fonts.load) return Promise.resolve();
+    const want = [['Libre Caslon Text', 700], ['Space Mono', 400], ['Space Mono', 700], ['Caveat', 600], ['Archivo', 400], ['Archivo', 500], ['Archivo', 800], ['Archivo Black', 400], ['Oswald', 500], ['Oswald', 600], ['Noto Sans SC', 400], ['Noto Sans SC', 900], ['Noto Serif SC', 900]];
+    const have = new Set(Array.from(document.fonts).map(f => String(f.family).replace(/["']/g, '')));
+    const words = [card.title, card.en, card.host, card.loc, '缺人的你来不来还不算局主已成局位子满了已确认已预留活动已取消结束这局的记录余候补报名后等确认 0123456789:.·/'].join('');
+    const loads = want.filter(f => have.has(f[0])).map(f => document.fonts.load(f[1] + ' 20px "' + f[0] + '"', words).catch(() => { }));
+    return Promise.race([Promise.all(loads), new Promise(ok => setTimeout(ok, 1500))]);
   }
   _paintCards() { const root = this.rootRef.current; if (!root) return; root.querySelectorAll('canvas[data-card]').forEach(cv => { if (cv.__c07card !== cv.getAttribute('data-card')) this._paintCard(cv); }); }
   /* the host's cancel: the card is settled on the tray's stage, then burns (data already written; onDone hands the tray to the result) */
