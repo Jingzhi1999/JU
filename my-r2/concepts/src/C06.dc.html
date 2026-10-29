@@ -465,7 +465,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                         <sc-if value="{{v.dt.resTitle}}"><p class="c06-res {{v.dt.resTone}}">{{v.dt.resTitle}}</p></sc-if><sc-if value="{{v.dt.resBody}}"><p class="c06-lede">{{v.dt.resBody}}</p></sc-if>
                         <p class="c06-lede">{{v.dt.lede}}</p>
                         <sc-if value="{{c.detail.countdown.on}}"><p class="c06-left {{c.detail.countdown.tone}}" style="--ratio:{{c.detail.countdown.ratio}}"><b>剩 {{c.detail.countdown.text}}</b><span>{{c.detail.row.deadlineText}}</span><i></i></p></sc-if>
-                        <sc-if value="{{c.detail.receipt}}"><p class="c06-lede"><sc-if value="{{c.detail.receipt.field}}"><b class="c06-lf">{{c.detail.receipt.field}}</b></sc-if>{{v.dt.rcBody}}</p><p class="c06-note">{{c.detail.receipt.note}}</p></sc-if>
+                        <sc-if value="{{c.detail.receipt}}"><sc-if value="{{v.dt.rcLede}}"><p class="c06-lede"><sc-if value="{{v.dt.rcField}}"><b class="c06-lf">{{v.dt.rcField}}</b></sc-if>{{v.dt.rcBody}}</p></sc-if><p class="c06-note">{{c.detail.receipt.note}}</p></sc-if>
                         <div class="c06-jc" data-c06card="{{v.dt.card}}" role="img" aria-label="局卡 · {{c.detail.title}}"></div>
                         <h4 class="c06-h4">同局的人<small>{{c.detail.seatText}}</small></h4>
                         <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><p class="c06-line {{m.youCls}}"><b>{{m.name}}</b><span>{{m.statusText}}</span></p></sc-for>
@@ -1107,7 +1107,9 @@ class Component extends DCLogic {
     /* measured once the stub's box has closed (the stage shrinks after the fall) and the layer has begun to show: one smooth carry, never a jump */
     const k = this.kf(); setTimeout(() => requestAnimationFrame(() => { const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return; const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); const wrap = sec && sec.querySelector('.ju-contact-wrap'); if (!wrap) return;
       const slot = sec.querySelector('.c06-slot'); const limit = sc.getBoundingClientRect().bottom - (slot ? slot.offsetHeight : 0) - 6; const over = wrap.getBoundingClientRect().bottom - limit;
-      if (over > 1) this._tween(sc, sc.scrollTop + over, 420 * this.kf(), this._ezO); }), k > 0 ? 120 * k : 0);
+      /* never past the reading position: the item's title stays at least 12px under the header (the layer may then need a scroll of the reader's own) */
+      const item = sec.closest('.c06-item'); const room = item ? item.getBoundingClientRect().top - sc.getBoundingClientRect().top - 12 : over; const by = Math.min(over, Math.max(0, room));
+      if (by > 1) this._tween(sc, sc.scrollTop + by, 420 * this.kf(), this._ezO); }), k > 0 ? 120 * k : 0);
   }
   _tearOpts() {
     return { onDetach: () => { this._rit.tearing = true; const ok = this.tearCommit(); if (ok === false) { this._rit.tearing = false; this._tearBack(); } return ok; },
@@ -1374,7 +1376,9 @@ class Component extends DCLogic {
         resTone: d.result && d.result.kind === 'confirmed' ? 'c06-t-go' : 'c06-t-ink', lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : strip(strip(d.need || '', drow.need), dneed),
         rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '',
         card: this._card('d', d.eventId, d.event, d.when, d.place, d.host, d.counts ? d.counts.available : 0) };
-    } else v.dt = { resTitle: '', resBody: '', rcBody: '', resTone: '', lede: '', rules: [], rulesNote: '', card: '' };
+      /* the receipt's bold field never repeats the status (候补轮到 · 已预留 → no second 已预留) */
+      const rf = d.receipt ? d.receipt.field || '' : ''; v.dt.rcField = rf && !(drow.label && String(drow.label).indexOf(rf) >= 0) ? rf : ''; v.dt.rcLede = !!(v.dt.rcField || v.dt.rcBody);
+    } else v.dt = { resTitle: '', resBody: '', rcBody: '', rcField: '', rcLede: false, resTone: '', lede: '', rules: [], rulesNote: '', card: '' };
     v.wl = { card: '', rcBody: '' };
     if (c.waitlist.on) { (c.waitlist.entered || []).forEach(m => { m.youCls = m.you ? 'you' : ''; }); (c.waitlist.queue || []).forEach(q => { q.youCls = q.you ? 'you' : ''; });
       const wr = c.waitlist.row || {}; v.wl.card = this._card('w', c.waitlist.eventId, wr.event, wr.when, wr.place, wr.host, c.waitlist.counts ? c.waitlist.counts.available : 0);
