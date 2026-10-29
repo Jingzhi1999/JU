@@ -903,6 +903,9 @@ class Component extends DCLogic {
         if (tt.one) tt.fold = this._fold(t.textContent, tz); }
       const bfx = { id, srcKey: src ? src.key : null, band: src ? src.band : null, tone: src ? src.tone : null, y0, h0, push, hdPush, counts, tt, role: this.state.role, section: this.state.section, srcH: src ? src.h : 0 };
       this._fx = bfx; this.setState({ bfx, ghost: null, cntFx: null });
+      /* 重播 / 关键帧 after the page has landed: the controller's replay walks back() and only then go()es again — the mixin froze it on
+         the setup's own exit. Here the setup is back() and go() in the same turn: the first frame the mixin sees is this expansion. */
+      const self = this, s0 = s, p0 = params; this.lastMotion = { name: 'go:' + s, fn: function () { if (self._top().s !== s0) return; self.back(); Promise.resolve().then(function () { self.go(s0, p0, null); }); } };
     }
     if (kind === 'back' && s === 'home') {
       const fx = this._fx; if (!fx || fx.role !== this.state.role || fx.section !== this.state.section) { this._fx = null; this.setState({ bfx: null }); return; }
