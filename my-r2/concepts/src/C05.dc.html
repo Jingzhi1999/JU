@@ -416,6 +416,10 @@ body{margin:0}
 .c05-glass:active,.c05-ink:active{transform:scale(.97)}
 .c05-irrev{background:#fbe9ec;color:#8b1f30;padding:8px 10px;border-radius:8px;font-size:calc(13px * var(--tz,1));margin:8px 0}
 .c05-in{display:block;width:100%;font:inherit;font-size:16px;padding:10px 12px;border:1px solid rgba(20,22,31,.2);border-radius:10px;margin:6px 0;background:#fff}
+/* date / time: the native control stays (keyboard, picker); its own text is painted over with the 24-hour Chinese form of its value */
+.c05-fw{position:relative;display:block;margin:6px 0}.c05-fw .c05-in{margin:0;color:transparent}.c05-fw .c05-in::-webkit-datetime-edit{opacity:0}
+.c05-fv{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:16px;color:#14161F;pointer-events:none;font-variant-numeric:tabular-nums}.c05-fv:empty::before{content:'选择';color:#7c8193}
+.c05-fw:focus-within .c05-in{outline:2px solid #4553BE;outline-offset:1px}
 .c05-sheet label{display:block;font-size:calc(13px * var(--tz,1));color:#535b70;margin-top:6px}
 /* ---- toast ---- */
 .c05-toast{position:absolute;left:20px;right:20px;bottom:calc(72px + var(--kb,0px) + var(--sab,0px));background:rgba(16,18,30,.92);color:#F8F9FF;padding:12px 16px;border-radius:14px;font-size:calc(14px * var(--tz,1));z-index:60;animation:c05-toast calc(220ms * var(--k)) ease;text-align:center}
@@ -833,8 +837,8 @@ body{margin:0}
               <div class="c05-handle"></div>
               <sc-if value="{{c.history.on}}">
                 <sc-if value="{{c.history.burn.play}}"><p class="c05-help" role="status">票根正在作废…</p></sc-if>
-                <sc-if value="{{history.isVoid}}"><p class="c05-hreason">{{c.history.reason}}<sc-if value="{{c.history.closedNote}}"><br><span>{{c.history.closedNote}}</span></sc-if></p>
-                  <div class="c05-sec"><h4 class="c05-sh"><span>这一场</span></h4><sc-for list="{{history.facts}}" as="f" hint-placeholder-count="4"><div class="c05-mem"><span class="l">{{f.k}}</span><span class="r">{{f.v}}</span></div></sc-for>
+                <sc-if value="{{history.isVoid}}"><p class="c05-hreason">{{c.history.reason}}<sc-if value="{{c.history.closedNote}}"><br><span>{{c.history.closedNote}}</span></sc-if></p></sc-if>
+                <sc-if value="{{history.factsOn}}"><div class="c05-sec"><h4 class="c05-sh"><span>这一场</span></h4><sc-for list="{{history.facts}}" as="f" hint-placeholder-count="4"><div class="c05-mem"><span class="l">{{f.k}}</span><span class="r">{{f.v}}</span></div></sc-for>
                   </div><sc-if value="{{history.factMemOn}}"><div class="c05-sec"><h4 class="c05-sh"><span>当时的成员</span></h4><sc-for list="{{history.factMembers}}" as="m" hint-placeholder-count="3"><div class="c05-mem {{m.youCls}}"><span class="l">{{m.name}}</span><span class="r {{m.tone}}">{{m.statusText}}</span></div></sc-for></div></sc-if></sc-if>
                 <sc-if value="{{c.history.hasStamp}}"><p class="c05-help">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）<sc-if value="{{history.browseHint}}"><br><span class="c05-dim">{{history.browseHint}}</span></sc-if></p></sc-if>
                 <sc-if value="{{c.history.contactOpen}}"><div class="c05-mem"><span class="l">局主微信 {{c.history.hostWx}}</span><span class="r"><button type="button" class="c05-mini" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></span></div><sc-if value="{{c.history.copyFail}}"><p class="c05-copyfail">未能复制，长按手动复制 <button type="button" class="c05-mini" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
@@ -1026,8 +1030,8 @@ body{margin:0}
             <sc-if value="{{c.sheet.body}}"><p>{{c.sheet.body}}</p></sc-if>
             <sc-if value="{{c.sheet.fields}}">
               <p class="c05-help">原定 <s>{{c.sheet.fields.oldWhen.zh}}</s> → 改为 · {{c.sheet.fields.tz}} <b>{{sheet.newOrPlaceholder}}</b></p>
-              <label>新日期<input class="c05-in" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}"></label>
-              <label>新时间<input class="c05-in" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}"></label>
+              <label>新日期<span class="c05-fw"><span class="c05-fv" aria-hidden="true">{{sheet.dateText}}</span><input class="c05-in" type="date" data-field="date" value="{{c.sheet.fields.date}}" onInput="{{c.sheet.fields.onDate}}" onChange="{{c.sheet.fields.onDate}}" onClick="{{sheet.pick}}"></span></label>
+              <label>新时间<span class="c05-fw"><span class="c05-fv" aria-hidden="true">{{sheet.timeText}}</span><input class="c05-in" type="time" step="900" data-field="time" value="{{c.sheet.fields.time}}" onInput="{{c.sheet.fields.onTime}}" onChange="{{c.sheet.fields.onTime}}" onClick="{{sheet.pick}}"></span></label>
               <sc-if value="{{c.sheet.fields.sameHint}}"><p class="c05-err">{{c.sheet.fields.sameHint}}</p></sc-if>
               <p class="c05-help">{{c.sheet.fields.consequence}}</p>
             </sc-if>
@@ -1597,8 +1601,8 @@ class Component extends DCLogic {
       history: { name: H.on ? this._nb(H.event.title) : '', recordCount: H.on ? H.records.length : 0, wd: hw ? hw.wdZh + ' ' + hw.md : '', time: hw ? hw.time : '', md: hw ? hw.md : '',
         isVoid: hk === 'void', notVoid: H.on && hk !== 'void', pgCls: hk === 'void' ? 'pg-hvoid' : '',
         /* 未成行 / 已取消: the paper keeps the facts of the evening (原定 / 地点 / 局主 / 人数, and who was in) */
-        facts: H.on && hk === 'void' ? [['原定', H.when ? H.when.long : ''], ['地点', H.place ? H.place.full : ''], ['局主', H.host && (H.members || []).length < 2 ? H.host.name : ''], ['人数', H.event && H.event.capacity ? H.event.capacity + ' 人局（含局主）' : '']].filter(function (x) { return x[1]; }).map(function (x) { return { k: x[0], v: x[1] }; }) : [],
-        factMembers: H.on && hk === 'void' && (H.members || []).length > 1 ? H.members : [], factMemOn: H.on && hk === 'void' && (H.members || []).length > 1,
+        factsOn: H.on && (hk === 'void' || hk === 'drained'), facts: H.on && (hk === 'void' || hk === 'drained') ? [['原定', H.when ? H.when.long : ''], ['地点', H.place ? H.place.full : ''], ['局主', H.host && (H.members || []).length < 2 ? H.host.name : ''], ['人数', H.event && H.event.capacity ? H.event.capacity + ' 人局（含局主）' : '']].filter(function (x) { return x[1]; }).map(function (x) { return { k: x[0], v: x[1] }; }) : [],
+        factMembers: H.on && hk !== 'stamp' && (H.members || []).length > 1 ? H.members : [], factMemOn: H.on && hk !== 'stamp' && (H.members || []).length > 1,
         hvCls: (hr && hr.torn ? 'torn' : '') + (H.on && H.ashes && s.hReplayOn !== H.eventId ? ' is-ash' : '') + (H.on && H.burn && H.burn.play ? ' is-burning' : ''), impHidden: 'true',
         showStage: hk === 'void' && !!hr && (!!(H.burn && H.burn.play) || !H.ashes || s.hReplayOn === H.eventId),
         noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark),
@@ -1617,6 +1621,8 @@ class Component extends DCLogic {
       draft: { time: c.draft.on && c.draft.row && c.draft.row.when ? c.draft.row.when.time : '未定', timeCls: c.draft.on && c.draft.row && c.draft.row.when ? '' : 'is-tbd', name: c.draft.on ? this._nb(c.draft.title) : '', state: c.draft.on && c.draft.ready ? '可以发布' : '没写完',
         meta: c.draft.on ? c.draft.capacity + ' 人局 · ' + c.draft.agoText : '', sub: c.draft.on ? (c.draft.missingText || '已补完 · 可以发布') + (c.draft.sourceText ? ' · ' + c.draft.sourceText : '') : '' },
       sheet: { keepCta: !!(c.sheet.on && c.sheet.keepPrimary), inkPair: !!(c.sheet.on && !c.sheet.keepPrimary && c.sheet.okTone === 'ink'), plainActs: !!(c.sheet.on && !c.sheet.keepPrimary && c.sheet.okTone !== 'ink'),
+        dateText: c.sheet.fields && c.sheet.fields.date ? (function (w) { return w.date + ' ' + w.wdZh; })(JU.fmt.when(c.sheet.fields.date + 'T12:00')) : '', timeText: c.sheet.fields ? c.sheet.fields.time || '' : '',
+        pick: function (e) { try { e.currentTarget.showPicker(); } catch (x) { } },
         idOn: !!c.sheet.identity && c.sheet.kind !== 'card', idDay: idw ? idw.day.replace(/^0/, '') : '', idWd: idw ? idw.wdZh : '', hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okCls: c.sheet.danger ? 'danger' : 'pri', okDisabled: !c.sheet.canOk }
     };
   }

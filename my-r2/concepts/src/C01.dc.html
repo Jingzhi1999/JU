@@ -165,7 +165,7 @@ body{margin:0}
 .c01-dueact{grid-column:3;display:flex;justify-content:center;margin:12px 0 0 -6px;position:relative}
 .c01-dueact .ju-v27-cta{border:0;padding:0;margin:0}
 .c01-bar{flex:1 1 auto;height:3px;border-radius:2px;background:rgba(20,22,31,.1);overflow:hidden;min-width:60px}
-.c01-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--greenF);transition:width 900ms linear}
+.c01-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--greenF)}
 .c01-bar.amber i{background:var(--amberF)}.c01-bar.red i,.c01-bar.expired i{background:var(--redF)}
 .c01-seats{display:flex;gap:3px;margin-top:8px;width:min(150px,100%)}
 .c01-seat{flex:1 1 0;height:5px;border-radius:2px;background:rgba(20,22,31,.13);transition:background calc(300ms * var(--k)) ease,transform calc(500ms * var(--k)) cubic-bezier(.2,.9,.3,1.1);transform-origin:50% 100%}
@@ -1117,7 +1117,7 @@ class Component extends DCLogic {
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (r.paused) { if (this._burnHeld !== burn) { burn.pause(); this._burnHeld = burn; } } else if ((pr && pr.scrub != null) || this._burnHeld) { this._burnHeld = null; burn.resume(); } }
   }
   _preStage(stage) { if (stage.classList.contains('c01-pre')) return; stage.classList.add('c01-pre'); const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px'); }
-  _tearOpts() { return { onDetach: () => { this._justTorn = this._c && this._c.ticket.printKey; return this.tearCommit(); }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _tearOpts() { return { onDetach: () => { this._justTorn = this._c && this._c.ticket.printKey; this.forceUpdate(); return this.tearCommit(); }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
   _mountTicket(stage, c) {
     this._destroyTicket();
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
@@ -1413,7 +1413,7 @@ class Component extends DCLogic {
       sheet.onDate = (e) => { const v = e.target.value; if (v && (v < sheet.dMin || v > sheet.dMax)) e.target.value = v < sheet.dMin ? sheet.dMin : sheet.dMax; f.onDate(e); };
       if (f.newText && y && +y !== new Date(JU.now()).getUTCFullYear()) sheet.newOrPlaceholder = y + ' 年 ' + f.newText; }
     /* m-13: past 120 characters the extra text is cut by */
-    if (S.kind === 'record') { sheet.recInput = (e) => { const n = (e.target.value || '').length - S.max; this._recOver = n > 0 ? n : 0; S.onInput(e); this.forceUpdate(); };
+    if (S.kind === 'record') { sheet.recInput = (e) => { const t = e.target, n = (t.value || '').length - S.max; this._recOver = n > 0 ? n : 0; S.onInput(e); if (n > 0) t.value = t.value.slice(0, S.max); this.forceUpdate(); };
       sheet.cntCls = S.count >= S.max ? 'is-max' : ''; sheet.overText = this._recOver ? '最多 ' + S.max + ' 字，多出的 ' + this._recOver + ' 字没有保留' : ''; } else this._recOver = 0;
     return { on: true, sh: S, sheet };
   }
