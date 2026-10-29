@@ -129,7 +129,7 @@ body{margin:0}
 /* M5 · the lead's result in place, then the next lead rises in (the white plate stays; what is on it changes) */
 .c09-lead.is-result .c09-lt{color:var(--c09-meta)}.c09-lead.is-result h2{color:#3a4050}.c09-lead.is-result .c09-edge i{background:var(--c09-meta)}
 .c09-lres{display:flex;align-items:center;justify-content:center;height:48px;margin:12px 0 0;border-radius:24px;background:#f1f2f6;font-size:calc(14px * var(--tz,1));font-weight:600;color:#3a4050;animation:c09-lres calc(360ms * var(--k)) var(--c09-ease) both}
-.c09-lead.is-result .c09-lead-pad{height:52px}
+.c09-lead.is-result{min-height:var(--c09-lh,auto);box-sizing:border-box}
 @keyframes c09-lres{0%{opacity:0;scale:.96}}
 .c09-lead.is-in>:not(.c09-edge){animation:c09-leadin calc(420ms * var(--k)) var(--c09-ease) both}
 .c09-lead.is-in>:nth-child(3){animation-delay:calc(40ms * var(--k))}.c09-lead.is-in>:nth-child(n+4){animation-delay:calc(80ms * var(--k))}
@@ -520,7 +520,7 @@ textarea.c09-in{height:auto;min-height:110px;padding:10px 12px;resize:none;line-
             <div class="c09-pane">
               <!-- 先做这件 -->
               <sc-if value="{{v.home.leadTop}}">
-                <div class="c09-lead {{v.home.lead.cls}}{{v.home.lead.rcls}}" data-rid="{{v.home.lead.id}}" data-origin="{{v.home.lead.originKey}}" style="--c09-left:{{v.home.lead.ratio}}" onClick="{{v.home.lead.open}}">
+                <div class="c09-lead {{v.home.lead.cls}}{{v.home.lead.rcls}}" data-rid="{{v.home.lead.id}}" data-origin="{{v.home.lead.originKey}}" style="--c09-left:{{v.home.lead.ratio}};--c09-lh:{{v.home.lead.lh}}" onClick="{{v.home.lead.open}}">
                   <div class="c09-edge" aria-hidden="true"><i></i></div>
                   <p class="c09-lt"><span>{{v.home.lead.label}}</span><span class="ar">{{v.home.lead.areaZh}}</span></p>
                   <h2>{{v.home.lead.title}}</h2>
@@ -537,7 +537,7 @@ textarea.c09-in{height:auto;min-height:110px;padding:10px 12px;resize:none;line-
                 <section class="c09-area {{a.secCls}}{{a.leadCls}}" data-c09-area="{{a.key}}">
                   <h3 class="c09-ah {{a.cls}}" data-c09-ah="{{a.key}}"><span class="n">{{a.zh}}</span><span class="sub"><span class="c">{{a.countText}}</span></span><span class="en">{{a.en}}</span></h3>
                   <sc-if value="{{a.leadHere}}">
-                  <div class="c09-lead {{v.home.lead.cls}}{{v.home.lead.rcls}}" data-rid="{{v.home.lead.id}}" data-origin="{{v.home.lead.originKey}}" style="--c09-left:{{v.home.lead.ratio}}" onClick="{{v.home.lead.open}}">
+                  <div class="c09-lead {{v.home.lead.cls}}{{v.home.lead.rcls}}" data-rid="{{v.home.lead.id}}" data-origin="{{v.home.lead.originKey}}" style="--c09-left:{{v.home.lead.ratio}};--c09-lh:{{v.home.lead.lh}}" onClick="{{v.home.lead.open}}">
                   <div class="c09-edge" aria-hidden="true"><i></i></div>
                   <p class="c09-lt"><span>{{v.home.lead.label}}</span><span class="ar">{{v.home.lead.areaZh}}</span></p>
                   <h2>{{v.home.lead.title}}</h2>
@@ -1455,7 +1455,8 @@ class Component extends DCLogic {
     if (this._leadOut || curId === this._leadSeen) { this._leadSeen = curId; return; }
     const prev = this._leadVM; this._leadSeen = curId; if (!prev || prev.id === curId) return;
     const all = role === 'joined' ? c.joined.current.concat(c.joined.history) : c.hosted.current.concat(c.hosted.history); const was = all.find(x => x.id === prev.id);
-    this._leadOut = Object.assign({}, prev, { rcls: ' is-result', label: '这一件已处理', res: [(was && was.label) || '已处理', was && (was.need || was.stateText)].filter(Boolean).join(' · '), sub: prev.sub, left: '', leftTone: '', ratio: '0', ctaOn: false, sec: null, noSec: true, open: () => { }, cls: '' });
+    const el = this.rootRef.current && this.rootRef.current.querySelector('[data-surface="home"] .c09-lead'), lh = el ? el.offsetHeight + 'px' : 'auto';
+    this._leadOut = Object.assign({}, prev, { lh, rcls: ' is-result', label: '这一件已处理', res: [(was && was.label) || '已处理', was && (was.need || was.stateText)].filter(Boolean).join(' · '), sub: prev.sub, left: '', leftTone: '', ratio: '0', ctaOn: false, sec: null, noSec: true, open: () => { }, cls: '' });
     this.holdKey('c09lead', 1700, () => { this._leadOut = null; this._leadIn = curId; this.setState({}); this.holdKey('c09leadin', 700, () => { this._leadIn = null; this.setState({}); }); });
   }
   _countIn(areas, key) { const a = areas && areas.find(x => x.key === key); return a ? a.countText : ''; }
@@ -1541,7 +1542,7 @@ class Component extends DCLogic {
       }
       if (H.empty.on) empty = { title: H.empty.title, body: H.empty.body, label: H.empty.action.label, go: H.empty.action.go, inert: !!H.empty.action.inert };
     }
-    if (LO) lead = LO; else if (lead) { lead.ctaOn = true; lead.rcls = this._leadIn === lead.id ? ' is-in' : ''; }
+    if (LO) lead = LO; else if (lead) { lead.ctaOn = true; lead.lh = 'auto'; lead.rcls = this._leadIn === lead.id ? ' is-in' : ''; }
     if (!LO) this._leadVM = lead;
     const areas = this._areas(rows, sortRows, lift);
     let leadTop = !!lead; const la = lead && areas.find(a => a.key === lead.areaKey);
