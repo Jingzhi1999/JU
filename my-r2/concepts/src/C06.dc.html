@@ -358,7 +358,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
       <!-- ===== the one page: header (V27) + one scroller in which every item opens in place ===== -->
       <section class="c06-pg" data-surface="home">
         <header class="c06-hd" data-header>
-          <button type="button" class="ju-v27-back-pill c06-back {{v.backCls}}" data-act="back" aria-label="收起" tabindex="{{v.backTab}}" onClick="{{v.back}}"><span class="ju-v27-back-gloss"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg></button>
+          <button type="button" class="ju-v27-back-pill c06-back {{v.backCls}}" data-act="back" aria-label="收起" tabindex="{{v.backTab}}" onClick="{{v.back}}" onPointerDown="{{v.press}}"><span class="ju-v27-back-gloss"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14.5 5.5 8 12l6.5 6.5"></path></svg></button>
           <p class="c06-title">我的局</p>
           <p class="c06-meta">{{v.meta}}</p>
           <div class="c06-roles" role="tablist" aria-label="身份">
@@ -803,6 +803,9 @@ class Component extends DCLogic {
     this._rowKey = function (ev) { if ((ev.key === 'Enter' || ev.key === ' ') && ev.target === ev.currentTarget) { ev.preventDefault(); ev.currentTarget.click(); } };
     this._scrim = function (ev) { if (ev.target === ev.currentTarget && self._c && self._c.sheet.on && !self._c.sheet.busy) self._c.sheet.cancel(); };
     this._back = function () { const c = self._c; if (c) c.nav.back(); };
+    /* M2 · a paragraph stacked over another (ticket over its detail) answers the finger, not the click: it steps back on pointerdown,
+       so a busy main thread between press and click no longer delays the first visible frame; a press that does not end in a click undoes it */
+    this._press = function (ev) { if (ev && ev.button > 0) return; self._pressBack(ev && ev.currentTarget); };
   }
   initialState(variant) { return JU.baseState(variant); }
   R() { return window.JURitual || null; }
@@ -990,8 +993,20 @@ class Component extends DCLogic {
     const root = this.rootRef.current, k = this.kf(); const block = root && root.querySelector('[data-xb="' + x.id + '"]'); if (!block || !(k > 0)) return;
     this._moT0 = document.timeline.currentTime; this._moSet = null; this._swapOut = x.id;
     const inner = block.firstElementChild; if (!inner) return; const fig = inner.querySelector('.c06-figwrap');
-    if (fig) fig.animate([{ opacity: 1, transform: 'none' }, { opacity: .3, transform: 'translateY(-8px) scale(.975)' }], { duration: 220 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' });
-    Array.prototype.forEach.call(inner.children, (el) => { if (el === fig || el.contains(fig)) return; el.animate([{ opacity: 1 }, { opacity: .5 }], { duration: 160 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' }); });
+    const A = this._swapAnims = [];
+    if (fig) A.push(fig.animate([{ opacity: 1, transform: 'none' }, { opacity: .3, transform: 'translateY(-8px) scale(.975)' }], { duration: 220 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' }));
+    Array.prototype.forEach.call(inner.children, (el) => { if (el === fig || el.contains(fig)) return; A.push(el.animate([{ opacity: 1 }, { opacity: .5 }], { duration: 160 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' })); });
+  }
+  _pressBack(btn) {
+    const nav = this.state.nav, x = this._expOf(); if (!nav || nav.phase !== 'idle' || !(this.kf() > 0) || this._preBacked || this._backQ || !x || !x.top) return;
+    if (!(x.under && x.under !== 'home' && C06_INLINE[x.under])) return;   /* the fold to the list stays on the click (it moves the list) */
+    this._swapBack(x); this._preBacked = true; this._backAt = performance.now(); const id = x.id, s = x.s; const tok = this._pressTok = (this._pressTok || 0) + 1;
+    const done = (e) => { window.removeEventListener('pointerup', done, true); window.removeEventListener('pointercancel', done, true); if (this._pressTok !== tok) return;
+      const path = e && e.composedPath ? e.composedPath() : []; if (e && e.type === 'pointerup' && btn && path.indexOf(btn) >= 0) return; this._unpress(); };
+    window.addEventListener('pointerup', done, true); window.addEventListener('pointercancel', done, true);
+    setTimeout(() => { if (this._pressTok !== tok) return; const y = this._expOf(); if (this._preBacked && !this._backQ && this.state.nav.phase === 'idle' && y && y.id === id && y.s === s) this._unpress(); }, 1500);
+  }
+  _unpress() { const A = this._swapAnims || []; this._swapAnims = null; this._preBacked = false; this._swapOut = null; A.forEach((a) => { try { a.reverse(); a.onfinish = () => { try { a.cancel(); } catch (e) { } }; } catch (e) { } });
   }
   _preBack() {
     const x = this._expOf(); if (!x || !x.top) return false; this._backAt = performance.now();
@@ -1321,7 +1336,7 @@ class Component extends DCLogic {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
     const c = this.ctlVals(); this._c = c; const s = this.state, nav = s.nav;
     const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing; if (!x) this._xl = null;
-    const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim }; this._cards = {};
+    const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, press: this._press, scrim: this._scrim }; this._cards = {};
     v.appCls = (open ? ' c06-open' : '') + (s.hcOn ? ' c06-hcon' : '');
     v.listCls = open ? 'is-open' + (this._liftId && x && this._liftId === x.id ? ' is-lift' : '') : ''; v.tail = !!x; if (!x) this._liftId = null;
     v.backCls = open ? '' : 'off'; v.backTab = open ? '0' : '-1';
@@ -1417,7 +1432,7 @@ class Component extends DCLogic {
 }
 JU.mixin(Component);
 (function () { const P = Component.prototype, base = P.back; P.back = function () { const nav = this.state && this.state.nav; if (nav && nav.phase === 'exit') { this._landBack(); return true; } if (this._backQ) return true;
-  if (nav && nav.phase === 'idle' && this.kf() > 0 && this._preBack()) { const self = this, args = arguments; this._backQ = requestAnimationFrame(function () { self._backQ = requestAnimationFrame(function () { self._backQ = 0; base.apply(self, args); }); }); return true; }   /* two frames: the reaction is painted before the controller's render */
+  if (nav && nav.phase === 'idle' && this.kf() > 0 && (this._preBacked || this._preBack())) { const self = this, args = arguments; this._backQ = requestAnimationFrame(function () { self._backQ = requestAnimationFrame(function () { self._backQ = 0; base.apply(self, args); }); }); return true; }   /* two frames: the reaction is painted before the controller's render */
   return base.apply(this, arguments); }; })();
 </script>
 </body>

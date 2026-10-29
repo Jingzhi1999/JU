@@ -531,7 +531,7 @@
         else {
           var path = this._paths()[s] || ['home', s]; path.slice(1).forEach(function (x) { stack.push(mk(x, { eventId: id })); });
           if ((s === 'ticket' || s === 'reply') && it && ev0) { var key = id + ':' + (s === 'reply' ? ev0.version : (it.ticket ? it.ticket.version : ev0.version)); ui.ticket.printed[key] = true; }
-          if (o.surface === 'contact') ui.ticket.contactOpen = true;
+          if (o.surface === 'contact' || (s === 'ticket' && it && it.ticket && it.ticket.torn && !it.ticket.void && (it.stage === 'contact' || it.stage === 'going'))) ui.ticket.contactOpen = true;   /* a jump to a torn ticket opens its contact layer, like a real entry (C08 fix round: j-d-going) */
           if (o.surface === 'withdraw' && it) { var sub = it.stage === 'pending' ? 'withdraw' : (it.stage === 'invited' || it.stage === 'invited_queue') ? 'release' : it.stage === 'reschedule' ? 'decline' : it.stage === 'waitlist' ? 'leaveQueue' : 'exit'; patch.sheet = { kind: 'confirm', sub: sub, eventId: id, id: 1, busy: false, error: '', done: false }; this._sheetRef = this._sheetRef || { current: null }; this._focusSheet = true; }
           if (s === 'history' && it) ui.burned[id] = true; /* a jumped history state shows the settled ashes; the burn plays on a real first open */
         }

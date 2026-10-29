@@ -1205,16 +1205,34 @@ class Component extends DCLogic {
     const OUT = function (b, oy, w) { const t = f(b[0] - oy), u = f(b[1] - oy), L = '-400px ', R = (w + 400) + 'px ', Z = f(H - oy + 400); return 'polygon(' + L + '-400px,' + R + '-400px,' + R + t + ',' + L + t + ',' + L + u + ',' + R + u + ',' + R + Z + ',' + L + Z + ')'; };
     const cut = function (el, oy, h, w, inside) { add(el, B.map(function (b) { return { clipPath: inside ? IN(b, oy, h) : OUT(b, oy, w) }; })); };
     if (inPg) cut(inPg, 0, H, W, true); if (outPg) cut(outPg, 0, H, W, false); if (fl && m.gband) { cut(m.gband, 0, H, W, true); const gb = m.gband; m.clean.push(function () { gb.style.zIndex = ''; }); }
-    /* the card: the composition that stays keeps the real card on its side of the band, a copy of the old one is on the other side */
-    const card = this.cardRef.current; if (card) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
+    /* the card switches whole like a text line: the old one is gone before the band's edge reaches it, the new one shows once the band holds all of it */
+    const card = this.cardRef.current, X = []; if (card) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
       if ((this._c.heroKey || '') === (this._shownKey || '')) { if (snap.cardTop != null && snap.cardTop !== card.offsetTop) add(card, [{ top: snap.cardTop + 'px' }, { top: card.offsetTop + 'px' }]); }
-      else { const ri = dir !== 'back', cs = snap.card, hold = this.snapCardRef.current; if (!card.classList.contains('is-off')) cut(card, card.offsetTop, card.offsetHeight, card.offsetWidth, ri);
-        if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); cut(cs.el, cs.top, card.offsetHeight, card.offsetWidth, !ri); } } }
+      else { const ri = dir !== 'back', cs = snap.card, hold = this.snapCardRef.current; if (!card.classList.contains('is-off')) X.push([card, ri]);
+        if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); X.push([cs.el, !ri]); } } }
+    this._yield(m, dir, cy, H, inPg, outPg, X, add);
     /* the face colour (and the light of 光晕 / 落日) on the same curve */
     const t = tn && tn.el; if (t) { const a = getComputedStyle(t), bo = getComputedStyle(t, '::before').opacity;
       if (a.backgroundColor !== tn.bg || a.opacity !== tn.op) add(t, [{ backgroundColor: tn.bg, opacity: tn.op }, { backgroundColor: a.backgroundColor, opacity: a.opacity }]);
       if (bo !== tn.bo) add(t, [{ opacity: tn.bo }, { opacity: bo }], { pseudoElement: '::before' }); }
   }
+  /* no text is ever cut by the band or flown over: every text line (and the card) of the page in the band shows only while the band holds
+     all of it and the title is not on it; every one outside shows only while the band is clear of it. Sampled every 1/40 on the band's
+     curve: gone (40ms) before the edge or the title arrives, back (50ms) after */
+  _yield(m, dir, cy, H, inPg, outPg, X, add) {
+    const self = this, root = this.rootRef.current, q = this._kk() / m.T, P = m.gp, ex = m.gx || [], S = [], C = [];
+    for (let i = 0; i <= 40; i++) { const e = this._ez(i / 40); S.push(dir === 'back' ? [cy * e, H - (H - cy) * e] : [cy - cy * e, cy + (H - cy) * e]); }
+    [[inPg, true], [outPg, false]].forEach(function (pp) { if (pp[0]) pp[0].querySelectorAll('*').forEach(function (el) { if (ex.some(function (x) { return x === el || x.contains(el) || el.contains(x); })) return;
+      let own = el.matches('.ju-v27-cta,[data-tear],canvas'); for (let n = el.firstChild; !own && n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) own = true; if (own) C.push([el, pp[1]]); }); });
+    X.forEach(function (x) { C.push(x); }); const R = C.map(function (c) { return self._rel(c[0], root); });
+    C.forEach(function (c, j) { const r = R[j]; if (!r.w || !r.h || r.y > H || r.y + r.h < 0) return;
+      const hit = function (i) { if (!P) return false; for (let k = Math.max(0, i - 1); k <= Math.min(40, i + 1); k++) { const b = P[k]; if (r.x < b[0] + b[2] - 2 && r.x + r.w > b[0] + 2 && r.y < b[1] + b[3] - 2 && r.y + r.h > b[1] + 2) return true; } return false; };
+      const v = S.map(function (s, i) { return c[1] ? s[0] <= r.y + 1 && s[1] >= r.y + r.h - 1 && !hit(i) : r.y + r.h <= s[0] + 1 || r.y >= s[1] - 1; });
+      if (v.every(function (x) { return x; })) return; const kf = [{ offset: 0, opacity: v[0] ? 1 : 0 }]; let o = 0; const pu = function (t, a) { o = Math.max(o, Math.min(1, t)); kf.push({ offset: o, opacity: a }); };
+      for (let i = 1; i <= 40; i++) if (v[i] !== v[i - 1]) { if (v[i]) { pu(i / 40, 0); pu(i / 40 + 50 * q, 1); } else { pu((i - 1) / 40 - 40 * q, 1); pu((i - 1) / 40, 0); } }
+      pu(1, v[40] ? 1 : 0); add(c[0], kf, { easing: 'linear' }); });
+  }
+  _ez(x) { let lo = 0, hi = 1, u = x; for (let i = 0; i < 18; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * .22 + 3 * (1 - u) * u * u * .18 + u * u * u < x) lo = u; else hi = u; } return 3 * (1 - u) * (1 - u) * u * .6 + 3 * (1 - u) * u * u + u * u * u; }
   /* the title in flight, inside the band: row title (paper) → face title (管理: the page title; 详情 / 历史 / 候补: the name under the card) */
   _flight(dir, top, inPg, outPg, m, add) {
     const root = this.rootRef.current, g = this.ghostRef.current, SURF = { manage: 1, detail: 1, waitlist: 1, history: 1, draft: 1 }, TICKET = { ticket: 1, reply: 1 };
@@ -1232,25 +1250,17 @@ class Component extends DCLogic {
        is gone before the row's words appear — never two titles at once */
     if (fwd) { add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' }); }
     else { add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - 2 * hand }, { opacity: 0, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' }); add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); }
-    /* what the title passes over steps aside: a text line of the page in the band that the moving title box (same curve, sampled every
-       1/40) touches is out of the way before the title reaches it and, on the way in, comes back once the title has passed it */
-    const s0 = af / df, A = fwd ? { x: ra.x, y: ra.y, w: face.offsetWidth * s0, h: face.offsetHeight * s0 } : { x: d.x, y: d.y, w: face.offsetWidth, h: face.offsetHeight }, Bx = fwd ? { x: d.x, y: d.y, w: face.offsetWidth, h: face.offsetHeight } : { x: ra.x, y: ra.y, w: face.offsetWidth * s0, h: face.offsetHeight * s0 };
-    const bz = function (x) { let lo = 0, hi = 1, u = x; for (let i = 0; i < 18; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * .22 + 3 * (1 - u) * u * u * .18 + u * u * u < x) lo = u; else hi = u; } return 3 * (1 - u) * (1 - u) * u * .6 + 3 * (1 - u) * u * u + u * u * u; };
-    const P = []; for (let i = 0; i <= 40; i++) { const f = bz(i / 40); P.push([A.x + (Bx.x - A.x) * f, A.y + (Bx.y - A.y) * f, A.w + (Bx.w - A.w) * f, A.h + (Bx.h - A.h) * f]); }
-    const q = this._kk() / T, cl = function (v) { return Math.max(0, Math.min(1, v)); }, self = this;
-    const C = []; inPg.querySelectorAll('*').forEach(function (el) { if (el === src || el === dst || el.contains(src) || el.contains(dst) || src.contains(el) || dst.contains(el)) return;
-      let own = false; for (let n = el.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) { own = true; break; } if (own || el.matches('.ju-v27-cta')) C.push([el, self._rel(el, root)]); });
-    C.forEach(function (c) { const el = c[0], r = c[1]; if (!r.w) return; let a = -1, z = -1; P.forEach(function (b, i) { if (r.x < b[0] + b[2] - 2 && r.x + r.w > b[0] + 2 && r.y < b[1] + b[3] - 2 && r.y + r.h > b[1] + 2) { if (a < 0) a = i; z = i; } }); if (a < 0) return;
-      if (fwd) { const o = cl((z + 1) / 40 + 10 * q), e = Math.min(1, o + 60 * q); add(el, e < 1 ? [{ opacity: 0 }, { opacity: 0, offset: o }, { opacity: 1, offset: e }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 0, offset: Math.min(o, 1 - 30 * q) }, { opacity: 1 }], { easing: 'linear' }); }
-      else { const h = cl((a - 1) / 40 - 10 * q), s1 = cl(h - 40 * q); add(el, h > 0 ? [{ opacity: 1 }, { opacity: 1, offset: s1 }, { opacity: 0, offset: h }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0 }], { easing: 'linear' }); } });
+    const s0 = af / df, A = fwd ? [ra.x, ra.y, face.offsetWidth * s0, face.offsetHeight * s0] : [d.x, d.y, face.offsetWidth, face.offsetHeight], Z = fwd ? [d.x, d.y, face.offsetWidth, face.offsetHeight] : [ra.x, ra.y, face.offsetWidth * s0, face.offsetHeight * s0];
+    m.gp = []; for (let i = 0; i <= 40; i++) { const f = this._ez(i / 40); m.gp.push(A.map(function (v, j) { return v + (Z[j] - v) * f; })); } m.gx = [src, dst];
     m.clean.push(function () { g.style.opacity = '0'; src.style.visibility = ''; dst.style.visibility = ''; });
     return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
   }
   _xfade(dir, snap) {
-    const root = this.rootRef.current, k = this._kk(), D = 90 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = (dir === 'role' ? 28 : 22) * (h ? h.sign : 1), over = this.snapOverRef.current;
-    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 90) * k, dir: dir, id: 0 };
+    const root = this.rootRef.current, k = this._kk(), D = 90 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = 20 * (h ? h.sign : 1), over = this.snapOverRef.current;
+    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 196) * k, dir: dir, id: 0 };
     const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
-    const mv = function (el, out) { m.anims.push(el.animate(out ? [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx) + 'px)' }] : [{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: D, easing: E, fill: 'both' })); };
+    /* two beats: the old content is gone within 90ms (under .3 by 65ms), only then the new one comes in from 20px aside — never both above .3 */
+    const mv = function (el, out) { m.anims.push(out ? el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx / 2) + 'px)' }], { duration: D, easing: E, fill: 'both' }) : el.animate([{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 130 * k, delay: .73 * D, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' })); };
     if (h && over) { over.appendChild(h.box); m.clean.push(function () { h.box.remove(); }); h.parts.forEach(function (p) { mv(p, true); }); }
     const pg = root.querySelector('.c05-pg.pg-home'); if (pg) pg.querySelectorAll('.c05-fc .c05-zb, .c05-cap, .c05-list').forEach(function (el) { mv(el, false); });
     const card = this.cardRef.current, cs = snap.card; if (card && (this._c.heroKey || '') !== (this._shownKey || '')) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });

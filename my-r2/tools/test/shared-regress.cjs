@@ -64,6 +64,10 @@ let fails = 0, passes = 0; const ok = (n, c, x) => { if (c) passes++; else { fai
   await p.waitForTimeout(150);
   const bn5 = await L.E(p, CODE, "return { state: window.__bnSt.dataset.state, done: window.__bnDone }");
   ok('burn: paused seek to the end waits, resume lands the end state once; an unpaused seek to the end lands by itself', bn && bn.state === 'burning' && bn2.state === 'burning' && bn2.done === 0 && bn3.state === 'void' && bn3.done === 1 && bn4 === 1 && bn5.state === 'void' && bn5.done === 1, { bn, bn2, bn3, bn5 });
+  /* 7. a jump to a torn ticket (待赴约) opens its contact layer like a real entry (C08 fix round) */
+  await L.jump(p, CODE, 'j-d-going', 600); await idle();
+  const jg = await L.E(p, CODE, "return { s: inst.state.nav.stack[inst.state.nav.stack.length - 1].s, open: inst.state.ui.ticket.contactOpen }");
+  ok('jump j-d-going → ticket with the contact layer open', jg && jg.s === 'ticket' && jg.open === true, jg);
   ok('no console errors', errors.length === 0, errors.slice(0, 3));
   await b.close();
   console.log(fails ? `FAILED ${fails} / ${passes} passed` : `shared-regress OK · ${passes} checks passed`); process.exit(fails ? 1 : 0);
