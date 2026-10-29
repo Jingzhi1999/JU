@@ -498,7 +498,7 @@
     if (el.__jurig) { try { el.__jurig.destroy(); } catch (e) { } }
     let resolveDone, detachedAt = 0;
     const promise = new Promise(ok => { resolveDone = ok; });
-    const err = stage.querySelector('[data-tear-error]');
+    const err = stage.querySelector('[data-tear-error]') || (stage.parentElement && stage.parentElement.querySelector(':scope > [data-tear-error]'));   /* the template keeps the line just outside the stage (C03 report: it stayed empty) */
     const rig = window.JUTear.mount(el, {
       width: 258, height: 84,
       draw: (g, w, h) => window.JUTear.drawStub(g, w, h, data.reissued ? 'REISSUED' : 'REAL PLANS ONLY', data.reissued ? { lines: [], by: '' } : null),

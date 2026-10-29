@@ -14,13 +14,13 @@
 | 8 | `j-d-invitedq` 候补轮到 | ✓ | ✓ 读完 → 确认入局（operations） | ✓ | — | 是 |
 | 9 | `j-d-gathering` 已确认待成局 | ✓ | — | ✓ | — | 控制器不给「已确认待成局」退出入口（secLabel 不含 gathering），只看了静态 |
 | 10 | `j-d-tear` 已出票待撕 | ✓ | ✓ 手势撕票 → 联系 → 复制 → 已加微信（m8 / rm-check） | ✓ | ✓ m8-tear-contact | 是 |
-| 11 | `j-d-contact` 已撕票待联系 | ✓ | ✓ 复制（http 剪贴板）→ 已加微信；复制失败 → 重试（operations） | ✓ | — | 是 |
+| 11 | `j-d-contact` 已撕票待联系 | ✓ | ✓ 从首页行进入即带联系层；复制（http 剪贴板）→ 已加微信（处理中…→待赴约）；复制失败 → 原件那一行 + 旁边的重试（operations） | ✓ | — | 是 |
 | 12 | `j-d-going` 已联系待赴约 | ✓ | ✓ 去不了了 → 确认退出 → 燃烧（m8-burn-exit） | ✓ | ✓ m8-burn-exit · m6 | 是 |
 | 13 | `j-d-reschedule` 改期待答复 | ✓ | ✓ 撕下副券=接受（m7）；拒绝 → 燃烧 B（rm-check） | ✓ | ✓ m7 | 是 |
 | 14 | `j-d-withdraw` 撤回 / 退出确认 | ✓ | ✓ 同一确认层从「待赴约」票根进入：Tab 循环 / Esc 回到触发处（keyboard）、退出 → 燃烧（m8-burn-exit） | ✓ | ✓ m6（第二层墨色确认） | 是 |
 | 15 | `j-d-ended` 已散场 · 历史票根 | ✓ | ✓ 局内记录弹层（kb-check） | ✓ | ✓ m9-history-settled | 小尺寸章面的可读性 |
 | 16 | `j-d-cancelled` 局主取消 | ✓ | — | ✓ | — | 是 |
-| 17 | `j-d-rejected` 审核未通过 | ✓ | — | ✓ | — | 无票的历史用局卡纸 + 事实章 |
+| 17 | `j-d-rejected` 审核未通过 | ✓ | — | ✓ | — | 无票的历史 = V27 局卡原件 + 事实章 |
 | 18 | `j-d-queueleft` 退出候补 | ✓ | ✓ 同类事实由真实操作产生：候补「退出候补」→ 确认（reduced-motion · waitlist-leave） | ✓ | — | 是 |
 | 19 | `j-d-exited` 主动退出 | ✓ | ✓ 同类事实由真实操作产生：待赴约「去不了了」→ 确认退出 → 燃烧（motion-m8-burn-exit） | ✓ | — | 是 |
 | 20 | `j-d-declined` 拒绝改期 | ✓ | ✓ 同类事实由真实操作产生：改期票「去不了了」→ 确认 → 燃烧 B（reduced-motion · reschedule-decline） | ✓ | — | 是 |
@@ -41,10 +41,10 @@
 | 35 | `h-m-leaves` 离开记录 | ✓ | ✓ 离开记录展开（operations） | ✓ | — | 是 |
 | 36 | `h-m-reschedule` 改时间 | ✓ | ✓ 改日期 → 预览 → 确认改时间 → 名单到改期答复；键盘不遮挡（m7 · kb-check · rm-check） | ✓ | ✓ m7 | 是 |
 | 37 | `h-m-replies` 改期答复 | ✓ | — | ✓ | — | 是 |
-| 38 | `h-m-cancel` 取消这局 | ✓ | ✓ 确认取消 → 局卡在盘里燃烧 → 结果；写入失败 → 重试（m8 · operations） | ✓ | ✓ m8-burn-cancel | 6.6s 燃烧对局主是否太长（结果与返回在燃烧中已可用） |
+| 38 | `h-m-cancel` 取消这局 | ✓ | ✓ 确认取消 → 原件局卡在盘里燃烧 → 结果；写入失败 → 重试（m8 · operations） | ✓ | ✓ m8-burn-cancel | 6.6s 燃烧对局主是否太长（结果与返回在燃烧中已可用） |
 | 39 | `h-m-end` 记为散场 | ✓ | ✓ 记为散场 → 出席台（rm-check · m9） | ✓ | ✓ m9 | 是 |
 | 40 | `h-m-attendance` 出席记录 | ✓ | ✓ 逐人落章 → 焦点下一位；更正留轨迹；写入失败不落章；连点只记一次（six ④ · m9 · operations · keyboard） | ✓ | ✓ m9 | 名单里 44px 章面偏淡 |
-| 41 | `h-m-card` 完整局卡 | ✓ | ✓ 局卡在盘内打开 / 关闭（m6） | ✓ | ✓ m6 | 是 |
+| 41 | `h-m-card` 完整局卡 | ✓ | ✓ 局卡（V27 原件 JuFilm.paintCard）在盘内打开 / 关闭（m6） | ✓ | ✓ m6 | 是 |
 | 42 | `h-m-cancelled` 已取消的局 | ✓ | — | ✓ | — | 是 |
 | 43 | `h-draft` 草稿摘要 | ✓ | ✓ 删除草稿 → 回列表，盘里撤销（operations） | ✓ | — | 是 |
 | 44 | `b-empty` 完全空 | ✓ | ✓ 「找局」为不可点的说明（operations） | ✓ | — | 空态：环境光一句 + 盘里三档图例 |

@@ -155,6 +155,8 @@ body{margin:0}
 .c10-foot>*{pointer-events:auto}
 .c10-foot .ju-contact-action.is-done{color:#626777;background:rgba(20,22,31,.055);background-image:none;box-shadow:inset 0 0 0 1px rgba(20,22,31,.1);cursor:default}
 .c10-foot .ju-contact-action.is-done .gloss{display:none}
+.c10-foot .ju-contact-action:not([data-shown="true"]){display:none}
+.c10-foot .ju-contact-action[data-shown="true"]{animation:c10-fin calc(460ms * var(--k,1)) cubic-bezier(.2,.9,.3,1) both}
 .c10-fhint{margin:0 0 8px;font-size:calc(13px * var(--tz,1));color:var(--sub)}
 .c10-facts{display:flex;flex-direction:column;align-items:center;margin:22px 0 0}
 .c10-big{font-family:var(--num);font-size:calc(32px * var(--tz,1));font-weight:600;line-height:1;color:var(--ink);font-variant-numeric:tabular-nums}
@@ -214,7 +216,9 @@ body{margin:0}
 /* history */
 .c10-t08{position:relative;width:calc(100% + 64px);margin:8px -32px 0;height:520px}
 .c10-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
-.c10-ash{width:258px;height:62px;margin:18px auto 0;border-radius:4px;background:radial-gradient(60% 40% at 50% 100%,rgba(58,46,40,.32),rgba(58,46,40,0) 70%),repeating-linear-gradient(90deg,rgba(59,42,32,.0) 0 7px,rgba(59,42,32,.22) 7px 9px,rgba(59,42,32,0) 9px 15px);-webkit-mask:linear-gradient(180deg,transparent,#000 60%);mask:linear-gradient(180deg,transparent,#000 60%)}
+.c10-ash{position:relative;width:258px;height:76px;margin:22px auto 0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:radial-gradient(56% 22px at 50% 100%,rgba(74,50,38,.2),rgba(74,50,38,0)),linear-gradient(180deg,rgba(237,239,247,.5),rgba(237,239,247,.3));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92),0 18px 30px -26px rgba(18,22,48,.4)}
+.c10-ash b{font-size:calc(14px * var(--tz,1));font-weight:500;letter-spacing:.14em;color:var(--ink2)}
+.c10-ash small{font-size:calc(12px * var(--tz,1));color:var(--sub)}
 .c10-wx{display:flex;align-items:center;gap:14px;margin:12px 0 0}
 .c10-wx b{font-family:var(--num);font-size:calc(18px * var(--tz,1));font-weight:500;color:var(--ink);user-select:text}
 /* ---------- manage ---------- */
@@ -527,6 +531,7 @@ body{margin:0}
               <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta ju-print-cta-in" data-act="{{v.tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
               <sc-if value="{{v.tk.declineOn}}"><button type="button" class="c10-weak" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if>
               <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action{{v.tk.ctaCls}}" data-contact-action data-act="contacted" aria-disabled="{{c.ticket.contact.ctaDisabled}}"><span class="gloss"></span><span class="label">{{c.ticket.contact.ctaLabel}}</span></button></sc-if>
+              <sc-if value="{{v.tk.openContact}}"><button type="button" class="c10-ghost" data-act="open-contact" onClick="{{c.ticket.contact.open}}">查看局主微信</button></sc-if>
               <sc-if value="{{v.tk.resCta}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
               <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
             </div>
@@ -576,7 +581,7 @@ body{margin:0}
                       </div>
                     </div>
                   </sc-if>
-                  <sc-if value="{{v.hs.ashes}}"><div class="c10-ash" aria-label="票根灰烬"></div></sc-if>
+                  <sc-if value="{{v.hs.ashes}}"><div class="c10-ash"><b>票根已作废</b><small>{{v.hs.ashNote}}</small></div></sc-if>
                   <sc-if value="{{v.hs.fact}}"><div class="c10-res t-{{v.hs.tone}}"><b>{{v.hs.fact}}</b><sc-if value="{{c.history.closedNote}}"><p>{{c.history.closedNote}}</p></sc-if><sc-if value="{{v.hs.oldText}}"><small>{{v.hs.oldText}}</small></sc-if></div></sc-if>
                   <sc-if value="{{c.history.contactOpen}}">
                     <div class="c10-sech"><b>局主微信</b><i></i><small>散场后 24 小时内仍可联系</small></div>
@@ -1213,7 +1218,7 @@ class Component extends DCLogic {
         slotText: tk.isReply ? '新票出票中' : '出票中', slotSub: tk.isReply ? '原票作废，换这一张' : '撕开副券后联系局主', noPrevious: !tk.ritual.previous, previousText: tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !tk.ritual.mark,
         pair: rp && !rp.answered ? { o: rp.oldWhen.md + ' ' + rp.oldWhen.time, n: rp.newWhen.md + ' ' + rp.newWhen.time } : null,
         tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', exitAct: tk.isReply ? 'decline' : 'exit', exitOn: tk.canExit && !(rp && tk.tear.canTear), declineOn: !!(rp && tk.tear.canTear),
-        contactAction: !tk.unavailable && !tk.result && tk.state === 'torn', ctaCls: tk.contact.done ? ' is-done' : '', note: tk.contact.note, showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable),
+        contactAction: !tk.unavailable && !tk.result && tk.state === 'torn', openContact: !tk.unavailable && !tk.result && tk.state === 'torn' && !tk.contact.on && !!tk.contact.available && !tk.contact.closed, ctaCls: tk.contact.done ? ' is-done' : '', note: tk.contact.note, showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable),
         res: tk.result && !tk.result.burning ? { title: tk.result.title, body: tk.result.body } : null, resCta: !!(tk.result && !tk.result.burning),
         retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
         hint: tk.isReply ? '向右拖动新副券撕开 · 或按下方按钮' : '向右拖动副券撕开 · 或按下方按钮' };
@@ -1221,13 +1226,13 @@ class Component extends DCLogic {
     /* ---- history ---- */
     const Hs = c.history;
     if (Hs.on) {
-      const hr = Hs.ritual; const ended = Hs.stage === 'ended';
+      const hr = Hs.ritual; const ended = Hs.stage === 'ended'; if (Hs.burn && Hs.burn.play) this._hsVisit = Hs.eventId; const bv = this._hsVisit === Hs.eventId; const stageOn = !!(hr && Hs.burnOnce && (!Hs.ashes || bv));
       v.hs = { title: kd(Hs.title), meta: (Hs.label || '') + ' · ' + (Hs.when ? Hs.when.zh : ''), rc: (Hs.records || []).length, noRecords: !(Hs.records || []).length,
         tone: ended ? (Hs.stamp === 'absent' ? 'void' : 'go') : 'void', attTitle: Hs.attendanceText || Hs.stampText || '已散场', stampFallback: !!this.state.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载' : '出席章加载中…',
-        facts: !Hs.hasStamp && !(hr && Hs.burnOnce), d: Hs.when ? Hs.when.wdZh + ' ' + Hs.when.md : '', h: Hs.when ? Hs.when.time : '', p: (Hs.place ? Hs.place.full : '') + (Hs.host ? ' · 局主 ' + Hs.host.name : ''),
-        showStage: !!(hr && Hs.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), ashes: !!Hs.ashes,
-        fact: Hs.hasStamp ? '' : (Hs.reason || Hs.label || ''), oldText: Hs.oldWhen ? '原定 ' + Hs.oldWhen.zh : '', foot: Hs.footer && Hs.footer.lead || c.COPY.historyFooter.lead };
-    } else v.hs = null;
+        facts: !Hs.hasStamp && !stageOn, d: Hs.when ? Hs.when.wdZh + ' ' + Hs.when.md : '', h: Hs.when ? Hs.when.time : '', p: (Hs.place ? Hs.place.full : '') + (Hs.host ? ' · 局主 ' + Hs.host.name : ''),
+        showStage: stageOn, stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), ashes: !!Hs.ashes && !stageOn,
+        fact: Hs.hasStamp ? '' : (Hs.reason || Hs.label || ''), oldText: Hs.oldWhen ? '原定 ' + Hs.oldWhen.zh : '', ashNote: Hs.burn && Hs.burn.reason === 'cancelled' ? '局已取消，票根随之烧掉' : Hs.burn && Hs.burn.reason === 'reschedule-declined' ? '没有接受新时间，旧票烧掉' : '退出后票根烧掉，联系方式关闭', foot: Hs.footer && Hs.footer.lead || c.COPY.historyFooter.lead };
+    } else { v.hs = null; this._hsVisit = null; }
     /* ---- manage ---- */
     const M = c.manage;
     if (M.on) {
@@ -1236,7 +1241,7 @@ class Component extends DCLogic {
       const lc = (o, d) => o ? { l: o.label || String(o.title || d).split(' · ')[0], n: o.count != null ? o.count : '' } : { l: d, n: '' };
       const ap = lc(M.apps, '申请'), rp = lc(M.replies, '改期答复'), at = lc(M.attendance, '出席'), q = lc(M.queue, '候补'), lv = lc(M.leaves, '离开记录');
       v.mg = { title: kd(hd.title || M.title || ''), meta: hd.when ? hd.when.zh + ' · ' + (hd.place ? hd.place.full : '') : '', ready: !M.missing, tone: tone, hCls: hd.cancelled ? ' is-void' : '',
-        status: (hd.life ? hd.life + ' · ' : '') + (hd.status || ''), seatsOn: !M.missing && !pg.hidden && !hd.ended && (pg.seats || []).length > 0,
+        status: hd.life && hd.life !== hd.status ? hd.life + ' · ' + (hd.status || '') : (hd.status || hd.life || ''), seatsOn: !M.missing && !pg.hidden && !hd.ended && (pg.seats || []).length > 0,
         seats: (pg.seats || []).map((s, i) => ({ kind: s.kind, attendance: s.attendance || '', i: i })), progText: pg.hidden ? '' : (pg.attendance ? pg.attendance.text : (pg.text || '') + (pg.more ? ' · ' + pg.more : '')), formedLine: hd.formedLine || '',
         appsL: ap.l, appsN: ap.n, repL: rp.l, repN: rp.n, attL: at.l, attN: at.n, qL: q.l, qN: q.n, lvL: lv.l, lvN: lv.n,
         repOld: M.replies && M.replies.oldWhen ? M.replies.oldWhen.md + ' ' + M.replies.oldWhen.time : '', repNew: M.replies && M.replies.newWhen ? M.replies.newWhen.md + ' ' + M.replies.newWhen.time : '',
