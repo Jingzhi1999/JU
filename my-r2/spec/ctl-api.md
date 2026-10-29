@@ -283,3 +283,4 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - 过期预留不能确认入局：引擎 `confirmReservation` 在 stage 不是 invited / invited_queue、或预留截止已过时返回错误「预留已到期，位置已补给他人。」；阅读层在 stage 为 expired 时进入到期态（C01 复核 B1：到期后读到末尾仍能确认并直接成局出票）。shared-regress 新增一项（9/9）。
 - 已撕的票（待联系 / 待赴约）从任意入口进入时联系层自动打开（`contactOpen`），原先只有 `params.contact` 才开（C04：待赴约没有入口）。
 - 成员行：本人已放弃的预留 =「已放弃预留」；过期 =「预留已过期」；无截止时间的预留 =「已预留」（不再出现「剩不到 1 小时」）；三者都没有倒计时（C03 复核）。
+- 弹层聚焦首字段：`focus({preventScroll:true})` 之后把各级祖先的滚动量复原（Chromium 里日期输入框仍会把外层滚走，C06 实测 `.app` 被滚到 428）。回归 79/79、9/9、7/7。

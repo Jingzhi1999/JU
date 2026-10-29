@@ -142,7 +142,8 @@ body{margin:0}
    rows, then the note that closes the list, not rows and an undefined void (review m18) */
 .c07-pane.is-few{min-height:100%;display:flex;flex-direction:column}
 .c07-pane.is-few .c07-foot-note{margin-top:auto;padding-top:22px;border-top:1px solid var(--line)}
-.c07-dis{color:var(--mute2)}   /* an entry outside this module: the words stay where they are, not a link (the scope note is outside the phone) */
+.c07-dis,.c07-link.c07-dis{color:var(--mute2);text-decoration:none;cursor:default}
+.c07-tray .c07-dis,.c07-tray .c07-link.c07-dis{color:var(--tw3)}   /* an entry outside this module: the words stay where they are, not a link (the scope note is outside the phone) */
 
 /* ======================= the tray: ONE rigid deep-ink sheet, full height, parked so that only its top --th shows =======================
    M4 is a spatial move of that sheet (transform, no reflow): up 340ms cubic-bezier(.22,.9,.24,1) (fast start, no overshoot — a tap gets
@@ -1281,7 +1282,7 @@ class Component extends DCLogic {
      the 联系局主 key) → at once — a torn ticket is the contact step, it is never shown without its contact */
   _contactWant(c) { const t = c.ticket; return !!(t && t.on && t.contact && (t.contact.on || (t.state === 'torn' && !this._rit.tornHere))); }
   _mountTicket(stage, c) {
-    this._destroyTicket();
+    this._destroyTicket(); { const er = stage.parentElement && stage.parentElement.querySelector(':scope > [data-tear-error]'); if (er) er.textContent = ''; }
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; this._rit.tornHere = false; const R = this.R(), data = this._rd(c.ticket.ritual), st = c.ticket.state;
     /* a fresh contact handle repaints its labels from the data; hide() clears any reveal / shown state a previous mount left on the
        engine-owned DOM (the same stage is reused when a review jump resets the data) */
@@ -1332,7 +1333,8 @@ class Component extends DCLogic {
     const h = R.burn(stage, { reason }, { onDone: done }); if (isH) this._rit.hburn = h; else this._rit.burn = h;
     if (h && h.promise && h.promise.then) h.promise.then(done, done);
     this.holdKey('c07-burnreplay', Math.ceil(((h && h.engine && h.engine.duration) || 6.6) * 1000) + 900, done); }
-  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _destroyTicket() { const t = this._rit; { const er = t.stage && t.stage.parentElement && t.stage.parentElement.querySelector(':scope > [data-tear-error]'); if (er) er.textContent = ''; }   /* the original writes this line; a new ticket starts without the last one's failure */
+    if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = this._rd(c.history.ritual); if (!R || !data) return;
     this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
