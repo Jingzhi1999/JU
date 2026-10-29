@@ -94,14 +94,14 @@ body{margin:0}
 .c05-pg.pg-deep .c05-paper{padding-bottom:calc(28px + var(--sab,0px) + var(--kb,0px))}
 .c05-handle{width:36px;height:4px;border-radius:2px;background:rgba(20,22,31,.16);margin:0 auto 10px}
 /* ---- 运动（M4 / M1）：脚本里的一条 WAAPI 时间线（_wipe / _xfade） ---- */
-.c05-snapt,.c05-snapc,.c05-snapx,.c05-snapo,.c05-snaps,.c05-snapbox{position:absolute;inset:0;pointer-events:none}
+.c05-snapt,.c05-snapc,.c05-snapx,.c05-snaps{position:absolute;inset:0;pointer-events:none}
 .c05-snapt,.c05-snapc,.c05-snapx{z-index:1}.c05-snapx{z-index:2}
-.c05-ember{position:absolute;border-radius:50%;background:#FFB15C;box-shadow:0 0 6px 2px rgba(255,118,40,.7);pointer-events:none}.c05-snapo{z-index:4}.c05-snaps{z-index:50}
+.c05-ember{position:absolute;border-radius:50%;background:#FFB15C;box-shadow:0 0 6px 2px rgba(255,118,40,.7);pointer-events:none}.c05-snaps{z-index:50}
 .c05-was,.c05-was *{pointer-events:none!important;animation:none!important;transition:none!important}
 .c05-tint.no-tr,.c05-tint.no-tr::before{transition:none!important}
 /* the flying title: laid out exactly like the face title (30/500, same width), moved by transform only */
 .c05-gband{position:absolute;inset:0;z-index:6;pointer-events:none}
-.c05-ghost{position:absolute;left:0;top:0;margin:0;pointer-events:none;opacity:0;transform-origin:0 0;font-weight:500;font-size:calc(30px * var(--tz,1));line-height:calc(37.5px * var(--tz,1));color:var(--c05-ink);overflow-wrap:anywhere;will-change:transform}
+.c05-ghost{position:absolute;left:0;top:0;margin:0;pointer-events:none;opacity:0;transform-origin:0 0;font-weight:500;font-size:calc(30px * var(--tz,1));line-height:calc(37.5px * var(--tz,1));color:var(--c05-ink);white-space:nowrap}
 /* ---- 面内文字角色：外层标题 30/500（V27）· 辅助行 14 · 角色切换 15/500 · 日期 15 ---- */
 /* outer title (V27 30/500) */
 .c05-ttl{position:relative;margin:0;width:max-content;max-width:calc(100% - 104px * var(--c05-p,0));font-size:calc((30px - 12px * var(--c05-p,0)) * var(--tz,1));font-weight:500;line-height:calc(37.5px * var(--tz,1));letter-spacing:0;color:var(--c05-ink);word-break:keep-all;overflow-wrap:anywhere;left:calc(var(--c05-p,0) * 50%);transform:translate(calc(var(--c05-p,0) * -50%),calc(var(--c05-p,0) * -49.75px))}
@@ -1053,7 +1053,6 @@ body{margin:0}
         </div>
       </sc-if>
       <div class="c05-snapx" ref="{{emberRef}}" aria-hidden="true"></div>
-      <div class="c05-snapo" ref="{{snapOverRef}}" aria-hidden="true"></div>
       <div class="c05-snaps" ref="{{snapSheetRef}}" aria-hidden="true"></div>
       <sc-if value="{{c.toast.on}}"><div class="c05-toast {{c.toast.cls}}" role="status">{{toastText}}</div></sc-if>
     </div>
@@ -1070,7 +1069,7 @@ class Component extends DCLogic {
     super(p); this.reviewInit(Object.assign({}, CONCEPT, { notes: (CONCEPT.notes || '') + '\n范围外（手机内只留文字与位置，禁用态）：查看我的记录、补充这局的记录、对出席记录提出异议 → 账户级记录页；继续编辑 → 开局模块；查看进度 → 举报处理。' })); /* 关键帧 during a live burn seeks that burn */ const mv = this._movingAnims; this._movingAnims = function () { const a = mv.call(this), r = this._rit; return r && (r.burn || r.hburn) ? a.concat([r.burn || r.hburn]) : a; };
     this.motionSpec = { fwd: 400, back: 340, swap: 320, role: 300 };
     this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
-    this.envRef = { current: null }; this.gbandRef = { current: null }; this.cardRef = { current: null }; this.cstampRef = { current: null }; this.snapTintRef = { current: null }; this.snapCardRef = { current: null }; this.snapOverRef = { current: null }; this.snapSheetRef = { current: null }; this.emberRef = { current: null }; this.homeFcRef = { current: null }; this.ghostRef = { current: null };
+    this.envRef = { current: null }; this.gbandRef = { current: null }; this.cardRef = { current: null }; this.cstampRef = { current: null }; this.snapTintRef = { current: null }; this.snapCardRef = { current: null }; this.snapSheetRef = { current: null }; this.emberRef = { current: null }; this.homeFcRef = { current: null }; this.ghostRef = { current: null };
     this.manageStatusRef = { current: null }; this.manageSeatsRef = { current: null }; this.leadSeatsRef = { current: null };
     this._rit = {}; this._statusKey = ''; this._seatsKey = ''; this._settle = {}; this._mEntry = '';
     /* every scroller: the controller's handler (--hc, scroll memo) + the */
@@ -1124,7 +1123,6 @@ class Component extends DCLogic {
     pg.classList.toggle('hc1', p >= 0.999);
   }
   /* ---- page motion: one WAAPI timeline per transition ---- */
-  _layoutPos(el, root) { let x = 0, y = 0, e = el; while (e && e !== root) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x: x, y: y }; }
   _kk() { return (this.state.review && this.state.review.speed === 0.5) ? 2 : 1; }
   _rel(el, root) { const a = el.getBoundingClientRect(), b = root.getBoundingClientRect(), k = (b.width / root.offsetWidth) || 1; return { x: (a.left - b.left) / k, y: (a.top - b.top) / k, w: a.width / k, h: a.height / k }; }
   _navSig() { const st = this.state.nav, t = st.stack[st.stack.length - 1]; return st.phase + st.dir + t.id + this.state.role + this.state.section; }
@@ -1148,15 +1146,9 @@ class Component extends DCLogic {
     this._snap = snap; return null;
   }
   _snapHome(root, s, ps) {
-    const pg = root.querySelector('.c05-pg.pg-home'), paper = pg && pg.querySelector('.c05-paper'), sc = pg && pg.querySelector('.c05-sc'); if (!paper || !sc) return null;
-    const self = this, H = root.offsetHeight, pt = this._rel(paper, root).y, lo = Math.max(pt, this._rel(sc, root).y), box = document.createElement('div'), cs = getComputedStyle(root), parts = [];
-    box.className = 'c05-snapbox c05-was'; ['--c05-ink', '--c05-ink2', '--c05-ink3', '--c05-line', '--c05-face'].forEach(function (v) { box.style.setProperty(v, cs.getPropertyValue(v)); }); box.style.color = cs.getPropertyValue('--c05-ink');
-    const put = function (el, a, b) { const r = self._rel(el, root); if (!r.h || r.y >= b || r.y + r.h <= a) return; const cl = self._clone(el); cl.style.cssText += ';position:absolute;margin:0;left:' + r.x + 'px;top:' + r.y + 'px;width:' + r.w + 'px;clip-path:inset(' + Math.max(0, a - r.y) + 'px -40px ' + Math.max(0, r.y + r.h - b) + 'px -40px)'; box.appendChild(cl); parts.push(cl); };
-    pg.querySelectorAll('.c05-fc .c05-zb').forEach(function (el) { put(el, 0, pt); });
-    pg.querySelectorAll('.c05-cap, .c05-list').forEach(function (el) { put(el, lo, H); });
     const o = { current: 0, drafts: 1, history: 2 }, sign = s.role !== ps.role ? (s.role === 'hosted' ? 1 : -1) : ((o[s.section] || 0) > (o[ps.section] || 0) ? 1 : -1);
     let tint = null; if (s.role !== ps.role) { const t = root.querySelector('.c05-tint'); if (t) { tint = document.createElement('div'); tint.className = root.className + ' c05-was'; tint.setAttribute('data-skin', root.getAttribute('data-skin') || ''); tint.appendChild(t.cloneNode(false)); } }
-    return { box: box, parts: parts, sign: sign, pt: pt, tint: tint };
+    return { sign: sign, tint: tint };
   }
   _navMotion(snap) {
     const root = this.rootRef.current, st = this.state.nav; if (!root || !st) return;
@@ -1197,7 +1189,8 @@ class Component extends DCLogic {
     const root = this.rootRef.current, H = root.offsetHeight, W = root.offsetWidth, T = (dir === 'back' ? 340 : dir === 'swap' ? 320 : 400) * this._kk(), E = 'cubic-bezier(.22,.6,.18,1)';
     const inPg = root.querySelector('.c05-pg.is-top'), outPg = root.querySelector(dir === 'swap' ? '.c05-pg.is-leaving' : '.c05-pg.is-under');
     const m = this._mo = { anims: [], clean: [], T: T, dir: dir, id: top.id };
-    const add = function (el, kf, o) { const a = el.animate(kf, Object.assign({ duration: T, easing: E, fill: 'both' }, o || {})); m.anims.push(a); return a; };
+    /* every part on one clock: clip-path animates on the main thread, so the opacity / transform parts carry a custom property that keeps them there too (a busy main thread can never let a line or the title run ahead of the band) */
+    const add = function (el, kf, o) { const a = el.animate(kf.map(function (x) { return Object.assign({ '--c05-s': '1' }, x); }), Object.assign({ duration: T, easing: E, fill: 'both' }, o || {})); m.anims.push(a); return a; };
     const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
     const fl = inPg && outPg ? this._flight(dir, top, inPg, outPg, m, add) : null, cy = fl ? fl.cy : this._lineY(dir, top, outPg, H);
     /* with a flight the band opens from / closes onto the title's own box, so the title is never cut by it */
@@ -1217,58 +1210,70 @@ class Component extends DCLogic {
       if (a.backgroundColor !== tn.bg || a.opacity !== tn.op) add(t, [{ backgroundColor: tn.bg, opacity: tn.op }, { backgroundColor: a.backgroundColor, opacity: a.opacity }]);
       if (bo !== tn.bo) add(t, [{ opacity: tn.bo }, { opacity: bo }], { pseudoElement: '::before' }); }
   }
-  /* no text is ever cut by the band or flown over */
+  /* no text is cut by the band, flown over or left behind: every line (and card) switches whole on the band's own sampled curve. The page
+     in the band shows a line once the band holds all of it and the title is clear of it; the page outside keeps a line until the edge
+     reaches it — so the arriving page is drawn from the first frame wherever the band uncovers it and the leaving one is wiped away, and
+     some text is always on screen. One event name at a time (the other hero's name waits), one card at a time; a return also clears what
+     is left of the leaving page once the band is thin (no slot or note left on the list) */
   _yield(m, dir, B, H, inPg, outPg, X, add) {
-    const self = this, root = this.rootRef.current, q = this._kk() / m.T, P = m.gp, ex = m.gx || [], S = [], C = [];
+    const self = this, root = this.rootRef.current, q = this._kk() / m.T, P = m.gp, ex = m.gx || [], fwd = dir !== 'back', S = [], C = [];
     for (let i = 0; i <= 40; i++) { const e = this._ez(i / 40); S.push([B[0][0] + (B[1][0] - B[0][0]) * e, B[0][1] + (B[1][1] - B[0][1]) * e]); }
     [[inPg, true], [outPg, false]].forEach(function (pp) { if (pp[0]) pp[0].querySelectorAll('*').forEach(function (el) { if (ex.some(function (x) { return x === el || x.contains(el) || el.contains(x); })) return;
-      let own = el.matches('.ju-v27-cta,[data-tear],canvas,.c05-seats,.c05-bar'); for (let n = el.firstChild; !own && n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) own = true; if (own) C.push([el, pp[1]]); }); });
+      let own = el.matches('.ju-v27-cta,[data-tear],canvas,.c05-seats,.c05-bar,.c05-slotan,[data-print-stage]'); for (let n = el.firstChild; !own && n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) own = true; if (own) C.push([el, pp[1]]); }); });
     X.forEach(function (x) { C.push(x); }); const R = C.map(function (c) { return self._rel(c[0], root); });
-    C.forEach(function (c, j) { const r = R[j], card = X.some(function (x) { return x[0] === c[0]; }); if (!r.w || !r.h || r.y > H || r.y + r.h < 0) return;
-      /* the title's box with a margin (20px, ±3 samples) while it moves, so a frame-late title never lands on a line that is fading in */
+    const V = C.map(function (c, j) { const r = R[j], card = X.some(function (x) { return x[0] === c[0]; }), arr = c[1] === fwd, nm = P && c[0].closest('.c05-zb .c05-name');
+      if (!r.w || !r.h || r.y > H || r.y + r.h < 0) return null;
+      /* the title's box with a margin (20px, ±3 samples) while it moves */
       const hit = function (i) { if (!P) return false; for (let k = Math.max(0, i - 3); k <= Math.min(40, i + 3); k++) { const b = P[k], g = k < 36 && !card ? 20 : -2, gx = k < 36 && !card ? 6 : -2; if (r.x < b[0] + b[2] + gx && r.x + r.w > b[0] - gx && r.y < b[1] + b[3] + g && r.y + r.h > b[1] - g) return true; } return false; };
-      const v = S.map(function (s, i) { return c[1] ? s[0] <= r.y + 1 && s[1] >= r.y + r.h - 1 && !hit(i) : r.y + r.h <= s[0] + 1 || r.y >= s[1] - 1; });
-      /* the arriving page's lines show once and stay; the leaving page's go once and stay gone */
-      if (c[1] === (dir !== 'back')) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else { if (P && (c[2] || c[1] || c[0].closest('.c05-zb'))) for (let i = 2; i <= 40; i++) v[i] = false; for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1]; }
-      /* with a title in flight the leaving hero (这一场, card) and, on a return, every line of the leaving page are gone at once (≈10ms) */
-      if (v.every(function (x) { return x; })) return; const kf = [{ offset: 0, opacity: v[0] ? 1 : 0 }]; let o = 0; const pu = function (t, a) { o = Math.max(o, Math.min(1, t)); kf.push({ offset: o, opacity: a }); };
-      for (let i = 1; i <= 40; i++) if (v[i] !== v[i - 1]) { if (v[i]) { pu(i / 40, 0); pu(i / 40 + 50 * q, 1); } else { pu((i - 1) / 40 - 40 * q, 1); pu((i - 1) / 40, 0); } }
+      const v = S.map(function (s, i) { return (c[1] ? s[0] <= r.y + 1 && s[1] >= r.y + r.h - 1 : r.y + r.h <= s[0] + 1 || r.y >= s[1] - 1) && !hit(i) && !(nm && (arr ? i < 40 : i)) && !(!fwd && !arr && i && s[1] - s[0] < 120); });
+      if (arr) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1];
+      return v; });
+    const lc = V[C.length - 1] && X.length > 1 ? V[C.length - 1] : null, ac = X.length > 1 ? C.length - 2 : -1;
+    if (lc && V[ac]) V[ac] = V[ac].map(function (x, i) { return x && !lc[i]; });
+    C.forEach(function (c, j) { const v = V[j]; if (!v || v.every(function (x) { return x; })) return; const kf = [{ offset: 0, opacity: v[0] ? 1 : 0 }]; let o = 0; const pu = function (t, a) { o = Math.max(o, Math.min(1, t)); kf.push({ offset: o, opacity: a }); };
+      for (let i = 1; i <= 40; i++) if (v[i] !== v[i - 1]) { const t = v[i] ? i / 40 : (i - 1) / 40 - 15 * q; pu(t, v[i] ? 0 : 1); pu(t + 2 * q, v[i] ? 1 : 0); }
       pu(1, v[40] ? 1 : 0); add(c[0], kf, { easing: 'linear' }); });
   }
   _ez(x) { let lo = 0, hi = 1, u = x; for (let i = 0; i < 18; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * .22 + 3 * (1 - u) * u * u * .18 + u * u * u < x) lo = u; else hi = u; } return 3 * (1 - u) * (1 - u) * u * .6 + 3 * (1 - u) * u * u + u * u * u; }
-  /* the title in flight, inside the band */
+  /* the title in flight, inside the band: cut into the pieces that sit on one line in both the face and the row, each piece flies from its
+     glyphs in one layout to its glyphs in the other — the title never re-wraps on landing */
   _flight(dir, top, inPg, outPg, m, add) {
     const root = this.rootRef.current, g = this.ghostRef.current, SURF = { manage: 1, detail: 1, waitlist: 1, history: 1, draft: 1 }, TICKET = { ticket: 1, reply: 1 };
     if (!g || dir === 'swap' || !(SURF[top.s] || (TICKET[top.s] && dir === 'back')) || this.isRM()) return null;
     const key = dir === 'back' ? this._backKey(top, outPg) : top.key, origin = key && outPg.querySelector('[data-origin="' + key + '"]'); if (!origin) return null;
-    const norm = function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); }, row = origin.querySelector('.c05-row .t') || origin.querySelector('.t') || origin.querySelector('.c05-name'); if (!row || row.closest('.c05-fc')) return null;   /* face to face: no flight (it would pass under the card) — the titles switch whole */
+    const norm = function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); }, row = origin.querySelector('.c05-row .t') || origin.querySelector('.t') || origin.querySelector('.c05-name'); if (!row || row.closest('.c05-fc')) return null;   /* face to face: no flight — the titles switch whole */
     const want = norm(row.textContent); let face = null; inPg.querySelectorAll('.c05-fc .c05-ttl, .c05-fc .c05-name, .c05-fc .ju-ticket-title, .c05-fc .c05-hv.is-ash .c05-imp-t').forEach(function (el) { if (!face && norm(el.textContent) === want && el.offsetWidth) face = el; }); if (!face) return null;
     if (dir === 'back') { if ((parseFloat(inPg.style.getPropertyValue('--c05-p')) || 0) > .01) return null; const sg = face.closest('[data-print-stage]'); if (sg && sg.dataset.state !== 'ready' && sg.dataset.state !== 'torn') return null; }
-    const ra = this._rel(row, root), ro = this._rel(origin, root), d = this._layoutPos(face, root), cs = getComputedStyle(face), df = parseFloat(cs.fontSize) || 30, af = parseFloat(getComputedStyle(row).fontSize) || 14;
-    Object.assign(g.style, { left: d.x + 'px', top: d.y + 'px', width: face.offsetWidth + 'px', fontSize: cs.fontSize, lineHeight: cs.lineHeight, fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing, fontFamily: cs.fontFamily, textWrap: cs.getPropertyValue('text-wrap') || 'wrap', wordBreak: cs.wordBreak, overflowWrap: cs.overflowWrap, opacity: '1' }); g.textContent = face.textContent; m.gband = this.gbandRef.current;
-    const rowT = 'translate(' + (ra.x - d.x).toFixed(1) + 'px,' + (ra.y - d.y).toFixed(1) + 'px) scale(' + (af / df).toFixed(4) + ')', fwd = dir !== 'back', src = fwd ? row : face, dst = fwd ? face : row, T = m.T, hand = Math.min(70 * this._kk(), T * .25) / T;
+    const RB = root.getBoundingClientRect(), kz = (RB.width / root.offsetWidth) || 1, cs = getComputedStyle(face), df = parseFloat(cs.fontSize) || 30, s0 = (parseFloat(getComputedStyle(row).fontSize) || 14) / df;
+    const gl = function (el) { const o = [], w = document.createTreeWalker(el, NodeFilter.SHOW_TEXT); let n, pre = ''; while ((n = w.nextNode())) for (let i = 0; i < n.data.length; i++) { const ch = n.data[i]; if (/\s/.test(ch)) { pre += ch; continue; } const rg = document.createRange(); rg.setStart(n, i); rg.setEnd(n, i + 1); const b = rg.getBoundingClientRect(); o.push({ c: ch, p: pre, x: (b.left - RB.left) / kz, y: (b.top - RB.top) / kz, w: b.width / kz, h: b.height / kz }); pre = ''; } return o; };
+    const F = gl(face), W = gl(row); if (!F.length || F.length !== W.length || F.some(function (a, i) { return a.c !== W[i].c; })) return null;
+    const fwd = dir !== 'back', src = fwd ? row : face, dst = fwd ? face : row, T = m.T, hand = Math.min(70 * this._kk(), T * .25) / T, seg = [];
+    F.forEach(function (a, i) { if (!i || Math.abs(a.y - F[i - 1].y) > a.h / 2 || Math.abs(W[i].y - W[i - 1].y) > W[i].h / 2) seg.push({ i: i, t: a.c }); else seg[seg.length - 1].t += a.p + a.c; });
+    Object.assign(g.style, { left: '0px', top: '0px', width: '0px', fontSize: cs.fontSize, lineHeight: cs.lineHeight, fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing, fontFamily: cs.fontFamily, color: cs.color, opacity: '1' }); g.textContent = '';
+    const sp = seg.map(function (q) { const e = document.createElement('span'); e.textContent = q.t; e.style.cssText = 'position:absolute;white-space:pre;left:' + F[q.i].x + 'px;top:' + F[q.i].y + 'px'; g.appendChild(e); return e; });
+    const a0 = F[seg[0].i], b0 = W[seg[0].i], self = this, pc = sp.map(function (e, k) { const a = F[seg[k].i], b = W[seg[k].i], rg = document.createRange(); rg.setStart(e.firstChild, 0); rg.setEnd(e.firstChild, 1); const r = rg.getBoundingClientRect(), dx = (r.left - RB.left) / kz - a.x, dy = (r.top - RB.top) / kz - a.y;
+      e.style.left = (a.x - dx) + 'px'; e.style.top = (a.y - dy) + 'px'; e.style.transformOrigin = dx + 'px ' + dy + 'px'; const fy = a.y - a0.y, ry = (b.y - b0.y) / s0; return { e: e, a: a, fx: a.x - a0.x, fy: fy, rx: b.x - b0.x, ry: b.y - b0.y, up: ry < fy - 1, w: e.offsetWidth, h: a.h }; });
+    /* w = how far towards the row's layout: the pieces keep the face's arrangement scaled, then the row's; one that changes line moves along its line first (going up) or leaves it first (going down) */
+    const at = function (w) { const sc = 1 + (s0 - 1) * w, x0 = a0.x + (b0.x - a0.x) * w, y0 = a0.y + (b0.y - a0.y) * w, cl = function (v) { return Math.max(0, Math.min(1, v)); };
+      return pc.map(function (q) { const mx = q.up ? cl(2 * w) : Math.abs(q.fy - q.ry / s0) < 1 ? w : cl(2 * w - 1), my = q.up ? cl(2 * w - 1) : cl(2 * w), fx = q.fx * sc, fy = q.fy * sc, rx = q.rx * sc / s0, ry = q.ry * sc / s0; return [x0 + fx + (rx - fx) * mx, y0 + fy + (ry - fy) * my, sc]; }); };
+    pc.forEach(function (q, k) { const kf = []; for (let i = 0; i <= 20; i++) { const e = self._ez(i / 20), p = at(fwd ? 1 - e : e)[k]; kf.push({ offset: i / 20, transform: 'translate(' + (p[0] - q.a.x).toFixed(1) + 'px,' + (p[1] - q.a.y).toFixed(1) + 'px) scale(' + p[2].toFixed(4) + ')' }); } add(q.e, kf, { easing: 'linear' }); });
     src.style.visibility = 'hidden'; dst.style.visibility = '';
-    g.style.color = cs.color; add(g, fwd ? [{ transform: rowT }, { transform: 'none' }] : [{ transform: 'none' }, { transform: rowT }]);
-    /* the hand-over: into the face the title lands on its own layout */
+    /* the hand-over: into the face the pieces land on the face's own glyphs (70ms); back, they land on the row's glyphs and the row takes over in the last frame */
     if (fwd) { add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' }); }
-    else add(dst, [{ opacity: 0 }, { opacity: 0 }]);   /* back: the band closes onto the title box, the title lands on the row's line and the row takes over in that last frame */
-    const s0 = af / df, A = fwd ? [ra.x, ra.y, face.offsetWidth * s0, face.offsetHeight * s0] : [d.x, d.y, face.offsetWidth, face.offsetHeight], Z = fwd ? [d.x, d.y, face.offsetWidth, face.offsetHeight] : [ra.x, ra.y, face.offsetWidth * s0, face.offsetHeight * s0];
-    m.gp = []; for (let i = 0; i <= 40; i++) { const f = this._ez(i / 40); m.gp.push(A.map(function (v, j) { return v + (Z[j] - v) * f; })); } m.gx = [src, dst];
-    m.clean.push(function () { g.style.opacity = '0'; src.style.visibility = ''; dst.style.visibility = ''; });
-    return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
+    else add(dst, [{ opacity: 0 }, { opacity: 0 }]);
+    m.gp = []; for (let i = 0; i <= 40; i++) { const e = this._ez(i / 40), P = at(fwd ? 1 - e : e); let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; P.forEach(function (p, k) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0] + pc[k].w * p[2]); y1 = Math.max(y1, p[1] + pc[k].h * p[2]); }); m.gp.push([x0, y0, x1 - x0, y1 - y0]); } m.gx = [src, dst];
+    m.clean.push(function () { g.style.opacity = '0'; g.textContent = ''; src.style.visibility = ''; dst.style.visibility = ''; });
+    const ro = this._rel(origin, root), ra = this._rel(row, root); return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
   }
+  /* role / section: the content changes in one frame (never two layers, never a blank); the new content settles from 16px aside
+     while the face colour (光晕 / 落日: its light too) fades from the old role's to the new one's */
   _xfade(dir, snap) {
-    const root = this.rootRef.current, k = this._kk(), D = 75 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = 20 * (h ? h.sign : 1), over = this.snapOverRef.current;
-    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 215) * k, dir: dir, id: 0 };
+    const root = this.rootRef.current, k = this._kk(), h = snap.home, dx = 16 * (h ? h.sign : 1);
+    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 220) * k, dir: dir, id: 0 };
     const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
-    /* two beats: the old content holds, then is gone at 75ms; only then the new one comes in fast from 20px aside */
-    const mv = function (el, out) { m.anims.push(out ? el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx / 2) + 'px)' }], { duration: D, easing: 'cubic-bezier(.5,0,.9,.6)', fill: 'both' }) : el.animate([{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 140 * k, delay: D, easing: 'cubic-bezier(.1,.8,.2,1)', fill: 'both' })); };
-    if (h && over) { over.appendChild(h.box); m.clean.push(function () { h.box.remove(); }); h.parts.forEach(function (p) { mv(p, true); }); }
-    const pg = root.querySelector('.c05-pg.pg-home'); if (pg) pg.querySelectorAll('.c05-fc .c05-zb, .c05-cap, .c05-list').forEach(function (el) { mv(el, false); });
-    const card = this.cardRef.current, cs = snap.card; if (card && (this._c.heroKey || '') !== (this._shownKey || '')) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
-      if (!card.classList.contains('is-off')) mv(card, false);
-      if (cs && over) { const pt = h ? h.pt : 1e4; cs.el.style.cssText += ';top:' + cs.top + 'px;clip-path:inset(-200px -200px ' + Math.max(0, cs.top + card.offsetHeight - pt) + 'px -200px)'; over.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); mv(cs.el, true); } }
-    /* role: the whole face colour (光晕 / 落日: its light too) fades from the old role's to the new one's */
+    const mv = function (el) { m.anims.push(el.animate([{ transform: 'translateX(' + dx + 'px)' }, { transform: 'none' }], { duration: 220 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' })); };
+    const pg = root.querySelector('.c05-pg.pg-home'); if (pg) pg.querySelectorAll('.c05-fc .c05-zb, .c05-cap, .c05-list').forEach(mv);
+    const card = this.cardRef.current; if (card && (this._c.heroKey || '') !== (this._shownKey || '')) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; }); if (!card.classList.contains('is-off')) mv(card); }
     if (h && h.tint && this.snapTintRef.current) { this.snapTintRef.current.appendChild(h.tint); m.clean.push(function () { h.tint.remove(); }); m.anims.push(h.tint.animate([{ opacity: 1 }, { opacity: 0 }], { duration: m.T, easing: 'ease', fill: 'both' })); }
   }
   /* a closing sheet: the scrim fades and the paper drops away (220ms) instead of vanishing in one frame */
@@ -1610,7 +1615,7 @@ class Component extends DCLogic {
     const sev = c.sheet.on && c.sheet.eventId && this.state.data && this.state.data.events ? this.state.data.events[c.sheet.eventId] : null, idw = sev && sev.iso ? JU.fmt.when(sev.iso) : null;
     const dw = c.detail.on ? c.detail.when : null; const ww = c.waitlist.on ? c.waitlist.row.when : null; const hw = c.history.on ? c.history.when : null; const mw = c.manage.on && !c.manage.missing ? c.manage.head.when : null; const mp = mw ? c.manage.head.progress : null;
     return {
-      panel, rootRef: this.rootRef, envRef: this.envRef, cardRef: this.cardRef, cstampRef: this.cstampRef, snapTintRef: this.snapTintRef, snapCardRef: this.snapCardRef, snapOverRef: this.snapOverRef, snapSheetRef: this.snapSheetRef, emberRef: this.emberRef, homeFcRef: this.homeFcRef, manageStatusRef: this.manageStatusRef, manageSeatsRef: this.manageSeatsRef, leadSeatsRef: this.leadSeatsRef, c, hero, lead, home,
+      panel, rootRef: this.rootRef, envRef: this.envRef, cardRef: this.cardRef, cstampRef: this.cstampRef, snapTintRef: this.snapTintRef, snapCardRef: this.snapCardRef, snapSheetRef: this.snapSheetRef, emberRef: this.emberRef, homeFcRef: this.homeFcRef, manageStatusRef: this.manageStatusRef, manageSeatsRef: this.manageSeatsRef, leadSeatsRef: this.leadSeatsRef, c, hero, lead, home,
       onFaceScroll: this._onFaceScroll, onReadScroll: this._onReadScroll, ghostRef: this.ghostRef, gbandRef: this.gbandRef,
       detail: { label: c.detail.on ? this._nb(c.detail.label) : '', name: c.detail.on ? this._nb(c.detail.event.title) : '', wd: dw ? dw.wdZh + ' ' + dw.md : '', time: dw ? dw.time : '', sub: c.detail.on ? c.detail.place.full + ' · ' + c.detail.seatText : '' },
       read: { progressPct: Math.round((c.read.progress || 0) * 100) },
