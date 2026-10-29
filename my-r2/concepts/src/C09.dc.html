@@ -360,12 +360,14 @@ textarea.c09-in{height:auto;min-height:110px;padding:10px 12px;resize:none;line-
 .c09-home.c09-splitting.is-under:is(.ph-in,.ph-idle) .c09-up,.c09-home.c09-splitting.is-under:is(.ph-in,.ph-idle)>.c09-hd{translate:0 var(--c09-dyu,-160px);opacity:0}
 .c09-home.c09-splitting.is-under:is(.ph-in,.ph-idle) :is(.c09-down,.c09-split>.c09-row){translate:0 var(--c09-dyd,380px);opacity:0}
 .c09-home.c09-splitting.is-under:is(.ph-in,.ph-idle) .c09-lead.c09-lout{translate:-56px 0;opacity:0}
+.c09-home.c09-splitting .c09-lead.c09-lout{transition-duration:calc(320ms * var(--k)),calc(85ms * var(--k))}
+.c09-home.c09-splitting.c09-vialead.is-under.ph-exit :is(.c09-up,.c09-lead),.c09-home.c09-splitting.c09-vialead.is-under.ph-exit>.c09-hd{transition-delay:0ms,calc(110ms * var(--k))}
 .c09-home.c09-splitting.is-under.ph-exit :is(.c09-up,.c09-down,.c09-split>.c09-row,.c09-lead),.c09-home.c09-splitting.is-under.ph-exit>.c09-hd{transition-duration:calc(300ms * var(--k)),calc(170ms * var(--k));transition-delay:0ms,calc(95ms * var(--k));transition-timing-function:var(--c09-ease),ease-out}
 .c09-home.c09-splitting.is-under.ph-exit :is(.c09-up,.c09-lead),.c09-home.c09-splitting.is-under.ph-exit>.c09-hd{transition-delay:0ms,calc(60ms * var(--k))}
 .c09-pg.c09-hide{opacity:0!important;transition:none!important}
 .c09-deep.is-top.ph-enter .c09-sc,.c09-deep.is-top.ph-enter .c09-foot{translate:48px var(--c09-bfrom,0px)}
 .c09-deep.is-top.ph-exit .c09-sc,.c09-deep.is-top.ph-exit .c09-foot{translate:48px var(--c09-bto,0px)}
-.c09-deep.is-top.ph-in .c09-sc,.c09-deep.is-top.ph-in .c09-foot{transition-duration:calc(320ms * var(--k)),calc(170ms * var(--k));transition-delay:0ms,calc(70ms * var(--k));transition-timing-function:var(--c09-ease),ease-out}
+.c09-deep.is-top.ph-in .c09-sc,.c09-deep.is-top.ph-in .c09-foot{transition-duration:calc(320ms * var(--k)),calc(170ms * var(--k));transition-delay:0ms,calc(var(--c09-cd,70ms) * var(--k));transition-timing-function:var(--c09-ease),ease-out}
 .c09-deep.is-top.ph-in :is(.c09-tool,.c09-tt,.c09-meta){transition-delay:calc(120ms * var(--k));transition-duration:calc(300ms * var(--k)),calc(170ms * var(--k))}
 .c09-deep.is-top.ph-enter .c09-band .c09-ah>*{opacity:var(--c09-bt,1);transition:none}
 .c09-deep.is-top.ph-exit .c09-band .c09-ah>*{opacity:var(--c09-bt2,1)}
@@ -1195,6 +1197,7 @@ class Component extends DCLogic {
     const fromHome = st[0].s === 'home' && (st.length === 2 || (st.length === 3 && st[1].s === 'detail' && top.s === 'read'));
     if (nav.phase === 'enter' && nav.dir === 'fwd') {
       const b = this._band; this._band = null; const y = this._bandY(band);
+      set('--c09-cd', b && fromHome && b.lead ? '100ms' : '70ms');
       if (b && fromHome) { const from = b.lead ? b.y - ruleOff - y : b.y - y; set('--c09-bfrom', from.toFixed(1) + 'px'); set('--c09-bo', '1'); set('--c09-bc', b.lead ? '0' : '1'); set('--c09-bt', b.lead ? '0' : '1'); if (home) home.style.setProperty('--c09-dyu', (b.lead ? -90 : y - b.y).toFixed(1) + 'px'); }
       else { set('--c09-bfrom', '18px'); set('--c09-bo', '0'); set('--c09-bc', '0'); set('--c09-bt', '1'); }
     }
@@ -1396,7 +1399,7 @@ class Component extends DCLogic {
     const has = {}; areas.forEach(a => { has[a.key] = 1; });
     const restList = sec === 'current' && !empty && areas.length && areas.length <= 2 ? Object.keys(C09_AREAS).filter(k => !has[k]).map(k => ({ zh: C09_AREAS[k][0], en: C09_AREAS[k][1] })) : [];
     const rest = restList.length ? { list: restList, note: role === 'hosted' ? '发起的局会落进它所在的区' : '报名的局会落进它所在的区' } : null;
-    return { lead, leadTop, areas, index, rest, countText: empty ? '' : countText, empty, footer, splitCls: L ? 'c09-splitting' : '', undo: role === 'hosted' && sec === 'drafts' && c.hosted.undo.on };
+    return { lead, leadTop, areas, index, rest, countText: empty ? '' : countText, empty, footer, splitCls: L ? 'c09-splitting' + (L.lead ? ' c09-vialead' : '') : '', undo: role === 'hosted' && sec === 'drafts' && c.hosted.undo.on };
   }
   _card(e, when, place, counts, status) {
     const cap = e.capacity || 4, conf = counts ? counts.confirmed : 0, res = counts ? counts.reserved : 0, avail = Math.max(0, cap - conf - res); const pack = e.pack || 'invite';
