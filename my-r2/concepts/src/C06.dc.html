@@ -28,8 +28,8 @@ body{margin:0}
   --serif:"Noto Serif SC","Source Han Serif SC","Songti SC",serif;--num:Archivo,"Noto Sans SC",sans-serif;
   --gx:24px;--tt:calc(var(--sat,0px) + 24px);--navh:50px;
   --gA:rgba(206,190,240,.92);--gB:rgba(252,196,224,.9);--gC:rgba(184,226,244,.95)}
-.app[data-skin="halo"]{--sec:#3d4254;--void:#3d4254;--wait:#4d5467;--faint:#5c6172;--warn:#9f1f3a;--gA:rgba(240,156,92,.62);--gB:rgba(226,186,144,.85);--gC:rgba(206,186,230,.9)}
-.app[data-skin="sunset"]{--sec:#3d4254;--void:#3d4254;--wait:#4d5467;--faint:#5c6172;--warn:#9f1f3a;--gA:rgba(255,156,104,.6);--gB:rgba(255,204,96,.55);--gC:rgba(136,168,234,.7)}
+.app[data-skin="halo"]{--sec:#3d4254;--void:#3d4254;--cx:#3d4254;--wait:#4d5467;--faint:#5c6172;--warn:#7a1229;--gA:rgba(240,156,92,.62);--gB:rgba(226,186,144,.85);--gC:rgba(206,186,230,.9)}
+.app[data-skin="sunset"]{--sec:#3d4254;--void:#3d4254;--cx:#3d4254;--wait:#4d5467;--faint:#5c6172;--warn:#7a1229;--gA:rgba(255,156,104,.6);--gB:rgba(255,204,96,.55);--gC:rgba(136,168,234,.7)}
 .app *,.app *::before,.app *::after{box-sizing:border-box}
 .app button{font-family:inherit;-webkit-tap-highlight-color:transparent}
 .app p,.app h3,.app h4{margin:0}
@@ -122,7 +122,7 @@ body{margin:0}
 .c06-lab{display:inline-block;flex:0 0 auto;font-weight:500;white-space:nowrap;position:relative;transition:color calc(600ms * var(--k,1)) ease}
 .c06-need{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c06-need::before{content:"·";margin-right:6px;color:var(--faint)}
-.c06-item.is-cx .c06-ti{color:#4f5466}
+.c06-item.is-cx .c06-ti{color:var(--cx,#4f5466)}
 .c06-ember{position:absolute;z-index:40;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff1d6 0,#ffb267 26%,#f06a2a 46%,rgba(214,82,24,.35) 62%,rgba(214,82,24,0) 74%)}
 .c06-t-act{color:var(--act)}.c06-t-go{color:var(--go)}.c06-t-wait{color:var(--wait)}.c06-t-amber{color:var(--amber)}.c06-t-kept{color:var(--body)}.c06-t-void{color:var(--void)}.c06-t-red{color:var(--warn)}
 .c06-res.c06-t-ink{color:var(--ink)}   /* a step back (撤回 / 放弃 / 退出) is stated in ink; green stays for 已确认 */
@@ -1266,8 +1266,10 @@ class Component extends DCLogic {
     o.xT = isX && (x.s === 'ticket' || x.s === 'reply'); o.xD = isX && x.s === 'detail'; o.xW = isX && x.s === 'waitlist'; o.xH = isX && x.s === 'history';
     return o;
   }
+  /* the open item's head always shows the live facts (a cancel or a new time lands in its head at once), while the list keeps its frozen order */
+  _liveH(c, id) { const all = [].concat((c.hosted.sections || []), (c.hosted.sectionsHistory || [])); for (let i = 0; i < all.length; i++) { const rs = all[i].rows || []; for (let j = 0; j < rs.length; j++) if (rs[j].id === id) return rs[j]; } return null; }
   _decorH(it, c, x, collapsing) {
-    const r = it.r; const isX = !!(x && x.id === r.id && x.s === 'manage'); const w = r.when || {};
+    const isX = !!(x && x.id === it.r.id && x.s === 'manage'); const r = (isX && this._liveH(c, it.r.id)) || it.r; const w = r.when || {};
     const lead0 = !!r.isLead && c.section === 'current', lead = this._keepLead(isX, r.id, lead0);
     const tone = { todo: 'act', resched: 'amber', recruit: 'wait', formed: 'go', ended: 'kept', cancelled: 'void' }[r.section] || (r.life === '已取消' ? 'void' : 'wait');
     const old = r.oldWhen ? (r.oldWhen.md === w.md ? r.oldWhen.time : r.oldWhen.md + ' ' + r.oldWhen.time) : '';

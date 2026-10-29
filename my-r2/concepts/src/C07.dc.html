@@ -1079,7 +1079,17 @@ class Component extends DCLogic {
     const root = this.rootRef.current; if (this._snap || t.classList.contains('is-up') || root.classList.contains('c07-rising') || root.classList.contains('c07-falling')) return;
     const to = this._trayTy(t); if (Math.abs(to - from) < 1) return; const r = this.state.review || {}; const k = this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); if (!k || !t.animate) return;
     const a = t.animate([{ transform: 'translate3d(0,' + from + 'px,0)' }, { transform: 'translate3d(0,' + to + 'px,0)' }], { duration: 320 * k, easing: 'cubic-bezier(.32,.72,.2,1)' });
-    a.__c07dur = 320 * k; this._trayAnim = a; a.onfinish = () => { if (this._trayAnim === a) this._trayAnim = null; }; this._syncTrayClock();
+    a.__c07dur = 320 * k; a.__c07to = to; this._trayAnim = a; a.onfinish = () => { if (this._trayAnim === a) this._trayAnim = null; }; this._syncTrayClock(); this._toastFollow();
+  }
+  /* a toast stands on the tray's top edge: while a parked height change is still moving, the toast rides with the tray (added to its own
+     entry), so it never sits on the tray's text before the tray has made room (M7: 改时间确认 → 盘收回安排块) */
+  _toastFollow() {
+    const a = this._trayAnim, root = this.rootRef.current, el = root && root.querySelector('.c07-toast'); if (!el || !a || a.playState === 'finished' || el.__c07f === a || !el.animate) return;
+    const off = this._trayTy(root.querySelector('.c07-tray')) - a.__c07to; el.__c07f = a; if (Math.abs(off) < 1) return;
+    const at = Math.min(a.currentTime || 0, a.__c07dur - 1), dur = a.__c07dur - at;
+    if (this._toastAnim) { try { this._toastAnim.cancel(); } catch (e) { } }
+    const f = el.animate([{ transform: 'translate3d(0,' + off + 'px,0)' }, { transform: 'translate3d(0,0,0)' }], { duration: dur, easing: 'cubic-bezier(.32,.72,.2,1)', composite: 'add' });
+    f.__c07at = at; f.__c07dur = dur; this._toastAnim = f; f.onfinish = () => { if (this._toastAnim === f) this._toastAnim = null; }; this._syncTrayClock();
   }
   _syncTrayMotion() {
     const sn = this._traySnap; this._traySnap = null; const root = this.rootRef.current, t = root && root.querySelector('.c07-tray'); if (!t) return;
@@ -1094,7 +1104,7 @@ class Component extends DCLogic {
     const memo = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section], want = memo && memo.home; if (want == null) return;
     const el = this.rootRef.current && this.rootRef.current.querySelector('[data-scroller="home"]'); if (el && Math.abs(el.scrollTop - want) > 1) { el.scrollTop = want; if (this._applyHc) this._applyHc(el); }
   }
-  _syncTrayClock() { const a = this._trayAnim, r = this.state.review || {}; if (!a) return; try { if (r.scrub != null) { a.pause(); a.currentTime = Math.max(0, Math.min(r.scrub / 100 * a.__c07dur, a.__c07dur - 1)); } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } }
+  _syncTrayClock() { const a = this._trayAnim, f = this._toastAnim, r = this.state.review || {}; if (!a) return; try { if (r.scrub != null) { a.pause(); a.currentTime = Math.max(0, Math.min(r.scrub / 100 * a.__c07dur, a.__c07dur - 1)); if (f) { f.pause(); f.currentTime = Math.max(0, Math.min(a.currentTime - f.__c07at, f.__c07dur - 1)); } } else if (r.paused) { a.pause(); if (f) f.pause(); } else { if (a.playState === 'paused') a.play(); if (f && f.playState === 'paused') f.play(); } } catch (e) { } }
   /* m17: focus follows the sheet — risen: the back button; back home: the row it came from */
   _syncNavFocus() {
     const c = this._c, root = this.rootRef.current; if (!c || !root) return; const nav = c.nav; const top = nav.cur + ':' + nav.depth + ':' + (nav.seq || 0);
@@ -1117,7 +1127,7 @@ class Component extends DCLogic {
   /* m6: a list that can scroll only a little would leave the large title half collapsed — it gets the rest of the range as a tail */
   _fitScrollers() { const root = this.rootRef.current; if (!root) return; const rng = this.headerRange || 96;
     root.querySelectorAll('.c07-sc[data-scroller],.c07-ssc[data-scroller]').forEach(el => { const tail = parseFloat(el.style.getPropertyValue('--c07-tail')) || 0; const nat = el.scrollHeight - el.clientHeight - tail; const want = nat > 2 && nat < rng ? Math.ceil(rng - nat) : 0; if (Math.abs(want - tail) > 1) el.style.setProperty('--c07-tail', want + 'px'); }); }
-  componentDidUpdate(pp, ps) { this._syncTrayMotion(); this._syncGoing(); this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._fixHomeRestore(ps); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._syncNavFocus(); this._fitScrollers(); this._undoTicker();
+  componentDidUpdate(pp, ps) { this._syncTrayMotion(); this._syncGoing(); this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._toastFollow(); this._fixHomeRestore(ps); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._syncNavFocus(); this._fitScrollers(); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
     { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && cf.offsetParent && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */

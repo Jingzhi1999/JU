@@ -1,6 +1,6 @@
 # C04「叠层」· fix-r1：独立复核（快照 88505666dc73）之后的修改，并入规则 10
 
-- 源文件：`my-r2/concepts/src/C04.dc.html`，SIZE_B 字节（SIZE_KB KB，上限 200 KB）。
+- 源文件：`my-r2/concepts/src/C04.dc.html`，193,525 字节（189 KB，上限 200 KB）。
 - 构建：`JU_FONTS_CSS=… JU_STANDALONE=.build/C04.html JU_ONLY=C04 node my-r2/src/build.js`。
 - 已提交的 stage1 / stage2 证据没有删除，也没有覆盖。本轮证据全部在 `my-r2/evidence/C04/fix-r1/`，规则 10 的阶段中间测量放在 `stage2/env/`。
 - 帧证据都来自真实点击（`clickSel` 或元素 `click()`），每条流程从首页起步，不走索引跳转；只有工具（coverage / widths / kb / rm / env-probe）按约定使用索引跳转。
@@ -97,17 +97,17 @@
   - 事实卡第二行不再重复第一行，例如「拒绝改期 / 席位已释放」。
   - 待审核详情的 meta 改成「等局主审核 · 不占名额」。
   - 页面标题用不换行空格把「·」粘在前一个字上，拒绝改期后的历史标题变成「周五 Livehouse · / 散场后吃宵夜」。
-  - 证据：`fix-r1/ops-b/m8-01…03`。
+  - 证据：`fix-r1/ops-b/m8-01…03`；`m8-04` 确认已预留详情的 meta 仍完整，为「已预留 · 等你确认 · …」。
   - 局主历史组注释「可以从这里再开一局」来自共享 `ju-data.js`，没有本地改写（见下）。
 - **m-10 首页释放预留后没有结果提示**：首页释放后给 toast「已放弃预留 · 这局移到了历史」，见 `fix-r1/ops-a/m10-01…02`。
 - **m-11 原生日期 / 时间控件**：共享截图工具改为中文启动后，显示为 24h。本方案没有改动。
 
 ## 工具（复跑，最终构建）
 
-- coverage：TOOL_COV（`fix-r1/coverage/`）
-- rm-check：TOOL_RM（`fix-r1/rm/`）
-- kb-check：TOOL_KB（`fix-r1/kb/`）
-- widths：TOOL_W（`fix-r1/widths/`）
+- coverage：50/50，errors 0，mismatches 0（`fix-r1/coverage/`）
+- rm-check：rmSys true，flows 11/11，findings []，errors 0（`fix-r1/rm/`）
+- kb-check：findings []（h-m-reschedule、j-d-ended）（`fix-r1/kb/`）
+- widths：48 shots，overflow []，fontInvariance []，minFont 12，zoom / safe ok（`fix-r1/widths/`）
 - 对比度（像素取样，18 状态 × 3 环境）：自有文字 0 处低于目标，最低 4.56（`fix-r1/contrast.txt`）。共享原件不在统计内：V27 CTA 白字取样 2.37–2.39，back pill「←」3.73–3.79。
 - 三环境与变体静帧：`fix-r1/stills/`，接触表 `sheet-3env.jpg`、`sheet-variants.jpg`、`sheet-s12-widths.jpg`。
 - 联系 / 退出：`fix-r1/contact-exit/`。
