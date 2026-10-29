@@ -222,8 +222,7 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 100%{scroll-margin-bottom:0px;clip-path:inset(0 0 0 0 round 18px)}}
 @keyframes c04-gt-in{
 0%,52%{color:var(--gc0);left:var(--gx0);top:var(--gy0);font-size:var(--gf0);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.2,1)}
-94%{opacity:1}
-100%{color:var(--gc1);left:var(--gx1);top:var(--gy1);font-size:calc(var(--gf0) * var(--gs));opacity:0}}
+100%{color:var(--gc1);left:var(--gx1);top:var(--gy1);font-size:calc(var(--gf0) * var(--gs));opacity:1}}
 @keyframes c04-gtf-in{0%,70%{opacity:1}92%,100%{opacity:0}}
 /* the line breaks early (24–34%: the second half drops to its line, the meta is pushed down with it), then slides to the margin while the title grows */
 @keyframes c04-g2-in{0%,52%{left:var(--g2x0);top:var(--g2y0);animation-timing-function:cubic-bezier(.3,.6,.3,1)}64%{left:var(--g2x0);top:var(--g2y1);animation-timing-function:cubic-bezier(.25,.7,.25,1)}100%{left:var(--g2x1);top:var(--g2y1)}}
@@ -233,12 +232,12 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 80%{opacity:0}
 100%{color:var(--mc1);left:var(--mx1);top:var(--my1);font-size:calc(var(--mf0) * var(--ms));opacity:0}}
 @keyframes c04-gs-in{0%,14%{left:var(--sx0);top:var(--sy0);opacity:1}32%,100%{left:var(--sx0);top:var(--sy0);opacity:0}}
-@keyframes c04-ptx-in{0%,94%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-ptx-in{0%,99%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
 @keyframes c04-ptf-in{0%,72%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
 @keyframes c04-pmx-in{0%,84%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
 @keyframes c04-pt2-in{0%,40%{scroll-margin-bottom:0px;opacity:0;transform:translateY(16px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
 @keyframes c04-fade-in{0%,52%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
-@keyframes c04-body-in{0%,56%{scroll-margin-bottom:0px;opacity:0;transform:translateY(40px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
+@keyframes c04-body-in{0%,70%{scroll-margin-bottom:0px;opacity:0;transform:translateY(24px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
 @keyframes c04-sheet-in{0%,26%{scroll-margin-bottom:0px;transform:translateY(105%);animation-timing-function:cubic-bezier(.2,.8,.24,1)}100%{scroll-margin-bottom:0px;transform:none}}
 @keyframes c04-edge-in{0%{scroll-margin-bottom:0px;transform:translateY(100%)}100%{scroll-margin-bottom:0px;transform:none}}
 /* closing */
@@ -967,7 +966,8 @@ _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) retu
 _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R || !c.ticket.on) return; R.burn.reset(stage); this._settleTicket(stage, this._rit4(c), 'torn'); this._rit.burn = R.burn(stage, { reason: c.ticket.result ? c.ticket.result.reason : 'withdrawn' }, { onDone: () => { this._rit.burn = null; } }); }
 _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false;
 /* the section can stay mounted from one ticket to the next (jumps, replace): the original's own reveal state must not carry over */
-{ const root = this.rootRef.current, sec = root && root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (sec) { const w = sec.querySelector('[data-contact-reveal]'), a = sec.querySelector('[data-contact-action]'); if (w) { w.dataset.revealed = 'false'; w.setAttribute('aria-hidden', 'true'); } if (a) a.dataset.shown = 'false'; } } if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+{ const root = this.rootRef.current, sec = root && root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (sec) { const w = sec.querySelector('[data-contact-reveal]'), a = sec.querySelector('[data-contact-action]'); if (w) { w.dataset.revealed = 'false'; w.setAttribute('aria-hidden', 'true'); } if (a) a.dataset.shown = 'false'; } } if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } if (t.stage && t.stage.__juPrintMesh) { const R = this.R(); try { if (R && R.print && R.print.reset) R.print.reset(t.stage); } catch (e) { } }   /* leaving mid-print: stop the original's paper mesh, or it keeps the compositor busy for the next page */
+const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
 onEffect(fx) {
 const root = this.rootRef.current, c = this._c, top = sel => { const sc = root && root.querySelector(sel); if (sc && sc.scrollTop > 0) try { sc.scrollTo({ top: 0, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop = 0; } };
 if (fx.type === 'confirmed' && !fx.replay) this.afterKey('c04-rtop', 90, () => top('[data-scroller="read"]'));   /* M-4: the result card sits at the top of the read layer */

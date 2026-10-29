@@ -1066,7 +1066,7 @@ body{margin:0}
 /* C05「大面」— behaviour comes from JU.ctl (this.ctlVals()) */
 class Component extends DCLogic {
   constructor(p) {
-    super(p); this.reviewInit(Object.assign({}, CONCEPT, { notes: (CONCEPT.notes || '') + '\n范围外（手机内只留文字与位置，禁用态）：查看我的记录、补充这局的记录、对出席记录提出异议 → 账户级记录页；继续编辑 → 开局模块；查看进度 → 举报处理。' }));
+    super(p); this.reviewInit(Object.assign({}, CONCEPT, { notes: (CONCEPT.notes || '') + '\n范围外（手机内只留文字与位置，禁用态）：查看我的记录、补充这局的记录、对出席记录提出异议 → 账户级记录页；继续编辑 → 开局模块；查看进度 → 举报处理。' })); /* 关键帧 during a live burn seeks that burn (canvas engine: the mixin's _movingAnims cannot see it and would replay instead) */ const mv = this._movingAnims; this._movingAnims = function () { const a = mv.call(this), r = this._rit; return r && (r.burn || r.hburn) ? a.concat([r.burn || r.hburn]) : a; };
     this.motionSpec = { fwd: 400, back: 340, swap: 320, role: 300 };
     this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this.cardRef = { current: null }; this.cstampRef = { current: null }; this.snapTintRef = { current: null }; this.snapCardRef = { current: null }; this.snapOverRef = { current: null }; this.snapSheetRef = { current: null }; this.emberRef = { current: null }; this.homeFcRef = { current: null }; this.ghostRef = { current: null };
@@ -1425,7 +1425,7 @@ class Component extends DCLogic {
     this._rit.contact = h; return h;
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
-  _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R || !c.ticket.on) return; const data = c.ticket.ritual; const torn = c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = c.ticket.result ? c.ticket.result.reason : 'withdrawn'; this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
+  _replayBurn() { const stage = this._rit.stage, c = this._c, R = this.R(); if (!stage || !R || !c.ticket.on) return; const data = c.ticket.ritual; const torn = c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = c.ticket.result ? c.ticket.result.reason : 'withdrawn'; this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; const r = this._c.ticket.result; if (r && r.burning) r.burnDone(); } }); }
   _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   onEffect(fx) {
     if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();

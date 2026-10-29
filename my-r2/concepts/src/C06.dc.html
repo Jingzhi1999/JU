@@ -97,7 +97,8 @@ body{margin:0}
 .c06-list.is-open .c06-item:not(.has-x),.c06-list.is-open .c06-grp,.c06-list.is-open .c06-tabs{opacity:.28}
 .c06-list.is-open .c06-foot{opacity:0;visibility:hidden}
 .c06-list.is-open .c06-grp:has(+ .c06-item.is-x){opacity:0}   /* the label right above the open paragraph steps away (it would sit in the header's fade) */
-.c06-list.is-open>:has(~ .c06-item.is-x){opacity:0;transition:opacity calc(110ms * var(--k,1)) ease}   /* everything above the open paragraph leaves at once: no line of type ghosts over its title as the list carries it up */
+.c06-list.is-open>:has(~ .c06-item.is-x){opacity:.28}   /* the title stayed where it was: what was above it stays above, dimmed like the rest */
+.c06-list.is-open.is-lift>:has(~ .c06-item.is-x){opacity:0;transition:opacity calc(110ms * var(--k,1)) ease}   /* everything above the open paragraph leaves at once: no line of type ghosts over its title as the list carries it up */
 .c06-row{padding:18px 0 19px;cursor:pointer;outline:none;touch-action:pan-y}
 .c06-row:focus-visible{box-shadow:inset 3px 0 0 var(--focus)}
 .c06-row:active .c06-ti{color:#41444f}
@@ -122,7 +123,7 @@ body{margin:0}
 .c06-need{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c06-need::before{content:"·";margin-right:6px;color:var(--faint)}
 .c06-item.is-cx .c06-ti{color:#4f5466}
-.c06-ember{position:absolute;z-index:40;width:5px;height:5px;margin:-2.5px 0 0 -2.5px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#ffe2b8 0,#ff9a4d 38%,rgba(214,82,24,.55) 62%,rgba(214,82,24,0) 74%)}
+.c06-ember{position:absolute;z-index:40;width:9px;height:9px;margin:-4.5px 0 0 -4.5px;border-radius:50%;pointer-events:none;background:radial-gradient(circle,#fff1d6 0,#ffb267 26%,#f06a2a 46%,rgba(214,82,24,.35) 62%,rgba(214,82,24,0) 74%)}
 .c06-t-act{color:var(--act)}.c06-t-go{color:var(--go)}.c06-t-wait{color:var(--wait)}.c06-t-amber{color:var(--amber)}.c06-t-kept{color:var(--body)}.c06-t-void{color:var(--void)}.c06-t-red{color:var(--warn)}
 .c06-res.c06-t-ink{color:var(--ink)}   /* a step back (撤回 / 放弃 / 退出) is stated in ink; green stays for 已确认 */
 /* the lead (先做这件): countdown rule + the only CTA, which rests on a band of environment light */
@@ -917,7 +918,7 @@ class Component extends DCLogic {
     if (!x) this._swapOut = null;
     if (x && (!prev || prev.id !== x.id)) {
       const memo = this._scrollMemo && this._scrollMemo['home:' + this.state.role + ':' + this.state.section];
-      const target = this._targetFor(x.id);
+      const target = this._targetFor(x.id); this._liftId = target != null ? x.id : null; const lst = root.querySelector('.c06-list'); if (lst) lst.classList.toggle('is-lift', target != null);
       this._y0 = { id: x.id, y: memo && memo.home != null ? memo.home : null, alt: sc.scrollTop };
       const moving = nav.phase !== 'idle' && nav.dir !== 'back' && k > 0; if (moving) { this._moT0 = document.timeline.currentTime; this._moSet = null; }
       /* the paragraph starts opening under a title that has not moved yet (the rows below are pushed down); 90ms later the list carries the title up under the header — both land by 420ms */
@@ -983,8 +984,8 @@ class Component extends DCLogic {
     const root = this.rootRef.current, k = this.kf(); const block = root && root.querySelector('[data-xb="' + x.id + '"]'); if (!block || !(k > 0)) return;
     this._moT0 = document.timeline.currentTime; this._moSet = null; this._swapOut = x.id;
     const inner = block.firstElementChild; if (!inner) return; const fig = inner.querySelector('.c06-figwrap');
-    if (fig) fig.animate([{ opacity: 1, transform: 'none' }, { opacity: .3, transform: 'translateY(-8px) scale(.975)' }], { duration: 220 * k, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
-    Array.prototype.forEach.call(inner.children, (el) => { if (el === fig || el.contains(fig)) return; el.animate([{ opacity: 1 }, { opacity: .5 }], { duration: 160 * k, easing: 'ease', fill: 'forwards' }); });
+    if (fig) fig.animate([{ opacity: 1, transform: 'none' }, { opacity: .3, transform: 'translateY(-8px) scale(.975)' }], { duration: 220 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' });
+    Array.prototype.forEach.call(inner.children, (el) => { if (el === fig || el.contains(fig)) return; el.animate([{ opacity: 1 }, { opacity: .5 }], { duration: 160 * k, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'forwards' }); });
   }
   _preBack() {
     const x = this._expOf(); if (!x || !x.top) return false; this._backAt = performance.now();
@@ -1110,7 +1111,8 @@ class Component extends DCLogic {
   _tearGoing() {
     const root = this.rootRef.current; if (!root) return; const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec) return;
     const node = root.getRootNode ? root.getRootNode() : document; const ae = node && node.activeElement; if (ae && sec.contains(ae)) this._rit.refocus = true;
-    const key = this._c && this._c.ticket ? this._c.ticket.printKey : null; if (this._rit.leaving !== key) { this._rit.leaving = key; this.forceUpdate(); }
+    const key = this._c && this._c.ticket ? this._c.ticket.printKey : null; const btn = sec.querySelector('.c06-slot .ju-print-cta-in'); if (btn) btn.classList.add('is-leaving');   /* painted on this frame */
+    if (this._rit.leaving !== key) { this._rit.leaving = key; setTimeout(() => this.forceUpdate(), 0); }   /* and kept by the view from the next render on */
   }
   _tearBack() { if (this._rit.leaving) { this._rit.leaving = null; this.forceUpdate(); } }
   _cueTear(stage) {
@@ -1194,11 +1196,11 @@ class Component extends DCLogic {
     this.after(480, () => { const root = this.rootRef.current, ti = root && root.querySelector('.c06-row[data-rid="' + id + '"] .c06-ti'); if (!ti) return;
       ti.animate([{ color: '#14161F' }, { color: getComputedStyle(ti).color }], { duration: 900 * k, easing: 'cubic-bezier(.4,0,.2,1)' });
       const rr = root.getBoundingClientRect(), tr = ti.getBoundingClientRect(); const rg = document.createRange(); rg.selectNodeContents(ti); const lines = Array.from(rg.getClientRects()).filter(r => r.width > 4);
-      const span = lines.length ? lines[lines.length - 1] : tr; const n = 14;
+      const span = lines.length ? lines[lines.length - 1] : tr; const n = 18;
       for (let i = 0; i < n; i++) { const e = document.createElement('i'); e.className = 'c06-ember'; e.setAttribute('aria-hidden', 'true');
         const x0 = span.left - rr.left + (span.width * (i + .5) / n) + (Math.random() - .5) * 10, y0 = span.bottom - rr.top - 5 - Math.random() * 8;
         e.style.left = x0 + 'px'; e.style.top = y0 + 'px'; root.appendChild(e);
-        const dx = (Math.random() - .5) * 26, dy = 22 + Math.random() * 30, dur = (900 + Math.random() * 600) * k, del = Math.random() * 420 * k;
+        const dx = (Math.random() - .5) * 30, dy = 30 + Math.random() * 40, dur = (1000 + Math.random() * 700) * k, del = Math.random() * 480 * k;
         const a = e.animate([{ transform: 'translate(0,0) scale(1)', opacity: 0 }, { opacity: 1, offset: .14 }, { transform: 'translate(' + (dx * .5) + 'px,' + (-dy * .55) + 'px) scale(.85)', opacity: .9, offset: .55 }, { transform: 'translate(' + dx + 'px,' + (-dy) + 'px) scale(.35)', opacity: 0 }], { duration: dur, delay: del, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'backwards' });
         a.onfinish = a.oncancel = () => e.remove(); }
     });
@@ -1207,6 +1209,9 @@ class Component extends DCLogic {
   _reprintFx(id) {
     const k = this.kf(); if (!(k > 0)) return;
     requestAnimationFrame(() => { const root = this.rootRef.current; if (!root) return; const tm = root.querySelector('[data-tm="' + id + '"]'), old = tm && tm.parentElement.querySelector('.c06-old');
+      const nw = root.querySelector('[data-section="replies"] .c06-mlede b'), os = root.querySelector('[data-section="replies"] .c06-mlede s');
+      if (nw) nw.animate([{ clipPath: 'inset(0 100% 0 0)', opacity: .35 }, { clipPath: 'inset(0 0 0 0)', opacity: 1 }], { duration: 620 * k, delay: 320 * k, easing: 'cubic-bezier(.3,.6,.2,1)', fill: 'backwards' });
+      if (os) os.animate([{ color: 'var(--ink)' }, { color: getComputedStyle(os).color }], { duration: 400 * k, delay: 300 * k, easing: 'ease', fill: 'backwards' });
       if (tm) tm.animate([{ clipPath: 'inset(0 100% 0 0)', opacity: .35 }, { clipPath: 'inset(0 0 0 0)', opacity: 1 }], { duration: 560 * k, delay: 300 * k, easing: 'cubic-bezier(.3,.6,.2,1)', fill: 'backwards' });
       if (old) old.animate([{ opacity: 0, transform: 'translateX(-6px)' }, { opacity: 1, transform: 'none' }], { duration: 320 * k, delay: 700 * k, easing: 'ease', fill: 'backwards' }); });
   }
@@ -1308,7 +1313,7 @@ class Component extends DCLogic {
     const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing; if (!x) this._xl = null;
     const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim }; this._cards = {};
     v.appCls = (open ? ' c06-open' : '') + (s.hcOn ? ' c06-hcon' : '');
-    v.listCls = open ? 'is-open' : ''; v.tail = !!x;
+    v.listCls = open ? 'is-open' + (this._liftId && x && this._liftId === x.id ? ' is-lift' : '') : ''; v.tail = !!x; if (!x) this._liftId = null;
     v.backCls = open ? '' : 'off'; v.backTab = open ? '0' : '-1';
     v.meta = this._meta(c);
     v.roles = c.roleTabs.map(t => Object.assign(t, { short: t.k === 'joined' ? '参加的' : '发起的', badgeOn: !t.on && t.badge ? String(t.badge) : '' }));
@@ -1327,9 +1332,9 @@ class Component extends DCLogic {
     v.items = items.map(it => it.isG ? it : it.kind === 'j' ? this._decorJ(it, c, x, collapsing) : it.kind === 'h' ? this._decorH(it, c, x, collapsing) : this._decorD(it, c, x, collapsing));
     if (this._hold) v.items.forEach(o => { if (o.key !== this._hold.key) return; o.label = this._hold.label; o.need = this._hold.need; o.tone = 'c06-t-void'; o.kick = o.kick ? '已处理' : ''; o.kickEm = ''; o.tap = () => { }; o.cls = String(o.cls || '') + ' is-held'; });
     v.undoLeft = this._undoLeft(c.hosted && c.hosted.undo);
-    v.outline = !!(v.empty && role === 'hosted' && sec === 'drafts');
     const em = role === 'joined' ? c.joined.empty : c.hosted.empty;
     v.empty = em && em.on && !x ? { title: em.title, body: em.body, label: em.action ? em.action.label : '', go: em.action ? em.action.go : null, inert: em.action && em.action.inert ? 'true' : 'false', cls: em.action && em.action.inert ? 'inert' : 'act' } : null;
+    v.outline = !!(v.empty && role === 'hosted' && sec === 'drafts');
     v.foot = sec === 'history' && !v.empty ? (role === 'joined' ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '再开一局只带入活动内容，成员与记录不复制（开局模块，本轮不可点）') : sec === 'drafts' && c.hosted.drafts.length ? '继续编辑在开局模块里完成（本轮不可点）· 删除后 10 秒内可以撤销' : '';
     /* a list with nothing or almost nothing in it keeps its shape: the intents it is organised by, each with one line of what lands there */
     const nRows = items.filter((it) => !it.isG).length; v.stubs = [];
@@ -1354,10 +1359,11 @@ class Component extends DCLogic {
       const d = c.detail; const st = d.stage; const drow = d.row || {}; const dneed = c06Need(drow.label, drow.need) || '';
       /* m9 · the paragraph never repeats the status line under the title (result, lede, receipt) */
       const same = (a, b) => !!a && !!b && String(a).replace(/[。.\s]/g, '') === String(b).replace(/[。.\s]/g, '');
+      const strip = (a, b) => { if (!a || !b) return a; const A = String(a), B = String(b); if (same(A, B)) return ''; const i = A.indexOf(B); if (i < 0) return A; return (A.slice(0, i) + A.slice(i + B.length)).replace(/\s*·\s*$/, '').replace(/^\s*·\s*/, '').replace(/\s*·\s*·\s*/g, ' · ').trim(); };
       const rT = d.result ? d.result.title : '', rB = d.result ? d.result.body : '';
       const rcB = d.receipt ? d.receipt.body : '', dl = drow.deadlineText || '';
       v.dt = { resTitle: rT && !same(rT, drow.label) ? rT : '', resBody: rB && !same(rB, drow.need) && !same(rB, dneed) ? rB : '', rcBody: rcB && !(d.countdown && d.countdown.on && (same(rcB, dl) || (dl && String(rcB).indexOf(dl) >= 0))) ? rcB : '',
-        resTone: d.result && d.result.kind === 'confirmed' ? 'c06-t-go' : 'c06-t-ink', lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : (d.need && !same(d.need, drow.need) && !same(d.need, dneed) ? d.need : ''),
+        resTone: d.result && d.result.kind === 'confirmed' ? 'c06-t-go' : 'c06-t-ink', lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : strip(strip(d.need || '', drow.need), dneed),
         rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '',
         card: this._card('d', d.eventId, d.event, d.when, d.place, d.host, d.counts ? d.counts.available : 0) };
     } else v.dt = { resTitle: '', resBody: '', rcBody: '', resTone: '', lede: '', rules: [], rulesNote: '', card: '' };
@@ -1396,7 +1402,7 @@ class Component extends DCLogic {
 }
 JU.mixin(Component);
 (function () { const P = Component.prototype, base = P.back; P.back = function () { const nav = this.state && this.state.nav; if (nav && nav.phase === 'exit') { this._landBack(); return true; } if (this._backQ) return true;
-  if (nav && nav.phase === 'idle' && this.kf() > 0 && this._preBack()) { const self = this, args = arguments; this._backQ = requestAnimationFrame(function () { self._backQ = 0; base.apply(self, args); }); return true; }
+  if (nav && nav.phase === 'idle' && this.kf() > 0 && this._preBack()) { const self = this, args = arguments; this._backQ = requestAnimationFrame(function () { self._backQ = requestAnimationFrame(function () { self._backQ = 0; base.apply(self, args); }); }); return true; }   /* two frames: the reaction is painted before the controller's render */
   return base.apply(this, arguments); }; })();
 </script>
 </body>
