@@ -501,12 +501,11 @@ body{margin:0}
 @keyframes c03-ember{30%{filter:saturate(1.5) brightness(1.4);box-shadow:0 0 7px 1px rgba(255,140,60,.7)}70%{filter:saturate(0) brightness(.7);box-shadow:0 0 3px rgba(255,120,40,.3)}100%{filter:saturate(0) brightness(.5);opacity:0;transform:scaleY(.35)}}
 @keyframes c03-spark{20%{opacity:1}100%{opacity:0;transform:translate(3px,-20px) scale(.5)}}
 @keyframes c03-ashin{0%,55%{opacity:0}100%{opacity:1}}
-/* 改时间：旧时间划掉，新时间逐字重印 */
-.c03-rp{margin:8px 0 0;font-size:calc(13px * var(--tz,1));color:var(--c03-fg2);animation:c03-out calc(300ms * var(--k)) calc(2400ms * var(--k)) both}
-.c03-rp s{text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 55%/0 1px no-repeat;animation:c03-strike calc(420ms * var(--k)) ease-out both}
-.c03-rp b{display:inline-block;font-weight:600;color:var(--c03-fg);clip-path:inset(0 100% 0 0);animation:c03-type calc(640ms * var(--k)) steps(12,end) calc(420ms * var(--k)) both}
-@keyframes c03-strike{to{background-size:100% 1px}}@keyframes c03-type{to{clip-path:inset(0)}}@keyframes c03-out{to{opacity:0}}
-.app.scrub .c03-mash.is-burn .c03-seat,.app.scrub .c03-mash.is-burn .c03-seat::before,.app.scrub .c03-mash.is-burn .c03-seats::after,.app.scrub .c03-rp s,.app.scrub .c03-rp b{animation-delay:calc(var(--frame,0) * -1.5s)}
+/* 改时间：答复区那一行重印——旧时间一笔划掉，新时间逐字印出（等弹层下沉后开始） */
+.c03-chg s{text-decoration:none;background:linear-gradient(currentColor,currentColor) 0 55%/100% 1px no-repeat}.c03-chg b{display:inline-block}
+.c03-chg.is-rp s{animation:c03-strike calc(420ms * var(--k)) ease-out calc(200ms * var(--k)) both}.c03-chg.is-rp b{animation:c03-type calc(640ms * var(--k)) steps(12,end) calc(620ms * var(--k)) both}
+@keyframes c03-strike{from{background-size:0 1px}}@keyframes c03-type{from{clip-path:inset(0 100% 0 0)}}
+.app.scrub .c03-mash.is-burn .c03-seat,.app.scrub .c03-mash.is-burn .c03-seat::before,.app.scrub .c03-mash.is-burn .c03-seats::after,.app.scrub .c03-chg.is-rp s,.app.scrub .c03-chg.is-rp b{animation-delay:calc(var(--frame,0) * -1.5s)}
 </style>
 </helmet>
 <div class="ju-stage">
@@ -925,7 +924,7 @@ body{margin:0}
                     <div class="c03-sc" data-scroller="manage" onScroll="{{c.nav.onScroll}}">
                       <sc-if value="{{c.manage.missing}}"><div class="c03-empty"><b>{{c.manage.title}}</b><p>{{c.manage.body}}</p></div></sc-if>
                       <sc-if value="{{manage.ready}}">
-                        <div class="c03-mhead"><sc-if value="{{manage.ash}}"><div class="c03-mash {{manage.ash.cls}}"><div class="st">席位已作废</div><div class="c03-seats"><sc-for list="{{manage.ash.seats}}" as="s" hint-placeholder-count="4"><i class="c03-seat {{s.kind}}" style="--i:{{s.i}}"></i></sc-for></div></div></sc-if><sc-if value="{{manage.rp}}"><div class="c03-rp"><s>{{manage.rp.old}}</s> → <b>{{manage.rp.now}}</b></div></sc-if>
+                        <div class="c03-mhead"><sc-if value="{{manage.ash}}"><div class="c03-mash {{manage.ash.cls}}"><div class="st">席位已作废</div><div class="c03-seats"><sc-for list="{{manage.ash.seats}}" as="s" hint-placeholder-count="4"><i class="c03-seat {{s.kind}}" style="--i:{{s.i}}"></i></sc-for></div></div></sc-if>
                           <sc-if value="{{manage.progressOn}}">
                             <sc-if value="{{c.manage.head.progress.attendance}}"><div class="st">{{c.manage.head.progress.attendance.text}}</div><div class="pl">{{c.manage.head.progress.attendance.sub}}</div></sc-if>
                             <sc-if value="{{manage.seatsOn}}"><div class="st">{{c.manage.head.progress.text}}</div><div class="c03-seats"><sc-for list="{{manage.seats}}" as="s" hint-placeholder-count="4"><i class="c03-seat {{s.kind}} att-{{s.attendance}} {{s.freshCls}}"></i></sc-for></div><sc-if value="{{c.manage.head.progress.more}}"><div class="pl">{{c.manage.head.progress.more}}</div></sc-if></sc-if>
@@ -943,7 +942,7 @@ body{margin:0}
                             <sc-if value="{{c.manage.apps.empty}}"><div class="c03-done"><b>申请都处理完了</b><span>{{manage.appsDone}}</span></div></sc-if>
                             <p class="c03-help">{{c.manage.apps.help}}</p></div></div></sc-if>
                           <sc-if value="{{c.manage.replies.on}}"><div class="c03-sec {{c.manage.replies.cls}}" data-section="replies" style="--o:{{c.manage.replies.order}}"><h4><span>{{c.manage.replies.title}}</span><small>{{c.manage.replies.sub}}</small></h4><div class="body">
-                            <div class="c03-chg"><s>{{c.manage.replies.oldWhen.zh}}</s><i aria-hidden="true">→</i><b>{{c.manage.replies.newWhen.zh}}</b></div>
+                            <div class="c03-chg {{manage.rpCls}}"><s>{{c.manage.replies.oldWhen.zh}}</s><i aria-hidden="true">→</i><b>{{c.manage.replies.newWhen.zh}}</b></div>
                             <sc-for list="{{c.manage.replies.rows}}" as="r" hint-placeholder-count="2"><div class="c03-mem" data-rid="{{r.id}}"><span>{{r.name}}</span><span class="r tn-{{r.tone}}">{{r.answerText}} · {{r.ticketLine}}</span></div></sc-for>
                             <p class="c03-help">{{c.manage.replies.help}}</p></div></div></sc-if>
                           <sc-if value="{{c.manage.roster.on}}"><div class="c03-sec {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}"><h4><span>{{c.manage.roster.title}}</span><small>{{c.manage.roster.line}}</small></h4><div class="body">
@@ -1495,7 +1494,7 @@ class Component extends DCLogic {
   onEffect(fx) {
     const self = this;
     if (fx.type === 'cancelled' && !this.isRM()) { this.setState({ c03ash: fx.eventId }); this.afterKey('c03ash', 1600, () => this.setState({ c03ash: null })); }
-    if (fx.type === 'proposed' && !this.isRM()) { const W = JU.fmt.when; this.setState({ c03rp: { id: fx.eventId, old: W(fx.oldIso).zh, now: W(fx.newIso).zh } }); this.afterKey('c03rp', 2800, () => this.setState({ c03rp: null })); }
+    if (fx.type === 'proposed' && !this.isRM()) { this.setState({ c03rp: fx.eventId }); this.afterKey('c03rp', 2800, () => this.setState({ c03rp: null })); }
     if (fx.type === 'attended' && fx.correction && !fx.replay) this._attKeep = this._attHold = fx.memberId;
     if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
     if (fx.type === 'torn') this._rit.st = 'torn';
@@ -1597,7 +1596,7 @@ class Component extends DCLogic {
       scard: this._cardVM(mReady ? c.manage.m : null),
       ticket: { goCls: s.c03tearGo ? 'c03-gone' : '', showStage: tk.on && !tk.unavailable, scCls: tk.result ? 'has-result' : '', stageCls: (tk.isReply ? 'reissued' : '') + (tk.result && tk.result.burn && !tk.result.burning ? ' is-ash' : ''), noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result && !tk.contact.closed, showClosed: !!(tk.on && tk.contact.closed && tk.contact.closedText && !tk.result), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按下方按钮' : '') : '' },
       history: { title: c.history.on && c.history.event ? nb(c.history.event.title) : '', recordCount: c.history.on ? c.history.records.length : 0, memberCount: c.history.on && c.history.members ? c.history.members.length : 0, showSum: c.history.on && !c.history.hasStamp, toneCls: c.history.on && (c.history.burnOnce || (c.history.event && c.history.event.status === 'cancelled')) ? 't-red' : '', voidNote: hr && !c.history.burn.play ? '这张票根已作废，只留下这条记录' : '', showStage: !!(hr && c.history.burnOnce), burning: !!(hr && c.history.burn.play), stageCls: (hr && hr.reissued ? 'reissued' : '') + (hr && !c.history.burn.play ? ' is-ash' : ''), noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
-      manage: { ready: mReady, ash: mAsh, rp: s.c03rp && mReady && s.c03rp.id === c.manage.eventId ? s.c03rp : null, progressOn: mReady && !c.manage.head.progress.hidden, seatsOn: mReady && !c.manage.head.ended, seats: mSeats, appsDone: mReady ? (c.manage.apps.handled ? '本次处理了 ' + c.manage.apps.handled + ' 份 · ' : '') + c.manage.head.progress.text : '' },
+      manage: { ready: mReady, ash: mAsh, rpCls: s.c03rp === c.manage.eventId && mReady ? 'is-rp' : '', progressOn: mReady && !c.manage.head.progress.hidden, seatsOn: mReady && !c.manage.head.ended, seats: mSeats, appsDone: mReady ? (c.manage.apps.handled ? '本次处理了 ' + c.manage.apps.handled + ' 份 · ' : '') + c.manage.head.progress.text : '' },
       sv: sv,
       sheet: { closing: closing, closingCls: closing ? 'is-closing' : '', focusRef: closing ? this._noRef : sh.focusRef, keepPrimary: !!sv.keepPrimary && !svSolo, okInk: !svSolo && sv.okTone === 'ink' && svKind === 'confirm', actsCls: sv.keepPrimary && !svSolo ? 'is-keep' : (!svSolo && sv.okTone === 'ink' && svKind === 'confirm' ? 'is-row' : ''), closeText: !(sv.keepPrimary && !svSolo) && !(!svSolo && sv.okTone === 'ink' && svKind === 'confirm'), focusClose: sv.danger && !sv.keepPrimary ? 'true' : null, hasAffected: !!(sv.affected && sv.affected.length), newOrPlaceholder: sv.fields ? (sv.fields.newText || sv.fields.placeholder) : '', newCls: sv.fields && sv.fields.newText ? '' : 'ph', isRecord: svKind === 'record', recordOpen: svKind === 'record' && !sv.done, okDanger: !svSolo && !!sv.danger && !(sv.okTone === 'ink' && svKind === 'confirm'), okBlue: !svSolo && !sv.danger && !(sv.okTone === 'ink' && svKind === 'confirm'), okDisabled: !sv.canOk, okLabel: sv.okLabel || '', countCls: sv.max && sv.count > sv.max ? 'over' : '', closeCls: svSolo ? 'solo' : '' }
     };
