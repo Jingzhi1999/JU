@@ -4,7 +4,7 @@
 
 | 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |
 |---|---|---|---|---|---|
-| j-home · 当前（默认） | ✓ | ✓ 打开 Livehouse → 接受改期 → 返回、改槽（path/）；角色 / 分区切换（motion-a）；rm enter-back；时钟到期跳变（motion-b clk） | ✓ 接触表 | ✓ 实时录屏 328 帧（path/，负载 5.8–7.2）+ 逐帧 k=1（fixes/after-open / back） | 实时开页时，纸与局名同步（修后重录 path/），请在真机上再看一次 |
+| j-home · 当前（默认） | ✓ | ✓ 打开 Livehouse → 接受改期 → 返回、改槽（path/）；角色 / 分区切换（motion-a）；rm enter-back；时钟到期跳变（motion-b clk） | ✓ 接触表 | ✓ 实时录屏 415 帧（path/，负载 5.2→4.5）+ 逐帧 k=1（fixes/after-open / back） | 实时开页时，纸与局名同步（修后重录 path/），请在真机上再看一次 |
 | j-history · 历史 | ✓ | ✓ 打开作废的局 → 首次燃烧 → 压印（motion-b m8b） | ✓ 接触表 | ✓ 逐帧（motion-a m2-sec，motion-b m8b） | 整体观感 |
 | j-many · 当前较多 | ✓ | ✓ 滚到收拢终点再回滚（motion-a m3-many） | ✓ 接触表 | ✓ 逐帧（motion-a m3-many） | 整体观感 |
 | j-history-many · 历史较多 | ✓ | ✓ 滚到收拢终点（284/284，p = 1，ops2/o-history-many-collapsed） | ✓ 接触表 | – | 整体观感 |

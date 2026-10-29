@@ -144,7 +144,7 @@
       var o = this._originOf(ev, s); this._captureScroll();
       var seq = nav.seq || 1; var stack = nav.stack.slice();
       var path = this._paths()[s] || ['home', s]; var parents = path.slice(1, -1);
-      parents.forEach(function (ps) { if (!stack.some(function (e) { return e.s === ps; })) stack.push({ s: ps, p: assign(params), from: null, key: null, id: ++seq }); });
+      parents.forEach(function (ps) { if (!stack.some(function (e) { return e.s === ps; })) stack.push({ s: ps, p: assign(params), from: null, key: o.key, id: ++seq }); });   /* an inserted parent (home → manage puts detail under it) keeps the origin row's key, so backing out through it still reveals that row (C10 report) */
       var entry = { s: s, p: params, from: o.from, key: o.key, id: ++seq }; stack.push(entry);
       var patch = { nav: { stack: stack, phase: 'enter', dir: 'fwd', seq: seq, leaving: null }, sheet: null };
       this.setState(patch); this._enterApply(s, entry.p); this._runPhases('fwd');
@@ -393,12 +393,12 @@
         var iso = isoOf(sh.date, sh.time);
         run('propose', { eventId: sh.eventId, newIso: iso }, function (e) {
           self.closeSheet(); self.say(e.asked ? '已改时间 · 等 ' + e.asked + ' 位成员答复' : '已改时间', 'ok');
-          self._uiIn('manage', { open: assign(self.state.ui.manage.open, { replies: true }) }); self._pendingSection = 'replies'; self.scrollTop('manage');
+          self._uiIn('manage', { open: assign(self.state.ui.manage.open, { replies: true }) }); self._pendingSection = 'replies';   /* reveal only — a scrollTop here fought the reveal (C10: two scrolls after 改时间 / 记为散场) */
         });
         return;
       }
       if (sh.kind === 'cancel') { run('cancel', { eventId: sh.eventId }, function () { self.closeSheet(); self.scrollTop('manage'); }); return; }
-      if (sh.kind === 'end') { run('end', { eventId: sh.eventId }, function (e, data) { self.closeSheet(); self.setTopParams({ intent: 'attendance' }); self._uiIn('manage', { open: assign(self.state.ui.manage.open, { attendance: true }), next: e.toRecord ? (self._firstUnrecorded(sh.eventId, data) || null) : null }); self._pendingSection = 'attendance'; self.scrollTop('manage'); }); return; }
+      if (sh.kind === 'end') { run('end', { eventId: sh.eventId }, function (e, data) { self.closeSheet(); self.setTopParams({ intent: 'attendance' }); self._uiIn('manage', { open: assign(self.state.ui.manage.open, { attendance: true }), next: e.toRecord ? (self._firstUnrecorded(sh.eventId, data) || null) : null }); self._pendingSection = 'attendance'; }); return; }
       if (sh.kind === 'record') {
         var text = (sh.text || '').trim(); if (text.length < 4) { this._sheetSet({ error: '请至少写 4 个字' }); return; }
         run('addRecord', { eventId: sh.eventId, kind: 'report', text: '你补充：' + text }, function () { self._sheetSet({ done: true, text: text }); });
