@@ -1,0 +1,6 @@
+from PIL import Image
+box={"x":240,"y":96,"w":390,"h":844}
+for f in ["/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/023-back_home-1.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/024-back_home-4.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/025-back_home-7.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/026-back_home-9.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/027-back_home-12.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/028-back_home-15.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/029-back_home-18.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/030-back_home-21.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/031-back_home-24.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/032-back_home-26.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/033-back_home-29.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07b-attend-all/034-back_home-32.jpg"]:
+    im=Image.open(f)
+    sx=im.width/1000; sy=im.height/1100
+    im.crop((int(box['x']*sx),int(box['y']*sy),int((box['x']+box['w'])*sx),int((box['y']+box['h'])*sy))).save(f,quality=84)

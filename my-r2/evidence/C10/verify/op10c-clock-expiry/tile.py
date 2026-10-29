@@ -1,0 +1,18 @@
+from PIL import Image, ImageDraw, ImageOps
+import os
+rows=[["/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/000-joined_at_+4h.png","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/001-joined_to_nearest_due-1.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/002-joined_to_nearest_due-2.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/003-joined_after_due.png","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/004-joined_after_due_2.png","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/005-cards_before.png"],["/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/006-host_to_nearest_due-1.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/007-host_to_nearest_due-7.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/008-host_to_nearest_due-12.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/009-host_to_nearest_due-18.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/010-host_to_nearest_due-24.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/011-host_to_nearest_due-29.jpg"],["/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/012-host_to_nearest_due-35.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/013-host_to_nearest_due-41.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/014-host_to_nearest_due-47.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/015-host_to_nearest_due-52.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/016-host_to_nearest_due-58.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/017-host_to_nearest_due-64.jpg"],["/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/018-host_to_nearest_due-69.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/019-host_to_nearest_due-75.jpg","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/020-cards_after_due.png","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/021-cards_after_due_2.png","/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/022-cards_lower.png"]]
+labels=[["joined at +4h","joined: to nearest due 1/2 +0ms","joined: to nearest due 2/2 +23ms","joined after due","joined after due 2","cards before"],["host: to nearest due 1/75 +0ms","host: to nearest due 7/75 +136ms","host: to nearest due 12/75 +243ms","host: to nearest due 18/75 +370ms","host: to nearest due 24/75 +1275ms","host: to nearest due 29/75 +1357ms"],["host: to nearest due 35/75 +1456ms","host: to nearest due 41/75 +1574ms","host: to nearest due 47/75 +1681ms","host: to nearest due 52/75 +2322ms","host: to nearest due 58/75 +2513ms","host: to nearest due 64/75 +2638ms"],["host: to nearest due 69/75 +3259ms","host: to nearest due 75/75 +3381ms","cards after due","cards after due 2","cards lower"]]
+sc=0.5; gap=6; lab=18
+ims=[[Image.open(f).convert('RGB') for f in r] for r in rows]
+W=max(int(i.width*sc) for r in ims for i in r); H=max(int(i.height*sc) for r in ims for i in r); cols=max(len(r) for r in ims)
+sh=Image.new('RGB',(cols*(W+gap)+gap, len(ims)*(H+gap+lab)+gap),(40,40,44))
+d=ImageDraw.Draw(sh)
+from PIL import ImageFont
+try: ft=ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 13)
+except Exception: ft=None
+for ri,r in enumerate(ims):
+    for ci,im in enumerate(r):
+        x=gap+ci*(W+gap); y=gap+ri*(H+gap+lab)
+        if labels and ri < len(labels) and ci < len(labels[ri]): d.text((x+2,y+2),str(labels[ri][ci]),fill=(230,230,230),font=ft)
+        sh.paste(im.resize((int(im.width*sc),int(im.height*sc)),Image.LANCZOS),(x,y+lab))
+sh.save("/home/user/JU/my-r2/evidence/C10/verify/op10c-clock-expiry/sheet.png",optimize=True)

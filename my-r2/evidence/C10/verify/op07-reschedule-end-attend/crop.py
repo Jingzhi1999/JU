@@ -1,0 +1,6 @@
+from PIL import Image
+box={"x":240,"y":90,"w":390,"h":844}
+for f in ["/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/144-_1_未出席-1.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/145-_1_未出席-4.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/146-_1_未出席-6.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/147-_1_未出席-9.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/148-_1_未出席-11.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/149-_1_未出席-14.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/150-_1_未出席-16.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/151-_1_未出席-19.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/152-_1_未出席-21.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/153-_1_未出席-24.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/154-_1_未出席-26.jpg","/home/user/JU/my-r2/evidence/C10/verify/op07-reschedule-end-attend/155-_1_未出席-29.jpg"]:
+    im=Image.open(f)
+    sx=im.width/1000; sy=im.height/1100
+    im.crop((int(box['x']*sx),int(box['y']*sy),int((box['x']+box['w'])*sx),int((box['y']+box['h'])*sy))).save(f,quality=84)
