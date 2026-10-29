@@ -191,6 +191,10 @@ body{margin:0}
 .c07-cd.green{color:var(--tgreen)}.c07-cd.amber{color:var(--tamber)}.c07-cd.red,.c07-cd.expired{color:var(--tred)}
 .c07-lead .cta{padding:12px 0 16px;display:flex;justify-content:center}
 .c07-lead.is-compact{padding-top:18px;padding-bottom:20px}
+/* back from a tray form (再想想 / 关闭 / a confirmed change): the form is gone in that commit, so the block starts at .35 with no wait —
+   the tray is never empty, even when the commit is followed by a long frame (a card paint, a stamp mount) */
+.c07-lead.c07-ret:not(.is-off),.c07-act.c07-ret:not(.is-off){animation:c07-ret calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1);transition-delay:0s}
+@keyframes c07-ret{0%{opacity:.35;transform:translateY(6px)}100%{opacity:1;transform:none}}
 /* the lead's own hand-over (role / section change, a receipt): same 110ms wait as its entry, so the old block is gone first */
 .c07-lead.sw-a:not(.is-off){animation:c07-swapA calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-lead.sw-b:not(.is-off){animation:c07-swapB calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
@@ -419,7 +423,8 @@ body{margin:0}
 .c07-ocard{position:relative;width:258px;aspect-ratio:4/5;border-radius:13px;overflow:hidden;background:rgba(237,239,247,.06);box-shadow:0 30px 60px -28px rgba(0,0,0,.7),0 10px 26px -12px rgba(0,0,0,.45)}
 .c07-ocard canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity calc(240ms * var(--k)) ease}
 .c07-ocard canvas[data-painted]{opacity:1}
-.c07-ocard.in-paper{box-shadow:none}
+.c07-ocard.in-paper{box-shadow:none;background:#1E2232}
+.c07-cstage .ju-ticket-shadow>div{background:#1E2232;border-radius:13px}   /* the card's underlay (it casts the paper shadow) is ink, not paper: no white card before the canvas paints, no pale corner under radius 13 */
 .c07-ocardwrap .c07-pmark{top:150px}
 .app.c07-formon .c07-scrim{opacity:.2}
 .app.c07-formon .c07-tray{transform:translate3d(0,calc(100% - var(--th) - max(0px,var(--kb,0px) - var(--navh))),0)}
@@ -1234,6 +1239,10 @@ class Component extends DCLogic {
     /* a sheet opened while the tray is parked is drawn as the tray's own block (manage: 改时间 / 取消这局 / 记为散场 / 局卡; home: the
        lead's 去不了了 / 撤回 / 退出候补 confirm); over a risen page it is a second ink sheet (.c07-ovl) */
     const sh = c.sheet; const trayForm = !!(sh.on && ((mTop && ['reschedule', 'cancel', 'end', 'card'].indexOf(sh.kind) >= 0) || (cur === 'home' && !trayUp && sh.kind === 'confirm')));
+    /* why the tray's own block last went off: a tray form leaves in the same commit that brings the block back, so that block takes
+       the tray from .35 at once (c07-ret) — the class stays until the next rise / manage switch, so a later re-render never restarts it */
+    if (trayForm) this._offBy = 'form'; else if (trayUp || mVis !== !!this._mVisWas) this._offBy = 'move'; this._mVisWas = mVis;
+    const retCls = !trayForm && this._offBy === 'form' ? ' c07-ret' : '';
     if (trayForm) this._c07FormKind = sh.kind;
     const form = { on: trayForm, plainActs: true };
     if (trayForm) {
@@ -1302,7 +1311,7 @@ class Component extends DCLogic {
     if (!isJ && c.hosted.undo.on) { const u = c.hosted.undo; const ut = (this.state.ui && this.state.ui.undo && this.state.ui.undo.title) || ''; Object.assign(lead, { on: false, none: false, undo: true, cls: '', label: '已删除 · 10 秒内可撤销', undoTitle: ut ? nb('「' + ut + '」') : nb(u.text), undoLeft: u.left, undoRatio: (u.left / 10).toFixed(3), undoAct: u.act, secondary: null }); }
     lead.secondaryOn = !!lead.secondary && !s.leadNote;   /* lead.labText / labCls are set once the label is final (below) */
     /* the parked lead stays mounted while the sheet is up (hidden + inert), so it can fade back in as the sheet settles */
-    lead.cls = (lead.cls || '') + ((trayUp || mVis || trayForm) ? ' is-off' : '') + (s.leadSwap ? (s.leadSwap % 2 ? ' sw-a' : ' sw-b') : ''); lead.inert = trayUp || mVis || trayForm; lead.labText = s.leadNote || lead.label; lead.labCls = s.leadNote ? 'ok' : '';
+    lead.cls = (lead.cls || '') + ((trayUp || mVis || trayForm) ? ' is-off' : '') + retCls + (s.leadSwap ? (s.leadSwap % 2 ? ' sw-a' : ' sw-b') : ''); lead.inert = trayUp || mVis || trayForm; lead.labText = s.leadNote || lead.label; lead.labCls = s.leadNote ? 'ok' : '';
     /* ---- manage: focus = the application / attendee handled in the tray ---- */
     const m = c.manage; const act = { on: false }; let manage = { ready: false };
     if (m.on && !m.missing) {
@@ -1319,7 +1328,7 @@ class Component extends DCLogic {
         a.stampMode = a.recorded && !(held && held.id === a.id) ? a.stamp : ''; a.rowAct = a.recorded ? 'correct' : null; a.ariaText = a.name + ' · ' + (a.recorded ? '已记为' + a.chopText + ' · 更正' : '待记录');
         a.pick = () => { this.cancelKey('c07-att'); if (a.recorded && !a.editing) a.correct(); this._c07FocusAct = '[data-act="attend-present"]'; this.setState({ mfocus: a.id, mArr: false, attHold: null }); }; });
       const seats = m.head.progress.seats; seats.forEach((x, i) => { x.newCls = (s.seatNew != null && i === s.seatNew) ? 'is-new' : ''; });
-      act.on = true; act.cls = 'k-' + mode + (mVis && !trayForm ? '' : ' is-off'); act.inert = !mVis || trayForm; act.rid = ''; act.swapCls = s.actSwap ? (s.actSwap % 2 ? 'sw-a' : 'sw-b') : ''; act.okNote = s.actNote || ''; act.plainHead = mode !== 'att' && mode !== 'burn';
+      act.on = true; act.cls = 'k-' + mode + (mVis && !trayForm ? '' : ' is-off') + retCls; act.inert = !mVis || trayForm; act.rid = ''; act.swapCls = s.actSwap ? (s.actSwap % 2 ? 'sw-a' : 'sw-b') : ''; act.okNote = s.actNote || ''; act.plainHead = mode !== 'att' && mode !== 'burn';
       if (mode === 'app') { const a = focusApp; act.rid = a.id; act.isApp = true; act.label = '先处理这一件 · 申请 ' + (pending.indexOf(a) + 1) + '/' + pending.length; act.side = pending.length > 1 ? '还有 ' + (pending.length - 1) + ' 份' : ''; act.title = a.nickText; act.meta = a.verifiedLabel + ' · ' + a.agoText; act.quote = a.note || ''; act.error = a.error; act.busy = !!a.busy; act.approveLabel = a.busy ? '处理中…' : a.error ? '重试' : '发出邀请'; act.approve = (ev) => { if (a.error) a.retry(); a.approve(ev); }; act.reject = (ev) => { if (a.error) a.retry(); a.reject(ev); }; }
       else if (mode === 'att') { const a = focusAtt; const isHeld = !!(held && held.id === a.id); act.rid = a.id; act.isAtt = true;
         act.label = '记录出席 · ' + Math.min(m.attendance.total, m.attendance.rec + (a.recorded ? 0 : 1)) + '/' + m.attendance.total;
