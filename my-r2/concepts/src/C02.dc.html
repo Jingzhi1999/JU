@@ -48,7 +48,7 @@ body{margin:0}
 .c02-pg.is-under .c02-pgbg,.c02-pg.is-leaving .c02-pgbg,.c02-pg.is-top.ph-exit .c02-pgbg{visibility:hidden}
 .c02-pg.is-under.ph-exit .c02-pgbg{visibility:visible}
 /* the page you leave: its content is gone within 90ms */
-.c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>:not(.c02-hdv){animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
+.c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>:not(.c02-hdv){animation:c02-out calc(90ms * var(--k)) cubic-bezier(0,0,.4,1) both}
 /* the header glass is the section's own child (an ancestor's opacity would cut its blur): it leaves after the rows, arrives before them */
 .c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>.c02-hdv{animation:c02-hdvout calc(150ms * var(--k)) cubic-bezier(.5,0,.7,1) both}
 @keyframes c02-hdvout{0%{opacity:var(--hc,0)}100%{opacity:0}}
@@ -73,13 +73,14 @@ body{margin:0}
 .c02-morph{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
 .c02-morph>i{position:absolute;inset:0;will-change:clip-path}
 .c02-morph>i>b{position:absolute;inset:0}
-.c02-fly>u{position:absolute;left:0;top:0;margin:0;transform-origin:0 0;text-decoration:none;will-change:transform;pointer-events:none}
+.c02-fly>u{z-index:2;position:absolute;left:0;top:0;margin:0;transform-origin:0 0;text-decoration:none;will-change:transform;pointer-events:none}
 /* the flight layer: one circle per person, from where it was to where it lands; the destination circle shows when it lands */
 .c02-fly{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}
-.c02-fly>i{position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;will-change:transform;font-style:normal}
+.c02-fly>i{z-index:1;position:absolute;left:0;top:0;border-radius:50%;transform-origin:50% 50%;will-change:transform;font-style:normal}
 .c02-fly>i>b{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:500;line-height:1;letter-spacing:0}
 .c02-pane{transition:opacity calc(200ms * var(--k)) ease,transform calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-.c02-home.ph-enter.dir-role .c02-pane{opacity:.18;transform:translateX(var(--rx,18px));transition:none}
+.c02-home.dir-role .c02-pane{transition-delay:calc(60ms * var(--k)),0ms}
+.c02-home.ph-enter.dir-role .c02-pane{opacity:0;transform:translateX(var(--rx,18px));transition:none}
 .c02-home.ph-enter.dir-swap .c02-pane{opacity:.22;transform:translateY(10px);transition:none}
 /* ---- outer header (V27): title 30 → 18 into the tool row; constant box, so the scroller never changes height ---- */
 .c02-hd{position:absolute;left:0;right:0;top:0;height:calc(var(--sat,0px) + 140px);z-index:6;pointer-events:none}
@@ -1056,7 +1057,7 @@ class Component extends DCLogic {
     var c = pane.cloneNode(true); c.querySelectorAll('[data-pk],[data-origin],[data-rid],[data-act],[id],[tabindex]').forEach(function (n) { ['data-pk', 'data-origin', 'data-rid', 'data-act', 'id', 'tabindex'].forEach(function (a) { n.removeAttribute(a); }); });
     c.style.cssText = 'position:absolute;margin:0;left:' + (r.left - P.left) / z + 'px;top:' + (r.top - P.top) / z + 'px;width:' + r.width / z + 'px;transition:none;opacity:1;transform:none'; g.appendChild(c);
     morph.style.zIndex = 5; morph.appendChild(g);
-    var a = g.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dir * 18) + 'px)' }], { duration: 120 * k, easing: 'cubic-bezier(0,0,.6,1)', fill: 'forwards' });
+    var a = g.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dir * 18) + 'px)' }], { duration: 80 * k, easing: 'cubic-bezier(0,0,.6,1)', fill: 'forwards' });
     var rec = { i: g, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (g.parentNode) g.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); };
   }
   _same(a, b) { var n = function (t) { return String(t || '').replace(/[\s ]+/g, ''); }; return !!a && n(a) === n(b); }
@@ -1086,13 +1087,15 @@ class Component extends DCLogic {
     var sA = sy + (src.lh - src.fs) / 2, dA = dy + (d.lh - d.fs) / 2, up = d.fs / src.fs, dn = src.fs / d.fs;   /* glyph-top anchors */
     var face = function (t, x, y) { var u = document.createElement('u'); u.textContent = t.text; u.style.cssText = t.css + ';position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + (t.w / 1) + 'px;margin:0;transform-origin:0 0'; layer.appendChild(u); return u; };
     var A = face(src, sx, sy), B = face(d, dx, dy); var D = 260 * k, E = 'cubic-bezier(.2,.8,.2,1)';
-    var moveA = A.animate([{ transform: 'none' }, { transform: 'translate(' + (dx - sx) + 'px,' + (dA - sy - up * (src.lh - src.fs) / 2) + 'px) scale(' + up + ')' }], { duration: D, easing: E, fill: 'both' });
-    var moveB = B.animate([{ transform: 'translate(' + (sx - dx) + 'px,' + (sA - dy - dn * (d.lh - d.fs) / 2) + 'px) scale(' + dn + ')' }, { transform: 'none' }], { duration: D, easing: E, fill: 'both' });
+    var W = 40 * k, T = { duration: D, delay: W, fill: 'both' };
+    var moveA = A.animate([{ transform: 'none' }, { transform: 'translate(' + (dx - sx) + 'px,' + (dA - sy - up * (src.lh - src.fs) / 2) + 'px) scale(' + up + ')' }], { duration: D, delay: W, easing: E, fill: 'both' });
+    var moveB = B.animate([{ transform: 'translate(' + (sx - dx) + 'px,' + (sA - dy - dn * (d.lh - d.fs) / 2) + 'px) scale(' + dn + ')' }, { transform: 'none' }], { duration: D, delay: W, easing: E, fill: 'both' });
     /* the title's faces swap at the row end of the flight (small), so the title stays whole while the pages change under it */
     var sw = back ? [.66, .74, .82] : [.04, .12, .2];
-    var x = [A.animate([{ opacity: 1 }, { opacity: 1, offset: sw[1] - .04 }, { opacity: 0, offset: sw[2] }, { opacity: 0 }], { duration: D, fill: 'both' }), B.animate([{ opacity: 0 }, { opacity: 0, offset: sw[0] }, { opacity: 1, offset: sw[1] }, { opacity: 1 }], { duration: D, fill: 'both' }), moveB];
-    var host = back && dst.closest('[data-origin]'); if (host) host.querySelectorAll('.c02-ppl,.c02-mt,.c02-lp,.c02-lw').forEach(function (n) { if (n.animate) x.push(n.animate([{ opacity: 0 }, { opacity: 0, offset: .58 }, { opacity: 1 }], { duration: D, fill: 'backwards' })); });   /* the row's lines join as the title lands */
-    var h = dst.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }); if (src.el && src.el.isConnected && src.el.animate) x.push(src.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }));
+    var x = [A.animate([{ opacity: 1 }, { opacity: 1, offset: sw[1] - .04 }, { opacity: 0, offset: sw[2] }, { opacity: 0 }], T), B.animate([{ opacity: 0 }, { opacity: 0, offset: sw[0] }, { opacity: 1, offset: sw[1] }, { opacity: 1 }], T), moveB];
+    var host = back && dst.closest('[data-origin]'), wait = host ? host.querySelectorAll('.c02-ppl,.c02-mt,.c02-lp,.c02-lw') : (dst.nextElementSibling ? [dst.nextElementSibling] : []);
+    Array.prototype.forEach.call(wait, function (n) { if (n.animate) x.push(n.animate([{ opacity: 0 }, { opacity: 0, offset: .62 }, { opacity: 1 }], { duration: D + W, fill: 'backwards' })); });   /* the row's lines join as the title lands */
+    var h = dst.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D + W }); if (src.el && src.el.isConnected && src.el.animate) x.push(src.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D + W }));
     var rec = { i: A, a: moveA, h: h, x: x }, self = this; this._fl.push(rec); this._fl.push({ i: B, a: moveB });
     moveA.onfinish = function () { if (A.parentNode) A.remove(); if (B.parentNode) B.remove(); self._fl = self._fl.filter(function (y) { return y !== rec && y.i !== B; }); };
   }
