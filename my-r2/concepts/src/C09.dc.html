@@ -1210,7 +1210,9 @@ class Component extends DCLogic {
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   componentDidMount() { this._mountEnv(); this._syncTh(); this._syncRituals(null); this._syncReduced(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncTh(); this._syncBand(ps); this._syncSame(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncStuck(); this._syncStampFaces(); this._sheetTick(); this._undoTick(); this._wrapReplay(ps); this._syncFreeze(ps); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncTh(); this._syncBand(ps); this._syncSame(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncStuck(); this._syncStampFaces(); this._sheetTick(); this._undoTick(); this._wrapReplay(ps); this._syncFreeze(ps); this._syncClip(); }
+  /* m15: a clipped place name ends on a whole glyph, so the ellipsis sits right before the · (no empty run after it) */
+  _syncClip() { const r = this.rootRef.current; if (!r) return; const bs = [].slice.call(r.querySelectorAll('.c09-lm>b,.c09-rl>b')); bs.forEach(b => { if (b.style.maxWidth) b.style.maxWidth = ''; }); const m = bs.filter(b => b.scrollWidth > b.clientWidth + 1).map(b => [b, b.clientWidth, parseFloat(getComputedStyle(b).fontSize) || 14]); m.forEach(([b, w, em]) => { b.style.maxWidth = Math.max(2 * em, Math.floor(w / em) * em) + 'px'; }); }
   /* M6: same-surface open (同区还有): new page from its top, old keeps its scroll, never a blank frame */
   _syncSame(ps) {
     const nav = this.state.nav, pn = ps && ps.nav, root = this.rootRef.current; if (!nav || !pn || !root) return;
