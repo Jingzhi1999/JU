@@ -19,7 +19,7 @@ body{margin:0}
    文字角色（5 个）：盘内局名 24/600 · 列表局名 15/500 · 时间与地点 13 · 状态 13（有色）· 标签 12（字距 .04em）。
    颜色：盘 #14161F 不透明；盘内唯一彩色 = 倒计时（绿 / 琥珀 / 红）；CTA 为 V27 原构造（cta.css）；列表区只有环境色光 + 墨字。
    ============================================================================ */
-.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;--th:calc(var(--thc,318px) + var(--sab,0px));--navh:calc(56px + var(--sab,0px));background:#dfdfe7;font-size:calc(15px * var(--tz,1));line-height:1.45;
+.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;--th:calc(var(--thc,318px) + var(--sab,0px));--upgap:max(118px,calc(var(--sat,0px) + 72px));--navh:calc(56px + var(--sab,0px));background:#dfdfe7;font-size:calc(15px * var(--tz,1));line-height:1.45;
   --ink:#14161F;--ink2:#2a3040;--mute:#454b5e;--mute2:#50566a;--line:rgba(20,22,31,.14);
   --st-act:#B4223D;--st-go:#035A43;--st-amber:#8A4B00;--link:#3B47A8;--st-due:#5B2FB4;
   --tw:#F4F5FA;--tw2:rgba(244,245,250,.74);--tw3:rgba(244,245,250,.58);--tline:rgba(255,255,255,.11);
@@ -146,7 +146,7 @@ body{margin:0}
 .c07-tray{position:absolute;left:0;right:0;top:0;height:100%;z-index:10;background:#14161F;color:var(--tw);border-radius:28px 28px 0 0;overflow:hidden;
   transform:translate3d(0,calc(100% - var(--th)),0);
   box-shadow:0 -18px 40px -26px rgba(20,22,31,.34),inset 0 1px 0 rgba(255,255,255,.09)}   /* no transition: every move of the sheet is an animation (rise / descent keyframes below, a height change in _syncTrayMotion) */
-.c07-tray.is-up{transform:translate3d(0,0,0);border-radius:0}
+.c07-tray.is-up{transform:translate3d(0,var(--upgap),0)}   /* directions §0.10: risen, the sheet stops at ~86% — its top edge leaves the live environment (and the list under the scrim) in view */
 .c07-nav{position:absolute;left:0;right:0;bottom:0;z-index:12;height:var(--navh);padding:0 10px var(--sab,0px);display:flex;align-items:stretch;border-top:1px solid var(--tline);background:#14161F}
 .c07-nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;line-height:1.2;color:var(--tw3);cursor:pointer;padding:6px 0 4px}
 .c07-nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
@@ -214,7 +214,7 @@ body{margin:0}
 .c07-link.dim{color:var(--tw3);text-decoration:none;cursor:default}
 
 /* ======================= surfaces inside the risen tray ======================= */
-.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:var(--navh);opacity:0;pointer-events:none}
+.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:calc(var(--navh) + var(--upgap));opacity:0;pointer-events:none;--sat:0px}   /* the sheet sits below the status bar: pages inside it need no top inset */
 .c07-tray.is-up .c07-surfs{opacity:1;pointer-events:auto}
 .c07-tray .ju-v27-cta[aria-disabled="true"]{background:rgba(255,255,255,.08);background-image:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:rgba(244,245,250,.6)}
 .c07-tray .ju-v27-cta[aria-disabled="true"]>.gloss{display:none}
@@ -227,7 +227,7 @@ body{margin:0}
 /* ======== motion as keyframes: 暂停 freezes them (.app.paused), 关键帧 drags them (.scrub, below); static rules hold the end states ======== */
 /* M4 rise (340ms): the sheet, the list behind it (stays, recedes 14px / .985), the scrim, the block leaving, the page arriving */
 .app.c07-rising .c07-tray{animation:c07-rise calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
-@keyframes c07-rise{from{transform:translate3d(0,calc(100% - var(--th)),0);border-radius:28px 28px 0 0}}
+@keyframes c07-rise{from{transform:translate3d(0,calc(100% - var(--th)),0)}}
 .app.c07-rising .c07-page{animation:c07-plift calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
 @keyframes c07-plift{from{transform:none}}
 .app.c07-rising .c07-scrim{transition:none;animation:c07-scrin calc(200ms * var(--k)) ease}
@@ -243,7 +243,7 @@ body{margin:0}
 @keyframes c07-hin{from{opacity:0}}
 /* M4 descent (320ms) */
 .app.c07-falling .c07-tray{animation:c07-fall calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
-@keyframes c07-fall{from{transform:translate3d(0,0,0);border-radius:0}}
+@keyframes c07-fall{from{transform:translate3d(0,var(--upgap),0)}}
 .app.c07-falling .c07-page{animation:c07-pdrop calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
 @keyframes c07-pdrop{from{transform:translateY(-14px) scale(.985)}}
 .app.c07-falling .c07-scrim{transition:none;animation:c07-scrout calc(200ms * var(--k)) ease}

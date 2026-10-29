@@ -4,13 +4,13 @@
 
 ## §1 视觉结论：视觉通过（附修改项，见 §2 中标「视觉」的 minor 条目）
 
-先于功能检查写定。依据：三环境双角色首屏 `vg-skins.jpg`（`visual/v-j-home-{cotton,halo,sunset}.png`、`visual/v-h-home-*.png`）、滚到底 `visual/v-j-home-scrolled.png`、`v-h-home-scrolled.png`、详情 `vg-detail.jpg`、票根 / 改期 `vg-ticket.jpg`、管理 / 出席 `vg-manage.jpg`、`vg-manage2.jpg`、历史 `vg-history.jpg`、`vg-history2.jpg`、弹层 `vg-sheets.jpg`、`vg-sheets2.jpg`、空态与边界 `vg-empty.jpg`、`vg-single-long.jpg`、`vg-long-many.jpg`、减少动态 `vg-rm.jpg`、最近邻 `vg-nn-anon.jpg`、`vg-nn-deep.jpg`（匿名：A = C10、B = C06、C = C02）。
+先于功能检查写定。依据：三环境双角色首屏 `vg-skins.jpg`（`visual/v-j-home-{cotton,halo,sunset}.jpg`、`visual/v-h-home-*.jpg`）、滚到底 `visual/v-j-home-scrolled.jpg`、`v-h-home-scrolled.jpg`、详情 `vg-detail.jpg`、票根 / 改期 `vg-ticket.jpg`、管理 / 出席 `vg-manage.jpg`、`vg-manage2.jpg`、历史 `vg-history.jpg`、`vg-history2.jpg`、弹层 `vg-sheets.jpg`、`vg-sheets2.jpg`、空态与边界 `vg-empty.jpg`、`vg-single-long.jpg`、`vg-long-many.jpg`、减少动态 `vg-rm.jpg`、最近邻 `vg-nn-anon.jpg`、`vg-nn-deep.jpg`（匿名：A = C10、B = C06、C = C02）。
 
 | 问题 | 判断 | 依据 |
 |---|---|---|
-| 1 主体形态与重心 | 成立。首屏上半是「先做这件」一段：12px 引语 + 红色截止 → 26px Noto Serif SC 600 局名 → 14px 时间 · 地点 → 13px 状态 → 倒计时细线 → 280×48 原 CTA（下面一条环境色光带）→ 文字弱动作；其余各项 21px 衬线局名 + 14/13px 两行，1px 墨线分隔，组名 12px + 右侧说明。重心明确，留白来自段落间距而不是空着。局主侧同构（「待你处理」→ 审核申请）。整体是左对齐的书页节奏，不是白底通用列表：字阶反差（26 / 21 / 14 / 13 / 12）和墨线撑住了结构 | `visual/v-j-home-cotton.png`、`v-h-home-cotton.png`、`v-j-home-scrolled.png`、`v-h-home-scrolled.png` |
-| 2 中文可读 | 字阶少而清楚（实测页头 30px/500、先做这件 26px/600 衬线、各项 21px/600 衬线、时间地点 14px、状态 13px、组名 / 引语 12px；九个状态的最小字号都是 12px）。行宽 342。`long` 变体局名两行、地点单行省略，时间不换行。没有胶囊。问题（都是 minor）：① 名单里本人一行显示「你（你）」（CSS `::after` 给已经是「你」的名字再加「（你）」，源第 201 行）；② 「参加约定」的长句放在两栏 `.c06-line` 的右栏、右对齐，多行时左缘参差，难读；③ 画面内的范围说明脚注 `.c06-foot` 以 opacity .28 显示，实测对比 1.44:1，基本读不出（草稿摘要、已取消管理、历史）；④ 作废 / 未成行状态字 `#6F7486` 13px 对比 4.45:1，略低于 AA | `visual/v-detail-invited.png`、`v-detail-waitlist-queue.png`、`v-draft.png`、`v-manage-cancelled.png`、`log.json`（probes `type:*`） |
-| 3 表面与光 | 一致：纸底 #FBFAF7 + 墨，环境色光只在顶部渐隐，三环境下前景都成立；页面本身无卡、无面、无影。唯一的第二道光是 CTA 下的全宽色光带（`.c06-ctaw::before`，按钮在场才出现）：读起来像按钮落在光里，是有意设计，是否保留请用户判断。票根 / 局卡 / 08 散场局卡带各自原件的影子，属于原件。没有噪点 / 堆渐变 / 玻璃模糊替代关系（返回键是 V27 原件的玻璃圆钮） | `vg-skins.jpg`、`crop-cta-band.png`、`vg-ticket.jpg` |
+| 1 主体形态与重心 | 成立。首屏上半是「先做这件」一段：12px 引语 + 红色截止 → 26px Noto Serif SC 600 局名 → 14px 时间 · 地点 → 13px 状态 → 倒计时细线 → 280×48 原 CTA（下面一条环境色光带）→ 文字弱动作；其余各项 21px 衬线局名 + 14/13px 两行，1px 墨线分隔，组名 12px + 右侧说明。重心明确，留白来自段落间距而不是空着。局主侧同构（「待你处理」→ 审核申请）。整体是左对齐的书页节奏，不是白底通用列表：字阶反差（26 / 21 / 14 / 13 / 12）和墨线撑住了结构 | `visual/v-j-home-cotton.jpg`、`v-h-home-cotton.jpg`、`v-j-home-scrolled.jpg`、`v-h-home-scrolled.jpg` |
+| 2 中文可读 | 字阶少而清楚（实测页头 30px/500、先做这件 26px/600 衬线、各项 21px/600 衬线、时间地点 14px、状态 13px、组名 / 引语 12px；九个状态的最小字号都是 12px）。行宽 342。`long` 变体局名两行、地点单行省略，时间不换行。没有胶囊。问题（都是 minor）：① 名单里本人一行显示「你（你）」（CSS `::after` 给已经是「你」的名字再加「（你）」，源第 201 行）；② 「参加约定」的长句放在两栏 `.c06-line` 的右栏、右对齐，多行时左缘参差，难读；③ 画面内的范围说明脚注 `.c06-foot` 以 opacity .28 显示，实测对比 1.44:1，基本读不出（草稿摘要、已取消管理、历史）；④ 作废 / 未成行状态字 `#6F7486` 13px 对比 4.45:1，略低于 AA | `visual/v-detail-invited.jpg`、`v-detail-waitlist-queue.jpg`、`v-draft.jpg`、`v-manage-cancelled.jpg`、`log.json`（probes `type:*`） |
+| 3 表面与光 | 一致：纸底 #FBFAF7 + 墨，环境色光只在顶部渐隐，三环境下前景都成立；页面本身无卡、无面、无影。唯一的第二道光是 CTA 下的全宽色光带（`.c06-ctaw::before`，按钮在场才出现）：读起来像按钮落在光里，是有意设计，是否保留请用户判断。票根 / 局卡 / 08 散场局卡带各自原件的影子，属于原件。没有噪点 / 堆渐变 / 玻璃模糊替代关系（返回键是 V27 原件的玻璃圆钮） | `vg-skins.jpg`、`crop-cta-band.jpg`、`vg-ticket.jpg` |
 | 4 深层页同构 | 是同一构图生成：详情、票根、改期、候补、历史都是原地展开在列表里的段落（局名不动，原件以原尺寸插在段落中，四周留白，后面的项淡到 28% 让位）；管理 = 17px 衬线段落标题 + 文字行 + 文字动作；弹层 = 纸面升起的一段文字（26px 衬线标题 + 身份行 + 正文 + 两个文字动作或原 CTA）。没有退回「返回 + 标题 + 列表」默认面板 | `vg-detail.jpg`、`vg-manage.jpg`、`vg-manage2.jpg`、`vg-history.jpg`、`vg-sheets.jpg` |
 | 5 减少动态静态 | 成立，与正常态同一画面。差异一处：减少动态下票根抓手圆点不画（正常态有），撕票入口仍有 CTA 与键盘 | `vg-rm.jpg` |
 | 6 与最近邻 | 不看名字能分辨，灰度下也能：C10 居中轴 + 无衬线 + 32px 时间数字 + 胶囊切换；C02 人物首字圆领行 + 白卡；C06 左对齐衬线 + 墨线 + 文字式角色切换，无任何容器。深层页同样可分（C10 / C02 的申请人是白卡，C06 是文字行） | `vg-nn-anon.jpg`、`vg-nn-deep.jpg` |
@@ -35,10 +35,10 @@
 | 7 | 自然酒小试改时间 → 阳台烧烤答复 → 散场 → 出席 | 同时间：红字提示 + 确认禁用；选 20:30 → 预览「原定 … → 周三 12.23 · 20:30」→ 提交 → 行时间 20:30 +「原定 19:30」+「4 人未答复新时间」，toast「已改时间 · 等 4 位成员答复」，答复区 0/4；阳台烧烤答复区「已答复 2/3」逐人状态。记为散场（重置后）→ 四人：指针点出席，键盘 Tab/Enter 记未出席、待定；每次盖章后焦点到下一位的「出席」，scrollTop 恒为 821（不自动翻页）；更正保留「更正 未出席 → 出席 / 记录 未出席」轨迹；全部记完「都记好了 · 3/4 人到场」，历史「3/4 人到场」 | `op07/op07-att-1-present/sheet.jpg`、`op07/op07-resched-submit/sheet.jpg`、`op07/vg-op07-states.jpg`、`op07/log.json` |
 | 8 | 德州扑克新手桌取消 | 确认层列出受影响的人（已确认 1 / 已预留 1 / 候补 2）+ 不可撤销行；武装失败 → 层内「本机保存失败，请重试」、按钮变「重试」；重试成功 → 历史「已取消 · 票根作废 · 联系已关闭」。取消效果缺失，见 M3 | `op08/vg-op08-states.jpg`、`op08/op08-cancel-retry/sheet.jpg`、`op08/vg-op08-hist.jpg` |
 | 9 | 草稿删除 / 撤销 / 10 秒 / 空态 | 删中间一条 → 撤销条 →（撤销）原槽位恢复 → 再删 → 11s 后真正消失；删光 → 「没有草稿」空态。问题见 m6、m7 | `op09/op09-delete/sheet.jpg`、`op09/vg-op09-states.jpg` |
-| 10 | 时钟 | 到最近到期：16:05 候补第 2 → 第 1 位；19:21 早午餐预留到期进历史「预留已到期 · 位置已补给他人」；20:02 局主侧 Leon「预留到期」入离开记录、候补 №1 西西获 6 小时预留；22:05 参加者侧古着淘货「候补轮到 · 已预留」成为先做这件。+24 小时：局主侧看展搭子「24 小时内仍可查看成员微信」→「联系方式已关闭」 | `op10/log.json`、`op10b/op10b/03-brunch-expired.png`、`op10c/vg-op10c.jpg` |
+| 10 | 时钟 | 到最近到期：16:05 候补第 2 → 第 1 位；19:21 早午餐预留到期进历史「预留已到期 · 位置已补给他人」；20:02 局主侧 Leon「预留到期」入离开记录、候补 №1 西西获 6 小时预留；22:05 参加者侧古着淘货「候补轮到 · 已预留」成为先做这件。+24 小时：局主侧看展搭子「24 小时内仍可查看成员微信」→「联系方式已关闭」 | `op10/log.json`、`op10b/op10b/03-brunch-expired.jpg`、`op10c/vg-op10c.jpg` |
 | 11 | 变体 / 宽度 / 115% / 键盘 / 安全区 | 七个变体两角色经面板真实切换都成立；360 / 430 无横向溢出、票根仍 258 宽；115% 不溢出；改时间键盘态输入框与确认在键盘之上；安全区页头让位刘海 | `op11/vg-variants.jpg`、`op11/vg-widths-zoom-kb.jpg` |
 | 12 | 暂停与关键帧 | 不成立，见 M4 | `op12/vg-op12-a.jpg`、`op12/vg-op12-b.jpg`、`op12/log.json` |
-| 13 | 系统减少动态下 2 / 3 / 6 / 7 | 成立：`rmSys` 真、`.app.rm`，四条流程终态完整（瞬印 → 撕 → 联系层 → 待赴约；审核完；出席 2/4），>1ms 动画 0 条；移组的行带 `is-landing` | `op13/op13/*.png`、`op13/log.json` |
+| 13 | 系统减少动态下 2 / 3 / 6 / 7 | 成立：`rmSys` 真、`.app.rm`，四条流程终态完整（瞬印 → 撕 → 联系层 → 待赴约；审核完；出席 2/4），>1ms 动画 0 条；移组的行带 `is-landing` | `op13/op13/*.jpg`、`op13/log.json` |
 
 另做了打断测试（任务书 §08 可打断）与补充入口：`op14/`、`op14b/`、`op15/`（放弃预留、历史三种、补充记录、名单复制、离开记录、草稿摘要）。
 
@@ -102,15 +102,15 @@
 
 **m9 · minor（视觉）· 中文文案与排版细节**
 - 「你（你）」「第 2 位（你） 你」：`.c06-line.you>b::after` 给本来就是「你」的名字再加「（你）」（源第 201 行）。
-- 「参加约定」长句放在两栏右侧并右对齐，多行时左缘参差（`visual/v-detail-waitlist-queue.png`）。
+- 「参加约定」长句放在两栏右侧并右对齐，多行时左缘参差（`visual/v-detail-waitlist-queue.jpg`）。
 - 重复信息：撤回后结果块与状态行重复「已撤回 / 申请已撤回」；候补门口 lede 重复状态行；候补轮到的倒计时提示与回执重复「请在 明天 04:05 前阅读并确认」；名单复制失败同时有「未能复制 · 重试」与「重试」两个入口；草稿摘要页头「删除草稿」与行内「删除」两个删除入口。
-- 证据：`visual/v-detail-invited.png`、`op05/vg-op05-a.jpg`、`op05/vg-op05-b.jpg`、`op10c/vg-op10c.jpg`、`op15/vg-op15.jpg`。
+- 证据：`visual/v-detail-invited.jpg`、`op05/vg-op05-a.jpg`、`op05/vg-op05-b.jpg`、`op10c/vg-op10c.jpg`、`op15/vg-op15.jpg`。
 
 **m10 · minor（视觉）· 对比度**
 - 画面内的范围说明脚注 `.c06-foot`（opacity .28）对比 1.44:1，基本不可读——要么删掉（范围说明应在手机外），要么提到 ≥ 4.5:1；作废 / 未成行状态字 `#6F7486` 13px 为 4.45:1。证据：`visual/log.json`（probes `type:*`）。
 
 **m11 · minor（视觉）· 草稿分区空态偏薄**
-- 删光草稿后只有一行标题 + 一句说明 + 不可点「去开局」，下方大片空白；其它空态有分组骨架。证据：`op09/op09/07-drafts-empty.png`。
+- 删光草稿后只有一行标题 + 一句说明 + 不可点「去开局」，下方大片空白；其它空态有分组骨架。证据：`op09/op09/07-drafts-empty.jpg`。
 
 **m12 · minor · 减少动态下票根抓手圆点不画**
 - 撕票仍可用 CTA 与键盘，但副券上少了「从这里撕」的提示。证据：`vg-rm.jpg`。
@@ -180,7 +180,7 @@
 
 | 工具 | 输出目录 | 结果 |
 |---|---|---|
-| coverage | `coverage/` | `{"states":50,"errors":0,"mismatches":0}`；接触表 `coverage/sheet.png`（50 个状态都渲染出 C06 的页面系统，无空白 / 崩坏状态） |
+| coverage | `coverage/` | `{"states":50,"errors":0,"mismatches":0}`；接触表 `coverage/sheet.jpg`（50 个状态都渲染出 C06 的页面系统，无空白 / 崩坏状态） |
 | widths | `widths/` | `{"shots":48,"overflow":[],"findings":[],"fontInvariance":[],"minFont":12,"api":{"zoom":"ok","safe":"ok"},"errors":0}` |
 | kb-check | `kb/` | `{"shots":2,"findings":[],"errors":0}`；h-m-reschedule：日期 261–308、时间 347–394、确认底 528，键盘顶 544；j-d-ended 补充记录：输入框 335–458、提交底 528 |
 | rm-check | `rm/` | `{"rmSys":true,"flowsOk":"11/11","findings":[],"errors":0}` |
