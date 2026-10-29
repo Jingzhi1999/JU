@@ -56,6 +56,8 @@
       return { en: WD_EN[p.wd] + ' ' + md + ' · ' + time, zh: WD_ZH[p.wd] + ' ' + md + ' · ' + time, md: md, time: time, wdEn: WD_EN[p.wd], wdZh: WD_ZH[p.wd], wd1: WD_ZH1[p.wd], date: p.mo + '月' + p.d + '日', long: p.mo + '月' + p.d + '日 ' + WD_ZH[p.wd] + ' ' + time, meeting: meeting, month: pad(p.mo), day: pad(p.d), hour: pad(p.h), minute: pad(p.mi), iso: iso };
     },
     place: function (loc) { if (!loc) return { area: '', hood: '', full: '' }; var i = loc.indexOf('-'); if (i < 0) return { area: '', hood: loc, full: loc }; return { area: loc.slice(0, i), hood: loc.slice(i + 1), full: loc.slice(0, i) + ' · ' + loc.slice(i + 1) }; },
+    /* 剩余时长的口语写法，和同屏 hh:mm:ss 倒计时一致（04:20:31 →「剩 4 小时多」，原先向上取整成「剩 5 小时」，C05 复核） */
+    hoursLeft: function (ms) { var h = Math.floor(Math.max(0, ms) / 3600000), rem = Math.max(0, ms) - h * 3600000; return h >= 1 ? '剩 ' + h + ' 小时' + (rem >= 60000 ? '多' : '') : '剩不到 1 小时'; },
     left: function (ms) { if (ms <= 0) return '00:00:00'; var s = Math.floor(ms / 1000); return pad(Math.floor(s / 3600)) + ':' + pad(Math.floor(s / 60) % 60) + ':' + pad(s % 60); },
     leftShort: function (ms) { if (ms <= 0) return '已到期'; var h = Math.floor(ms / H), m = Math.floor((ms % H) / M); return h > 0 ? h + ' 小时 ' + m + ' 分' : m + ' 分钟'; },
     ago: function (ms) { var d = JU.now() - ms; if (d < M) return '刚刚'; if (d < H) return Math.floor(d / M) + ' 分钟前'; if (d < 24 * H) return Math.floor(d / H) + ' 小时前'; return Math.floor(d / (24 * H)) + ' 天前'; },
@@ -89,16 +91,16 @@
   var EVENTS = {
     /* 我参加的 */
     brunch: ev({ id: 'brunch', title: '周六早午餐 · 只聊不卷', en: 'SLOW BRUNCH', pack: 'invite', cat: 'food', iso: '2026-12-19T11:30', loc: 'Brooklyn-威廉斯堡', host: { name: '阿檬', wx: 'ameng.nyc' }, capacity: 3, note: '一家不赶客的早午餐店，聊聊最近在读的书。' }),
-    livehouse: ev({ id: 'livehouse', title: '周四 Livehouse · 散场后吃宵夜', en: 'LATE SHOW', pack: 'acid', cat: 'night', iso: '2026-12-18T21:30', loc: 'Brooklyn-布什维克', host: { name: '老杨', wx: 'laoyang.ju' }, capacity: 5, version: 2, note: '票各买各的，散场后一起去隔壁吃宵夜。' }),
+    livehouse: ev({ id: 'livehouse', title: '周五 Livehouse · 散场后吃宵夜', en: 'LATE SHOW', pack: 'acid', cat: 'night', iso: '2026-12-18T21:30', loc: 'Brooklyn-布什维克', host: { name: '老杨', wx: 'laoyang.ju' }, capacity: 5, version: 2, note: '票各买各的，散场后一起去隔壁吃宵夜。' }),
     run3k: ev({ id: 'run3k', title: '公园慢跑 3K · 跑完喝咖啡', en: 'EASY 3K', pack: 'grain', cat: 'sport', iso: '2026-12-20T09:00', loc: 'Manhattan-中央公园', host: { name: 'Nina', wx: 'nina.runs' }, capacity: 6, joinMode: 'direct', note: '配速随意，跑完去 72 街喝咖啡。' }),
     coffee: ev({ id: 'coffee', title: '手冲咖啡品鉴 · 三款豆子', en: 'POUR OVER', pack: 'mono', cat: 'food', iso: '2026-12-21T15:00', loc: 'Queens-阿斯托利亚', host: { name: '蛋挞', wx: 'dantat.coffee' }, capacity: 4, note: '我带豆子和器具，你带杯子。' }),
     theater: ev({ id: 'theater', title: '外百老汇小剧场 · 一起看《海鸥》', en: 'OFF-BROADWAY', pack: 'riso', cat: 'culture', iso: '2026-12-19T19:30', loc: 'Manhattan-西村', host: { name: '花卷', wx: 'huajuan_play' }, capacity: 4, note: '散场后在剧场门口聊十分钟就走。' }),
     sketch: ev({ id: 'sketch', title: '周末速写 · 画人不画景', en: 'URBAN SKETCH', pack: 'street', cat: 'culture', iso: '2026-12-27T14:00', loc: 'Brooklyn-DUMBO', host: { name: '小面', wx: 'xiaomian.draws' }, capacity: 5, note: '自带本子，画完互相看。' }),
     vintage: ev({ id: 'vintage', title: '古着淘货 · 下东区三家店', en: 'VINTAGE WALK', pack: 'acid', cat: 'shop', iso: '2026-12-26T13:00', loc: 'Manhattan-下东区', host: { name: 'Kiki', wx: 'kiki1210' }, capacity: 4, note: '三家店走一圈，不买也行。' }),
-    dimsum: ev({ id: 'dimsum', title: '法拉盛早茶 · 周日十点', en: 'DIM SUM', pack: 'invite', cat: 'food', iso: '2026-12-21T10:00', loc: 'Queens-法拉盛', host: { name: '阿宽', wx: 'akuan_88' }, capacity: 5, note: '人齐了才点菜。' }),
-    climb: ev({ id: 'climb', title: '新手攀岩 · 周三晚上', en: 'BOULDER NIGHT', pack: 'street', cat: 'sport', iso: '2026-12-24T19:00', loc: 'Brooklyn-绿点', host: { name: 'Leon', wx: 'leon_hp' }, capacity: 4, note: '租鞋 12 刀，第一次来有人教。' }),
-    jazz: ev({ id: 'jazz', title: '周五爵士小酒馆 · 第二场', en: 'JAZZ SET', pack: 'mono', cat: 'night', iso: '2026-12-12T22:00', loc: 'Manhattan-哈莱姆', host: { name: '老杨', wx: 'laoyang.ju' }, capacity: 4, status: 'ended', endedAt: t('2026-12-13T01:00') }),
-    mahjong: ev({ id: 'mahjong', title: '周末麻将 · 不赌钱', en: 'MAHJONG', pack: 'riso', cat: 'game', iso: '2026-12-14T15:00', loc: 'Queens-埃姆赫斯特', host: { name: '阿宽', wx: 'akuan_88' }, capacity: 4, status: 'ended', endedAt: t('2026-12-14T19:00') }),
+    dimsum: ev({ id: 'dimsum', title: '法拉盛早茶 · 周一十点', en: 'DIM SUM', pack: 'invite', cat: 'food', iso: '2026-12-21T10:00', loc: 'Queens-法拉盛', host: { name: '阿宽', wx: 'akuan_88' }, capacity: 5, note: '人齐了才点菜。' }),
+    climb: ev({ id: 'climb', title: '新手攀岩 · 周四晚上', en: 'BOULDER NIGHT', pack: 'street', cat: 'sport', iso: '2026-12-24T19:00', loc: 'Brooklyn-绿点', host: { name: 'Leon', wx: 'leon_hp' }, capacity: 4, note: '租鞋 12 刀，第一次来有人教。' }),
+    jazz: ev({ id: 'jazz', title: '哈莱姆爵士酒馆 · 第二场', en: 'JAZZ SET', pack: 'mono', cat: 'night', iso: '2026-12-12T22:00', loc: 'Manhattan-哈莱姆', host: { name: '老杨', wx: 'laoyang.ju' }, capacity: 4, status: 'ended', endedAt: t('2026-12-13T01:00') }),
+    mahjong: ev({ id: 'mahjong', title: '周一麻将 · 不赌钱', en: 'MAHJONG', pack: 'riso', cat: 'game', iso: '2026-12-14T15:00', loc: 'Queens-埃姆赫斯特', host: { name: '阿宽', wx: 'akuan_88' }, capacity: 4, status: 'ended', endedAt: t('2026-12-14T19:00') }),
     ramen: ev({ id: 'ramen', title: '深夜拉面 · 吃完散步回家', en: 'MIDNIGHT RAMEN', pack: 'grain', cat: 'food', iso: '2026-12-15T23:00', loc: 'Manhattan-东村', host: { name: '西西', wx: 'xixi_nyc' }, capacity: 4, status: 'cancelled', cancelledAt: t('2026-12-15T12:00') }),
     boardgame: ev({ id: 'boardgame', title: '桌游夜 · 新手局', en: 'BOARD GAMES', pack: 'street', cat: 'game', iso: '2026-12-16T19:00', loc: 'Brooklyn-公园坡', host: { name: 'Ivy', wx: 'ivy_pm' }, capacity: 6, status: 'ended', endedAt: t('2026-12-16T23:00') }),
     pottery: ev({ id: 'pottery', title: '陶艺体验 · 拉坯一次', en: 'POTTERY', pack: 'grain', cat: 'culture', iso: '2026-12-10T14:00', loc: 'Brooklyn-红钩', host: { name: 'Nina', wx: 'nina.runs' }, capacity: 4, status: 'ended', endedAt: t('2026-12-10T17:00') }),
@@ -107,7 +109,7 @@
     hike: ev({ id: 'hike', title: '熊山徒步 · 早班车', en: 'BEAR MTN', pack: 'street', cat: 'sport', iso: '2026-12-06T07:30', loc: 'Upstate-熊山', host: { name: 'Leon', wx: 'leon_hp' }, capacity: 5, status: 'ended', endedAt: t('2026-12-06T17:00') }),
     bookclub: ev({ id: 'bookclub', title: '读书会 · 《房思琪》', en: 'BOOK CLUB', pack: 'mono', cat: 'culture', iso: '2026-12-05T19:00', loc: 'Brooklyn-公园坡', host: { name: '小面', wx: 'xiaomian.draws' }, capacity: 5, status: 'ended', endedAt: t('2026-12-05T21:30') }),
     /* 我发起的 */
-    bar: ev({ id: 'bar', title: '周五小酒馆试营业', en: 'BAR TRIAL', pack: 'riso', cat: 'night', iso: '2026-12-19T20:30', loc: 'Manhattan-东村', host: YOU, capacity: 5, hosted: true, note: '朋友的店试营业，我们去捧场。' }),
+    bar: ev({ id: 'bar', title: '东村小酒馆试营业', en: 'BAR TRIAL', pack: 'riso', cat: 'night', iso: '2026-12-19T20:30', loc: 'Manhattan-东村', host: YOU, capacity: 5, hosted: true, note: '朋友的店试营业，我们去捧场。' }),
     bbq: ev({ id: 'bbq', title: '阳台烧烤 · 自带肉', en: 'ROOF BBQ', pack: 'street', cat: 'food', iso: '2026-12-21T16:00', loc: 'Queens-长岛市', host: YOU, capacity: 4, hosted: true, version: 2, establishedAt: NOW - 30 * H, proposal: { oldIso: '2026-12-20T17:00', at: NOW - 6 * H }, note: '我出炭和炉子，肉各带各的。' }),
     museum: ev({ id: 'museum', title: '看展搭子 · 现代馆', en: 'MoMA WALK', pack: 'acid', cat: 'culture', iso: '2026-12-16T13:00', loc: 'Manhattan-中城', host: YOU, capacity: 4, hosted: true, status: 'ended', endedAt: NOW - 20 * H, establishedAt: NOW - 60 * H }),
     wine: ev({ id: 'wine', title: '自然酒小试 · 六款', en: 'NATURAL WINE', pack: 'mono', cat: 'food', iso: '2026-12-23T19:30', loc: 'Brooklyn-威廉斯堡', host: YOU, capacity: 5, hosted: true, establishedAt: NOW - 10 * H, note: '六款酒，每人出 20 刀。' }),
@@ -116,7 +118,7 @@
     hostcards2: ev({ id: 'hostcards2', title: '德州扑克新手桌 · 第一期', en: 'POKER 101', pack: 'grain', cat: 'game', iso: '2026-11-20T20:00', loc: 'Queens-阿斯托利亚', host: YOU, capacity: 6, hosted: true, status: 'ended', endedAt: t('2026-11-21T00:00'), establishedAt: t('2026-11-18T10:00') }),
     hostpicnic: ev({ id: 'hostpicnic', title: '河边野餐 · 下雨取消', en: 'RIVER PICNIC', pack: 'invite', cat: 'food', iso: '2026-11-15T12:00', loc: 'Brooklyn-多米诺公园', host: YOU, capacity: 6, hosted: true, status: 'cancelled', cancelledAt: t('2026-11-14T20:00') })
   };
-  var LONG = { brunch: { title: '周六早午餐 · 只聊不卷 · 带上一本最近在读的书', loc: 'Brooklyn-威廉斯堡北六街与贝德福德大道交口那家门口有绿色雨棚的店' }, livehouse: { title: '周四 Livehouse · 散场后一起吃宵夜 · 不喝酒也欢迎来坐坐', loc: 'Brooklyn-布什维克 Knickerbocker 大道与 Troutman 街口（蓝门）' }, bar: { title: '周五小酒馆试营业 · 第一次开门请多包涵 · 来的人都有一杯', loc: 'Manhattan-东村圣马克广场 B1（门口有红灯笼，走到底左转）' } };
+  var LONG = { brunch: { title: '周六早午餐 · 只聊不卷 · 带上一本最近在读的书', loc: 'Brooklyn-威廉斯堡北六街与贝德福德大道交口那家门口有绿色雨棚的店' }, livehouse: { title: '周五 Livehouse · 散场后一起吃宵夜 · 不喝酒也欢迎来坐坐', loc: 'Brooklyn-布什维克 Knickerbocker 大道与 Troutman 街口（蓝门）' }, bar: { title: '东村小酒馆试营业 · 第一次开门请多包涵 · 来的人都有一杯', loc: 'Manhattan-东村圣马克广场 B1（门口有红灯笼，走到底左转）' } };
 
   /* ------------------------------------------------------------------ participant items ------------------------------------------------------------------ */
   function mem(name, status, extra) { return Object.assign({ id: id('m'), name: name, status: status }, extra || {}); }
@@ -184,7 +186,7 @@
     if (variant === 'drafts') { d.drafts = draftsDefault().concat(draftsMore()); return d; }
     if (variant === 'single') { d.joined = joinedDefault().slice(0, 1); d.hosted = hostedDefault().slice(0, 1); return d; }
     d.joined = joinedDefault(); d.hosted = hostedDefault(); d.drafts = draftsDefault();
-    if (variant === 'many') { d.joined = d.joined.concat(joinedExtraCurrent()); d.hosted.push(hostItem('bbq', { eventId: 'bbq2' })); d.events.bbq2 = Object.assign(clone(EVENTS.bbq), { id: 'bbq2', title: '阳台烧烤 · 第二场', iso: '2026-12-28T16:00', version: 1, proposal: null, establishedAt: null }); d.hosted[d.hosted.length - 1].members = [hmem('你', 'confirmed', { host: true, slot: 0 }), hmem('Ivy', 'confirmed', { slot: 1 })]; d.events.climb2 = Object.assign(clone(EVENTS.climb), { id: 'climb2', title: '新手攀岩 · 周五场', iso: '2026-12-26T19:00' }); d.joined.push(joinItem('climb2', 'going', { ticket: { version: 1, torn: true }, contactAdded: true, members: [mem('Leon', 'host'), mem('阿禾', 'confirmed', { you: true }), mem('小面', 'confirmed'), mem('Momo', 'confirmed')] })); }
+    if (variant === 'many') { d.joined = d.joined.concat(joinedExtraCurrent()); d.hosted.push(hostItem('bbq', { eventId: 'bbq2' })); d.events.bbq2 = Object.assign(clone(EVENTS.bbq), { id: 'bbq2', title: '阳台烧烤 · 第二场', iso: '2026-12-28T16:00', version: 1, proposal: null, establishedAt: null }); d.hosted[d.hosted.length - 1].members = [hmem('你', 'confirmed', { host: true, slot: 0 }), hmem('Ivy', 'confirmed', { slot: 1 })]; d.events.climb2 = Object.assign(clone(EVENTS.climb), { id: 'climb2', title: '新手攀岩 · 周六场', iso: '2026-12-26T19:00' }); d.joined.push(joinItem('climb2', 'going', { ticket: { version: 1, torn: true }, contactAdded: true, members: [mem('Leon', 'host'), mem('阿禾', 'confirmed', { you: true }), mem('小面', 'confirmed'), mem('Momo', 'confirmed')] })); }
     if (variant === 'pending') { var b = d.hosted[0]; b.applications = [app(0, 'approved'), app(1, 'approved'), app(2), app(3), app(4), app(5), app(6), app(7)]; d.hosted[4].applications = [app(2), app(3), app(4)]; d.hosted[4].members = [hmem('你', 'confirmed', { host: true, slot: 0 })]; d.events.cards.joinMode = 'application'; }
     if (variant === 'history') { d.joined = d.joined.concat(joinedExtraHistory()); d.events.hike2 = Object.assign(clone(EVENTS.hike), { id: 'hike2', title: '熊山徒步 · 第二次', iso: '2026-11-22T07:30', endedAt: t('2026-11-22T17:00') }); d.events.bookclub2 = Object.assign(clone(EVENTS.bookclub), { id: 'bookclub2', title: '读书会 · 《秋园》', iso: '2026-11-14T19:00', endedAt: t('2026-11-14T21:30') }); d.hosted = d.hosted.concat(hostedExtraHistory()); }
     if (variant === 'long') { Object.keys(LONG).forEach(function (k) { Object.assign(d.events[k], LONG[k]); }); }
@@ -206,7 +208,7 @@
     reschedule: { label: '待确认新时间', group: 'act', tone: 'act', object: 'ticket', need: '局主改了时间，答复前旧票不能用', cta: '答复新时间', detailTitle: '局主改了时间' },
     ended: { label: '已散场', group: 'kept', tone: 'kept', object: 'stamp', need: '', cta: '', detailTitle: '散场' },
     cancelled: { label: '已取消', group: 'closed', tone: 'void', object: 'spine', need: '局主取消 · 票根作废，不计你的退出', cta: '', detailTitle: '局主取消了' },
-    rejected: { label: '这次没留住', group: 'closed', tone: 'void', object: 'spine', need: '这次没留住 · 不影响信用', cta: '', detailTitle: '这次没留住' },
+    rejected: { label: '这次没留住', group: 'closed', tone: 'void', object: 'spine', need: '这次没留住 · 不影响以后报名', cta: '', detailTitle: '这次没留住' },
     withdrawn: { label: '已撤回', group: 'closed', tone: 'void', object: 'spine', need: '申请已撤回', cta: '', detailTitle: '已撤回申请' },
     exited: { label: '已退出', group: 'closed', tone: 'void', object: 'spine', need: '主动退出 · 票根与联系已关闭', cta: '', detailTitle: '已退出这局' },
     declined: { label: '拒绝改期', group: 'closed', tone: 'void', object: 'spine', need: '拒绝改期 · 席位已释放', cta: '', detailTitle: '未接受新时间' },
@@ -390,7 +392,7 @@
     { key: 'meet', title: '赴约', lines: ['撕开票根，再联系赴约：撕开副券后 8 小时内联系局主；成局后仅局主可见你的微信。', '联系方式有查看期限：退出、拒绝改期、取消后票和联系入口失效；散场 24 小时后关闭。', '改期重新选，取消不算失约：接受新时间就撕开新版副券；去不了可点「去不了了」；局主取消后票根作废。'] }
   ];
   JU.COPY = {
-    withdraw: { title: '撤回报名？', body: '撤回后不再参与本次报名，不影响信用。仍有位置时可以重新报名。', cancel: '再想想', ok: '撤回报名' },
+    withdraw: { title: '撤回报名？', body: '撤回后不再参与本次报名，也不记为失约。仍有位置时可以重新报名。', cancel: '再想想', ok: '撤回报名' },
     release: { title: '退出这局？', body: '你还未确认参加。退出后释放预留，不记主动失约，也不消耗票根主动退出机会；想再参加，需重新申请。', cancel: '保留位置', ok: '确认退出' },
     exit: { title: '退出这局？', body: '你已确认参加。退出会释放席位、作废票根并关闭联系方式，记为主动退出（同一账户每年共 4 次）。', cancel: '继续赴约', ok: '确认退出' },
     decline: { title: '新时间去不了？', body: '这是局主改期。退出后释放席位并作废票根，不记你的主动失约，也不消耗主动退出机会，旧票不恢复。', cancel: '再想想', ok: '确认退出' },

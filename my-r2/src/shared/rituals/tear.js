@@ -510,6 +510,10 @@
       },
       onDone: () => {
         stage.dataset.state = 'torn';
+        /* the engine removes the stub's grab layer: if focus was on it (keyboard tear) it would fall to <body> — park it on the
+           stage so the next Tab continues from the ticket (C08 report; concepts may move it on, e.g. to the contact copy key) */
+        const ae = document.activeElement;
+        if (!ae || ae === document.body || !ae.isConnected) { if (!stage.hasAttribute('tabindex')) stage.setAttribute('tabindex', '-1'); try { stage.focus({ preventScroll: true }); } catch (e) { } }
         if (NS.measureTicket) {
           NS.measureTicket(stage, true);
           /* the stub's box collapses over the next frames (under reduced motion onDone fires on the detach frame, so the first

@@ -56,16 +56,14 @@ body{margin:0}
 /* ======================= upper region: home list on the colour light ======================= */
 /* M4 — when the tray rises the list recedes (fades out in 160ms, drifts up 14px) and the colour light dims under an ink scrim, so the
    area the sheet has not covered yet never flashes bright; on the way back the scrim lifts and the list fades in behind the sheet */
-.c07-page{position:absolute;inset:0;z-index:2;transform-origin:50% 0;transition:opacity calc(160ms * var(--k)) cubic-bezier(0,0,.2,1),transform calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
+.c07-page{position:absolute;inset:0;z-index:2;transform-origin:50% 0}
 /* the list stays readable while the sheet rises over it (only dimmed by the scrim and receding 14px / .985) and is there again the
    moment the sheet starts down: every frame has the list above the sheet edge and a page or the lead on the sheet */
-.app.c07-up .c07-page{transform:translateY(-14px) scale(.985);pointer-events:none;transition:transform calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
-/* home ⇄ manage swap the upper region in place: the outgoing page is gone in 90ms before the incoming one starts (at 100ms) — never
-   two page titles at once */
-.c07-page.is-away{opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
-.app.c07-mswap .c07-page:not(.is-away){transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k))}
+.app.c07-up .c07-page{transform:translateY(-14px) scale(.985);pointer-events:none}
+/* home ⇄ manage swap the upper region in place (a cross-fade, see the motion block below) */
+.c07-page.is-away{opacity:0;transform:translateY(-8px);pointer-events:none}
 .c07-scrim{position:absolute;inset:0;z-index:5;pointer-events:none;background:#14161F;opacity:0;transition:opacity calc(200ms * var(--k)) ease}
-.app.c07-up .c07-scrim{opacity:.34;transition:opacity calc(200ms * var(--k)) ease}
+.app.c07-up .c07-scrim{opacity:.34}
 .c07-head{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(140px + var(--sat,0px));pointer-events:none}
 .c07-head::before{content:"";position:absolute;inset:0;bottom:4px;background:linear-gradient(180deg,rgba(236,237,244,.86) 60%,rgba(236,237,244,0));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:var(--hc,0);mask-image:linear-gradient(#000 70%,transparent);-webkit-mask-image:linear-gradient(#000 70%,transparent);height:calc(96px + var(--sat,0px))}
 .c07-title{position:absolute;left:calc(22px + (50% - 22px) * var(--hc,0));top:calc(var(--sat,0px) + 24px - 11.5px * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));max-width:calc(346px - 104px * var(--hc,0));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.25;letter-spacing:0;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:0;pointer-events:none}
@@ -130,8 +128,9 @@ body{margin:0}
 .c07-legend .g b{font-weight:500;color:var(--tw);white-space:nowrap}
 .c07-legend .g span{min-width:0}
 .c07-lead .c07-fn{margin:10px 0 18px;font-size:calc(13px * var(--tz,1));color:var(--tw3)}
-.c07-pane{transition:opacity calc(240ms * var(--k)) ease}
-.ph-enter.dir-role .c07-pane,.ph-enter.dir-swap .c07-pane{opacity:0}
+/* a role / section change: the list takes its place from .3 (the old list is gone in that commit — never an empty upper region) */
+.c07-page.is-top:is(.dir-role,.dir-swap):is(.ph-enter,.ph-in) .c07-pane{animation:c07-panein calc(240ms * var(--k)) ease backwards}
+@keyframes c07-panein{from{opacity:.3;transform:translateY(6px)}}
 .c07-foot-note{margin:22px 0 0;font-size:calc(13px * var(--tz,1));color:var(--mute2)}
 
 /* ======================= the tray: ONE rigid deep-ink sheet, full height, parked so that only its top --th shows =======================
@@ -141,25 +140,22 @@ body{margin:0}
    at the bottom (same ink) while the sheet slides behind it. */
 .c07-tray{position:absolute;left:0;right:0;top:0;height:100%;z-index:10;background:#14161F;color:var(--tw);border-radius:28px 28px 0 0;overflow:hidden;
   transform:translate3d(0,calc(100% - var(--th)),0);
-  box-shadow:0 -18px 40px -26px rgba(20,22,31,.34),inset 0 1px 0 rgba(255,255,255,.09);
-  transition:transform calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1),border-radius calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
-.c07-tray.is-up{transform:translate3d(0,0,0);border-radius:0;transition-duration:calc(340ms * var(--k));transition-timing-function:cubic-bezier(.22,.9,.24,1)}
+  box-shadow:0 -18px 40px -26px rgba(20,22,31,.34),inset 0 1px 0 rgba(255,255,255,.09)}   /* no transition: every move of the sheet is an animation (rise / descent keyframes below, a height change in _syncTrayMotion) */
+.c07-tray.is-up{transform:translate3d(0,0,0);border-radius:0}
 .c07-nav{position:absolute;left:0;right:0;bottom:0;z-index:12;height:var(--navh);padding:0 10px var(--sab,0px);display:flex;align-items:stretch;border-top:1px solid var(--tline);background:#14161F}
 .c07-nav button{flex:1;border:0;background:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:13px;line-height:1.2;color:var(--tw3);cursor:pointer;padding:6px 0 4px}
 .c07-nav button svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 .c07-nav button.on{color:var(--tw)}
 .c07-nav button.off{opacity:.7}
 /* lead block (home) and action block (manage) occupy exactly the parked part of the sheet: their CTA sits where it sits, whatever the
-   sheet does. Rising: they fade out in 90ms and drift up (the page fades in only after 110ms — never two titles on the sheet at once);
-   settling back: the old page stays on the sheet for 40ms and clears by 150ms; the block fades in from 110ms (the sheet is ~65% down),
-   so the moving sheet always carries content and never two layers at full strength. */
+   sheet does. Rising: they fade out in 110ms (c07-bout) while the page fades in from 50ms; settling back: the page clears in 140ms while
+   the block fades in from 40ms — the moving sheet always carries content */
 .c07-lead,.c07-act{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;
-  transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(40ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(40ms * var(--k));
   animation:c07-bin calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) calc(40ms * var(--k)) backwards}
 @keyframes c07-bin{from{opacity:0;transform:translateY(8px)}}
-/* going off (the sheet rises / a form takes the tray) the block is gone in the same commit that brings the new content — no fade to
-   tick: a starved main thread (live WebGL environment) must never show the old title under the new one */
-.c07-lead.is-off,.c07-act.is-off{opacity:0;transform:translateY(-8px);pointer-events:none;animation:none;transition:opacity calc(110ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) ease}   /* animation:none — a swap / entry animation must not restart (backwards fill = opacity 0) when the block goes off */
+/* going off (the sheet rises / a form takes the tray / manage opens): the block fades out in 110ms (c07-bout, below) under the incoming
+   content; at rest it is simply off */
+.c07-lead.is-off,.c07-act.is-off{opacity:0;transform:translateY(-8px);pointer-events:none;animation:none}   /* animation:none — a swap / entry animation must not restart (backwards fill = opacity 0) when the block goes off */
 @keyframes c07-in{from{opacity:0;transform:translateY(10px)}}
 .c07-lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:20px;font-size:calc(13px * var(--tz,1));letter-spacing:.02em;line-height:1.5;color:var(--tw3)}
 .c07-lab>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -193,9 +189,9 @@ body{margin:0}
 .c07-lead.is-compact{padding-top:18px;padding-bottom:20px}
 /* back from a tray form (再想想 / 关闭 / a confirmed change): the form is gone in that commit, so the block starts at .35 with no wait —
    the tray is never empty, even when the commit is followed by a long frame (a card paint, a stamp mount) */
-.c07-lead.c07-ret:not(.is-off),.c07-act.c07-ret:not(.is-off){animation:c07-ret calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1);transition-delay:0s}
+.c07-lead.c07-ret:not(.is-off),.c07-act.c07-ret:not(.is-off){animation:c07-ret calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 @keyframes c07-ret{0%{opacity:.35;transform:translateY(6px)}100%{opacity:1;transform:none}}
-/* the lead's own hand-over (role / section change, a receipt): same 110ms wait as its entry, so the old block is gone first */
+/* the lead's own hand-over (role / section change, a receipt): the next one takes the tray from .25 at once */
 .c07-lead.sw-a:not(.is-off){animation:c07-swapA calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-lead.sw-b:not(.is-off){animation:c07-swapB calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-none{margin:4px 0 0;font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.4;color:var(--tw)}
@@ -215,22 +211,79 @@ body{margin:0}
 .c07-link.dim{color:var(--tw3);text-decoration:none;cursor:default}
 
 /* ======================= surfaces inside the risen tray ======================= */
-.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:var(--navh);opacity:0;pointer-events:none;transition:opacity calc(140ms * var(--k)) cubic-bezier(.4,0,1,1)}
-.c07-tray.is-up .c07-surfs{opacity:1;pointer-events:auto;transition:opacity calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) calc(50ms * var(--k))}
+.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:var(--navh);opacity:0;pointer-events:none}
+.c07-tray.is-up .c07-surfs{opacity:1;pointer-events:auto}
 .c07-tray .ju-v27-cta[aria-disabled="true"]{background:rgba(255,255,255,.08);background-image:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:rgba(244,245,250,.6)}
 .c07-tray .ju-v27-cta[aria-disabled="true"]>.gloss{display:none}
-.c07-surf{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(220ms * var(--k)) ease}
-.c07-surf.is-top.ph-enter.dir-fwd{transform:translateX(28px);opacity:0}
-.c07-surf.is-top.ph-enter.dir-swap{opacity:0}
+.c07-surf{position:absolute;inset:0;display:flex;flex-direction:column}
 .c07-surf.is-top.ph-exit{transform:translateX(28px);opacity:0}
 .c07-surf.is-under{transform:translateX(-8%);opacity:0}
 .c07-surf.is-under.ph-exit{transform:none;opacity:1}
 .c07-surf.is-under.ph-idle{display:none}
-.c07-surf.is-leaving{opacity:0;pointer-events:none!important;transition:opacity calc(90ms * var(--k)) ease}
-.c07-surf.is-top.ph-in.dir-swap{transition:opacity calc(220ms * var(--k)) ease calc(90ms * var(--k)),transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}   /* a swap (read → ticket after 成局) holds the old page a beat so the sheet is never empty */
-/* the first rise from home and the descent back to it: the sheet carries the page; the page itself neither slides nor fades (the
-   surfaces layer does the hand-over: in 220ms after 110ms on the way up, out in 110ms after 40ms on the way down) */
-.c07-tray.first-up .c07-surf.is-top,.c07-tray.is-down .c07-surf{transform:none!important;opacity:1!important;transition:none!important}
+.c07-surf.is-leaving{pointer-events:none!important}
+/* ======================= motion as keyframes =======================
+   暂停 freezes these (.app.paused, panel CSS) and 关键帧 drags them (.scrub rules at the end of this block, --frame 0…1); the static rules
+   above hold every end state, so a frozen, dragged or released animation always lands where the state says. */
+/* M4 rise (340ms): the sheet, the list behind it (stays, recedes 14px / .985), the scrim, the block leaving, the page arriving */
+.app.c07-rising .c07-tray{animation:c07-rise calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
+@keyframes c07-rise{from{transform:translate3d(0,calc(100% - var(--th)),0);border-radius:28px 28px 0 0}}
+.app.c07-rising .c07-page{animation:c07-plift calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
+@keyframes c07-plift{from{transform:none}}
+.app.c07-rising .c07-scrim{transition:none;animation:c07-scrin calc(200ms * var(--k)) ease}
+@keyframes c07-scrin{from{opacity:0}}
+.app.c07-rising .c07-surfs{animation:c07-sfin calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) calc(50ms * var(--k)) backwards}
+@keyframes c07-sfin{from{opacity:0}}
+.app:is(.c07-rising,.c07-formon,.c07-mswap) :is(.c07-lead,.c07-act).is-off{animation:c07-bout calc(110ms * var(--k)) cubic-bezier(.4,0,1,1)}
+@keyframes c07-bout{from{opacity:1;transform:none}}
+/* M4 descent (320ms) */
+.app.c07-falling .c07-tray{animation:c07-fall calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
+@keyframes c07-fall{from{transform:translate3d(0,0,0);border-radius:0}}
+.app.c07-falling .c07-page{animation:c07-pdrop calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
+@keyframes c07-pdrop{from{transform:translateY(-14px) scale(.985)}}
+.app.c07-falling .c07-scrim{transition:none;animation:c07-scrout calc(200ms * var(--k)) ease}
+@keyframes c07-scrout{from{opacity:.34}}
+.app.c07-falling .c07-surfs{animation:c07-sfout calc(140ms * var(--k)) cubic-bezier(.4,0,1,1)}
+@keyframes c07-sfout{from{opacity:1}}
+/* the first rise and the descent: the sheet carries the page — the page itself neither slides nor fades */
+.app.c07-rising .c07-surf.is-top,.app.c07-falling .c07-surf{transform:none!important;opacity:1!important;animation:none!important}
+/* pages inside the risen sheet (detail → read / ticket / waitlist): 320ms slide, 220ms fade, the page under it recedes */
+.c07-surf.is-top.dir-fwd:is(.ph-enter,.ph-in){animation:c07-sin-t calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) backwards,c07-sin-o calc(220ms * var(--k)) ease backwards}
+@keyframes c07-sin-t{from{transform:translateX(28px)}}
+@keyframes c07-sin-o{from{opacity:0}}
+.c07-surf.is-top.ph-exit{animation:c07-sout-t calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),c07-sout-o calc(220ms * var(--k)) ease}
+@keyframes c07-sout-t{from{transform:none}}
+@keyframes c07-sout-o{from{opacity:1}}
+.c07-surf.is-under.dir-fwd:is(.ph-enter,.ph-in){animation:c07-uout-t calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),c07-uout-o calc(220ms * var(--k)) ease}
+@keyframes c07-uout-t{from{transform:none}}
+@keyframes c07-uout-o{from{opacity:1}}
+.c07-surf.is-under.ph-exit{animation:c07-uin-t calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),c07-uin-o calc(220ms * var(--k)) ease}
+@keyframes c07-uin-t{from{transform:translateX(-8%)}}
+@keyframes c07-uin-o{from{opacity:0}}
+/* a swap (阅读层 → 票根, M1): the new page comes in OVER the old one (its own ink ground, 220ms); the old page stays whole underneath
+   until it is gone — never a frame without a page on the sheet */
+.c07-surf.is-top.dir-swap:is(.ph-enter,.ph-in){z-index:2;background:#14161F;animation:c07-sin-o calc(220ms * var(--k)) ease backwards}
+.c07-surf.is-leaving{z-index:1}
+/* home ⇄ manage: the upper region cross-fades (out 150ms; in from 30ms, 170ms) — at every frame one of the two is at least half there */
+.app.c07-mswap .c07-page.is-away{animation:c07-paway-o calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),c07-paway-t calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
+@keyframes c07-paway-o{from{opacity:1}}
+@keyframes c07-paway-t{from{transform:none}}
+.app.c07-mswap .c07-page:not(.is-away){animation:c07-pback-o calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)) backwards,c07-pback-t calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k)) backwards}
+@keyframes c07-pback-o{from{opacity:0}}
+@keyframes c07-pback-t{from{transform:translateY(-8px)}}
+.app.c07-mswap .c07-mpage:not(.is-on){animation:c07-mout-o calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),c07-mout-t calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
+@keyframes c07-mout-o{from{opacity:1}}
+@keyframes c07-mout-t{from{transform:none}}
+/* 关键帧: the slider is mapped onto each family's own length — rise 340ms, descent 320ms, manage swap 260ms, pages in the sheet 320ms,
+   the swap 220ms, the tray's hand-overs 300ms; an element with its own delay keeps it. Only running animations are affected (the
+   mixin zeroes the ones in flight; a finished animation stays finished). */
+.app.scrub.c07-rising :is(.c07-tray,.c07-page,.c07-scrim),.app.scrub.c07-rising :is(.c07-lead,.c07-act).is-off{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
+.app.scrub.c07-rising .c07-surfs{animation-play-state:paused!important;animation-delay:calc((50ms - var(--frame,0) * 340ms) * var(--k,1))!important}
+.app.scrub.c07-falling :is(.c07-tray,.c07-page,.c07-scrim,.c07-surfs){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.scrub.c07-falling :is(.c07-lead,.c07-act):not(.is-off){animation-play-state:paused!important;animation-delay:calc((40ms - var(--frame,0) * 320ms) * var(--k,1))!important}
+.app.scrub.c07-mswap :is(.c07-page,.c07-mpage,.c07-lead.is-off,.c07-act.is-off){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 260ms * var(--k,1))!important}
+.app.scrub.c07-mswap :is(.c07-lead,.c07-act):not(.is-off){animation-play-state:paused!important;animation-delay:calc((40ms - var(--frame,0) * 260ms) * var(--k,1))!important}
+.app.scrub .c07-surf:is(.ph-enter,.ph-in,.ph-exit){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
+.app.scrub:not(.c07-rising):not(.c07-falling):not(.c07-mswap) :is(.c07-lead,.c07-act,.c07-actin,.c07-form,.c07-pane),.app.scrub .c07-seat.is-new,.app.scrub .c07-lab>span.ok{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
 .c07-shead{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(130px + var(--sat,0px));pointer-events:none}
 .c07-shead::before{content:"";position:absolute;inset:0;height:calc(92px + var(--sat,0px));background:linear-gradient(180deg,rgba(20,22,31,.96) 58%,rgba(20,22,31,0));opacity:var(--hc,0)}
 .c07-back{position:absolute;left:22px;top:calc(24px + var(--sat,0px));border:0;padding:0}
@@ -247,6 +300,21 @@ body{margin:0}
 .c07-sfoot:empty{display:none}
 /* body text roles on ink */
 .c07-id{margin:0 0 14px}
+/* the participant's detail grows out of the tray: the event's card on top (V27 212 tier), the same seat discs as the lead, one line for
+   the agreements (the read layer when it is the step to take, the three groups in place otherwise) */
+.c07-dcard{margin:6px auto 10px}
+.c07-dmeta{margin:0;text-align:center;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw2);text-wrap:balance}
+.c07-dseats{margin:20px 0 4px}
+.c07-rules{display:flex;align-items:center;gap:12px;width:100%;margin:12px 0 0;padding:13px 0;border:0;border-top:1px solid var(--tline);border-bottom:1px solid var(--tline);background:none;color:var(--tw);font:inherit;font-size:calc(14px * var(--tz,1));text-align:left;cursor:pointer}
+.c07-rules .n{font-weight:500;flex:0 0 auto}
+.c07-rules .r{flex:1 1 auto;min-width:0;text-align:right;font-size:calc(13px * var(--tz,1));color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.c07-rules .go{flex:0 0 auto;color:var(--tw3);font-size:18px;line-height:1;transition:transform calc(200ms * var(--k)) ease}
+.c07-rules[aria-expanded="true"] .go{transform:rotate(90deg)}
+.c07-rlist{padding:4px 0 6px;border-bottom:1px solid var(--tline);animation:c07-in calc(220ms * var(--k)) ease}
+.c07-rlist .g{margin:10px 0 0}
+.c07-rlist b{display:block;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--tw2)}
+.c07-rlist p{margin:4px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--tw)}
+.c07-hint.c07-dis{color:var(--tw3);opacity:.7}   /* an account-level page, not in this module: the words stay, not a link */
 .c07-id .t{font-size:calc(24px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw);text-wrap:balance}
 .c07-id .m{margin-top:6px;font-size:calc(14px * var(--tz,1));color:var(--tw2);line-height:1.5}
 .c07-kv{display:flex;justify-content:space-between;gap:12px;padding:11px 0;border-top:1px solid var(--tline);font-size:calc(14px * var(--tz,1));line-height:1.5}
@@ -295,7 +363,6 @@ body{margin:0}
 .c07-errrow:has(.ju-form-error:empty) [data-act="retry"]{display:none}   /* 「重试」 belongs to the original's failure line: when the original clears it (已加微信 → add()), the retry goes with it */
 .c07-errrow .c07-link{padding:4px 0}
 .c07-tray .ju-tear-error24{text-align:center}
-.c07-ash{height:40px;margin:10px auto 0;width:258px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.6}
 .c07-t08{position:relative;height:520px;margin:8px -22px 0}
 /* paper for what never became a ticket (no-ticket history, a draft): the ticket's own face and paper, centred, with the fact as a mark */
 .c07-pcard{position:relative;width:258px;margin:22px auto 14px;border-radius:14px;background:#EDEFF7;box-shadow:0 18px 26px -18px rgba(0,0,0,.7),0 3px 4px rgba(0,0,0,.22)}
@@ -305,12 +372,14 @@ body{margin:0}
 .c07-pmark.draft{border-color:#4550BE;color:#3a44a8}
 .c07-gap{color:#8d93a7;letter-spacing:.06em}
 .ju-ticket-line strong.c07-gap{font-weight:400}
-/* a ticket that has burned leaves no hole: the void stage closes over .5s and only the ash line stays */
-.c07-stage[data-state="void"]{height:24px}
-/* the ticket's place before the paper comes: while the print engine starts (it needs a moment after the sheet has risen) the slot
-   under the printer mouth is already outlined — the paper then covers it as it feeds down; gone once printed */
-.c07-stage[data-print-stage="c07"]::after{content:"";position:absolute;left:50%;top:var(--ju-ticket-top,84px);width:258px;height:300px;margin-left:-129px;border-radius:14px 14px 10px 10px;background:rgba(237,239,247,.035);box-shadow:inset 0 0 0 1px rgba(244,245,250,.12);opacity:0;transition:opacity calc(240ms * var(--k)) ease;pointer-events:none;z-index:1}
-.c07-stage[data-print-stage="c07"][data-state="idle"]::after,.c07-stage[data-print-stage="c07"][data-print="printing"]::after{opacity:1}
+/* a ticket that has burned leaves nothing (as in the original: the paper is gone); the facts that remain — what happened, that the
+   contact is closed — are one centred group in the middle of the sheet, above the CTA (no hole, no half-empty sheet) */
+.c07-stage[data-state="void"]{height:0;margin:0}
+.c07-tk.is-void{display:flex;flex-direction:column;justify-content:center}
+.c07-tk.is-void .c07-stage{flex:0 0 auto}
+.c07-endgrp{text-align:center;padding:0 8px 24px}
+.c07-endgrp b+p,.c07-endgrp p+p{margin-top:6px}
+.c07-endgrp .c07-hint{margin:10px 0 0;color:var(--tw3)}
 .c07-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
 /* while the stamp scene starts (it is mounted after the sheet has risen, then needs its first frame) the card's place is already held:
    the same 4:5 paper silhouette, centred where the engine puts the card (cardWidth = min(66% stage, 52% height, 250)); gone once it renders */
@@ -320,8 +389,8 @@ body{margin:0}
 /* ======================= manage: the upper region is the roster / applications, the tray is the action area ======================= */
 /* home ⇄ manage swap the upper region in place as a cross-fade: the outgoing page eases out (150ms) while the incoming one eases in from
    30ms (170ms), 8px apart — at every frame one of the two is at least half there */
-.c07-mpage{position:absolute;inset:0;z-index:3;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
-.c07-mpage.is-on{opacity:1;transform:none;pointer-events:auto;transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k));animation:c07-pagein calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)) backwards}   /* mounted already on: the entry is an animation */
+.c07-mpage{position:absolute;inset:0;z-index:3;opacity:0;transform:translateY(8px);pointer-events:none}
+.c07-mpage.is-on{opacity:1;transform:none;pointer-events:auto;animation:c07-pagein calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)) backwards}   /* mounted already on: the entry is an animation */
 @keyframes c07-pagein{from{opacity:0;transform:translateY(8px)}}
 .c07-mpage .c07-sc{top:calc(92px + var(--sat,0px))}
 .c07-mhead{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(140px + var(--sat,0px));pointer-events:none}
@@ -418,15 +487,18 @@ body{margin:0}
 .c07-quiet{height:44px;min-width:120px;padding:0 18px;border:0;background:none;color:var(--tw2);font-size:calc(14px * var(--tz,1));font-weight:500;cursor:pointer;border-radius:999px}
 .c07-quiet:active{background:rgba(255,255,255,.06)}
 /* the V27 局卡 original: JuFilm.paintCard (V27 ju-paper-film.js — the same 720×900 card face the stamp scene uses, all six packs, its
-   own fonts and seat lines) in the V27 front shell (ju-card.css: radius 13, inner 1px ring, top / bottom punches); 258 wide like the
-   ticket paper, so a card and a ticket are the same size in the tray */
-.c07-ocardwrap{position:relative;width:258px;margin:14px auto 10px}
-.c07-ocard{position:relative;width:258px;aspect-ratio:4/5;border-radius:13px;overflow:hidden;background:rgba(237,239,247,.06);box-shadow:0 30px 60px -28px rgba(0,0,0,.7),0 10px 26px -12px rgba(0,0,0,.45)}
+   own fonts and seat lines) in the V27 front shell (ju-card.css: radius 13, inner 1px ring, top / bottom punches), at the V27 middle tier
+   212×265 (directions §0.3: only V27 tiers) — detail, history, the tray's 局卡 layer and the cancel burn alike */
+.c07-ocardwrap{position:relative;width:212px;margin:14px auto 10px}
+.c07-ocard{position:relative;width:212px;aspect-ratio:4/5;border-radius:13px;overflow:hidden;background:rgba(237,239,247,.06);box-shadow:0 30px 60px -28px rgba(0,0,0,.7),0 10px 26px -12px rgba(0,0,0,.45)}
 .c07-ocard canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity calc(240ms * var(--k)) ease}
 .c07-ocard canvas[data-painted]{opacity:1}
 .c07-ocard.in-paper{box-shadow:none;background:#1E2232}
 .c07-cstage .ju-ticket-shadow>div{background:#1E2232;border-radius:13px}   /* the card's underlay (it casts the paper shadow) is ink, not paper: no white card before the canvas paints, no pale corner under radius 13 */
-.c07-ocardwrap .c07-pmark{top:150px}
+.c07-ocardwrap .c07-pmark{top:122px}
+/* the cancel burns the card itself: the original's paper, cut to the card's 212 tier (the burn reads the paper's own size) */
+.c07-cstage .ju-ticket{width:212px;margin-left:-106px}
+.c07-cstage :is(.ju-ticket-surface,.ju-ticket-burn){width:212px}
 .app.c07-formon .c07-scrim{opacity:.2}
 .app.c07-formon .c07-tray{transform:translate3d(0,calc(100% - var(--th) - max(0px,var(--kb,0px) - var(--navh))),0)}
 /* the host's cancel: the event's card (the same paper as a ticket, brand 局卡) burns in the tray — JURitual.burn, variant C */
@@ -484,7 +556,7 @@ body{margin:0}
       <div class="c07-veil"></div>
 
       <!-- ===== upper region · HOME list on the colour light (role × section live in state; never on the stack) ===== -->
-      <section class="c07-page {{home.pageCls}} {{c.nav.cls.home}}" data-surface="home" inert="{{formOn}}">
+      <section class="c07-page {{home.pageCls}} {{c.nav.cls.home}}" data-surface="home" inert="{{homeInert}}">
         <header class="c07-head" data-header>
           <h1 class="c07-title">我的局</h1>
           <div class="c07-meta">{{home.meta}}</div>
@@ -743,15 +815,15 @@ body{margin:0}
               <header class="c07-shead" data-header><button type="button" class="c07-back ju-v27-back-pill" data-act="back" aria-label="返回" onClick="{{c.detail.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><h1 class="c07-stitle">{{c.detail.title}}</h1><div class="c07-smeta">{{c.detail.label}} · {{c.detail.need}}</div></header>
               <div class="c07-ssc" data-scroller="detail" onScroll="{{c.nav.onScroll}}">
                 <sc-if value="{{c.detail.on}}">
-                  <div class="c07-id"><div class="t">{{c.detail.row.titleNb}}</div><div class="m">{{c.detail.when.zh}} · {{c.detail.row.placeText}} · 局主 {{c.detail.host.name}}</div></div>
+                  <div class="c07-ocardwrap c07-dcard"><div class="c07-ocard" role="img" aria-label="局卡 · {{c.detail.row.titleNb}} · {{c.detail.label}}"><canvas data-card="{{detail.cardJson}}" aria-hidden="true"></canvas><span class="ju-v27-face-ring"></span><span class="ju-v27-punch-top"></span><span class="ju-v27-punch-bottom"></span></div></div>
+                  <p class="c07-dmeta">{{c.detail.when.zh}} · {{c.detail.row.placeText}} · 局主 {{c.detail.host.name}}</p>
                   <sc-if value="{{c.detail.countdown.on}}"><div class="c07-h"><span>预留剩余</span><i>{{c.detail.row.deadlineText}}</i></div><div class="c07-cd {{c.detail.countdown.tone}}" style="font-size:28px">{{c.detail.countdown.text}}</div><div class="c07-bar {{c.detail.countdown.tone}}" style="--ratio:{{c.detail.countdown.ratio}}"><i></i></div></sc-if>
                   <sc-if value="{{c.detail.receipt}}"><div class="c07-h"><span>候补回执</span></div><div class="c07-result"><b>{{c.detail.receipt.title}}</b><p>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</p><p class="c07-hint">{{c.detail.receipt.note}}</p></div></sc-if>
                   <sc-if value="{{c.detail.result}}"><div class="c07-result"><b>{{c.detail.result.title}}</b><p>{{c.detail.result.body}}</p></div></sc-if>
-                  <div class="c07-h"><span>成员</span><i>{{c.detail.seatText}}</i></div>
-                  <sc-for list="{{c.detail.members}}" as="m" hint-placeholder-count="3"><div class="c07-kv {{m.youCls}}"><span class="n">{{m.name}}</span><span class="r">{{m.statusText}}</span></div></sc-for>
-                  <div class="c07-h"><span>参加约定</span><i>读到末尾才能确认</i></div>
-                  <sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><div class="c07-kv"><span class="n">{{g.title}}</span><span class="r">{{g.lines.length}} 条</span></div></sc-for>
-                  <p class="c07-hint">查看我的记录 · 账户级页面，本轮不可点</p>
+                  <div class="c07-seats2 c07-dseats" role="img" aria-label="{{detail.seatText}}"><span class="ds"><sc-for list="{{detail.seats}}" as="d" hint-placeholder-count="4"><i class="d {{d.cls}}">{{d.t}}</i></sc-for><sc-if value="{{detail.seatMore}}"><b class="more">{{detail.seatMore}}</b></sc-if></span><span class="tx">{{detail.seatText}}</span></div>
+                  <button type="button" class="c07-rules" data-act="rules" aria-expanded="{{detail.rulesExp}}" onClick="{{detail.openRules}}"><span class="n">参加约定</span><span class="r">{{detail.rulesText}}</span><span class="go" aria-hidden="true">›</span></button>
+                  <sc-if value="{{detail.rulesOpen}}"><div class="c07-rlist"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><div class="g"><b>{{g.title}}</b><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></div></sc-for></div></sc-if>
+                  <p class="c07-hint c07-dis">查看我的记录</p>
                   <sc-if value="{{c.detail.error}}"><p class="c07-err">{{c.detail.error}}</p></sc-if>
                 </sc-if>
               </div>
@@ -796,7 +868,7 @@ body{margin:0}
           <sc-if value="{{ticketOn}}" hint-placeholder-val="{{false}}">
             <section class="c07-surf {{c.nav.cls.ticket}}{{c.nav.cls.reply}}" data-surface="{{ticketSurface}}">
               <header class="c07-shead" data-header><button type="button" class="c07-back ju-v27-back-pill" data-act="back" aria-label="返回" onClick="{{tv.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><sc-if value="{{tv.canExit}}"><button type="button" class="c07-weak" data-act="{{ticketExitAct}}" onClick="{{tv.exit}}">{{tv.exitLabel}}</button></sc-if><h1 class="c07-stitle">{{tv.title}}</h1><div class="c07-smeta">{{tv.row.label}} · {{tv.row.need}}</div></header>
-              <div class="c07-ssc c07-tk" data-scroller="ticket" onScroll="{{c.nav.onScroll}}">
+              <div class="c07-ssc c07-tk {{ticket.voidCls}}" data-scroller="ticket" onScroll="{{c.nav.onScroll}}">
                 <sc-if value="{{tv.on}}">
                   <sc-if value="{{tv.unavailable}}"><div class="c07-id"><div class="t">{{tv.row.titleNb}}</div><div class="m">{{tv.row.whenText}} · {{tv.row.placeText}}</div></div><div class="c07-result"><p>{{tv.unavailable.text}}</p></div></sc-if>
                   <sc-if value="{{ticket.showStage}}">
@@ -831,17 +903,17 @@ body{margin:0}
                       <p class="ju-contact-note23"></p>
                       <div class="c07-errrow"><p class="ju-form-error" role="alert"></p><sc-if value="{{tv.contact.copyFail}}"><button type="button" class="c07-link" data-act="retry" onClick="{{ticket.retryCopy}}">重试</button></sc-if></div>
                     </div>
-                    <sc-if value="{{tv.contact.closed}}"><p class="c07-err">{{tv.contact.closedText}}</p></sc-if>
+                    <sc-if value="{{ticket.closedAlone}}"><p class="c07-hint">{{tv.contact.closedText}}</p></sc-if>
                     <sc-if value="{{tv.contact.error}}"><p class="c07-err">{{tv.contact.error}}</p></sc-if>
-                    <sc-if value="{{tv.result}}"><div class="c07-result" style="text-align:center"><sc-if value="{{tv.result.burning}}"><p class="c07-hint">票根正在作废…</p></sc-if><sc-if value="{{ticket.ashes}}"><div class="c07-ash" aria-hidden="true"></div></sc-if><b>{{tv.result.title}}</b><p>{{tv.result.body}}</p></div></sc-if>
+                    <sc-if value="{{tv.result}}"><div class="c07-result c07-endgrp" role="status"><sc-if value="{{tv.result.burning}}"><p class="c07-hint">票根正在作废…</p></sc-if><sc-if value="{{ticket.resTitle}}"><b>{{ticket.resTitle}}</b></sc-if><sc-if value="{{ticket.resBody}}"><p>{{ticket.resBody}}</p></sc-if><sc-if value="{{ticket.closedIn}}"><p class="c07-hint">{{tv.contact.closedText}}</p></sc-if></div></sc-if>
                     <sc-if value="{{tv.reply}}"><p class="c07-hint" style="text-align:center">{{tv.reply.oldText}} → {{tv.reply.newText}}</p></sc-if>
                     <sc-if value="{{ticket.hint}}"><p class="c07-hint" style="text-align:center">{{ticket.hint}}</p></sc-if>
                   </sc-if>
                 </sc-if>
               </div>
               <div class="c07-sfoot">
-                <sc-if value="{{tv.tear.canTear}}"><button type="button" class="c07-cta ju-v27-cta ju-print-cta-in" data-act="{{ticket.tearAct}}" onClick="{{tv.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button></sc-if>
-                <sc-if value="{{tv.reply}}"><sc-if value="{{tv.tear.canTear}}"><button type="button" class="c07-link" data-act="decline" onClick="{{tv.reply.decline}}">去不了了</button></sc-if></sc-if>
+                <sc-if value="{{ticket.tearOn}}"><button type="button" class="c07-cta ju-v27-cta ju-print-cta-in" data-act="{{ticket.tearAct}}" onClick="{{tv.tear.tearNow}}"><span class="gloss"></span><span class="label">{{ticket.tearLabel}}</span></button></sc-if>
+                <sc-if value="{{tv.reply}}"><sc-if value="{{ticket.tearOn}}"><button type="button" class="c07-link" data-act="decline" onClick="{{tv.reply.decline}}">去不了了</button></sc-if></sc-if>
                 <sc-if value="{{ticket.contactAction}}"><button type="button" class="c07-cta ju-v27-cta ju-contact-action {{ticket.actionCls}}" data-contact-action data-act="contacted" aria-disabled="{{ticket.ctaDisabled}}" inert="{{ticket.actionInert}}"><span class="gloss"></span><span class="label">{{ticket.ctaLabel}}</span><span data-slot="actionLabel" hidden></span></button></sc-if>
                 <sc-if value="{{tv.result}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" onClick="{{tv.result.act}}"><span class="gloss"></span><span class="label">{{tv.result.label}}</span></button></sc-if>
                 <sc-if value="{{tv.unavailable}}"><button type="button" class="c07-cta ju-v27-cta" data-act="ok" onClick="{{tv.unavailable.act}}"><span class="gloss"></span><span class="label">{{tv.unavailable.label}}</span></button></sc-if>
@@ -874,7 +946,7 @@ body{margin:0}
                       </div>
                     </div>
                     <sc-if value="{{c.history.burn.play}}"><p class="c07-hint" style="text-align:center">票根正在作废…</p></sc-if>
-                    <sc-if value="{{c.history.ashes}}"><div class="c07-ash" aria-label="票根灰烬"></div><p class="c07-hint" style="text-align:center">票根已作废</p></sc-if>
+                    <sc-if value="{{c.history.ashes}}"><p class="c07-hint" style="text-align:center;margin-top:18px">票根已作废 · 纸已烧尽</p></sc-if>
                   </sc-if>
                   <sc-if value="{{c.history.contactOpen}}"><div class="c07-kv"><span class="n">局主微信 {{c.history.hostWx}}</span><button type="button" class="c07-link" data-act="copy" onClick="{{c.history.copyWx}}">{{c.history.copyLabel}}</button></div><sc-if value="{{c.history.copyFail}}"><p class="c07-err">未能复制，长按手动复制 <button type="button" class="c07-link" data-act="retry" onClick="{{c.history.retryCopy}}">重试</button></p></sc-if></sc-if>
                   <sc-if value="{{c.history.contactClosedText}}"><p class="c07-hint">{{c.history.contactClosedText}}</p></sc-if>
@@ -966,12 +1038,28 @@ class Component extends DCLogic {
     if (p.preset === 'hosted') this.state.role = 'hosted';
   }
   /* a review jump / reset starts the tray's own state over as well (receipts, holds, the cancel ceremony, the form's touched flag) */
-  initialState(variant) { return Object.assign(JU.baseState(variant), { mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null, leadNote: '', seatNew: null, fTouched: null }); }
+  initialState(variant) { return Object.assign(JU.baseState(variant), { mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null, leadNote: '', seatNew: null, fTouched: null, burnReplay: null, printReplay: false }); }
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
+  /* the parked sheet follows its block (a form, a receipt, the next item, the keyboard): each change of its parked position is an
+     animation from where the sheet is NOW (read before the DOM changes) to where the state puts it — 320ms on the descent curve; rise and
+     descent are the keyframes in CSS. 暂停 / 关键帧 hold it like the CSS ones (_syncTrayClock). */
+  getSnapshotBeforeUpdate() { const root = this.rootRef && this.rootRef.current, t = root && root.querySelector('.c07-tray'); this._traySnap = t ? { ty: this._trayTy(t), up: t.classList.contains('is-up') } : null; return null; }
+  _trayTy(t) { const m = getComputedStyle(t).transform; if (!m || m === 'none') return 0; try { return new DOMMatrixReadOnly(m).m42; } catch (e) { return 0; } }
+  _syncTrayMotion() {
+    const sn = this._traySnap; this._traySnap = null; const root = this.rootRef.current, t = root && root.querySelector('.c07-tray'); if (!t) return;
+    const cs = getComputedStyle(t); const key = [this.state.thc, root.classList.contains('c07-formon'), t.classList.contains('is-up'), cs.getPropertyValue('--kb'), cs.getPropertyValue('--sab'), cs.getPropertyValue('--navh')].join('|');
+    if (key === this._trayKey) { this._syncTrayClock(); return; } const first = this._trayKey == null; this._trayKey = key;
+    if (this._trayAnim) { try { this._trayAnim.cancel(); } catch (e) { } this._trayAnim = null; }
+    if (first || !sn || sn.up || this._snap || t.classList.contains('is-up') || root.classList.contains('c07-rising') || root.classList.contains('c07-falling')) return;
+    const to = this._trayTy(t); if (Math.abs(to - sn.ty) < 1) return; const r = this.state.review || {}; const k = this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); if (!k || !t.animate) return;
+    const a = t.animate([{ transform: 'translate3d(0,' + sn.ty + 'px,0)' }, { transform: 'translate3d(0,' + to + 'px,0)' }], { duration: 320 * k, easing: 'cubic-bezier(.32,.72,.2,1)' });
+    a.__c07dur = 320 * k; this._trayAnim = a; a.onfinish = () => { if (this._trayAnim === a) this._trayAnim = null; }; this._syncTrayClock();
+  }
+  _syncTrayClock() { const a = this._trayAnim, r = this.state.review || {}; if (!a) return; try { if (r.scrub != null) { a.pause(); a.currentTime = Math.max(0, Math.min(r.scrub / 100 * a.__c07dur, a.__c07dur - 1)); } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } }
+  componentDidUpdate(pp, ps) { this._syncTrayMotion(); this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
     { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && cf.offsetParent && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
@@ -1105,8 +1193,15 @@ class Component extends DCLogic {
     const thost = root.querySelector('[data-surface="history"] .c07-t08');
     if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost) this._mountStamp(thost, c); }
     else if (this._rit.thost) this._destroyStamp();
-    const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
-    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+    this._syncBurnClock(ps);
+  }
+  /* 暂停 pauses a burn in flight and 继续 resumes it; 关键帧 seeks it (and holds it there); 释放 lets it run on from where it is */
+  _syncBurnClock(ps) {
+    const r = this.state.review || {}, pr = (ps && ps.review) || {};
+    [this._rit.burn, this._rit.hburn, this._rit.cburn].forEach(b => { if (!b || !b.engine) return;
+      if (r.scrub != null) { try { b.seek(r.scrub / 100 * (b.engine.duration || 6.6)); b.pause(); } catch (e) { } }
+      else if (r.paused && !pr.paused) { try { b.pause(); } catch (e) { } }
+      else if (!r.paused && (pr.paused || pr.scrub != null)) { try { b.resume(); } catch (e) { } } });
   }
   /* the ritual's text slots get the title with " · " glued to the word before it (a no-break space), so a two-line title never
      starts its second line with the dot; same characters, only the break opportunity moves */
@@ -1151,7 +1246,7 @@ class Component extends DCLogic {
     }
     stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
   }
-  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, this._rd(c.ticket.ritual), { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
+  _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; this.setState({ printReplay: true }); R.print(stage, this._rd(c.ticket.ritual), { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { this.setState({ printReplay: false }); const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
   _contact() {
     if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
     const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
@@ -1161,7 +1256,15 @@ class Component extends DCLogic {
     this._rit.contact = h; return h;
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
-  _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = this._rd(isH ? c.history.ritual : c.ticket.ritual); const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
+  /* replay (面板「重播」/ 关键帧): the paper is put back, burns again, and ends in the same
+     state as the first time — the void stage and the result group are state (burnReplay off), not something a callback writes once.
+     The paper is settled as it burned the first time (torn or with its stub), without a tear handle, so no tear button comes back */
+  _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = this._rd(isH ? c.history.ritual : c.ticket.ritual); const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn');
+    const seq = (this._burnSeq = (this._burnSeq || 0) + 1); let fired = false; const done = () => { if (fired || this._burnSeq !== seq) return; fired = true; if (isH) this._rit.hburn = null; else this._rit.burn = null; if (stage.isConnected) stage.dataset.state = 'void'; this.setState({ burnReplay: null }); };
+    this.setState({ burnReplay: { seq, isH } });
+    const h = R.burn(stage, { reason }, { onDone: done }); if (isH) this._rit.hburn = h; else this._rit.burn = h;
+    if (h && h.promise && h.promise.then) h.promise.then(done, done);
+    this.holdKey('c07-burnreplay', Math.ceil(((h && h.engine && h.engine.duration) || 6.6) * 1000) + 900, done); }
   _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = this._rd(c.history.ritual); if (!R || !data) return;
@@ -1215,15 +1318,7 @@ class Component extends DCLogic {
       if (note) this.holdKey('c07-actnote', 2600, () => this.setState({ actNote: '' }));
       if (fx.type === 'invited') { this.setState({ seatNew: fx.slot }); this.afterKey('seatnew', 700, () => this.setState({ seatNew: null })); }
     }
-    /* 成局: the result reads for a beat in the reading layer, then the same sheet turns into the ticket and prints (as if 查看票根 were tapped) */
-    if (fx.type === 'formed' && !fx.replay) {
-      const id = fx.eventId;
-      this.holdKey('c07-formed', 760, () => {
-        const c = this._c; if (!c || !c.read.on || c.read.eventId !== id || !c.read.confirmed || !c.read.primary || c.read.primary.key !== 'ticket') return;
-        const root = this.rootRef.current; const foot = root && root.querySelector('[data-surface="read"] .c07-sfoot');
-        c.read.primary.act({ currentTarget: foot || null, target: foot || null });
-      });
-    }
+    /* 成局: the reading layer keeps the result and 「查看票根」 (the shared flow) — the ticket comes only when it is tapped (review M1) */
   }
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
@@ -1357,17 +1452,22 @@ class Component extends DCLogic {
     const hr = c.history.on ? c.history.ritual : null;
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins,
-      toastOn: this._toastHere(c), trayRootCls: (this._snap ? ' c07-snap' : '') + (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : '') + (mTop && ph !== 'idle' ? ' c07-mswap' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
+      toastOn: this._toastHere(c), trayRootCls: (this._snap ? ' c07-snap' : '') + (trayUp ? ' c07-up' : '') + (firstUp ? ' c07-rising' : '') + (descending ? ' c07-falling' : '') + (mVis ? ' c07-mng' : '') + (mTop && ph !== 'idle' ? ' c07-mswap' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
       home: { pageCls: (mVis ? 'is-away' : '') + (isJ ? '' : ' three'), meta: isJ ? (c.joined.badgeText || (c.joined.counts.current ? c.joined.counts.current + ' 场进行中' : '眼下没有进行中的局')) : ((c.hosted.badgeText || (c.hosted.counts.current ? c.hosted.counts.current + ' 场进行中' : '眼下没有进行中的局')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')),
         joinedCurrent: isJ && c.section === 'current', joinedHistory: isJ && c.section === 'history', hostedCurrent: !isJ && c.section === 'current', hostedDrafts: !isJ && c.section === 'drafts', hostedHistory: !isJ && c.section === 'history',
         jsections, hsections, onlyLead: isCur && !!leadRow && (isJ ? jsections : hsections).length === 0, onlyLeadTitle: isJ ? '只有这一件' : '只有这一局',
         onlyLeadText: (leadRow ? ({ act: '要你回应', soon: '就快见面', wait: '还在等', todo: '待你处理', resched: '改期中', formed: '已成局', recruit: '招募中' }[leadKind] || '') + ' · ' : '') + '在下方的盘里处理',
         paneCls: (isCur && ((isJ ? c.joined.empty.on : c.hosted.empty.on) || (!!leadRow && (isJ ? jsections : hsections).length === 0))) || (c.section === 'history' && (isJ ? c.joined.empty.on : c.hosted.empty.on)) || (c.section === 'drafts' && c.hosted.empty.on && !c.hosted.drafts.length) ? 'is-hero' : '' },
       tray: { cls: (trayUp ? 'is-up' : 'is-down') + (firstUp ? ' first-up' : ''), leadOn: !(mTop && ph === 'idle') },
-      lead, act, manage, rv, tv, dv, form, formOn: trayForm, trayThc: (s.thc || 318) + 'px',
+      lead, act, manage, rv, tv, dv, form, formOn: trayForm, homeInert: trayForm || trayUp, trayThc: (s.thc || 318) + 'px',
       read: { showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
       ticketOn, ticketSurface: nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result,
+        tearOn: !!(tk.on && tk.tear && tk.tear.canTear && !s.printReplay),   /* a print replay (关键帧 / 重播) hides it until the paper has printed */
+        voidCls: tk.on && tk.result && tk.result.burn && !tk.result.burning && !s.burnReplay ? 'is-void' : '',
+        resTitle: tk.on && tk.result && tk.result.title !== tk.title ? tk.result.title : '',
+        resBody: tk.on && tk.result && tk.result.body && String((tk.row && tk.row.label) + ' · ' + (tk.row && tk.row.need)).indexOf(tk.result.body) < 0 && String(tk.title).indexOf(tk.result.body) < 0 ? tk.result.body : '',
+        closedIn: !!(tk.on && tk.result && tk.contact && tk.contact.closed), closedAlone: !!(tk.on && !tk.result && tk.contact && tk.contact.closed),
         /* the contact action exists from the start (the shared contact handle wires it once); it stays unreachable until the stub is torn
            and the contact layer opens (the engine also only accepts it then) */
         actionCls: this._contactWant(c) ? 'is-on' : '', actionInert: !this._contactWant(c),
@@ -1375,6 +1475,11 @@ class Component extends DCLogic {
       draft: (() => { const d = dv, miss = (d.on && d.draft && d.draft.missing) || [], w = d.on ? d.when : null, has = (k) => miss.indexOf(k) >= 0;
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
           locText: has('地点') || !d.placeText ? '待定' : d.placeText, locCls: has('地点') || !d.placeText ? 'c07-gap' : '', titleCls: d.untitled ? 'c07-gap' : '' }; })(),
+      detail: (() => { const d = c.detail; if (!d || !d.on || !d.row) return { cardJson: '', seats: [], seatMore: '', seatText: '', rulesText: '', rulesOpen: false, rulesExp: 'false', openRules: () => { } };
+        const sl = seatLine(d.row, false), rules = d.rules || [], toRead = !!(d.primary && d.primary.key === 'read'), open = !toRead && s.dRules === d.eventId;
+        return { cardJson: cardJson(d.event, d.row.counts ? Object.assign({}, d.row.counts, { formed: !!d.row.formed }) : null), seats: sl.seats, seatMore: sl.seatMore, seatText: sl.seatText,
+          rulesText: rules.map(g => g.title + ' ' + ((g.lines && g.lines.length) || 0)).join(' · ') + (toRead ? ' · 读到末尾再确认' : ''), rulesOpen: open, rulesExp: open ? 'true' : 'false',
+          openRules: (ev) => { if (toRead) { d.primary.act(ev); return; } this.setState(st => ({ dRules: st.dRules === d.eventId ? null : d.eventId })); } }; })(),
       history: { titleNb: hr ? nb(hr.title) : '', recordCount: c.history.on ? c.history.records.length : 0, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), showCard: c.history.on && !c.history.hasStamp && !!hr, paperCard: c.history.on && !c.history.hasStamp && !hr,
         cardJson: c.history.on && !c.history.hasStamp && !hr ? cardJson(c.history.event, c.history.row && c.history.row.counts ? Object.assign({}, c.history.row.counts, { formed: !!c.history.row.formed }) : null) : '', stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
       sheet: { overlay: c.sheet.on && !trayForm, keepFirst: c.sheet.on && !!c.sheet.keepPrimary, inkPair: c.sheet.on && c.sheet.okTone === 'ink', plainActs: !(c.sheet.on && (c.sheet.keepPrimary || c.sheet.okTone === 'ink')), hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okBlue: !c.sheet.danger, okDisabled: !c.sheet.canOk }

@@ -20,7 +20,7 @@ body{margin:0}
    详情 = 原地展开：点局名，该项在列表里原位展开（其它项下移），局名不动；票根 / 局卡以原尺寸出现在展开段落之中，像杂志内页的图。
    管理 = 段落标题（17px 衬线）+ 文字行；弹层 = 纸面上升的一段文字 + 两个动作。
    ============================================================================================ */
-.app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--body);background:var(--paper);font-size:calc(15px * var(--tz,1));line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
+.app{position:absolute;inset:0;overflow:hidden;overflow:clip;font-family:"Noto Sans SC",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;color:var(--body);background:var(--paper);font-size:calc(15px * var(--tz,1));line-height:1.5;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;
   --ju-font-ui:"Noto Sans SC","Microsoft YaHei","PingFang SC",sans-serif;
   --paper:#FBFAF7;--paper0:rgba(251,250,247,0);--ink:#14161F;--body:#252b3a;--sec:#535b70;--faint:#686d7d;
   --line:rgba(20,22,31,.12);--rule:rgba(20,22,31,.74);--focus:#4A5AD6;
@@ -284,10 +284,10 @@ body{margin:0}
 .c06-nv.on{color:var(--ink);font-weight:500;cursor:pointer}
 
 /* ---- sheets: paper rising + two actions ---- */
-.c06-over{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,22,31,.3);animation:c06-scrim calc(260ms * var(--k,1)) ease both}
+.c06-over{position:absolute;inset:0;z-index:50;overflow:clip;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,22,31,.3);animation:c06-scrim calc(260ms * var(--k,1)) ease both}
 @keyframes c06-scrim{0%{background:rgba(20,22,31,0)}100%{background:rgba(20,22,31,.3)}}
-.c06-sheet{position:relative;background:var(--paper);padding:28px var(--gx) calc(16px + var(--sab,0px) + var(--kb,0px));max-height:calc(100% - var(--tt) - 24px);overflow-y:auto;overflow-x:hidden;animation:c06-rise calc(340ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both;outline:none}
-@keyframes c06-rise{0%{transform:translateY(100%)}100%{transform:none}}   /* opaque paper slides up from the edge: no frame where the sheet's words lie over the page's */
+.c06-sheet{position:relative;background:var(--paper);padding:28px var(--gx) calc(16px + var(--sab,0px) + var(--kb,0px));max-height:calc(100% - var(--tt) - 24px);overflow-y:auto;overflow-x:hidden;outline:none}   /* entrance: _syncSheetIn (WAAPI, after the controller has focused the first field) */
+
 .c06-sheet h3{font-family:var(--serif);font-weight:600;font-size:calc(24px * var(--tz,1));line-height:1.3;color:var(--ink)}
 .c06-sh-id{margin:10px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--sec)}
 .c06-sh-id b{font-weight:500;color:var(--body);margin-right:8px}
@@ -787,6 +787,13 @@ class Component extends DCLogic {
     return null;
   }
   /* ---------------- environment (JU.shared.skins) ---------------- */
+  /* the sheet enters as opaque paper sliding up from the bottom edge (no fade: no frame where its words lie over the page's). It is started here,
+     after the controller has focused the first field with the sheet already in place, so focusing never scrolls the page */
+  _syncSheetIn(ps) {
+    const sh = this.state.sheet, k = this.kf(); if (!sh || k <= 0 || (ps && ps.sheet && ps.sheet.id === sh.id)) return;
+    const root = this.rootRef.current, el = root && root.querySelector('.c06-over:not(.is-ghost) .c06-sheet'); if (!el || !el.animate) return;
+    el.animate([{ transform: 'translateY(100%)' }, { transform: 'none' }], { duration: 340 * k, easing: 'cubic-bezier(.2,.8,.2,1)' });
+  }
   _syncSheetGhost() {
     const g = this._ghost, root = this.rootRef.current; this._ghost = null; if (!g || !root) return; const k = this.kf();
     g.setAttribute('aria-hidden', 'true'); g.inert = true; g.style.pointerEvents = 'none'; g.style.animation = 'none'; g.classList.add('is-ghost');
@@ -805,7 +812,7 @@ class Component extends DCLogic {
   componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncCards(); this._syncStamps(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
   _card(kind, id, ev, when, place, host, avail, status, caption) { const vm = c06CardVm(ev, when, place, host, avail, status, caption); const key = [kind, id, vm.pack, vm.title, vm.date, vm.time, avail, status || ''].join('|'); this._cards[key] = vm; return key; }
   _syncCards() { const root = this.rootRef.current, vm = this._cards || {}; if (!root) return; root.querySelectorAll('[data-c06card]').forEach((el) => { const k = el.getAttribute('data-c06card'); if (!k || el.__c06k === k || !vm[k]) return; el.innerHTML = c06CardHtml(vm[k]); el.__c06k = k; }); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncStamps(); this._syncSheetGhost(); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncStamps(); this._syncSheetGhost(); this._syncSheetIn(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); }
   _syncScroll(ps) {
     const s = this.state, sc = this.scRef.current; if (!ps || !sc || (ps.role === s.role && ps.section === s.section) || this._expOf()) return;
     const m = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section]; sc.scrollTop = m && m.home != null ? m.home : 0;

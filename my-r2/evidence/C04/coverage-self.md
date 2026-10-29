@@ -4,14 +4,14 @@
 
 | 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |
 |---|---|---|---|---|---|
-| j-home · 当前（默认） | ✓ | ✓ 打开 Livehouse → 接受改期 → 返回、改槽（path/）；角色 / 分区切换（motion-a）；rm enter-back；时钟到期跳变（motion-b clk） | ✓ 接触表 | ✓ 实时录屏 328 帧（path/，负载 5.8–7.2）+ 逐帧 k=1（fixes/after-open / back） | 实时开页起步是否同步（见 motion/C04.md 的判断） |
+| j-home · 当前（默认） | ✓ | ✓ 打开 Livehouse → 接受改期 → 返回、改槽（path/）；角色 / 分区切换（motion-a）；rm enter-back；时钟到期跳变（motion-b clk） | ✓ 接触表 | ✓ 实时录屏 328 帧（path/，负载 5.8–7.2）+ 逐帧 k=1（fixes/after-open / back） | 实时开页时，纸与局名同步（修后重录 path/），请在真机上再看一次 |
 | j-history · 历史 | ✓ | ✓ 打开作废的局 → 首次燃烧 → 压印（motion-b m8b） | ✓ 接触表 | ✓ 逐帧（motion-a m2-sec，motion-b m8b） | 整体观感 |
 | j-many · 当前较多 | ✓ | ✓ 滚到收拢终点再回滚（motion-a m3-many） | ✓ 接触表 | ✓ 逐帧（motion-a m3-many） | 整体观感 |
-| j-history-many · 历史较多 | ✓ | – | ✓ 接触表 | – | 整体观感 |
-| j-d-pending · 待审核 | ✓ | – | ✓ 接触表 | – | 整体观感 |
-| j-d-invited · 已预留待确认 | ✓ | ✓ rm read-confirm（阅读确认 → 成局出票） | ✓ 接触表 | – | 整体观感 |
+| j-history-many · 历史较多 | ✓ | ✓ 滚到收拢终点（284/284，p = 1，ops2/o-history-many-collapsed） | ✓ 接触表 | – | 整体观感 |
+| j-d-pending · 待审核 | ✓ | ✓ 撤回申请 → 确认 → 已撤回（ops2/o-pending-withdraw） | ✓ 接触表 | – | 整体观感 |
+| j-d-invited · 已预留待确认 | ✓ | ✓ rm read-confirm（阅读确认 → 成局出票）；放弃预留 → 确认 → 已退出（ops2/o-invited-release） | ✓ 接触表 | – | 整体观感 |
 | j-d-waitlist · 候补等待 | ✓ | ✓ rm waitlist-leave | ✓ 接触表 | – | 整体观感 |
-| j-d-invitedq · 候补轮到 | ✓ | – | ✓ 接触表 | – | 整体观感 |
+| j-d-invitedq · 候补轮到 | ✓ | ✓ 阅读 → 确认 → 已确认，等全员（ops2/o-invitedq-read-confirm） | ✓ 接触表 | – | 整体观感 |
 | j-d-gathering · 已确认待成局 | ✓ | – | ✓ 接触表 | – | 整体观感 |
 | j-d-tear · 已出票待撕 | ✓ | ✓ rm tear-contact-copy；按钮撕（contact-exit t1） | ✓ 接触表 | ✓ 实时撕新票（path/ accept 段）；按钮撕定格（contact-exit t1） | 整体观感 |
 | j-d-contact · 已撕票待联系 | ✓ | ✓ 复制失败 → 重试 → 已加微信（contact-exit c2–c5） | ✓ 接触表 | ✓ 联系层出现（path/ accept 段） | 整体观感 |
@@ -30,8 +30,8 @@
 | j-d-absent · 散场 · 未出席待核实 | ✓ | – | ✓ 接触表 | – | 整体观感 |
 | h-home · 当前（默认） | ✓ | ✓ 角色切换（motion-a m1）；时钟到期（motion-b clk-2） | ✓ 接触表 | ✓ 逐帧 k=1（motion-a m1-role） | 整体观感 |
 | h-drafts · 草稿 | ✓ | ✓ rm draft-delete-undo；删除 / 撤销（motion-a m10） | ✓ 接触表 | ✓ 逐帧（motion-a m10 抽出 / 放回） | 整体观感 |
-| h-history · 历史 | ✓ | – | ✓ 接触表 | – | 整体观感 |
-| h-pending · 待处理较多 | ✓ | – | ✓ 接触表 | – | 整体观感 |
+| h-history · 历史 | ✓ | ✓ 打开历史局 → 出席页（ops2/o-h-history-open） | ✓ 接触表 | – | 整体观感 |
+| h-pending · 待处理较多 | ✓ | ✓ 打开 lead 纸 → 审核页（ops2/o-pending-open-review） | ✓ 接触表 | – | 整体观感 |
 | h-history-many · 历史较多 | ✓ | – | ✓ 接触表 | – | 整体观感 |
 | h-drafts-many · 只有草稿 | ✓ | ✓ 删到最后一份 → 空态（motion-a m11） | ✓ 接触表 | ✓（motion-a m11） | 整体观感 |
 | h-m-review · 申请审核 | ✓ | ✓ rm review-approve-reject；通过 / 谢绝（motion-a m5） | ✓ 接触表 | ✓（motion-a m5 处理中 → 写入） | 整体观感 |
@@ -44,9 +44,9 @@
 | h-m-cancel · 取消这局 | ✓ | ✓ rm cancel-burn；取消 → 成员纸褪色（motion-b m8c） | ✓ 接触表 | ✓（motion-b m8c 褪色） | 整体观感 |
 | h-m-end · 记为散场 | ✓ | ✓ rm end-attend；记为散场 → 出席（motion-b m9-0） | ✓ 接触表 | ✓（motion-b m9-0） | 整体观感 |
 | h-m-attendance · 出席记录 | ✓ | ✓ 逐人落章 + 更正（motion-b m9）；+24h 联系方式关闭（motion-b clk-4） | ✓ 接触表 | ✓（motion-b m9 落章 000 / 120 / 320 / 落定） | 整体观感 |
-| h-m-card · 完整局卡 | ✓ | – | ✓ 接触表 | – | 整体观感 |
+| h-m-card · 完整局卡 | ✓ | ✓ 局卡弹层关闭（ops2/o-card-open） | ✓ 接触表 | – | 整体观感 |
 | h-m-cancelled · 已取消的局 | ✓ | – | ✓ 接触表 | – | 整体观感 |
-| h-draft · 草稿摘要 | ✓ | – | ✓ 接触表 | – | 整体观感 |
+| h-draft · 草稿摘要 | ✓ | ✓ 删除草稿 → 回到首页（ops2/o-draft-delete） | ✓ 接触表 | – | 整体观感 |
 | b-empty · 完全空 | ✓ | – | ✓ 接触表 | – | 整体观感 |
 | b-empty-h · 完全空 · 局主 | ✓ | – | ✓ 接触表 | – | 整体观感 |
 | b-single · 只有一场 | ✓ | – | ✓ 接触表 | – | 整体观感 |
