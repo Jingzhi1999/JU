@@ -213,10 +213,12 @@ body{margin:0}
 .app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-ftx{opacity:1;transition:opacity calc(70ms * var(--k)) linear calc(285ms * var(--k))}
 /* the fold (titles that settle on exactly two lines): no second copy at all — the travelling line breaks where its settled self breaks; the
    words after the break (.c08-tb) slide down onto the second line during the travel's last 260ms (main-thread left / top, in step with the
-   title's own left / top), and back up behind the first line on the way home, so the title lands as the strip's one line */
+   title's own left / top; the target in px at the settled 30px — an em target moves with the growing font, and Chrome restarted the
+   transition every frame, so it never left its delay), and back up behind the first line on the way home (a keyframe animation in em:
+   it follows the shrinking font), so the title lands as the strip's one line */
 .c08-tb{position:relative;left:0;top:0}
 .app.over-home .c08-pg.is-top.t1.f1.ph-enter.dir-fwd .c08-tb,.app.over-home .c08-pg.is-top.t1.f1.ph-in .c08-tb{display:inline-block}
-.app.over-home .c08-pg.is-top.t1.f1.ph-in .c08-tb{left:calc(var(--fbx,0) * 1em);top:calc(var(--fby,0) * 1em);transition:left calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k)),top calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k))}
+.app.over-home .c08-pg.is-top.t1.f1.ph-in .c08-tb{left:var(--fbxp,0px);top:var(--fbyp,0px);transition:left calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k)),top calc(260ms * var(--k)) cubic-bezier(.45,0,.2,1) calc(120ms * var(--k))}
 .app.over-home .c08-pg.is-top.t1.f1.ph-in.dir-fwd .c08-ft{opacity:1;transition:left calc(380ms * var(--k)) var(--tA),top calc(380ms * var(--k)) var(--tA),font-size calc(380ms * var(--k)) var(--tA)}
 .app.over-home .c08-pg.is-top.t1.f1.ph-in.dir-fwd .c08-ftx{opacity:0;transition:none}
 .app.over-home .c08-pg.is-top.ph-exit.has-back.f1 .c08-ft{white-space:nowrap;display:block;text-overflow:clip;max-width:100%;min-height:calc(63px * var(--tz,1))}
@@ -1189,7 +1191,7 @@ class Component extends DCLogic {
     /* the head title as two runs: before / after the line break of its settled two-line self (one run when no fold is travelling) */
     const tsplit = o => { if (!o) return o; const on = foldOk && o.title === fold.full; o.ta = on ? fold.a : o.title; o.tb = on ? fold.b : ''; o.f1 = on ? ' f1' : ''; return o; };
     const fx = { bg:'--y0:' + (bfx ? bfx.y0 : 0) + 'px;--h0:' + (bfx ? bfx.h0 : 0) + 'px;--y1:' + (bfx && bfx.y1 != null ? bfx.y1 : (bfx ? bfx.y0 : 0)) + 'px;--h1:' + (bfx && bfx.h1 != null ? bfx.h1 : (bfx ? bfx.h0 : 0)) + 'px',
-      title: (tt ? '--tx:' + tt.tx + 'px;--ty:' + tt.ty + 'px;--tfs:' + tt.fs + 'px' : '--tfs:' + (30 * tz) + 'px') + (bfx && bfx.tt1 ? ';--tx1:' + bfx.tt1.tx + 'px;--ty1:' + bfx.tt1.ty + 'px;--tfs1:' + bfx.tt1.fs + 'px' : '') + (foldOk ? ';--fbx:' + fold.x + ';--fby:' + fold.y : ''),
+      title: (tt ? '--tx:' + tt.tx + 'px;--ty:' + tt.ty + 'px;--tfs:' + tt.fs + 'px' : '--tfs:' + (30 * tz) + 'px') + (bfx && bfx.tt1 ? ';--tx1:' + bfx.tt1.tx + 'px;--ty1:' + bfx.tt1.ty + 'px;--tfs1:' + bfx.tt1.fs + 'px' : '') + (foldOk ? ';--fbx:' + fold.x + ';--fby:' + fold.y + ';--fbxp:' + Math.round(fold.x * 30 * tz * 100) / 100 + 'px;--fbyp:' + Math.round(fold.y * 30 * tz * 100) / 100 + 'px' : ''),
       backCls: (bfx && bfx.tt1 && bfx.y1 != null ? ' has-back' : '') + (tt && tt.one && !(bfx && bfx.y1 != null) ? ' t1' : '') };
     /* a page keeps the colour of the band it was opened from for the whole visit (a 局 that moves group while its page is open does not
        repaint the head — the list shows the move on return); only a cancellation drains the head to the closed tone (manage, below) */
