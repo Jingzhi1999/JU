@@ -363,8 +363,8 @@ body{margin:0}
 .c07-stage.reissued{--ju-ticket-top:24px}
 /* the sheet starts below the header, so a short phone cannot hold the 84px slot room above the ticket and the dock below it:
    the original's own short-phone value (print.js: 24px), from the height where the stub would slide under the CTA */
-@container c07app (max-height: 838px){.c07-tk .c07-stage{--ju-ticket-top:24px}}
-@container c07app (max-height: 902px){.ju-phone.safe .c07-tk .c07-stage{--ju-ticket-top:24px}}
+@container c07app (max-height: 838px){.c07-tray .c07-tk{padding-top:0}.c07-tk .c07-stage{--ju-ticket-top:24px;margin-top:0}}
+@container c07app (max-height: 902px){.ju-phone.safe .c07-tray .c07-tk{padding-top:0}.ju-phone.safe .c07-tk .c07-stage{--ju-ticket-top:24px;margin-top:0}}
 /* until the print engine starts, the original's own exit-slot lip is shown, dimmed */
 .c07-stage[data-state="idle"]:not([data-print]) .ju-print-lip{opacity:.5;transition:opacity calc(300ms * var(--k)) ease calc(200ms * var(--k))}
 .c07-tray .ju-contact-row{border-top-color:rgba(255,255,255,.16);color:var(--tw)}
@@ -1191,6 +1191,7 @@ class Component extends DCLogic {
       const sel = this._c07FocusAct; const b = root.querySelector('.c07-act:not(.is-off) ' + sel) || root.querySelector('.c07-act:not(.is-off) button');
       if (b) { this._c07FocusAct = null; try { b.focus({ preventScroll: true }); } catch (e) { } const rid = this._c07RevealRow; this._c07RevealRow = null; const row = rid && root.querySelector('[data-surface="manage"] [data-rid="' + rid + '"]'); if (row && this.reveal) this.reveal(row); }
     }
+    if (this._c07FocusRow) { const row = root.querySelector('[data-surface="manage"] [data-rid="' + this._c07FocusRow + '"]'); if (row) { this._c07FocusRow = null; try { row.focus({ preventScroll: true }); } catch (e) { } } }
     const formWas = !!(ps && ps.sheet && this._c07FormKind);
     const samePage = !!(ps && ps.nav && this.state.nav && ps.nav.seq === this.state.nav.seq && ps.jumpKey === this.state.jumpKey);
     if (formWas && !this.state.sheet && !samePage) this._c07FormKind = null;
@@ -1354,8 +1355,10 @@ class Component extends DCLogic {
     if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
     /* manage: the decided item leaves the tray and the next one takes it (the .c07-actin entry replays); a short receipt stays in the label */
     if (fx.type === 'attended' && !fx.replay) {
-      const id = fx.memberId; this.setState(st => ({ mfocus: id, attHold: { id: id, seq: ((st.attHold && st.attHold.seq) || 0) + 1 } }));
-      this.holdKey('c07-att', this.isRM() ? 650 : 1050, () => { this._c07FocusAct = '[data-act="attend-present"]'; this.setState(st => { const nx = this._c && this._c.manage.on ? (this._c.manage.attendance.rows.filter(a => !a.recorded)[0] || null) : null; this._c07RevealRow = nx ? nx.id : null; return { attHold: null, mfocus: null, actSwap: (st.actSwap || 0) + 1 }; }); });
+      /* a correction (he was already recorded) keeps focus on him: after the hold the tray goes back to whoever is next, focus returns
+         to his row and the roster does not scroll (ctl-api 出席更正); a first record hands focus to the next person's 出席 */
+      const id = fx.memberId, corr = this._c07Corr === id; this._c07Corr = null; this.setState(st => ({ mfocus: id, attHold: { id: id, seq: ((st.attHold && st.attHold.seq) || 0) + 1 } }));
+      this.holdKey('c07-att', this.isRM() ? 650 : 1050, () => { if (corr) this._c07FocusRow = id; else this._c07FocusAct = '[data-act="attend-present"]'; this.setState(st => { const nx = !corr && this._c && this._c.manage.on ? (this._c.manage.attendance.rows.filter(a => !a.recorded)[0] || null) : null; this._c07RevealRow = nx ? nx.id : null; return { attHold: null, mfocus: null, actSwap: (st.actSwap || 0) + 1 }; }); });
     }
     /* the clock: what a settle changed is said once, on the side it concerns */
     const clockNote = fx.type === 'expired' ? (fx.side === 'joined' ? (fx.other ? '' : '「' + this._evTitle(fx.eventId) + '」预留已到期 · 位置已补给他人') : (fx.nick || '') + ' 的预留已到期')
@@ -1507,8 +1510,8 @@ class Component extends DCLogic {
         act.title = a.name; act.meta = (a.ticketText ? a.ticketText + ' · ' : '') + (a.contactAdded ? '已自报加微信' : '未自报加微信');
         act.error = a.error; act.pPresent = a.isPresent ? 'true' : 'false'; act.pAbsent = a.isAbsent ? 'true' : 'false'; act.pPending = a.isPending ? 'true' : 'false';
         act.slipMode = a.recorded ? a.stamp : ''; act.slipSeq = isHeld ? String(s.attHold.seq) : ''; act.slipPress = isHeld ? '1' : ''; act.slipCls = a.recorded ? 'has-stamp' : ''; act.slipLabel = a.recorded ? '已落章 · ' + a.chopText : '还没落章';
-        /* the controller would also move focus to the next row; the tray does that itself after the hold */
-        const rec = (fn) => (ev) => { fn(ev); this._focusAtt = null; };
+        /* the controller would also move focus (next row, or the corrected row); the tray does that itself after the hold */
+        const rec = (fn) => (ev) => { this._c07Corr = a.recorded ? a.id : null; fn(ev); this._focusAtt = null; };
         act.setPresent = rec(a.setPresent); act.setAbsent = rec(a.setAbsent); act.setPending = rec(a.setPending); }
       else if (mode === 'burn') { act.isBurn = true; act.cardJson = cardJson(m.event, { confirmed: m.head.progress.confirmed, reserved: m.head.progress.reserved, available: m.head.progress.available, formed: m.head.formed }, 'cancelled'); act.label = '已取消 · 不能撤销'; act.title = m.head.title; act.card = this._cardData(m); act.burnNote = '局卡作废 · 已出的票根作废、联系入口关闭'; }
       else if (mode === 'done') { act.isDone = true; act.label = '都处理完了 · 已处理 ' + m.apps.handled; act.title = '申请都有答复了'; act.meta = m.head.progress.text + (m.head.progress.more ? ' · ' + m.head.progress.more : ''); act.arrLink = true; act.toArrange = () => this.setState({ mArr: true }); }

@@ -1370,12 +1370,13 @@ class Component extends DCLogic {
     const sec = stage.closest('[data-surface]'), cw = sec && sec.querySelector('[data-contact-reveal]');
     if (cw && !c.ticket.contact.on) { cw.dataset.revealed = 'false'; cw.setAttribute('aria-hidden', 'true'); const act = sec.querySelector('[data-contact-action]'); if (act) act.dataset.shown = 'false'; }
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    if (R && R.print && R.print.reset && stage.dataset.print === 'printing') R.print.reset(stage);
     if (R && R.burn && R.burn.reset) { try { R.burn.reset(stage); } catch (e) { } }
     if (!R || !R.print) { stage.dataset.state = st === 'torn' || st === 'fresh' ? 'torn' : 'ready'; if (st === 'printing' || st === 'fresh') this.ticketPrinted(c.ticket.printKey); return; }
     if (st === 'printing' || st === 'fresh') {   /* 'fresh' is defensive: never leave an empty ticket slot */
       const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() }; const it = c.ticket.row && c.ticket.row.item;
       R.print(stage, data, { final: it && it.ticket && it.ticket.torn && !c.ticket.isReply ? 'torn' : 'ready', tear: this._tearOpts() }).then(res => {
-        if (this._rit.stage !== stage) return;
+        if (this._rit.stage !== stage || this._rit.key !== key) return;
         const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null);
         if (!res.ok && res.reason !== 'superseded') this.say(res.message || '纸票未准备好，请重试', 'error');
         this.ticketPrinted(key);
@@ -1616,10 +1617,10 @@ class Component extends DCLogic {
       v.wl = Object.assign(this._deep(w.row, home.areas), { title: c09T((w.row && w.row.title) || w.title), state: w.receipt ? w.receipt.title : w.title, receiptLine: w.receipt ? [w.receipt.field, w.receipt.body].filter(Boolean).join(' · ') : '', enteredCount: w.entered.length + ' 人' }); } else v.wl = { area: {} };
     const hr = c.history.on ? c.history.ritual : null; v.sameH = this._sameCls('history');
     const hsRow = c.history.on ? c.history.row : null, hsState = hsRow ? (c.history.label && c.history.label.indexOf(c.history.title) >= 0 ? c.history.label : c.history.title) : '';
-    const hsBare = !!(c.history.on && !c.history.hasStamp && !(hr && c.history.burnOnce));
+    const hsBare = !!(c.history.on && !c.history.hasStamp && (!(hr && c.history.burnOnce) || c.history.ashes));
     const hsAr = hsRow ? home.areas.find(a => a.key === c09Area(hsRow.place).key) : null, hsNear = hsAr ? hsAr.rows.filter(x => x.id !== hsRow.id && !x.draft).slice(0, 3) : [];
     v.hs = c.history.on ? Object.assign(this._deep(c.history.row, home.areas), { title: c09T(hsRow.title || c.history.title), state: hsState, meta: c09When(c.history.when),
-      facts: hsBare ? { when: c.history.when ? c.history.when.long || c09When(c.history.when) : '日期未定', meet: c.history.when && c.history.when.meeting || '', place: hsRow.place ? hsRow.place.full : '', host: hsRow.host ? hsRow.host.name : '', seat: hsRow.seatText || '' } : null,
+      facts: hsBare ? { when: c.history.when ? c.history.when.long || c09When(c.history.when) : '日期未定', meet: c.history.when && c.history.when.meeting || '', place: hsRow.place ? c09Area(hsRow.place).zh + ' · ' + hsRow.place.hood : '', host: hsRow.host ? hsRow.host.name : '', seat: hsRow.seatText || '' } : null,
       near: hsBare && hsNear.length ? hsNear : null, nearCount: hsNear.length + ' 场', recordCount: c.history.records.length, noRecords: !c.history.records.length, slip: !c.history.hasStamp, slipTitle: c.history.row.label, showStage: !!(hr && c.history.burnOnce) && (!c.history.ashes || this._hsLive === c.history.row.id), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '' }) : { area: {} };
     v.df = c.draft.on && c.draft.row ? Object.assign(this._deep(c.draft.row, home.areas), { title: c09T(c.draft.title) }) : { area: {} };
     /* sheet: live view model while open; its last one for the closing motion (not under reduced motion) */

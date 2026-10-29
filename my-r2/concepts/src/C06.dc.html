@@ -447,7 +447,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                         </sc-if>
                         <div class="c06-slot">
                           <div class="c06-ctaw">
-                            <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta c06-cta ju-print-cta-in" data-act="{{v.tk.tearAct}}" onClick="{{v.tk.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
+                            <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta c06-cta ju-print-cta-in {{v.tk.tearCls}}" data-act="{{v.tk.tearAct}}" onClick="{{v.tk.tearNow}}"><span class="gloss"></span><span class="label">{{v.tk.tearLabel}}</span></button></sc-if>
                             <sc-if value="{{v.tk.contactAction}}"><button type="button" class="ju-v27-cta c06-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="{{v.tk.ctaDisabled}}" aria-busy="{{v.tk.ctaBusy}}"><span class="gloss"></span><span class="label">{{c.ticket.contact.ctaLabel}}</span><span data-slot="actionLabel" hidden></span></button></sc-if>
                             <sc-if value="{{c.ticket.result}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></sc-if>
                             <sc-if value="{{c.ticket.unavailable}}"><button type="button" class="ju-v27-cta c06-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></sc-if>
@@ -886,7 +886,7 @@ class Component extends DCLogic {
     const snap = this._snap; this._snap = false;
     if (k > 0 && !snap) { this._moT0 = document.timeline.currentTime; this._moSet = null; }
     if (k > 0 && !snap) root.querySelectorAll('.c06-list [data-k]').forEach(el => { const key = el.getAttribute('data-k'); const d = from[key] == null ? null : from[key] - to[key];
-      if (moved && key === mk) { el.classList.add('is-moving'); const a = el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 360 * k, easing: 'cubic-bezier(.3,.7,.2,1)' }); a.onfinish = a.oncancel = () => { el.classList.remove('is-moving'); }; el.animate([{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .72 }, { opacity: 0 }], { duration: 1100 * k, delay: 360 * k, pseudoElement: '::before' }); return; }
+      if (moved && key === mk) { el.style.zIndex = '3'; el.style.background = 'var(--paper)'; const a = el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 360 * k, easing: 'cubic-bezier(.3,.7,.2,1)' }); a.onfinish = a.oncancel = () => { el.style.zIndex = ''; el.style.background = ''; }; el.animate([{ opacity: 0 }, { opacity: 1, offset: .12 }, { opacity: 1, offset: .72 }, { opacity: 0 }], { duration: 1100 * k, delay: 360 * k, pseudoElement: '::before' }); return; }
       if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 * k, delay: 120 * k, easing: 'ease', fill: 'backwards' }); return; }
       if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 300 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
     if (moved) {
@@ -985,6 +985,12 @@ class Component extends DCLogic {
     const inner = block.firstElementChild; if (!inner) return; const fig = inner.querySelector('.c06-figwrap');
     if (fig) fig.animate([{ opacity: 1, transform: 'none' }, { opacity: .3, transform: 'translateY(-8px) scale(.975)' }], { duration: 220 * k, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' });
     Array.prototype.forEach.call(inner.children, (el) => { if (el === fig || el.contains(fig)) return; el.animate([{ opacity: 1 }, { opacity: .5 }], { duration: 160 * k, easing: 'ease', fill: 'forwards' }); });
+  }
+  _preBack() {
+    const x = this._expOf(); if (!x || !x.top) return false; this._backAt = performance.now();
+    if (x.under === 'home' && this._xp && this._xp.id === x.id && !this._xp.collapsing) { this._collapse(x); this._preBacked = true; return true; }
+    if (x.under && C06_INLINE[x.under]) { this._swapBack(x); this._preBacked = true; return true; }
+    return false;
   }
   /* M1 · back is idempotent: a back (or a burst of taps) while the fold runs lands the fold at once — no second level, no leftover paragraph */
   _landBack() {
@@ -1104,9 +1110,9 @@ class Component extends DCLogic {
   _tearGoing() {
     const root = this.rootRef.current; if (!root) return; const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec) return;
     const node = root.getRootNode ? root.getRootNode() : document; const ae = node && node.activeElement; if (ae && sec.contains(ae)) this._rit.refocus = true;
-    const btn = sec.querySelector('.c06-slot .ju-print-cta-in'); if (btn) btn.classList.add('is-leaving');
+    const key = this._c && this._c.ticket ? this._c.ticket.printKey : null; if (this._rit.leaving !== key) { this._rit.leaving = key; this.forceUpdate(); }
   }
-  _tearBack() { const root = this.rootRef.current, btn = root && root.querySelector('.c06-slot .ju-print-cta-in.is-leaving'); if (btn) btn.classList.remove('is-leaving'); }
+  _tearBack() { if (this._rit.leaving) { this._rit.leaving = null; this.forceUpdate(); } }
   _cueTear(stage) {
     const grab = stage && stage.querySelector('[data-tear] [role=button]'); if (!grab || grab.__c06cue) return; grab.__c06cue = 1;
     const later = () => requestAnimationFrame(() => { const h = this._tearRig, rig = h && h.rig; if (rig && !rig.retract && (rig.done || rig.auto || rig.p >= 0.5)) this._tearGoing(); });
@@ -1167,7 +1173,7 @@ class Component extends DCLogic {
   _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
   onNav(kind, s, p) {
     if ((kind === 'go' || kind === 'replace') && C06_INLINE[s]) { const id = p && (p.eventId || p.draftId); if (id) this.lastMotion = { name: 'expand', fn: () => this._replayOpen(id) }; }
-    if (kind !== 'back') return; this._backAt = performance.now();
+    if (kind !== 'back') return; if (this._preBacked) { this._preBacked = false; return; } this._backAt = performance.now();
     const x = this._expOf(); if (x && x.top && x.under === 'home' && this._xp && this._xp.id === x.id && !this._xp.collapsing) this._collapse(x);
     else if (x && x.top && x.under && C06_INLINE[x.under]) this._swapBack(x);
   }
@@ -1339,6 +1345,7 @@ class Component extends DCLogic {
     v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), figCls: tk.on && (tk.state === 'printing' || tk.state === 'fresh') ? 'is-await' : '', stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),
       ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ctaBusy: tk.on && tk.contact && tk.contact.busy ? 'true' : 'false',
       tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', contactAction: !!(tk.on && !tk.unavailable && !tk.result), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), contactCls: tk.on && tk.contact.closed && !tk.result && !tk.unavailable ? 'c06-gone' : '',
+      tearCls: tk.on && this._rit.leaving && this._rit.leaving === tk.printKey ? 'is-leaving' : '',
       tearNow: (ev) => { const node = this.rootRef.current && this.rootRef.current.getRootNode ? this.rootRef.current.getRootNode() : document; if (ev && ev.currentTarget && node && node.activeElement === ev.currentTarget) this._rit.refocus = true; this._tearGoing(); if (tk.tear && tk.tear.tearNow) tk.tear.tearNow(ev); },
       resultNote: tk.result ? (tk.result.burning ? '票根正在作废…' : '票根已作废。') : '', goneCls: tk.result && tk.result.burn && !tk.result.burning ? 'is-gone' : '', retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } };
     /* detail paragraph */
@@ -1388,7 +1395,9 @@ class Component extends DCLogic {
   }
 }
 JU.mixin(Component);
-(function () { const P = Component.prototype, base = P.back; P.back = function () { const nav = this.state && this.state.nav; if (nav && nav.phase === 'exit') { this._landBack(); return true; } return base.apply(this, arguments); }; })();
+(function () { const P = Component.prototype, base = P.back; P.back = function () { const nav = this.state && this.state.nav; if (nav && nav.phase === 'exit') { this._landBack(); return true; } if (this._backQ) return true;
+  if (nav && nav.phase === 'idle' && this.kf() > 0 && this._preBack()) { const self = this, args = arguments; this._backQ = requestAnimationFrame(function () { self._backQ = 0; base.apply(self, args); }); return true; }
+  return base.apply(this, arguments); }; })();
 </script>
 </body>
 </html>

@@ -104,6 +104,11 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     // (g) reschedule → replies
     await click(p, '[data-surface="manage"] [data-act="back"]'); await settled(p); await click(p, '[data-rid="wine"]'); await settled(p);
     await click(p, '[data-act="propose"]'); await p.waitForTimeout(150); ok('reschedule sheet opens with ok disabled (same time)', await phone(p).locator('.c00-over [data-act="ok"]').first().isDisabled());
+    await phone(p).locator('[data-field="date"]').first().fill('2026-12-17'); await phone(p).locator('[data-field="time"]').first().fill('10:00'); await p.waitForTimeout(80);
+    ok('a past time keeps ok disabled and says why (C01 verify r2 N2)', (await phone(p).locator('.c00-over [data-act="ok"]').first().isDisabled()) && (await text(p)).indexOf('已经过去了') >= 0);
+    await phone(p).locator('[data-field="date"]').first().fill('2028-03-01'); await phone(p).locator('[data-field="time"]').first().fill('20:30'); await p.waitForTimeout(80);
+    ok('a date beyond one year keeps ok disabled and says why', (await phone(p).locator('.c00-over [data-act="ok"]').first().isDisabled()) && (await text(p)).indexOf('一年内') >= 0);
+    await phone(p).locator('[data-field="date"]').first().fill('2026-12-23');
     await phone(p).locator('[data-field="time"]').first().fill('20:30'); await p.waitForTimeout(80); ok('new time enables ok', !(await phone(p).locator('.c00-over [data-act="ok"]').first().isDisabled()));
     await click(p, '.c00-over [data-act="ok"]'); await settled(p, 600);
     const g = await inst(p, `var v = inst.ctlVals().manage; return { on: v.replies.on, total: v.replies.total, when: v.head.when.time, toast: inst.state.toast && inst.state.toast.text, status: v.head.status }`);
