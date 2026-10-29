@@ -1453,8 +1453,8 @@ class Component extends DCLogic {
     if (this._leadOut || curId === this._leadSeen) { this._leadSeen = curId; return; }
     const prev = this._leadVM; this._leadSeen = curId; if (!prev || prev.id === curId) return;
     const all = role === 'joined' ? c.joined.current.concat(c.joined.history) : c.hosted.current.concat(c.hosted.history); const was = all.find(x => x.id === prev.id);
-    const el = this.rootRef.current && this.rootRef.current.querySelector('[data-surface="home"] .c09-lead'), lh = el ? el.offsetHeight + 'px' : 'auto';
-    this._leadOut = Object.assign({}, prev, { lh, rcls: ' is-result', label: '这一件已处理', res: [(was && was.label) || '已处理', was && (was.need || was.stateText)].filter(Boolean).join(' · '), sub: prev.sub, left: '', leftTone: '', ratio: '0', ctaOn: false, sec: null, noSec: true, open: () => { }, cls: '' });
+    const el = this.rootRef.current && this.rootRef.current.querySelector('[data-surface="home"] .c09-lead'), lh = el ? el.offsetHeight + 'px' : 'auto', rr = was && { released: ['已放弃预留', '位置已释放 · 不记主动失约'], expired: ['预留已到期', '没有确认 · 位置已补给他人'] }[was.stage];
+    this._leadOut = Object.assign({}, prev, { lh, rcls: ' is-result', label: rr ? rr[0] : '这一件已处理', res: rr ? rr[1] : [(was && was.label) || '已处理', was && (was.need || was.stateText)].filter(Boolean).join(' · '), sub: prev.sub, left: '', leftTone: '', ratio: '0', ctaOn: false, sec: null, noSec: true, open: () => { }, cls: '' });
     this.holdKey('c09lead', 1700, () => { this._leadOut = null; this._leadIn = curId; this.setState({}); this.holdKey('c09leadin', 700, () => { this._leadIn = null; this.setState({}); }); });
   }
   _countIn(areas, key) { const a = areas && areas.find(x => x.key === key); return a ? a.countText : ''; }
