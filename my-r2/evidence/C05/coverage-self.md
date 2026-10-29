@@ -54,3 +54,25 @@
 | b-drafts | 只有草稿 | 跳转（变体） | — | ✓ variants/v-drafts-hosted | — | — |
 | b-long | 长标题长地点 | 跳转（变体） | — | ✓ variants/v-long-joined、checks/widths（115%） | — | — |
 | b-long-h | 长标题 · 局主 | 跳转（变体） | — | ✓ variants/v-long-hosted | — | — |
+
+## 修复轮（10-29 复核第 1 轮 → 交第 2 轮；证据 `stage2/fix/`，录制负载 4–7，环境引擎暂停）
+| 条目 | 改法 | 证据 |
+|---|---|---|
+| M-1 签名路径 / 角色切换经过空白帧 | 进入 / 返回 = 从那一行打开 / 收回的带子：两页始终是不透明整页、各占一部分屏幕，标题在带子里飞，卡与面色同一曲线；replace（查看票根）同；角色 / 分区 = 90ms 交叉淡化，新旧错开 28 / 22px | `m-enter-back`、`m-role-section`、`m-read-ticket` |
+| M-2 面上起手不滚 | 面 / 卡上的竖向拖动与滚轮转给顶层页的纸（惯性续滚，拖过不触发点击）；面里不可点部分 `pointer-events:none` | `face-scroll/touch-swipe.txt`（首页 / 详情 / 管理 y160–420 起手均滚 ≈305px） |
+| M-3 关键帧滑杆无效 | 转场全部 WAAPI，`_syncScrub` 写 currentTime；静止时拖滑杆 = 瞬间回到上一次转场的起点（不绘制）再播；倒计时条去掉宽度过渡 | `scrub`（0 / 35 / 70 / 100 四帧不同；回首页后 0 / 50 / 100 重播返回） |
+| 规则 10 环境露出 | 色面改为半透明纱（参加者 30% / 局主 36% / 票根 66% / 褪色 60%），去掉光晕 / 落日的静态仿制渐变与高光；遮罩 .24；深层页收拢带 96px；拿起的局卡下移 28px | `env/count.json`、`env-steps/count.json`（59 态最低 11.0%）、`env-look`、`contrast`（213 项最低 5.31） |
+| 新栈 home > read | 核对：阅读层直接在首页上；查看票根 replace；出票后返回一次即回首页，带子收回到早午餐的新行并补落点 | `m-read-ticket/log.json` info |
+| V1 字阶 | 保留 42 / 22（阶段 1 定的单一主角），34 / 26 对照待主负责人定 | `v1` |
+| V2 手机内范围说明 | 去掉；入口只留文字与禁用态，说明移到面板 notes | `checks/coverage/j-d-ended`、`h-draft` |
+| V3 长标题拆词 | `word-break:keep-all`（面标题、局名、行标题、飞行标题） | `checks/widths/f23-w-390-b-long-h` |
+| V4 未成行 / 已取消空纸 | 纸上「这一场」：原定 / 地点 / 局主 / 人数 + 当时的成员 | `checks/coverage/j-d-rejected`、`j-d-cancelled` |
+| V5 12 小时制 | 原生控件保留（键盘 / 选择器），其上叠 24 小时中文显示「12月23日 周三」「19:30」 | `minor/v5-*`、`minor/minor.txt` |
+| V6 身份行纯色块 | 方块写日与星期 | `checks/coverage/j-d-withdraw` |
+| V7 草稿「--:--」 | 「未定」（32px） | `checks/coverage/h-draft` |
+| F1 已加微信后「再复制一次」 | 绑定的是 `c.ticket.contact.copyFail`（控制器已随原件失败行清掉）：实测 retry 0 | `minor/f1-*` |
+| F2 退出候补确认层一帧消失 | 关闭用前一帧副本：遮罩淡出 220ms、纸下落 64px | `f2-leave-queue` |
+| F3 燃烧 B 副券压在纸边 | 副券只在真正撕下后才从纸边计算中减去；燃烧期间纸边让出 74px | `f3-burn-b` |
+| F4 局主取消无余烬 | 抽色同时 18 粒余烬从卡下沿与两侧升起、冷却熄灭 | `f4-host-cancel` |
+| F5 早午餐返回无落点 | 来源行已不在时落到这场在纸上的新行 + 落点色 | `m-read-ticket` |
+| 共享修正 | `'fresh'` 与 `'printing'` 同样出票；撕开后焦点移到复制键；票台外的撕票失败行可见 | `tear/tear.txt`、`tear/tear-failed` |

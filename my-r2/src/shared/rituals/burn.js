@@ -466,10 +466,14 @@
       engine.seek(engine.duration);
       requestAnimationFrame(finish);
     } else engine.start();
+    // 原件引擎 seek 到终点只置 done、不回调 onDone，之后 start / resume 也直接返回（C03 汇报）：终点的落定由这里补上——
+    // 暂停中拖到终点不落定（评审还在拖），松手 resume 时落定；未暂停直接 seek 到终点，下一帧落定。引擎本身逐字节未改。
+    let paused = false;
     const handle = {
       engine, promise, variant,
-      pause: () => { engine.pause(); return handle; }, resume: () => { engine.resume(); return handle; },
-      seek: s => { engine.seek(s); return handle; },
+      pause: () => { paused = true; engine.pause(); return handle; },
+      resume: () => { paused = false; if (engine.done) finish(); else engine.resume(); return handle; },
+      seek: s => { engine.seek(s); if (engine.done) requestAnimationFrame(() => { if (!paused && engine.done) finish(); }); return handle; },
       destroy: () => { unmount(stage, engine); },
     };
     return handle;

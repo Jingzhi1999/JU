@@ -50,6 +50,20 @@ let fails = 0, passes = 0; const ok = (n, c, x) => { if (c) passes++; else { fai
   await L.jump(p, CODE, 'j-many', 700); await L.E(p, CODE, "inst.go('waitlist', { eventId: 'climb' })"); await idle();   /* climb = my turn in the queue (invited_queue, many variant) */
   const r = await L.E(p, CODE, 'var c = inst.ctlVals(); var w = c.waitlist && c.waitlist.on ? c.waitlist : null; return w ? w.receipt : null');
   ok('waitlist receipt: field dropped when the title already says it', r && !(r.field && r.title.indexOf(r.field) >= 0), r);
+  /* 6. burn handle: a paused seek to the end waits; resume lands the end state; an unpaused seek to the end lands next frame (C03 report) */
+  await L.jump(p, CODE, 'j-d-tear', 700); await idle();
+  for (let i = 0; i < 90; i++) { if (await L.E(p, CODE, "return inst.ctlVals().ticket.state === 'printed' || inst.ctlVals().ticket.state === 'ready'")) break; await p.waitForTimeout(100); }
+  const bn = await L.E(p, CODE, `var st = root.querySelector('[data-surface="ticket"] [data-print-stage]') || root.querySelector('[data-print-stage]'); if (!st || !window.JURitual || !window.JURitual.burn) return { missing: true };
+    window.__bnDone = 0; var h = window.JURitual.burn(st, { reason: 'withdrawn' }, { reduced: false, onDone: function () { window.__bnDone++; } }); window.__bnH = h; window.__bnSt = st;
+    if (!h.engine) return { noEngine: true }; h.pause(); h.seek(h.engine.duration); return { state: st.dataset.state };`);
+  await p.waitForTimeout(150);
+  const bn2 = await L.E(p, CODE, "return { state: window.__bnSt.dataset.state, done: window.__bnDone }");
+  await L.E(p, CODE, "window.__bnH.resume(); return 1"); await p.waitForTimeout(50);
+  const bn3 = await L.E(p, CODE, "return { state: window.__bnSt.dataset.state, done: window.__bnDone }");
+  const bn4 = await L.E(p, CODE, `var st = window.__bnSt; window.JURitual.burn.reset(st); window.__bnDone = 0; var h = window.JURitual.burn(st, { reason: 'withdrawn' }, { reduced: false, onDone: function () { window.__bnDone++; } }); window.__bnH = h; h.seek(h.engine.duration); return 1`);
+  await p.waitForTimeout(150);
+  const bn5 = await L.E(p, CODE, "return { state: window.__bnSt.dataset.state, done: window.__bnDone }");
+  ok('burn: paused seek to the end waits, resume lands the end state once; an unpaused seek to the end lands by itself', bn && bn.state === 'burning' && bn2.state === 'burning' && bn2.done === 0 && bn3.state === 'void' && bn3.done === 1 && bn4 === 1 && bn5.state === 'void' && bn5.done === 1, { bn, bn2, bn3, bn5 });
   ok('no console errors', errors.length === 0, errors.slice(0, 3));
   await b.close();
   console.log(fails ? `FAILED ${fails} / ${passes} passed` : `shared-regress OK · ${passes} checks passed`); process.exit(fails ? 1 : 0);

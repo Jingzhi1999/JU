@@ -475,13 +475,14 @@
     p.attend = function (eventId, memberId, value) {
       var self = this; var res = this.act('attend', { eventId: eventId, memberId: memberId, value: value }); var e = res.effect;
       if (e.type === 'error') { this.setState(function (s) { var er = assign(s.ui.errors); er['att:' + memberId] = e.message; return { ui: assign(s.ui, { errors: er }) }; }); return; }
+      var correcting = !!(this.state.ui.manage.editing || {})[memberId];   /* a correction keeps focus on the corrected person (C03 report) */
       var ed = assign(this.state.ui.manage.editing); delete ed[memberId];
       var fresh = assign(this.state.ui.manage.fresh); if (e.type === 'attended') fresh[memberId] = e.seq || Date.now();
       var next = this._firstUnrecorded(eventId, res.data);
       this._uiIn('manage', { editing: ed, fresh: fresh, next: next });
       this.setState(function (s) { var er = assign(s.ui.errors); delete er['att:' + memberId]; return { ui: assign(s.ui, { errors: er }) }; });
       if (e.type === 'attended') this.holdKey('stamp:' + memberId, 2500, function () { var f = assign(self.state.ui.manage.fresh); delete f[memberId]; self._uiIn('manage', { fresh: f }); });
-      if (next) this._focusAtt = next;
+      if (correcting) this._focusAtt = memberId; else if (next) this._focusAtt = next;
     };
     p.correct = function (memberId) { var ed = assign(this.state.ui.manage.editing); ed[memberId] = true; this._uiIn('manage', { editing: ed }); };
     p.toggleSection = function (key) { var o = assign(this.state.ui.manage.open); o[key] = !o[key]; this._uiIn('manage', { open: o }); };

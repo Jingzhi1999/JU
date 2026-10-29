@@ -125,8 +125,9 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     const i2 = await inst(p, `var v = inst.ctlVals().manage; var r = v.attendance.rows[0]; return { rec: v.attendance.rec, fresh: r.stampFresh, next: v.attendance.focusNext === v.attendance.rows[1].id, focused: (function(){ var a = root.getRootNode().activeElement; return a && a.closest('[data-rid]') && a.closest('[data-rid]').getAttribute('data-rid'); })(), nextId: v.attendance.rows[1].id }`);
     ok('出席 writes at once · stamp fresh · focus moves to the next person', i2.rec === 1 && i2.fresh && i2.next && i2.focused === i2.nextId, i2);
     await click(p, '[data-section="attendance"] [data-rid] [data-act="correct"]'); await p.waitForTimeout(80); await click(p, '[data-section="attendance"] [data-act="attend-absent"]'); await p.waitForTimeout(120);
-    const i3 = await inst(p, `var r = inst.ctlVals().manage.attendance.rows[0]; return { v: r.value, trail: r.trail, show: r.showTrail }`);
+    const i3 = await inst(p, `var r = inst.ctlVals().manage.attendance.rows[0]; return { v: r.value, trail: r.trail, show: r.showTrail, focused: (function(){ var a = root.getRootNode().activeElement; return a && a.closest('[data-rid]') && a.closest('[data-rid]').getAttribute('data-rid'); })(), id: r.id }`);
     ok('更正 leaves a trail', i3.v === 'absent' && i3.show && i3.trail.length === 2 && i3.trail[0].indexOf('更正 出席 → 未出席') === 0, i3);
+    ok('更正 keeps focus on the corrected person (C03 report)', i3.focused === i3.id, i3);
     // (j) drafts: delete → undo (original slot)
     await click(p, '[data-surface="manage"] [data-act="back"]'); await settled(p); await click(p, '[data-section-tab="drafts"]'); await settled(p);
     const d0 = await inst(p, `return inst.ctlVals().hosted.drafts.map(function(x){return x.id}).join(',')`);

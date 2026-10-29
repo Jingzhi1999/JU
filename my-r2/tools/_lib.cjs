@@ -22,7 +22,7 @@ function positionals() { const a = process.argv.slice(2); const out = []; for (c
 const STAGE_FN = function (c) { var m = window.JUShell && window.JUShell.mounts.stage['stage:' + c + ':']; var h = document.querySelector('.stage-host[data-code="' + c + '"]'); return { m: m, inst: m && m.instance, root: m && m.root, sr: h && h.shadowRoot, host: h }; };
 async function launch(o) {
   o = o || {};
-  const b = await chromium.launch();
+  const b = await chromium.launch({ args: ['--lang=zh-CN'], env: Object.assign({}, process.env, { LANG: 'zh_CN.UTF-8', LANGUAGE: 'zh_CN' }) });   /* native date / time inputs follow the BROWSER language, not the context locale: without this they render 12/24/2026 · 07:30 PM (C03 report) */
   const ctx = await b.newContext({ viewport: o.viewport || { width: 1000, height: 1000 }, deviceScaleFactor: o.dsf || 1, reducedMotion: o.reducedMotion || 'no-preference', locale: o.locale || 'zh-CN' });   /* zh-CN: native date / time inputs render 24-hour Chinese format like the product's audience sees them (C05 / C10: 「08:00 PM」 under en-US) */
   await ctx.addInitScript('window.__juStage = ' + STAGE_FN.toString() + ';');
   const blocked = [];
