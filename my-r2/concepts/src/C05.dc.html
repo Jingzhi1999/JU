@@ -1222,19 +1222,24 @@ class Component extends DCLogic {
     const sig = this._navSig(); if (sig === this._moSig) return; this._moSig = sig; const top = st.stack[st.stack.length - 1];
     /* back while the same page is still opening: the opening plays backwards from where it is (no jump to the open page first) */
     const m = this._mo; if (m && m.dir === 'fwd' && st.dir === 'back' && m.id === top.id && !this.isRM()) { m.dir = 'back'; m.anims.forEach(function (a) { try { a.reverse(); } catch (e) { } }); this._replayFor(st, top); return; }
-    if (m) this._endMotion(); this._replayFor(st, top);
-    if (this.isRM()) { if (snap.tint) snap.tint.el.classList.remove('no-tr'); return; }
+    if (m) this._endMotion(); if (this._quiet || this.isRM()) { if (snap.tint) snap.tint.el.classList.remove('no-tr'); if (!this._quiet) this._replayFor(st, top); return; }
+    this._replayFor(st, top);
     try { if (st.dir === 'role' || (st.dir === 'swap' && !st.leaving)) this._xfade(st.dir, snap); else this._wipe(st.dir, snap, top); } catch (e) { this._endMotion(); }
   }
   _endMotion() { const m = this._mo; this._mo = null; if (!m) return; m.anims.forEach(function (a) { try { a.cancel(); } catch (e) { } }); m.clean.forEach(function (f) { try { f(); } catch (e) { } }); }
   /* 关键帧: every animation of the running transition is paused at frame × its length; released → they play on from there */
   _syncScrub() { const m = this._mo, r = this.state.review || {}; if (!m) return; m.anims.forEach(function (a) { try { if (r.scrub != null) { a.pause(); a.currentTime = Math.min(r.scrub / 100 * m.T, m.T - 1); } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } }); }
-  /* 重播 (and the slider at rest): the transition that just ran, again — with its row as the origin, so the title flies too */
+  /* 重播 (and the slider at rest): the transition that just ran, again. The way back to its start is instant and never painted (same
+     task: no motion, transitions off, entrance animations finished), so the slider scrubs exactly the transition that ran */
   _replayFor(st, top) {
-    const self = this, s = top.s, p = top.p, key = top.key, ev = function () { const r = self.rootRef.current, el = key && r && r.querySelector('.c05-pg.is-top [data-origin="' + key + '"]'); return el ? { currentTarget: el } : null; };
-    if (st.dir === 'fwd') this.lastMotion = { name: 'go:' + s, fn: function () { if (self._top().s !== s) return; self.back(); self.afterKey('replay', self.navMs('back') + 60, function () { self.go(s, p, ev()); }); } };
-    else if (st.dir === 'back') this.lastMotion = { name: 'back:' + s, fn: function () { if (self._top().s === s) return; self.go(s, p, ev()); self.afterKey('replay', self.navMs('fwd') + 80, function () { if (self._top().s === s) self.back(); }); } };
-    else if (st.dir === 'role') { const r0 = this.state.role; this.lastMotion = { name: 'role', fn: function () { self.setRole(r0 === 'joined' ? 'hosted' : 'joined'); self.afterKey('replay', self.navMs('role') + 80, function () { self.setRole(r0); }); } }; }
+    const self = this, s = top.s, p = top.p, key = top.key, ev = function () { const r = self.rootRef.current; let el = null; ['.c05-pg.is-under', '.c05-pg.is-top'].forEach(function (q) { el = el || (key && r ? r.querySelector(q + ' [data-origin="' + key + '"]') : null); }); return el ? { currentTarget: el } : null; };
+    const leg = function (a, b) { const r = self.rootRef.current, hold = self.snapSheetRef.current, q = document.createElement('style'); q.textContent = '*,*::before,*::after{transition:none!important}'; if (hold) hold.appendChild(q); self._quiet = 1; try { a(); } catch (e) { }
+      Promise.resolve().then(function () { if (r) { void r.offsetHeight; r.getAnimations({ subtree: true }).forEach(function (x) { try { const t = x.effect && x.effect.target; if (typeof CSSAnimation !== 'undefined' && x instanceof CSSAnimation && t && t.closest && t.closest('.c05-pg') && isFinite(x.effect.getComputedTiming().endTime)) x.finish(); } catch (e) { } }); }
+        q.remove(); self._quiet = 0; b(); }); };
+    if (st.dir === 'fwd') this.lastMotion = { name: 'go:' + s, fn: function () { if (self._top().s !== s) return; leg(function () { self.back(); }, function () { self.go(s, p, ev()); }); } };
+    else if (st.dir === 'back') this.lastMotion = { name: 'back:' + s, fn: function () { if (self._top().s === s) return; leg(function () { self.go(s, p, ev()); }, function () { if (self._top().s === s) self.back(); }); } };
+    else if (st.dir === 'role') { const r0 = this.state.role; this.lastMotion = { name: 'role', fn: function () { leg(function () { self.setRole(r0 === 'joined' ? 'hosted' : 'joined'); }, function () { self.setRole(r0); }); } }; }
+    else if (st.dir === 'swap' && !st.leaving) { const s0 = this.state.section, s1 = this.state.ui.prevSection; if (s1 && s1 !== s0) this.lastMotion = { name: 'section', fn: function () { leg(function () { self.setSection(s1); }, function () { self.setSection(s0); }); } }; }
   }
   /* the line a band opens from / closes onto: the row's own line (a tall origin such as 「这一场」: its title, or the point that was tapped) */
   _fallbackKey(top, pg) { const id = top.p && (top.p.eventId || top.p.draftId), k = id && 'row-' + id, el = k && pg && pg.querySelector('[data-origin="' + k + '"]'); if (!el) return null; try { this.reveal(el, false, { soft: true }); } catch (e) { } this._landWant = k; return k; }
@@ -1351,7 +1356,7 @@ class Component extends DCLogic {
   _animateFace(snap) {
     const rm = this.isRM && this.isRM(), k = this._kk(), card = this.cardRef.current, hk = this._c && this._c.heroKey || '';
     /* the card changed without a page change (an action, the clock): the old one lifts away, the new one settles in */
-    if (card && hk !== (this._shownKey || '') && this._shownKey !== undefined && !this._mo && !rm) { const cs = snap && snap.card, hold = this.snapCardRef.current;
+    if (card && hk !== (this._shownKey || '') && this._shownKey !== undefined && !this._mo && !rm && !this._quiet) { const cs = snap && snap.card, hold = this.snapCardRef.current;
       if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); const a = cs.el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 160 * k, easing: 'ease', fill: 'both' }); a.onfinish = a.oncancel = function () { cs.el.remove(); }; }
       if (!card.classList.contains('is-off')) { try { card.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 220 * k, delay: 60 * k, fill: 'backwards', easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } }
     if (card) this._shownKey = hk;
