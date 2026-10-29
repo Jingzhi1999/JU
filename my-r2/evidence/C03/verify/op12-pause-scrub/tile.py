@@ -1,0 +1,18 @@
+from PIL import Image, ImageDraw, ImageOps
+import os
+rows=[["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/000-swap_paused_mid-way.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/001-paused_0.8s_still_frozen_.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/002-scrub_20.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/003-scrub_40.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/004-scrub_60.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/005-scrub_80.png"],["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/006-scrub_100.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/007-act.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/008-released_2.5s.png"],["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/009-livehouse_reply.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/010-burn_running_1.6s.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/011-burn_paused.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/012-burn_paused_0.8s.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/013-scrub_17.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/014-scrub_33.png"],["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/015-scrub_50.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/016-scrub_67.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/017-scrub_83.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/018-scrub_100.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/019-act.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/020-burn_released_5.5s.png"],["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/021-scrub_17.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/022-scrub_33.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/023-scrub_50.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/024-scrub_67.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/025-scrub_83.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/026-scrub_100.png"],["/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/027-act.png","/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/028-after_replay_release_6s.png"]]
+labels=[["swap paused mid-way","paused +0.8s (still frozen?)","scrub 20","scrub 40","scrub 60","scrub 80"],["scrub 100","act","released +2.5s"],["livehouse reply","burn running ~1.6s","burn paused","burn paused +0.8s","scrub 17","scrub 33"],["scrub 50","scrub 67","scrub 83","scrub 100","act","burn released +5.5s"],["scrub 17","scrub 33","scrub 50","scrub 67","scrub 83","scrub 100"],["act","after replay release +6s"]]
+sc=0.42; gap=6; lab=18
+ims=[[Image.open(f).convert('RGB') for f in r] for r in rows]
+W=max(int(i.width*sc) for r in ims for i in r); H=max(int(i.height*sc) for r in ims for i in r); cols=max(len(r) for r in ims)
+sh=Image.new('RGB',(cols*(W+gap)+gap, len(ims)*(H+gap+lab)+gap),(40,40,44))
+d=ImageDraw.Draw(sh)
+from PIL import ImageFont
+try: ft=ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 13)
+except Exception: ft=None
+for ri,r in enumerate(ims):
+    for ci,im in enumerate(r):
+        x=gap+ci*(W+gap); y=gap+ri*(H+gap+lab)
+        if labels and ri < len(labels) and ci < len(labels[ri]): d.text((x+2,y+2),str(labels[ri][ci]),fill=(230,230,230),font=ft)
+        sh.paste(im.resize((int(im.width*sc),int(im.height*sc)),Image.LANCZOS),(x,y+lab))
+sh.save("/home/user/JU/my-r2/evidence/C03/verify/op12-pause-scrub/sheet.png",optimize=True)

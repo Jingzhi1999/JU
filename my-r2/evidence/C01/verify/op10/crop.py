@@ -1,0 +1,6 @@
+from PIL import Image
+box={"x":40,"y":258,"w":390,"h":844}
+for f in ["/home/user/JU/my-r2/evidence/C01/verify/op10/f005.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f006.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f007.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f008.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f009.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f010.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f014.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f015.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f016.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f017.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f018.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f019.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f020.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f021.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f024.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f025.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f026.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f027.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f028.jpg","/home/user/JU/my-r2/evidence/C01/verify/op10/f029.jpg"]:
+    im=Image.open(f)
+    sx=im.width/480; sy=im.height/1110
+    im.crop((int(box['x']*sx),int(box['y']*sy),int((box['x']+box['w'])*sx),int((box['y']+box['h'])*sy))).save(f,quality=84)
