@@ -883,10 +883,15 @@ class Component extends DCLogic {
     const sh = root.querySelector('.c06-over:not(.is-ghost) .c06-sheet');
     if (sh && sh.offsetHeight > 0) top = layTop(sh);   /* a sheet is up: speak from above it, outside it */
     else {
-      const band = pr.bottom - base - t.offsetHeight - 12;
-      root.querySelectorAll('.c06-cta, .ju-contact-action, .c06-slot button, .c06-item.is-x .ju-contact-wrap').forEach((el) => {   /* the contact layer above the action is being read too */
-        if (el.closest('.c06-over') || el.classList.contains('is-leaving')) return; const r = el.getBoundingClientRect(); if (r.height < 4 || r.bottom <= band || r.top >= pr.bottom) return;
-        const st = getComputedStyle(el); if (st.visibility === 'hidden' || st.display === 'none') return; top = top == null ? r.top : Math.min(top, r.top); });
+      /* stack upward: every action, and the contact layer (being read, or about to be), that the toast would cover where it now sits
+         pushes it above with a 10px gap — so it ends above the whole run of them */
+      const h = t.offsetHeight, obs = []; let bottom = pr.bottom - base;
+      root.querySelectorAll('.c06-cta, .ju-contact-action, .c06-slot button, .c06-item.is-x .ju-contact-wrap').forEach((el) => {
+        if (el.closest('.c06-over') || el.classList.contains('is-leaving')) return; const r = el.getBoundingClientRect(); if (r.height < 4 || r.top >= pr.bottom) return;
+        const st = getComputedStyle(el); if (st.display === 'none' || (st.visibility === 'hidden' && !el.classList.contains('ju-contact-wrap'))) return; obs.push(r); });
+      obs.sort((p, q) => q.bottom - p.bottom);
+      for (let i = 0; i < obs.length; i++) { const r = obs[i]; if (r.bottom > bottom - h - 10 && r.top < bottom) bottom = r.top - 10; }
+      if (bottom < pr.bottom - base) top = bottom + 10;
     }
     const b = top == null ? '' : Math.max(base, Math.round(pr.bottom - top + 10)) + 'px';
     const cur = root.style.getPropertyValue('--c06-toast-b');
