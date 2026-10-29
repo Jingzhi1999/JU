@@ -1171,7 +1171,7 @@ class Component extends DCLogic {
     const data = this._rd(this._cardData(c.manage)); this._settleTicket(stage, data, 'torn');
     const go = () => { if (this._rit.cstage !== stage) return; let fired = false;
       const done = () => { if (fired) return; fired = true; this._rit.cburn = null; if (stage.isConnected) stage.dataset.state = 'void'; if (this._rit.cstage === stage) this.setState({ cburn: null }); };
-      const h = R.burn(stage, { reason: 'cancelled' }, { onDone: done }); this._rit.cburn = h; this._burnEnd(h, done, 'c07-cburn'); };
+      const h = R.burn(stage, { reason: 'cancelled' }, { onDone: done }); this._rit.cburn = h; this._burnEnd(h, done); };
     this.lastMotion = { name: 'burn', fn: () => { this.setState({ cburn: { eventId: c.manage.eventId, seq: Date.now() } }); } };
     const cv = stage.querySelector('canvas[data-card]'); const painted = cv ? this._paintCard(cv) : Promise.resolve(true);
     /* 抽色 + 余烬 (ctl-api cancelled): the painted card drains to grey (700ms), its pixels are then made grey for the burn's own raster,
@@ -1316,23 +1316,24 @@ class Component extends DCLogic {
     this._rit.contact = h; return h;
   }
   /* a burn's end: its callback, its promise, or a held timer (paused with the rest) — the terminal state is state */
-  _burnEnd(h, done, key) { if (h && h.promise && h.promise.then) h.promise.then(done, done); this.holdKey(key, Math.ceil(((h && h.engine && h.engine.duration) || 6.6) * 1000) + 900, done); }
-  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; let fired = false; const end = () => { if (fired) return; fired = true; this._rit.burn = null; if (stage.isConnected) stage.dataset.state = 'void'; onDone(); }; const h = R.burn(stage, { reason: reason }, { onDone: end }); this._rit.burn = h; this._burnEnd(h, end, 'c07-tburn'); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+  /* a burn ends in state: onDone or the handle's promise, whichever comes first (the shared handle settles a seek to the end itself:
+     on resume when paused, the next frame otherwise), so pause → keyframe → release lands on the same terminal as a plain run */
+  _burnEnd(h, done) { if (h && h.promise && h.promise.then) h.promise.then(done, done); }
+  _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; let fired = false; const end = () => { if (fired) return; fired = true; this._rit.burn = null; if (stage.isConnected) stage.dataset.state = 'void'; onDone(); }; const h = R.burn(stage, { reason: reason }, { onDone: end }); this._rit.burn = h; this._burnEnd(h, end); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   /* replay: the paper is put back as it burned (no tear handle), burns again, and ends in the same state — the void stage and the
      result group are state (burnReplay), not a one-off callback */
   _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = this._rd(isH ? c.history.ritual : c.ticket.ritual); const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn');
     const seq = (this._burnSeq = (this._burnSeq || 0) + 1); let fired = false; const done = () => { if (fired || this._burnSeq !== seq) return; fired = true; if (isH) this._rit.hburn = null; else this._rit.burn = null; if (stage.isConnected) stage.dataset.state = 'void'; this.setState({ burnReplay: null }); };
     this.setState({ burnReplay: { seq, isH } });
     const h = R.burn(stage, { reason }, { onDone: done }); if (isH) this._rit.hburn = h; else this._rit.burn = h;
-    if (h && h.promise && h.promise.then) h.promise.then(done, done);
-    this.holdKey('c07-burnreplay', Math.ceil(((h && h.engine && h.engine.duration) || 6.6) * 1000) + 900, done); }
+    this._burnEnd(h, done); }
   _destroyTicket() { const t = this._rit; { const er = t.stage && t.stage.parentElement && t.stage.parentElement.querySelector(':scope > [data-tear-error]'); if (er) er.textContent = ''; }   /* the original writes this line; a new ticket starts without the last one's failure */
     if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = this._rd(c.history.ritual); if (!R || !data) return;
     this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
     if (c.history.ashes) { stage.dataset.state = 'void'; return; }
-    if (c.history.burn.play) { let fired = false; const end = () => { if (fired) return; fired = true; this._rit.hburn = null; if (stage.isConnected) stage.dataset.state = 'void'; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); }; this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: end }); this._burnEnd(this._rit.hburn, end, 'c07-hburn'); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
+    if (c.history.burn.play) { let fired = false; const end = () => { if (fired) return; fired = true; this._rit.hburn = null; if (stage.isConnected) stage.dataset.state = 'void'; const cc = this._c; if (cc && cc.history.on) cc.history.burn.burnDone(); }; this._rit.hburn = R.burn(stage, { reason: c.history.burn.reason }, { onDone: end }); this._burnEnd(this._rit.hburn, end); this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   }
   _destroyHistoryStage() { const t = this._rit; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } const el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
   _mountStamp(host, c) {
