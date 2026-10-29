@@ -489,7 +489,7 @@ body{margin:0}
                   <sc-if value="{{v.tk.showStage}}">
                     <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
                     <div class="ju-ticket-stage c10-stage {{v.tk.stageCls}}" data-print-stage="c10" data-state="idle">
-                      <div class="c10-slot" aria-hidden="true"><b>{{v.tk.slotText}}</b><u>{{v.tk.slotSub}}</u></div>
+                      <div class="c10-slot" aria-hidden="true"><b>{{v.tk.slotText}}</b></div>
                       <i class="c10-port" aria-hidden="true"></i>
                       <div class="ju-print-mouth"></div><div class="ju-print-lip"></div>
                       <div class="ju-ticket" data-paper="c10">
@@ -917,7 +917,7 @@ const C10_E_IN = 'cubic-bezier(.22,.8,.22,1)', C10_E_BACK = 'cubic-bezier(.4,.05
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
-    this.motionSpec = { fwd: 400, back: 460, swap: 320, role: 300 };
+    this.motionSpec = { fwd: 400, back: 500, swap: 340, role: 300 };
     this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this._rit = {}; this._bumps = {}; this._idle = null; this._hsig = ''; this._ha = [];
     if (p.preset === 'hosted') this.state.role = 'hosted';
@@ -955,13 +955,13 @@ class Component extends DCLogic {
   _rect(el) { const root = this.rootRef.current; return JU.fx.rectIn(el, root); }
   _anims(list) { (this._ha || []).forEach(a => { try { a.cancel(); } catch (e) { } }); this._ha = list || []; }
   _ani(el, kf, o) { if (!el) return null; try { const a = el.animate(kf, o); this._ha.push(a); return a; } catch (e) { return null; } }
-  _fly(rowT, pageT, dir, ms, easing) {
+  _fly(rowT, pageT, dir, ms, easing, delay) {
     const a = this._rect(rowT), d = this._rect(pageT); if (!a.h || !d.h) return null;
     const cr = getComputedStyle(rowT), cp = getComputedStyle(pageT); const fr = parseFloat(cr.fontSize) || 17, fp = parseFloat(cp.fontSize) || 30;
     const s = fr / fp; const lr = parseFloat(cr.lineHeight) || fr * 1.35, lp = parseFloat(cp.lineHeight) || fp * 1.05;
     const dx = (a.x + a.w / 2) - (d.x + d.w / 2); const dy = (a.y + (lr - fr) / 2) - (d.y + (lp - fp) / 2 * s);
     const T = 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + s.toFixed(4) + ')';
-    this._ani(pageT, dir === 'fwd' ? [{ transform: T }, { transform: 'none' }] : [{ transform: 'none' }, { transform: T }], { duration: ms, easing: easing, fill: 'forwards' });
+    this._ani(pageT, dir === 'fwd' ? [{ transform: T }, { transform: 'none' }] : [{ transform: 'none' }, { transform: T }], { duration: ms, delay: delay || 0, easing: easing, fill: 'both' });
     return { top0: d.y + dy, bot0: d.y + dy + d.h * s, top1: d.y, bot1: d.y + d.h };
   }
   /* the transform that puts the page title on top of another title (same centre line, uniform scale, top-left aligned glyph box) */
@@ -973,12 +973,12 @@ class Component extends DCLogic {
     return 'translate(' + dx.toFixed(1) + 'px,' + dy.toFixed(1) + 'px) scale(' + sc.toFixed(4) + ')';
   }
   /* what sits at / after a row: the row's lines after its title, the rows after it, the groups after its group */
-  _below(row) {
-    const out = []; if (!row) return out; let seen = false;
-    Array.from(row.children).forEach(c => { if (seen) out.push(c); else if (c.hasAttribute('data-ttl')) seen = true; });
-    for (let n = row.nextElementSibling; n; n = n.nextElementSibling) out.push(n);
-    const g = row.closest('.c10-g'); if (g) for (let m = g.nextElementSibling; m; m = m.nextElementSibling) out.push(m);
-    return out;
+  _below(row, split) {
+    const own = [], rest = []; if (!row) return split ? { own, rest } : own; let seen = false;
+    Array.from(row.children).forEach(c => { if (seen) own.push(c); else if (c.hasAttribute('data-ttl')) seen = true; });
+    for (let n = row.nextElementSibling; n; n = n.nextElementSibling) rest.push(n);
+    const g = row.closest('.c10-g'); if (g) for (let m = g.nextElementSibling; m; m = m.nextElementSibling) rest.push(m);
+    return split ? { own, rest } : own.concat(rest);
   }
   _hinge() {
     const root = this.rootRef.current, st = this.state.nav; if (!root || !st) return;
@@ -1000,22 +1000,25 @@ class Component extends DCLogic {
       const sc0 = oldPg.querySelector('.c10-sc'), hd0 = oldPg.querySelector('.c10-hd');
       below.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0 }], lin(T)));
       this._ani(sc0, [{ transform: 'none' }, { transform: up }], o); this._ani(hd0, [{ transform: 'none' }, { transform: up }], o);
-      [col(oldPg), hd0].forEach(el => this._ani(el, [{ opacity: 1 }, { opacity: 1, offset: .55 }, { opacity: 0 }], lin(T)));
+      [col(oldPg), hd0].forEach(el => this._ani(el, [{ opacity: 1 }, { opacity: 1, offset: .3 }, { opacity: 0 }], lin(T)));
       const c1 = col(newPg);
       this._ani(c1, [{ transform: 'translateY(' + (g.bot0 - g.bot1).toFixed(1) + 'px)' }, { transform: 'none' }], o);
       this._ani(c1, [{ opacity: 0 }, { opacity: 1, offset: .22 }, { opacity: 1 }], lin(T));
     } else if (mode === 'hg' && st.dir === 'back') {
       const topPg = root.querySelector('.c10-pg.is-top'), home = root.querySelector('.pg-home');
       const row = home && home.querySelector('[data-origin="' + this._backKey + '"]'), dst = row && row.querySelector('[data-ttl]'), src = topPg && topPg.querySelector('.c10-ht'); if (!dst || !src) return;
-      const H = root.offsetHeight, T1 = 340 * k, T2 = 110 * k, o = { duration: T1, easing: C10_E_BACK, fill: 'forwards' };
+      const H = root.offsetHeight, W = 50 * k, T1 = 320 * k, T2 = 110 * k, o = { duration: T1, delay: W, easing: C10_E_BACK, fill: 'both' };
       const sc = home.querySelector('.c10-sc');
       /* the row may have moved to another group while the page was open: the controller's reveal brings it on screen (memo kept) */
       { const rr = this._rect(dst); if (sc && (rr.y > H - 170 || rr.y < 150)) { try { this.reveal(row, false, { memoKey: this._scrollKey(stack[stack.length - 2]) }); } catch (e) { } } }
-      this._ani(col(topPg), [{ opacity: 1 }, { opacity: 0 }], lin(70 * k));
-      const g = this._fly(dst, src, 'back', T1, C10_E_BACK); if (!g) return;
+      this._ani(col(topPg), [{ opacity: 1 }, { opacity: 0 }], lin(W + 10 * k));
+      const g = this._fly(dst, src, 'back', T1, C10_E_BACK, W); if (!g) return;
       const down = 'translateY(' + (g.top1 - g.top0).toFixed(1) + 'px)', hd = home.querySelector('.c10-hd');
       this._ani(sc, [{ transform: down }, { transform: 'none' }], o); this._ani(hd, [{ transform: down }, { transform: 'none' }], o);
-      this._below(row).forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: T1 / (T1 + T2) }, { opacity: 1 }], lin(T1 + T2)));
+      /* the row's own lines wait for the title to land; the rows and groups after it come down with the list once the page body is gone */
+      const bl = this._below(row, true), all = W + T1 + T2;
+      bl.own.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: (W + T1) / all }, { opacity: 1 }], lin(all)));
+      bl.rest.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: (W + 10 * k) / all }, { opacity: 1, offset: (W + 90 * k) / all }, { opacity: 1 }], lin(all)));
     } else if (mode === 'wp') {
       const back = st.dir === 'back';
       const newPg = back ? root.querySelector('.c10-pg.is-under') : root.querySelector('.c10-pg.is-top');

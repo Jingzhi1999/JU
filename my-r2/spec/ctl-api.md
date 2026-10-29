@@ -264,3 +264,4 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - 待查（未改）：减少动态下撕开后 `measureTicket` 在 detach 当帧测高，票台多出约 84px（C03 自补测）；`jumpTo` 只把带 `data-scroller` 的元素归零——自己的滚动列表请加 `data-scroller`。
 - 演示数据口径：参加者侧所有已散场的局都早于 24 小时，「+24 小时」在参加者侧没有可见变化；这条只在局主侧可演示（记入限制）。
 - `_mountTicket` 建议加防御分支：`'fresh'` 与 `'printing'` 一样走出票（C02 复核：已撕票曾以 fresh 进入，票位空白；共享层已修根因，防御分支避免任何遗漏路径留空票位）。
+- 切换角色 / 分区首次进入：没有存过滚动位置时，`[data-scroller="home"]` 归零（原先沿用另一角色列表的滚动量，C02 复核 m3）；shared-regress 新增一项（8/8）。

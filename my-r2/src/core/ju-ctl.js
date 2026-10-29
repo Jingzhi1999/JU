@@ -236,8 +236,9 @@
       var self = this;
       if (this._resetScrollers) { this._resetScrollers = false; this._scrollMemo = {}; root.querySelectorAll('[data-scroller]').forEach(function (el) { el.scrollTop = 0; }); }   /* jumpTo / reset start every list at the top (C06 report) */
       if (this._pendingRestore != null) {
-        var memo = (this._scrollMemo || {})[this._pendingRestore]; this._pendingRestore = null;
+        var pkey = this._pendingRestore; var memo = (this._scrollMemo || {})[pkey]; this._pendingRestore = null;
         if (memo) Object.keys(memo).forEach(function (k) { var el = root.querySelector('[data-scroller="' + k + '"]'); if (el && el.getAttribute('data-restore') !== 'manual') el.scrollTop = memo[k]; });   /* data-restore="manual": the concept places this scroller itself (in-place layouts, C06) */
+        else if (String(pkey).indexOf('home:') === 0) { var hs = root.querySelector('[data-scroller="home"]'); if (hs && hs.getAttribute('data-restore') !== 'manual') hs.scrollTop = 0; }   /* first visit of a role / section starts at the top instead of keeping the other list's offset (C02 verify m3) */
       }
       root.querySelectorAll('[data-scroller]').forEach(function (el) { if (el.getAttribute('data-hc') !== 'manual') self._applyHc(el); });   /* data-hc="manual": the concept writes --hc itself (C03 window swap) — scroll events still write it */
       if (this._pendingSection) { var sec = root.querySelector('[data-section="' + this._pendingSection + '"]'); this._pendingSection = null; if (sec) this.reveal(sec, true); }

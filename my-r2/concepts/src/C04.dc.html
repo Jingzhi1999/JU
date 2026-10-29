@@ -106,6 +106,13 @@ Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual pr
 .c04-home.dir-role.ph-enter .c04-grp,.c04-home.dir-swap.ph-enter .c04-grp{opacity:0}
 .c04-home.dir-role.ph-in .c04-grp,.c04-home.dir-swap.ph-in .c04-grp{transition:opacity calc(240ms * var(--k)) ease calc(60ms * var(--k))}
 .c04-sheet.is-landing .c04-bst{animation:c04-land calc(1100ms * var(--k)) ease both}
+/* M10: a deleted draft is pulled out of the stack sideways while its slot closes (the papers below slide up, no jump);
+   undo puts it back into the same slot. margin-bottom grows to 18px as the height goes to 0, so the next paper's −18px overlap stays continuous */
+.c04-stack{interpolate-size:allow-keywords}
+.c04-sheet.is-deleting{pointer-events:none;overflow:hidden;animation:c04-pull calc(260ms * var(--k)) cubic-bezier(.4,0,.6,1) both}
+@keyframes c04-pull{0%{height:auto;margin-bottom:0;opacity:1;transform:none}100%{height:0;padding-top:0;padding-bottom:0;margin-bottom:18px;opacity:0;transform:translateX(56px)}}
+.c04-sheet.is-restored{overflow:hidden;animation:c04-put calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes c04-put{0%{height:0;padding-top:0;padding-bottom:0;margin-bottom:18px;opacity:0;transform:translateX(56px)}100%{height:auto;margin-bottom:0;opacity:1;transform:none}}
 @keyframes c04-land{0%,45%{opacity:.3}78%{opacity:1}100%{opacity:1}}
 /* empty */
 .c04-estack{position:relative;margin:4px 8px 0}
@@ -939,7 +946,7 @@ this._destroyTicket(); this._rit.stage = stage; this._rit.key = c.ticket.printKe
 if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
 if (st === 'printing') {
 const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
-R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => { if (this._rit.stage !== stage) return; const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error'); this.ticketPrinted(key); });
+R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => { if (this._rit.stage !== stage) return; const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (el && el.__juritual) { el.__juritual.__c04ready = true; this._rewake(el.__juritual, stage); } if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error'); this.ticketPrinted(key); });
 } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
 else if (st === 'fresh' && !c.ticket.isReply && (c.ticket.stage === 'contact' || c.ticket.stage === 'going')) {
 /* a ticket torn on an earlier visit reaches us as 'fresh' (printed{} is per session and torn tickets never print): lay the torn
@@ -948,9 +955,11 @@ this._settleTicket(stage, data, 'torn'); const T = c.ticket; setTimeout(() => { 
 }
 else if (st === 'torn') this._settleTicket(stage, data, 'torn');
 }
+/* the rig's IntersectionObserver can keep 'not visible' from the frame it was mounted in (a reused section, a scroll reset after a jump): observe again once settled */
+_rewake(h, stage) { try { const io = h && h.rig && h.rig.io, el = stage.querySelector('[data-tear]'); if (io && el) { io.disconnect(); io.observe(el); } } catch (e) { } }
 _settleTicket(stage, data, final, tearOpts) {
 const R = this.R(); R.fillTicket(stage, data); const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
-if (final === 'ready' && R.tear) { const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready'; if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); h.__c04ready = true; if (this._tearQueued) { this._tearQueued = false; const cc = this._c; if (cc && cc.ticket.on && cc.ticket.tear.canTear) cc.ticket.tear.tearNow(); } R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); } if (tearOpts) this.registerTear(h); return h; }
+if (final === 'ready' && R.tear) { const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready'; if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); h.__c04ready = true; this._rewake(h, stage); if (this._tearQueued) { this._tearQueued = false; const cc = this._c; if (cc && cc.ticket.on && cc.ticket.tear.canTear) cc.ticket.tear.tearNow(); } R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); } if (tearOpts) this.registerTear(h); return h; }
 stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
 }
 _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, this._rit4(c), { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }

@@ -1,6 +1,7 @@
 // Shared-layer regression for the lead's fixes after the C04 / C06 stage-1 reviews (2026-10-23), on the C00 wiring reference:
 // torn ticket opened from home is 'torn' (not 'fresh'); home() one level deep runs the exit phase like back(); the exiting
-// surface keeps its last model (no text swap mid-exit); jumpTo resets every list to the top; a receipt never repeats its title.
+// surface keeps its last model (no text swap mid-exit); jumpTo resets every list to the top; the first visit of the other role starts at
+// the top (C02 verify); a receipt never repeats its title.
 // Usage: JU_STANDALONE=/home/user/JU/.build/lead-C00.html node my-r2/tools/test/shared-regress.cjs [CODE]
 const L = require('../_lib.cjs');
 const CODE = process.argv[2] || 'C00';
@@ -34,6 +35,14 @@ let fails = 0, passes = 0; const ok = (n, c, x) => { if (c) passes++; else { fai
   await L.jump(p, CODE, 'j-many', 600);
   const sc2 = sc ? await L.E(p, CODE, "var el = root.querySelector('[data-scroller=\"' + a + '\"]'); return el ? el.scrollTop : null", sc.name) : null;
   ok('jumpTo puts every list back at the top', sc && sc.top > 0 && sc2 === 0, { sc, sc2 });
+  /* 4b. the first visit of the other role starts at the top (C02 verify m3: it kept the joined list's offset) */
+  await L.jump(p, CODE, 'j-many', 600);
+  const rs0 = await L.E(p, CODE, "var el = root.querySelector('[data-scroller=\"home\"]'); if (!el) return null; el.scrollTop = 300; el.dispatchEvent(new Event('scroll')); return el.scrollTop");
+  await L.E(p, CODE, "inst.setRole('hosted')"); await idle(); await p.waitForTimeout(200);
+  const rs1 = await L.E(p, CODE, "var el = root.querySelector('[data-scroller=\"home\"]'); return el ? el.scrollTop : null");
+  await L.E(p, CODE, "inst.setRole('joined')"); await idle(); await p.waitForTimeout(200);
+  const rs2 = await L.E(p, CODE, "var el = root.querySelector('[data-scroller=\"home\"]'); return el ? el.scrollTop : null");
+  ok('first visit of the other role starts at the top; coming back restores the first role\'s offset', rs0 > 0 && rs1 === 0 && Math.abs(rs2 - rs0) < 2, { rs0, rs1, rs2 });
   /* 5. receipt never repeats its title */
   await L.jump(p, CODE, 'j-many', 700); await L.E(p, CODE, "inst.go('waitlist', { eventId: 'climb' })"); await idle();   /* climb = my turn in the queue (invited_queue, many variant) */
   const r = await L.E(p, CODE, 'var c = inst.ctlVals(); var w = c.waitlist && c.waitlist.on ? c.waitlist : null; return w ? w.receipt : null');
