@@ -132,7 +132,7 @@ Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual pr
 .app.c04:not(.at-home) .c04-nav,.app.c04.nav-exit .c04-nav{transform:translateY(calc(100% + 24px))}
 .c04-nav button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:calc(12px * var(--tz,1));color:#5d6375;text-align:center}
 .c04-nav button.on{color:#14161F;font-weight:600}
-.c04-nav button.off{color:#7a8091}
+.c04-nav button.off{color:#686e80}
 .c04-nav svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
 
 /* ------------------------------------------------- A SHEET OPENED INTO A PAGE (detail / ticket / manage …) ------------------------------------------------- */
@@ -308,7 +308,6 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 .c04-tkpg .c04-foot{--fg0:#edeff7;--fg1:rgba(237,239,247,0);padding-top:10px;background:linear-gradient(0deg,var(--fg0) calc(100% - 10px),var(--fg1))}
 .c04-stage{margin:0;--ju-ticket-top:52px}
 /* the balanced title of the shared original may split a CJK word (手冲咖啡品 / 鉴 · …): keep CJK runs whole, break at spaces / the dot (overflow-wrap:anywhere still guards very long runs) */
-.c04-stage .ju-ticket-title{word-break:keep-all}
 .c04-pwait{position:absolute;left:0;right:0;top:22px;text-align:center;font-size:13px;letter-spacing:.04em;color:#5d647a;animation:c04-pw calc(1400ms * var(--k)) ease-in-out infinite alternate;z-index:1}
 /* the feed slot cut into the ticket sheet (the ticket comes out of it) and the ticket's place, pressed in before it prints */
 .c04-slot{position:absolute;left:50%;top:7px;width:236px;margin-left:-118px;height:7px;border-radius:4px;background:#c9cede;box-shadow:inset 0 2px 3px rgba(18,22,48,.32),0 1px 0 #fff;z-index:0}
@@ -323,8 +322,9 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 .c04-tkres{margin:6px 0 0;text-align:center}
 .c04-tkres b{display:block;font-size:20px;font-weight:600;color:#22283b}
 .c04-tkres p{margin:4px 0 0;font-size:14px;color:#535b70}
-.c04-copyfail{margin:6px 0 0;font-size:13px;color:#C2364C;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-[data-surface]:has(.c04-copyfail) .ju-contact-wrap .ju-form-error{display:none}
+.c04-ferr{display:flex;align-items:center;gap:10px;margin-top:6px;color:#a32b3e}.c04-ferr .ju-form-error{margin:0;flex:0 1 auto}
+.c04-ferr:has(.ju-form-error:empty):not(:has(button)){display:none}
+.c04-tlink{display:block;margin:18px auto 0;height:44px;padding:0 20px;border-radius:22px;font-size:15px;font-weight:500;color:#3b4258;background:#e4e6ee;box-shadow:inset 0 1px 2px rgba(18,22,48,.08)}
 .c04-mini{height:32px;padding:0 12px;border-radius:999px;font-size:13px;font-weight:500;box-shadow:inset 0 0 0 1px currentColor}
 .c04-err{font-size:13px;line-height:1.5;color:#C2364C}
 .c04-reply{margin:14px 0 0;padding:12px 14px;border-radius:12px;background:rgba(69,83,190,.07);font-size:13px;line-height:1.6;color:#3b4157}
@@ -653,10 +653,10 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 <p class="ju-form-error ju-tear-error24" role="status" data-tear-error></p>
 <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
 <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
-<p class="ju-contact-note23"></p>
-<p class="ju-form-error"></p>
+<p class="ju-contact-note23">{{c.ticket.contact.note}}</p>
+<div class="c04-ferr"><p class="ju-form-error" role="alert"></p><sc-if value="{{c.ticket.contact.copyFail}}"><button type="button" class="c04-mini" data-act="retry" onClick="{{tk.retryCopy}}">重试</button></sc-if></div>
 </div>
-<sc-if value="{{c.ticket.contact.copyFail}}"><p class="c04-copyfail">未能复制，长按上方微信号手动复制 <button type="button" class="c04-mini" data-act="retry" onClick="{{tk.retryCopy}}">重试</button></p></sc-if>
+<sc-if value="{{tk.seeWx}}"><button type="button" class="c04-tlink" data-act="contact" onClick="{{c.ticket.contact.open}}">看局主微信</button></sc-if>
 <sc-if value="{{tk.showClosed}}"><p class="c04-err">{{c.ticket.contact.closedText}}</p></sc-if>
 <sc-if value="{{c.ticket.contact.error}}"><p class="c04-err">{{c.ticket.contact.error}}</p></sc-if>
 <sc-if value="{{c.ticket.result}}"><div class="c04-tkres"><sc-if value="{{tk.ashes}}"><div class="c04-imprint" role="img" aria-label="票根已作废"><b>{{tk.rit.title}}</b><span>{{c.ticket.ritual.md}} · {{c.ticket.ritual.time}} · {{c.ticket.ritual.loc}}</span><i>已作废</i></div></sc-if><b>{{c.ticket.result.title}}</b><p>{{c.ticket.result.body}}</p></div></sc-if>
@@ -672,7 +672,7 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 </header>
 <div class="c04-foot">
 <sc-if value="{{c.ticket.tear.canTear}}"><span class="c04-plate c04-fplate ju-print-cta-in"><button type="button" class="ju-v27-cta c04-cta" data-act="{{tk.tearAct}}" onClick="{{tk.tearGo}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></span></sc-if>
-<sc-if value="{{tk.contactAction}}"><span class="c04-plate c04-fplate c04-bedc"><button type="button" class="ju-v27-cta c04-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></span></sc-if>
+<sc-if value="{{tk.contactAction}}"><span class="c04-plate c04-fplate c04-bedc"><button type="button" class="ju-v27-cta c04-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="{{tk.ctaDis}}"><span class="gloss"></span><span class="label" data-slot="actionLabel">{{c.ticket.contact.ctaLabel}}</span></button></span></sc-if>
 <sc-if value="{{c.ticket.result}}"><span class="c04-plate c04-fplate"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></span></sc-if>
 <sc-if value="{{c.ticket.unavailable}}"><span class="c04-plate c04-fplate"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></span></sc-if>
 </div>
@@ -931,7 +931,7 @@ const sc = sec.querySelector('[data-scroller]'), wrap = sec.querySelector('[data
 /* measure the settled sheet only: the shared stage shrinks with a height transition after a tear / on entering a torn ticket */
 const stage = sec.querySelector('[data-print-stage]'), moving = stage && stage.getAnimations ? stage.getAnimations().filter(a => a.playState === 'running') : [];
 if (moving.length) { Promise.all(moving.map(a => a.finished)).then(() => this.afterKey('c04-fit', 40, () => this._fitContact()), () => { }); return; }
-const last = sec.querySelector('.c04-copyfail') || wrap, plate = foot.querySelector('.c04-plate'), toast = root.querySelector('.c04-toast');
+const ferr = sec.querySelector('.c04-ferr'), last = ferr && ferr.offsetHeight ? ferr : wrap, plate = foot.querySelector('.c04-plate'), toast = root.querySelector('.c04-toast');
 let lim = (plate ? plate.getBoundingClientRect().top : foot.getBoundingClientRect().top + 10) - 14; if (toast) lim = Math.min(lim, toast.getBoundingClientRect().top - 10);
 const d = last.getBoundingClientRect().bottom - lim; if (d <= 4) return;
 /* never rest half-collapsed: when the sheet has to move at all, it moves at least to the compact header (88px) */
@@ -947,11 +947,6 @@ if (st === 'printing') {
 const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
 R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => { if (this._rit.stage !== stage) return; const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (el && el.__juritual) { el.__juritual.__c04ready = true; this._rewake(el.__juritual, stage); } if (!r.ok && r.reason !== 'superseded') this.say(r.message || '纸票未准备好，请重试', 'error'); this.ticketPrinted(key); });
 } else if (st === 'printed') this._settleTicket(stage, data, 'ready', this._tearOpts());
-else if (st === 'fresh' && !c.ticket.isReply && (c.ticket.stage === 'contact' || c.ticket.stage === 'going')) {
-/* a ticket torn on an earlier visit reaches us as 'fresh' (printed{} is per session and torn tickets never print): lay the torn
-original down as it is, report it settled, and open its contact layer — otherwise the page would wait for a print that never comes */
-this._settleTicket(stage, data, 'torn'); const T = c.ticket; setTimeout(() => { try { if (typeof T.printed === 'function') T.printed(); if (T.contact && T.contact.open && !T.contact.on) T.contact.open(); } catch (e) { } }, 0);
-}
 else if (st === 'torn') this._settleTicket(stage, data, 'torn');
 }
 /* the rig's IntersectionObserver can keep 'not visible' from the frame it was mounted in (a reused section, a scroll reset after a jump): observe again once settled */
@@ -965,7 +960,7 @@ _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if 
 _contact() {
 if (this._rit.contact) return this._rit.contact; const R = this.R(), root = this.rootRef.current, c = this._c; if (!R || !R.contact || !root || !c.ticket.on) return null;
 const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (!sec || !sec.querySelector('[data-contact-reveal]')) return null;
-const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, {});
+const h = R.contact(sec, { host: c.ticket.contact.hostName, account: c.ticket.ritual.account, added: c.ticket.ritual.added }, { labels: false });   /* labels come from the controller (ctaLabel / note) */
 const copyBtn = sec.querySelector('.ju-contact-copy'); if (copyBtn) copyBtn.onclick = () => { this._c.ticket.contact.copyWith(() => h.copy()); };
 const action = sec.querySelector('[data-contact-action]'); if (action) action.onclick = () => { if (action.getAttribute('aria-disabled') !== 'true') this._c.ticket.contact.markContacted(); };
 this._rit.contact = h; return h;
@@ -1208,11 +1203,11 @@ sty: (fromSty ? fromSty + ';' : '') + P.sty + ';--pt0:' + (lines === 2 ? 196 : 1
 bandTitle: r.title, bandStatus: b.status, bandMetaA: b.metaA, bandOld: b.old, bandMetaB: b.metaB,
 title: c04t(r.title), meta: T.title + ' · ' + (rp ? rp.newWhen.zh : w.zh) + ' · ' + r.place.hood,
 back: () => this.back(), onScroll: (ev) => this._scroll(ev), exitAct: T.isReply ? 'decline' : 'exit',
-showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark,
+showStage: !T.unavailable && !(T.result && T.result.burn && !T.result.burning), stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark,
 /* a tap that lands before the original's tear rig is ready (its raster takes ~0.75s in headless) is kept and run when the rig is ready */
 tearGo: () => { const h = this._tearRig; if (h && h.rig && !h.__c04ready) { this._tearQueued = true; return; } const cc = this._c; if (cc && cc.ticket.on) cc.ticket.tear.tearNow(); },
 waiting: T.state === 'printing' || (T.state === 'fresh' && (T.isReply || T.stage === 'tear')), ghostCls: T.isReply ? 're' : '', waitText: T.isReply ? '新的一版正在出票…' : '票根正在出纸…', rit: this._rit4(c), tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', declineOn: !!(rp && T.tear.canTear),
-contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning),
+contactAction: !T.unavailable && !T.result, ctaDis: String(!!T.contact.ctaDisabled), seeWx: T.state === 'torn' && !!T.contact.available && !T.contact.on && !T.contact.closed && !T.result && !T.unavailable, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning),
 retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
 replyLine: !!(rp && !rp.answered), replyOld: rp ? rp.oldWhen.zh : '', replyNew: rp ? rp.newWhen.wdZh + ' ' + rp.newWhen.time : '', replyNote: '撕下新票的副券 = 接受新时间；旧票随之作废。',
 hint: T.state !== 'printing' && T.tear.canTear ? (T.isReply ? '把副券向右撕下，或按下方按钮接受' : '把副券向右撕下，或按 Enter / 下方按钮') : '' };
@@ -1241,7 +1236,7 @@ mg.roster = Mg.roster.rows.map(m => Object.assign({}, m, { cls: m.host ? 'you' :
 mg.oldWhen = Mg.replies.oldWhen ? Mg.replies.oldWhen.zh : ''; mg.newWhen = Mg.replies.newWhen ? Mg.replies.newWhen.zh : '';
 const At = Mg.attendance || { rows: [] };
 mg.att = (At.rows || []).map(a => Object.assign({}, a, { cls: a.isNext ? 'is-next' : '', initial: a.initial || JU.fmt.initial(a.name), stampCls: a.stampFresh ? ' fx' : '', chopText: a.stamp === 'present' ? '出席' : a.stamp === 'absent' ? '未出席' : '待定', canCorrect: !!(a.recorded && !a.editing), labelText: a.recorded && !a.editing ? '' : a.label }));
-mg.attFallback = !!s.c04atf; mg.attDone = At.doneText || ''; mg.attHelp = String(At.help || '').replace(/也不会自动[^；;，,。]*/, '也不会自动带来任何后果');   /* shared copy still carries a banned word here (reported) */
+mg.attFallback = !!s.c04atf; mg.attDone = At.doneText || ''; mg.attHelp = At.help || '';
 mg.attContact = At.contactLine || '';
 }
 }

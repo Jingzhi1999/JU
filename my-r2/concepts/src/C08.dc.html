@@ -1004,13 +1004,14 @@ class Component extends DCLogic {
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn;
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
   }
-  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); this.after(120, () => this._focusAfterTear(true)); } }; }
+  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); this.after(120, () => this._focusAfterTear(6)); } }; }
   /* a stub torn from the keyboard leaves focus on nothing (the stub is gone): it goes on to the contact the tear revealed */
-  _focusAfterTear(retry) {
+  _focusAfterTear(n) {
     const root = this._root(); if (!root) return; const sr = root.getRootNode(); const ae = sr && sr.activeElement;
-    if (ae && root.contains(ae) && ae.getClientRects().length && !ae.closest('[data-tear]')) return;
+    if (ae && root.contains(ae) && ae.getClientRects().length && !ae.closest('[data-tear]')) return;   /* the person has moved on */
     const sec = root.querySelector('.c08-pg.is-top'); const t = sec && (sec.querySelector('.ju-contact-copy:not([disabled])') || sec.querySelector('[data-contact-action]'));
-    if (t) { try { t.focus({ preventScroll: true }); } catch (e) { } } else if (retry) this.after(300, () => this._focusAfterTear(false));
+    if (t) { try { t.focus({ preventScroll: true }); } catch (e) { } }
+    if ((!t || sr.activeElement !== t) && n > 0) this.hold(250, () => this._focusAfterTear(n - 1));   /* the contact is still revealing (not focusable yet) */
   }
   _mountTicket(stage, c) {
     this._destroyTicket();

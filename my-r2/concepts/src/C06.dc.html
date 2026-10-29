@@ -177,6 +177,7 @@ body{margin:0}
 /* the paper sits 24px under the mouth (V27's own reissued / short-phone value): the 24px of air the paragraph gives every object */
 .c06-stage{margin:0;--ju-ticket-top:24px}
 .c06-x .ju-contact-wrap{margin-top:6px}
+.c06-x .ju-contact-wrap.c06-gone{display:none}   /* contact closed for good: the closed note takes its place, no reserved gap */
 .c06-x .ju-contact-row{border-top-color:var(--line)}
 .c06-x .ju-form-error:empty{display:none}
 .c06-errline{display:flex;align-items:baseline;gap:4px}
@@ -410,13 +411,13 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                               </div>
                             </div>
                           </div>
-                          </div></div>
-                          <!-- contact layer (original DOM; JURitual.contact owns data-revealed, the note and the button labels) -->
-                          <div class="ju-contact-wrap" data-contact-reveal aria-hidden="true">
+                          <!-- contact layer (original DOM; JURitual.contact owns data-revealed, the note and the button labels). It sits inside the figure's wrap: when a burnt ticket's place folds away, its closed contact folds with it -->
+                          <div class="ju-contact-wrap {{v.tk.contactCls}}" data-contact-reveal aria-hidden="true">
                             <div class="ju-contact-row"><span class="ju-contact-name">局主 · {{c.ticket.contact.hostName}}</span><span class="ju-contact-account">{{c.ticket.contact.wx}}</span><button class="ju-contact-copy" type="button" data-act="copy" aria-label="复制局主微信"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M9 9h11v11H9z M5 15H3V3h12v2"></path></svg><span aria-live="polite">复制</span></button></div>
                             <p class="ju-contact-note23"></p>
                             <div class="c06-errline"><p class="ju-form-error" role="alert"></p><sc-if value="{{c.ticket.contact.copyFail}}"><button type="button" class="c06-ta danger" data-act="retry" onClick="{{v.tk.retryCopy}}">重试</button></sc-if></div>
                           </div>
+                          </div></div>
                           <sc-if value="{{v.tk.showClosed}}"><p class="c06-note">{{c.ticket.contact.closedText}}</p></sc-if>
                           <sc-if value="{{c.ticket.contact.error}}"><p class="c06-err">{{c.ticket.contact.error}}</p></sc-if>
                           <sc-if value="{{c.ticket.result}}"><p class="c06-note">{{v.tk.resultNote}}</p></sc-if>
@@ -1100,7 +1101,7 @@ class Component extends DCLogic {
   }
   _tkLede(c) {
     const tk = c.ticket; if (!tk.on) return ''; const host = tk.face.host, r = tk.row;
-    if (tk.result) return tk.result.title + '。' + (tk.result.body || '');
+    if (tk.result) return tk.result.title + '。' + (tk.result.body && tk.result.body !== (r && r.need) ? tk.result.body : '');   /* the status line under the title already says the body */
     if (tk.unavailable) return tk.unavailable.text;
     if (tk.isReply && tk.reply) { const rp = tk.reply; if (tk.state === 'torn') return '新时间已确认 · 旧票作废。'; return host + '把时间改到 ' + rp.newWhen.time + '，撕下新副券就是接受。'; }
     if (tk.state === 'printing' || tk.state === 'fresh') return '票正在出纸。';
@@ -1147,7 +1148,7 @@ class Component extends DCLogic {
     const tk = c.ticket;
     v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), figCls: tk.on && (tk.state === 'printing' || tk.state === 'fresh') ? 'is-await' : '', stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),
       ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ctaBusy: tk.on && tk.contact && tk.contact.busy ? 'true' : 'false',
-      tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', contactAction: !!(tk.on && !tk.unavailable && !tk.result), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable),
+      tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', contactAction: !!(tk.on && !tk.unavailable && !tk.result), showClosed: !!(tk.on && tk.contact.closed && !tk.result && !tk.unavailable), contactCls: tk.on && tk.contact.closed && !tk.result && !tk.unavailable ? 'c06-gone' : '',
       resultNote: tk.result ? (tk.result.burning ? '票根正在作废…' : '票根已作废。') : '', goneCls: tk.result && tk.result.burn && !tk.result.burning ? 'is-gone' : '', retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); } };
     /* detail paragraph */
     if (c.detail.on) {

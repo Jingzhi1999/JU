@@ -1,6 +1,6 @@
 # C08 色带 · 覆盖表草稿（阶段 2，构建者自填）
 
-只勾我自己亲眼看过 / 亲手点过的。✓ = 看过或做过；— = 没有单独做；「跳转」= 只经索引跳转到达、没有从首页真实点进去。证据都在 `my-r2/evidence/C08/stage2/`：`coverage/`（50 态接触表，覆盖工具 50/50、errors 0）、`six/`、`env/`、`variants/`、`sizes/`、`keyboard/`、`operations/`、`clock/`、`m3/`、`widths/`、`kb/`、`reduced-motion/`、`contrast/`、`before-after/`，其余 `motion-*` 为正常速度帧序列（CDP 录屏，帧名带毫秒，`load.txt` 记开录时 1 分钟负载）。
+只勾我自己亲眼看过 / 亲手点过的。✓ = 看过或做过；— = 没有单独做；「跳转」= 只经索引跳转到达、没有从首页真实点进去。证据都在 `my-r2/evidence/C08/stage2/`：`coverage/`（终版构建 50 态接触表，覆盖工具 50/50、errors 0、mismatches 0）、`six/`、`env/`、`variants/`、`sizes/`、`keyboard/`、`operations/`、`clock/`、`m3/`、`widths/`、`kb/`、`reduced-motion/`、`contrast/`（终版构建重跑）、`before-after/`、`rituals/`（出票 / 撕票 / 燃烧 B·C·取消 / 落章：触发→展开→落定帧条），其余 `motion-*` 为正常速度帧序列（CDP 录屏，帧名带毫秒，`load.txt` 记开录时 1 分钟负载，全部 < 8）。
 
 | 索引 | 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |
 |---|---|---|---|---|---|---|
@@ -13,7 +13,7 @@
 | j-d-waitlist | 候补等待 | ✓ | ✓ 查看候补位置；到最近到期 → 第 2 位变第 1 位 | ✓ clock/jw-0、jw-1 | — | — |
 | j-d-invitedq | 候补轮到 | 跳转 | — | ✓ coverage | — | — |
 | j-d-gathering | 已确认待成局 | 跳转 | — | ✓ coverage（席位条在延续带上） | — | — |
-| j-d-tear | 已出票待撕 | ✓ | ✓ 从首页点进：出票口 + 虚线票位 → 停稳后打印 → 撕开票根（按钮）→ 联系层；副券 Enter 撕 | ✓ keyboard/12–13 | ✓ motion-m4-enter-operate-return-ticket（含打印 / 撕 / 联系 / 返回） | 打印 2.3s 是原件时长 |
+| j-d-tear | 已出票待撕 | ✓ | ✓ 从首页点进：出票口 + 虚线票位 → 停稳后打印 → 撕开票根（按钮）→ 联系层；副券 Enter 撕 | ✓ keyboard/12–13、rituals/print、rituals/tear | ✓ motion-m4-enter-operate-return-ticket（含局名「回车」折行 / 打印 / 撕 / 联系 / 返回） | 打印 2.3s 是原件时长 |
 | j-d-contact | 已撕票待联系 | ✓ | ✓「下一次复制失败」→ 原件那行提示 + 旁边重试 | ✓ operations/6–7 | — | — |
 | j-d-going | 已联系待赴约 | ✓ | ✓ 去不了了 → 继续赴约 / 确认退出 → 燃烧 C → 空舞台收起，头部面褪成未成行色 | ✓ coverage | ✓ motion-m8-burn-exit | — |
 | j-d-reschedule | 改期待答复 | ✓ | ✓ 接受新时间（撕新副券 → 联系）；不接受 → 燃烧 B | ✓ coverage | ✓ motion-m7-reply、motion-m8-burn-decline | — |
@@ -24,7 +24,7 @@
 | j-d-queueleft | 退出候补 | 跳转 | ✓（rm 流程：退出候补终态） | ✓ coverage、reduced-motion/f05 | — | — |
 | j-d-exited | 主动退出 | 跳转 | — | ✓ coverage | — | — |
 | j-d-declined | 拒绝改期 | 跳转 | — | ✓ coverage | — | — |
-| j-d-expired | 预留到期 | 跳转 | ✓ 时钟：周六早午餐预留到期移出「要你回应」 | ✓ coverage、clock | ✓ motion-m11-clock-expiry | — |
+| j-d-expired | 预留到期 | 跳转 | ✓ 时钟：周六早午餐预留到期移出「要你回应」 | ✓ coverage、clock | ✓ motion-m11-clock-expiry（下一件升为带首时带首与 CTA 一起淡入） | — |
 | j-d-released | 放弃预留 | 跳转 | ✓ 只有一场时放弃预留（详情内 / 首页内） | ✓ coverage | ✓ motion-m11-empty、motion-m11-inplace-release | — |
 | j-d-withdrawn | 撤回申请 | 跳转 | — | ✓ coverage | — | — |
 | j-d-absent | 未出席待核实 | 跳转 | — | ✓ coverage（08 场景：未出席章） | — | — |
