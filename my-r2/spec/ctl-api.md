@@ -290,3 +290,4 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - 出席更正：`attend()` 在该成员处于更正态（`manage.editing[id]`）时，焦点留在被更正的人身上（`_focusAtt = memberId`），不再移到下一位、也不滚动；首次记录仍移到下一位未记录者（C03 汇报；ctl-regress 新增一条）。
 - 燃烧句柄（`JURitual.burn` 返回的 handle）：原件引擎 `seek(duration)` 只置 done、不回调 onDone，之后 `start / resume` 直接返回——包装层补上落定：暂停中拖到终点不落定（评审仍在拖），`resume()` 时若已到终点即落定；未暂停直接 seek 到终点，下一帧落定。原件引擎逐字节未改（C03 汇报；shared-regress 新增一条）。
 - 截图 / 评审工具（`_lib.cjs`）以 `--lang=zh-CN`、`LANG=zh_CN.UTF-8` 启动浏览器：原生日期 / 时间控件跟随浏览器语言而非页面 locale，原先渲染成 12/24/2026 · 07:30 PM，现在是 2026/12/24 · 19:30。回归 80/80、10/10、7/7。
+- 改时间校验（C01 复核第 2 轮 N1 / N2）：`c.sheet.fields` 新增 `past`（日期时间早于等于当前演示时钟）、`outRange`（日期不在今天…今天 + 365 天）、`dMin` / `dMax`（可直接绑到日期框的 min / max）；两种情况确认键都不可用，原因写进 `sameHint`（同时给 `hint` 别名），各套已在渲染 sameHint，无需改模板；`newWhen` / `newText` 只在可确认时给出。引擎 `propose` 拒绝过去的时间（「这个时间已经过去了。」）。方案不得在 input 事件里改写日期框的值：键入年份时会经过 0002 / 0020 / 0202，改写会让键盘无法输入。C00 示范了 min / max 绑定。回归 82/82、10/10、7/7（新增两条：过去的时间、一年外的日期）。
