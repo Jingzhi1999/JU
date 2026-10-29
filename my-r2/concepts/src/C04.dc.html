@@ -25,7 +25,7 @@ Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual pr
 .c04 *,.c04 *::before,.c04 *::after{box-sizing:border-box}
 .app.c04.rm *,.app.c04.rm *::before,.app.c04.rm *::after{transition-duration:1ms!important;animation-duration:1ms!important;animation-delay:0ms!important;transition-delay:0ms!important}
 .app.c04.paused *,.app.c04.paused *::before,.app.c04.paused *::after,.app.c04[data-hold] :is(.c04-pg,.c04-home) *,.app.c04[data-hold] .c04-pg *::before{animation-play-state:paused!important}
-.app.c04.scrub .c04-pg.is-top.dir-fwd:not(.ph-idle) :is(.c04-shape,.c04-pgc,.c04-gt,.c04-gt .g2,.c04-gm,.c04-gs,.c04-pt,.c04-pm,.c04-edge i),.app.c04.scrub .c04-pg.is-top.dir-fwd:not(.ph-idle) .c04-shape::before,.app.c04.scrub .c04-sheet.is-lifting{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 400ms * var(--k,1))!important}
+.app.c04.scrub .c04-pg.is-top.dir-fwd:is([data-open="1"],:not(.ph-idle)) :is(.c04-shape,.c04-pgc,.c04-gt,.c04-gt .g2,.c04-gm,.c04-gs,.c04-pt,.c04-pm,.c04-edge i),.app.c04.scrub .c04-pg.is-top.dir-fwd:is([data-open="1"],:not(.ph-idle)) .c04-shape::before,.app.c04.scrub .c04-sheet.is-lifting{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
 .app.c04.scrub .c04-pg.is-top.ph-exit :is(.c04-shape,.c04-pgc,.c04-pt,.c04-pm,.c04-back,.c04-weak,.c04-foot,.c04-psc>*,.c04-stage,.c04-hsheet){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 440ms * var(--k,1))!important}
 .ju-env{position:absolute;inset:0;z-index:0;overflow:hidden}
 .c04-envf{position:absolute;inset:0;z-index:0;background:linear-gradient(180deg,#e4dde6,#d6e0e8 45%,#e2e1e9)}
@@ -64,7 +64,7 @@ Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual pr
 .c04-sc{position:absolute;inset:0;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding:calc(152px + 31.5px * (var(--tz,1) - 1) + var(--sat,0px)) 0 calc(104px + var(--sab,0px));--p:clamp(0,(var(--hc,0) * 88 - 4) / 84,1);--hb:calc(96px + var(--sat,0px) + 52px * (1 - var(--p)));--mt:calc(124px - 28px * var(--p) + (31.5px - 12.6px * var(--p)) * (var(--tz,1) - 1) + var(--sat,0px));-webkit-mask-image:linear-gradient(180deg,transparent 0,transparent var(--mt),#000 calc(var(--mt) + 20px - 4px * var(--p)),#000 calc(100% - 98px - var(--sab,0px)),transparent calc(100% - 62px - var(--sab,0px)));mask-image:linear-gradient(180deg,transparent 0,transparent var(--mt),#000 calc(var(--mt) + 20px - 4px * var(--p)),#000 calc(100% - 98px - var(--sab,0px)),transparent calc(100% - 62px - var(--sab,0px)));scrollbar-width:none}
 .c04-sc::-webkit-scrollbar{display:none}
 /* while a page is opening its scroller is at the top, so the head fade-mask shows nothing — but a mask forces an offscreen surface that the software rasteriser has to rebuild every frame of the growing page, and the paper then lags its own title (1x screencast, stage 2) */
-.c04-pg:is(.ph-enter,.ph-in) .c04-psc{-webkit-mask-image:none;mask-image:none}
+.c04-pg:is(.ph-enter,.ph-in,[data-open="1"]) .c04-psc{-webkit-mask-image:none;mask-image:none}
 .c04-grp{display:flex;align-items:baseline;gap:7px;padding:0 22px 8px;font-size:calc(12px * var(--tz,1));line-height:16px;font-weight:500;letter-spacing:.05em;color:var(--gl)}
 .c04-grp b{font:600 12px/16px "Archivo",sans-serif;color:var(--gl)}
 .c04-grp em{font-style:normal;font-weight:400;letter-spacing:.02em}
@@ -171,30 +171,30 @@ Prefix c04-. Shared originals: V27 CTA (.ju-v27-cta), V27 back pill, JURitual pr
 .c04-edge i{position:absolute;left:8px;right:8px;top:calc(var(--j) * var(--sl,3px));height:48px;border-radius:14px 14px 0 0;background:var(--pp);box-shadow:inset 0 1px 0 var(--hl),0 -3px 6px -3px rgba(20,22,31,.45)}
 .c04-edge::after{content:"";position:absolute;left:0;right:0;top:0;height:9px;background:linear-gradient(180deg,rgba(20,22,31,.22),rgba(20,22,31,0));pointer-events:none}
 /* ================= opening / closing: one paper, and its own words travel with it =================
-open (400ms): the tapped paper lifts 8px (0–24%), then grows into the page (24–100%). The band's title, meta and status are a shared
+open (300ms, gated by the page's data-open so the controller's clock can never cut it short): the tapped paper lifts 8px (0–24%), then grows into the page (24–100%). The band's title, meta and status are a shared
 element (.c04-ghost, filled from the band itself at the tap): the title rides the growing paper to the page head and re-wraps there
 (two spans glide into the page's own line break), the meta rides under it, the status word lets go first. The page's own title and
 meta take over only on the last frames, at the same place and size. Ticket / section sheets slide in from 40%. No frame is a bare field.
 close (440ms): the content clears first (0–34%: the sheets slide down, the body fades, the pressed edge drops) while the paper keeps its
 size; then the paper sinks into its band (34–100%) carrying the same title back into it. Two layers at most: the closing paper and the list. */
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-shape{animation:c04-sh-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-pgc{animation:c04-pc-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) :is(.c04-back,.c04-weak){animation:c04-fade-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-psc>*{animation:c04-body-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-psc>:is(.c04-tkp,.c04-mstack){animation:c04-sheet-in calc(400ms * var(--k)) both}
-.c04-pg.is-top.dir-fwd:not(.ph-idle) .c04-edge i{animation:c04-edge-in calc(340ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc((90ms + var(--j) * 16ms) * var(--k))}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] .c04-shape{animation:c04-sh-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] .c04-pgc{animation:c04-pc-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] :is(.c04-back,.c04-weak){animation:c04-fade-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] .c04-psc>*{animation:c04-body-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] .c04-psc>:is(.c04-tkp,.c04-mstack){animation:c04-sheet-in calc(300ms * var(--k)) both}
+.c04-pg.is-top.dir-fwd:is([data-open="1"],:not(.has-from):not(.ph-idle)) .c04-edge i{animation:c04-edge-in calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;animation-delay:calc((60ms + var(--j) * 12ms) * var(--k))}
 /* page title / meta: with a measured ghost they take over on the last frames; without one (index jump, button origin) they settle in place */
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gh="in"]) .c04-pt{animation:c04-ptx-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gh="in"]) .c04-pm{animation:c04-pmx-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):has(.c04-ghost[data-gm="fade"]) .c04-pt{animation:c04-ptf-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):not(:has(.c04-ghost[data-gh="in"])) .c04-pt{animation:c04-pt2-in calc(400ms * var(--k)) both}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle):not(:has(.c04-ghost[data-gh="in"])) .c04-pm{animation:c04-fade-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"]:has(.c04-ghost[data-gh="in"]) .c04-pt{animation:c04-ptx-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"]:has(.c04-ghost[data-gh="in"]) .c04-pm{animation:c04-pmx-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"]:has(.c04-ghost[data-gm="fade"]) .c04-pt{animation:c04-ptf-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"]:not(:has(.c04-ghost[data-gh="in"])) .c04-pt{animation:c04-pt2-in calc(300ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"]:not(:has(.c04-ghost[data-gh="in"])) .c04-pm{animation:c04-fade-in calc(300ms * var(--k)) both}
 .c04-sheet.is-origin{visibility:hidden}
 /* a lead (fully open) sheet lifts itself — content and all — and the page's paper fades in over it; its title / meta / kicker are the ghost's from the first frame */
-.c04-sheet.is-lifting{z-index:3;animation:c04-lift calc(400ms * var(--k)) both}
+.c04-sheet.is-lifting{z-index:3;animation:c04-lift calc(300ms * var(--k)) both}
 .app.c04:has(.c04-pg.is-top .c04-ghost[data-gh]) .c04-sheet.is-olead :is(.c04-lt,.c04-lm,.c04-lk>span:first-child){visibility:hidden}
 @keyframes c04-lift{0%{scroll-margin-bottom:0px;transform:none;animation-timing-function:cubic-bezier(.25,.7,.35,1)}24%,100%{scroll-margin-bottom:0px;transform:translateY(-8px);box-shadow:inset 0 1px 0 var(--hl),0 -18px 34px -14px rgba(20,22,31,.62),0 20px 30px -16px rgba(20,22,31,.55)}}
-.c04-pg.has-from.is-top.from-lead.dir-fwd:not(.ph-idle) .c04-shape::before{animation:c04-lead-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.from-lead.dir-fwd[data-open="1"] .c04-shape::before{animation:c04-lead-in calc(300ms * var(--k)) both}
 @keyframes c04-lead-in{0%,20%{scroll-margin-bottom:0px;opacity:0}40%,100%{scroll-margin-bottom:0px;opacity:1}}
 /* the shared element. Coordinates are page px written by _gFill on the ghost (0 = the band side, 1 = the page head); the title's spans keep
 the band's own font and get the page's line height ÷ scale, so the last frame is the page title's line box exactly */
@@ -203,12 +203,12 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 .c04-gt span{position:absolute;left:0;top:0;white-space:pre}
 .c04-gm s{margin-left:4px;text-decoration-thickness:1px}
 .c04-gm .cd{font-family:"Archivo",sans-serif;font-variant-numeric:tabular-nums;font-weight:600}
-.c04-pg.has-from.is-top.dir-fwd:not(.ph-idle) .c04-ghost[data-gh="in"]{display:block}
-.c04-ghost[data-gh="in"] .c04-gt{animation:c04-gt-in calc(400ms * var(--k)) both}
-.c04-ghost[data-gh="in"][data-gm="fade"] .c04-gt{animation:c04-gt-in calc(400ms * var(--k)) both,c04-gtf-in calc(400ms * var(--k)) both}
-.c04-ghost[data-gh="in"] .c04-gt .g2{animation:c04-g2-in calc(400ms * var(--k)) both}
-.c04-ghost[data-gh="in"] .c04-gm{animation:c04-gm-in calc(400ms * var(--k)) both}
-.c04-ghost[data-gh="in"] .c04-gs{animation:c04-gs-in calc(400ms * var(--k)) both}
+.c04-pg.has-from.is-top.dir-fwd[data-open="1"] .c04-ghost[data-gh="in"]{display:block}
+.c04-ghost[data-gh="in"] .c04-gt{animation:c04-gt-in calc(300ms * var(--k)) both}
+.c04-ghost[data-gh="in"][data-gm="fade"] .c04-gt{animation:c04-gt-in calc(300ms * var(--k)) both,c04-gtf-in calc(300ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gt .g2{animation:c04-g2-in calc(300ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gm{animation:c04-gm-in calc(300ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gs{animation:c04-gs-in calc(300ms * var(--k)) both}
 /* every opening / closing keyframe also carries a constant scroll-margin-bottom: a property the compositor cannot run, so the whole choreography
 (shape, clip, ghost, sheets) stays on one thread and in lockstep even when the main thread is busy */
 /* no animated shadow on the growing / shrinking page: a large blurred shadow that changes size every frame has to be re-rastered each frame, and under load the visible paper then lags behind the travelling title (seen in the 1x screencast, stage 2) */
@@ -223,7 +223,7 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 @keyframes c04-gt-in{
 0%,52%{color:var(--gc0);left:var(--gx0);top:var(--gy0);font-size:var(--gf0);opacity:1;animation-timing-function:cubic-bezier(.3,.6,.2,1)}
 100%{color:var(--gc1);left:var(--gx1);top:var(--gy1);font-size:calc(var(--gf0) * var(--gs));opacity:1}}
-@keyframes c04-gtf-in{0%,70%{opacity:1}92%,100%{opacity:0}}
+@keyframes c04-gtf-in{0%,58%{opacity:1}78%,100%{opacity:0}}
 /* the line breaks early (24–34%: the second half drops to its line, the meta is pushed down with it), then slides to the margin while the title grows */
 @keyframes c04-g2-in{0%,52%{left:var(--g2x0);top:var(--g2y0);animation-timing-function:cubic-bezier(.3,.6,.3,1)}64%{left:var(--g2x0);top:var(--g2y1);animation-timing-function:cubic-bezier(.25,.7,.25,1)}100%{left:var(--g2x1);top:var(--g2y1)}}
 @keyframes c04-gm-in{
@@ -232,8 +232,8 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 80%{opacity:0}
 100%{color:var(--mc1);left:var(--mx1);top:var(--my1);font-size:calc(var(--mf0) * var(--ms));opacity:0}}
 @keyframes c04-gs-in{0%,14%{left:var(--sx0);top:var(--sy0);opacity:1}32%,100%{left:var(--sx0);top:var(--sy0);opacity:0}}
-@keyframes c04-ptx-in{0%,99%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
-@keyframes c04-ptf-in{0%,72%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
+@keyframes c04-ptx-in{0%,100%{scroll-margin-bottom:0px;opacity:0}}
+@keyframes c04-ptf-in{0%,80%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
 @keyframes c04-pmx-in{0%,84%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
 @keyframes c04-pt2-in{0%,40%{scroll-margin-bottom:0px;opacity:0;transform:translateY(16px);animation-timing-function:cubic-bezier(.2,.8,.2,1)}100%{scroll-margin-bottom:0px;opacity:1;transform:none}}
 @keyframes c04-fade-in{0%,52%{scroll-margin-bottom:0px;opacity:0}100%{scroll-margin-bottom:0px;opacity:1}}
@@ -246,7 +246,11 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 .c04-pg.has-from.is-top.ph-exit :is(.c04-back,.c04-weak,.c04-foot){animation:c04-fade-out calc(440ms * var(--k)) both}
 .c04-pg.has-from.is-top.ph-exit .c04-pm{animation:c04-fade-out calc(440ms * var(--k)) both}
 .c04-pg.has-from.is-top.ph-exit .c04-psc>*{animation:c04-body-late calc(440ms * var(--k)) both}
-.c04-pg.has-from.is-top.ph-exit :is(.c04-tkp .c04-stage,.c04-hsheet){animation:c04-body-out calc(440ms * var(--k)) both}
+.c04-pg.has-from.is-top.ph-exit .c04-hsheet{animation:c04-body-out calc(440ms * var(--k)) both}
+/* ② the ticket / reply page leaves as one piece: its paper, the 票底 sheet, the stub (even mid-print) and the contact rows cross-fade with the list together — the stub never leaves its sheet early, and no bare sheet shrinks over the list */
+.c04-pg.c04-tkpg.has-from.is-top.ph-exit :is(.c04-shape,.c04-pgc){animation:c04-tk-out calc(260ms * var(--k)) cubic-bezier(.33,0,.4,1) both}
+.c04-pg.c04-tkpg.has-from.is-top.ph-exit :is(.c04-psc>*,.c04-tkp .c04-stage){animation:none}
+@keyframes c04-tk-out{0%{scroll-margin-bottom:0px;opacity:1}100%{scroll-margin-bottom:0px;opacity:0}}
 @keyframes c04-body-late{0%,50%{opacity:1}85%,100%{opacity:0}}
 @keyframes c04-fade-late{0%,70%{opacity:1}100%{opacity:0}}
 .c04-pg.is-top.ph-exit .c04-edge i{animation:c04-edge-out calc(150ms * var(--k)) cubic-bezier(.4,0,.6,1) both}
@@ -842,7 +846,7 @@ toWho: full ? '在局里的你' : '缺' + seatsLeft + '人的你', seatLong: ful
 class Component extends DCLogic {
 constructor(p) {
 super(p); this.reviewInit(CONCEPT);
-this.motionSpec = { fwd: 440, back: 440, swap: 220, role: 220 };
+this.motionSpec = { fwd: 320, back: 440, swap: 220, role: 220 };
 this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
 this.envRef = { current: null }; this._rit = {};
 if (p.preset === 'hosted') this.state.role = 'hosted';
@@ -851,10 +855,19 @@ initialState(variant) { return JU.baseState(variant); }
 R() { return window.JURitual || null; }
 live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
 componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); }
-componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._placeHint(); const c = this._c; if (this._flip && c && c.nav.cur === 'home' && c.nav.phase === 'idle') this._flipSlide(); if (this._gPending && c && c.nav.cur !== 'home') { this._gPending = false; this._gIn(); this._hold(); }
+componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._placeHint(); const c = this._c; if (this._flip && c && c.nav.cur === 'home' && c.nav.phase === 'idle') this._flipSlide(); if (this._gPending && c && c.nav.cur !== 'home') { this._gPending = false; this._gIn(); this._openTrack(); this._hold(); }
 const u = c && c.hosted && c.hosted.undo; clearTimeout(this._undoT); if (u && u.on) this._undoT = setTimeout(() => this.forceUpdate(), 1000);   /* m-3: the undo seconds follow the clock */
 }
 /* M-3: a page's keyframes start only after its first frame has been laid out and painted, so 1x never opens on a half-finished frame */
+/* ① / M-3: the opening keyframes run under the page's own data-open, set here (first frame) and cleared on the frame after they have all finished —
+never by the controller's timer, which on a slow 1x frame used to end the flight early (two titles). The ghost hides and the page title shows in one style pass. */
+_openTrack() {
+const root = this.rootRef.current, sec = root && root.querySelector('.c04-pg.is-top'); if (!sec || this.isRM() || !sec.classList.contains('has-from') || !sec.classList.contains('dir-fwd')) return;
+const seq = this._openSeq = (this._openSeq || 0) + 1; sec.dataset.open = '1';
+const done = () => { if (this._openSeq !== seq) return; this._openSeq++; delete sec.dataset.open; };   /* resolved after the last keyframe: the frame being drawn is already the settled page */
+let as = []; try { as = sec.getAnimations({ subtree: true }).filter(a => /^c04-(sh-in|pc-in|gt-in|body-in|sheet-in|edge-in)$/.test(a.animationName)); } catch (e) { }
+if (!as.length) { done(); return; } Promise.all(as.map(a => a.finished)).then(done, done); this.afterKey('c04-open', 2400, done);
+}
 _hold() { const root = this.rootRef.current; if (!root || this.isRM()) return; root.dataset.hold = '1'; requestAnimationFrame(() => requestAnimationFrame(() => { delete root.dataset.hold; })); }
 /* the gesture hint hangs 8px under the stub (its height depends on the printed ticket), clear of the footer CTA */
 _placeHint() {
@@ -970,11 +983,12 @@ _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide();
 /* the section can stay mounted from one ticket to the next (jumps, replace): the original's own reveal state must not carry over */
 { const root = this.rootRef.current, sec = root && root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); if (sec) { const w = sec.querySelector('[data-contact-reveal]'), a = sec.querySelector('[data-contact-action]'); if (w) { w.dataset.revealed = 'false'; w.setAttribute('aria-hidden', 'true'); } if (a) a.dataset.shown = 'false'; } } if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } if (t.stage && t.stage.__juPrintMesh) { const R = this.R(); try { if (R && R.print && R.print.reset) R.print.reset(t.stage); } catch (e) { } }   /* leaving mid-print: stop the original's paper mesh, or it keeps the compositor busy for the next page */
 const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+_showWhole(q) { const root = this.rootRef.current, el = root && root.querySelector(q), sc = el && el.closest('[data-scroller]'); if (!sc) return; const b = el.getBoundingClientRect().bottom, lim = sc.getBoundingClientRect().bottom - 14; if (b <= lim) return; const to = Math.min(sc.scrollHeight - sc.clientHeight, sc.scrollTop + (b - lim)); try { sc.scrollTo({ top: to, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop = to; } }
 onEffect(fx) {
 const root = this.rootRef.current, c = this._c, top = sel => { const sc = root && root.querySelector(sel); if (sc && sc.scrollTop > 0) try { sc.scrollTo({ top: 0, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop = 0; } };
 if (fx.type === 'confirmed' && !fx.replay) this.afterKey('c04-rtop', 90, () => top('[data-scroller="read"]'));   /* M-4: the result card sits at the top of the read layer */
 if (fx.type === 'released' && !fx.replay && c && c.nav.cur === 'home') this.say('已放弃预留 · 这局移到了历史', 'ok');   /* m-10 */
-if (fx.type === 'cancelled' && !fx.replay) { this._emb = { id: fx.eventId, at: Date.now() }; this.afterKey('c04-emb', 2300, () => this.forceUpdate()); }
+if (fx.type === 'cancelled' && !fx.replay) { this._emb = { id: fx.eventId, at: Date.now() }; this.afterKey('c04-emb', 2300, () => this.forceUpdate()); this.afterKey('c04-mres', 260, () => this._showWhole('.c04-pg.is-top .c04-mres')); }   /* the whole result paper ends inside the viewport */
 if (fx.type === 'proposed' && !fx.replay) { this.setState({ c04mx: { id: fx.eventId, intent: c && c.manage && c.manage.intent, k: 'replies' } }); this.afterKey('c04-mtop', 90, () => top('[data-scroller="manage"]')); }   /* m-7 */
 if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
 if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
@@ -993,6 +1007,7 @@ const root = this.rootRef.current; if (!root) return;
 if (kind === 'go' && s !== 'home') { this._gPending = true; this._gsrc = null; if (this._c && this._c.nav.cur === 'home' && p && (p.eventId || p.draftId)) { try { this._gsrc = this._gMeasure(root.querySelector('.c04-home [data-flip="row-' + (p.eventId || p.draftId) + '"]')); } catch (e) { this._gsrc = null; }
 const sc = root.querySelector('[data-scroller="home"]'), q = Math.min(1, Math.max(0, ((sc ? sc.scrollTop : 0) - 4) / 84)), b = this._gsrc && this._gsrc.tb; if (b && (b.y < 92 + 52 * (1 - q) || b.y + b.h > root.clientHeight - 84)) this._gsrc = null; }
 this._flipEnd(); const h = this._homePos(); const key = p && (p.eventId || p.draftId) ? 'row-' + (p.eventId || p.draftId) : null; const last = key && root.querySelector('[data-flip="' + key + '"].is-last'), lead = key && root.querySelector('[data-flip="' + key + '"].is-lead'); this._snap = h ? { role: this.state.role, section: this.state.section, pos: h.pos, key: key, last: !!last, lead: !!lead } : null; }
+if (kind === 'back') { this._openSeq = (this._openSeq || 0) + 1; const op = root.querySelector('.c04-pg[data-open]'); if (op) delete op.dataset.open; }
 if (kind === 'back' && s === 'home') { this._flipHome(); const gh = root.querySelector('.c04-pg.is-top .c04-ghost'); if (gh) { delete gh.dataset.gh; delete gh.dataset.gm; } }
 if (kind === 'role' || kind === 'section') { this._snap = null; this._flipEnd(); }
 }

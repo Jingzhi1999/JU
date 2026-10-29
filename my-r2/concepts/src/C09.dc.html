@@ -1261,7 +1261,7 @@ class Component extends DCLogic {
     const nav = this.state.nav, pn = ps && ps.nav; if (!nav || !pn) return;
     const m = this.lastMotion;
     if (m && !m.c09 && /^go:/.test(m.name || '')) this.lastMotion = { name: m.name, c09: true, fn: () => this._replayEnter() };
-    if (pn.phase === 'exit' && nav.phase === 'idle' && nav.stack.length < pn.stack.length) { const e = pn.stack[pn.stack.length - 1]; this._popped = { s: e.s, p: e.p, key: e.key }; this._poppedLift = this._lift; this.lastMotion = { name: 'back:' + e.s, c09: true, fn: () => this._replayBack() }; }
+    if (pn.phase === 'exit' && nav.phase === 'idle' && nav.stack.length < pn.stack.length) { const e = pn.stack[pn.stack.length - 1]; this._popped = { s: e.s, p: e.p, key: e.key }; this._poppedLift = this._lift || this._liftWas || null; this._liftWas = null; this.lastMotion = { name: 'back:' + e.s, c09: true, fn: () => this._replayBack() }; }
   }
   _replayEnter() {
     const nav = this.state.nav; if (!nav || nav.stack.length < 2 || nav.phase !== 'idle') return;
@@ -1321,7 +1321,7 @@ class Component extends DCLogic {
     const root = this.rootRef.current, nav = this.state.nav; if (!root || !nav || !ps || !ps.nav) return;
     const st = nav.stack, top = st[st.length - 1]; const pn = ps.nav;
     if (nav.phase === pn.phase && nav.seq === pn.seq && st.length === pn.stack.length) return;
-    if (nav.phase === 'idle') { if (top.s === 'home') this._lift = null; this._homeKeep = false; return; }
+    if (nav.phase === 'idle') { if (top.s === 'home') { if (this._lift) this._liftWas = this._lift; this._lift = null; } this._homeKeep = false; return; }
     const sec = root.querySelector('[data-surface="' + top.s + '"]'); const band = sec && sec.querySelector(':scope > .c09-hd > .c09-band'); if (!band) return;
     const rt = root.getBoundingClientRect().top, home = root.querySelector('[data-surface="home"]'), set = (k, v) => sec.style.setProperty(k, v);
     const ah = band.firstElementChild, ruleOff = ah ? ah.offsetHeight - 2 : 40;

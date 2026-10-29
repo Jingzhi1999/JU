@@ -55,6 +55,9 @@ body{margin:0}
 .c08-hdw{position:absolute;left:0;right:0;top:0;z-index:6;pointer-events:none}
 /* V27 外层标题：top 53 − 40.45p、字号 30 → 18、p = 1 时居中进工具行中线（22px）；页头是覆盖式的纸，带从它下面穿过（滚动容器高度不随收拢变化） */
 .c08-hd{position:relative;height:calc(var(--sat) + 68px + 86px * var(--tz,1) * (1 - var(--hc,0)));overflow:hidden;pointer-events:auto}
+.c08-totop{position:absolute;left:0;right:132px;top:0;height:calc(var(--sat) + 68px);z-index:3;appearance:none;border:0;padding:0;background:none;opacity:0;pointer-events:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+.c08-hd.is-c .c08-totop{opacity:1;pointer-events:auto}
+.c08-totop:focus-visible{outline:2px solid #4A5AD6;outline-offset:-6px;border-radius:12px}
 .c08-ttl{position:absolute;margin:0;left:calc(22px + (100% - 44px) / 2 * var(--hc,0));top:calc(var(--sat) + 24px + 53px - 40.45px * var(--hc,0));transform:translateX(calc(-50% * var(--hc,0)));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));line-height:1.05;font-weight:500;color:#14161F;white-space:nowrap;letter-spacing:0}
 .c08-tabs{position:absolute;left:22px;right:22px;top:calc(var(--sat) + 24px + 53px + 31.5px * var(--tz,1) + 8px);display:flex;align-items:center;gap:10px;opacity:calc(1 - var(--hc,0) * 1.7);transform:translateY(calc(-16px * var(--hc,0)))}
 .c08-roles,.c08-secs{display:flex;align-items:center;gap:18px}
@@ -515,6 +518,7 @@ body{margin:0}
           <div class="c08-hdw">
             <header class="c08-hd" data-header>
               <h1 class="c08-ttl">我的局</h1>
+              <button type="button" class="c08-totop" data-act="to-top" tabindex="-1" aria-hidden="true" aria-label="回到顶部，切换身份与分区" onClick="{{x.toTop}}"></button>
               <div class="c08-tabs">
                 <div class="c08-roles" role="tablist" aria-label="身份">
                   <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" class="c08-tab {{t.cls}}" data-role-tab="{{t.k}}" aria-selected="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.badge}}"><span class="c08-badge">{{t.badge}}</span></sc-if></button></sc-for>
@@ -525,7 +529,7 @@ body{margin:0}
               </div>
             </header>
           </div>
-          <div class="c08-sc" data-scroller="home" data-measure="layout" onScroll="{{c.nav.onScroll}}">
+          <div class="c08-sc" data-scroller="home" data-measure="layout" onScroll="{{x.homeScroll}}">
             <div class="c08-pane">
               <sc-for list="{{home.bands}}" as="b" hint-placeholder-count="3">
                 <div class="c08-band {{b.toneCls}} {{b.wCls}}" data-band="{{b.key}}" data-count="{{b.count}}">
@@ -1387,7 +1391,16 @@ class Component extends DCLogic {
       closing: shClosing, closingCls: shClosing ? 'is-closing' : '', keep, ink, plain: S.on && !keep && !ink, okMain: showOk && !keep && !ink && !S.danger, okDanger: showOk && !keep && !ink && !!S.danger, okDisabled: !S.canOk, card: shCard, identTitle: S.identity ? JU.fmt.keepDot(S.identity.title) : '',
       backdrop: (ev) => { if (ev.target === ev.currentTarget && !S.busy) S.cancel(); } };
     const navItems = c.rootNav.map(n => ({ label: n.label, cls: n.on ? 'on' : '', inert: !!n.inert, cur: n.on ? 'page' : 'false', go: n.go, icon: C08_ICONS[n.k] }));
-    const x = { appCls: '', faceScroll, nav: navItems };
+    /* the collapsed header: its title strip scrolls the list back to the top (smoothly; at once under 减少动态), where the identity tabs are —
+       switching role is one tap away again; it is a button only while the header is collapsed, and focus lands on the current identity tab */
+    const homeScroll = (ev) => { c.nav.onScroll(ev); const sc = ev.currentTarget; const hd = sc.parentElement && sc.parentElement.querySelector('.c08-hd'); if (!hd) return;
+      const on = sc.scrollTop >= (this.headerRange || 88) * 0.98; if (hd.classList.contains('is-c') === on) return; hd.classList.toggle('is-c', on);
+      const b = hd.querySelector('.c08-totop'); if (b) { b.tabIndex = on ? 0 : -1; b.setAttribute('aria-hidden', on ? 'false' : 'true'); } };
+    const toTop = (ev) => { const b = ev && ev.currentTarget; const home = b && b.closest('[data-surface="home"]'); const sc = home && home.querySelector('[data-scroller="home"]'); if (!sc) return;
+      const rm = !!(this.isRM && this.isRM()); try { sc.scrollTo({ top: 0, behavior: rm ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop = 0; }
+      const land = () => { const t = home.querySelector('.c08-roles .c08-tab.on') || home.querySelector('.c08-roles .c08-tab'); if (t) { try { t.focus({ preventScroll: true }); } catch (e) { } } };
+      if (rm) land(); else { let n = 0; const wait = () => { if (sc.scrollTop <= 1 || ++n > 60) land(); else requestAnimationFrame(wait); }; requestAnimationFrame(wait); } };
+    const x = { appCls: '', faceScroll, nav: navItems, homeScroll, toTop };
     tsplit(tk); tsplit(mg); pages.forEach(tsplit);
     return { panel, rootRef: this.rootRef, envRef: this.envRef, c, home, fx, tk, mg, pages, sh, sv: S, x };
   }
