@@ -326,6 +326,9 @@ body{margin:0}
 .c08-mline b{font-weight:500;color:var(--bt)}
 .c08-mline button{appearance:none;border:0;background:none;padding:0;min-height:30px;margin:-6px 0;font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--bt);text-decoration:underline;text-underline-offset:3px;cursor:pointer}
 .c08-msecs{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+/* a cancelled 局: the member / waitlist / reply bands drain with the head (closed tone, 700ms) — nothing stays saturated JU blue */
+.c08-sec{transition:background-color calc(700ms * var(--k)) ease,color calc(700ms * var(--k)) ease}
+.c08-msecs.is-drained .c08-sec,.c08-msecs.is-drained .c08-attsec>.c08-bh{--bc:var(--b-closed);--bg:var(--b-closed);--bt:#14161F;--bs:#454c60;--bl:rgba(20,22,31,.12);--bk:#14161F}
 .c08-sec{order:var(--o,9);background:var(--bg);color:var(--bt);padding:0 22px 6px;scroll-margin-top:96px}
 .c08-sec .help{margin:0;padding:10px 0 12px;border-top:1px solid var(--bl);font-size:calc(13px * var(--tz,1));line-height:1.6;color:var(--bs)}
 .c08-person{display:grid;grid-template-columns:36px minmax(0,1fr);column-gap:12px;row-gap:2px;padding:12px 0 14px;border-top:1px solid var(--bl)}
@@ -622,7 +625,7 @@ body{margin:0}
               <sc-if value="{{mg.ready}}"><div class="c08-fx"><sc-if value="{{mg.seatsOn}}"><div class="c08-mhead"><div class="c08-seats"><i></i></div></div><div class="c08-mline"><span>.</span></div></sc-if><sc-if value="{{mg.att}}"><div class="c08-mline"><span>.</span></div></sc-if><div class="c08-mline"><span>.</span></div></div></sc-if></div></div>
             <sc-if value="{{c.manage.missing}}"><div class="c08-paper"><div class="c08-result"><b>{{c.manage.title}}</b><p>{{c.manage.body}}</p></div></div></sc-if>
             <sc-if value="{{mg.ready}}">
-              <div class="c08-msecs">
+              <div class="c08-msecs {{mg.drainCls}}">
                 <!-- 申请审核 (environment band): result replaces the two buttons in place; rows never move while the page is open -->
                 <sc-if value="{{c.manage.apps.on}}"><div class="c08-sec t-act {{c.manage.apps.cls}}" data-section="apps" style="--o:{{c.manage.apps.order}}">
                   <div class="c08-bh"><span><b>申请</b><span class="c08-cnt"><i class="now">{{c.manage.apps.count}}</i></span><sc-if value="{{c.manage.apps.handled}}"><span> · 已处理 <span class="c08-num">{{c.manage.apps.handled}}</span></span></sc-if></span><span class="note">通过即发出 6 小时预留</span></div>
@@ -904,7 +907,9 @@ class Component extends DCLogic {
       /* where the face lands: the same item if it is still in a band of that colour; else the first item of the band it came from (the band
          has moved on — its count rolls); else the band is gone: a ghost of it stands at the top for one beat and closes (M11) */
       let tgt = fx.id ? m.list.find(x => x.rid === fx.id && x.tone === fx.tone && !x.el.matches('.c08-ctaz')) : null;
-      if (!tgt && fx.band) tgt = m.list.find(x => x.band === fx.band && x.rid && !x.el.matches('.c08-ctaz')) || null;
+      /* the 局 left this group (候补退出, moved on): the face closes into the group's own header strip, whose count rolls — landing on
+         another 局's row read as if that one had been touched */
+      if (!tgt && fx.band) tgt = m.list.find(x => x.band === fx.band && x.key === 'h:' + fx.band) || m.list.find(x => x.band === fx.band && x.rid && !x.el.matches('.c08-ctaz')) || null;
       /* everything handled: the bands stand at zero — the face closes into its own band's header strip, whose count rolls to 0 */
       if (!tgt && fx.band) tgt = m.list.find(x => x.band === fx.band && x.key === 'h:' + fx.band && x.el.closest('.is-zero')) || null;
       let y1, h1, ghost = null, tgtKey = tgt ? tgt.key : null;
@@ -1227,7 +1232,10 @@ class Component extends DCLogic {
       bands.splice(Math.min(s.ghost.index || 0, bands.length), 0, { key: s.ghost.key, toneCls: s.ghost.tone, wCls: 'c08-ghost', title: s.ghost.title, note: '都处理好了', count: 0, was: '', cntCls: '', hKey: gk, hCls: stCls(gk), hStyle: '--gh:42px;--gd:' + gd + 'ms', lead: null, rows: [], ghost: true, ghostText: gText, ghostStyle: '--gh:' + (s.ghost.h ? Math.max(40, s.ghost.h - 42) : 40) + 'px;--gd:' + gd + 'ms' });
     }
     const emptyM = c.role === 'joined' ? c.joined.empty : c.hosted.empty;
-    const tailTxt = c.role === 'joined' && c.section === 'history' ? c.COPY.historyFooter.lead : c.role === 'hosted' && c.section === 'history' ? '再开一局只带入活动内容，成员与记录不复制' : '';
+    /* every list ends on a line of its own (a single 局 or a short list no longer just stops at the environment) */
+    const listed = bands.some(b => !b.ghost && b.wCls !== 'is-zero');
+    const tailTxt = c.role === 'joined' && c.section === 'history' ? c.COPY.historyFooter.lead : c.role === 'hosted' && c.section === 'history' ? '再开一局只带入活动内容，成员与记录不复制'
+      : !listed ? '' : c.section === 'drafts' ? '草稿只存在这台设备上' : c.role === 'joined' ? '就这些 · 新的邀请和改期会先排进「要你回应」' : '就这些 · 新的申请会先排进「待你处理」';
     const home = {
       /* while a deleted draft can still be undone the list is not really empty: the「没有草稿」words wait for the undo window to close
          (they appeared between the band and the undo bar and pushed the bar down ~280px in one frame) */
@@ -1273,7 +1281,7 @@ class Component extends DCLogic {
         a.stampMode = a.recorded ? (a.stamp || 'pending') : ''; a.freshFlag = a.stampFresh ? '1' : '0'; a.stampAria = a.recorded ? '出席印记：' + word : '尚未记录';
         a.stateLine = a.recorded ? (a.editing ? '更正中 · 原记录 ' + word : '已记录 · ' + word) : (a.isNext ? '下一位 · 待记录' : '待记录'); });
     }
-    const mg = { ready: mgReady, tone: mTone, crumb: crumbOf(mTone), title: M.on ? JU.fmt.keepDot(M.missing ? M.title : M.head.title) : '', meta: mgReady ? M.head.meta : '',
+    const mg = { ready: mgReady, tone: mTone, crumb: crumbOf(mTone), drainCls: mgReady && M.head.cancelled ? 'is-drained' : '', title: M.on ? JU.fmt.keepDot(M.missing ? M.title : M.head.title) : '', meta: mgReady ? M.head.meta : '',
       seatsOn: mgReady && !M.head.progress.hidden && !M.head.ended, seats: mgReady ? M.head.progress.seats.map(x => ({ kind: x.kind })) : [], progText: mgReady ? M.head.progress.text : '', progMore: mgReady ? M.head.progress.more : '',
       att: mgReady && M.head.progress.attendance ? M.head.progress.attendance : null, leavesIcon: M.on && M.leaves && M.leaves.open ? 'M6 15l6-6 6 6' : 'M6 9l6 6 6-6', arrNote: mgReady && (M.head.cancelled || M.head.ended) ? '' : '改时间 · 散场 · 取消' };
     /* ---- the other pages (detail / read / waitlist / history / draft): face = the band head; under it bands, built from the same logic as the
