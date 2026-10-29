@@ -23,7 +23,7 @@ const STAGE_FN = function (c) { var m = window.JUShell && window.JUShell.mounts.
 async function launch(o) {
   o = o || {};
   const b = await chromium.launch();
-  const ctx = await b.newContext({ viewport: o.viewport || { width: 1000, height: 1000 }, deviceScaleFactor: o.dsf || 1, reducedMotion: o.reducedMotion || 'no-preference' });
+  const ctx = await b.newContext({ viewport: o.viewport || { width: 1000, height: 1000 }, deviceScaleFactor: o.dsf || 1, reducedMotion: o.reducedMotion || 'no-preference', locale: o.locale || 'zh-CN' });   /* zh-CN: native date / time inputs render 24-hour Chinese format like the product's audience sees them (C05 / C10: 「08:00 PM」 under en-US) */
   await ctx.addInitScript('window.__juStage = ' + STAGE_FN.toString() + ';');
   const blocked = [];
   if (o.offline) await ctx.route('**/*', r => { const u = r.request().url(); if (/^(file|data|blob):/.test(u)) return r.continue(); blocked.push(u); return r.abort(); });
