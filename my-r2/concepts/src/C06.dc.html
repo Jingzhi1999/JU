@@ -66,7 +66,7 @@ body{margin:0}
 .c06-role.on{color:var(--ink);font-weight:500}
 .c06-role + .c06-role::before{content:"/";display:inline-block;color:rgba(20,22,31,.28);margin:0 10px;font-weight:400}
 .c06-role sup{font-family:var(--num);font-size:12px;line-height:0;color:var(--warn);margin-left:3px;vertical-align:7px;font-weight:600}
-.c06-role:focus-visible,.c06-tab:focus-visible,.c06-ta:focus-visible,.c06-weak:focus-visible,.c06-nv:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.c06-role:focus-visible,.c06-tab:focus-visible,.c06-ta:focus-visible,.c06-weak:focus-visible,.c06-nv:focus-visible{outline:none;text-decoration:underline;text-decoration-color:var(--focus);text-decoration-thickness:2px;text-underline-offset:6px}
 /* the weak action of an open item sits in the tool row, right (V27 back / tools relationship) */
 .c06-weak{position:absolute;right:calc(var(--gx) - 8px);top:var(--tt);height:44px;min-width:52px;padding:0 8px;border:0;background:none;font:inherit;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--sec);pointer-events:auto;cursor:pointer;animation:c06-fade calc(220ms * var(--k,1)) ease both}
 .c06-weak.danger{color:var(--warn)}
@@ -154,6 +154,9 @@ body{margin:0}
 .c06-empty h3{font-family:var(--serif);font-weight:600;font-size:calc(26px * var(--tz,1));line-height:1.3;color:var(--ink)}
 .c06-empty p{margin:10px 0 0;font-size:calc(15px * var(--tz,1));line-height:1.7;color:var(--body);max-width:300px}
 .c06-empty .c06-ta{margin:10px 0 0 -12px}
+.c06-grp.is-stub{color:var(--faint)}
+.c06-grp.is-stub .n{color:var(--faint)}
+.c06-stub{margin:0;padding:8px 0 16px;border-bottom:1px solid var(--line);font-size:calc(14px * var(--tz,1));line-height:1.7;color:var(--sec)}
 
 /* ---- the in-place expansion: a paragraph under the title (data-xb = the row id). Objects keep their original size. ---- */
 .c06-x{position:relative;margin:0}
@@ -347,7 +350,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
               <sc-for list="{{v.tabs}}" as="t" hint-placeholder-count="3"><button type="button" class="c06-tab {{t.cls}}" role="tab" data-section-tab="{{t.k}}" aria-selected="{{t.on}}" onClick="{{t.go}}">{{t.label}}<i>{{t.n}}</i></button></sc-for>
             </div>
             <sc-if value="{{v.empty}}">
-              <div class="c06-empty"><h3>{{v.empty.title}}</h3><p>{{v.empty.body}}</p><button type="button" class="c06-ta {{v.empty.cls}}" aria-disabled="{{v.empty.inert}}" onClick="{{v.empty.go}}">{{v.empty.label}}</button></div>
+              <div class="c06-empty"><h3>{{v.empty.title}}</h3><p>{{v.empty.body}}</p><sc-if value="{{v.empty.label}}"><button type="button" class="c06-ta {{v.empty.cls}}" aria-disabled="{{v.empty.inert}}" onClick="{{v.empty.go}}">{{v.empty.label}}</button></sc-if></div>
             </sc-if>
 
             <sc-for list="{{v.items}}" as="it" hint-placeholder-count="8">
@@ -654,6 +657,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
               </sc-if>
             </sc-for>
 
+            <sc-for list="{{v.stubs}}" as="g" hint-placeholder-count="2"><div class="c06-grp is-stub"><span>{{g.title}}</span><span class="n">0</span><span class="note">{{g.note}}</span></div><p class="c06-stub">{{g.desc}}</p></sc-for>
             <sc-if value="{{c.hosted.undo.on}}"><div class="c06-undo" role="status"><span>{{c.hosted.undo.text}}</span><button type="button" class="c06-ta" data-act="undo" onClick="{{c.hosted.undo.act}}">{{c.hosted.undo.label}} · {{c.hosted.undo.left}}s</button></div></sc-if>
             <sc-if value="{{v.foot}}"><p class="c06-foot">{{v.foot}}</p></sc-if>
             <sc-if value="{{v.tail}}"><div class="c06-tail" aria-hidden="true"></div></sc-if>
@@ -931,6 +935,7 @@ class Component extends DCLogic {
     if (c.ticket.on && stage) {
       const opening = c.ticket.state === 'printing' && this.state.nav.phase !== 'idle' && this.kf() > 0;
       if ((this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) && !opening) this._mountTicket(stage, c);
+      if (c.ticket.state === 'torn' && c.ticket.contact.available && !c.ticket.contact.on && !c.ticket.contact.closed && !c.ticket.result && !c.ticket.leaving && this._rit.autoKey !== c.ticket.printKey && this.state.nav.phase === 'idle') { this._rit.autoKey = c.ticket.printKey; c.ticket.contact.open(); }
       const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
@@ -981,7 +986,7 @@ class Component extends DCLogic {
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = isH ? c.history.ritual : c.ticket.ritual; const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason }, { onDone: () => { this._rit.burn = null; } }); }
-  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; t.autoKey = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = c.history.ritual; if (!R || !data) return;
     this._settleTicket(stage, data, data.torn ? 'torn' : 'ready');
@@ -1106,7 +1111,16 @@ class Component extends DCLogic {
     v.items = items.map(it => it.isG ? it : it.kind === 'j' ? this._decorJ(it, c, x, collapsing) : it.kind === 'h' ? this._decorH(it, c, x, collapsing) : this._decorD(it, c, x, collapsing));
     const em = role === 'joined' ? c.joined.empty : c.hosted.empty;
     v.empty = em && em.on && !x ? { title: em.title, body: em.body, label: em.action ? em.action.label : '', go: em.action ? em.action.go : null, inert: em.action && em.action.inert ? 'true' : 'false', cls: em.action && em.action.inert ? 'inert' : 'act' } : null;
-    v.foot = sec === 'history' && !v.empty ? (role === 'joined' ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '再开一局只带入活动内容，成员与记录不复制（开局模块，本轮不可点）') : '';
+    v.foot = sec === 'history' && !v.empty ? (role === 'joined' ? c.COPY.historyFooter.lead + ' · 账户级记录页不在本次范围' : '再开一局只带入活动内容，成员与记录不复制（开局模块，本轮不可点）') : sec === 'drafts' && c.hosted.drafts.length ? '继续编辑在开局模块里完成（本轮不可点）· 删除后 10 秒内可以撤销' : '';
+    /* a list with nothing or almost nothing in it keeps its shape: the intents it is organised by, each with one line of what lands there */
+    const nRows = items.filter((it) => !it.isG).length; v.stubs = [];
+    if (sec === 'current' && !x && nRows <= 2) {
+      const have = {}; live.forEach((it) => { if (it.isG) have[it.key.slice(2)] = 1; });
+      const intents = role === 'joined'
+        ? [['act', '局主给你留了位置、改了时间，需要你答复的，先排在这里。'], ['soon', '已成局的局：出票、撕票、联系局主，都在这一段。'], ['wait', '等局主审核、候补顺位、等其他成员确认。']].map((a) => ({ k: a[0], title: (JU.GROUPS[a[0]] || {}).title, note: (JU.GROUPS[a[0]] || {}).note, desc: a[1] }))
+        : [['todo', '待你处理', '审核与出席', '新的申请、散场后要记录的出席。'], ['resched', '改期中', '等成员逐人答复', '改了时间的局，等成员一个个答复。'], ['recruit', '招募中', '还没成局', '还没成局的局，名额在等人。'], ['formed', '已成局', '按日期', '全员确认后出票；名单与联系方式在这里。']].map((a) => ({ k: a[0], title: a[1], note: a[2], desc: a[3] }));
+      v.stubs = intents.filter((g) => !have[g.k]);
+    }
     /* ticket / reply paragraph */
     const tk = c.ticket;
     v.tk = { surface: x && x.s === 'reply' ? 'reply' : 'ticket', lede: this._tkLede(c), showStage: !!(tk.on && !tk.unavailable), figCls: tk.on && (tk.state === 'printing' || tk.state === 'fresh') ? 'is-await' : '', stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual && tk.ritual.previous), previousText: tk.on && tk.ritual && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual && tk.ritual.mark),

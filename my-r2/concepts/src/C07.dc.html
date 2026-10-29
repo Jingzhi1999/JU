@@ -406,9 +406,15 @@ body{margin:0}
 .c07-tray .c07-dz{background:rgba(255,141,160,.08);color:#FF9DAE;box-shadow:inset 0 0 0 1px rgba(255,141,160,.46)}
 .c07-quiet{height:44px;min-width:120px;padding:0 18px;border:0;background:none;color:var(--tw2);font-size:calc(14px * var(--tz,1));font-weight:500;cursor:pointer;border-radius:999px}
 .c07-quiet:active{background:rgba(255,255,255,.06)}
-.c07-card{margin-top:12px;border-radius:14px;overflow:hidden;box-shadow:0 14px 26px -18px rgba(0,0,0,.7)}
-.c07-card .ju-ticket-title{margin:10px 0 12px}
-.c07-card .cap{margin:12px 0 0;font-size:13px;color:#474e66}
+/* the V27 局卡 original: JuFilm.paintCard (V27 ju-paper-film.js — the same 720×900 card face the stamp scene uses, all six packs, its
+   own fonts and seat lines) in the V27 front shell (ju-card.css: radius 13, inner 1px ring, top / bottom punches); 258 wide like the
+   ticket paper, so a card and a ticket are the same size in the tray */
+.c07-ocardwrap{position:relative;width:258px;margin:14px auto 10px}
+.c07-ocard{position:relative;width:258px;aspect-ratio:4/5;border-radius:13px;overflow:hidden;background:rgba(237,239,247,.06);box-shadow:0 30px 60px -28px rgba(0,0,0,.7),0 10px 26px -12px rgba(0,0,0,.45)}
+.c07-ocard canvas{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:0;transition:opacity calc(240ms * var(--k)) ease}
+.c07-ocard canvas[data-painted]{opacity:1}
+.c07-ocard.in-paper{box-shadow:none}
+.c07-ocardwrap .c07-pmark{top:150px}
 .app.c07-formon .c07-scrim{opacity:.2}
 .app.c07-formon .c07-tray{transform:translate3d(0,calc(100% - var(--th) - max(0px,var(--kb,0px) - var(--navh))),0)}
 /* the host's cancel: the event's card (the same paper as a ticket, brand 局卡) burns in the tray — JURitual.burn, variant C */
@@ -662,11 +668,7 @@ body{margin:0}
               <div class="ju-ticket-stage c07-stage c07-cstage" data-print-stage="c07c" data-state="idle">
                 <div class="ju-ticket" data-paper="c07c">
                   <div class="ju-ticket-shadow" data-paper-shadow="c07c" data-raster="skip"><div></div></div>
-                  <div class="ju-ticket-shell" data-paper-shell="c07c"><div class="ju-ticket-surface" data-paper-surface="c07c"><div class="ju-ticket-body"><div class="ju-ticket-face">
-                    <div class="ju-ticket-brand">JU. / 局卡</div><div class="ju-ticket-title" data-slot="title">{{act.card.title}}</div>
-                    <div class="ju-ticket-when"><span data-slot="time">{{act.card.time}}</span><span data-slot="md">{{act.card.md}}</span></div>
-                    <div class="ju-ticket-line"><span>地点</span><strong data-slot="loc">{{act.card.loc}}</strong></div><div class="ju-ticket-line"><span>集合</span><strong data-slot="meeting">{{act.card.meeting}}</strong></div><div class="ju-ticket-line"><span>局主</span><strong data-slot="host">{{act.card.host}}</strong></div>
-                  </div></div><div class="ju-ticket-stub" data-tear="c07c"></div></div></div>
+                  <div class="ju-ticket-shell" data-paper-shell="c07c"><div class="ju-ticket-surface" data-paper-surface="c07c"><div class="c07-ocard in-paper" role="img" aria-label="局卡 · {{act.card.title}} · 已取消"><canvas data-card="{{act.cardJson}}" aria-hidden="true"></canvas><span class="ju-v27-face-ring"></span><span class="ju-v27-punch-top"></span><span class="ju-v27-punch-bottom"></span></div></div></div>
                   <div class="ju-ticket-burn" data-burn="c07c" data-raster="skip"></div>
                 </div>
               </div>
@@ -707,13 +709,8 @@ body{margin:0}
             <sc-if value="{{form.isConfirm}}"><sc-if value="{{form.ident}}"><p class="c07-fid">{{form.ident}}</p></sc-if><p class="c07-fbody">{{c.sheet.body}}</p></sc-if>
             <sc-if value="{{form.isEnd}}"><p class="c07-fbody">{{c.sheet.body}}</p><sc-if value="{{c.sheet.hint}}"><p class="c07-fnote">{{c.sheet.hint}}</p></sc-if></sc-if>
             <sc-if value="{{form.isCard}}">
-              <div class="c07-card"><div class="ju-ticket-face">
-                <div class="ju-ticket-brand">JU. / 局卡 · {{c.sheet.card.statusLabel}}</div><div class="ju-ticket-title">{{form.cardTitle}}</div>
-                <div class="ju-ticket-when"><span>{{c.sheet.card.when.time}}</span><span>{{c.sheet.card.when.md}}</span></div>
-                <div class="ju-ticket-line"><span>地点</span><strong>{{c.sheet.card.place.full}}</strong></div><div class="ju-ticket-line"><span>局主</span><strong>{{c.sheet.card.host}}</strong></div>
-                <sc-if value="{{c.sheet.card.note}}"><div class="ju-ticket-line"><span>说明</span><strong>{{c.sheet.card.note}}</strong></div></sc-if>
-                <p class="cap">{{c.sheet.card.caption}} · {{c.sheet.card.en}}</p>
-              </div></div>
+              <div class="c07-ocardwrap"><div class="c07-ocard" role="img" aria-label="局卡 · {{form.cardTitle}} · {{c.sheet.card.statusLabel}}"><canvas data-card="{{form.cardJson}}" aria-hidden="true"></canvas><span class="ju-v27-face-ring"></span><span class="ju-v27-punch-top"></span><span class="ju-v27-punch-bottom"></span></div></div>
+              <p class="c07-fnote">{{c.sheet.card.caption}}<sc-if value="{{c.sheet.card.note}}"> · {{c.sheet.card.note}}</sc-if></p>
             </sc-if>
             <sc-if value="{{c.sheet.error}}"><p class="c07-err" role="alert">{{c.sheet.error}}</p></sc-if>
             <sc-if value="{{form.keepFirst}}"><div class="c07-cbtns"><button type="button" class="c07-cta ju-v27-cta" data-act="close" data-autofocus="true" onClick="{{c.sheet.cancel}}"><span class="gloss"></span><span class="label">{{c.sheet.cancelLabel}}</span></button><button type="button" class="ju-v27-danger c07-dz" data-act="ok" disabled="{{sheet.okDisabled}}" onClick="{{c.sheet.ok}}">{{c.sheet.okLabel}}</button></div></sc-if>
@@ -848,11 +845,7 @@ body{margin:0}
                 <sc-if value="{{c.history.on}}">
                   <sc-if value="{{c.history.hasStamp}}"><div class="c07-t08" data-t08-scope="1" aria-label="出席印记"></div><sc-if value="{{history.stampFallback}}"><div class="c07-id"><div class="t">{{c.history.event.title}}</div><div class="m">{{history.stampNote}}</div></div></sc-if><p class="c07-hint">出席记录：{{c.history.attendanceText}}（局主记录的事实，不评分）</p></sc-if>
                   <sc-if value="{{history.showCard}}"><div class="c07-id"><div class="t">{{c.history.row.titleNb}}</div><div class="m">{{c.history.when.zh}} · {{c.history.row.placeText}} · 局主 {{c.history.host.name}}</div></div></sc-if>
-                  <sc-if value="{{history.paperCard}}"><div class="c07-pcard" role="img" aria-label="{{c.history.row.titleNb}} · {{c.history.label}}"><div class="ju-ticket-face">
-                    <div class="ju-ticket-brand">JU. / 局卡</div><div class="ju-ticket-title">{{c.history.row.titleNb}}</div>
-                    <div class="ju-ticket-when"><span>{{c.history.when.time}}</span><span>{{c.history.when.md}}</span></div>
-                    <div class="ju-ticket-line"><span>地点</span><strong>{{c.history.row.placeText}}</strong></div><div class="ju-ticket-line"><span>局主</span><strong>{{c.history.host.name}}</strong></div>
-                  </div><div class="c07-pmark">{{c.history.label}}</div></div></sc-if>
+                  <sc-if value="{{history.paperCard}}"><div class="c07-ocardwrap"><div class="c07-ocard" role="img" aria-label="局卡 · {{c.history.row.titleNb}} · {{c.history.label}}"><canvas data-card="{{history.cardJson}}" aria-hidden="true"></canvas><span class="ju-v27-face-ring"></span><span class="ju-v27-punch-top"></span><span class="ju-v27-punch-bottom"></span></div><div class="c07-pmark">{{c.history.label}}</div></div></sc-if>
                   <sc-if value="{{c.history.oldWhen}}"><p class="c07-hint">原定 {{c.history.oldWhen.zh}}</p></sc-if>
                   <p style="margin:0;font-size:14px;color:var(--tw2)">{{c.history.reason}}</p><sc-if value="{{c.history.closedNote}}"><p class="c07-hint">{{c.history.closedNote}}</p></sc-if>
                   <sc-if value="{{history.showStage}}">
@@ -966,7 +959,7 @@ class Component extends DCLogic {
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
     { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
@@ -993,6 +986,16 @@ class Component extends DCLogic {
       try { R.stampFace.mount(el, mode, { diameter: row ? 44 : 64, pressed: !row && el.getAttribute('data-press') === '1' && !this.isRM() }); } catch (e) { el.__c07face = null; }
     });
   }
+  /* the original card: JuFilm comes with the stamp engines (stampFace.ready ensures them); JuFilm.loadFonts loads exactly the faces the card
+     draws with (Caslon / Caveat / Space Mono / Archivo / Oswald / Noto …) for its own text, then paintCard draws the 720×900 face */
+  _paintCard(cv) {
+    const k = cv.getAttribute('data-card'); if (!k) return Promise.resolve(false); if (cv.__c07card === k && cv.__c07paint) return cv.__c07paint;
+    cv.__c07card = k; const R = this.R();
+    const ready = this._filmReady || (this._filmReady = (R && R.stampFace ? R.stampFace.ready() : Promise.resolve()).catch(() => { }));
+    return (cv.__c07paint = ready.then(() => { const F = window.JuFilm; if (!F || cv.__c07card !== k) return false; const card = JSON.parse(k);
+      return (F.loadFonts ? F.loadFonts([card]).catch(() => { }) : Promise.resolve()).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
+  }
+  _paintCards() { const root = this.rootRef.current; if (!root) return; root.querySelectorAll('canvas[data-card]').forEach(cv => { if (cv.__c07card !== cv.getAttribute('data-card')) this._paintCard(cv); }); }
   /* the host's cancel: the card is settled on the tray's stage, then burns (data already written; onDone hands the tray to the result) */
   _syncCardBurn() {
     const root = this.rootRef.current; if (!root) return; const stage = root.querySelector('.c07-act [data-print-stage="c07c"]');
@@ -1002,7 +1005,8 @@ class Component extends DCLogic {
     const data = this._rd(this._cardData(c.manage)); this._settleTicket(stage, data, 'torn');
     const go = () => { if (this._rit.cstage !== stage) return; this._rit.cburn = R.burn(stage, { reason: 'cancelled' }, { onDone: () => { this._rit.cburn = null; if (this._rit.cstage === stage) this.setState({ cburn: null }); } }); };
     this.lastMotion = { name: 'burn', fn: () => { this.setState({ cburn: { eventId: c.manage.eventId, seq: Date.now() } }); } };
-    if (this.isRM()) go(); else this.after(260, go);   /* the tray has grown to hold the card first */
+    const cv = stage.querySelector('canvas[data-card]'); const painted = cv ? this._paintCard(cv) : Promise.resolve(true);
+    painted.then(() => { if (this._rit.cstage !== stage) return; R.measureTicket(stage, true); if (this.isRM()) go(); else this.after(260, go); });   /* the tray has grown to hold the card first */
   }
   _destroyCardBurn() { const t = this._rit; if (t.cburn) { try { t.cburn.destroy(); } catch (e) { } t.cburn = null; } t.cstage = null; }
   _evTitle(id) { const e = this.state.data && this.state.data.events[id]; return e ? e.title : ''; }
@@ -1207,6 +1211,10 @@ class Component extends DCLogic {
     const firstUp = trayUp && nav.depth === 2 && nav.dir === 'fwd' && ph !== 'idle';
     if (this._pendingSection) this._c07Pending = this._pendingSection;   /* see _fixManageScroll */
     const nb = (t) => String(t || '').replace(/ · /g, '\u00a0· ');
+    /* an event as the card JuFilm.paintCard paints (same fields the controller gives the stamp scene) */
+    const cardJson = (ev, n, status) => { if (!ev || !ev.iso) return ''; const w = JU.fmt.when(ev.iso), pl = JU.fmt.place(ev.loc || ''); n = n || {};
+      return JSON.stringify({ id: 'NYC|' + (ev.pack || 'invite') + '|' + ev.title, city: 'NYC', num: 'NYC', pack: ev.pack || 'invite', title: ev.title, en: ev.en || '', wd: w.wdEn, date: w.md, dateNum: w.month + '-' + w.day + '-2026', time: w.time,
+        loc: pl.hood, host: (ev.host && ev.host.name) || '', capacity: ev.capacity, seats: n.available != null ? n.available : Math.max(0, ev.capacity - (n.confirmed || 0)), confirmed: n.confirmed, reserved: n.reserved || 0, formed: !!n.formed, status: status || ev.status }); };
     /* a sheet opened while the tray is parked is drawn as the tray's own block (manage: 改时间 / 取消这局 / 记为散场 / 局卡; home: the
        lead's 去不了了 / 撤回 / 退出候补 confirm); over a risen page it is a second ink sheet (.c07-ovl) */
     const sh = c.sheet; const trayForm = !!(sh.on && ((mTop && ['reschedule', 'cancel', 'end', 'card'].indexOf(sh.kind) >= 0) || (cur === 'home' && !trayUp && sh.kind === 'confirm')));
@@ -1222,7 +1230,8 @@ class Component extends DCLogic {
       else if (sh.kind === 'cancel') { form.isCancel = true; form.safeFirst = true; form.label = '取消这局'; form.side = '不能撤销'; form.title = nb('取消「' + idn.title + '」？'); form.danger = true; }
       else if (sh.kind === 'end') { form.isEnd = true; form.label = '记为散场'; form.side = idn.when || ''; form.title = nb('「' + idn.title + '」散场了？'); form.primary = true; }
       else if (sh.kind === 'confirm') { form.isConfirm = true; form.label = { withdraw: '撤回申请', release: '去不了了', exit: '去不了了', decline: '不接受新时间', leaveQueue: '退出候补' }[sh.sub] || ''; form.side = '不影响其他局'; form.title = sh.title; form.ident = idn.title ? nb(idn.title) + ' · ' + idn.when + ' · ' + idn.place : ''; form.keepFirst = !!sh.keepPrimary; form.inkPair = sh.okTone === 'ink'; form.danger = !!sh.danger; form.primary = !sh.danger; form.safeFirst = true; }   /* V27 roles: keep = blue / leave = danger; withdraw = glass + ink */
-      else { form.isCard = true; form.label = '局卡'; form.side = '成员看到的是同一张'; form.cardTitle = nb(sh.card ? sh.card.title : ''); form.closeLabel = '关闭'; }
+      else { form.isCard = true; form.label = '局卡'; form.side = '成员看到的是同一张'; form.cardTitle = nb(sh.card ? sh.card.title : '');
+        { const mm = c.manage, pg = mm.on && mm.head ? mm.head.progress : null; form.cardJson = mm.on && mm.event ? cardJson(mm.event, pg ? { confirmed: pg.confirmed, reserved: pg.reserved, available: pg.available, formed: mm.head.formed } : null) : ''; } form.closeLabel = '关闭'; }
     }
     const rowCls = (r) => Object.assign(r, { landingCls: r.landing ? 'is-landing' : '', readyCls: r.ready ? 'go' : 'wait', toneCls: r.todo ? 'act' : (r.section === 'formed' ? 'go' : 'wait'), seatShort: r.counts ? (r.counts.confirmed + '/' + r.counts.capacity) : '' });
     [c.joined.sections, c.joined.sectionsHistory, c.hosted.sections, c.hosted.sectionsHistory].forEach(ss => ss.forEach(g => g.rows.forEach(rowCls))); c.hosted.drafts.forEach(rowCls); c.hosted.drafts.forEach(r => { r.canDel = !r.ghost; });
@@ -1305,7 +1314,7 @@ class Component extends DCLogic {
         /* the controller would also move focus to the next row; the tray does that itself after the hold */
         const rec = (fn) => (ev) => { fn(ev); this._focusAtt = null; };
         act.setPresent = rec(a.setPresent); act.setAbsent = rec(a.setAbsent); act.setPending = rec(a.setPending); }
-      else if (mode === 'burn') { act.isBurn = true; act.label = '已取消 · 不能撤销'; act.title = m.head.title; act.card = this._cardData(m); act.burnNote = '局卡作废 · 已出的票根作废、联系入口关闭'; }
+      else if (mode === 'burn') { act.isBurn = true; act.cardJson = cardJson(m.event, { confirmed: m.head.progress.confirmed, reserved: m.head.progress.reserved, available: m.head.progress.available, formed: m.head.formed }, 'cancelled'); act.label = '已取消 · 不能撤销'; act.title = m.head.title; act.card = this._cardData(m); act.burnNote = '局卡作废 · 已出的票根作废、联系入口关闭'; }
       else if (mode === 'done') { act.isDone = true; act.label = '都处理完了 · 已处理 ' + m.apps.handled; act.title = '申请都有答复了'; act.meta = m.head.progress.text + (m.head.progress.more ? ' · ' + m.head.progress.more : ''); act.arrLink = true; act.toArrange = () => this.setState({ mArr: true }); }
       else if (mode === 'attdone') { act.isDone = true; act.label = '都记好了'; act.title = m.attendance.doneText || '出席都记录了'; act.meta = '未出席是待核实的事实 · 可随时更正'; act.arrLink = false; }
       else { act.isArr = true; act.label = '这局的安排 · ' + m.head.status; act.title = m.head.title; act.meta = m.head.when.zh + ' · ' + m.head.place.hood + ' · ' + m.head.progress.text; act.error = m.error; if (m.head.cancelled || m.head.ended) { act.isArr = false; act.isDone = true; act.label = m.head.cancelled ? '已取消' : '已散场'; act.title = m.head.cancelled ? '这局已取消' : '这局已散场'; act.meta = m.head.formedLine; act.arrLink = false; } }
@@ -1340,7 +1349,8 @@ class Component extends DCLogic {
       draft: (() => { const d = dv, miss = (d.on && d.draft && d.draft.missing) || [], w = d.on ? d.when : null, has = (k) => miss.indexOf(k) >= 0;
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
           locText: has('地点') || !d.placeText ? '待定' : d.placeText, locCls: has('地点') || !d.placeText ? 'c07-gap' : '', titleCls: d.untitled ? 'c07-gap' : '' }; })(),
-      history: { titleNb: hr ? nb(hr.title) : '', recordCount: c.history.on ? c.history.records.length : 0, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), showCard: c.history.on && !c.history.hasStamp && !!hr, paperCard: c.history.on && !c.history.hasStamp && !hr, stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
+      history: { titleNb: hr ? nb(hr.title) : '', recordCount: c.history.on ? c.history.records.length : 0, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), showCard: c.history.on && !c.history.hasStamp && !!hr, paperCard: c.history.on && !c.history.hasStamp && !hr,
+        cardJson: c.history.on && !c.history.hasStamp && !hr ? cardJson(c.history.event, c.history.row && c.history.row.counts ? Object.assign({}, c.history.row.counts, { formed: !!c.history.row.formed }) : null) : '', stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
       sheet: { overlay: c.sheet.on && !trayForm, keepFirst: c.sheet.on && !!c.sheet.keepPrimary, inkPair: c.sheet.on && c.sheet.okTone === 'ink', plainActs: !(c.sheet.on && (c.sheet.keepPrimary || c.sheet.okTone === 'ink')), hasAffected: c.sheet.affected && c.sheet.affected.length > 0, newOrPlaceholder: c.sheet.fields ? (c.sheet.fields.newText || c.sheet.fields.placeholder) : '', isRecord: c.sheet.kind === 'record', recordOpen: c.sheet.kind === 'record' && !c.sheet.done, showOk: c.sheet.kind !== 'card' && c.sheet.kind !== 'contact' && !(c.sheet.kind === 'record' && c.sheet.done), okBlue: !c.sheet.danger, okDisabled: !c.sheet.canOk }
     };
   }

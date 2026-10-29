@@ -785,7 +785,8 @@ class Component extends DCLogic {
   /* ---------------- header: the title's natural two-line height (V27 th) drives meta / band / scroller positions ---------------- */
   _syncTh() {
     const root = this.rootRef.current; if (!root) return;
-    root.querySelectorAll('[data-surface]').forEach(sec => { const pr = sec.querySelector(':scope > .c09-hd > .c09-probe'); if (!pr) return; const h = pr.offsetHeight; if (h && Math.abs((sec._th || 0) - h) > 0.5) { sec._th = h; sec.style.setProperty('--th', h + 'px'); } });
+    const r = this.state.review || {}; const env = (r.pw || 390) + '|' + (r.zoom ? 1 : 0);
+    root.querySelectorAll('[data-surface]').forEach(sec => { const pr = sec.querySelector(':scope > .c09-hd > .c09-probe'); if (!pr) return; const key = pr.textContent + '|' + env; if (sec._thKey === key) return; const h = pr.offsetHeight; if (!h) return; sec._thKey = key; if (Math.abs((sec._th || 0) - h) > 0.5) { sec._th = h; sec.style.setProperty('--th', h + 'px'); } });   /* measured once per title / width / zoom */
   }
   _onScroll(ev) {
     const el = ev.currentTarget; this._c && this._c.nav.onScroll(ev);
@@ -794,7 +795,9 @@ class Component extends DCLogic {
   }
   /* the district header that is currently pinned under the collapsed title gets a frosted ground (only then: the headers have no container) */
   _stick(sc) {
-    const hs = sc.querySelectorAll('.c09-area>.c09-ah'); if (!hs.length) return; const top = sc.getBoundingClientRect().top;
+    const hs = sc.querySelectorAll('.c09-area>.c09-ah'); if (!hs.length) return;
+    if (sc.scrollTop <= 4) { hs.forEach(h => h.classList.remove('is-stuck')); return; }
+    const top = sc.getBoundingClientRect().top;
     hs.forEach(h => { const cs = parseFloat(getComputedStyle(h).top) || 0; const y = h.getBoundingClientRect().top - top; h.classList.toggle('is-stuck', sc.scrollTop > 4 && Math.abs(y - cs) < 1.5); });
   }
   _syncStuck() { const root = this.rootRef.current; const sc = root && root.querySelector('[data-scroller="home"]'); if (sc && this._c && this._c.nav.cur === 'home') this._stick(sc); }
