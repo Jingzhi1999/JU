@@ -19,17 +19,17 @@
 3. 盘的每次交接都先清空成一块空深色面（M2），而盘正是这一套的视觉主体。
 4. 作废类终态和少量内容时有无组织的空白（m4、m18）。
 
-**依据截图（均已 Read）**：`vis-home/00–08`（双角色 × 三环境 + 滚动）、`vis-deep-j/00–13`、`vis-deep-h/00–24`、`vis-rm/00–12`（系统减少动态）、`neighbor-C05/00–03`、`neighbor-C03/00–03`、`compare/nb-C05-C07-home.png`、`compare/nb-C03-C07-home.png`、`compare/nb-detail-review-C05-C03-C07.png`、`measure/log.json`、`coverage/sheet.png`、`widths/sheet.png`。
+**依据截图（均已 Read）**：`vis-home/00–08`（双角色 × 三环境 + 滚动）、`vis-deep-j/00–13`、`vis-deep-h/00–24`、`vis-rm/00–12`（系统减少动态）、`neighbor-C05/00–03`、`neighbor-C03/00–03`、`compare/nb-C05-C07-home.jpg`、`compare/nb-C03-C07-home.jpg`、`compare/nb-detail-review-C05-C03-C07.jpg`、`measure/log.json`、`coverage/sheet.jpg`、`widths/sheet.jpg`。
 
 | # | 问题（任务书 §07 / §11） | 结论 | 依据 |
 |---|---|---|---|
 | 1 | 整屏主体形态与重心；留白 | **首屏 ✓**：盘高 329 px（局主 315 px，约占 38%），装 24px 局名、座位点、倒计时和 CTA；列表 15/13px，分量轻；滚到底时最后一项仍在盘上方可见。<br>**深层页有好有坏**：票根页 ✓（票居中，深墨承托）；管理页 ✓（名单在色光上、动作在盘里，延续首页）。<br>**问题**：参加者详情 ✗（深色整页的键值表，见 M3）；作废 / 取消 / 退出终态偏空（条纹灰烬条加下半屏空，m4）；局主历史与草稿只有 1–2 条时，列表后是大片无组织空白（m18） | `vis-home/00、04、05`、`vis-deep-j/00–03、09、10`、`vis-deep-h/00、06、12、13` |
 | 2 | 中文是否好读；最小字号；灰字与胶囊 | **字阶清楚**：页头 30→18、盘内局名 24、列表局名 15、元数据与状态 13、分组标签 12；最小 12px。胶囊只用在受影响人数和复制钮。<br>**问题**：状态列与盘 meta 截断（m1）；两行局名断词（m2）；手机内有 10 处范围说明灰字（m3）；「要你回应」三条状态全用错误红（m7） | `vis-deep-j/13`、`vis-deep-h/02、15、24`、`measure/log.json` |
 | 3 | 表面与光是否一致 | **✓ 同一套逻辑**：不透明深墨盘、色光底、V27 CTA 高光；没有噪点、堆渐变、粗阴影。页头收拢时的一层背景模糊有功能作用，可以接受。<br>**问题**：唯一的堆渐变是作废终态的条纹灰烬条（m4） | `vis-home/00–03`、`vis-deep-j/09` |
-| 4 | 深层页是否由同一构图生成 | **部分是**：票根、管理、出席、改时间、取消、局卡都是盘上升或盘作动作区生成的。非燃烧类历史事实（退出候补 / 没留住 / 放弃预留 / 到期 / 撤回）有局卡加印章，组织得最好。<br>**问题**：参加者详情是「返回 + 标题 + 表格」。同页族里 C05、C03 都把局卡放进详情，C07 没有，也违背本套命题「局卡在详情盘的上部」 | `vis-deep-j/00–02`、`compare/nb-detail-review-C05-C03-C07.png`、`opx-joined/09–11、13、15` |
+| 4 | 深层页是否由同一构图生成 | **部分是**：票根、管理、出席、改时间、取消、局卡都是盘上升或盘作动作区生成的。非燃烧类历史事实（退出候补 / 没留住 / 放弃预留 / 到期 / 撤回）有局卡加印章，组织得最好。<br>**问题**：参加者详情是「返回 + 标题 + 表格」。同页族里 C05、C03 都把局卡放进详情，C07 没有，也违背本套命题「局卡在详情盘的上部」 | `vis-deep-j/00–02`、`compare/nb-detail-review-C05-C03-C07.jpg`、`opx-joined/09–11、13、15` |
 | 5 | 关掉动画后静态画面是否成立 | **✓**：系统减少动态下，首屏、票根、散场印记、出席、取消终态都完整 | `vis-rm/00–12`、`rm-op2/07`、`rm-op7b/08` |
-| 6 | 与最近邻相比，不看名字能否分辨 | **✓**：C05 是上半屏彩色面加局卡，其余在下方纸上；C03 是上下两窗，另一角色在下窗。<br>**提醒**：C03 局主态的上窗和 C07 的盘一样，都是深墨、白字、同一 CTA、同一「先处理这一件」内容，差别只在位置和另一窗 | `compare/nb-C05-C07-home.png`、`compare/nb-C03-C07-home.png` |
-| 7 | 固定物件是否原件；周围空间 | **✓ 原件**：票根 258 宽（出纸口 84 px、舞台 346×520，打印 / 撕 / 燃烧都走 JURitual）；CTA 280×48 用 V27 构造；页头 30→18 连续收拢并居中；散场印记用 V27 08 场景（舞台 390×520）；局主逐人出席用共享 stampFace。<br>**问题**：局卡 258×323 是自创档（M4）；阅读约定层没有用 V27 表单卡栈（m15）；打印舞台多了一个空的圆角占位框（m5） | `measure/log.json`、`op6-host-review/05-card.png`、`op2-read-confirm/01-read-top.png`、`op3-tear-contact/r-btn-tear-00.jpg` |
+| 6 | 与最近邻相比，不看名字能否分辨 | **✓**：C05 是上半屏彩色面加局卡，其余在下方纸上；C03 是上下两窗，另一角色在下窗。<br>**提醒**：C03 局主态的上窗和 C07 的盘一样，都是深墨、白字、同一 CTA、同一「先处理这一件」内容，差别只在位置和另一窗 | `compare/nb-C05-C07-home.jpg`、`compare/nb-C03-C07-home.jpg` |
+| 7 | 固定物件是否原件；周围空间 | **✓ 原件**：票根 258 宽（出纸口 84 px、舞台 346×520，打印 / 撕 / 燃烧都走 JURitual）；CTA 280×48 用 V27 构造；页头 30→18 连续收拢并居中；散场印记用 V27 08 场景（舞台 390×520）；局主逐人出席用共享 stampFace。<br>**问题**：局卡 258×323 是自创档（M4）；阅读约定层没有用 V27 表单卡栈（m15）；打印舞台多了一个空的圆角占位框（m5） | `measure/log.json`、`op6-host-review/05-card.jpg`、`op2-read-confirm/01-read-top.jpg`、`op3-tear-contact/r-btn-tear-00.jpg` |
 
 ---
 
@@ -64,7 +64,7 @@
   - 替换时有整屏空白帧（1× f25 +1216ms），返回键和标题都不在，只剩根导航，持续约 100–200 ms。
   - 之后票根面淡入并开始打印。
 - 复现：参加者首页 → 盘「阅读并确认」→ 滚到「已到约定末尾」→ 确认入局 → 什么都不点。
-- 证据：`op2-read-confirm/sheet-confirm.png`（第三行 f23→f25→f27）、`compare/op2-blank-frame-confirm-to-ticket.png`、`half-speed/sheet-h-confirm-to-ticket.png`（f62、f65）。
+- 证据：`op2-read-confirm/sheet-confirm.jpg`（第三行 f23→f25→f27）、`compare/op2-blank-frame-confirm-to-ticket.jpg`、`half-speed/sheet-h-confirm-to-ticket.jpg`（f62、f65）。
 - 修法：二选一。
   - 保留结果层，等用户点「查看票根」。
   - 或者自动替换，但票根面要在阅读层之上进入（先入后出），不能先出后入。
@@ -80,7 +80,7 @@
   - 取消这局：半屏空深色块上升约 330 ms 后才出现局卡。
 - 被点的列表行和升起的盘之间没有对应关系。
 - 复现：任意一次角色切换；在首页点任意一行；局主审核点「发出邀请」；出席点「出席」；「取消这局」→ 确认。
-- 证据：`compare/op1-role-switch-empty-tray.png`、`op1-scroll-role/sheet-m1-to-hosted.png`（f1–f6）、`op2-read-confirm/sheet-rise-read.png`（f1–f5）、`half-speed/sheet-h-row-to-ticket.png`（f1–f8）、`q5-misc/sheet-back-restore.png`（f7）、`op6-host-review/sheet-approve.png`（+383ms）、`op7b-end-attendance/sheet-att-1-present.png`（+1013ms）、`op7a-reschedule/sheet-resched-confirm.png`（+494ms）、`op8-cancel/sheet-cancel-retry-burn.png`（+473→+804ms）。
+- 证据：`compare/op1-role-switch-empty-tray.jpg`、`op1-scroll-role/sheet-m1-to-hosted.jpg`（f1–f6）、`op2-read-confirm/sheet-rise-read.jpg`（f1–f5）、`half-speed/sheet-h-row-to-ticket.jpg`（f1–f8）、`q5-misc/sheet-back-restore.jpg`（f7）、`op6-host-review/sheet-approve.jpg`（+383ms）、`op7b-end-attendance/sheet-att-1-present.jpg`（+1013ms）、`op7a-reschedule/sheet-resched-confirm.jpg`（+494ms）、`op8-cancel/sheet-cancel-retry-burn.jpg`（+473→+804ms）。
 - 来源：`.c07-lead.sw-a/.sw-b` 和 `.c07-actin.sw-*` 的进入动画带 110 ms 延迟和 `backwards`，而旧内容已经先撤掉；盘上升时 lead 立即被设为 inert 并隐藏。
 - 修法：
   - 交接改为重叠：旧内容淡出和新内容进入至少重叠 60–80 ms，或者新内容随盘高一起滑入。
@@ -94,7 +94,7 @@
   - 「参加约定 确认 3 条 / 信用 3 条 / 赴约 3 条」表。
 - 这些详情页里没有局卡，也没有盘里已经有的座位点。本套命题写的是「局卡在详情盘的上部」；同页族对照里，C05、C03 同一状态的详情都放了局卡。
 - 复现：在首页点「法拉盛早茶」（待成局）或「周末速写」（待审核）。
-- 证据：`vis-deep-j/00-j-d-invited.png`、`01-j-d-pending.png`、`02-j-d-waitlist.png`、`opx-joined/03-dimsum-gathering.png`、`compare/nb-detail-review-C05-C03-C07.png`。
+- 证据：`vis-deep-j/00-j-d-invited.jpg`、`01-j-d-pending.png`、`02-j-d-waitlist.png`、`opx-joined/03-dimsum-gathering.jpg`、`compare/nb-detail-review-C05-C03-C07.jpg`。
 - 修法：
   - 在详情盘上部放原局卡（V27 档 212×265 或 196×245）。
   - 成员改用盘内的座位点加一行计数。
@@ -105,7 +105,7 @@
 - 现象：
   - 下列四处的局卡都是 258 宽：局卡层、改期后的局卡、取消时燃烧的局卡、历史局卡。源码注释写的是「258 wide like the ticket paper」。
   - 这不是 V27 的任何一档。V27 只有 196×245 / 212×265 / 296×370 / 328×460，directions §0.3 和 contract §1 都要求不自创档。
-- 证据：`measure/log.json`（`h-m-card` 条：`.c07-ocard:66,353 258x323`）、`op6-host-review/05-card.png`、`op7a-reschedule/08-card-new-time.png`、`op8-cancel/sheet-cancel-retry-burn.png`、`opx-joined/09-boardgame-queueleft.png`。
+- 证据：`measure/log.json`（`h-m-card` 条：`.c07-ocard:66,353 258x323`）、`op6-host-review/05-card.jpg`、`op7a-reschedule/08-card-new-time.jpg`、`op8-cancel/sheet-cancel-retry-burn.jpg`、`opx-joined/09-boardgame-queueleft.jpg`。
 - 修法：
   - 盘内局卡层和取消燃烧用 296×370（大档）。
   - 历史和详情用 212×265（中档）。
@@ -131,7 +131,7 @@
   - 周六早午餐成局出票结束后，直接拖关键帧。
   - 外百老汇点「去不了了」→ 确认，燃烧中按「暂停」→ 拖关键帧 →「释放」→ 再拖一次。
   - 0.5× 下点「手冲咖啡」行，随即按「暂停」→ 拖关键帧。
-- 证据：`q6-pause/00–03`（出票）、`05–08`（燃烧）、`09–16`（盘上升）、`op12-pause-scrub/00–17`、`op12-pause-scrub/18–32`、`compare/op12-burn-endstate-before-after-replay.png`。
+- 证据：`q6-pause/00–03`（出票）、`05–08`（燃烧）、`09–16`（盘上升）、`op12-pause-scrub/00–17`、`op12-pause-scrub/18–32`、`compare/op12-burn-endstate-before-after-replay.jpg`。
 - 修法：
   - `review.paused` 变化时，对 print / burn 的 handle 调 pause / resume。
   - 盘的上升、下降、交接改用受 `--frame` 控制的 animation，并写 `.scrub` 规则。
@@ -144,7 +144,7 @@
   - 「历史较多」变体里，K 歌（主动退出）和秋末野餐（拒绝改期）也是同一个字。
   - 详情页能区分两者（「未接受新时间 · 拒绝改期」/「已退出这局 · 主动退出」），列表不能。contract §4F 要求八种「没去成」是八个事实。
 - 根因：共享数据里 `declined` 和 `exited` 的 label 都是「已退出」，而 C07 的历史行只显示 label。
-- 证据：`op4-reschedule-reply/09-joined-history.png`、`op5-waitlist-withdraw-exit/13-joined-history.png`、`opx-joined/log.json`（历史较多各行状态）、`op4-reschedule-reply/07-history.png`。
+- 证据：`op4-reschedule-reply/09-joined-history.jpg`、`op5-waitlist-withdraw-exit/13-joined-history.jpg`、`opx-joined/log.json`（历史较多各行状态）、`op4-reschedule-reply/07-history.jpg`。
 - 修法：
   - C07 的未成行行改用 need 的前半（「拒绝改期」/「主动退出」）或 detailTitle。
   - 或者由主负责人在共享层把两者的 label 分开。
@@ -153,52 +153,52 @@
 
 **截断与排版**
 - **m1 截断**：几处文字被截掉，需要把时效信息放到优先占宽的位置或换到第二行，盘 meta 拆成两行。
-  - 状态列 max-width 168 px，把时效截成「候补轮到 · 已预留 · 05:3…」（`vis-deep-j/13-j-many.png`）。
-  - 盘 meta：「已确认 2/3（含…」（`vis-deep-h/02`）、「通过即发出 6 小…」（`vis-deep-h/15`）、360 宽下「预留 1 …」（`op11a-variants-sizes/15-w360-hosted.png`）。
-  - 草稿行两端都省略（`op9-drafts/02-drafts-tab.png`）。
-- **m2 断词**：长局名换行时断在「第一次开 / 门请多包涵」（`vis-deep-h/24-b-long-h.png`）。修法：优先在「·」处断开，或用 `word-break: keep-all`。
+  - 状态列 max-width 168 px，把时效截成「候补轮到 · 已预留 · 05:3…」（`vis-deep-j/13-j-many.jpg`）。
+  - 盘 meta：「已确认 2/3（含…」（`vis-deep-h/02`）、「通过即发出 6 小…」（`vis-deep-h/15`）、360 宽下「预留 1 …」（`op11a-variants-sizes/15-w360-hosted.jpg`）。
+  - 草稿行两端都省略（`op9-drafts/02-drafts-tab.jpg`）。
+- **m2 断词**：长局名换行时断在「第一次开 / 门请多包涵」（`vis-deep-h/24-b-long-h.jpg`）。修法：优先在「·」处断开，或用 `word-break: keep-all`。
 - **m3 手机内有 10 处范围说明**：如「本轮不可点」「账户级记录页不在本次范围」「本轮未开放」（`vis-deep-j/01、11`、`vis-deep-h/12、14、18`、`op9-drafts/09`）。contract §4E 要求范围说明放在手机外。
 
 **作废终态与占位**
-- **m4 自造的灰烬条**：作废、取消、退出的终态都是一条 258×40 的条纹渐变块，看起来像条码或木条；下半屏是大片空白；「联系方式已关闭」红字左对齐悬在条上方（`vis-deep-j/09、10`、`op4-reschedule-reply/06-burned.png`、`op5-waitlist-withdraw-exit/sheet-exit-burn.png` 末帧）。原件的终态是纸没了，只留页头文案和 CTA。修法：去掉条纹块，把结果块和关闭文案对齐成一组。
+- **m4 自造的灰烬条**：作废、取消、退出的终态都是一条 258×40 的条纹渐变块，看起来像条码或木条；下半屏是大片空白；「联系方式已关闭」红字左对齐悬在条上方（`vis-deep-j/09、10`、`op4-reschedule-reply/06-burned.jpg`、`op5-waitlist-withdraw-exit/sheet-exit-burn.jpg` 末帧）。原件的终态是纸没了，只留页头文案和 CTA。修法：去掉条纹块，把结果块和关闭文案对齐成一组。
 - **m5 打印占位框**：出票前和出票中，落点先显示一个空的圆角框（`.c07-stage::after`，原件没有），像一个空卡槽（`op3-tear-contact/r-btn-tear-00.jpg`、`01`）。
 
 **滚动与状态色**
 - **m6 页头停在半收拢**：
-  - 局主列表最多只能滚 38 px，页头停在 hc 0.40：标题 25 px，副标题 37% 透明、贴着标签行（`measure/log.json` 第 3 条、`vis-home/08-h-home-scroll-end.png`）。
+  - 局主列表最多只能滚 38 px，页头停在 hc 0.40：标题 25 px，副标题 37% 透明、贴着标签行（`measure/log.json` 第 3 条、`vis-home/08-h-home-scroll-end.jpg`）。
   - 修法：短列表不收拢，或者滚到尾部时吸附到 0 或 1，副标题更早淡出。
 - **m7 状态色**：「要你回应」三条状态都用错误红（首屏 3 处红字），和复制失败、保存失败是同一种颜色（`vis-home/00`）。
 
 **返回、失败与文案**
-- **m8 返回没有即时反馈**：从票根返回首页，点击后约 230 ms 画面不变（`op2-read-confirm/sheet-back-home.png` f1–f8）。疑似是原件销毁占住了主线程，需要真机确认。修法：先播返回过渡，过渡结束后再销毁 print / tear / contact。
-- **m9 撕票失败时票根下移**：错误行插入后，票根整体下移约 13 px（`op3b-tear-redo/sheet-drag-fail.png` +1.2→1.6 s）。修法：预留错误行的高度，或让错误行叠放。
+- **m8 返回没有即时反馈**：从票根返回首页，点击后约 230 ms 画面不变（`op2-read-confirm/sheet-back-home.jpg` f1–f8）。疑似是原件销毁占住了主线程，需要真机确认。修法：先播返回过渡，过渡结束后再销毁 print / tear / contact。
+- **m9 撕票失败时票根下移**：错误行插入后，票根整体下移约 13 px（`op3b-tear-redo/sheet-drag-fail.jpg` +1.2→1.6 s）。修法：预留错误行的高度，或让错误行叠放。
 - **m10 文案拼接**：
-  - 候补回执行首悬挂「 · 退出候补 · 不记缺席」（`op5-waitlist-withdraw-exit/03-left.png`）。
+  - 候补回执行首悬挂「 · 退出候补 · 不记缺席」（`op5-waitlist-withdraw-exit/03-left.jpg`）。
   - 已撤回页的结果块重复了页头内容（`07-withdrawn.png`）。
-  - 草稿删空后盘标题是「0 份草稿」（`op9-drafts/09-all-deleted-committed.png`）。
+  - 草稿删空后盘标题是「0 份草稿」（`op9-drafts/09-all-deleted-committed.jpg`）。
 
 **入口、过渡与提示位置**
 - **m11 盘里那一件没有进详情的入口**：点盘里的局名没有反应（`opx-joined/log.json` 第一条 `nav=home`）。这一件的成员、约定、倒计时详情，只有在它不是 lead 时才能从列表进入。
-- **m12 改时间后时间直接换字**：提交后，头部和局卡上的时间从旧到新没有过渡；M7 只在答复区用划线表达（`op7a-reschedule/sheet-resched-confirm.png`）。
-- **m13 时钟补位提示占用了 lead 的标签行**：「「古着淘货 · 下东区三家店」候补前进到第 1 位」出现在「周六早午餐」的盘上（`op10-clock/01-joined-due1.png`），容易被读成这一件自己的状态。
-- **m14 候补门口页底 CTA 盖住名单最后一行**：被盖住的是「№2 你」（`vis-deep-j/02-j-d-waitlist.png`）。修法：滚动容器底部留出 sfoot 的高度。
-- **m15 阅读约定层没有用 V27 表单卡栈**：三类约定是纯文字段落（`op2-read-confirm/01-read-top.png`、`03-read-end.png`）。contract §1 写明卡栈用于「阅读约定」层。可读性本身没有问题。
+- **m12 改时间后时间直接换字**：提交后，头部和局卡上的时间从旧到新没有过渡；M7 只在答复区用划线表达（`op7a-reschedule/sheet-resched-confirm.jpg`）。
+- **m13 时钟补位提示占用了 lead 的标签行**：「「古着淘货 · 下东区三家店」候补前进到第 1 位」出现在「周六早午餐」的盘上（`op10-clock/01-joined-due1.jpg`），容易被读成这一件自己的状态。
+- **m14 候补门口页底 CTA 盖住名单最后一行**：被盖住的是「№2 你」（`vis-deep-j/02-j-d-waitlist.jpg`）。修法：滚动容器底部留出 sfoot 的高度。
+- **m15 阅读约定层没有用 V27 表单卡栈**：三类约定是纯文字段落（`op2-read-confirm/01-read-top.jpg`、`03-read-end.png`）。contract §1 写明卡栈用于「阅读约定」层。可读性本身没有问题。
 
 **焦点、加载占位与共享层**
-- **m16 历史印记加载期间有空矩形**：每次打开散场历史，08 场景画出来之前，有约 0.8 s 只是一个空的占位矩形；已经不重放盖章，这一点是对的（`q5-misc/sheet-jazz-open-2.png` +466→+1271ms）。需要真机看实际长度。
+- **m16 历史印记加载期间有空矩形**：每次打开散场历史，08 场景画出来之前，有约 0.8 s 只是一个空的占位矩形；已经不重放盖章，这一点是对的（`q5-misc/sheet-jazz-open-2.jpg` +466→+1271ms）。需要真机看实际长度。
 - **m17 盘升起后焦点留在被盖住的列表行；首页不 inert**：
   - 点列表行进入票根后，`activeElement` 仍是首页那一行；键盘用户要按 8 次 Tab 穿过被盘盖住的行才到撕票抓手（`op3b-tear-redo/log.json`：drag-hold-cancel 后 focus=`div[rid=run3k]`，kb-tear 前 `tabs: 8`）。
   - 首页只在表单态才设为 inert。
   - 修法：盘升起后把焦点移到返回键或该面的主动作；栈顶不是 home 时给首页加 `inert`；返回后焦点回到原行，与落点一致。
 - **m18 少量内容时的空白**：局主历史只有 2 条、草稿只有 1 条时，列表后面大半屏是无组织的空白；同时盘只放了一行摘要，接近本套命题自己写的失败信号「盘吃掉一半屏幕却只放一行字」（`vis-deep-h/12`、`13`、`vis-deep-j/11`）。
-- **m19 已取消的局仍在显示预留倒计时（共享层）**：取消后名单里 Leon 显示「取消前已预留 · 剩 05:01:43」（`op8-cancel/04-cancel-settled.png`）。来源是 `ju-ctl.js` 的 `roster.left.on = !!r.leftText`，属于共享层问题，应该由主负责人处理。另外，这里取消直接燃烧，没有看到契约写的「抽色」这一步（`op8-cancel/sheet-cancel-retry-burn.png`）。
+- **m19 已取消的局仍在显示预留倒计时（共享层）**：取消后名单里 Leon 显示「取消前已预留 · 剩 05:01:43」（`op8-cancel/04-cancel-settled.jpg`）。来源是 `ju-ctl.js` 的 `roster.left.on = !!r.leftText`，属于共享层问题，应该由主负责人处理。另外，这里取消直接燃烧，没有看到契约写的「抽色」这一步（`op8-cancel/sheet-cancel-retry-burn.jpg`）。
 
-- **m20 分区切换后滚动位置被钳**：参加者「当前」滚到 180 px，切到「历史」再切回「当前」，只恢复到 83 px（约等于历史分区的最大滚动值），页头停在 19.6px（hc .865）的半收拢状态。角色切换的记忆是对的（83→83）。推测是恢复滚动时旧分区内容还在 DOM 里，scrollTop 被钳住了。证据：`op1-scroll-role/log.json`（mid-180 → current-back 两次 eval）、`op1-scroll-role/04-mid-180.png` 对照 `06-current-back.png`。修法：等新分区渲染完（下一帧）再恢复 scrollTop，或者两个分区分别用各自的滚动容器。
+- **m20 分区切换后滚动位置被钳**：参加者「当前」滚到 180 px，切到「历史」再切回「当前」，只恢复到 83 px（约等于历史分区的最大滚动值），页头停在 19.6px（hc .865）的半收拢状态。角色切换的记忆是对的（83→83）。推测是恢复滚动时旧分区内容还在 DOM 里，scrollTop 被钳住了。证据：`op1-scroll-role/log.json`（mid-180 → current-back 两次 eval）、`op1-scroll-role/04-mid-180.jpg` 对照 `06-current-back.png`。修法：等新分区渲染完（下一帧）再恢复 scrollTop，或者两个分区分别用各自的滚动容器。
 
 ### 亲自确认没有问题的部分
 这些项供构建者对照。它们没问题不代表视觉已经通过。
 - **页头**：30→18 连续收拢，回滚后恢复；管理页同样收拢到 18px 居中（`q5-misc/06`）。
-- **返回**：滚动位置恢复到 247 px，落回原行并高亮（`q5-misc/sheet-back-restore.png`）。
+- **返回**：滚动位置恢复到 247 px，落回原行并高亮（`q5-misc/sheet-back-restore.jpg`）。
 - **角色记忆**：切换角色后，分区和滚动位置都保留。分区切换的滚动位置有问题，见 m20。
 - **阅读层**：未读完时确认无效，读完后可以确认。
 - **打印与撕票**：打印中只有「去不了了」，撕票按钮在打印结束后才入场；撕不到 50% 回弹且不写数据，过 50% 撕开；写入失败后可以原位重撕；键盘 Enter 和按钮与手势等价。
@@ -213,7 +213,7 @@
 - **键盘态**：输入框和主动作都在键盘之上。
 - **减少动态**：2、3、6、7 四条流程终态完整。
 
-> **环境限制**：撕开后的自动完成与坠落，在无 GPU 的无头 Chromium 里约 2 s，原件约 0.35 s 加 1.08 s。用同一个驱动、同一个手势测 C00 参考实现，也是约 2 s（`cal-C00/sheet-cal-drag-long.png` 对照 `cal-C07/sheet-cal-drag-long.png`），所以不算 C07 的问题，但撕票节奏需要真机验收。
+> **环境限制**：撕开后的自动完成与坠落，在无 GPU 的无头 Chromium 里约 2 s，原件约 0.35 s 加 1.08 s。用同一个驱动、同一个手势测 C00 参考实现，也是约 2 s（`cal-C00/sheet-cal-drag-long.jpg` 对照 `cal-C07/sheet-cal-drag-long.jpg`），所以不算 C07 的问题，但撕票节奏需要真机验收。
 
 ---
 
@@ -282,8 +282,8 @@
 
 | 工具 | 命令输出（原样） | 运行时段与 1 分钟负载 |
 |---|---|---|
-| coverage | `{"states":50,"errors":0,"mismatches":0,"sheet":"/home/user/JU/my-r2/evidence/C07/verify/coverage/sheet.png"}`（log.json：keys 50，errors []，mismatches []）→ `coverage/sheet.png`、50 张 | 10:43:04–10:46:11 · 3.16→9.15 |
-| widths | `{"code":"C07","shots":48,"sheet":"/home/user/JU/my-r2/evidence/C07/verify/widths/sheet.png","overflow":[],"findings":[],"fontInvariance":[],"minFont":12,"api":{"zoom":"ok","safe":"ok"},"errors":0}` | 10:47:01–10:52:01 · 7.47→7.28 |
+| coverage | `{"states":50,"errors":0,"mismatches":0,"sheet":"/home/user/JU/my-r2/evidence/C07/verify/coverage/sheet.jpg"}`（log.json：keys 50，errors []，mismatches []）→ `coverage/sheet.jpg`、50 张 | 10:43:04–10:46:11 · 3.16→9.15 |
+| widths | `{"code":"C07","shots":48,"sheet":"/home/user/JU/my-r2/evidence/C07/verify/widths/sheet.jpg","overflow":[],"findings":[],"fontInvariance":[],"minFont":12,"api":{"zoom":"ok","safe":"ok"},"errors":0}` | 10:47:01–10:52:01 · 7.47→7.28 |
 | kb-check | `{"code":"C07","shots":2,"findings":[],"errors":0}`；明细：h-m-reschedule 的 date / time 底边 368 px，确认键底边 484 px，键盘顶 544 px；j-d-ended 记录的 text 底边 389 px，提交底边 482 px | 10:52:01–10:53:25 · 7.28→5.05 |
 | rm-check | `{"code":"C07","rmSys":true,"flowsOk":"11/11","findings":[],"errors":0}`；11 条流程：enter-back✓, read-confirm✓, tear-contact-copy✓, reschedule-accept✓, reschedule-decline✓, waitlist-leave✓, review-approve-reject✓, reschedule-propose✓, cancel-burn✓, end-attend✓, draft-delete-undo✓ | 10:53:25–10:54:06 · 5.05→2.83 |
 
@@ -306,7 +306,7 @@
   - 候补数 2→1；
   - 离开记录 1→2；
   - 盘标签变成绿字「Leon 的预留已到期 · 候补 西西 已补位 · 6 小时预留」。
-- 名单行是一帧直接换人，没有过渡；盘在 +0 帧是空的（同 M2）。证据：`hclock3/01-cards-leon-expired.png`、`02-cards-expired-scrolled.png`、`sheet-h-expire-leon.png`。
+- 名单行是一帧直接换人，没有过渡；盘在 +0 帧是空的（同 M2）。证据：`hclock3/01-cards-leon-expired.jpg`、`02-cards-expired-scrolled.png`、`sheet-h-expire-leon.png`。
 
 **参加者侧**（`op10-clock`）：
 - 到期后，古着淘货候补从 2 位进到 1 位。
