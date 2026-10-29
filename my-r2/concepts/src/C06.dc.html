@@ -952,7 +952,7 @@ class Component extends DCLogic {
       const opening = c.ticket.state === 'printing' && this.state.nav.phase !== 'idle' && this.kf() > 0;
       if ((this._rit.stage !== stage || this._rit.key !== c.ticket.printKey) && !opening) this._mountTicket(stage, c);
       if (c.ticket.state === 'torn' && c.ticket.contact.available && !c.ticket.contact.on && !c.ticket.contact.closed && !c.ticket.result && !c.ticket.leaving && this._rit.autoKey !== c.ticket.printKey && this.state.nav.phase === 'idle') { this._rit.autoKey = c.ticket.printKey; c.ticket.contact.open(); }
-      const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
+      const want = !!c.ticket.contact.on; if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) { h.reveal(); this._showContact(); } else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
     const hstage = root.querySelector('[data-surface="history"] .c06-stage');
@@ -963,6 +963,12 @@ class Component extends DCLogic {
     else if (this._rit.thost) this._destroyStamp();
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+  }
+  /* the contact layer appears above the sticky action, never under it: if its last line would sit behind the slot, the list carries it up */
+  _showContact() {
+    requestAnimationFrame(() => { const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc) return; const sec = root.querySelector('[data-surface="ticket"],[data-surface="reply"]'); const wrap = sec && sec.querySelector('.ju-contact-wrap'); if (!wrap) return;
+      const slot = sec.querySelector('.c06-slot'); const limit = sc.getBoundingClientRect().bottom - (slot ? slot.offsetHeight : 0) - 6; const over = wrap.getBoundingClientRect().bottom - limit;
+      if (over > 1) this._tween(sc, sc.scrollTop + over, 360 * this.kf(), this._ezO); });
   }
   _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
   _mountTicket(stage, c) {
