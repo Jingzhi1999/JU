@@ -15,7 +15,7 @@ body{margin:0}
 /* @shared-css */
 /* ============================================================================
    C07 「下盘」 · 底部固定的深墨动作盘承载「先处理这一件」与 CTA，列表在上方环境色光里流过；
-   盘上升为详情 / 票根 / 阅读层（height 318 → 100%，320ms，列表淡出 160ms）；管理页 = 盘为动作区，上方列表区为名单 / 申请。
+   盘上升为详情 / 票根 / 阅读层（整张墨板 340ms 升满，列表留在墨纱下后退）；管理页 = 盘为动作区，上方列表区为名单 / 申请。
    文字角色（5 个）：盘内局名 24/600 · 列表局名 15/500 · 时间与地点 13 · 状态 13（有色）· 标签 12（字距 .04em）。
    颜色：盘 #14161F 不透明；盘内唯一彩色 = 倒计时（绿 / 琥珀 / 红）；CTA 为 V27 原构造（cta.css）；列表区只有环境色光 + 墨字。
    ============================================================================ */
@@ -24,10 +24,8 @@ body{margin:0}
   --st-act:#B4223D;--st-go:#035A43;--st-amber:#8A4B00;--link:#3B47A8;--st-due:#5B2FB4;
   --tw:#F4F5FA;--tw2:rgba(244,245,250,.74);--tw3:rgba(244,245,250,.58);--tline:rgba(255,255,255,.11);
   --red:#DA3A52;--green:#0E9B76;--blue:#4553BE;--tred:#FF7A8E;--tamber:#F2B14A;--tgreen:#4AD3A4}
-/* the parked tray height is ONE variable on .app: the tray's resting transform and the list's bottom clearance both read it, so the
-   last row always clears the tray (+ safe area). It FOLLOWS ITS CONTENT: the script measures the parked block (lead / action) and
-   writes --thc (block + 56px nav) — a two-line title, 文字 115% or a short history block change the parked height, never clip, and
-   the change itself rides the tray's transform transition */
+/* the parked height is ONE variable (--thc = measured block + 56px nav) read by the tray and the list's bottom clearance; it follows
+   its content, never clips; the change is animated in _syncTrayMotion / _animTray */
 /* list text on the colour light, per environment (measured, baseline-v27 §3.4): V27's #535b70 / status hues fall to 2–4:1 on Halo's
    orange and Sunset's peach, so the roles keep their hue but deepen; every 12–14px role on the light stays ≥ 4.5:1 */
 .app[data-skin="halo"]{--mute:#2a2e3b;--mute2:#2f3443;--st-act:#7A0A20;--st-go:#023A2C;--st-amber:#5A3000;--link:#202870;--st-due:#3F1A86}
@@ -145,11 +143,8 @@ body{margin:0}
 .c07-dis,.c07-link.c07-dis{color:var(--mute2);text-decoration:none;cursor:default}
 .c07-tray .c07-dis,.c07-tray .c07-link.c07-dis{color:var(--tw3)}   /* an entry outside this module: the words stay where they are, not a link (the scope note is outside the phone) */
 
-/* ======================= the tray: ONE rigid deep-ink sheet, full height, parked so that only its top --th shows =======================
-   M4 is a spatial move of that sheet (transform, no reflow): up 340ms cubic-bezier(.22,.9,.24,1) (fast start, no overshoot — a tap gets
-   100% damping), down 320ms cubic-bezier(.32,.72,.2,1). Its content is laid out once at the sheet's own coordinates, so whatever rides on
-   it (the lead block, the incoming page) moves with the sheet instead of being stretched. The root nav is NOT part of the sheet: it stays
-   at the bottom (same ink) while the sheet slides behind it. */
+/* ======== the tray: ONE rigid deep-ink sheet, full height, parked so that only its top --th shows ========
+   M4 moves it by transform (up 340ms .22,.9,.24,1 · down 320ms .32,.72,.2,1); its content rides it; the root nav is not part of it */
 .c07-tray{position:absolute;left:0;right:0;top:0;height:100%;z-index:10;background:#14161F;color:var(--tw);border-radius:28px 28px 0 0;overflow:hidden;
   transform:translate3d(0,calc(100% - var(--th)),0);
   box-shadow:0 -18px 40px -26px rgba(20,22,31,.34),inset 0 1px 0 rgba(255,255,255,.09)}   /* no transition: every move of the sheet is an animation (rise / descent keyframes below, a height change in _syncTrayMotion) */
@@ -235,9 +230,7 @@ body{margin:0}
 .c07-surf.is-under.ph-exit{transform:none;opacity:1}
 .c07-surf.is-under.ph-idle{display:none}
 .c07-surf.is-leaving{pointer-events:none!important}
-/* ======================= motion as keyframes =======================
-   暂停 freezes these (.app.paused, panel CSS) and 关键帧 drags them (.scrub rules at the end of this block, --frame 0…1); the static rules
-   above hold every end state, so a frozen, dragged or released animation always lands where the state says. */
+/* ======== motion as keyframes: 暂停 freezes them (.app.paused), 关键帧 drags them (.scrub, below); static rules hold the end states ======== */
 /* M4 rise (340ms): the sheet, the list behind it (stays, recedes 14px / .985), the scrim, the block leaving, the page arriving */
 .app.c07-rising .c07-tray{animation:c07-rise calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
 @keyframes c07-rise{from{transform:translate3d(0,calc(100% - var(--th)),0);border-radius:28px 28px 0 0}}
@@ -287,9 +280,7 @@ body{margin:0}
 .app.c07-mswap .c07-mpage:not(.is-on){animation:c07-mout-o calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),c07-mout-t calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
 @keyframes c07-mout-o{from{opacity:1}}
 @keyframes c07-mout-t{from{transform:none}}
-/* 关键帧: the slider is mapped onto each family's own length — rise 340ms, descent 320ms, manage swap 260ms, pages in the sheet 320ms,
-   the swap 220ms, the tray's hand-overs 300ms; an element with its own delay keeps it. Only running animations are affected (the
-   mixin zeroes the ones in flight; a finished animation stays finished). */
+/* 关键帧 per family: rise 340 / descent 320 / manage 260 / pages 320 / swap 220 / hand-overs 300ms (own delays kept) */
 .app.scrub.c07-rising :is(.c07-tray,.c07-page,.c07-scrim),.app.scrub.c07-rising :is(.c07-lead,.c07-act).is-off{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 340ms * var(--k,1))!important}
 .app.scrub.c07-rising .c07-surfs{animation-play-state:paused!important;animation-delay:calc((50ms - var(--frame,0) * 340ms) * var(--k,1))!important}
 .app.scrub.c07-falling :is(.c07-tray,.c07-page,.c07-scrim,.c07-surfs){animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 320ms * var(--k,1))!important}
@@ -396,9 +387,7 @@ body{margin:0}
 .c07-endgrp b+p,.c07-endgrp p+p{margin-top:6px}
 .c07-endgrp .c07-hint{margin:10px 0 0;color:var(--tw3)}
 .c07-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
-/* while the stamp scene starts (mounted after the sheet has risen, then it needs its first frame) its card is already in place: the
-   same JuFilm card face, at the scene's own card size (cardWidth = min(66% stage, 52% height, 250)), centred where the scene puts it;
-   it fades once the scene has rendered — no empty rectangle (review m16) */
+/* m16: until the stamp scene renders, its card is already in place (same JuFilm face, the scene's size min(66%, 250), centred) */
 .c07-t08w{position:relative}
 .c07-t08ph{position:absolute;left:50%;top:260px;width:min(calc((100% + 44px) * .66),250px);transform:translate(-50%,-50%);pointer-events:none;transition:opacity calc(240ms * var(--k)) ease}
 .c07-t08ph .c07-ocard{width:100%}
@@ -425,6 +414,8 @@ body{margin:0}
 .c07-mrow{display:block;width:100%;text-align:left;padding:12px 0;border-top:1px solid var(--line);background:none;border-left:0;border-right:0;border-bottom:0;font:inherit;color:inherit;position:relative;cursor:default}
 .c07-mrow.pick{cursor:pointer}
 .c07-mrow.is-focus::before{content:"";position:absolute;left:-14px;top:14px;bottom:14px;width:3px;border-radius:2px;background:var(--ink)}
+.c07-mrow.is-fresh{animation:c07-fresh calc(900ms * var(--k)) ease}   /* a queued member who has just taken the seat arrives */
+@keyframes c07-fresh{0%{opacity:.3;transform:translateY(6px);background:rgba(255,255,255,.5)}40%{opacity:1;transform:none}100%{background:rgba(255,255,255,0)}}
 .c07-mrow .n{display:flex;justify-content:space-between;gap:10px;align-items:baseline;font-size:calc(15px * var(--tz,1));font-weight:500;line-height:1.4}
 .c07-mrow .n .r{flex:0 0 auto;font-weight:400;font-size:calc(13px * var(--tz,1));color:var(--mute2);white-space:nowrap}
 .c07-mrow .n .r.ok{color:var(--st-go)}.c07-mrow .n .r.res{color:var(--st-amber)}.c07-mrow .n .r.wait,.c07-mrow .n .r.void{color:var(--mute2)}
@@ -552,10 +543,8 @@ body{margin:0}
 .c07-sheet .help{font-size:calc(13px * var(--tz,1));color:var(--tw3);margin:6px 0 0}
 .c07-sheet .err{color:#FF9DAE;font-size:calc(13px * var(--tz,1));margin:6px 0 0}
 .c07-sheet :focus-visible{outline-color:#8FA2FF}
-/* confirm layers by role (V27, shared keepPrimary / okTone): leaving a seat (release / exit / decline) — the KEEP key is the only blue
-   (V27 q5StayStyle = blueCta), the leave key is the danger construction below it; withdraw / leave queue — 再想想 glass + the ink capsule
-   side by side, no blue at all. On C07's ink sheets the ink capsule keeps V27 inkCta's geometry (48 high, pill, .04em, 13.5/600) with
-   its fill inverted to paper — an #14161F capsule on the #14161F tray would vanish. */
+/* confirm layers by role (V27 keepPrimary / okTone): leaving a seat — KEEP is the only blue, leave is the danger construction; withdraw /
+   leave queue — 再想想 glass + the ink capsule (V27 inkCta geometry, fill inverted to paper on the ink tray), no blue */
 .c07-cbtns{display:flex;flex-direction:column;gap:10px;align-items:center;padding:16px 0 12px}
 .c07-cbtns.pair{flex-direction:row;align-items:stretch}
 .c07-cbtns.pair>button{flex:1;min-width:0;height:48px;border-radius:999px;font-family:inherit;font-size:13.5px;letter-spacing:.04em;cursor:pointer;white-space:nowrap}
@@ -691,7 +680,7 @@ body{margin:0}
                 </div></sc-if>
                 <sc-if value="{{c.manage.roster.on}}"><div class="c07-msec {{c.manage.roster.cls}}" data-section="members" style="--o:{{c.manage.roster.order}}">
                   <div class="c07-grp"><span>{{c.manage.roster.title}}</span><i>{{c.manage.roster.line}}</i></div>
-                  <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c07-mrow" data-rid="{{m.id}}">
+                  <sc-for list="{{c.manage.roster.rows}}" as="m" hint-placeholder-count="3"><div class="c07-mrow {{m.freshCls}}" data-rid="{{m.id}}">
                     <div class="n"><span>{{m.name}}</span><span class="r {{m.tone}}">{{m.stateText}}<sc-if value="{{m.left.on}}"> · {{m.left.text}}</sc-if><sc-if value="{{m.ticketText}}"> · {{m.ticketText}}</sc-if></span></div>
                     <sc-if value="{{m.wxText}}"><div class="wx"><span>{{m.wxText}}</span><button type="button" data-act="copy" onClick="{{m.copyWx}}">{{m.copyLabel}}</button><sc-if value="{{m.contactText}}"><span>{{m.contactText}}</span></sc-if></div></sc-if>
                     <sc-if value="{{m.copyFail}}"><div class="q" style="color:var(--st-act)">未能复制，长按手动复制 <button type="button" class="c07-cardlink" data-act="retry" onClick="{{m.retryCopy}}">重试</button></div></sc-if>
@@ -1067,9 +1056,7 @@ class Component extends DCLogic {
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
-  /* the parked sheet follows its block (a form, a receipt, the next item, the keyboard): each change of its parked position is an
-     animation from where the sheet is NOW (read before the DOM changes) to where the state puts it — 320ms on the descent curve; rise and
-     descent are the keyframes in CSS. 暂停 / 关键帧 hold it like the CSS ones (_syncTrayClock). */
+  /* parked-height changes: WAAPI from where the sheet is now to where the state puts it (320ms); 暂停 / 关键帧 via _syncTrayClock */
   getSnapshotBeforeUpdate() { const root = this.rootRef && this.rootRef.current, t = root && root.querySelector('.c07-tray'); this._traySnap = t ? { ty: this._trayTy(t), up: t.classList.contains('is-up') } : null; return null; }
   _trayTy(t) { const m = getComputedStyle(t).transform; if (!m || m === 'none') return 0; try { return new DOMMatrixReadOnly(m).m42; } catch (e) { return 0; } }
   _trayKeyNow(thc) { const root = this.rootRef.current, t = root && root.querySelector('.c07-tray'); if (!t) return ''; const cs = getComputedStyle(t); return [thc, root.classList.contains('c07-formon'), t.classList.contains('is-up'), cs.getPropertyValue('--kb'), cs.getPropertyValue('--sab'), cs.getPropertyValue('--navh')].join('|'); }
@@ -1087,9 +1074,7 @@ class Component extends DCLogic {
     if (first || !sn || sn.up) { if (this._trayAnim) { try { this._trayAnim.cancel(); } catch (e) { } this._trayAnim = null; } return; }
     this._animTray(t, sn.ty);
   }
-  /* m20: the home list's bottom padding follows the tray, which is measured only after the render that switched role / section, so the
-     controller's restore ran against the old tray's padding and was clamped — once the tray is measured (and --thc written now, not
-     one render later) the remembered position is put back */
+  /* m20: the restore ran against the old tray's padding (clamped); once the tray is measured the remembered position is put back */
   _fixHomeRestore(ps) {
     const s = this.state; if (!ps || (ps.section === s.section && ps.role === s.role)) return;
     const memo = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section], want = memo && memo.home; if (want == null) return;
@@ -1324,9 +1309,8 @@ class Component extends DCLogic {
     this._rit.contact = h; return h;
   }
   _burnTicket(stage, reason, onDone) { const R = this.R(); if (!R || !R.burn) return; const h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
-  /* replay (面板「重播」/ 关键帧): the paper is put back, burns again, and ends in the same
-     state as the first time — the void stage and the result group are state (burnReplay off), not something a callback writes once.
-     The paper is settled as it burned the first time (torn or with its stub), without a tear handle, so no tear button comes back */
+  /* replay: the paper is put back as it burned (no tear handle), burns again, and ends in the same state — the void stage and the
+     result group are state (burnReplay), not a one-off callback */
   _replayBurn() { const stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; const isH = stage === this._rit.hstage; const data = this._rd(isH ? c.history.ritual : c.ticket.ritual); const torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn');
     const seq = (this._burnSeq = (this._burnSeq || 0) + 1); let fired = false; const done = () => { if (fired || this._burnSeq !== seq) return; fired = true; if (isH) this._rit.hburn = null; else this._rit.burn = null; if (stage.isConnected) stage.dataset.state = 'void'; this.setState({ burnReplay: null }); };
     this.setState({ burnReplay: { seq, isH } });
@@ -1378,7 +1362,7 @@ class Component extends DCLogic {
       if (onHome && (fx.side === 'joined' ? this.state.role === 'joined' : this.state.role === 'hosted')) {
         if (fx.eventId === this._leadRid) { this.setState(st => ({ leadNote: join(st.leadNote, clockNote), leadSwap: (st.leadSwap || 0) + 1 })); this.holdKey('c07-leadnote', 3600, () => this.setState({ leadNote: '' })); }
         else { const q = this._clkToast = fresh && this._clkToast ? this._clkToast + ' · ' + clockNote : clockNote; setTimeout(() => { if (this._clkToast === q) { this._clkToast = ''; this.say(q); } }, 0); } }
-      if (onMng && fx.side === 'host') { this.setState(st => ({ actNote: join(st.actNote, clockNote), actSwap: (st.actSwap || 0) + 1, seatNew: fx.type === 'queue-invited' ? fx.slot : st.seatNew })); this.holdKey('c07-actnote', 3600, () => this.setState({ actNote: '' })); if (fx.type === 'queue-invited') this.afterKey('seatnew', 900, () => this.setState({ seatNew: null })); }
+      if (onMng && fx.side === 'host') { this.setState(st => ({ actNote: join(st.actNote, clockNote), actSwap: (st.actSwap || 0) + 1, seatNew: fx.type === 'queue-invited' ? fx.slot : st.seatNew, rosterNew: fx.type === 'queue-invited' ? (fx.nick || null) : st.rosterNew })); this.holdKey('c07-actnote', 3600, () => this.setState({ actNote: '' })); if (fx.type === 'queue-invited') { this.afterKey('seatnew', 900, () => this.setState({ seatNew: null })); this.afterKey('rosternew', 1000, () => this.setState({ rosterNew: null })); } }
     }
     const homeNote = { withdrawn: '已撤回申请', released: '已放弃预留 · 不记主动失约', exited: '已退出这局', 'reschedule-declined': '已退出 · 位置已释放', queue_left: '已退出候补' }[fx.type];
     if (homeNote && !fx.replay && this._c && this._c.nav.cur === 'home') { this.setState(st => ({ leadNote: homeNote, leadSwap: (st.leadSwap || 0) + 1 })); this.holdKey('c07-leadnote', 2800, () => this.setState({ leadNote: '' })); }
@@ -1518,6 +1502,7 @@ class Component extends DCLogic {
       else { act.isArr = true; act.label = '这局的安排 · ' + m.head.status; act.title = m.head.title; act.meta = m.head.when.zh + ' · ' + m.head.place.hood + ' · ' + m.head.progress.text; act.error = m.error; if (m.head.cancelled || m.head.ended) { act.isArr = false; act.isDone = true; act.label = m.head.cancelled ? '已取消' : '已散场'; act.title = m.head.cancelled ? '这局已取消' : '这局已散场'; act.meta = m.head.formedLine; act.arrLink = false; } }
       act.labText = s.actNote || act.label; act.labCls = s.actNote ? 'ok' : ''; act.sideOn = !!act.side && !s.actNote;
       if (s.timeSwap) act.mCls = s.timeSwap % 2 ? 'c07-tchg-a' : 'c07-tchg-b';
+      ((m.roster && m.roster.rows) || []).forEach(r => { r.freshCls = s.rosterNew && (r.nick === s.rosterNew || r.name === s.rosterNew) ? 'is-fresh' : ''; });
       manage = { ready: true, tchg: s.timeSwap ? (s.timeSwap % 2 ? 'c07-tchg-a' : 'c07-tchg-b') : '', progressOn: !m.head.progress.hidden, seatsOn: !m.head.ended, leavesArrow: m.leaves && m.leaves.open ? '收起' : '展开', leavesExpanded: m.leaves && m.leaves.open ? 'true' : 'false', pageCls: mVis ? 'is-on' : '', arrInList: mode !== 'arr' && mode !== 'burn', arrHint: '处理完上面的事，这局的安排会出现在下方的盘里' };
     } else if (m.on) manage = { ready: false, pageCls: mVis ? 'is-on' : '' };
     const ticketOn = nav.on.ticket || nav.on.reply;

@@ -90,49 +90,66 @@ body{margin:0}
 .c01-pill i{position:absolute;left:14%;right:30%;top:8%;height:34%;border-radius:50%;background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,0));pointer-events:none}
 .c01-weak{position:absolute;right:14px;top:0;height:44px;min-width:52px;display:flex;align-items:center;justify-content:center;padding:0 6px;border:0;background:transparent;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--sec);cursor:pointer;border-radius:12px;pointer-events:auto}
 /* ---- role / section switch inside home: the pane fades without a blank frame ---- */
-.c01-pane{transition:opacity calc(220ms * var(--k)) ease,transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-.c01-pg.ph-enter.dir-role .c01-pane,.c01-pg.ph-enter.dir-swap .c01-pane{opacity:.35;transform:translateY(8px)}
-/* ---- surface transitions, both ways without a dissolve */
+.c01-pg.ph-enter:is(.dir-role,.dir-swap) .c01-pane{opacity:.35;transform:translateY(8px)}
+.c01-pg.ph-in:is(.dir-role,.dir-swap) .c01-pane{animation:c01-pane calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+@keyframes c01-pane{from{opacity:.35;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* ---- surface transitions: keyframes on the phase classes (暂停 holds them, 关键帧 places them); the column slides in from the right edge over a page beneath that is wiped, never faded */
 .c01-body{transition:opacity calc(280ms * var(--k)) ease}
-.c01-pg .c01-hd .c01-title,.c01-pg .c01-hd .c01-meta,.c01-pg .c01-hd .c01-weak{transition:opacity calc(180ms * var(--k)) ease}
-.c01-pg.is-top.ph-in .c01-hd .c01-title,.c01-pg.is-top.ph-in .c01-hd .c01-meta,.c01-pg.is-top.ph-in .c01-hd .c01-weak,.c01-pg.is-top.ph-in .c01-pill{transition-delay:calc(100ms * var(--k))}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-pill,.c01-pg.is-top.ph-exit .c01-pill{opacity:0}
-.c01-pg.is-top.ph-exit .c01-hd .c01-title,.c01-pg.is-top.ph-exit .c01-hd .c01-meta,.c01-pg.is-top.ph-exit .c01-hd .c01-weak,.c01-pg.is-top.ph-exit .c01-pill{transition-duration:calc(110ms * var(--k))}
-.c01-pg .c01-body .c01-an{transition:opacity calc(180ms * var(--k)) ease}
-.c01-pg .c01-body .c01-ct,.c01-pg .c01-body .c01-mfull{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-/* enter: the column starts just off the right edge and decelerates in (its left edge = the wipe edge on the page beneath, frame by frame) */
-.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-ct,.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-mfull{transform:translateX(calc(100% + var(--mx)));transition:none}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-body .c01-an:not(.lead){transition:none}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-title,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-meta,.c01-pg.is-top.ph-enter.dir-fwd .c01-hd .c01-weak{opacity:0}
-.c01-pg .c01-an.lead{transition:transform calc(340ms * var(--k)) cubic-bezier(.25,.8,.25,1),opacity calc(180ms * var(--k)) ease}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-an.lead{transform:translateY(var(--c01-ady,0px));transition:none}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-an.lead.no-travel{transform:none;opacity:0}
-.c01-pg.is-top.ph-enter.dir-swap .c01-body{opacity:0}
+.c01-pg .c01-hd .c01-title,.c01-pg .c01-hd .c01-meta,.c01-pg .c01-hd .c01-weak,.c01-pg .c01-body .c01-an{transition:opacity calc(180ms * var(--k)) ease}
+.c01-pg:is(.ph-enter,.ph-in):is(.dir-fwd,.dir-swap) :is(.c01-body,.c01-hd,.c01-hd>*,.c01-an,.c01-ct,.c01-mfull,.c01-sc,.c01-foot),.c01-pg.ph-exit :is(.c01-body,.c01-hd,.c01-hd>*,.c01-an,.c01-ct,.c01-mfull,.c01-sc,.c01-foot){transition:none}
+@keyframes c01-cin{from{transform:translateX(calc(100% + var(--mx)))}to{transform:none}}
+@keyframes c01-cout{from{transform:none}to{transform:translateX(calc(100% + var(--mx)))}}
+@keyframes c01-fin{from{opacity:0}to{opacity:1}}
+@keyframes c01-fout{from{opacity:1}to{opacity:0}}
+@keyframes c01-ain{from{transform:translateY(var(--c01-ady,0px))}to{transform:none}}
+@keyframes c01-aout{from{transform:none}to{transform:translateY(var(--c01-ady,0px))}}
+@keyframes c01-fsl{from{transform:translateX(100%)}to{transform:none}}
+@keyframes c01-fsr{from{transform:none}to{transform:translateX(100%)}}
+@keyframes c01-wout{from{transform:none}to{transform:translateX(-100%)}}
+@keyframes c01-woutb{from{transform:translateY(var(--c01-hy,0px))}to{transform:translateX(100%) translateY(var(--c01-hy,0px))}}
+@keyframes c01-win{from{transform:translateX(calc(var(--cx) - 100%))}to{transform:none}}
+@keyframes c01-winb{from{transform:translateX(calc(100% - var(--cx)))}to{transform:none}}
+/* enter: the column decelerates in (its left edge = the wipe edge beneath, frame by frame); the lead anchor travels along the spine */
+.c01-pg.is-top.dir-fwd.ph-enter .c01-body :is(.c01-ct,.c01-mfull){transform:translateX(calc(100% + var(--mx)))}
+.c01-pg.is-top.dir-fwd.ph-in .c01-body :is(.c01-ct,.c01-mfull){animation:c01-cin calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c01-pg.is-top.dir-fwd.ph-enter :is(.c01-hd .c01-title,.c01-hd .c01-meta,.c01-hd .c01-weak,.c01-pill){opacity:0}
+.c01-pg.is-top.dir-fwd.ph-in :is(.c01-hd .c01-title,.c01-hd .c01-meta,.c01-hd .c01-weak,.c01-pill){animation:c01-fin calc(180ms * var(--k)) ease calc(100ms * var(--k)) both}
+.c01-pg.is-top.dir-fwd.ph-enter .c01-an.lead{transform:translateY(var(--c01-ady,0px))}
+.c01-pg.is-top.dir-fwd.ph-in .c01-an.lead{animation:c01-ain calc(340ms * var(--k)) cubic-bezier(.25,.8,.25,1) both}
+.c01-pg.is-top.dir-fwd.ph-enter .c01-an.lead.no-travel{transform:none;opacity:0}
+.c01-pg.is-top.dir-fwd.ph-in .c01-an.lead.no-travel{animation:c01-fin calc(180ms * var(--k)) ease both}
+.c01-pg.is-top.dir-swap.ph-enter .c01-body{opacity:0}
+.c01-pg.is-top.dir-swap.ph-in .c01-body{animation:c01-fin calc(280ms * var(--k)) ease both}
+.c01-pg.is-top.dir-fwd.ph-enter .c01-foot{transform:translateX(100%)}
+.c01-pg.is-top.dir-fwd.ph-in .c01-foot{animation:c01-fsl calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 /* return: the column accelerates out to the right; the departing spine anchors vanish at once (the list's are already in place) */
-.c01-pg.is-top.ph-exit .c01-body .c01-ct,.c01-pg.is-top.ph-exit .c01-body .c01-mfull{transform:translateX(calc(100% + var(--mx)));opacity:1;transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
-.c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead){transition:none}
-.c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead),.c01-pg.is-top.ph-exit .c01-hd .c01-title,.c01-pg.is-top.ph-exit .c01-hd .c01-meta,.c01-pg.is-top.ph-exit .c01-hd .c01-weak{opacity:0}
-.c01-pg.is-top.ph-exit .c01-an.lead{transform:translateY(var(--c01-ady,0px))}
-.c01-pg.is-top.ph-exit .c01-an.lead.no-travel{transform:none;opacity:0;transition:none}
-/* the page beneath: never faded — wiped */
+.c01-pg.is-top.ph-exit .c01-body :is(.c01-ct,.c01-mfull){animation:c01-cout calc(270ms * var(--k)) cubic-bezier(.4,0,1,1) both}
+.c01-pg.is-top.ph-exit .c01-body .c01-an:not(.lead){opacity:0}
+.c01-pg.is-top.ph-exit :is(.c01-hd .c01-title,.c01-hd .c01-meta,.c01-hd .c01-weak,.c01-pill){animation:c01-fout calc(110ms * var(--k)) ease both}
+.c01-pg.is-top.ph-exit .c01-an.lead{animation:c01-aout calc(340ms * var(--k)) cubic-bezier(.25,.8,.25,1) both}
+.c01-pg.is-top.ph-exit .c01-an.lead.no-travel{animation:none;opacity:0}
+.c01-pg.is-top.ph-exit .c01-foot{animation:c01-fsr calc(270ms * var(--k)) cubic-bezier(.4,0,1,1) both}
+/* the page beneath: wiped (its scroller, a clip box, slides while the content counter-slides) */
 .c01-pg.is-under{z-index:1}
-.c01-pg.is-under .c01-body{transition:none}
-.c01-pg.is-under .c01-hd{transition:opacity calc(110ms * var(--k)) ease}
-.c01-pg.is-under.ph-in .c01-hd,.c01-pg.is-under.ph-idle .c01-hd,.c01-pg.is-under.ph-idle .c01-body{opacity:0}
+.c01-pg.is-under.ph-in .c01-hd{animation:c01-fout calc(110ms * var(--k)) ease both}
+.c01-pg.is-under.ph-idle .c01-hd,.c01-pg.is-under.ph-idle .c01-body{opacity:0}
 .c01-pg.is-under.ph-idle,.c01-pg.is-under.dir-swap{visibility:hidden}
 .c01-pg.is-under.dir-fwd .c01-body .c01-an{opacity:0;transition:none}
 .c01-pg.is-under .c01-sc,.c01-pg.is-under .c01-sc>.c01-body{transition:none}
-/* going in, the page beneath is wiped all the way out (its spine strip too */
-.c01-pg.is-under.ph-in .c01-sc{transform:translateX(-100%)}
-.c01-pg.is-under.ph-in .c01-sc>.c01-body{transform:translateX(100%)}
+.c01-pg.is-under.ph-enter .c01-sc>.c01-body{transform:translateY(var(--c01-hy,0px))}
+.c01-pg.is-under.ph-in .c01-sc{animation:c01-wout calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
+.c01-pg.is-under.ph-in .c01-sc>.c01-body{animation:c01-woutb calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .c01-pg.is-under.ph-idle .c01-sc{transform:translateX(calc(var(--cx) - 100%))}
 .c01-pg.is-under.ph-idle .c01-sc>.c01-body{transform:translateX(calc(100% - var(--cx)))}
-.c01-pg.is-under.ph-in .c01-sc,.c01-pg.is-under.ph-in .c01-sc>.c01-body{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-.c01-pg.is-under.ph-exit .c01-body{opacity:1}
-.c01-pg.is-under.ph-exit .c01-sc,.c01-pg.is-under.ph-exit .c01-sc>.c01-body{transform:none;transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
-.c01-pg.is-under.ph-exit .c01-hd{opacity:1;transition:opacity calc(130ms * var(--k)) ease calc(80ms * var(--k))}
+.c01-pg.is-under.ph-exit .c01-sc{animation:c01-win calc(270ms * var(--k)) cubic-bezier(.4,0,1,1) both}
+.c01-pg.is-under.ph-exit .c01-sc>.c01-body{animation:c01-winb calc(270ms * var(--k)) cubic-bezier(.4,0,1,1) both}
+.c01-pg.is-under.ph-exit .c01-hd{animation:c01-fin calc(130ms * var(--k)) ease calc(80ms * var(--k)) both}
 .c01-pg.is-under .c01-day.is-src>.c01-an{opacity:0}
 .c01-day>.c01-an{transition:none!important}
+/* 关键帧: one 380ms timeline for every surface keyframe (ctl-api .scrub convention) */
+.scrub .c01-pg:is(.ph-in,.ph-exit) :is(.c01-ct,.c01-mfull,.c01-an.lead,.c01-foot,.c01-sc,.c01-sc>.c01-body,.c01-pane),.scrub .c01-pg.is-top.ph-exit :is(.c01-hd .c01-title,.c01-hd .c01-meta,.c01-hd .c01-weak,.c01-pill),.scrub .c01-pg.is-under.ph-in .c01-hd{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 380ms * var(--k,1))!important}
+.scrub .c01-pg.is-top.ph-in :is(.c01-hd .c01-title,.c01-hd .c01-meta,.c01-hd .c01-weak,.c01-pill){animation-play-state:paused!important;animation-delay:calc((100ms - var(--frame,0) * 380ms) * var(--k,1))!important}
+.scrub .c01-pg.is-under.ph-exit .c01-hd{animation-play-state:paused!important;animation-delay:calc((80ms - var(--frame,0) * 380ms) * var(--k,1))!important}
 .c01-day.is-going>.c01-an{opacity:0;transition:opacity calc(200ms * var(--k)) ease!important}
 .c01-day.is-back>.c01-an{animation:c01-restore calc(260ms * var(--k)) ease}
 .c01-pg.is-leaving{opacity:0;pointer-events:none}
@@ -248,9 +265,6 @@ body{margin:0}
 .c01-foot{position:absolute;left:0;right:0;bottom:var(--below);z-index:7;pointer-events:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding:30px var(--mx) calc(16px + var(--kb,0px)) var(--cx);background:linear-gradient(0deg,rgba(var(--fog),.94) 0,rgba(var(--fog),.94) calc(100% - 34px),rgba(var(--fog),0) 100%)}
 .c01-foot>*{pointer-events:auto}
 .c01-foot{transition:opacity calc(200ms * var(--k)) ease}
-.c01-pg.is-top.ph-enter.dir-fwd .c01-foot{transform:translateX(100%);transition:none}
-.c01-pg.is-top.ph-in.dir-fwd .c01-foot{transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-.c01-pg.is-top.ph-exit .c01-foot{transform:translateX(100%);transition:transform calc(270ms * var(--k)) cubic-bezier(.4,0,1,1)}
 .c01-pg.is-under .c01-foot{opacity:0;transition:none}
 .c01-foot .ju-v27-cta{border:0;padding:0;margin:0}
 .c01-foot .c01-link{padding:2px 8px}
@@ -1001,7 +1015,7 @@ class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
     /* phase lengths carry slack over the CSS motion (enter 320ms, return 270ms) */
-    this.motionSpec = { fwd: 380, back: 380, swap: 260, role: 240 };
+    this.motionSpec = { fwd: 380, back: 380, swap: 260, role: 240 }; this.paths = { read: ['home', 'read'] };
     this.headerRange = 84; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this._rit = {};
     if (p.preset === 'hosted') this.state.role = 'hosted';
@@ -1064,17 +1078,17 @@ class Component extends DCLogic {
     const nav = this.state.nav, root = this.rootRef.current; if (!nav || !root) return;
     const top = nav.stack[nav.stack.length - 1]; if (!top) return;
     const home = root.querySelector('[data-surface="home"] .c01-body');
-    if (nav.phase === 'idle' || nav.phase === 'exit') { if (home && home.style.transform) { home.style.transform = ''; } }
+    if (nav.phase === 'idle' || nav.phase === 'exit') { if (home && home.style.getPropertyValue('--c01-hy')) home.style.removeProperty('--c01-hy'); }
     const k = nav.phase + ':' + top.id; if (this._travelK === k) return; this._travelK = k;
     if (!((nav.phase === 'enter' && nav.dir === 'fwd') || nav.phase === 'exit')) return;
-    if (!top.key || !/^row-/.test(top.key)) return;
+    if (!top.key || !/^(row|due)-/.test(top.key)) return;
     const page = root.querySelector('.c01-pg.is-top'); const lead = page && page.querySelector('.c01-an.lead');
     const row = root.querySelector('[data-surface="home"] [data-origin="' + top.key + '"]'); const day = row && row.closest('.c01-day');
     const src = day && day.querySelector('.c01-an .c01-an-big'); const leadBig = lead && lead.querySelector('.c01-an-big'); if (!lead || !src || !leadBig) return;
     let sTop = src.getBoundingClientRect().top; const tap = this._tap;
     if (nav.phase === 'enter' && tap && tap.key === top.key && Date.now() - tap.at < 1500) {
       sTop = tap.top; const sc = root.querySelector('[data-scroller="home"]');
-      if (home && sc && sc.scrollTop !== tap.st) { home.style.transform = 'translateY(' + (sc.scrollTop - tap.st) + 'px)'; }
+      if (home && sc && sc.scrollTop !== tap.st) home.style.setProperty('--c01-hy', (sc.scrollTop - tap.st) + 'px');
     }
     this._tap = null;
     const tr = lead.style.transition, tf = lead.style.transform; lead.style.setProperty('--c01-ady', '0px'); lead.style.transition = 'none'; lead.style.transform = 'none';
@@ -1107,7 +1121,7 @@ class Component extends DCLogic {
     else if (this._rit.thost) this._destroyStamp();
     this._syncStampFaces(c, root);
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
-    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
+    if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (r.paused) { if (this._burnHeld !== burn) { burn.pause(); this._burnHeld = burn; } } else if ((pr && pr.scrub != null) || this._burnHeld) { this._burnHeld = null; burn.resume(); } }
   }
   _preStage(stage) { if (stage.classList.contains('c01-pre')) return; stage.classList.add('c01-pre'); const pp = stage.querySelector('[data-paper]'); if (pp) stage.style.setProperty('--c01-bed', pp.offsetHeight + 'px'); }
   _tearOpts() { return { onDetach: () => { this._justTorn = this._c && this._c.ticket.printKey; return this.tearCommit(); }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
@@ -1239,7 +1253,7 @@ class Component extends DCLogic {
   _oldText(r) { if (!r.oldWhen) return ''; return '原定 ' + (r.when && r.oldWhen.md === r.when.md ? r.oldWhen.time : r.oldWhen.wdZh + ' ' + r.oldWhen.md + ' ' + r.oldWhen.time); }
   _decoJoined(r, lead) {
     const g = r.group; r.tcls = g === 'act' ? 't-act' : g === 'soon' ? 't-soon' : g === 'wait' ? 't-wait' : g === 'kept' ? 't-kept' : 't-void';
-    r.timeText = r.when.time; r.landingCls = r.landing ? 'is-landing' : ''; r.seatsOn = false;
+    r.timeText = r.when.time; this._dueRow(r); r.landingCls = r.landing ? 'is-landing' : ''; r.seatsOn = false;
     const isLead = lead && lead.id === r.id;
     r.line2 = r.placeText + ' · ' + r.hostName;
     if (g === 'kept' || g === 'closed') { const f = this._fact(r.label, r.attendanceText || r.need || ''); r.status = f[0]; r.statusEx = f[1]; r.actText = ''; }
@@ -1259,7 +1273,7 @@ class Component extends DCLogic {
   /* host rows: one line of people in the meta line; the seat strip only on recruiting rows (the deadline block carries its own) */
   _decoHosted(r, lead, hist) {
     const sec = r.section; const voidEv = !!(r.event && r.event.status === 'cancelled'); r.tcls = hist ? (voidEv ? 't-void' : r.unrecorded ? 't-act' : 't-kept') : sec === 'todo' ? 't-act' : sec === 'resched' ? 't-amber' : sec === 'formed' ? 't-soon' : 't-wait';
-    r.timeText = r.when.time; r.landingCls = r.landing ? 'is-landing' : '';
+    r.timeText = r.when.time; this._dueRow(r); r.landingCls = r.landing ? 'is-landing' : '';
     const isLead = lead && lead.id === r.id; const life = r.life || '', lab = r.label || r.status || '';
     if (hist) { r.line2 = r.placeText + (r.seatText ? ' · ' + r.seatText : ''); const f = this._fact(life, lab); r.status = f[0]; r.statusEx = f[1]; r.actText = r.cta && r.unrecorded ? r.cta : ''; r.seatsOn = false; return r; }
     r.line2 = r.placeText + (r.seatText ? ' · ' + r.seatText : '');
@@ -1272,6 +1286,28 @@ class Component extends DCLogic {
     return r;
   }
   _decoDraft(r) { r.tcls = r.ready ? 't-soon' : 't-amber'; r.timeText = r.when ? r.when.time : '日期未定'; r.line2 = r.placeText + (r.capacity ? ' · ' + r.capacity + ' 人（含你）' : ''); r.status = r.missingText; r.statusEx = r.sourceText || ''; r.actText = ''; r.isDraft = true; r.landingCls = r.landing ? 'is-landing' : ''; r.sortTime = r.when && r.when.iso ? JU.t(r.when.iso) : 0; return r; }
+  /* a due-block origin whose event has left the block lands on (and travels to) its row instead */
+  _dueMap(c) {
+    const lead = c.section === 'current' ? (c.role === 'joined' ? c.joined.lead : c.hosted.lead) : null, dueId = lead ? lead.id : null;
+    const away = this._dueAway = {}; (this.state.nav.stack || []).forEach(e => { if (e.key && /^due-/.test(e.key) && e.key.slice(4) !== dueId) away[e.key.slice(4)] = 1; });
+    const lk = c.nav.landKey || ''; this._dueLand = /^due-/.test(lk) && lk.slice(4) !== dueId ? lk.slice(4) : null;
+    /* an event that left the current list while away (cancelled, ended) lands on the 历史 tab, then on its row there */
+    const lid = /^(row|due)-/.test(lk) ? lk.slice(4) : null, J = c.role === 'joined';
+    if (lid && c.section === 'current' && !(this._histPend && this._histPend.id === lid)) { const cur = J ? c.joined.current : c.hosted.current, his = J ? c.joined.history : c.hosted.history; if (!cur.some(r => r.id === lid) && his.some(r => r.id === lid)) this._histPend = { id: lid, at: Date.now() }; }
+    if (lid && c.section === 'current' && this._histPend && this._histPend.id === lid) c.sectionTabs = c.sectionTabs.map(t => t.k === 'history' ? Object.assign({}, t, { cls: t.cls + ' is-landing' }) : t);
+    let hp = this._histPend; if (hp && !hp.shown && Date.now() - hp.at > 15000) hp = this._histPend = null;
+    if (c.section === 'history' && hp && !hp.shown) { hp.shown = 1; this.afterKey('c01-hland', 1100, () => { this._histPend = null; this.forceUpdate(); }); }
+  }
+  _dueRow(r) { if (this._dueAway[r.id]) r.originKey = 'due-' + r.id; if (this._dueLand === r.id || (this._histPend && this._histPend.shown && this._histPend.id === r.id && this._c.section === 'history')) r.landing = true; }
+  /* read pushed straight from the list: 查看成员 opens the details in its place, 查看票根 keeps the list origin for the way back */
+  _readAct(c) {
+    if (!c.read.on || c.read.state !== 'confirmed' || !c.read.result) return;
+    const rid = c.read.eventId, res = c.read.result, fk = c.nav.fromKey; const root = this.rootRef.current;
+    const kev = (ev) => { const el = fk && root && root.querySelector('[data-surface="home"] [data-origin="' + fk + '"]'); return el ? { currentTarget: el } : ev; };
+    c.read.primary.act = (ev) => { if (res.formed) this.replace('ticket', { eventId: rid }, kev(ev)); else if (c.nav.prev === 'detail') this.back(); else this.replace('detail', { eventId: rid }, kev(ev)); };
+  }
+  /* 重播 / 关键帧 of a push re-run its own enter on the same stack (the default goes back first and would freeze the return) */
+  onNav(kind, s) { if (kind !== 'go') return; const self = this; this.lastMotion = { name: 'go:' + s, fn() { const n = self.state.nav; if (self._top().s !== s || n.phase !== 'idle') return; self.setState({ nav: Object.assign({}, n, { phase: 'enter', dir: 'fwd' }) }); self._runPhases('fwd'); } }; }
   _due(c) {
     const role = c.role; if (c.section !== 'current') return { on: false };
     const lead = role === 'joined' ? c.joined.lead : c.hosted.lead; if (!lead) return { on: false };
@@ -1359,12 +1395,12 @@ class Component extends DCLogic {
   }
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
-    const c = this.ctlVals(); this._c = c; const s = this.state;
+    const c = this.ctlVals(); this._c = c; const s = this.state; this._dueMap(c); this._readAct(c);
     const onScroll = (ev) => { c.nav.onScroll(ev); this._hcFlag(ev.currentTarget); };
     const onReadScroll = (ev) => { c.read.onScroll(ev); this._hcFlag(ev.currentTarget); };
     /* ---- home ---- */
     const role = c.role, section = c.section; const joined = role === 'joined';
-    const away = c.nav.cur !== 'home'; const srcKey = away && c.nav.fromKey && /^row-/.test(c.nav.fromKey) ? c.nav.fromKey : null;
+    const away = c.nav.cur !== 'home'; const srcKey = away && c.nav.fromKey && (/^row-/.test(c.nav.fromKey) || this._dueAway[c.nav.fromKey.slice(4)]) ? c.nav.fromKey : null;
     const homeVisible = !away || c.nav.phase === 'exit'; const homeIdle = !away && c.nav.phase === 'idle';
     let days = [], footNote = '', empty = { on: false }, meta = '', legend = { on: false, items: [] };
     const due = this._due(c);

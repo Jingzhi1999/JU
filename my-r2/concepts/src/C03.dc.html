@@ -20,7 +20,6 @@ body{margin:0}
 @property --c03-chj{syntax:'<length>';inherits:true;initial-value:287px}
 @property --c03-chh{syntax:'<length>';inherits:true;initial-value:287px}
 @property --pp{syntax:'<number>';inherits:false;initial-value:1}
-@property --c03-fit{syntax:'<length>';inherits:false;initial-value:4000px}
 .app{position:absolute;inset:0;overflow:hidden;font-family:"Noto Sans SC",-apple-system,"PingFang SC",sans-serif;color:#14161F;--k:1;background:#dfe0e8;font-size:calc(15px * var(--tz,1));line-height:1.45;-webkit-font-smoothing:antialiased;
   --c03-ink:#14161F;--c03-ink2:#535b70;--c03-paper:rgba(255,255,255,.82);--c03-dark:#1B1D27;--c03-fg:#F4F5FA;--c03-fg2:rgba(244,245,250,.64);--c03-fg3:rgba(244,245,250,.50);
   --c03-line:rgba(20,22,31,.10);--c03-line-d:rgba(255,255,255,.10);
@@ -132,10 +131,10 @@ body{margin:0}
 .c03-band::after{content:"";position:absolute;left:20px;right:20px;bottom:0;height:1px;background:var(--c03-line);opacity:var(--c03-cut,0)}
 .c03-hs .c03-band::after{background:var(--c03-line-d)}
 .c03-hsc{position:absolute;left:0;right:0;top:var(--c03-band);bottom:0;padding:76px 20px 34px}
-/* window / footer edges */
-.c03-hsc,.c03-pg>.c03-sc{clip-path:inset(0 0 max(0px,calc(100% - var(--c03-fit))) 0);transition:--c03-fit calc(150ms * var(--k)) ease}
-/* the band's own lift (--po) clips the list box too: content that threaded scrolling moves ahead of the lift can never show over the band */
-.c03-hsc{clip-path:inset(var(--po,0px) 0 max(0px,calc(100% - var(--c03-fit))) 0)}
+/* the lift (--po) clips the list box, so nothing shows over the band; at the bottom the other paper's edge cuts hard (no fade, nothing hidden) */
+.c03-hsc{clip-path:inset(var(--po,0px) 0 0 0)}
+/* a peek makes the list box taller: as much bottom padding keeps its scroll range, so the list never clamps under a page */
+.c03-jw .c03-hsc{padding-bottom:calc(34px + var(--c03-chhN) - var(--c03-chh))}.c03-hw .c03-hsc{padding-bottom:calc(34px + var(--c03-chjN) - var(--c03-chj))}
 .c03-sc{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;overflow-anchor:none;-webkit-overflow-scrolling:touch}
 /* page and face motion */
 .c03-pg.is-top.dir-fwd.ph-enter,.c03-pg.is-top.ph-exit,.c03-face.is-under.ph-enter,.c03-pg.is-under.ph-enter,.c03-face.is-under.ph-exit,.c03-pg.is-under.ph-exit,.c03-pg.is-top.dir-swap.ph-enter{--pp:0}
@@ -366,7 +365,7 @@ body{margin:0}
 .c03-mem .r{color:var(--c03-ink2);text-align:right;font-size:calc(13px * var(--tz,1))}.c03-hs .c03-mem .r{color:var(--c03-fg2)}
 .c03-mem.you{font-weight:500}
 .c03-hs .c03-rules p{color:var(--c03-fg)}
-.c03-result{text-align:center;padding:26px 6px 10px}
+.c03-result{text-align:center;padding:26px 6px 10px}.c03-foot .c03-result{padding:0 6px 10px;animation:c03-settle calc(260ms * var(--k)) ease-out both}
 .c03-result b{display:block;font-size:calc(20px * var(--tz,1));font-weight:600}
 .c03-result p{color:var(--c03-ink2);font-size:calc(14px * var(--tz,1));margin:6px 0 0}
 /* the tear rig paints a 434×322 canvas around the 258×84 stub */
@@ -706,13 +705,11 @@ body{margin:0}
                   <section class="c03-pg {{win.read}}" data-surface="read">
                     <header class="c03-ph" data-header><button type="button" class="ju-v27-back-pill c03-back" data-act="back" aria-label="返回" onClick="{{c.read.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><div class="tb"><div class="t">{{c.read.title}}</div><div class="m"><sc-if value="{{c.read.countdown.on}}">剩余 {{c.read.countdown.text}} · </sc-if>{{c.read.hint}}</div></div><sc-if value="{{c.read.secondary}}"><button type="button" class="c03-weak2" data-act="release" onClick="{{c.read.secondary.act}}">{{c.read.secondary.label}}</button></sc-if></header>
                     <div class="c03-sc" data-scroller="read" onScroll="{{c.read.onScroll}}">
-                      <sc-if value="{{c.read.result}}"><div class="c03-result"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if>
-                      <sc-if value="{{c.read.expired}}"><div class="c03-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
                       <div class="c03-rules c03-read"><sc-for list="{{c.read.rules}}" as="g" hint-placeholder-count="3"><h5>{{g.title}}</h5><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></sc-for></div>
                       <div class="c03-endmark">— {{c.read.endMark}} —</div>
                       <sc-if value="{{c.read.error}}"><p class="c03-err">{{c.read.error}}</p></sc-if>
                     </div>
-                    <div class="c03-foot"><div class="c03-prog"><i style="--ratio:{{dx.readRatio}}"></i></div><button type="button" class="ju-v27-cta" data-act="{{c.read.primary.key}}" aria-disabled="{{c.read.primary.disabled}}" disabled="{{c.read.primary.disabled}}" onClick="{{c.read.primary.act}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button></div>
+                    <div class="c03-foot"><sc-if value="{{c.read.result}}"><div class="c03-result"><b>{{c.read.result.title}}</b><p>{{c.read.result.body}}</p></div></sc-if><sc-if value="{{c.read.expired}}"><div class="c03-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if><div class="c03-prog"><i style="--ratio:{{dx.readRatio}}"></i></div><button type="button" class="ju-v27-cta" data-act="{{c.read.primary.key}}" data-origin="row-{{c.read.eventId}}" aria-disabled="{{c.read.primary.disabled}}" disabled="{{c.read.primary.disabled}}" onClick="{{dx.readAct}}"><span class="gloss"></span><span class="label">{{c.read.primary.label}}</span></button></div>
                   </section>
                 </sc-if>
                 <!-- ===== WAITLIST（候补门口 + 回执） ===== -->
@@ -1169,13 +1166,14 @@ class Component extends DCLogic {
     this.motionSpec = { fwd: 360, back: 300, swap: 280, role: 300 };
     this.headerRange = 76; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
     this.envRef = { current: null }; this.winsRef = { current: null }; this.homeRef = { current: null }; this._noRef = { current: null }; this._rit = {}; this._drag = null; this._raf = 0; this._tw = null;
+    this.paths = { read: ['home', 'read'] };
     if (p.preset === 'hosted') this.state.role = 'hosted';
     this._t = this.state.role === 'hosted' ? 1 : 0;
   }
   initialState(variant) { return JU.baseState(variant); }
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
-  componentDidMount() { this._scrollEnd = (ev) => { const sc = ev.target; if (sc && sc.matches && sc.matches('.c03-hsc,.c03-pg>.c03-sc')) { this._lastScroll = 0; clearTimeout(this._fitT); this._fitAll(); } }; if (this.rootRef.current) this.rootRef.current.addEventListener('scrollend', this._scrollEnd, true); if (window.ResizeObserver) this._ro = new ResizeObserver(() => { if (!this._roRaf) this._roRaf = requestAnimationFrame(() => { this._roRaf = 0; this._fitAll(); }); }); this._scrollCap = (ev) => this._onAnyScroll(ev); if (this.rootRef.current) this.rootRef.current.addEventListener('scroll', this._scrollCap, true); this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._tabsLine(); this._cut(this._list('joined')); this._cut(this._list('hosted')); this._autoContact(); if (document.fonts) document.fonts.ready.then(() => { this._tabsLine(true); this._fitAll(); }); this._fitAll(); }
+  componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._tabsLine(); this._cut(this._list('joined')); this._cut(this._list('hosted')); this._autoContact(); if (document.fonts) document.fonts.ready.then(() => this._tabsLine(true)); }
   componentDidUpdate(pp, ps) {
     this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps);
     const nav = this.state.nav, pn = ps && ps.nav;
@@ -1193,13 +1191,9 @@ class Component extends DCLogic {
     /* the sheet closes: keep its last frame for 220 ms as an inert copy that sinks */
     if (ps && ps.sheet && !this.state.sheet && !this.state.c03sheetClosing) { if (this.isRM()) { } else { this.setState({ c03sheetClosing: true }); this.afterKey('c03sheet', 220, () => this.setState({ c03sheetClosing: false })); } }
     if (this.state.sheet && this.state.c03sheetClosing) { this.cancelKey('c03sheet'); this.setState({ c03sheetClosing: false }); }
-    this._autoContact(); this._tabsLine(); this._stampSlots(); this._observe(); this._fitAll();
+    this._autoContact(); this._tabsLine(); this._stampSlots();
   }
-  /* content that a ritual resizes after the render */
-  _observe() { const root = this.rootRef.current; if (!root) return; if (this._ro) root.querySelectorAll('.c03-hsc>.c03-list,.c03-pg>.c03-sc,.c03-pg>.c03-sc>*').forEach(el => { if (!el._c03ro) { el._c03ro = 1; this._ro.observe(el); } });
-    /* rituals also move content without resizing an observed box (contact reveal, stub collapse): any attribute / child change inside a scroller re-fits, debounced */
-    if (!this._mo && window.MutationObserver) { this._mo = new MutationObserver(list => { for (let i = 0; i < list.length; i++) { const t = list[i].target; if (t.nodeType === 1 && !t.matches('.c03-hsc,.c03-pg>.c03-sc') && t.closest('.c03-hsc,.c03-pg>.c03-sc')) { clearTimeout(this._moT); this._moT = setTimeout(() => this._fitAll(), 90); return; } } }); this._mo.observe(root, { subtree: true, childList: true, attributes: true, attributeFilter: ['aria-hidden', 'data-state', 'class', 'hidden', 'style'] }); } }
-  componentWillUnmount() { if (this.rootRef.current && this._scrollEnd) this.rootRef.current.removeEventListener('scrollend', this._scrollEnd, true); clearTimeout(this._fitT); clearTimeout(this._moT); if (this._ro) this._ro.disconnect(); if (this._mo) this._mo.disconnect(); if (this.rootRef.current && this._scrollCap) this.rootRef.current.removeEventListener('scroll', this._scrollCap, true); this._stopSpring(); if (this._tw && this._tw.raf) cancelAnimationFrame(this._tw.raf); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
+  componentWillUnmount() { this._stopSpring(); if (this._tw && this._tw.raf) cancelAnimationFrame(this._tw.raf); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
   _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
   _syncEnv(ps) {
     const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; const r = this.state.review, pr = ps && ps.review;
@@ -1229,9 +1223,7 @@ class Component extends DCLogic {
     const pk = this.state.role === 'hosted' ? '--c03-pkj' : '--c03-pkh';
     const sp = (this.state.review || {}).speed === 0.5 ? 2 : 1;
     const tw = { tops: tops, unders: unders, fwd: fwd, swap: swap, deep: deepTw, pk: pk, from: from, t0: performance.now(), dur: Math.max(120, (fwd ? 360 : swap ? 280 : 284) * from) * sp, raf: 0, held: 0, p: null };
-    if (kind === 'back') unders.forEach(el => { const face = el.classList.contains('c03-face'); const sc = el.querySelector(face ? '.c03-hsc' : ':scope>.c03-sc'); if (!sc) return; if (face) this._landNow(sc); this._fit(sc, true); });
-    /* the incoming page is fitted for its landed geometry now */
-    if (!kind || kind !== 'back') tops.forEach(el => { if (el.classList.contains('is-top') && !el.classList.contains('is-leaving')) { const sc = el.querySelector(':scope>.c03-sc'); if (sc) this._fit(sc, true); } });
+    if (kind === 'back') unders.forEach(el => { const sc = el.classList.contains('c03-face') && el.querySelector('.c03-hsc'); if (sc) this._landNow(sc); });
     this._tw = tw; this._twApply(this.isRM() ? 1 : 0);
     if (this.isRM()) return;
     const step = (now) => { if (this._tw !== tw) return; if ((this.state.review || {}).paused) { tw.held = tw.held || now; tw.raf = requestAnimationFrame(step); return; } if (tw.held) { tw.t0 += now - tw.held; tw.held = 0; } const x = Math.max(0, Math.min(1, (now - tw.t0) / tw.dur)); this._twApply(x, now); tw.raf = x < 1 ? requestAnimationFrame(step) : 0; };
@@ -1244,7 +1236,7 @@ class Component extends DCLogic {
     if (tw.deep) { const home = this.homeRef.current; if (home) { home.style.setProperty('--c03-dp', v); home.style.setProperty(tw.pk, v); } }
   }
   _twStop() { const tw = this._tw; if (tw && tw.raf) cancelAnimationFrame(tw.raf); this._twEnd(); }
-  _twEnd() { const tw = this._tw; if (!tw) return; if (tw.raf) cancelAnimationFrame(tw.raf); tw.tops.concat(tw.unders).forEach(el => el.style.removeProperty('--pp')); const home = this.homeRef.current; if (home && tw.deep) { home.style.removeProperty('--c03-dp'); home.style.removeProperty(tw.pk); } this._tw = null; this._fitAll(); }
+  _twEnd() { const tw = this._tw; if (!tw) return; if (tw.raf) cancelAnimationFrame(tw.raf); tw.tops.concat(tw.unders).forEach(el => el.style.removeProperty('--pp')); const home = this.homeRef.current; if (home && tw.deep) { home.style.removeProperty('--c03-dp'); home.style.removeProperty(tw.pk); } this._tw = null; }
   /* ---------------- the home list: lift, band hairline, row snapping ---------------- */
   _list(role) { const root = this.rootRef.current; if (!root) return null; role = role || this.state.role; return root.querySelector((role === 'hosted' ? '.c03-hw' : '.c03-jw') + ' .c03-hsc'); }
   _L(role) { const sc = this._list(role); return sc ? Math.max(0, Math.min(1, sc.scrollTop / 76)) : 0; }
@@ -1283,20 +1275,6 @@ class Component extends DCLogic {
     const k = this._scrollKey ? this._scrollKey(under) : null, nm = sc.getAttribute('data-scroller'); if (k != null && nm) { const m = (this._scrollMemo = this._scrollMemo || {}); (m[k] = m[k] || {})[nm] = sc.scrollTop; }
     if (this._c && this._c.nav && this._c.nav.onScroll) this._c.nav.onScroll({ currentTarget: sc, target: sc }); this._cut(sc);
   }
-  /* at-rest edge fit */
-  _fitAll() { const root = this.rootRef.current; if (!root || this._tw || this.state.c03moving) return; if (performance.now() - (this._lastScroll || 0) < 150) { clearTimeout(this._fitT); this._fitT = setTimeout(() => this._fitAll(), 170); return; } root.querySelectorAll('.c03-win.is-exp .c03-face:not(.is-under) .c03-hsc,.c03-win.is-exp .c03-pg.is-top>.c03-sc').forEach(sc => this._fit(sc)); }
-  _fit(sc, now) {
-    if (now) { sc.style.transition = 'none'; sc._fitV = null; this._fit(sc); void getComputedStyle(sc).getPropertyValue('--c03-fit'); sc.style.transition = ''; return; }
-    const box = sc.getBoundingClientRect(); if (!box.height) return; const edge = box.bottom; let y = Infinity;
-    const els = sc.querySelectorAll(sc.classList.contains('c03-hsc') ? '.c03-lead>*,.c03-dlead>*,.c03-grp,.c03-row,.c03-empty>*,.c03-list>.c03-help' : '.c03-dtitle,.c03-facts>*,.c03-cd>*,.c03-receipt>*,.c03-result>*,.c03-grp,.c03-mem,.c03-dhead,.c03-rules h5,.c03-rules p,.c03-endmark,.c03-help,.c03-err,.c03-cferr,.c03-hsum>*,.c03-hnote,.c03-wxrow,.c03-mhead>*,.c03-sec>h4,.c03-app>*,.c03-chg,.c03-done>*,.c03-att>*,.c03-regdone,.c03-arr,.c03-dsum>*,.ju-contact-row,.ju-contact-note23,.c03-empty>*,.c03-tkc');
-    for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (!r.height || r.height > 150) continue; if (r.top < edge - 1 && r.bottom > edge + 0.5 && r.top < y) y = r.top; }
-    /* the line itself must not cut a block beside the one it hides */
-    for (let k = 0; k < 6 && y !== Infinity; k++) { let moved = false; for (let i = 0; i < els.length; i++) { const r = els[i].getBoundingClientRect(); if (r.height && r.height <= 150 && r.top < y - 0.5 && r.bottom > y + 0.5) { y = r.top; moved = true; } } if (!moved) break; }
-    if (y !== Infinity) for (let i = 0; i < els.length; i++) { const e = els[i]; if (!e.matches('.c03-grp,.c03-sec>h4')) continue; const r = e.getBoundingClientRect(); if (r.height && r.bottom <= y + 1 && r.bottom >= y - 10) { y = Math.min(y, r.top); break; } }
-    const v = y === Infinity ? box.height : Math.max(0, y - box.top - 1);
-    sc._fitST = sc.scrollTop; if (sc._fitV != null && Math.abs(sc._fitV - v) < 0.5) return; sc._fitV = v; sc.style.setProperty('--c03-fit', v.toFixed(1) + 'px');
-  }
-  _onAnyScroll(ev) { const sc = ev.target; if (!sc || !sc.matches || !sc.matches('.c03-hsc,.c03-pg>.c03-sc')) return; if (sc._fitST != null && Math.abs(sc.scrollTop - sc._fitST) < 1) return; this._lastScroll = performance.now(); const h = sc.clientHeight; if (sc._fitV != null && sc._fitV < h - 0.5) { sc._fitV = h; sc.style.setProperty('--c03-fit', h + 'px'); } clearTimeout(this._fitT); this._fitT = setTimeout(() => this._fitAll(), 160); }
   /* the section underline slides to the active tab */
   _tabsLine(force) { const root = this.rootRef.current; if (!root) return; const st = this.state, rv = st.review || {}; const key = st.role + st.section + JSON.stringify((st.ui && st.ui.memo) || {}) + rv.zoom + rv.size + (this._c ? JSON.stringify([this._c.joined.counts, this._c.hosted.counts]) : '') + st.jumpKey; if (!force && key === this._tabsKey) return; this._tabsKey = key; root.querySelectorAll('.c03-tabs').forEach(tb => { const on = tb.querySelector('.c03-tab.on'); if (!on) return; const l = on.offsetLeft + 'px', w = on.offsetWidth + 'px'; if (tb.style.getPropertyValue('--tl') !== l) tb.style.setProperty('--tl', l); if (tb.style.getPropertyValue('--tw') !== w) tb.style.setProperty('--tw', w); }); }
   /* host attendance */
@@ -1325,7 +1303,7 @@ class Component extends DCLogic {
     this._stopSpring(); role = role || this.state.role; const el = this.homeRef.current;
     if (el) { el.style.removeProperty('--c03-t'); el.classList.remove('is-moving', 'mv-d', 'mv-w'); el.classList.add('mv-' + this._restMv(role)); }
     this._t = role === 'hosted' ? 1 : 0; this._lifts = null; this._setHc(this._L(role)); this._cut(this._list(role));
-    this.setState({ c03mv: null, c03moving: false }, () => this._fitAll());
+    this.setState({ c03mv: null, c03moving: false });
   }
   _stopSpring() { if (this._raf) { cancelAnimationFrame(this._raf); this._raf = 0; } }
   _spring(target, v) {
@@ -1580,7 +1558,7 @@ class Component extends DCLogic {
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, winsRef: this.winsRef, homeRef: this.homeRef, c, win, home, noSkins: !c.ritual.skins,
       ticketOn, ticketSurface: c.nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
-      dx: { title: dOn && c.detail.event ? nb(c.detail.event.title) : '', rulesOpen: !!(dOn && s.c03rules === c.detail.eventId), rulesCls: dOn && s.c03rules === c.detail.eventId ? 'is-open' : '', toggleRules: () => self.setState({ c03rules: self.state.c03rules === c.detail.eventId ? null : c.detail.eventId }), readRatio: c.read.on ? String(Math.round((c.read.progress || 0) * 1000) / 1000) : '0', draftCls: c.draft.on && c.draft.ready ? 'ok' : '' },
+      dx: { title: dOn && c.detail.event ? nb(c.detail.event.title) : '', rulesOpen: !!(dOn && s.c03rules === c.detail.eventId), rulesCls: dOn && s.c03rules === c.detail.eventId ? 'is-open' : '', toggleRules: () => self.setState({ c03rules: self.state.c03rules === c.detail.eventId ? null : c.detail.eventId }), readRatio: c.read.on ? String(Math.round((c.read.progress || 0) * 1000) / 1000) : '0', readAct: (ev) => { const p = c.read.primary; if (!p) return; if (p.key === 'members' && under && under.s === 'home') self.replace('detail', { eventId: c.read.eventId }, ev); else p.act(ev); }, draftCls: c.draft.on && c.draft.ready ? 'ok' : '' },
       dcard: this._cardVM(dOn ? c.detail.row : null),
       scard: this._cardVM(mReady ? c.manage.m : null),
       ticket: { showStage: tk.on && !tk.unavailable, scCls: tk.result ? 'has-result' : '', stageCls: (tk.isReply ? 'reissued' : '') + (tk.result && tk.result.burn && !tk.result.burning ? ' is-ash' : ''), noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result && !tk.contact.closed, showClosed: !!(tk.on && tk.contact.closed && tk.contact.closedText && !tk.result), retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按下方按钮' : '') : '' },

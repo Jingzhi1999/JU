@@ -1463,7 +1463,8 @@ class Component extends DCLogic {
     const tone = (t) => /预留/.test(t) ? 'res' : /释放|到期|已过期/.test(t) ? 'void' : '';
     if (c.detail.on && c.detail.row) {
       const d = c.detail, row = d.row; d.members.forEach(m => { m.cls = m.you ? 'you' : ''; m.tone = tone(m.statusText || ''); });
-      v.dt = Object.assign(this._deep(row, home.areas), { title: row.detailTitle || d.title, meta: c09T(d.title), primaryOn: !!(d.primary && d.primary.key !== 'none'),
+      const dT = d.title || row.detailTitle; /* the meta line says what the state needs next (label · need), like the ticket page — never the title again */
+      v.dt = Object.assign(this._deep(row, home.areas), { title: dT, meta: [row.label, row.need].filter(x => x && x !== dT).join(' · ') || dT, primaryOn: !!(d.primary && d.primary.key !== 'none'),
         cdTone: d.countdown && (d.countdown.tone === 'red' || d.countdown.tone === 'expired') ? 'red' : d.countdown && d.countdown.tone === 'amber' ? 'amber' : '',
         receiptLine: d.receipt ? [d.receipt.field, d.receipt.body].filter(Boolean).join(' · ') : '', rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesCount: (d.rules || []).length + ' 类 · 读完再确认',
         canRead: !!d.openRead && (row.stage === 'invited' || row.stage === 'invited_queue') });
