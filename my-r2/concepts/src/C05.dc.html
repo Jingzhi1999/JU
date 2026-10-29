@@ -1205,12 +1205,12 @@ class Component extends DCLogic {
     const IN = function (b, oy, h) { return 'inset(' + f(b[0] - oy) + ' -400px ' + f(oy + h - b[1]) + ' -400px)'; };
     const OUT = function (b, oy, w) { const t = f(b[0] - oy), u = f(b[1] - oy), L = '-400px ', R = (w + 400) + 'px ', Z = f(H - oy + 400); return 'polygon(' + L + '-400px,' + R + '-400px,' + R + t + ',' + L + t + ',' + L + u + ',' + R + u + ',' + R + Z + ',' + L + Z + ')'; };
     const cut = function (el, oy, h, w, inside) { add(el, B.map(function (b) { return { clipPath: inside ? IN(b, oy, h) : OUT(b, oy, w) }; })); };
-    if (inPg) cut(inPg, 0, H, W, true); if (outPg) cut(outPg, 0, H, W, false); if (fl && m.gband) { cut(m.gband, 0, H, W, true); const gb = m.gband; m.clean.push(function () { gb.style.zIndex = ''; }); }
+    if (inPg) cut(inPg, 0, H, W, true); if (outPg) cut(outPg, 0, H, W, false); if (fl && m.gband) cut(m.gband, 0, H, W, true);
     /* the card switches whole like a text line */
     const card = this.cardRef.current, X = []; if (card) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
       if ((this._c.heroKey || '') === (this._shownKey || '')) { if (snap.cardTop != null && snap.cardTop !== card.offsetTop) add(card, [{ top: snap.cardTop + 'px' }, { top: card.offsetTop + 'px' }]); }
       else { const ri = dir !== 'back', cs = snap.card, hold = this.snapCardRef.current; if (!card.classList.contains('is-off')) X.push([card, ri]);
-        if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); X.push([cs.el, !ri]); } } }
+        if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); X.push([cs.el, !ri, 1]); } } }
     this._yield(m, dir, B, H, inPg, outPg, X, add);
     /* the face colour (and the light of 光晕 / 落日) on the same curve */
     const t = tn && tn.el; if (t) { const a = getComputedStyle(t), bo = getComputedStyle(t, '::before').opacity;
@@ -1228,7 +1228,8 @@ class Component extends DCLogic {
       const hit = function (i) { if (!P) return false; for (let k = Math.max(0, i - 1); k <= Math.min(40, i + 1); k++) { const b = P[k]; if (r.x < b[0] + b[2] - 2 && r.x + r.w > b[0] + 2 && r.y < b[1] + b[3] - 2 && r.y + r.h > b[1] + 2) return true; } return false; };
       const v = S.map(function (s, i) { return c[1] ? s[0] <= r.y + 1 && s[1] >= r.y + r.h - 1 && !hit(i) : r.y + r.h <= s[0] + 1 || r.y >= s[1] - 1; });
       /* the arriving page's lines show once and stay; the leaving page's go once and stay gone */
-      if (c[1] === (dir !== 'back')) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1];
+      if (c[1] === (dir !== 'back')) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else { if (P && (c[2] || c[0].closest('.c05-zb'))) for (let i = 4; i <= 40; i++) v[i] = false; for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1]; }
+      /* (with a title in flight the leaving hero — its 这一场 and its card — is gone within 40ms: one event's name at a time) */
       if (v.every(function (x) { return x; })) return; const kf = [{ offset: 0, opacity: v[0] ? 1 : 0 }]; let o = 0; const pu = function (t, a) { o = Math.max(o, Math.min(1, t)); kf.push({ offset: o, opacity: a }); };
       for (let i = 1; i <= 40; i++) if (v[i] !== v[i - 1]) { if (v[i]) { pu(i / 40, 0); pu(i / 40 + 50 * q, 1); } else { pu((i - 1) / 40 - 40 * q, 1); pu((i - 1) / 40, 0); } }
       pu(1, v[40] ? 1 : 0); add(c[0], kf, { easing: 'linear' }); });
@@ -1239,11 +1240,11 @@ class Component extends DCLogic {
     const root = this.rootRef.current, g = this.ghostRef.current, SURF = { manage: 1, detail: 1, waitlist: 1, history: 1, draft: 1 }, TICKET = { ticket: 1, reply: 1 };
     if (!g || dir === 'swap' || !(SURF[top.s] || (TICKET[top.s] && dir === 'back')) || this.isRM()) return null;
     const key = dir === 'back' ? this._backKey(top, outPg) : top.key, origin = key && outPg.querySelector('[data-origin="' + key + '"]'); if (!origin) return null;
-    const norm = function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); }, row = origin.querySelector('.c05-row .t') || origin.querySelector('.t') || origin.querySelector('.c05-name'); if (!row) return null;
+    const norm = function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); }, row = origin.querySelector('.c05-row .t') || origin.querySelector('.t') || origin.querySelector('.c05-name'); if (!row || row.closest('.c05-fc')) return null;   /* face to face: no flight (it would pass under the card) — the titles switch whole */
     const want = norm(row.textContent); let face = null; inPg.querySelectorAll('.c05-fc .c05-ttl, .c05-fc .c05-name, .c05-fc .ju-ticket-title, .c05-fc .c05-hv.is-ash .c05-imp-t').forEach(function (el) { if (!face && norm(el.textContent) === want && el.offsetWidth) face = el; }); if (!face) return null;
     if (dir === 'back') { if ((parseFloat(inPg.style.getPropertyValue('--c05-p')) || 0) > .01) return null; const sg = face.closest('[data-print-stage]'); if (sg && sg.dataset.state !== 'ready' && sg.dataset.state !== 'torn') return null; }
     const ra = this._rel(row, root), ro = this._rel(origin, root), d = this._layoutPos(face, root), cs = getComputedStyle(face), df = parseFloat(cs.fontSize) || 30, af = parseFloat(getComputedStyle(row).fontSize) || 14, rc = getComputedStyle(row).color;
-    Object.assign(g.style, { left: d.x + 'px', top: d.y + 'px', width: face.offsetWidth + 'px', fontSize: cs.fontSize, lineHeight: cs.lineHeight, fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing, fontFamily: cs.fontFamily, textWrap: cs.getPropertyValue('text-wrap') || 'wrap', wordBreak: cs.wordBreak, overflowWrap: cs.overflowWrap, opacity: '1' }); g.textContent = face.textContent; const gb = this.gbandRef.current; if (gb) { gb.style.zIndex = row.closest('.c05-fc') ? '1' : ''; m.gband = gb; }
+    Object.assign(g.style, { left: d.x + 'px', top: d.y + 'px', width: face.offsetWidth + 'px', fontSize: cs.fontSize, lineHeight: cs.lineHeight, fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing, fontFamily: cs.fontFamily, textWrap: cs.getPropertyValue('text-wrap') || 'wrap', wordBreak: cs.wordBreak, overflowWrap: cs.overflowWrap, opacity: '1' }); g.textContent = face.textContent; m.gband = this.gbandRef.current;
     const rowT = 'translate(' + (ra.x - d.x).toFixed(1) + 'px,' + (ra.y - d.y).toFixed(1) + 'px) scale(' + (af / df).toFixed(4) + ')', fwd = dir !== 'back', src = fwd ? row : face, dst = fwd ? face : row, T = m.T, hand = Math.min(70 * this._kk(), T * .25) / T;
     src.style.visibility = 'hidden'; dst.style.visibility = '';
     add(g, fwd ? [{ transform: rowT, color: rc }, { transform: 'none', color: cs.color }] : [{ transform: 'none', color: cs.color }, { transform: rowT, color: rc }]);
@@ -1256,11 +1257,11 @@ class Component extends DCLogic {
     return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
   }
   _xfade(dir, snap) {
-    const root = this.rootRef.current, k = this._kk(), D = 90 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = 20 * (h ? h.sign : 1), over = this.snapOverRef.current;
-    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 196) * k, dir: dir, id: 0 };
+    const root = this.rootRef.current, k = this._kk(), D = 75 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = 20 * (h ? h.sign : 1), over = this.snapOverRef.current;
+    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 215) * k, dir: dir, id: 0 };
     const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
-    /* two beats: the old content is gone within 90ms (under .3 by 65ms) */
-    const mv = function (el, out) { m.anims.push(out ? el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx / 2) + 'px)' }], { duration: D, easing: E, fill: 'both' }) : el.animate([{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 130 * k, delay: .73 * D, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' })); };
+    /* two beats: the old content is gone within 75ms, only then (85ms) the new one comes in from 20px aside */
+    const mv = function (el, out) { m.anims.push(out ? el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx / 2) + 'px)' }], { duration: D, easing: E, fill: 'both' }) : el.animate([{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: 130 * k, delay: D + 10 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'both' })); };
     if (h && over) { over.appendChild(h.box); m.clean.push(function () { h.box.remove(); }); h.parts.forEach(function (p) { mv(p, true); }); }
     const pg = root.querySelector('.c05-pg.pg-home'); if (pg) pg.querySelectorAll('.c05-fc .c05-zb, .c05-cap, .c05-list').forEach(function (el) { mv(el, false); });
     const card = this.cardRef.current, cs = snap.card; if (card && (this._c.heroKey || '') !== (this._shownKey || '')) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
