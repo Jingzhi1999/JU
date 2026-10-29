@@ -572,7 +572,7 @@ body{margin:0}
 </helmet>
 <div class="ju-stage">
   <div class="ju-phone{{panel.phoneCls}}" style="{{panel.phoneStyle}}">
-    <div class="app c07{{panel.rootCls}}{{c.nav.rootCls}}{{trayRootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};--thc:{{trayThc}}" ref="{{rootRef}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
+    <div class="app c07{{panel.rootCls}}{{c.nav.rootCls}}{{trayRootCls}}" style="--k:{{panel.k}};--frame:{{panel.frame}};--thc:{{trayThc}}" ref="{{rootRef}}" onKeyDown="{{rootKey}}" data-skin="{{c.skin}}" data-role="{{c.role}}">
       <div class="ju-env" ref="{{envRef}}"></div>
       <sc-if value="{{noSkins}}"><div class="c07-env"></div></sc-if>
       <div class="c07-veil"></div>
@@ -1071,15 +1071,28 @@ class Component extends DCLogic {
      descent are the keyframes in CSS. 暂停 / 关键帧 hold it like the CSS ones (_syncTrayClock). */
   getSnapshotBeforeUpdate() { const root = this.rootRef && this.rootRef.current, t = root && root.querySelector('.c07-tray'); this._traySnap = t ? { ty: this._trayTy(t), up: t.classList.contains('is-up') } : null; return null; }
   _trayTy(t) { const m = getComputedStyle(t).transform; if (!m || m === 'none') return 0; try { return new DOMMatrixReadOnly(m).m42; } catch (e) { return 0; } }
+  _trayKeyNow(thc) { const root = this.rootRef.current, t = root && root.querySelector('.c07-tray'); if (!t) return ''; const cs = getComputedStyle(t); return [thc, root.classList.contains('c07-formon'), t.classList.contains('is-up'), cs.getPropertyValue('--kb'), cs.getPropertyValue('--sab'), cs.getPropertyValue('--navh')].join('|'); }
+  _animTray(t, from) {
+    if (this._trayAnim) { try { this._trayAnim.cancel(); } catch (e) { } this._trayAnim = null; }
+    const root = this.rootRef.current; if (this._snap || t.classList.contains('is-up') || root.classList.contains('c07-rising') || root.classList.contains('c07-falling')) return;
+    const to = this._trayTy(t); if (Math.abs(to - from) < 1) return; const r = this.state.review || {}; const k = this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); if (!k || !t.animate) return;
+    const a = t.animate([{ transform: 'translate3d(0,' + from + 'px,0)' }, { transform: 'translate3d(0,' + to + 'px,0)' }], { duration: 320 * k, easing: 'cubic-bezier(.32,.72,.2,1)' });
+    a.__c07dur = 320 * k; this._trayAnim = a; a.onfinish = () => { if (this._trayAnim === a) this._trayAnim = null; }; this._syncTrayClock();
+  }
   _syncTrayMotion() {
     const sn = this._traySnap; this._traySnap = null; const root = this.rootRef.current, t = root && root.querySelector('.c07-tray'); if (!t) return;
-    const cs = getComputedStyle(t); const key = [this.state.thc, root.classList.contains('c07-formon'), t.classList.contains('is-up'), cs.getPropertyValue('--kb'), cs.getPropertyValue('--sab'), cs.getPropertyValue('--navh')].join('|');
+    const key = this._trayKeyNow(this.state.thc);
     if (key === this._trayKey) { this._syncTrayClock(); return; } const first = this._trayKey == null; this._trayKey = key;
-    if (this._trayAnim) { try { this._trayAnim.cancel(); } catch (e) { } this._trayAnim = null; }
-    if (first || !sn || sn.up || this._snap || t.classList.contains('is-up') || root.classList.contains('c07-rising') || root.classList.contains('c07-falling')) return;
-    const to = this._trayTy(t); if (Math.abs(to - sn.ty) < 1) return; const r = this.state.review || {}; const k = this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); if (!k || !t.animate) return;
-    const a = t.animate([{ transform: 'translate3d(0,' + sn.ty + 'px,0)' }, { transform: 'translate3d(0,' + to + 'px,0)' }], { duration: 320 * k, easing: 'cubic-bezier(.32,.72,.2,1)' });
-    a.__c07dur = 320 * k; this._trayAnim = a; a.onfinish = () => { if (this._trayAnim === a) this._trayAnim = null; }; this._syncTrayClock();
+    if (first || !sn || sn.up) { if (this._trayAnim) { try { this._trayAnim.cancel(); } catch (e) { } this._trayAnim = null; } return; }
+    this._animTray(t, sn.ty);
+  }
+  /* m20: the home list's bottom padding follows the tray, which is measured only after the render that switched role / section, so the
+     controller's restore ran against the old tray's padding and was clamped — once the tray is measured (and --thc written now, not
+     one render later) the remembered position is put back */
+  _fixHomeRestore(ps) {
+    const s = this.state; if (!ps || (ps.section === s.section && ps.role === s.role)) return;
+    const memo = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section], want = memo && memo.home; if (want == null) return;
+    const el = this.rootRef.current && this.rootRef.current.querySelector('[data-scroller="home"]'); if (el && Math.abs(el.scrollTop - want) > 1) { el.scrollTop = want; if (this._applyHc) this._applyHc(el); }
   }
   _syncTrayClock() { const a = this._trayAnim, r = this.state.review || {}; if (!a) return; try { if (r.scrub != null) { a.pause(); a.currentTime = Math.max(0, Math.min(r.scrub / 100 * a.__c07dur, a.__c07dur - 1)); } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } }
   /* keyboard focus follows the sheet (review m17): risen, the page's back button takes it (the list under the sheet is inert); a page
@@ -1105,7 +1118,7 @@ class Component extends DCLogic {
   /* m6: a list that can scroll only a little would leave the large title half collapsed — it gets the rest of the range as a tail */
   _fitScrollers() { const root = this.rootRef.current; if (!root) return; const rng = this.headerRange || 96;
     root.querySelectorAll('.c07-sc[data-scroller],.c07-ssc[data-scroller]').forEach(el => { const tail = parseFloat(el.style.getPropertyValue('--c07-tail')) || 0; const nat = el.scrollHeight - el.clientHeight - tail; const want = nat > 2 && nat < rng ? Math.ceil(rng - nat) : 0; if (Math.abs(want - tail) > 1) el.style.setProperty('--c07-tail', want + 'px'); }); }
-  componentDidUpdate(pp, ps) { this._syncTrayMotion(); this._syncGoing(); this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._syncNavFocus(); this._fitScrollers(); this._undoTicker();
+  componentDidUpdate(pp, ps) { this._syncTrayMotion(); this._syncGoing(); this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._fixHomeRestore(ps); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._syncNavFocus(); this._fitScrollers(); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
     { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && cf.offsetParent && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
@@ -1196,7 +1209,11 @@ class Component extends DCLogic {
     if (this._roBlk !== blk && window.ResizeObserver) { if (!this._ro) this._ro = new ResizeObserver(() => this._measureTray()); if (this._roBlk) this._ro.unobserve(this._roBlk); if (blk) this._ro.observe(blk); this._roBlk = blk; }
     if (!blk) return;
     const thc = Math.max(160, Math.ceil(blk.offsetHeight) + 56);
-    if (Math.abs(thc - (this.state.thc || 0)) > 1) this.setState({ thc });
+    if (Math.abs(thc - (this.state.thc || 0)) > 1 && thc !== this._thcNow) {   /* written now (the sheet moves from where it is), state follows */
+      const t = root.querySelector('.c07-tray'), from = t ? this._trayTy(t) : 0, had = this._trayKey != null; this._thcNow = thc;
+      root.style.setProperty('--thc', thc + 'px'); if (t) { this._trayKey = this._trayKeyNow(thc); if (had) this._animTray(t, from); }
+      this.setState({ thc });
+    }
   }
   /* manage: the controller scrolls params.focus to the scroller top (reveal(sec,true)); when that block is already fully readable above
      the parked tray at scrollTop 0, keep 0 — the head (status · 已确认 n/N · seats) must stay in view where its numbers change */
@@ -1515,6 +1532,8 @@ class Component extends DCLogic {
         onlyLeadText: (leadRow ? ({ act: '要你回应', soon: '就快见面', wait: '还在等', todo: '待你处理', resched: '改期中', formed: '已成局', recruit: '招募中' }[leadKind] || '') + ' · ' : '') + '在下方的盘里处理',
         paneCls: (isCur && ((isJ ? c.joined.empty.on : c.hosted.empty.on) || (!!leadRow && (isJ ? jsections : hsections).length === 0))) || (c.section === 'history' && (isJ ? c.joined.empty.on : c.hosted.empty.on)) || (c.section === 'drafts' && c.hosted.empty.on && !c.hosted.drafts.length) ? 'is-hero' : (() => { const n = c.section === 'history' ? ((isJ ? c.joined.sectionsHistory : c.hosted.sectionsHistory) || []).reduce((a, g) => a + ((g.rows && g.rows.length) || 0), 0) : c.section === 'drafts' ? c.hosted.drafts.length : 0; return n > 0 && n <= 2 ? 'is-few' : ''; })() },
       tray: { cls: (trayUp ? 'is-up' : 'is-down') + (firstUp ? ' first-up' : ''), leadOn: !(mTop && ph === 'idle') },
+      /* rows and other role="button" blocks answer Enter / Space like buttons (keyboard users open a row as a click would) */
+      rootKey: this._rootKey || (this._rootKey = (ev) => { const t = ev.target; if ((ev.key === 'Enter' || ev.key === ' ') && t && t.getAttribute && t.getAttribute('role') === 'button' && t.tagName !== 'BUTTON' && !ev.defaultPrevented) { ev.preventDefault(); t.click(); } }),
       lead, act, manage, rv, tv, dv, form, formOn: trayForm, homeInert: trayForm || trayUp, trayThc: (s.thc || 318) + 'px',
       read: { showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
       ticketOn, ticketSurface: nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',

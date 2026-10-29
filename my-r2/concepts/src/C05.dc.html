@@ -69,7 +69,6 @@ body{margin:0}
 /* ---- 局卡原件（JuCardV2 中档 212×265）：面的「实物」，在右上与大字时间并置；壳 = V27 正面壳（ju-card.css） ---- */
 .c05-card{position:absolute;right:20px;top:var(--c05-zb);width:212px;height:265px;z-index:1;perspective:1150px;perspective-origin:50% 46%;pointer-events:auto;cursor:pointer;transition:top calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease,transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),z-index 0s linear calc(380ms * var(--k))}
 .c05-card.is-off{opacity:0;pointer-events:none;transform:translateY(14px)}
-.c05-card.is-letgo{opacity:0;transform:translateY(-8px);transition:opacity calc(90ms * var(--k)) cubic-bezier(.3,0,.7,1),transform calc(90ms * var(--k)) ease,top calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c05-card .c05-spin{position:relative;width:100%;height:100%;transform-style:preserve-3d;transform:rotateX(3deg) rotateY(-7deg)}
 .c05-card [data-spin-face=front]{position:absolute;inset:0;border-radius:13px;overflow:hidden;box-shadow:0 42px 84px -28px rgba(18,22,48,.55),0 10px 26px -12px rgba(18,22,48,.35)}
 .c05-card [data-spin-sheen]{transform:translateX(-48%)}
@@ -96,8 +95,12 @@ body{margin:0}
 .c05-pg{position:absolute;inset:0;z-index:2;pointer-events:none;--c05-ptop:524px;--c05-band:calc(84px + var(--sat,0px))}
 .c05-pg.pg-home{--c05-band:calc(104px + var(--sat,0px))}
 .c05-pg.pg-manage{--c05-band:calc(108px + var(--sat,0px))}
-.c05-pg.is-under.ph-idle{visibility:hidden}
-.c05-fc{position:absolute;left:0;right:0;top:0;z-index:1;padding:calc(24px + var(--sat,0px)) 24px 0;pointer-events:none;color:var(--c05-ink);transition:transform calc(360ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(240ms * var(--k)) ease}
+.c05-pg.is-under{visibility:hidden}
+.c05-pg.is-under.dir-fwd:is(.ph-enter,.ph-in),.c05-pg.is-under.dir-back.ph-exit{visibility:visible}
+.app.rm .c05-pg:is(.is-under,.is-leaving){visibility:hidden!important}
+.c05-fc{position:absolute;left:0;right:0;top:0;z-index:1;padding:calc(24px + var(--sat,0px)) 24px 0;pointer-events:none;color:var(--c05-ink)}
+/* a drag / wheel that starts on the face scrolls the paper (script _bindFace): the browser must not pan the document instead */
+.ju-env,.c05-card,.c05-fc{touch-action:none}
 .c05-fc button,.c05-fc [role=button],.c05-fc a,.c05-fc .ju-contact-wrap{pointer-events:auto}
 /* the stage box (and the paper's soft shadow) reaches below the ticket, over the paper's top edge: only the paper itself takes input */
 .c05-fc .c05-stage{pointer-events:none}
@@ -105,59 +108,23 @@ body{margin:0}
 .c05-sc{position:absolute;left:0;right:0;bottom:0;top:var(--c05-band);z-index:2;overflow-y:auto;overflow-x:hidden;pointer-events:none;scrollbar-width:none;overscroll-behavior:contain;display:flex;flex-direction:column}
 .c05-sc::-webkit-scrollbar{display:none}
 .c05-sp{height:calc(var(--c05-ptop) - var(--c05-band));flex:0 0 auto;pointer-events:none}
-.c05-paper{position:relative;flex:1 0 auto;pointer-events:auto;background:var(--c05-paper);border-radius:26px 26px 0 0;min-height:100%;box-shadow:0 -14px 44px -22px rgba(20,10,20,.55);padding:8px 24px calc(var(--c05-nav) + 28px + var(--sab,0px) + var(--kb,0px));color:#14161F;transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(200ms * var(--k)) ease}
+.c05-paper{position:relative;flex:1 0 auto;pointer-events:auto;background:var(--c05-paper);border-radius:26px 26px 0 0;min-height:100%;box-shadow:0 -14px 44px -22px rgba(20,10,20,.55);padding:8px 24px calc(var(--c05-nav) + 28px + var(--sab,0px) + var(--kb,0px));color:#14161F}
 /* the band's lower edge: once the paper has reached it, a hairline shadow says the paper slides under the face */
 .c05-pg::after{content:'';position:absolute;left:0;right:0;top:var(--c05-band);height:14px;z-index:3;pointer-events:none;background:linear-gradient(180deg,rgba(20,10,30,.16),rgba(20,10,30,0));opacity:calc((var(--c05-p,0) - .85) * 6.6667)}
 .c05-pg.pg-ticket::after{display:none}
 .c05-pg.pg-deep .c05-paper{padding-bottom:calc(28px + var(--sab,0px) + var(--kb,0px))}
 .c05-handle{width:36px;height:4px;border-radius:2px;background:rgba(20,22,31,.16);margin:0 auto 10px}
-/* ---- 运动 · 纸上一行 → 面（fwd 400ms）/ 面 → 原行（back 340ms）：先清场，再穿过，后落定 ----
-   0–90     the leaving face content clears (opacity + 12px drift) and its card lets go (90ms); the paper dips 40px, its words clear
-   0–400    the tapped title flies (script .c05-ghost, slow start: it lifts off its row while the old face clears and crosses the face only
-            once it is empty)
-   90–400   the new sheet takes over at the bottom of the dip and rebounds 6px; its words arrive from 110ms
-   180–400  the new face body assembles behind the arriving title (18px rise, 200ms fade); the new card arrives from 160ms (script)
-   No frame holds two compositions: the old face is gone (90ms) before the new one starts (180ms). back mirrors it (340ms); the ticket
-   page has no flying title, so its own content arrives earlier (80ms) while the face turns ticket-grey (220ms). */
-.c05-pg.is-top.ph-enter.dir-fwd .c05-fc{opacity:0;transform:translateY(18px);transition:none}
-.c05-pg.is-top.ph-enter.dir-fwd .c05-paper{opacity:0;transform:translateY(40px);transition:none}
-.c05-pg.is-top.ph-in.dir-fwd .c05-fc{transition:opacity calc(200ms * var(--k)) ease calc(180ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(140ms * var(--k))}
-.c05-pg.pg-ticket.is-top.ph-in.dir-fwd .c05-fc{transition-delay:calc(80ms * var(--k)),calc(60ms * var(--k))}
-.c05-pg.is-top.ph-in.dir-fwd .c05-paper{animation:c05-dipin calc(400ms * var(--k)) linear both}
-.c05-pg.is-top.ph-in.dir-fwd .c05-paper>*{animation:c05-wordsin calc(140ms * var(--k)) ease calc(110ms * var(--k)) both}
-.c05-pg.is-under.ph-exit .c05-paper>*{animation:c05-wordsin calc(110ms * var(--k)) ease calc(250ms * var(--k)) both}
-@keyframes c05-dipin{0%{transform:translateY(40px);opacity:0;animation-timing-function:steps(1,end)}27%{transform:translateY(40px);opacity:1;animation-timing-function:cubic-bezier(.2,.8,.3,1)}74%{transform:translateY(-6px);animation-timing-function:ease-in-out}100%{transform:none;opacity:1}}
-@keyframes c05-wordsin{0%{opacity:0}100%{opacity:1}}
-.c05-pg.is-top.ph-enter.dir-swap .c05-fc,.c05-pg.is-top.ph-enter.dir-swap .c05-paper{opacity:0}
-.c05-pg.is-under .c05-fc,.c05-pg.is-under .c05-paper{opacity:0}
-/* the leaving face starts clearing in the same render as the flight (ph-enter), so their timing is locked even when renders are late */
-.c05-pg.is-under.ph-enter .c05-paper{opacity:1;transition:none}
-.c05-pg.is-under.ph-enter .c05-fc{opacity:0;transform:translateY(-12px);transition:opacity calc(90ms * var(--k)) cubic-bezier(.3,0,.7,1),transform calc(120ms * var(--k)) ease-in}
-/* the leaving face: gone in 90ms (opacity reaches 0 at 90ms; the drift is only a hint of direction) */
-.c05-pg.is-under.ph-in .c05-fc{opacity:0;transform:translateY(-12px);transition:opacity calc(90ms * var(--k)) cubic-bezier(.3,0,.7,1),transform calc(120ms * var(--k)) ease-in}
-.c05-pg.is-under.ph-in .c05-paper{opacity:1;transform:translateY(40px);transition:transform calc(110ms * var(--k)) cubic-bezier(.5,0,.9,.5)}
-.c05-pg.is-under.ph-in.sheet-out .c05-paper{opacity:0;transition:transform calc(110ms * var(--k)) cubic-bezier(.5,0,.9,.5),opacity calc(150ms * var(--k)) ease}
-/* what that sheet was covering (the old face body, the old card) was not visible: it must not reappear while the sheet fades */
-.c05-pg.is-under.sheet-out .c05-fc{opacity:0;transition:opacity calc(60ms * var(--k)) linear}
-.app:has(.c05-pg.sheet-out) .c05-card.is-letgo{opacity:0;transition:none}
-.c05-pg.is-under.ph-in .c05-paper>*,.c05-pg.is-top.ph-exit .c05-paper>*{opacity:0;transition:opacity calc(90ms * var(--k)) ease}
-.c05-pg.is-under.ph-idle .c05-fc,.c05-pg.is-under.ph-idle .c05-paper{transition:none;transform:none}
-.c05-pg.is-top.ph-exit .c05-fc{opacity:0;transform:translateY(12px);transition:opacity calc(90ms * var(--k)) cubic-bezier(.3,0,.7,1),transform calc(120ms * var(--k)) ease-in}
-.c05-pg.is-top.ph-exit .c05-paper{transform:translateY(40px);opacity:0;transition:transform calc(95ms * var(--k)) cubic-bezier(.5,0,.9,.5),opacity 1ms linear calc(95ms * var(--k))}
-.c05-pg.is-under.ph-exit .c05-fc{animation:c05-facein calc(140ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(200ms * var(--k)) both}
-.c05-pg.is-under.ph-exit .c05-paper{animation:c05-dipin calc(340ms * var(--k)) linear both}
-@keyframes c05-facein{0%{opacity:0;transform:translateY(-14px)}100%{opacity:1;transform:none}}
-.c05-pg.is-leaving{opacity:0;transition:opacity calc(200ms * var(--k)) ease}
+/* ---- 运动（M4 / M1）：脚本里的一条 WAAPI 时间线（_wipe / _xfade），关键帧滑杆可定位；这里只有静止态 ----
+   go / back / replace: a band grows from the tapped row's line to the whole screen (back: it closes onto the row). Inside = the deeper
+   page, outside = the page it came from — every pixel is one of them at full opacity: no empty frame, never two compositions on top of
+   each other. The title flies inside the band; the card is cut by the same band; the face colour moves on the same curve.
+   role / section: what changes cross-fades in 90ms, the old leaving towards the side away from the tapped tab, the new arriving from it. */
+.c05-snapt,.c05-snapc,.c05-snapx,.c05-snapo,.c05-snaps,.c05-snapbox{position:absolute;inset:0;pointer-events:none}
+.c05-snapt,.c05-snapc,.c05-snapx{z-index:1}.c05-snapo{z-index:4}.c05-snaps{z-index:50}
+.c05-was,.c05-was *{pointer-events:none!important;animation:none!important;transition:none!important}
+.c05-tint.no-tr,.c05-tint.no-tr::before{transition:none!important}
 /* the flying title: laid out exactly like the face title (30/500, same width), moved by transform only */
 .c05-ghost{position:absolute;left:0;top:0;z-index:6;margin:0;pointer-events:none;opacity:0;transform-origin:0 0;font-weight:500;font-size:calc(30px * var(--tz,1));line-height:calc(37.5px * var(--tz,1));color:var(--c05-ink);overflow-wrap:anywhere;will-change:transform}
-/* 角色切换（dir-role，300ms 同帧）：面色过渡在 .c05-tint 上；面内「一场」与纸上列表交叉淡入 */
-.c05-zb,.c05-list{transition:opacity calc(260ms * var(--k)) ease,transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-/* a role or section switch on the home page replaces only 「这一场」 and the list (the title, the tabs, the paper stay): hidden at once in the
-   enter render (no transition, so the old words do not linger under the new ones), then they rise in with the phase change */
-.c05-pg.ph-enter.dir-role .c05-zb,.c05-pg.ph-enter.dir-role .c05-list,.c05-pg.pg-home.ph-enter.dir-swap .c05-zb,.c05-pg.pg-home.ph-enter.dir-swap .c05-list{opacity:0;transform:translateY(10px);transition:none}
-.c05-pg.pg-home.is-top.ph-enter.dir-swap .c05-fc,.c05-pg.pg-home.is-top.ph-enter.dir-swap .c05-paper{opacity:1}
-/* the new 「这一场」 waits for the old card to let go (90ms) — the new words never sit beside the old card */
-.c05-pg.ph-in.dir-role .c05-zb,.c05-pg.pg-home.ph-in.dir-swap .c05-zb{transition-delay:calc(90ms * var(--k))}
 /* ---- 面内文字角色：外层标题 30/500（V27）· 辅助行 14 · 角色切换 15/500 · 日期 15 Archivo · 时间 34 Archivo · 局名 26/600 · 地点·局主·状态 14 ---- */
 /* outer title (V27 30/500): the line box stays 37.5px while the font goes 30 → 18, so nothing under it re-flows; at p=1 it is
    centred in the tool row (centre y = 24 + 22), like V27's syncHeader23 */
@@ -188,7 +155,7 @@ body{margin:0}
 .c05-cd{font:600 calc(14px * var(--tz,1))/1.4 'Archivo',sans-serif;font-variant-numeric:tabular-nums;color:var(--c05-ink);letter-spacing:.01em}
 .c05-cd.red{color:#7A0C22}.app.role-hosted .c05-cd.red{color:#17123A}
 .c05-bar{height:3px;border-radius:2px;background:var(--c05-line);margin:6px 0 2px;overflow:hidden;max-width:118px}
-.c05-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--c05-ink);transition:width 900ms linear}
+.c05-bar i{display:block;height:100%;width:calc(var(--ratio,0) * 100%);background:var(--c05-ink)}
 .c05-pl{margin-top:10px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--c05-ink2);overflow-wrap:anywhere}
 .c05-seats + .c05-pl{margin-top:8px;font-size:calc(13px * var(--tz,1))}
 .c05-seats + .c05-pl b{font-size:calc(14px * var(--tz,1))}
@@ -484,10 +451,12 @@ body{margin:0}
       <!-- 环境：共享 skins 引擎挂进 .ju-env；色面 = 环境主色的不透明面（.c05-tint），纸盖在下半 -->
       <div class="ju-env" ref="{{envRef}}"></div>
       <div class="c05-tint"></div>
+      <div class="c05-snapt" ref="{{snapTintRef}}" aria-hidden="true"></div>
       <!-- the title in flight between a paper row and the face (script; empty and transparent at rest). It sits before the card in the DOM:
            a face-to-face flight (首页的「这一场」⇄ 管理页标题) runs at the card's z-level and passes BEHIND the card that stays; a flight from
            or to a paper row runs above everything (z 6) -->
       <div class="c05-ghost" ref="{{ghostRef}}" aria-hidden="true"></div>
+      <div class="c05-snapc" ref="{{snapCardRef}}" aria-hidden="true"></div>
       <!-- 局卡原件（JuCardV2，V27 中档 212×265，V27 正面壳）：面的实物，在右上与大字时间并置；内容随当前主角（首页先做这件 / 打开的那局）交叉切换 -->
       <div class="c05-card {{hero.cls}}" ref="{{cardRef}}" data-act="card" role="button" tabindex="-1" aria-label="局卡 {{hero.fullTitle}}" onClick="{{hero.open}}">
         <div class="c05-spin">
@@ -1131,6 +1100,9 @@ body{margin:0}
           </div>
         </div>
       </sc-if>
+      <div class="c05-snapx" ref="{{emberRef}}" aria-hidden="true"></div>
+      <div class="c05-snapo" ref="{{snapOverRef}}" aria-hidden="true"></div>
+      <div class="c05-snaps" ref="{{snapSheetRef}}" aria-hidden="true"></div>
       <sc-if value="{{c.toast.on}}"><div class="c05-toast {{c.toast.cls}}" role="status">{{toastText}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
@@ -1146,11 +1118,11 @@ body{margin:0}
 class Component extends DCLogic {
   constructor(p) {
     super(p); this.reviewInit(CONCEPT);
-    this.motionSpec = { fwd: 400, back: 340, swap: 220, role: 300 };
+    this.motionSpec = { fwd: 400, back: 340, swap: 320, role: 300 };
     this.headerRange = 96; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
-    this.envRef = { current: null }; this.cardRef = { current: null }; this.cstampRef = { current: null }; this.homeFcRef = { current: null }; this.ghostRef = { current: null };
+    this.envRef = { current: null }; this.cardRef = { current: null }; this.cstampRef = { current: null }; this.snapTintRef = { current: null }; this.snapCardRef = { current: null }; this.snapOverRef = { current: null }; this.snapSheetRef = { current: null }; this.emberRef = { current: null }; this.homeFcRef = { current: null }; this.ghostRef = { current: null };
     this.manageStatusRef = { current: null }; this.manageSeatsRef = { current: null }; this.leadSeatsRef = { current: null };
-    this._rit = {}; this._heroKey = undefined; this._statusKey = ''; this._seatsKey = ''; this._settle = {}; this._mEntry = '';
+    this._rit = {}; this._statusKey = ''; this._seatsKey = ''; this._settle = {}; this._mEntry = '';
     /* every scroller: the controller's handler (--hc, scroll memo) + the face collapse progress of this page (--c05-p) */
     this._onFaceScroll = (ev) => { const c = this._c; if (c) c.nav.onScroll(ev); this._faceP(ev.currentTarget); };
     this._onReadScroll = (ev) => { const c = this._c; if (c) c.read.onScroll(ev); this._faceP(ev.currentTarget); };
@@ -1159,8 +1131,8 @@ class Component extends DCLogic {
   initialState(variant) { return JU.baseState(variant); }
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
-  componentDidMount() { this._syncCardStamp(this._heroVM); this._syncAttStamps(); this._mountEnv(); this._measure(); this._syncRituals(null); this._syncReduced(); this._animateFace(); const self = this; if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { self._measure(); }); }
-  componentDidUpdate(pp, ps) { this._syncCardStamp(this._heroVM); this._syncAttStamps(); this._syncEnv(ps); this._measure(); this._manageEntry(); this._landing(ps); this._sheetOut(); this._ghostNav(); this._syncRituals(ps); this._syncReduced(ps); this._animateFace(); }
+  componentDidMount() { this._syncCardStamp(this._heroVM); this._syncAttStamps(); this._mountEnv(); this._measure(); this._syncRituals(null); this._syncReduced(); this._animateFace(null); this._bindFace(); const self = this; if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { self._measure(); }); }
+  componentDidUpdate(pp, ps) { const snap = this._snap || {}; this._snap = null; this._syncCardStamp(this._heroVM); this._syncAttStamps(); this._syncEnv(ps); this._measure(); this._manageEntry(); this._landing(ps); this._navMotion(snap); this._sheetClose(snap); this._syncRituals(ps); this._syncReduced(ps); this._animateFace(snap); this._syncScrub(); }
   componentWillUnmount() { if (this._tro) this._tro.disconnect(); this._destroyTicket(); this._destroyStamp(); this._destroyHistoryStage(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; if (this._ro) this._ro.disconnect(); }
   /* ---------------- environment: the shared skins engine lives under the colour plane (.c05-tint) ---------------- */
   _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
@@ -1203,85 +1175,150 @@ class Component extends DCLogic {
     const v = p.toFixed(3); if (pg.style.getPropertyValue('--c05-p') !== v) pg.style.setProperty('--c05-p', v);
     pg.classList.toggle('hc1', p >= 0.999);
   }
-  /* ---------------- the title in flight: 纸上一行的局名 → 面的标题（fwd）/ 面的标题 → 回到原行（back） ----------------
-     Layout is measured with offsets (the pages are being translated by their phase transitions); the ghost is laid out as the face
-     title (same font, width, wrapping) and only translated + uniformly scaled; both real titles are hidden while it flies. */
+  /* ---------------- page motion: one WAAPI timeline per transition (the 关键帧 slider seeks it, _syncScrub) ----------------
+     go / back / replace (_wipe): a band grows from the tapped row's line to the whole screen (back: it closes onto the row). Inside = the
+     deeper page, outside = the page it came from; each pixel shows one of them at full opacity, so no frame is empty and none holds two
+     compositions. The title flies inside the band, the card is cut by the same band, the face colour moves on the same curve.
+     role / section (_xfade): the parts that change cross-fade in 90ms — the old ones leave towards the side away from the tapped tab. */
   _layoutPos(el, root) { let x = 0, y = 0, e = el; while (e && e !== root) { x += e.offsetLeft; y += e.offsetTop; e = e.offsetParent; } return { x: x, y: y }; }
-  _ghostNav() {
-    const c = this._c, root = this.rootRef.current, g = this.ghostRef.current; if (!c || !root || !g) return;
-    const st = this.state.nav; const top = st && st.stack && st.stack[st.stack.length - 1]; if (!top) return;
-    const sig = st.phase + ':' + st.dir + ':' + top.id; if (sig === this._ghostSig) return; this._ghostSig = sig;
-    if (st.phase === 'enter' || st.phase === 'exit') this._flyCross = false;
-    const SURF = { manage: 1, detail: 1, waitlist: 1, history: 1, draft: 1 }, TICKET = { ticket: 1, reply: 1 };
-    if (!top.key || (this.isRM && this.isRM())) return;
-    if (!SURF[top.s] && !(TICKET[top.s] && st.phase === 'exit')) return;
-    const norm = (t) => String(t || '').replace(/\s+/g, ' ').trim();   /* titles may carry U+00A0 (keepDot): compare whitespace-normalized */
-    const titleOf = (o) => o && (o.querySelector('.c05-row .t') || o.querySelector('.t') || o.querySelector('.c05-name'));
-    /* the face element that carries the same words (管理: the title; 详情 / 历史 / 候补: the name under the card; 票根: the ticket's own title) */
-    const faceTitle = (pg, text) => { if (!pg) return null; const want = norm(text); const list = pg.querySelectorAll('.c05-fc .c05-ttl, .c05-fc .c05-name, .c05-fc [data-surface-ticket] .ju-ticket-title, .c05-fc .ju-ticket-title, .c05-fc .c05-hv.is-ash .c05-imp-t'); for (let i = 0; i < list.length; i++) if (norm(list[i].textContent) === want && list[i].offsetWidth) return list[i]; return null; };
-    if (st.phase === 'enter' && st.dir === 'fwd') {
-      const origin = root.querySelector('.c05-pg.is-under [data-origin="' + top.key + '"]'); const src = titleOf(origin);
-      const dst = src && faceTitle(root.querySelector('.c05-pg.is-top'), src.textContent); if (!src || !dst) return;
-      const rr = root.getBoundingClientRect(), sr = src.getBoundingClientRect();
-      this._fly(src, dst, { x: sr.left - rr.left, y: sr.top - rr.top, f: parseFloat(getComputedStyle(src).fontSize), color: getComputedStyle(src).color }, 'fwd');
-    } else if (st.phase === 'exit' && st.dir === 'back') {
-      const pg = root.querySelector('.c05-pg.is-top'); if (!pg || (parseFloat(pg.style.getPropertyValue('--c05-p')) || 0) > 0.01) return;
-      const origin = root.querySelector('.c05-pg.is-under [data-origin="' + top.key + '"]'); const dst = titleOf(origin); if (!dst || !top.from) return;
-      const src = faceTitle(pg, dst.textContent); if (!src) return;
-      if (TICKET[top.s]) { const stg = src.closest('[data-print-stage]'); if (!stg || (stg.dataset.state !== 'ready' && stg.dataset.state !== 'torn')) return; }
-      /* the row's resting place = the rect the controller re-measured before the exit + the title's offset inside the row */
-      const off = this._layoutPos(dst, root), oo = this._layoutPos(origin, root);
-      this._fly(dst, src, { x: top.from.x + off.x - oo.x, y: top.from.y + off.y - oo.y, f: parseFloat(getComputedStyle(dst).fontSize), color: getComputedStyle(dst).color }, 'back');
-    }
+  _kk() { return (this.state.review && this.state.review.speed === 0.5) ? 2 : 1; }
+  _rel(el, root) { const a = el.getBoundingClientRect(), b = root.getBoundingClientRect(), k = (b.width / root.offsetWidth) || 1; return { x: (a.left - b.left) / k, y: (a.top - b.top) / k, w: a.width / k, h: a.height / k }; }
+  _navSig() { const st = this.state.nav, t = st.stack[st.stack.length - 1]; return st.phase + st.dir + t.id + this.state.role + this.state.section; }
+  /* a copy that only looks like the original: no test hooks, roles or focus, no motion of its own */
+  _clone(el) {
+    const cl = el.cloneNode(true), re = /^data-(act|origin|rid|field|settle|section|role-tab|scroller|surface|stamp-slot|contact|measure|restore)/;
+    const strip = function (n) { ['id', 'tabindex', 'role', 'aria-label', 'aria-modal', 'aria-pressed', 'aria-disabled'].forEach(function (a) { n.removeAttribute(a); }); [].slice.call(n.attributes).forEach(function (a) { if (re.test(a.name)) n.removeAttribute(a.name); }); };
+    strip(cl); cl.querySelectorAll('*').forEach(strip); cl.setAttribute('aria-hidden', 'true'); cl.inert = true; cl.classList.add('c05-was');
+    const a = el.querySelectorAll('canvas'), b = cl.querySelectorAll('canvas'); a.forEach(function (cv, i) { try { b[i].width = cv.width; b[i].height = cv.height; b[i].getContext('2d').drawImage(cv, 0, 0); } catch (e) { } });
+    return cl;
   }
-  /* rowEl = the paper / lead title, faceEl = the face title; a = the row title's rect; dir fwd: row → face, back: face → row */
-  _fly(rowEl, faceEl, a, dir) {
-    const root = this.rootRef.current, g = this.ghostRef.current; if (this._flyAnim) { try { this._flyAnim.cancel(); } catch (e) { } this._flyDone && this._flyDone(); }
-    const k0 = (this.state.review && this.state.review.speed === 0.5) ? 2 : 1; const ms = (dir === 'fwd' ? 400 : 340) * k0;
-    const d = this._layoutPos(faceEl, root); const cs = getComputedStyle(faceEl); const df = parseFloat(cs.fontSize) || 30;
-    g.textContent = faceEl.textContent; g.style.left = d.x + 'px'; g.style.top = d.y + 'px'; g.style.width = faceEl.offsetWidth + 'px';
-    /* both ends on a face (no paper to cross): fly at the card's level, under the card that stays in place */
-    g.style.zIndex = rowEl.closest('.c05-fc') && faceEl.closest('.c05-fc') ? '1' : '';
-    g.style.fontSize = cs.fontSize; g.style.lineHeight = cs.lineHeight; g.style.fontWeight = cs.fontWeight; g.style.letterSpacing = cs.letterSpacing; g.style.fontFamily = cs.fontFamily; g.style.textWrap = cs.getPropertyValue('text-wrap') || 'wrap';   /* the target's own type: 管理 title 30/500, 详情 name 22/600 */
-    const rowT = 'translate(' + (a.x - d.x).toFixed(1) + 'px,' + (a.y - d.y).toFixed(1) + 'px) scale(' + (a.f / df).toFixed(4) + ')';
-    /* the card waits for the title: when the title's path crosses the card band (zb … zb + 265), the arriving card comes in after it */
-    const zb = parseFloat(root.style.getPropertyValue('--c05-zb')) || 140; const y0 = Math.min(a.y, d.y), y1 = Math.max(a.y, d.y);
-    this._flyCross = y0 < zb + 265 && y1 > zb + 20;
-    const from = dir === 'fwd' ? { transform: rowT, color: a.color } : { transform: 'none', color: cs.color };
-    const to = dir === 'fwd' ? { transform: 'none', color: cs.color } : { transform: rowT, color: a.color };
-    /* the source vanishes under the ghost at once; the destination's own words take over in the last 70ms (the ghost keeps the face
-       title's wrapping while it flies; a row may wrap differently — a short hand-over instead of a pop) */
-    const src = dir === 'fwd' ? rowEl : faceEl, dst = dir === 'fwd' ? faceEl : rowEl; src.style.visibility = 'hidden'; dst.style.visibility = ''; g.style.opacity = '1';
-    if (this._dstAnim) { try { this._dstAnim.cancel(); } catch (e) { } } if (this._gFade) { try { this._gFade.cancel(); } catch (e) { } }
-    const hand = Math.min(70 * k0, ms * .25);
-    try { this._dstAnim = dst.animate([{ opacity: 0 }, { opacity: 0, offset: (ms - hand) / ms }, { opacity: 1 }], { duration: ms, easing: 'linear', fill: 'none' }); this._gFade = g.animate([{ opacity: 1 }, { opacity: 0 }], { duration: hand, delay: ms - hand, easing: 'linear', fill: 'forwards' }); } catch (e) { dst.style.visibility = 'hidden'; }
-    /* the face is handed over along the title's path, so no frame holds two faces and none is empty:
-       fwd  — the new face appears below an edge that rises from the tapped row to the top of the face with the title;
-       back — the face being returned to fills in from the top, only above the falling title (a shade pulled down behind it).
-       Both are sampled from the flight's own curve and start once the leaving face has cleared (90ms). */
-    if (this._revealAnim) { try { this._revealAnim.cancel(); } catch (e) { } this._revealAnim = null; }
-    if (this._revealEl) { this._revealEl.style.transition = ''; this._revealEl = null; }
-    const host = root.querySelector(dir === 'back' ? '.c05-pg.is-under .c05-fc' : '.c05-pg.is-top .c05-fc');
-    if (host) {
-      const H = host.offsetHeight + 60, start = 90 / (dir === 'fwd' ? 400 : 340), kf = [], N = 16, lh = parseFloat(cs.lineHeight) || df * 1.25;
-      const bez = (x1, y1b, x2, y2) => (u) => { let lo = 0, hi = 1, sp = u; for (let i = 0; i < 24; i++) { sp = (lo + hi) / 2; const x = 3 * (1 - sp) * (1 - sp) * sp * x1 + 3 * (1 - sp) * sp * sp * x2 + sp * sp * sp; if (x < u) lo = sp; else hi = sp; } return 3 * (1 - sp) * (1 - sp) * sp * y1b + 3 * (1 - sp) * sp * sp * y2 + sp * sp * sp; };
-      const ease = bez(.55, 0, .25, 1);
-      for (let i = 0; i <= N; i++) { const u = i / N; const shown = u >= start; const op = shown ? Math.min(1, (u - start) / .3) : 0; let clip;
-        if (dir === 'back') { const y = d.y + (a.y - d.y) * ease(u); clip = 'inset(0 0 ' + Math.max(0, H - (shown ? y : 0)).toFixed(1) + 'px 0)'; }
-        else {   /* visible = above the title's path (never crossed) ∪ below the rising title's bottom edge */
-          const e = ease(u), sc = a.f / df + (1 - a.f / df) * e, y = a.y + (d.y - a.y) * e, P = Math.max(0, d.y - 4), E = y + lh * sc + 4;
-          clip = shown ? 'polygon(0 0,100% 0,100% ' + P.toFixed(1) + 'px,0 ' + P.toFixed(1) + 'px,0 ' + E.toFixed(1) + 'px,100% ' + E.toFixed(1) + 'px,100% 100%,0 100%)' : 'polygon(0 0,100% 0,100% 0px,0 0px,0 ' + H + 'px,100% ' + H + 'px,100% 100%,0 100%)'; }
-        kf.push({ offset: u, clipPath: clip, opacity: op, transform: 'none' }); }
-      kf[N] = { offset: 1, clipPath: dir === 'back' ? 'inset(0px 0 0px 0)' : 'polygon(0 0,100% 0,100% 0px,0 0px,0 0px,100% 0px,100% 100%,0 100%)', opacity: 1, transform: 'none' };
-      if (dir === 'fwd') { host.style.transition = 'none'; this._revealEl = host; }   /* the sweep owns the arrival; the CSS fade would double it */
-      try { this._revealAnim = host.animate(kf, { duration: ms, easing: 'linear', fill: 'none' }); const el = host; this._revealAnim.onfinish = this._revealAnim.oncancel = () => { if (this._revealEl === el) { el.style.transition = ''; this._revealEl = null; } }; } catch (e) { }
-    }
-    const done = () => { if (this._flyDone !== done) return; this._flyDone = null; this._flyAnim = null; g.style.opacity = '0'; rowEl.style.visibility = ''; faceEl.style.visibility = '';
-      if (this._gFade) { try { this._gFade.cancel(); } catch (e) { } this._gFade = null; } if (this._dstAnim) { try { this._dstAnim.cancel(); } catch (e) { } this._dstAnim = null; } };
-    this._flyDone = done;
-    /* slow start: the title lifts off while the face it leaves (or lands on) is still clearing, then crosses an empty face */
-    try { this._flyAnim = g.animate([from, to], { duration: ms, easing: 'cubic-bezier(.55,0,.25,1)', fill: 'both' }); this._flyAnim.onfinish = done; this._flyAnim.oncancel = done; }
-    catch (e) { done(); }
+  /* before the DOM changes: copies of what is about to be replaced (the card, the home parts of a role / section switch, a closing sheet) */
+  getSnapshotBeforeUpdate(pp, ps) {
+    this._snap = null; const root = this.rootRef.current; if (!root || !ps || this.isRM()) return null;
+    const s = this.state, snap = {}, card = this.cardRef.current, hv = this._heroVM, nk = hv && hv.on ? hv.key : '';
+    if (card && this._shownKey && nk !== this._shownKey && +getComputedStyle(card).opacity > .05) snap.card = { el: this._clone(card), top: card.offsetTop };
+    if (card) snap.cardTop = card.offsetTop;
+    const st = s.nav; if ((st.phase === 'enter' || st.phase === 'exit') && this._navSig() !== this._moSig) { const t = root.querySelector('.c05-tint'); if (t) { const a = getComputedStyle(t); snap.tint = { el: t, bg: a.backgroundColor, op: a.opacity, bo: getComputedStyle(t, '::before').opacity }; t.classList.add('no-tr'); } }
+    if (s.role !== ps.role || s.section !== ps.section) snap.home = this._snapHome(root, s, ps);
+    if (ps.sheet && !s.sheet) { const ov = root.querySelector('.c05-over'); if (ov) snap.sheet = this._clone(ov); }
+    this._snap = snap; return null;
+  }
+  _snapHome(root, s, ps) {
+    const pg = root.querySelector('.c05-pg.pg-home'), paper = pg && pg.querySelector('.c05-paper'), sc = pg && pg.querySelector('.c05-sc'); if (!paper || !sc) return null;
+    const self = this, H = root.offsetHeight, pt = this._rel(paper, root).y, lo = Math.max(pt, this._rel(sc, root).y), box = document.createElement('div'), cs = getComputedStyle(root), parts = [];
+    box.className = 'c05-snapbox c05-was'; ['--c05-ink', '--c05-ink2', '--c05-ink3', '--c05-line', '--c05-face'].forEach(function (v) { box.style.setProperty(v, cs.getPropertyValue(v)); }); box.style.color = cs.getPropertyValue('--c05-ink');
+    const put = function (el, a, b) { const r = self._rel(el, root); if (!r.h || r.y >= b || r.y + r.h <= a) return; const cl = self._clone(el); cl.style.cssText += ';position:absolute;margin:0;left:' + r.x + 'px;top:' + r.y + 'px;width:' + r.w + 'px;clip-path:inset(' + Math.max(0, a - r.y) + 'px -40px ' + Math.max(0, r.y + r.h - b) + 'px -40px)'; box.appendChild(cl); parts.push(cl); };
+    pg.querySelectorAll('.c05-fc .c05-zb').forEach(function (el) { put(el, 0, pt); });
+    pg.querySelectorAll('.c05-cap, .c05-list').forEach(function (el) { put(el, lo, H); });
+    const o = { current: 0, drafts: 1, history: 2 }, sign = s.role !== ps.role ? (s.role === 'hosted' ? 1 : -1) : ((o[s.section] || 0) > (o[ps.section] || 0) ? 1 : -1);
+    let tint = null; if (s.role !== ps.role) { const t = root.querySelector('.c05-tint'); if (t) { tint = document.createElement('div'); tint.className = root.className + ' c05-was'; tint.setAttribute('data-skin', root.getAttribute('data-skin') || ''); tint.appendChild(t.cloneNode(false)); } }
+    return { box: box, parts: parts, sign: sign, pt: pt, tint: tint };
+  }
+  _navMotion(snap) {
+    const root = this.rootRef.current, st = this.state.nav; if (!root || !st) return;
+    if (st.phase === 'idle') { if (this._mo) this._endMotion(); this._moSig = ''; const k = this._landWant; this._landWant = null;
+      if (k && !this.state.ui.landKey && root.querySelector('.c05-pg.is-top [data-origin="' + k + '"]')) { this._ui({ landKey: k }); this.holdKey('land', 1100, () => this._ui({ landKey: null })); } return; }
+    if (st.phase !== 'enter' && st.phase !== 'exit') return;
+    const sig = this._navSig(); if (sig === this._moSig) return; this._moSig = sig; const top = st.stack[st.stack.length - 1];
+    /* back while the same page is still opening: the opening plays backwards from where it is (no jump to the open page first) */
+    const m = this._mo; if (m && m.dir === 'fwd' && st.dir === 'back' && m.id === top.id && !this.isRM()) { m.dir = 'back'; m.anims.forEach(function (a) { try { a.reverse(); } catch (e) { } }); this._replayFor(st, top); return; }
+    if (m) this._endMotion(); this._replayFor(st, top);
+    if (this.isRM()) { if (snap.tint) snap.tint.el.classList.remove('no-tr'); return; }
+    try { if (st.dir === 'role' || (st.dir === 'swap' && !st.leaving)) this._xfade(st.dir, snap); else this._wipe(st.dir, snap, top); } catch (e) { this._endMotion(); }
+  }
+  _endMotion() { const m = this._mo; this._mo = null; if (!m) return; m.anims.forEach(function (a) { try { a.cancel(); } catch (e) { } }); m.clean.forEach(function (f) { try { f(); } catch (e) { } }); }
+  /* 关键帧: every animation of the running transition is paused at frame × its length; released → they play on from there */
+  _syncScrub() { const m = this._mo, r = this.state.review || {}; if (!m) return; m.anims.forEach(function (a) { try { if (r.scrub != null) { a.pause(); a.currentTime = Math.min(r.scrub / 100 * m.T, m.T - 1); } else if (r.paused) a.pause(); else if (a.playState === 'paused') a.play(); } catch (e) { } }); }
+  /* 重播 (and the slider at rest): the transition that just ran, again — with its row as the origin, so the title flies too */
+  _replayFor(st, top) {
+    const self = this, s = top.s, p = top.p, key = top.key, ev = function () { const r = self.rootRef.current, el = key && r && r.querySelector('.c05-pg.is-top [data-origin="' + key + '"]'); return el ? { currentTarget: el } : null; };
+    if (st.dir === 'fwd') this.lastMotion = { name: 'go:' + s, fn: function () { if (self._top().s !== s) return; self.back(); self.afterKey('replay', self.navMs('back') + 60, function () { self.go(s, p, ev()); }); } };
+    else if (st.dir === 'back') this.lastMotion = { name: 'back:' + s, fn: function () { if (self._top().s === s) return; self.go(s, p, ev()); self.afterKey('replay', self.navMs('fwd') + 80, function () { if (self._top().s === s) self.back(); }); } };
+    else if (st.dir === 'role') { const r0 = this.state.role; this.lastMotion = { name: 'role', fn: function () { self.setRole(r0 === 'joined' ? 'hosted' : 'joined'); self.afterKey('replay', self.navMs('role') + 80, function () { self.setRole(r0); }); } }; }
+  }
+  /* the line a band opens from / closes onto: the row's own line (a tall origin such as 「这一场」: its title, or the point that was tapped) */
+  _fallbackKey(top, pg) { const id = top.p && (top.p.eventId || top.p.draftId), k = id && 'row-' + id, el = k && pg && pg.querySelector('[data-origin="' + k + '"]'); if (!el) return null; try { this.reveal(el, false, { soft: true }); } catch (e) { } this._landWant = k; return k; }
+  _lineY(dir, top, pg, H) {
+    const root = this.rootRef.current, p = this._ptr, key = top.key || (dir === 'back' ? this._fallbackKey(top, pg) : null), el = key && pg && pg.querySelector('[data-origin="' + key + '"]');
+    const box = el ? this._rel(el, root) : (dir !== 'back' ? top.from : null), near = p && Date.now() - p.t < 2000;
+    if (box && box.h > 0) { if (box.h <= 120) return box.y + box.h / 2; const t = el && el.querySelector('.c05-name, .t'); if (t) { const r = this._rel(t, root); return r.y + r.h / 2; } if (near && p.y >= box.y && p.y <= box.y + box.h) return p.y; return box.y + box.h / 2; }
+    return dir !== 'back' && near ? p.y : H * .5;
+  }
+  _wipe(dir, snap, top) {
+    const root = this.rootRef.current, H = root.offsetHeight, W = root.offsetWidth, T = (dir === 'back' ? 340 : dir === 'swap' ? 320 : 400) * this._kk(), E = 'cubic-bezier(.32,0,.14,1)';
+    const inPg = root.querySelector('.c05-pg.is-top'), outPg = root.querySelector(dir === 'swap' ? '.c05-pg.is-leaving' : '.c05-pg.is-under');
+    const m = this._mo = { anims: [], clean: [], T: T, dir: dir, id: top.id };
+    const add = function (el, kf, o) { const a = el.animate(kf, Object.assign({ duration: T, easing: E, fill: 'both' }, o || {})); m.anims.push(a); return a; };
+    const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
+    const fl = inPg && outPg ? this._flight(dir, top, inPg, outPg, m, add) : null, cy = fl ? fl.cy : this._lineY(dir, top, outPg, H);
+    const B = dir === 'back' ? [[0, H], [cy, cy]] : [[cy, cy], [0, H]], f = function (v) { return v.toFixed(1) + 'px'; };
+    const IN = function (b, oy, h) { return 'inset(' + f(b[0] - oy) + ' -400px ' + f(oy + h - b[1]) + ' -400px)'; };
+    const OUT = function (b, oy, w) { const t = f(b[0] - oy), u = f(b[1] - oy), L = '-400px ', R = (w + 400) + 'px ', Z = f(H - oy + 400); return 'polygon(' + L + '-400px,' + R + '-400px,' + R + t + ',' + L + t + ',' + L + u + ',' + R + u + ',' + R + Z + ',' + L + Z + ')'; };
+    const cut = function (el, oy, h, w, inside) { add(el, B.map(function (b) { return { clipPath: inside ? IN(b, oy, h) : OUT(b, oy, w) }; })); };
+    if (inPg) cut(inPg, 0, H, W, true); if (outPg) cut(outPg, 0, H, W, false);
+    /* the card: the composition that stays keeps the real card on its side of the band, a copy of the old one is on the other side;
+       an unchanged card only moves to its new place on the same curve */
+    const card = this.cardRef.current; if (card) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
+      if ((this._c.heroKey || '') === (this._shownKey || '')) { if (snap.cardTop != null && snap.cardTop !== card.offsetTop) add(card, [{ top: snap.cardTop + 'px' }, { top: card.offsetTop + 'px' }]); }
+      else { const ri = dir !== 'back', cs = snap.card, hold = this.snapCardRef.current; if (!card.classList.contains('is-off')) cut(card, card.offsetTop, card.offsetHeight, card.offsetWidth, ri);
+        if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); cut(cs.el, cs.top, card.offsetHeight, card.offsetWidth, !ri); } } }
+    /* the face colour (and the light of 光晕 / 落日) on the same curve */
+    const t = tn && tn.el; if (t) { const a = getComputedStyle(t), bo = getComputedStyle(t, '::before').opacity;
+      if (a.backgroundColor !== tn.bg || a.opacity !== tn.op) add(t, [{ backgroundColor: tn.bg, opacity: tn.op }, { backgroundColor: a.backgroundColor, opacity: a.opacity }]);
+      if (bo !== tn.bo) add(t, [{ opacity: tn.bo }, { opacity: bo }], { pseudoElement: '::before' }); }
+  }
+  /* the title in flight, inside the band: row title (paper) → face title (管理: the page title; 详情 / 历史 / 候补: the name under the card) */
+  _flight(dir, top, inPg, outPg, m, add) {
+    const root = this.rootRef.current, g = this.ghostRef.current, SURF = { manage: 1, detail: 1, waitlist: 1, history: 1, draft: 1 }, TICKET = { ticket: 1, reply: 1 };
+    if (!g || dir === 'swap' || !(SURF[top.s] || (TICKET[top.s] && dir === 'back')) || this.isRM()) return null;
+    const key = top.key || (dir === 'back' ? this._fallbackKey(top, outPg) : null), origin = key && outPg.querySelector('[data-origin="' + key + '"]'); if (!origin) return null;
+    const norm = function (t) { return String(t || '').replace(/\s+/g, ' ').trim(); }, row = origin.querySelector('.c05-row .t') || origin.querySelector('.t') || origin.querySelector('.c05-name'); if (!row) return null;
+    const want = norm(row.textContent); let face = null; inPg.querySelectorAll('.c05-fc .c05-ttl, .c05-fc .c05-name, .c05-fc .ju-ticket-title, .c05-fc .c05-hv.is-ash .c05-imp-t').forEach(function (el) { if (!face && norm(el.textContent) === want && el.offsetWidth) face = el; }); if (!face) return null;
+    if (dir === 'back') { if ((parseFloat(inPg.style.getPropertyValue('--c05-p')) || 0) > .01) return null; const sg = face.closest('[data-print-stage]'); if (sg && sg.dataset.state !== 'ready' && sg.dataset.state !== 'torn') return null; }
+    const ra = this._rel(row, root), ro = this._rel(origin, root), d = this._layoutPos(face, root), cs = getComputedStyle(face), df = parseFloat(cs.fontSize) || 30, af = parseFloat(getComputedStyle(row).fontSize) || 14, rc = getComputedStyle(row).color;
+    Object.assign(g.style, { left: d.x + 'px', top: d.y + 'px', width: face.offsetWidth + 'px', fontSize: cs.fontSize, lineHeight: cs.lineHeight, fontWeight: cs.fontWeight, letterSpacing: cs.letterSpacing, fontFamily: cs.fontFamily, textWrap: cs.getPropertyValue('text-wrap') || 'wrap', zIndex: row.closest('.c05-fc') ? '1' : '', opacity: '1' }); g.textContent = face.textContent;
+    const rowT = 'translate(' + (ra.x - d.x).toFixed(1) + 'px,' + (ra.y - d.y).toFixed(1) + 'px) scale(' + (af / df).toFixed(4) + ')', fwd = dir !== 'back', src = fwd ? row : face, dst = fwd ? face : row, T = m.T, hand = Math.min(70 * this._kk(), T * .25) / T;
+    src.style.visibility = 'hidden'; dst.style.visibility = '';
+    add(g, fwd ? [{ transform: rowT, color: rc }, { transform: 'none', color: cs.color }] : [{ transform: 'none', color: cs.color }, { transform: rowT, color: rc }]);
+    /* the hand-over: the destination's own words take over in the last 70ms (a row may wrap differently from the face) */
+    add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' });
+    m.clean.push(function () { g.style.opacity = '0'; src.style.visibility = ''; dst.style.visibility = ''; });
+    return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
+  }
+  _xfade(dir, snap) {
+    const root = this.rootRef.current, k = this._kk(), D = 90 * k, E = 'cubic-bezier(.3,0,.3,1)', h = snap.home, dx = 18 * (h ? h.sign : 1), over = this.snapOverRef.current;
+    const m = this._mo = { anims: [], clean: [], T: (dir === 'role' ? 240 : 90) * k, dir: dir, id: 0 };
+    const tn = snap.tint; if (tn) m.clean.push(function () { tn.el.classList.remove('no-tr'); });
+    const mv = function (el, out) { m.anims.push(el.animate(out ? [{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dx) + 'px)' }] : [{ opacity: 0, transform: 'translateX(' + dx + 'px)' }, { opacity: 1, transform: 'none' }], { duration: D, easing: E, fill: 'both' })); };
+    if (h && over) { over.appendChild(h.box); m.clean.push(function () { h.box.remove(); }); h.parts.forEach(function (p) { mv(p, true); }); }
+    const pg = root.querySelector('.c05-pg.pg-home'); if (pg) pg.querySelectorAll('.c05-fc .c05-zb, .c05-cap, .c05-list').forEach(function (el) { mv(el, false); });
+    const card = this.cardRef.current, cs = snap.card; if (card && (this._c.heroKey || '') !== (this._shownKey || '')) { const tr = card.style.transition; card.style.transition = 'none'; m.clean.push(function () { card.style.transition = tr; });
+      if (!card.classList.contains('is-off')) mv(card, false);
+      if (cs && over) { const pt = h ? h.pt : 1e4; cs.el.style.cssText += ';top:' + cs.top + 'px;clip-path:inset(-200px -200px ' + Math.max(0, cs.top + card.offsetHeight - pt) + 'px -200px)'; over.appendChild(cs.el); m.clean.push(function () { cs.el.remove(); }); mv(cs.el, true); } }
+    /* role: the whole face colour (光晕 / 落日: its light too) fades from the old role's to the new one's */
+    if (h && h.tint && this.snapTintRef.current) { this.snapTintRef.current.appendChild(h.tint); m.clean.push(function () { h.tint.remove(); }); m.anims.push(h.tint.animate([{ opacity: 1 }, { opacity: 0 }], { duration: m.T, easing: 'ease', fill: 'both' })); }
+  }
+  /* a closing sheet: the scrim fades and the paper drops away (220ms) instead of vanishing in one frame */
+  _sheetClose(snap) {
+    const cl = snap.sheet, hold = this.snapSheetRef.current; if (!cl || !hold) return; const k = this._kk(), sh = cl.querySelector('.c05-sheet'); hold.appendChild(cl);
+    const a = cl.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 220 * k, easing: 'ease-in', fill: 'both' }); if (sh) sh.animate([{ transform: 'none' }, { transform: 'translateY(64px)' }], { duration: 220 * k, easing: 'cubic-bezier(.4,0,1,1)', fill: 'both' });
+    a.onfinish = a.oncancel = function () { cl.remove(); };
+  }
+  /* the face scrolls the page too: a vertical drag (touch) or a wheel that starts on the face or the card moves the top page's paper
+     (the face has touch-action:none, so nothing else pans); a drag never ends in a click */
+  _bindFace() {
+    const root = this.rootRef.current; if (!root || this._fb) return; this._fb = 1; const self = this; let d = null, fl = 0;
+    const ok = function (t) { return t && t.closest && !t.closest('[data-scroller],.c05-over,[data-t08-scope],[data-tear],input,textarea,select'); };
+    const sc = function () { const s = root.querySelector('.c05-pg.is-top .c05-sc'); if (!s) return null; const o = getComputedStyle(s).overflowY; return (o === 'auto' || o === 'scroll') && s.scrollHeight - s.clientHeight > 1 ? s : null; };
+    root.addEventListener('wheel', function (e) { if (!ok(e.target)) return; const s = sc(), dy = e.deltaY * (e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? 600 : 1); if (!s || !dy) return; e.preventDefault(); s.scrollTop += dy; }, { passive: false });
+    root.addEventListener('pointerdown', function (e) { const b = root.getBoundingClientRect(), k = (b.width / root.offsetWidth) || 1; self._ptr = { y: (e.clientY - b.top) / k, t: Date.now() }; cancelAnimationFrame(fl);
+      const s = e.pointerType === 'touch' && ok(e.target) ? sc() : null; d = s ? { id: e.pointerId, x: e.clientX, y: e.clientY, s: s, st: s.scrollTop, on: 0, p: [[e.timeStamp, e.clientY]] } : null; }, true);
+    root.addEventListener('pointermove', function (e) { if (!d || e.pointerId !== d.id) return; const dy = e.clientY - d.y; if (!d.on) { if (Math.abs(dy) < 8 || Math.abs(dy) < Math.abs(e.clientX - d.x)) return; d.on = 1; d.y = e.clientY; d.st = d.s.scrollTop; }
+      d.s.scrollTop = d.st - (e.clientY - d.y); d.p.push([e.timeStamp, e.clientY]); if (d.p.length > 5) d.p.shift(); }, true);
+    const up = function (e) { if (!d || e.pointerId !== d.id) return; const q = d; d = null; if (!q.on) return; self._noClick = Date.now(); const a = q.p[0], b = q.p[q.p.length - 1]; let v = b[0] > a[0] ? (a[1] - b[1]) / (b[0] - a[0]) : 0; if (e.type !== 'pointerup' || Math.abs(v) < .2) return;
+      let last = performance.now(); const step = function (now) { const dt = Math.min(32, now - last), s0 = q.s.scrollTop; last = now; q.s.scrollTop += v * dt; v *= Math.pow(.9965, dt); if (Math.abs(v) > .02 && q.s.scrollTop !== s0) fl = requestAnimationFrame(step); }; fl = requestAnimationFrame(step); };
+    root.addEventListener('pointerup', up, true); root.addEventListener('pointercancel', up, true);
+    root.addEventListener('click', function (e) { if (self._noClick && Date.now() - self._noClick < 450) { self._noClick = 0; e.stopPropagation(); e.preventDefault(); } }, true);
   }
   /* back to a row that changed group: the controller reveals it for the exit, then restores the old scroll memo when the stack pops,
      which can leave the landing row off-screen. The landing spot wins: if the landed row is hidden, the list stays where the reveal put
@@ -1299,11 +1336,6 @@ class Component extends DCLogic {
       this._exitScroll = null;
     }
   }
-  /* a sheet that was pulled up over the face cannot just dip out of the way: while it is being left (under, enter / in) it fades */
-  _sheetOut() {
-    const root = this.rootRef.current, st = this.state.nav; if (!root || !st) return;
-    root.querySelectorAll('.c05-pg').forEach(function (pg) { const sc = pg.querySelector('.c05-sc'); const on = pg.classList.contains('is-under') && (st.phase === 'enter' || st.phase === 'in') && !!sc && sc.scrollTop > 4; pg.classList.toggle('sheet-out', on); });
-  }
   /* entering 管理 with a focus section: the controller scrolls that section to the top of its scroller. In C05 the paper's first
      section already sits under the face, so when it is visible with the face fully open, the face stays open (scroll back to 0). */
   _manageEntry() {
@@ -1316,13 +1348,13 @@ class Component extends DCLogic {
     if (at0 + 150 <= ph.height) { sc.scrollTop = 0; this._applyHc && this._applyHc(sc); this._faceP(sc); }
   }
   /* ---------------- settling in place: hero card swap, head status, seat segments ---------------- */
-  _animateFace() {
-    const rm = this.isRM && this.isRM(); const k = (this.state.review && this.state.review.speed === 0.5) ? 2 : 1;
-    const card = this.cardRef.current; const hk = this._c && this._c.heroKey || '';
-    /* a new card arrives only after the old face has cleared: 60ms after a let-go, 170ms when the card was off (票根 → 首页) */
-    if (card && hk !== this._heroKey) { const had = this._heroKey !== undefined; this._heroKey = hk; const moving = !!(this._c && this._c.nav.moving);
-      const delay = this._heroArrive != null ? this._heroArrive : (moving ? (this._c.nav.dir === 'back' ? 260 : (this._flyCross ? 300 : 170)) : 0); this._heroArrive = null;
-      if (had && !rm && hk) { try { card.animate([{ opacity: 0, transform: 'translateY(12px)' }, { opacity: 1, transform: 'none' }], { duration: 260 * k, delay: delay * k, fill: 'backwards', easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } }
+  _animateFace(snap) {
+    const rm = this.isRM && this.isRM(), k = this._kk(), card = this.cardRef.current, hk = this._c && this._c.heroKey || '';
+    /* the card changed without a page change (an action, the clock): the old one lifts away, the new one settles in */
+    if (card && hk !== (this._shownKey || '') && this._shownKey !== undefined && !this._mo && !rm) { const cs = snap && snap.card, hold = this.snapCardRef.current;
+      if (cs && hold) { cs.el.style.top = cs.top + 'px'; hold.appendChild(cs.el); const a = cs.el.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateY(-8px)' }], { duration: 160 * k, easing: 'ease', fill: 'both' }); a.onfinish = a.oncancel = function () { cs.el.remove(); }; }
+      if (!card.classList.contains('is-off')) { try { card.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 220 * k, delay: 60 * k, fill: 'backwards', easing: 'cubic-bezier(.2,.8,.2,1)' }); } catch (e) { } } }
+    if (card) this._shownKey = hk;
     /* numbers that settle in place: every [data-settle] on the top page, keyed by (scope, name); a changed value rolls in + is marked */
     const root = this.rootRef.current, c = this._c; const pg = root && root.querySelector('.c05-pg.is-top');
     if (pg && c) { const scope = c.nav.cur === 'manage' ? 'm:' + c.manage.eventId : c.nav.cur === 'home' ? 'h:' + c.role : c.nav.cur; const self = this;
@@ -1541,15 +1573,9 @@ class Component extends DCLogic {
     const joined = c.role === 'joined', cur = c.section === 'current', hist = c.section === 'history', drafts = c.section === 'drafts';
     /* home: the lead lives on the face, the paper lists the rest */
     const lead = this._lead(c); let hero = this._hero(c);
-    /* the card is one object: during a transition the old card lets go first (120ms) and the new one arrives with the new face */
-    if (this._heroHold && (!c.nav.moving || Date.now() - this._heroHoldAt > 600)) this._heroHold = null;
-    if (this._heroShown && hero.key !== this._heroShown.key && this._heroShown.on && c.nav.moving && !this.isRM() && !this._heroHold) {
-      this._heroHold = this._heroShown; this._heroHoldAt = Date.now(); const self = this; this.after(100, function () { if (self._heroHold) { self._heroHold = null; self._heroShown = null; self._heroArrive = (self.state.nav && self.state.nav.dir === 'back') ? 160 : (self._flyCross ? 200 : 60); self.setState({}); } });
-    }
-    if (this._heroHold) hero = Object.assign({}, this._heroHold, { cls: (this._heroHold.cls || '') + ' is-letgo', open: null }); else this._heroShown = hero;
     /* 局卡 sheet: the card is lifted; on close it travels back — unless its place is under the pulled-up paper, then it fades out where it is
        (no slide that ends by popping behind the paper) */
-    const lifted = !!(c.sheet.on && c.sheet.kind === 'card' && hero.on && !this._heroHold);
+    const lifted = !!(c.sheet.on && c.sheet.kind === 'card' && hero.on);
     if (this._lifted && !lifted) { const rt = this.rootRef.current, tp = rt && rt.querySelector('.c05-pg.is-top'); if (tp && (parseFloat(tp.style.getPropertyValue('--c05-p')) || 0) > .5 && !this.isRM()) { this._dropAt = Date.now(); const self = this; setTimeout(function () { self.setState({}); }, 460); setTimeout(function () { self.setState({}); }, 560); } }
     this._lifted = lifted;
     if (lifted) hero = Object.assign({}, hero, { cls: (hero.cls || '') + ' is-lifted' });
@@ -1614,7 +1640,7 @@ class Component extends DCLogic {
     const faceCls = (draining ? ' is-draining' : '') + (c.nav.cur === 'history' && hk === 'void' ? ' at-hvoid' : '') + ((c.nav.cur === 'history' && hk === 'drained') || (c.nav.cur === 'manage' && mCancel) ? ' at-drained' : '');
     const dw = c.detail.on ? c.detail.when : null; const ww = c.waitlist.on ? c.waitlist.row.when : null; const hw = c.history.on ? c.history.when : null; const mw = c.manage.on && !c.manage.missing ? c.manage.head.when : null; const mp = mw ? c.manage.head.progress : null;
     return {
-      panel, rootRef: this.rootRef, envRef: this.envRef, cardRef: this.cardRef, cstampRef: this.cstampRef, homeFcRef: this.homeFcRef, manageStatusRef: this.manageStatusRef, manageSeatsRef: this.manageSeatsRef, leadSeatsRef: this.leadSeatsRef, c, hero, lead, home,
+      panel, rootRef: this.rootRef, envRef: this.envRef, cardRef: this.cardRef, cstampRef: this.cstampRef, snapTintRef: this.snapTintRef, snapCardRef: this.snapCardRef, snapOverRef: this.snapOverRef, snapSheetRef: this.snapSheetRef, emberRef: this.emberRef, homeFcRef: this.homeFcRef, manageStatusRef: this.manageStatusRef, manageSeatsRef: this.manageSeatsRef, leadSeatsRef: this.leadSeatsRef, c, hero, lead, home,
       onFaceScroll: this._onFaceScroll, onReadScroll: this._onReadScroll, ghostRef: this.ghostRef,
       detail: { label: c.detail.on ? this._nb(c.detail.label) : '', name: c.detail.on ? this._nb(c.detail.event.title) : '', wd: dw ? dw.wdZh + ' ' + dw.md : '', time: dw ? dw.time : '', sub: c.detail.on ? c.detail.place.full + ' · ' + c.detail.seatText : '' },
       read: { progressPct: Math.round((c.read.progress || 0) * 100) },

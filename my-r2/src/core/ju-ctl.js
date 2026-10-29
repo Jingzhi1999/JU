@@ -207,7 +207,8 @@
         var key = e ? it.eventId + ':' + (s === 'reply' ? e.version : (it.ticket ? it.ticket.version : e.version)) : null;
         var hasTicket = !!(it && e && (s === 'reply' ? it.stage === 'reschedule' : (it.ticket && !it.ticket.void && (it.stage === 'tear' || it.stage === 'contact' || it.stage === 'going'))));
         var needPrint = hasTicket && key && !this.state.ui.ticket.printed[key] && !(it.ticket && it.ticket.torn && s !== 'reply');
-        this._uiIn('ticket', { printing: needPrint ? key : null, tear: { progress: 0, active: false, done: false, error: '' }, contactOpen: !!(params.contact) });
+        var tornIn = s === 'ticket' && hasTicket && !!(it.ticket && it.ticket.torn) && (it.stage === 'contact' || it.stage === 'going');   /* a ticket torn earlier opens with its contact layer (contact and going alike — C04: going had no way in) */
+        this._uiIn('ticket', { printing: needPrint ? key : null, tear: { progress: 0, active: false, done: false, error: '' }, contactOpen: !!(params.contact) || tornIn });
         this._ui({ result: null });
         if (needPrint && !ritual('print')) this.afterKey('print', this.printMs || 2300, function () { self.ticketPrinted(key); });
       }
@@ -623,7 +624,7 @@
       var rowOf = function (id) { return jcur.concat(jhist).filter(function (r) { return r.id === id; })[0] || null; };
       var curId = top.p.eventId || (under && under.p.eventId) || null;
       var result = ui.result && ui.result.eventId === curId ? ui.result : null;
-      var memberRows = function (r) { return r.item.members.filter(function (m) { return m.status !== 'open'; }).map(function (m) { var lapsed = m.status === 'invited' && (r.stage === 'expired' || (m.deadline && m.deadline <= now));   /* an expired reservation read from history is not「剩 1 小时」(C03 report) */ var txt = m.status === 'host' ? '局主' : m.status === 'confirmed' ? (r.stage === 'gathering' ? '已确认 · 等成局出票' : '已确认') : lapsed ? '预留已过期' : m.status === 'invited' ? '已预留 · ' + JU.fmt.hoursLeft((m.deadline || 0) - now) : '位置已释放'; return { id: m.id, name: m.you ? '你' : m.name, status: m.status, statusText: txt, you: !!m.you, leftText: m.status === 'invited' && m.deadline && !lapsed ? JU.fmt.left(Math.max(0, m.deadline - now)) : '', tone: m.status === 'host' ? 'host' : m.status === 'confirmed' ? 'ok' : m.status === 'invited' && !lapsed ? 'res' : 'void' }; }); };
+      var memberRows = function (r) { return r.item.members.filter(function (m) { return m.status !== 'open'; }).map(function (m) { var released = m.status === 'invited' && m.you && r.stage === 'released'; var lapsed = m.status === 'invited' && !released && (r.stage === 'expired' || (m.deadline && m.deadline <= now)); var timed = m.status === 'invited' && !released && !lapsed && !!m.deadline;   /* released / expired / untimed reservations never show a countdown (C03 verify) */   /* an expired reservation read from history is not「剩 1 小时」(C03 report) */ var txt = m.status === 'host' ? '局主' : m.status === 'confirmed' ? (r.stage === 'gathering' ? '已确认 · 等成局出票' : '已确认') : released ? '已放弃预留' : lapsed ? '预留已过期' : timed ? '已预留 · ' + JU.fmt.hoursLeft(m.deadline - now) : m.status === 'invited' ? '已预留' : '位置已释放'; return { id: m.id, name: m.you ? '你' : m.name, status: m.status, statusText: txt, you: !!m.you, leftText: timed ? JU.fmt.left(Math.max(0, m.deadline - now)) : '', tone: m.status === 'host' ? 'host' : m.status === 'confirmed' ? 'ok' : m.status === 'invited' && !lapsed && !released ? 'res' : 'void' }; }); };
       var detailOf = function (id) {
         var r = rowOf(id); if (!r) return { on: false };
         var st = r.stage; var cd = leftOf(r);
@@ -647,7 +648,7 @@
       var rd = ui.read; var readRow = is.read && top.p.eventId ? rowOf(top.p.eventId) : null;
       if (readRow) {
         var rid = readRow.id; var cdR = leftOf(readRow); var rres = ui.result && ui.result.eventId === rid ? ui.result : null;
-        var state = rres ? (rres.kind === 'confirmed' ? 'confirmed' : 'released') : cdR.expired ? 'expired' : ui.busy.confirm ? 'busy' : ui.errors.confirm ? 'failed' : 'reading';
+        var state = rres ? (rres.kind === 'confirmed' ? 'confirmed' : 'released') : (cdR.expired || readRow.stage === 'expired') ? 'expired' : ui.busy.confirm ? 'busy' : ui.errors.confirm ? 'failed' : 'reading';
         out.read = { on: true, eventId: rid, row: readRow, title: rres ? rres.title : state === 'expired' ? '预留已到期' : readRow.detailTitle, progress: rd.eventId === rid ? rd.progress : 0, done: rd.eventId === rid && rd.done, state: state, busy: state === 'busy', failed: state === 'failed', confirmed: state === 'confirmed', expired: state === 'expired', error: ui.errors.confirm || '', rules: JU.RULES, countdown: cdR, members: memberRows(readRow),
           hint: state === 'confirmed' ? (rres.body || '') : state === 'expired' ? '预留已到期，位置已补给他人' : (rd.eventId === rid && rd.done) ? '已读完，可以确认' : '请读到末尾，再确认入局', endMark: '已到约定末尾',
           onScroll: function (ev) { self.readScroll(ev); }, confirm: function () { self.readConfirm(rid); }, retry: function () { self.readConfirm(rid); }, release: function (ev) { self.openConfirm('release', rid, ev); },
