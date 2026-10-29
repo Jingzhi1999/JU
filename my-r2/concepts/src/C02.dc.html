@@ -986,7 +986,7 @@ class Component extends DCLogic {
   _kk() { var r = this.state.review || {}; return this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._syncCards(); this._syncStamps(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncRoleScroll(); this._fly(); this._syncScrub(); this._landInView(); this._syncCards(); this._syncStamps(); this._rowHeights(); this._homeBack(ps); this._sheetGone(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fly(); this._syncScrub(); this._landInView(); this._syncCards(); this._syncStamps(); this._rowHeights(); this._homeBack(ps); this._sheetGone(); }
   _landInView() { var lk = this.state.ui && this.state.ui.landKey; if (!lk || lk === this._landSeen || this.state.nav.phase !== 'idle') { if (!lk) this._landSeen = null; return; } this._landSeen = lk; var root = this.rootRef.current; var el = root && root.querySelector('.c02-pg.is-top [data-origin="' + lk + '"]'); var sc = el && el.closest('[data-scroller]'); if (!sc) return; var ph = root.closest('.ju-phone') || root; var pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect(); var top = pr.top + 96, bot = pr.bottom - (sc.closest('.c02-home') ? 132 : 120); var d = r.bottom > bot ? r.bottom - bot + 12 : r.top < top ? r.top - top - 12 : 0; if (d) { try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } } }
   componentWillUnmount() { this._land(); this._destroyTicket(); this._destroyHistory(); var S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
   _mountEnv() { var S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
@@ -1006,6 +1006,7 @@ class Component extends DCLogic {
   _rects(scope) { var out = {}, self = this, now = this._flyNow || {}; if (!scope) return out; scope.querySelectorAll('[data-pk]').forEach(function (el) { var k = el.getAttribute('data-pk'); if (!k || out[k]) return; var l = self._look(el); if (l) { if (now[k]) { l.cx = now[k].cx; l.cy = now[k].cy; l.w = now[k].w; } out[k] = l; } }); return out; }
   /* the surface a hand-over starts from / lands on: a home row's pressed highlight (inset 10 / 2, r 18) or the white first-thing card */
   _surfOf(el) { if (!el) return null; var r = el.getBoundingClientRect(); if (!r.width) return null; var card = el.classList.contains('c02-lead'); return { rect: card ? r : { left: r.left + 10, right: r.right - 10, top: r.top + 2, bottom: r.bottom - 2 }, radius: card ? 24 : 18, look: card ? 'rgba(255,255,255,.96)' : 'rgba(255,255,255,.42)', el: el }; }
+  _riseY(el) { var y = 0; while (el && el.classList && !el.classList.contains('c02-pg')) { if (el.classList.contains('c02-in')) { var m = /matrix\(([^)]+)\)/.exec(getComputedStyle(el).transform || ''); if (m) y += parseFloat(m[1].split(',')[5]) || 0; } el = el.parentElement; } return y; }
   _titleOf(el) { if (!el) return null; var r = el.getBoundingClientRect(); if (!r.width || !r.height) return null; var c = getComputedStyle(el); var fs = parseFloat(c.fontSize) || 15, lh = parseFloat(c.lineHeight); return { el: el, text: el.textContent, rect: r, w: el.offsetWidth || r.width, fs: fs, lh: isNaN(lh) ? fs * 1.3 : lh, css: 'font-family:' + c.fontFamily + ';font-size:' + c.fontSize + ';font-weight:' + c.fontWeight + ';letter-spacing:' + c.letterSpacing + ';line-height:' + c.lineHeight + ';color:' + c.color + ';white-space:' + c.whiteSpace + ';overflow:hidden;text-overflow:ellipsis;display:' + c.display + ';-webkit-box-orient:vertical;-webkit-line-clamp:' + (c.webkitLineClamp || 'none') + ';text-wrap:' + (c.textWrapStyle === 'balance' || c.textWrap === 'balance' ? 'balance' : 'wrap') + ';overflow-wrap:' + c.overflowWrap }; }
   _land() {
     var now = {}, self = this, root = this.rootRef && this.rootRef.current;
@@ -1023,8 +1024,8 @@ class Component extends DCLogic {
       var id = params && params.eventId; var src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null;
       this._flip = { to: s, back: false, rects: this._rects(src || top0), surf: fromHome && src ? this._surfOf(src) : null, title: this._titleOf(src ? src.querySelector('.c02-lt,.c02-ttl') : (top0 && !fromHome ? top0.querySelector('.c02-t30') : null)) };
     } else if (kind === 'role' && fromHome) {
-      /* role switch: the old list dissolves as a picture; a role's first visit starts at its top */
-      this._ghost(top0, k, s === 'hosted' ? 1 : -1); var mk = 'home:' + s + ':' + ((params && params.section) || 'current'); this._zeroRole = !(this._scrollMemo && this._scrollMemo[mk]);
+      /* role switch: the old list dissolves as a picture */
+      this._ghost(top0, k, s === 'hosted' ? 1 : -1);
     } else if (kind === 'back') {
       var st = this.state.nav.stack; var top = st[st.length - 1], under = st[st.length - 2], key = top && top.key;
       /* reached by a jump (no origin): it still goes back into its own row when the list has it */
@@ -1051,7 +1052,6 @@ class Component extends DCLogic {
     var a = g.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dir * 18) + 'px)' }], { duration: 120 * k, easing: 'cubic-bezier(0,0,.6,1)', fill: 'forwards' });
     var rec = { i: g, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (g.parentNode) g.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); };
   }
-  _syncRoleScroll() { if (!this._zeroRole) return; this._zeroRole = false; var root = this.rootRef.current, sc = root && root.querySelector('.c02-home [data-scroller="home"]'); if (sc && sc.scrollTop) { sc.scrollTop = 0; if (this._applyHc) this._applyHc(sc); } }
   _same(a, b) { var n = function (t) { return String(t || '').replace(/[\s ]+/g, ''); }; return !!a && n(a) === n(b); }
   /* the sheet: from / to (null = full page); z 3 under the arriving page, 5 under the returning list */
   _sheet(from, to, z, hide, k) {
@@ -1075,7 +1075,7 @@ class Component extends DCLogic {
   _titleFly(src, dst, k, back) {
     var layer = this.flyRef.current; if (!layer || !layer.animate || !src || !dst) return; var d = this._titleOf(dst); if (!d || !this._same(src.text, d.text)) return;
     var L = layer.getBoundingClientRect(), zf = (L.width / (layer.offsetWidth || L.width)) || 1;
-    var sx = (src.rect.left - L.left) / zf, sy = (src.rect.top - L.top) / zf, dx = (d.rect.left - L.left) / zf, dy = (d.rect.top - L.top) / zf;
+    var sx = (src.rect.left - L.left) / zf, sy = (src.rect.top - L.top) / zf, dx = (d.rect.left - L.left) / zf, dy = (d.rect.top - this._riseY(dst) - L.top) / zf;
     var sA = sy + (src.lh - src.fs) / 2, dA = dy + (d.lh - d.fs) / 2, up = d.fs / src.fs, dn = src.fs / d.fs;   /* glyph-top anchors */
     var face = function (t, x, y) { var u = document.createElement('u'); u.textContent = t.text; u.style.cssText = t.css + ';position:absolute;left:' + x + 'px;top:' + y + 'px;width:' + (t.w / 1) + 'px;margin:0;transform-origin:0 0'; layer.appendChild(u); return u; };
     var A = face(src, sx, sy), B = face(d, dx, dy); var D = 260 * k, E = 'cubic-bezier(.2,.8,.2,1)';
@@ -1084,6 +1084,7 @@ class Component extends DCLogic {
     /* the title's faces swap at the row end of the flight (small), so the title stays whole while the pages change under it */
     var sw = back ? [.66, .74, .82] : [.04, .12, .2];
     var x = [A.animate([{ opacity: 1 }, { opacity: 1, offset: sw[1] - .04 }, { opacity: 0, offset: sw[2] }, { opacity: 0 }], { duration: D, fill: 'both' }), B.animate([{ opacity: 0 }, { opacity: 0, offset: sw[0] }, { opacity: 1, offset: sw[1] }, { opacity: 1 }], { duration: D, fill: 'both' }), moveB];
+    var host = back && dst.closest('[data-origin]'); if (host) host.querySelectorAll('.c02-ppl,.c02-mt,.c02-lp,.c02-lw').forEach(function (n) { if (n.animate) x.push(n.animate([{ opacity: 0 }, { opacity: 0, offset: .58 }, { opacity: 1 }], { duration: D, fill: 'backwards' })); });   /* the row's lines join as the title lands */
     var h = dst.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }); if (src.el && src.el.isConnected && src.el.animate) x.push(src.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }));
     var rec = { i: A, a: moveA, h: h, x: x }, self = this; this._fl.push(rec); this._fl.push({ i: B, a: moveB });
     moveA.onfinish = function () { if (A.parentNode) A.remove(); if (B.parentNode) B.remove(); self._fl = self._fl.filter(function (y) { return y !== rec && y.i !== B; }); };
@@ -1095,7 +1096,7 @@ class Component extends DCLogic {
     var toHome = dest.classList.contains('c02-home'); var o = f.back && f.key ? dest.querySelector('[data-origin="' + f.key + '"]') : null;
     /* 1 · the sheet */
     if (!f.back && f.surf && dest.classList.contains('c02-deep')) this._sheet(f.surf, null, 3, dest.querySelector('.c02-pgbg'), k);
-    else if (f.back && f.sheet && toHome) { var oS = o ? this._surfOf(o) : null; if (oS) this._sheet(null, oS, 5, null, k); else this._sheetFade(5, k); }
+    else if (f.back && f.sheet && toHome) { var oS = o ? this._surfOf(o) : null, oy = oS ? this._riseY(o) : 0; if (oy) oS.rect = { left: oS.rect.left, right: oS.rect.right, top: oS.rect.top - oy, bottom: oS.rect.bottom - oy }; if (oS) this._sheet(null, oS, 5, null, k); else this._sheetFade(5, k); }
     /* 2 · the title */
     var dT = f.back ? (toHome ? (o ? o.querySelector('.c02-lt,.c02-ttl') : null) : dest.querySelector('.c02-t30')) : dest.querySelector('.c02-t30');
     if (f.title && dT) this._titleFly(f.title, dT, k, f.back);
@@ -1105,7 +1106,7 @@ class Component extends DCLogic {
     var D = 280 * k, E = 'cubic-bezier(.2,.78,.2,1)';
     scope.querySelectorAll('[data-pk]').forEach(function (el) {
       var key = el.getAttribute('data-pk'); if (!key || seen[key]) return; seen[key] = 1;
-      var from = f.rects[key]; if (!from) { if (o || !f.back) pops.push(el); return; }   /* a return with no origin row does not pop the whole list */ var to = self._look(el); if (!to) return;
+      var from = f.rects[key]; if (!from) { if (o || !f.back) pops.push(el); return; } var to = self._look(el); if (!to) return; to.cy -= self._riseY(el);
       if (Math.abs(from.cx - to.cx) < 1 && Math.abs(from.cy - to.cy) < 1 && Math.abs(from.w - to.w) < 1) return;
       var W = to.w / z, x1 = (to.cx - lr.left) / z - W / 2, y1 = (to.cy - lr.top) / z - W / 2, x0 = (from.cx - lr.left) / z - W / 2, y0 = (from.cy - lr.top) / z - W / 2;
       var i = document.createElement('i'); i.dataset.pk = key; i.style.width = i.style.height = W + 'px';
@@ -1133,7 +1134,7 @@ class Component extends DCLogic {
     } catch (e) { } });
     this._scrubMode = mode;
   }
-  /* press feedback in the first frame after pointerdown: a row lights the surface that will grow into the page, a card dips */
+  /* press feedback in the first frame after pointerdown */
   _press(ev) {
     var el = ev.currentTarget; if (!el || !el.classList) return; var t = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
     if (t && t !== el && t.getAttribute('data-act') !== 'cta') return;
@@ -1170,7 +1171,7 @@ class Component extends DCLogic {
       if (act) { var lb = act.querySelector('[data-slot="actionLabel"]'), L = c.ticket.contact.ctaLabel, D = String(!!c.ticket.contact.ctaDisabled); if (lb && L && lb.textContent !== L) lb.textContent = L; if (act.getAttribute('aria-disabled') !== D) act.setAttribute('aria-disabled', D); }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
-    /* the history page's WebGL originals (burn, 08 stamp) start once the page has settled */
+    /* history WebGL originals start once the page has settled */
     var settled = c.nav.phase === 'idle';
     var hstage = root.querySelector('[data-surface="history"] .c02-stage');
     if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); else if (this._rit.hburnWait && settled) { this._rit.hburnWait = false; this._startHistoryBurn(hstage, c); } }
@@ -1186,7 +1187,7 @@ class Component extends DCLogic {
     this._destroyTicket();
     this._rit.stage = stage; this._rit.key = c.ticket.printKey; var R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
     if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing' || st === 'fresh') this.ticketPrinted(c.ticket.printKey); return; }
-    if (st === 'printing' || st === 'fresh') {   /* 'fresh' (defensive): the controller has not marked it printed — print it like a new ticket */
+    if (st === 'printing' || st === 'fresh') {   /* 'fresh': print it like a new ticket */
       var key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
       R.print(stage, data, { final: 'ready', tear: this._tearOpts() }).then(r => {
         if (this._rit.stage !== stage) return;

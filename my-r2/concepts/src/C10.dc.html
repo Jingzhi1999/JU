@@ -222,7 +222,8 @@ body{margin:0}
 /* history */
 .c10-t08{position:relative;width:calc(100% + 64px);margin:8px -32px 0;height:520px}
 .c10-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
-.c10-ash{position:relative;width:258px;height:76px;margin:22px auto 0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:radial-gradient(56% 22px at 50% 100%,rgba(74,50,38,.2),rgba(74,50,38,0)),linear-gradient(180deg,rgba(237,239,247,.5),rgba(237,239,247,.3));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92),0 18px 30px -26px rgba(18,22,48,.4)}
+.c10-t08:not([data-on])::before{content:"出席印记";position:absolute;left:50%;top:70px;width:232px;height:300px;margin-left:-116px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:calc(14px * var(--tz,1));letter-spacing:.14em;color:var(--sub);background:linear-gradient(180deg,rgba(237,239,247,.6),rgba(237,239,247,.36));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92),0 24px 36px -28px rgba(18,22,48,.45)}
+.c10-ash{position:relative;width:258px;height:76px;margin:22px auto 0;animation:c10-in calc(360ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:radial-gradient(56% 22px at 50% 100%,rgba(74,50,38,.2),rgba(74,50,38,0)),linear-gradient(180deg,rgba(237,239,247,.5),rgba(237,239,247,.3));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.92),0 18px 30px -26px rgba(18,22,48,.4)}
 .c10-ash b{font-size:calc(14px * var(--tz,1));font-weight:500;letter-spacing:.14em;color:var(--ink2)}
 .c10-ash small{font-size:calc(12px * var(--tz,1));color:var(--sub)}
 .c10-wx{display:flex;align-items:center;gap:14px;margin:12px 0 0}
@@ -525,8 +526,8 @@ body{margin:0}
                     </div>
                     <sc-if value="{{v.tk.showClosed}}"><p class="c10-err">{{c.ticket.contact.closedText}}</p></sc-if>
                     <sc-if value="{{c.ticket.contact.error}}"><p class="c10-err">{{c.ticket.contact.error}}</p></sc-if>
-                    <sc-if value="{{v.tk.res}}"><div class="c10-res t-void"><b>{{v.tk.res.title}}</b><p>{{v.tk.res.body}}</p></div></sc-if>
                   </sc-if>
+                  <sc-if value="{{v.tk.res}}"><div class="c10-ash"><b>票根已作废</b><small>{{v.tk.res.ash}}</small></div><div class="c10-res t-void"><b>{{v.tk.res.title}}</b><p>{{v.tk.res.body}}</p></div></sc-if>
                 </div>
               </div>
             </div>
@@ -1016,8 +1017,11 @@ class Component extends DCLogic {
       const down = 'translateY(' + (g.top1 - g.top0).toFixed(1) + 'px)', hd = home.querySelector('.c10-hd');
       this._ani(sc, [{ transform: down }, { transform: 'none' }], o); this._ani(hd, [{ transform: down }, { transform: 'none' }], o);
       /* the row's own lines wait for the title to land; the rows and groups after it come down with the list once the page body is gone */
-      const bl = this._below(row, true), all = W + T1 + T2;
-      bl.own.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: (W + T1) / all }, { opacity: 1 }], lin(all)));
+      const bl = this._below(row, true), all = W + T1 + T2, a = (W + T1) / all;
+      /* on landing the row's own title takes over in one frame (the page title may wrap differently), then its lines appear */
+      this._ani(src, [{ opacity: 1 }, { opacity: 1, offset: a }, { opacity: 0, offset: Math.min(1, a + .002) }, { opacity: 0 }], lin(all));
+      this._ani(dst, [{ visibility: 'hidden' }, { visibility: 'hidden', offset: a }, { visibility: 'visible', offset: Math.min(1, a + .002) }, { visibility: 'visible' }], lin(all));
+      bl.own.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: a + .004 }, { opacity: 1 }], lin(all)));
       bl.rest.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: (W + 10 * k) / all }, { opacity: 1, offset: (W + 90 * k) / all }, { opacity: 1 }], lin(all)));
     } else if (mode === 'wp') {
       const back = st.dir === 'back';
@@ -1052,16 +1056,17 @@ class Component extends DCLogic {
     const stage = root.querySelector('[data-surface="ticket"] .c10-stage,[data-surface="reply"] .c10-stage');
     if (c.ticket.on && stage) {
       /* print as soon as the page has entered (phase in): the empty slot waits only as long as the engine needs */
-      const fresh = this._rit.stage !== stage || this._rit.key !== c.ticket.printKey;
+      const mk = c.ticket.printKey + '@' + this._top().id, fresh = this._rit.stage !== stage || this._rit.mk !== mk;
       if (fresh && !(c.ticket.state === 'printing' && c.nav.phase === 'enter')) this._mountTicket(stage, c);
       const want = !!c.ticket.contact.on; if (this._rit.stage === stage && want !== !!this._rit.contactShown) { this._rit.contactShown = want; const h = this._contact(); if (h) { if (want) h.reveal(); else h.hide(); } }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
     const hstage = root.querySelector('[data-surface="history"] .c10-stage');
-    if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); else if (this._rit.hburnWait && c.nav.phase === 'idle') { this._rit.hburnWait = false; this._startHistoryBurn(hstage); } }
+    const tid = this._top().id;
+    if (c.history.on && hstage) { if (this._rit.hstage !== hstage || this._rit.hid !== tid) { this._rit.hid = tid; this._mountHistoryStage(hstage, c); } else if (this._rit.hburnWait && c.nav.phase === 'idle') { this._rit.hburnWait = false; this._startHistoryBurn(hstage); } }
     else if (this._rit.hstage) this._destroyHistoryStage();
     const thost = root.querySelector('[data-surface="history"] .c10-t08');
-    if (c.history.on && c.history.hasStamp && thost) { if (this._rit.thost !== thost) this._mountStamp(thost, c); }
+    if (c.history.on && c.history.hasStamp && thost) { if ((this._rit.thost !== thost || this._rit.tid !== tid) && c.nav.phase === 'idle') { this._rit.tid = tid; this._mountStamp(thost, c); } }
     else if (this._rit.thost) this._destroyStamp();
     this._syncStampFaces(c, root);
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn || this._rit.hburn;
@@ -1070,7 +1075,7 @@ class Component extends DCLogic {
   _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
   _mountTicket(stage, c) {
     this._destroyTicket();
-    this._rit.stage = stage; this._rit.key = c.ticket.printKey; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
+    this._rit.stage = stage; this._rit.key = c.ticket.printKey; this._rit.mk = c.ticket.printKey + '@' + this._top().id; const R = this.R(), data = c.ticket.ritual, st = c.ticket.state;
     if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
     if (st === 'printing') {
       const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };
@@ -1112,7 +1117,7 @@ class Component extends DCLogic {
     const reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn');
     const h = R.burn(stage, { reason }, { onDone: () => { if (isH) this._rit.hburn = null; else this._rit.burn = null; } }); if (isH) this._rit.hburn = h; else this._rit.burn = h;
   }
-  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
+  _destroyTicket() { const t = this._rit; if (t.contact) { try { t.contact.hide(); t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } const el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; t.mk = null; }
   /* history: the ticket snapshot is burnt once on the first real open (after the page has settled), then only ashes remain */
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; const R = this.R(), data = c.history.ritual; if (!R || !data) return;
@@ -1131,7 +1136,7 @@ class Component extends DCLogic {
   _mountStamp(host, c) {
     this._destroyStamp(); this._rit.thost = host; const R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
     const p = R.stamp(host, c.history.stampData, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: () => { } });
-    p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
+    p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; host.dataset.on = '1'; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
   }
   _destroyStamp() { const t = this._rit; if (t.stamp) { try { t.stamp.destroy(); } catch (e) { } t.stamp = null; } t.thost = null; }
   _destroyHistory() { this._destroyHistoryStage(); this._destroyStamp(); }
@@ -1149,6 +1154,7 @@ class Component extends DCLogic {
   }
   onEffect(fx) {
     if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
+    if (fx.type === 'torn') { this.setState({ c10torn: true }); this.holdKey('c10torn', 2400, () => this.setState({ c10torn: false })); }
     if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
     if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
   }
@@ -1251,25 +1257,25 @@ class Component extends DCLogic {
     const tk = c.ticket; v.tkOn = c.nav.on.ticket || c.nav.on.reply; v.tkSurface = c.nav.on.reply ? 'reply' : 'ticket';
     if (tk.on) {
       const waiting = tk.state === 'printing' || tk.state === 'fresh'; const rp = tk.reply;
-      v.tk = { title: kd(tk.face.title), meta: tk.title + (tk.face && tk.face.when ? ' · ' + tk.face.when.wdZh + ' ' + tk.face.when.md + ' ' + tk.face.when.time : ''), showStage: !tk.unavailable, stageCls: (tk.isReply ? 'reissued' : '') + (waiting ? ' is-waiting' : ''),
+      v.tk = { title: kd(tk.face.title), meta: tk.title + (tk.face && tk.face.when ? ' · ' + tk.face.when.wdZh + ' ' + tk.face.when.md + ' ' + tk.face.when.time : ''), showStage: !tk.unavailable && !(tk.result && !tk.result.burning), stageCls: (tk.isReply ? 'reissued' : '') + (waiting ? ' is-waiting' : ''),
         slotText: tk.isReply ? '新票出票中' : '出票中', slotSub: tk.isReply ? '原票作废，换这一张' : '撕开副券后联系局主', noPrevious: !tk.ritual.previous, previousText: tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !tk.ritual.mark,
         pair: rp && !rp.answered ? { o: rp.oldWhen.md + ' ' + rp.oldWhen.time, n: rp.newWhen.md + ' ' + rp.newWhen.time } : null,
         tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间' : '撕开票根', exitAct: tk.isReply ? 'decline' : 'exit', exitOn: tk.canExit && !(rp && tk.tear.canTear), declineOn: !!(rp && tk.tear.canTear),
-        contactAction: !tk.unavailable && !tk.result && tk.state === 'torn', openContact: !tk.unavailable && !tk.result && tk.state === 'torn' && !tk.contact.on && !!tk.contact.available && !tk.contact.closed, ctaCls: tk.contact.done ? ' is-done' : '', note: tk.contact.note, showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable),
-        res: tk.result && !tk.result.burning ? { title: tk.result.title, body: tk.result.body } : null, resCta: !!(tk.result && !tk.result.burning),
+        contactAction: !tk.unavailable && !tk.result && tk.state === 'torn', openContact: !tk.unavailable && !tk.result && tk.state === 'torn' && !tk.contact.on && !!tk.contact.available && !tk.contact.closed && !this.state.c10torn, ctaCls: tk.contact.done ? ' is-done' : '', note: tk.contact.note, showClosed: !!(tk.contact.closed && !tk.result && !tk.unavailable),
+        res: tk.result && !tk.result.burning ? { title: tk.result.title, body: tk.result.body, ash: tk.result.reason === 'reschedule-declined' ? '没有接受新时间，旧票烧掉' : '退出后票根烧掉，联系方式关闭' } : null, resCta: !!(tk.result && !tk.result.burning),
         retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
         hint: tk.isReply ? '向右拖动新副券撕开 · 或按下方按钮' : '向右拖动副券撕开 · 或按下方按钮' };
     } else v.tk = { title: '' };
     /* ---- history ---- */
     const Hs = c.history;
     if (Hs.on) {
-      const hr = Hs.ritual; const ended = Hs.stage === 'ended'; if (Hs.burn && Hs.burn.play) this._hsVisit = Hs.eventId; const bv = this._hsVisit === Hs.eventId; const stageOn = !!(hr && Hs.burnOnce && (!Hs.ashes || bv));
-      v.hs = { title: kd(Hs.title), meta: (Hs.label || '') + ' · ' + (Hs.when ? Hs.when.zh : ''), rc: (Hs.records || []).length, noRecords: !(Hs.records || []).length,
+      const hr = Hs.ritual; const ended = Hs.stage === 'ended'; const stageOn = !!(hr && Hs.burnOnce && !Hs.ashes);
+      v.hs = { title: kd((Hs.row && Hs.row.title) || (Hs.event && Hs.event.title) || Hs.title), meta: [Hs.title || Hs.label, Hs.when ? Hs.when.zh : ''].filter(Boolean).join(' · '), rc: (Hs.records || []).length, noRecords: !(Hs.records || []).length,
         tone: ended ? (Hs.stamp === 'absent' ? 'void' : 'go') : 'void', attTitle: Hs.attendanceText || Hs.stampText || '已散场', stampFallback: !!this.state.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载' : '出席章加载中…',
         facts: !Hs.hasStamp && !stageOn, d: Hs.when ? Hs.when.wdZh + ' ' + Hs.when.md : '', h: Hs.when ? Hs.when.time : '', p: (Hs.place ? Hs.place.full : '') + (Hs.host ? ' · 局主 ' + Hs.host.name : ''),
         showStage: stageOn, stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), ashes: !!Hs.ashes && !stageOn,
         fact: Hs.hasStamp ? '' : (Hs.reason || Hs.label || ''), oldText: Hs.oldWhen ? '原定 ' + Hs.oldWhen.zh : '', ashNote: Hs.burn && Hs.burn.reason === 'cancelled' ? '局已取消，票根随之烧掉' : Hs.burn && Hs.burn.reason === 'reschedule-declined' ? '没有接受新时间，旧票烧掉' : '退出后票根烧掉，联系方式关闭', foot: Hs.footer && Hs.footer.lead || c.COPY.historyFooter.lead };
-    } else { v.hs = null; this._hsVisit = null; }
+    } else v.hs = null;
     /* ---- manage ---- */
     const M = c.manage;
     if (M.on) {

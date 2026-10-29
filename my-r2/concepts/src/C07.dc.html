@@ -292,6 +292,7 @@ body{margin:0}
 .c07-tray .ju-form-error{color:#FF8DA0}
 .c07-errrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 .c07-errrow .ju-form-error:empty{display:none}
+.c07-errrow:has(.ju-form-error:empty) [data-act="retry"]{display:none}   /* 「重试」 belongs to the original's failure line: when the original clears it (已加微信 → add()), the retry goes with it */
 .c07-errrow .c07-link{padding:4px 0}
 .c07-tray .ju-tear-error24{text-align:center}
 .c07-ash{height:40px;margin:10px auto 0;width:258px;border-radius:0 0 8px 8px;background:repeating-linear-gradient(90deg,#3b2a20 0 6px,#5a4a40 6px 10px);opacity:.6}
@@ -972,7 +973,7 @@ class Component extends DCLogic {
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._measureTray(); if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => this._measureTray()); }
   componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fixManageScroll(); this._measureTray(); this._syncFaces(); this._paintCards(); this._syncCardBurn(); this._syncTrayFocus(ps); this._undoTicker();
     if (this._snap && !this._snapRaf) this._snapRaf = requestAnimationFrame(() => requestAnimationFrame(() => { this._snapRaf = null; this._snap = false; this.setState(st => ({ snapTick: (st.snapTick || 0) + 1 })); }));
-    { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
+    { const root = this.rootRef.current, cf = root && root.querySelector('.c07-errrow [data-act="retry"]'); if (cf && cf.offsetParent && !cf.__c07shown) { cf.__c07shown = true; this.reveal(cf); } }
     /* M1 / M2: a role or section change hands the tray to that list's lead — its block replays the swap-in with the list's cross-fade */
     if (ps && (ps.role !== this.state.role || ps.section !== this.state.section)) {
       /* a role / section seen for the first time starts at its top (the list scroller is shared: without a memo it would keep the
@@ -1110,7 +1111,10 @@ class Component extends DCLogic {
   /* the ritual's text slots get the title with " · " glued to the word before it (a no-break space), so a two-line title never
      starts its second line with the dot; same characters, only the break opportunity moves */
   _rd(d) { return d ? Object.assign({}, d, { title: String(d.title || '').replace(/ · /g, '\u00a0· ') }) : d; }
-  _tearOpts() { return { onDetach: () => { this._rit.tornHere = true; const ok = this.tearCommit(); if (!ok) this._rit.tornHere = false; return ok; }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); } }; }
+  _tearOpts() { return { onDetach: () => { this._rit.tornHere = true; const ok = this.tearCommit(); if (!ok) this._rit.tornHere = false; return ok; }, onDone: () => { this._uiIn('ticket', { contactOpen: true }); this._remeasureTorn(); } }; }
+  /* reduced motion: the original measures the stage in the frame the stub detaches, while its host still holds the stub's 84px, and the
+     host lets go only later — measure again every frame for 24 frames and once at 700ms (idempotent under normal motion) */
+  _remeasureTorn() { const st = this._rit && this._rit.stage, R = this.R(); const m = () => { if (st && st.isConnected && st.dataset.state === 'torn' && R && R.measureTicket) R.measureTicket(st, true); }; let n = 0; const loop = () => { m(); if (++n < 24) requestAnimationFrame(loop); }; requestAnimationFrame(loop); setTimeout(m, 700); }   /* a plain timer: after() is 0 under reduced motion */
   /* the contact layer: torn in this visit → after the stub has fallen (onDone, V27 timing); entered already torn (from a row, a jump or
      the 联系局主 key) → at once — a torn ticket is the contact step, it is never shown without its contact */
   _contactWant(c) { const t = c.ticket; return !!(t && t.on && t.contact && (t.contact.on || (t.state === 'torn' && !this._rit.tornHere))); }
