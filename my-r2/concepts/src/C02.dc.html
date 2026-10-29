@@ -34,13 +34,11 @@ body{margin:0}
 .c02-veil{position:absolute;inset:0;z-index:1;pointer-events:none}
 .app[data-skin="halo"] .c02-veil{background:linear-gradient(180deg,rgba(255,246,238,.14) 0%,rgba(255,240,228,.34) 40%,rgba(255,242,232,.34) 72%,rgba(255,246,240,.26) 100%)}
 .app[data-skin="sunset"] .c02-veil{background:linear-gradient(180deg,rgba(255,244,236,.18) 0%,rgba(255,244,240,.26) 50%,rgba(246,246,255,.2) 100%)}
-/* ---- pages: the page you leave is gone within 90ms; the people fly across on their own layer (.c02-fly, 440ms); the new page
-   arrives from 90ms and its words rise in under the people. No frame shows two pages' words at once. ---- */
+/* ---- pages ---- */
 .c02-pg{position:absolute;inset:0;z-index:2}
 .c02-pg.is-top{z-index:4}
 .c02-pg.is-under.ph-exit{z-index:6}
-/* page hand-over (M4): the tapped surface grows into the new page's sheet, the title travels as a shared element, the people fly;
-   old content clears on the sheet in 90ms, the new first block rises from 62ms — never both pages' words, never only light + initials. */
+/* page hand-over: old content clears on the growing sheet in 90ms, the new first block rises from 62ms; title and people fly over it. */
 @keyframes c02-out{0%{opacity:1}100%{opacity:0}}
 @keyframes c02-op{0%{opacity:0}100%{opacity:1}}
 @keyframes c02-in{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
@@ -51,15 +49,13 @@ body{margin:0}
 .c02-pg.is-under.ph-exit .c02-pgbg{visibility:visible}
 /* the page you leave: its content is gone within 90ms */
 .c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>:not(.c02-hdv){animation:c02-out calc(90ms * var(--k)) cubic-bezier(.2,0,.4,1) both}
-/* the header glass is the section's own child (an ancestor's opacity would cut its backdrop blur); it thins from where it was (hc)
-   only after the rows under it are gone, and on arrival it is there before they are — so no row ever shows crisp through it */
+/* the header glass is the section's own child (an ancestor's opacity would cut its blur): it leaves after the rows, arrives before them */
 .c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>.c02-hdv{animation:c02-hdvout calc(150ms * var(--k)) cubic-bezier(.5,0,.7,1) both}
 @keyframes c02-hdvout{0%{opacity:var(--hc,0)}100%{opacity:0}}
 @keyframes c02-hdvin{0%{opacity:0}100%{opacity:var(--hc,0)}}
 .c02-pg.is-under.dir-fwd.ph-enter,.c02-pg.is-under.dir-fwd.ph-in,.c02-pg.is-top.ph-exit,.c02-pg.is-leaving{pointer-events:none}
 .c02-pg.is-under.ph-idle,.c02-pg.is-under.dir-swap{opacity:0;visibility:hidden;pointer-events:none}
-/* 关键帧 (.scrub, --frame 0…1): every C02 motion is a keyframe animation positioned by a negative delay — hand-over over 300ms
-   (the WAAPI sheet / title / people follow in _syncScrub), review settle 600ms, attendance stamp 550ms, draft collapse 340ms, cancel 1.6s */
+/* 关键帧 (.scrub, --frame 0…1): negative delays — hand-over 300ms (WAAPI layers follow in _syncScrub), settle 600ms, stamp 550ms, cancel 1.6s */
 .scrub .c02-pg:is(.is-under.dir-fwd.ph-enter,.is-under.dir-fwd.ph-in,.is-top.ph-exit,.is-leaving)>*{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
 .scrub :is(.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit)>:not(.c02-pgbg):not(.c02-hdv){animation-play-state:paused!important;animation-delay:calc((62ms - var(--frame,0) * 300ms) * var(--k,1))!important}
 .scrub :is(.c02-deep.is-top.dir-fwd.ph-enter,.c02-deep.is-top.dir-fwd.ph-in,.c02-deep.is-top.dir-swap.ph-enter,.c02-deep.is-top.dir-swap.ph-in,.c02-pg.is-under.ph-exit)>.c02-hdv{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 300ms * var(--k,1))!important}
@@ -85,7 +81,7 @@ body{margin:0}
 .c02-pane{transition:opacity calc(200ms * var(--k)) ease,transform calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c02-home.ph-enter.dir-role .c02-pane{opacity:.18;transform:translateX(var(--rx,18px));transition:none}
 .c02-home.ph-enter.dir-swap .c02-pane{opacity:.22;transform:translateY(10px);transition:none}
-/* ---- outer header (V27): title 30 → 18 continuously into the tool row; the helper line fades; constant box, so the scroller never changes height ---- */
+/* ---- outer header (V27): title 30 → 18 into the tool row; constant box, so the scroller never changes height ---- */
 .c02-hd{position:absolute;left:0;right:0;top:0;height:calc(var(--sat,0px) + 140px);z-index:6;pointer-events:none}
 .c02-hd>*{pointer-events:auto}
 .c02-hdv{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(var(--sat,0px) + 100px);opacity:var(--hc,0);background:linear-gradient(180deg,var(--hdv) 0%,var(--hdv) 50%,rgba(255,255,255,0) 100%);-webkit-backdrop-filter:blur(12px) saturate(1.15);backdrop-filter:blur(12px) saturate(1.15);-webkit-mask-image:linear-gradient(#000 56%,transparent);mask-image:linear-gradient(#000 56%,transparent);pointer-events:none!important}
@@ -99,8 +95,7 @@ body{margin:0}
 .c02-weak{position:absolute;right:12px;top:0;height:44px;padding:0 10px;border:0;background:none;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink2);cursor:pointer;border-radius:12px}
 .c02-weak:active{background:rgba(255,255,255,.35)}
 /* ---- home header: role switch (white pill) on the title row ---- */
-.c02-roles{position:absolute;right:22px;top:calc(var(--sat,0px) + 72px);display:grid;grid-template-columns:1fr 1fr;height:calc(40px * var(--tz,1));padding:3px;border-radius:999px;background:rgba(255,255,255,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.62),0 8px 18px -12px rgba(var(--sh),.4);opacity:calc(1 - var(--hc,0) * 1.8)}
-[data-c02c="1"] .c02-roles{visibility:hidden}
+.c02-roles{position:absolute;right:calc(22px - 6px * var(--hc,0));top:calc(var(--sat,0px) + 72px - 46px * var(--hc,0));transform:scale(calc(1 - .2 * var(--hc,0)));transform-origin:100% 50%;display:grid;grid-template-columns:1fr 1fr;height:calc(40px * var(--tz,1));padding:3px;border-radius:999px;background:rgba(255,255,255,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.62),0 8px 18px -12px rgba(var(--sh),.4)}
 .c02-pill{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(var(--sh),.14),0 6px 14px -6px rgba(var(--sh),.34);transition:transform calc(260ms * var(--k)) cubic-bezier(.3,.9,.3,1)}
 .c02-roles.is-hosted .c02-pill{transform:translateX(100%)}
 .c02-role{position:relative;z-index:1;min-width:0;border:0;background:transparent;padding:0 12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;cursor:pointer;border-radius:999px;transition:color calc(220ms * var(--k))}
@@ -205,7 +200,8 @@ body{margin:0}
 .c02-empty b{display:block;font-size:calc(18px * var(--tz,1));font-weight:600;color:var(--ink)}
 .c02-empty p{margin:6px 0 14px;font-size:calc(14px * var(--tz,1));color:var(--ink3)}
 .c02-chip{display:inline-flex;align-items:center;height:36px;padding:0 16px;border-radius:999px;border:0;background:#fff;color:var(--cink);font-size:calc(14px * var(--tz,1));font-weight:500;box-shadow:0 6px 14px -8px rgba(var(--sh),.4);cursor:pointer}
-.c02-chip.inert,.c02-chip[aria-disabled="true"]{background:rgba(255,255,255,.45);color:var(--ink3);box-shadow:none;cursor:default}
+.c02-chip.inert,.c02-chip[aria-disabled="true"]{height:30px;padding:0 12px;background:none;border:1px dashed rgba(28,24,23,.26);color:var(--ink3);font-weight:400;box-shadow:none;cursor:default}
+.c02-chip.inert::after,.c02-chip[aria-disabled="true"]::after{content:' · 本轮未开放'}
 .c02-notice{margin:0 20px 10px;padding:9px 14px;border-radius:14px;background:rgba(255,255,255,.66);box-shadow:inset 0 0 0 1px rgba(255,255,255,.75),0 10px 22px -14px rgba(var(--sh),.45);font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--ink);animation:c02-res calc(420ms * var(--k)) cubic-bezier(.2,.8,.2,1) both}
 .c02-notice.is-out{overflow:hidden;animation:c02-noteout calc(340ms * var(--k)) cubic-bezier(.4,0,.2,1) both}
 @keyframes c02-noteout{0%{max-height:120px;opacity:1}40%{opacity:0}100%{max-height:0;padding-top:0;padding-bottom:0;margin-bottom:0;opacity:0}}
@@ -241,8 +237,6 @@ body{margin:0}
 .c02-foot{position:absolute;left:0;right:0;bottom:0;z-index:8;display:grid;justify-items:center;align-items:end;gap:6px;padding:30px 22px calc(var(--sab,0px) + 20px + var(--kb,0px));background:linear-gradient(0deg,var(--foot) 42%,rgba(255,255,255,0));pointer-events:none}
 .c02-foot>*{grid-area:1/1}
 .c02-foot>:not(.ju-contact-action){pointer-events:auto}   /* the contact action stays under the original's control (pointer-events only once data-shown) */
-.c02-foot .c02-sub{grid-area:auto}
-.c02-sub{border:0;background:none;height:40px;padding:0 14px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink2);cursor:pointer}
 .c02-stage.reissued{--ju-ticket-top:24px}
 /* the printer's mouth is part of the page: its lip is there as the page arrives, and the paper comes out of it once the page settles */
 .c02-stage[data-state="idle"] .ju-print-mouth,.c02-stage[data-state="idle"] .ju-print-lip{opacity:1;transition:none}
@@ -331,8 +325,7 @@ body{margin:0}
 @keyframes c02-spin{to{transform:rotate(360deg)}}
 .c02-err{margin-top:10px;font-size:calc(13px * var(--tz,1));color:var(--warn);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .c02-help{margin:4px 22px 0;font-size:calc(12px * var(--tz,1));line-height:1.6;color:var(--ink3)}
-/* ---- person rows (detail · waitlist · manage · history): the home row's white circle on the light at 40px, name 16/500, state 13;
-   you are the ink circle, a reserved seat keeps its dashed ring, an open seat is a dashed outline ---- */
+/* ---- person rows (detail · waitlist · manage · history): 40px circle, name 16/500, state 13 ---- */
 .c02-prow{position:relative;display:grid;grid-template-columns:40px minmax(0,1fr) auto;column-gap:14px;align-items:center;padding:8px 22px;min-height:58px}
 .c02-prow>.c02-avw{position:relative;width:40px;height:40px}
 .c02-prow>.c02-avw .c02-av{font-size:calc(17px * var(--tz,1))}
@@ -352,13 +345,13 @@ body{margin:0}
 .c02-prow .c02-cd .bar{background:rgba(28,24,23,.1)}
 .c02-pill2{height:34px;padding:0 13px;border-radius:999px;border:0;background:rgba(255,255,255,.62);box-shadow:inset 0 0 0 1px rgba(255,255,255,.7),0 4px 10px -6px rgba(var(--sh),.35);font-size:calc(13px * var(--tz,1));font-weight:500;color:var(--ink);cursor:pointer;white-space:nowrap}
 .c02-pill2:active{transform:scale(.96)}
-.c02-qn{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;border-radius:50%;font:600 calc(15px * var(--tz,1))/1 Archivo,sans-serif;color:var(--ink2)}
 /* ---- the event as an object: the V27 局卡 at its door size (212×265), front face, still; read facts under it ---- */
 .c02-cardblk{position:relative;display:flex;flex-direction:column;align-items:center;margin:22px 22px 8px}
 .c02-v27{position:relative;width:212px;height:265px;flex:none}
 .c02-v27 [data-spin-sheen]{transform:translateX(-48%)}   /* V27 writes translateX by angle: at 0° it is −48% */
 .c02-facts{margin-top:30px;text-align:center;max-width:320px}
 .c02-facts .t{font-size:calc(18px * var(--tz,1));font-weight:600;line-height:1.4;color:var(--ink);text-wrap:balance;overflow-wrap:anywhere}
+.c02-t30,.c02-lt,.c02-facts .w{word-break:keep-all;overflow-wrap:anywhere}
 .c02-facts .w{margin-top:6px;font-size:calc(15px * var(--tz,1));font-weight:500;color:var(--ink)}
 .c02-facts .p{margin-top:2px;font-size:calc(14px * var(--tz,1));line-height:1.55;color:var(--ink2);overflow-wrap:anywhere}
 .c02-facts .h{margin-top:2px;font-size:calc(13px * var(--tz,1));color:var(--ink3)}
@@ -410,14 +403,14 @@ body{margin:0}
 .c02-rec .x{margin-top:2px;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--ink);overflow-wrap:anywhere}
 .c02-t08{position:relative;height:520px;margin:0 22px 8px}   /* V27 s08 sits in a 22px-padded screen: the stage's −20px margins reach 2px from the edge */
 .c02-t08 .ju-t08-root{position:absolute;inset:0;height:100%}
-/* the 08 canvas is drawn 24px past each side of its stage (V27 geometry); overflow:clip with a 24px margin renders the same and states that bound */
+/* the 08 canvas is drawn 24px past each side of its stage (V27 geometry): overflow:clip with a 24px margin */
 .c02-t08 .ju-t08-stage{overflow:clip;overflow-clip-margin:24px}
 /* ---- sheet / toast ---- */
 .c02-over{position:absolute;inset:0;z-index:50;display:flex;align-items:flex-end;background:rgba(24,18,30,.26);animation:c02-fade calc(260ms * var(--k)) ease both}
 @keyframes c02-fade{0%{background:rgba(24,18,30,0)}100%{background:rgba(24,18,30,.26)}}
 .c02-sheet{position:relative;width:100%;max-height:calc(100% - 40px);overflow:auto;padding:22px 22px calc(22px + var(--sab,0px) + var(--kb,0px));border-radius:28px 28px 0 0;background:#fff;color:var(--cink);box-shadow:0 -20px 40px -24px rgba(var(--sh),.5);animation:c02-up calc(340ms * var(--k)) cubic-bezier(.2,.8,.2,1) both;outline:none}
 @keyframes c02-up{0%{transform:translateY(46%);opacity:.4}100%{transform:none;opacity:1}}
-/* the keyboard comes up: whatever the sheet was doing, it stands in its final place above the keys at once (focus must never be under them) */
+/* with the keyboard up the sheet stands in its final place above the keys at once */
 .ju-phone.kb .c02-sheet{animation:none}
 .ju-phone.kb .c02-over{animation:none}
 /* closing: the controller drops the sheet at once; C02 keeps its last frame 220ms so it sinks back instead of vanishing */
@@ -454,7 +447,6 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
 .c02-toast{position:absolute;left:50%;top:calc(var(--sat,0px) + 28px);z-index:60;transform:translateX(-50%);width:max-content;max-width:calc(100% - 150px);min-height:36px;padding:8px 16px;border-radius:18px;background:rgba(28,24,23,.88);color:#fff;font-size:calc(14px * var(--tz,1));line-height:1.45;text-align:center;box-shadow:0 10px 24px -12px rgba(0,0,0,.5);animation:c02-toast calc(280ms * var(--k)) cubic-bezier(.2,.9,.3,1) both}
 @keyframes c02-toast{0%{opacity:0;transform:translate(-50%,-10px) scale(.96)}100%{opacity:1;transform:translate(-50%,0)}}
 .c02-toast.k-error{background:#7f1d2e}
-.c02-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </helmet>
 <div class="ju-stage">
@@ -917,8 +909,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
               <sc-if value="{{sh.recordOpen}}"><label class="c02-lbl">发生了什么（{{S.count}}/{{S.max}}）<textarea class="c02-in-f" data-field="text" rows="4" placeholder="至少 4 个字 · 局内事实陈述" onInput="{{S.onInput}}">{{S.text}}</textarea></label></sc-if>
             </sc-if>
             <sc-if value="{{S.error}}"><p class="c02-msg err">{{S.error}}</p></sc-if>
-            <!-- V27 roles: leaving a seat / an event keeps the blue CTA for 「留下」 and draws the leave as the V27 danger pill (stacked);
-                 撤回报名 / 退出候补 pair a glass 「再想想」 with the ink pill; host sheets keep a quiet pair -->
+            <!-- V27 roles: 留下 keeps the blue CTA, the leave is the V27 danger pill -->
             <sc-if value="{{sh.keep}}"><div class="c02-sacts keep">
               <button type="button" class="ju-v27-cta c02-cta" data-act="close" onClick="{{S.cancel}}"><span class="gloss"></span><span class="label">{{S.cancelLabel}}</span></button>
               <button type="button" class="ju-v27-danger c02-dgr" data-act="ok" aria-disabled="{{sh.okDisabled}}" onClick="{{S.ok}}">{{S.okLabel}}</button>
@@ -947,14 +938,13 @@ var C2 = {
   /* the JuCardV2 props for an event, as the template's own renderVals derives them (seat words, date forms) */
   cardVals: function (e, when, place, avail, status) {
     var full = !(avail > 0); var md = when && when.md || ''; var mm = md.split('.');
-    /* the card's lettering is sized for a short name (V27: 深夜救急火锅局): the card carries the name before 「 · 」, the facts under it the whole title */
+    /* the card carries the name before 「 · 」 (V27 lettering is sized for a short name); the facts under it the whole title */
     var cut = function (t, n) { t = String(t || '').split(' · ')[0]; return Array.from(t.replace(/\s+/g, '')).length <= n ? t : Array.from(t).slice(0, n).join('') + '…'; };
     var v = { pack: e.pack || 'invite', title: cut(e.title, 10), en: e.en || '', num: 'NYC', date: (when && when.wdEn ? when.wdEn + ' ' : '') + md, dateNum: mm.length === 2 ? mm[0] + '-' + mm[1] + '-2026' : md, time: when && when.time || '', loc: cut(place && place.hood || '', 10), locEn: String(place && place.area || 'NYC').toUpperCase(), host: e.host && e.host.name || '',
       toWho: full ? '在局里的你' : '缺' + avail + '人的你', seatLong: full ? '已成局 · 位子满了' : '还缺 ' + avail + ' 人 · 不算局主', seatMid: status || (full ? '已成局' : '还缺 ' + avail + ' 人'), seatShort: status || (full ? '已满员' : '缺 ' + avail + ' 人'), seatAsk: full ? '已成局 · 名单锁定' : '缺 ' + avail + ' 人 · 报名后等确认' };
     Object.keys(v).forEach(function (k) { if (k !== 'pack') v[k] = C2.esc(v[k]); }); return v;
   },
-  /* V27 局卡 JuCardV2 (src/shared/v27/ju-card.html): the six packs transcribed by script from the shared template, markup unchanged
-     (gender tag / QR strip dropped: never on in 我的局); v = the template's own renderVals output, HTML-escaped */
+  /* V27 局卡 JuCardV2 (src/shared/v27/ju-card.html), the six packs transcribed from the shared template, markup unchanged */
   card: function (v) { var N = "url(&quot;data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'140\' height=\'140\'%3E%3Cfilter id=\'g\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.8\' numOctaves=\'2\'/%3E%3C/filter%3E%3Crect width=\'140\' height=\'140\' filter=\'url(%23g)\'/%3E%3C/svg%3E&quot;)"; var P = {
     invite: '<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(174deg,#F4EBD9 0%,#EFE4CC 70%,#EADDC2 100%);color:#241F17;display:flex;flex-direction:column;padding:6.5cqw 7cqw 5.5cqw;box-sizing:border-box"><div style="font-family:\'Libre Caslon Text\',serif;font-weight:700;font-size:7.6cqw;letter-spacing:0.22cqw;color:#A8281F;text-align:center;line-height:1;white-space:nowrap;overflow:hidden">'+v.en+'</div><div style="display:flex;align-items:center;gap:2cqw;margin:2.8cqw 0 3.6cqw"><div style="flex:1;height:0.35cqw;background:#A8281F"></div><div style="font-family:\'Space Mono\',monospace;font-size:2.4cqw;letter-spacing:0.5cqw;color:#A8281F">JU '+v.num+'</div><div style="flex:1;height:0.35cqw;background:#A8281F"></div></div><div style="display:flex;align-items:flex-end;gap:2cqw;font-family:\'Space Mono\',monospace;font-size:2.9cqw;color:#A8281F;letter-spacing:0.2cqw"><span style="padding-bottom:1cqw">TO:</span><span style="flex:1;border-bottom:0.3cqw solid #CDAF93;font-family:\'Caveat\',\'Zhi Mang Xing\',cursive;font-size:6.6cqw;color:#241F17;line-height:1;text-align:center">'+v.toWho+'</span><span style="padding-bottom:1cqw">DATE:</span><span style="border-bottom:0.3cqw solid #CDAF93;font-family:\'Caveat\',\'Zhi Mang Xing\',cursive;font-size:6cqw;line-height:1;padding:0 1cqw">'+v.date+'</span></div><div style="margin-top:4cqw;flex:1;border:0.4cqw solid #A8281F;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.6cqw;padding:3cqw;min-height:0;position:relative"><div style="position:absolute;top:1.4cqw;left:1.4cqw;width:2.6cqw;height:2.6cqw;border-top:0.4cqw solid #A8281F;border-left:0.4cqw solid #A8281F"></div><div style="position:absolute;bottom:1.4cqw;right:1.4cqw;width:2.6cqw;height:2.6cqw;border-bottom:0.4cqw solid #A8281F;border-right:0.4cqw solid #A8281F"></div><div style="font-family:\'Caveat\',\'Zhi Mang Xing\',cursive;font-size:11.5cqw;color:#241F17;text-align:center;line-height:1.12;transform:rotate(-2deg)">'+v.title+'</div><div style="font-family:\'Caveat\',\'Zhi Mang Xing\',cursive;font-size:6.6cqw;color:#A8281F;transform:rotate(-2deg)">来不来！！</div></div><div style="margin-top:4.2cqw;display:flex;flex-direction:column;gap:1.9cqw;font-family:\'Space Mono\',monospace;font-size:2.85cqw"><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">SEATS</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">'+v.seatLong+'</span></div><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">WHERE</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">'+v.loc+' · NEW YORK</span></div><div style="display:flex;gap:2.5cqw;align-items:baseline"><span style="color:#A8281F;font-weight:700;width:13cqw;letter-spacing:0.2cqw">TIME</span><span style="flex:1;border-bottom:0.28cqw solid #DBC6AC;padding-bottom:0.7cqw">'+v.date+' · '+v.time+' 开吃</span></div></div><div style="margin-top:3.4cqw;display:flex;justify-content:space-between;font-family:\'Space Mono\',monospace;font-size:2.6cqw;color:#A8281F;letter-spacing:0.24cqw"><span>BY '+v.host+' · NYC</span><span>REAL PLANS ONLY</span></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.14;mix-blend-mode:multiply;background-image:'+N+'"></div></div>',
     street: '<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:linear-gradient(168deg,#96825f 0%,#6f5d46 32%,#473d30 60%,#221e18 100%);color:#FFFDF6;display:flex;flex-direction:column;justify-content:space-between;padding:6cqw;box-sizing:border-box"><div style="position:absolute;left:14%;top:32%;width:70%;height:30%;background:radial-gradient(ellipse at center,rgba(255,242,208,0.35),rgba(255,242,208,0) 70%)"></div><div style="position:absolute;left:0;right:0;bottom:0;height:45%;background:linear-gradient(180deg,rgba(20,16,10,0) 0%,rgba(20,16,10,0.55) 100%)"></div><div style="position:relative;display:flex;justify-content:space-between;align-items:flex-start;gap:3cqw"><div style="font-family:\'Archivo\',sans-serif;font-weight:500;font-size:8cqw;line-height:1.12;letter-spacing:-0.12cqw;text-wrap:balance;max-width:80%">'+v.title+'</div><div style="font-family:\'Space Mono\',monospace;font-size:2.8cqw;opacity:0.75;padding-top:1cqw;white-space:nowrap">'+v.num+'</div></div><div style="position:relative;margin-top:-14cqw;font-family:\'Archivo\',sans-serif;font-weight:400;font-size:3.7cqw;opacity:0.82;align-self:flex-start">Hosted by '+v.host+' · '+v.seatMid+'</div><div style="position:relative;align-self:center;border:0.28cqw dashed rgba(255,253,246,0.5);border-radius:1cqw;padding:1.6cqw 3cqw;font-family:\'Space Mono\',monospace;font-size:2.8cqw;letter-spacing:0.2cqw;color:rgba(255,253,246,0.8)">[ 官方图库 · 街拍 / 夜市_02 ]</div><div style="position:relative"><div style="display:flex;justify-content:space-between;align-items:flex-end;gap:3cqw"><div style="font-family:\'Archivo\',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;letter-spacing:-0.08cqw">In '+v.loc+'<br>纽约</div><div style="font-family:\'Archivo\',sans-serif;font-weight:500;font-size:6.4cqw;line-height:1.18;text-align:right;letter-spacing:-0.08cqw">'+v.date+'<br>'+v.time+'</div></div><div style="margin-top:3cqw;padding-top:2.4cqw;border-top:0.24cqw solid rgba(255,253,246,0.3);display:flex;justify-content:space-between;font-family:\'Space Mono\',monospace;font-size:2.7cqw;opacity:0.78;letter-spacing:0.2cqw"><span>PUBLISHED ON JU</span><span>ju.app</span></div></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.32;mix-blend-mode:overlay;background-image:'+N+'"></div></div>',
@@ -996,8 +986,8 @@ class Component extends DCLogic {
   _kk() { var r = this.state.review || {}; return this.isRM() ? 0 : (r.speed === 0.5 ? 2 : 1); }
   /* ---------------- environment ---------------- */
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._syncCards(); this._syncStamps(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._fly(); this._syncScrub(); this._landInView(); this._syncCards(); this._syncStamps(); this._rowHeights(); this._homeBack(ps); this._sheetGone(); }
-  _landInView() { var lk = this.state.ui && this.state.ui.landKey; if (!lk || lk === this._landSeen || this.state.nav.phase !== 'idle') { if (!lk) this._landSeen = null; return; } this._landSeen = lk; var root = this.rootRef.current; var el = root && root.querySelector('.c02-pg.is-top [data-origin="' + lk + '"]'); var sc = el && el.closest('[data-scroller]'); if (!sc) return; var ph = root.closest('.ju-phone') || root; var pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect(); var top = pr.top + 80, bot = pr.bottom - (sc.closest('.c02-home') ? 96 : 110); var d = r.bottom > bot ? r.bottom - bot + 12 : r.top < top ? r.top - top - 12 : 0; if (d) { try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } } }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncRoleScroll(); this._fly(); this._syncScrub(); this._landInView(); this._syncCards(); this._syncStamps(); this._rowHeights(); this._homeBack(ps); this._sheetGone(); }
+  _landInView() { var lk = this.state.ui && this.state.ui.landKey; if (!lk || lk === this._landSeen || this.state.nav.phase !== 'idle') { if (!lk) this._landSeen = null; return; } this._landSeen = lk; var root = this.rootRef.current; var el = root && root.querySelector('.c02-pg.is-top [data-origin="' + lk + '"]'); var sc = el && el.closest('[data-scroller]'); if (!sc) return; var ph = root.closest('.ju-phone') || root; var pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect(); var top = pr.top + 96, bot = pr.bottom - (sc.closest('.c02-home') ? 132 : 120); var d = r.bottom > bot ? r.bottom - bot + 12 : r.top < top ? r.top - top - 12 : 0; if (d) { try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } } }
   componentWillUnmount() { this._land(); this._destroyTicket(); this._destroyHistory(); var S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
   _mountEnv() { var S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }
   _syncEnv(ps) {
@@ -1007,9 +997,7 @@ class Component extends DCLogic {
     if (!!r.paused !== !!(pr && pr.paused)) { if (r.paused) S.pause(el); else S.resume(el); }
   }
   _syncReduced(ps) { if (this.props.panel === false) return; var rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
-  /* page hand-over (M4): onNav records the tapped surface, its title and every [data-pk] circle; _fly() then grows the sheet
-     (.c02-morph, clip-path) from it to the page or back (260ms), flies the title's two faces (260ms) and the people (280ms).
-     Anything still in flight is the start of the next hand-over. */
+  /* page hand-over (M4): onNav records the tapped surface, its title and the [data-pk] circles; _fly() draws sheet, title and people. */
   _look(el) {
     var r = el.getBoundingClientRect(); if (!r.width) return null; var av = el.querySelector('.c02-av') || el;
     var a = getComputedStyle(av), w = getComputedStyle(el);
@@ -1034,15 +1022,38 @@ class Component extends DCLogic {
     if (kind === 'go' || kind === 'replace') {
       var id = params && params.eventId; var src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null;
       this._flip = { to: s, back: false, rects: this._rects(src || top0), surf: fromHome && src ? this._surfOf(src) : null, title: this._titleOf(src ? src.querySelector('.c02-lt,.c02-ttl') : (top0 && !fromHome ? top0.querySelector('.c02-t30') : null)) };
+    } else if (kind === 'role' && fromHome) {
+      /* role switch: the old list dissolves as a picture; a role's first visit starts at its top */
+      this._ghost(top0, k, s === 'hosted' ? 1 : -1); var mk = 'home:' + s + ':' + ((params && params.section) || 'current'); this._zeroRole = !(this._scrollMemo && this._scrollMemo[mk]);
     } else if (kind === 'back') {
       var st = this.state.nav.stack; var top = st[st.length - 1], under = st[st.length - 2], key = top && top.key;
-      /* reached by a jump (no origin): the page still goes back into its own row when the list has it — revealed like the controller's */
+      /* reached by a jump (no origin): it still goes back into its own row when the list has it */
       var tid = !key && top && top.p && (top.p.eventId || top.p.draftId); if (tid && under && under.s === 'home' && this._originRect && this._originRect('row-' + tid, this._scrollKey(under))) key = 'row-' + tid;
+      var urow = key && under && root.querySelector('.c02-pg[data-surface="' + under.s + '"] [data-origin="' + key + '"]'); if (urow) this._clearFade(urow, under);
       this._flip = { to: s, back: true, key: key, rects: this._rects(top0), sheet: !!(top0 && top0.classList.contains('c02-deep')), title: this._titleOf(top0 && top0.querySelector('.c02-t30')) };
     }
   }
+  /* a row you return to lands clear of the header glass and the bottom fade (memo updated too) */
+  _clearFade(el, under) {
+    var sc = el.closest('[data-scroller]'), root = this.rootRef.current; if (!sc || !root) return; var ph = root.closest('.ju-phone') || root, pr = ph.getBoundingClientRect(), r = el.getBoundingClientRect();
+    var t = pr.top + 104, b = pr.bottom - 132, d = r.bottom > b ? r.bottom - b : r.top < t ? r.top - t : 0; if (!d) return;
+    sc.scrollTop += d; var mk = this._scrollKey(under), m = this._scrollMemo || (this._scrollMemo = {}); (m[mk] = m[mk] || {})[sc.getAttribute('data-scroller')] = sc.scrollTop; if (this._applyHc) this._applyHc(sc);
+  }
+  _ghost(pg, k, dir) {
+    var morph = this.morphRef.current, sc = pg.querySelector('[data-scroller="home"]'), pane = sc && sc.querySelector('.c02-pane'); if (!morph || !morph.animate || !pane || !k) return;
+    var L = morph.getBoundingClientRect(), z = (L.width / (morph.offsetWidth || L.width)) || 1, P = pg.getBoundingClientRect(), r = pane.getBoundingClientRect();
+    var hc = parseFloat(pg.style.getPropertyValue('--hc')) || 0, clip = hc > .5 ? 72 : (parseFloat(pg.style.getPropertyValue('--hdh')) || 150) - 24;
+    var g = document.createElement('div'); g.className = 'c02-ghost'; g.setAttribute('aria-hidden', 'true');
+    g.style.cssText = 'position:absolute;left:' + (P.left - L.left) / z + 'px;top:' + (P.top - L.top) / z + 'px;width:' + P.width / z + 'px;height:' + P.height / z + 'px;clip-path:inset(' + clip + 'px 0 0 0);-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 118px),transparent calc(100% - 58px));mask-image:linear-gradient(180deg,#000 calc(100% - 118px),transparent calc(100% - 58px))';
+    var c = pane.cloneNode(true); c.querySelectorAll('[data-pk],[data-origin],[data-rid],[data-act],[id],[tabindex]').forEach(function (n) { ['data-pk', 'data-origin', 'data-rid', 'data-act', 'id', 'tabindex'].forEach(function (a) { n.removeAttribute(a); }); });
+    c.style.cssText = 'position:absolute;margin:0;left:' + (r.left - P.left) / z + 'px;top:' + (r.top - P.top) / z + 'px;width:' + r.width / z + 'px;transition:none;opacity:1;transform:none'; g.appendChild(c);
+    morph.style.zIndex = 5; morph.appendChild(g);
+    var a = g.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'translateX(' + (-dir * 18) + 'px)' }], { duration: 150 * k, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    var rec = { i: g, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (g.parentNode) g.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); };
+  }
+  _syncRoleScroll() { if (!this._zeroRole) return; this._zeroRole = false; var root = this.rootRef.current, sc = root && root.querySelector('.c02-home [data-scroller="home"]'); if (sc && sc.scrollTop) { sc.scrollTop = 0; if (this._applyHc) this._applyHc(sc); } }
   _same(a, b) { var n = function (t) { return String(t || '').replace(/[\s ]+/g, ''); }; return !!a && n(a) === n(b); }
-  /* the sheet: from (null = full page) → to (null = full page); look = the small end's colour; z 3 under the arriving page, 5 under the returning list */
+  /* the sheet: from / to (null = full page); z 3 under the arriving page, 5 under the returning list */
   _sheet(from, to, z, hide, k) {
     var morph = this.morphRef.current; if (!morph || !morph.animate) return; var L = morph.getBoundingClientRect(), zf = (L.width / (morph.offsetWidth || L.width)) || 1;
     var ins = function (x) { if (!x) return 'inset(0px 0px 0px 0px round 0px)'; var r = x.rect; return 'inset(' + ((r.top - L.top) / zf) + 'px ' + ((L.right - r.right) / zf) + 'px ' + ((L.bottom - r.bottom) / zf) + 'px ' + ((r.left - L.left) / zf) + 'px round ' + x.radius + 'px)'; };
@@ -1060,7 +1071,7 @@ class Component extends DCLogic {
       else if (to && i.animate) { rec.landed = true; var o = i.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 120 * k, easing: 'ease', fill: 'forwards' }); rec.x.push(o); o.onfinish = done; } else done(); };
   }
   _sheetFade(z, k) { var morph = this.morphRef.current; if (!morph || !morph.animate) return; morph.style.zIndex = z; var i = document.createElement('i'); var b = document.createElement('b'); b.style.background = 'var(--pgbg)'; i.appendChild(b); morph.appendChild(i); var a = i.animate([{ opacity: 1 }, { opacity: 1, offset: .25 }, { opacity: 0 }], { duration: 300 * k, easing: 'ease', fill: 'both' }); var rec = { i: i, a: a, landed: true }, self = this; this._fl.push(rec); a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); }; }
-  /* the event title as a shared element: the source face (its own type) and the destination face travel together and cross-fade */
+  /* the event title as a shared element: two faces (source and destination type) travel together */
   _titleFly(src, dst, k, back) {
     var layer = this.flyRef.current; if (!layer || !layer.animate || !src || !dst) return; var d = this._titleOf(dst); if (!d || !this._same(src.text, d.text)) return;
     var L = layer.getBoundingClientRect(), zf = (L.width / (layer.offsetWidth || L.width)) || 1;
@@ -1070,8 +1081,7 @@ class Component extends DCLogic {
     var A = face(src, sx, sy), B = face(d, dx, dy); var D = 260 * k, E = 'cubic-bezier(.2,.8,.2,1)';
     var moveA = A.animate([{ transform: 'none' }, { transform: 'translate(' + (dx - sx) + 'px,' + (dA - sy - up * (src.lh - src.fs) / 2) + 'px) scale(' + up + ')' }], { duration: D, easing: E, fill: 'both' });
     var moveB = B.animate([{ transform: 'translate(' + (sx - dx) + 'px,' + (sA - dy - dn * (d.lh - d.fs) / 2) + 'px) scale(' + dn + ')' }, { transform: 'none' }], { duration: D, easing: E, fill: 'both' });
-    /* the faces swap at the row end of the flight, where they are small (early on the way in, late on the way back): a long title breaks
-       into two lines in the header but one in the row, and the title must stay whole while the pages change under it (gap frames) */
+    /* the title's faces swap at the row end of the flight (small), so the title stays whole while the pages change under it */
     var sw = back ? [.66, .74, .82] : [.04, .12, .2];
     var x = [A.animate([{ opacity: 1 }, { opacity: 1, offset: sw[1] - .04 }, { opacity: 0, offset: sw[2] }, { opacity: 0 }], { duration: D, fill: 'both' }), B.animate([{ opacity: 0 }, { opacity: 0, offset: sw[0] }, { opacity: 1, offset: sw[1] }, { opacity: 1 }], { duration: D, fill: 'both' }), moveB];
     var h = dst.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }); if (src.el && src.el.isConnected && src.el.animate) x.push(src.el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D }));
@@ -1112,7 +1122,7 @@ class Component extends DCLogic {
     pops.forEach(function (el, j) { self._fl.push({ i: null, a: el.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'none', opacity: 1 }], { duration: 190 * k, delay: (f.back ? 70 : Math.min(90, 70 + j * 10)) * k, easing: 'cubic-bezier(.2,1.35,.4,1)', fill: 'backwards' }) }); });
     this._flyNow = {};
   }
-  /* 暂停 / 关键帧 reach the hand-over's own WAAPI layers (sheet, title faces, people): the CSS ones follow .scrub rules (300ms span) */
+  /* 暂停 / 关键帧 for the hand-over's WAAPI layers (the CSS ones follow .scrub rules) */
   _syncScrub() {
     var r = this.state.review || {}, mode = r.scrub != null ? 's' + r.scrub : r.paused ? 'p' : '', k = this._kk() || 1; var all = [];
     (this._fl || []).forEach(function (f) { [f.a, f.h].concat(f.x || []).forEach(function (a) { if (a && a.effect) all.push(a); }); });
@@ -1123,7 +1133,7 @@ class Component extends DCLogic {
     } catch (e) { } });
     this._scrubMode = mode;
   }
-  /* press feedback within one frame of pointerdown: a home row lights its surface (the one that will grow into the page), a card dips */
+  /* press feedback in the first frame after pointerdown: a row lights the surface that will grow into the page, a card dips */
   _press(ev) {
     var el = ev.currentTarget; if (!el || !el.classList) return; var t = ev.target && ev.target.closest ? ev.target.closest('[data-act]') : null;
     if (t && t !== el && t.getAttribute('data-act') !== 'cta') return;
@@ -1131,8 +1141,8 @@ class Component extends DCLogic {
     var off = function () { el.classList.remove('is-pressed'); window.removeEventListener('pointercancel', off, true); };
     window.addEventListener('pointercancel', off, true); el.__c02p = setTimeout(off, 900);
   }
-  /* home() (回到列表) drops the stack without an exit phase: the page sheet thins away while the list arrives (never an empty frame) */
-  _homeBack(ps) { var n = this.state.nav, p = ps && ps.nav; if (!p || !n || this.isRM()) return; if (n.stack.length === 1 && p.stack.length > 1 && p.phase !== 'exit' && n.phase === 'idle') { var root = this.rootRef.current, h = root && root.querySelector('.c02-home'), k = this._kk(); if (h && h.animate) Array.prototype.forEach.call(h.children, function (ch) { var to = +getComputedStyle(ch).opacity; if (to > 0) ch.animate([{ opacity: to * .45 }, { opacity: to }], { duration: 200 * k, easing: 'cubic-bezier(.2,.6,.3,1)' }); });   /* the deeper page is already gone (no exit phase): the list is there from the first frame, part by part so the header glass keeps its blur */ var morph = this.morphRef.current; if (morph && morph.animate) { morph.style.zIndex = 1; var i = document.createElement('i'); var b = document.createElement('b'); b.style.background = 'var(--pgbg)'; i.appendChild(b); morph.appendChild(i); var a = i.animate([{ opacity: 1 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 320 * k, easing: 'ease', fill: 'both' }); var rec = { i: i, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); }; } } }
+  /* home() from deeper than one level (no exit phase) */
+  _homeBack(ps) { var n = this.state.nav, p = ps && ps.nav; if (!p || !n || this.isRM()) return; if (n.stack.length === 1 && p.stack.length > 1 && p.phase !== 'exit' && n.phase === 'idle') { var root = this.rootRef.current, h = root && root.querySelector('.c02-home'), k = this._kk(); if (h && h.animate) Array.prototype.forEach.call(h.children, function (ch) { var to = +getComputedStyle(ch).opacity; if (to > 0) ch.animate([{ opacity: to * .45 }, { opacity: to }], { duration: 200 * k, easing: 'cubic-bezier(.2,.6,.3,1)' }); });   /* the list is there from the first frame; part by part so the header glass keeps its blur */ var morph = this.morphRef.current; if (morph && morph.animate) { morph.style.zIndex = 1; var i = document.createElement('i'); var b = document.createElement('b'); b.style.background = 'var(--pgbg)'; i.appendChild(b); morph.appendChild(i); var a = i.animate([{ opacity: 1 }, { opacity: 1, offset: .3 }, { opacity: 0 }], { duration: 320 * k, easing: 'ease', fill: 'both' }); var rec = { i: i, a: a }, self = this; this._fl.push(rec); a.onfinish = function () { if (i.parentNode) i.remove(); self._fl = self._fl.filter(function (y) { return y !== rec; }); }; } } }
   /* the JuCardV2 front faces: rendered from the event's props into hosts the template leaves empty (like the ritual engines' DOM) */
   _syncCards() { var root = this.rootRef && this.rootRef.current, vm = this._cardVm; if (!root) return; root.querySelectorAll('[data-c02card]').forEach(function (el) { var k = el.getAttribute('data-c02card'); if (!k || el.__c02k === k || !vm[k]) return; el.innerHTML = C2.card(vm[k]); el.__c02k = k; }); }
   /* attendance: the V27 stamp face (JURitual.stampFace) pressed onto each recorded person's card; pressed (.55s juStamp) only when fresh */
@@ -1145,7 +1155,7 @@ class Component extends DCLogic {
   /* M10: the deleted / restored draft's own height is what its slot closes from / reopens to */
   _rowHeights() { var root = this.rootRef && this.rootRef.current; if (!root) return; root.querySelectorAll('.c02-row.is-deleting,.c02-row.is-restored').forEach(function (el) { if (el.__rhFor === el.className) return; el.__rhFor = el.className; el.style.setProperty('--rh', Math.max(60, el.scrollHeight) + 'px'); }); }
   _sheetGone() { if (this._shClosing && Date.now() - this._shClosing > 600) { this._shLast = null; this._shClosing = 0; this.setState({ c02s: Date.now() }); } }
-  /* ---------------- rituals (the controller wrote the data; these calls only show it) — same call sites as C00 ---------------- */
+  /* ---- rituals: the controller wrote the data; these calls only show it (same call sites as C00) ---- */
   _syncRituals(ps) {
     var c = this._c, root = this.rootRef.current; if (!c || !root) return;
     var stage = root.querySelector('[data-surface="ticket"] .c02-stage,[data-surface="reply"] .c02-stage');
@@ -1154,14 +1164,13 @@ class Component extends DCLogic {
       var waitPage = (c.ticket.state === 'printing' || c.ticket.state === 'fresh') && c.nav.phase !== 'idle' && this._rit.stage !== stage;
       if (!waitPage && (this._rit.stage !== stage || this._rit.key !== c.ticket.printKey)) this._mountTicket(stage, c);
       var cf = !!c.ticket.contact.copyFail; if (cf && !this._rit.cf) this._showHost(); this._rit.cf = cf;
-      /* a ticket torn earlier (opened from the list) shows its host card at once, like right after the tear (lead note: state 'torn' on entry) */
+      /* a ticket torn earlier (opened from the list) shows its host card at once */
       var want = !!(c.ticket.contact.on || c.ticket.contact.available); if (want !== !!this._rit.contactShown) { this._rit.contactShown = want; var h = this._contact(); if (h) { if (want) { h.reveal(); if (c.ticket.contact.on) this._showHost(); } else h.hide(); } }
       var act = stage.closest('[data-surface]'); act = act && act.querySelector('[data-contact-action]');
       if (act) { var lb = act.querySelector('[data-slot="actionLabel"]'), L = c.ticket.contact.ctaLabel, D = String(!!c.ticket.contact.ctaDisabled); if (lb && L && lb.textContent !== L) lb.textContent = L; if (act.getAttribute('aria-disabled') !== D) act.setAttribute('aria-disabled', D); }
       if (c.ticket.result && c.ticket.result.burning && !this._rit.burn) this._burnTicket(stage, c.ticket.result.reason, () => this._c.ticket.result && this._c.ticket.result.burnDone());
     } else if (this._rit.stage && (!c.ticket.on || !stage)) this._destroyTicket();
-    /* the WebGL originals of the history page (burn, 08 stamp scene) start once the page has settled, so their set-up never stalls the
-       arrival (the people's flight and the page fade); the settled ticket snapshot is drawn at once */
+    /* the history page's WebGL originals (burn, 08 stamp) start once the page has settled */
     var settled = c.nav.phase === 'idle';
     var hstage = root.querySelector('[data-surface="history"] .c02-stage');
     if (c.history.on && hstage) { if (this._rit.hstage !== hstage) this._mountHistoryStage(hstage, c); else if (this._rit.hburnWait && settled) { this._rit.hburnWait = false; this._startHistoryBurn(hstage, c); } }
@@ -1200,7 +1209,7 @@ class Component extends DCLogic {
     stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
   }
   _reprint() { var stage = this._rit.stage, c = this._c; var R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); var torn = c.ticket.state === 'torn'; R.print(stage, c.ticket.ritual, { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { var el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
-  /* the host's card (contact layer) opens under the ticket: bring it fully above the footer once it has risen in (300ms in the original) */
+  /* bring the host's card (contact layer) fully above the footer once it has risen in */
   _showHost() {
     var self = this, k = this._kk();
     setTimeout(function () { var root = self.rootRef && self.rootRef.current; var card = root && root.querySelector('.c02-pg.is-top .c02-hostcard'); var sc = card && card.closest('[data-scroller]'); if (!sc) return; var ph = root.closest('.ju-phone') || root; var pb = ph.getBoundingClientRect().bottom - 104; var r = card.getBoundingClientRect(); var extra = card.nextElementSibling && card.nextElementSibling.classList.contains('c02-msg') ? card.nextElementSibling.getBoundingClientRect().bottom : r.bottom; var d = Math.max(r.bottom, extra) - pb; if (d > 0) { try { sc.scrollBy({ top: d + 8, behavior: k ? 'smooth' : 'auto' }); } catch (e) { sc.scrollTop += d + 8; } } }, 340 * k + 30);
@@ -1215,8 +1224,7 @@ class Component extends DCLogic {
   }
   _burnTicket(stage, reason, onDone) { var R = this.R(); if (!R || !R.burn) return; var h = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; onDone(); } }); this._rit.burn = h; this.lastMotion = { name: 'burn', fn: () => this._replayBurn() }; }
   _replayBurn() { var stage = this._rit.stage || this._rit.hstage, c = this._c, R = this.R(); if (!stage || !R) return; var isH = stage === this._rit.hstage; var data = isH ? c.history.ritual : c.ticket.ritual; var torn = isH ? !!(data && data.torn) : c.ticket.row.item.ticket && c.ticket.row.item.ticket.torn; R.burn.reset(stage); this._settleTicket(stage, data, torn ? 'torn' : 'ready'); var reason = isH ? c.history.burn.reason : (c.ticket.result ? c.ticket.result.reason : 'withdrawn'); if (isH) this._rit.hburn = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.hburn = null; } }); else this._rit.burn = R.burn(stage, { reason: reason }, { onDone: () => { this._rit.burn = null; } }); }
-  /* the ticket section's DOM is reused from one event to the next (ticket ⇄ reply): put the contact layer back to hidden before letting go,
-     or the next event inherits the shared original's data-shown action (it would sit over this page's CTA) */
+  /* the ticket DOM is reused (ticket ⇄ reply): hide the contact layer before letting go */
   _destroyTicket() { var t = this._rit; if (t.contact) { try { t.contact.hide(); } catch (e) { } try { t.contact.destroy(); } catch (e) { } t.contact = null; } t.contactShown = false; if (t.burn) { try { t.burn.destroy(); } catch (e) { } t.burn = null; } var el = t.stage && t.stage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } this.registerTear(null); t.stage = null; t.key = null; }
   _mountHistoryStage(stage, c) {
     this._destroyHistoryStage(); this._rit.hstage = stage; var R = this.R(), data = c.history.ritual; if (!R || !data) return;
@@ -1228,7 +1236,7 @@ class Component extends DCLogic {
   _destroyHistoryStage() { var t = this._rit; t.hburnWait = false; if (t.hburn) { try { t.hburn.destroy(); } catch (e) { } t.hburn = null; } var el = t.hstage && t.hstage.querySelector('[data-tear]'); if (el && el.__juritual) { try { el.__juritual.destroy(); } catch (e) { } } t.hstage = null; }
   _mountStamp(host, c) {
     this._destroyStamp(); this._rit.thost = host; var R = this.R(); if (!R || !R.stamp) { this.setState({ stampFallback: true }); return; }
-    /* participant history never replays the stamp: the V27 engine is seeked to its settled browse state (settled:true); 重播 = h.replay() */
+    /* participant history never replays the stamp (settled:true); 重播 = h.replay() */
     var p = R.stamp(host, c.history.stampData, { adapter: 'v27', settled: true, active: () => !!(this._c && this._c.history.on), onPhase: function () { } });
     p.then(h => { if (this._rit.thost !== host) { try { h.destroy(); } catch (e) { } return; } this._rit.stamp = h; this.lastMotion = { name: 'stamp', fn: () => h.replay() }; this.setState({ stampFallback: false }); }).catch(e => { this._rit.stampErr = String(e && e.message || e); this.setState({ stampFallback: true }); });
   }
@@ -1241,7 +1249,7 @@ class Component extends DCLogic {
     if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
     /* the host's page draws what just happened to its people: a seat stamped (invited / queue promotion), a delta chip, a drain on cancel */
     var host = fx.type === 'invited' || fx.type === 'rejected' || fx.type === 'cancelled' || (fx.side === 'host' && (fx.type === 'expired' || fx.type === 'queue-invited' || fx.type === 'queue-moved'));
-    /* the clock settled something you did not do yourself: one line on the list per event, naming the people (C02 says who, not what) */
+    /* the clock settled something you did not do: one line per event, naming the people */
     var clockFx = { expired: 1, 'queue-turn': 1, 'queue-moved': 1, 'queue-invited': 1 };
     if (clockFx[fx.type] && (fx.side === 'joined' || fx.side === 'host')) { var nw = Date.now(); var keep = (this._c2notes || []).filter(function (x) { return nw - x.at < 4600; }); this._c2notes = keep.concat([{ eventId: fx.eventId, type: fx.type, side: fx.side, other: !!fx.other, name: fx.nick || fx.name || '', pos: fx.pos, at: nw }]); this.holdKey('c02note', 4600, () => { this._c2notes = []; this.setState({ c02n: Date.now() }); }); }
     if (host) { var now = Date.now(); this._c2fx = this._c2fx.filter(function (x) { return now - x.at < 1900; }).concat([{ type: fx.type, eventId: fx.eventId, nick: fx.nick || fx.name, at: now }]); this.holdKey('c02fx', 1900, () => { var rv = this.state.review || {}; if (rv.scrub != null || rv.paused) return; this._c2fx = []; this.setState({ c02t: Date.now() }); }); }
@@ -1282,7 +1290,7 @@ class Component extends DCLogic {
     if (rot && ppl.length > 1) { var r0 = ppl.slice(1).concat(ppl.slice(0, 1)), n0 = N(ppl), n1 = N(r0); ppl = r0; if (line.indexOf(n0) >= 0) line = line.replace(n0, n1); }
     var avs = ppl.slice(0, 2).map(function (m) { return { g: C2.glyph(m.name), pk: id + ':' + m.name, cls: m.status === 'invited' ? 'is-res' : '' }; });
     var sec = r.section; var tone = sec === 'todo' ? 'act' : sec === 'formed' ? 'go' : sec === 'ended' || sec === 'cancelled' ? 'void' : 'wait';
-    var status = sec === 'recruit' ? r.life + ' ' + r.counts.confirmed + '/' + e.capacity : sec === 'todo' ? r.label : r.life;
+    var status = sec === 'recruit' ? r.life + ' ' + r.counts.confirmed + '/' + e.capacity : sec === 'todo' || (e.status === 'ended' && r.label) ? r.label : r.life;
     var when = C2.when(r.when);
     return { line: line, ppl: ppl, avs: avs, more: ppl.length > 2 ? '+' + (ppl.length - 2) : '', when: when, place: C2.fit(when, r.place.hood, (status = C2.fitSt(when, status, this._avail || 276)), this._avail || 276), status: status, tone: tone, rowCls: (r.landing ? 'is-landing ' : ''), aria: line + '，' + r.title + '，' + when + '，' + r.place.hood + '，' + status, key: function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); r.open(ev); } } };
   }
@@ -1294,8 +1302,7 @@ class Component extends DCLogic {
   renderVals() {
     var panel = this.panelVals(); panel.show = this.props.panel !== false;
     var c = this.ctlVals(); this._c = c; var s = this.state; var rv = s.review || {}; var self = this;
-    /* nv = the controller's nav as C02 draws it: go('read') from the list skips a level (home → detail → read); the list you leave keeps
-       fading out like any page you leave, and the inserted parent (detail) stays hidden until you come back to it */
+    /* nv: go('read') from the list skips a level; the list fades like any page you leave, the inserted detail stays hidden */
     var nv = { on: Object.assign({}, c.nav.on), cls: Object.assign({}, c.nav.cls) }, ph = c.nav.phase;
     if (ph === 'idle') this._idleTop = c.nav.cur;
     else if (c.nav.dir === 'fwd' && this._idleTop && this._idleTop !== c.nav.cur) {
@@ -1411,8 +1418,7 @@ JU.mixin(Component);
   if (baseJump) Component.prototype.jumpTo = function (key) { var root = this.rootRef && this.rootRef.current; this._land(); this._flip = null; this._scrollMemo = {}; this._shLast = null; this._shClosing = 0; if (root) root.querySelectorAll('[data-scroller]').forEach(function (el) { el.scrollTop = 0; var sf = el.closest('[data-surface]'); if (sf) sf.dataset.c02c = '0'; }); return baseJump.apply(this, arguments); };
 })();
 (function () {
-  /* section focus (reveal(el, true)) must clear C02's overlay header (V27 constant-height header + tool row = sat + 76px) and never
-     move a section that is already fully in view; every other call (soft return-to-origin, memo sync) is the shared controller's */
+  /* section focus must clear C02's overlay header and never move a section that is already in view */
   var base = Component.prototype.reveal;
   Component.prototype.reveal = function (el, top, opts) {
     var root = this.rootRef && this.rootRef.current; var sc = el && el.closest && el.closest('[data-scroller]');

@@ -665,7 +665,7 @@ the band's own font and get the page's line height ÷ scale, so the last frame i
 <div class="c04-phc"><h1 class="c04-pt">{{tk.title}}</h1><p class="c04-pm">{{tk.meta}}</p></div>
 </header>
 <div class="c04-foot">
-<sc-if value="{{c.ticket.tear.canTear}}"><span class="c04-plate c04-fplate ju-print-cta-in"><button type="button" class="ju-v27-cta c04-cta" data-act="{{tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></span></sc-if>
+<sc-if value="{{c.ticket.tear.canTear}}"><span class="c04-plate c04-fplate ju-print-cta-in"><button type="button" class="ju-v27-cta c04-cta" data-act="{{tk.tearAct}}" onClick="{{tk.tearGo}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></span></sc-if>
 <sc-if value="{{tk.contactAction}}"><span class="c04-plate c04-fplate c04-bedc"><button type="button" class="ju-v27-cta c04-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></span></sc-if>
 <sc-if value="{{c.ticket.result}}"><span class="c04-plate c04-fplate"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.result.act}}"><span class="gloss"></span><span class="label">{{c.ticket.result.label}}</span></button></span></sc-if>
 <sc-if value="{{c.ticket.unavailable}}"><span class="c04-plate c04-fplate"><button type="button" class="ju-v27-cta c04-cta" data-act="ok" onClick="{{c.ticket.unavailable.act}}"><span class="gloss"></span><span class="label">{{c.ticket.unavailable.label}}</span></button></span></sc-if>
@@ -950,7 +950,7 @@ else if (st === 'torn') this._settleTicket(stage, data, 'torn');
 }
 _settleTicket(stage, data, final, tearOpts) {
 const R = this.R(); R.fillTicket(stage, data); const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
-if (final === 'ready' && R.tear) { const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready'; if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); } if (tearOpts) this.registerTear(h); return h; }
+if (final === 'ready' && R.tear) { const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready'; if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); h.__c04ready = true; if (this._tearQueued) { this._tearQueued = false; const cc = this._c; if (cc && cc.ticket.on && cc.ticket.tear.canTear) cc.ticket.tear.tearNow(); } R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); } if (tearOpts) this.registerTear(h); return h; }
 stage.dataset.state = 'torn'; R.measureTicket(stage, true); return null;
 }
 _reprint() { const stage = this._rit.stage, c = this._c; const R = this.R(); if (!stage || !R || !c.ticket.on) return; R.print.reset(stage); const torn = c.ticket.state === 'torn'; R.print(stage, this._rit4(c), { final: torn ? 'torn' : 'ready', tear: this._tearOpts() }).then(() => { const el = stage.querySelector('[data-tear]'); this.registerTear(el && el.__juritual ? el.__juritual : null); if (c.ticket.contact.on && this._rit.contact) this._rit.contact.reveal(); }); }
@@ -1201,6 +1201,8 @@ bandTitle: r.title, bandStatus: b.status, bandMetaA: b.metaA, bandOld: b.old, ba
 title: c04t(r.title), meta: T.title + ' · ' + (rp ? rp.newWhen.zh : w.zh) + ' · ' + r.place.hood,
 back: () => this.back(), onScroll: (ev) => this._scroll(ev), exitAct: T.isReply ? 'decline' : 'exit',
 showStage: !T.unavailable, stageCls: T.isReply ? 'reissued' : '', noPrevious: !T.ritual.previous, previousText: T.ritual.previous ? '原定 ' + T.ritual.previous : '', noMark: !T.ritual.mark,
+/* a tap that lands before the original's tear rig is ready (its raster takes ~0.75s in headless) is kept and run when the rig is ready */
+tearGo: () => { const h = this._tearRig; if (h && h.rig && !h.__c04ready) { this._tearQueued = true; return; } const cc = this._c; if (cc && cc.ticket.on) cc.ticket.tear.tearNow(); },
 waiting: T.state === 'printing' || (T.state === 'fresh' && (T.isReply || T.stage === 'tear')), ghostCls: T.isReply ? 're' : '', waitText: T.isReply ? '新的一版正在出票…' : '票根正在出纸…', rit: this._rit4(c), tearAct: T.isReply ? 'accept' : 'tear-now', tearLabel: T.isReply ? '接受新时间' : '撕开票根', declineOn: !!(rp && T.tear.canTear),
 contactAction: !T.unavailable && !T.result, showClosed: !!(T.contact.closed && !T.result && !T.unavailable), ashes: !!(T.result && T.result.burn && !T.result.burning),
 retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); },
@@ -1219,11 +1221,12 @@ const pg = Mg.head.progress; mg.seatsOn = !pg.hidden && !Mg.head.ended; mg.seats
 mg.progA = pg.attendance ? pg.attendance.text : pg.hidden ? Mg.head.status : pg.text; mg.progB = pg.attendance ? ' · ' + pg.attendance.sub : pg.hidden ? '' : (pg.more ? ' · ' + pg.more : ''); mg.progCls = this._tick('prog:' + Mg.eventId, mg.progA + mg.progB);
 mg.seats.forEach((x, i) => { x.kind += this._tick('seat:' + Mg.eventId + ':' + i, x.kind).replace('fb', 'fa'); });
 const keyOf = { apps: 'apps', replies: 'replies', members: 'roster', queue: 'queue', leaves: 'leaves', attendance: 'attendance', arrange: 'arrange' };
-const want = s.c04mx && s.c04mx.id === Mg.eventId && Mg.order.indexOf(s.c04mx.k) >= 0 ? s.c04mx.k : (Mg.focus && Mg.order.indexOf(Mg.focus) >= 0 ? Mg.focus : Mg.order[0]);
+/* the open section: what the host last opened (for this 局 and this intent), else the intent's own first section (记为散场 → 出席), else the focus */
+const want = s.c04mx && s.c04mx.id === Mg.eventId && s.c04mx.intent === Mg.intent && Mg.order.indexOf(s.c04mx.k) >= 0 ? s.c04mx.k : (Mg.intent === 'attendance' && Mg.order.indexOf('attendance') >= 0 ? 'attendance' : Mg.focus && Mg.order.indexOf(Mg.focus) >= 0 ? Mg.focus : Mg.order[0]);
 mg.secs = Mg.order.map((k, i, all) => { const v = Mg[keyOf[k]] || {}; const open = k === want || k === 'arrange' && i === all.length - 1 && want === k; const last = i === all.length - 1;
 const sub = k === 'apps' ? v.sub : k === 'members' ? v.line : k === 'replies' ? v.sub : k === 'queue' ? v.sub : k === 'attendance' ? v.sub : k === 'arrange' ? (Mg.head.formedLine || '') : '';
 return { key: k, open: open, closed: !open, cls: (open ? 'is-open' : 'is-closed') + (last ? ' is-last' : '') + (Mg.focus === k ? ' is-focus' : ''), sty: '--sp:' + P.secs[i % P.secs.length] + ';--si:' + P.si + ';--si2:' + c04mix(P.secs[i % P.secs.length], P.si, 0.72) + ';--sl2:' + (P.dark ? 'rgba(11,12,20,.12)' : 'rgba(20,22,31,.1)'),
-title: k === 'members' ? '成员' : (v.title || '这局的安排'), sub: sub, tcls: this._tick('st:' + Mg.eventId + k, v.title || ''), scls: this._tick('ss:' + Mg.eventId + k, sub), toggle: () => this.setState({ c04mx: { id: Mg.eventId, k: open && k !== 'arrange' ? (all.filter(z => z !== k)[0] || k) : k } }),
+title: k === 'members' ? '成员' : (v.title || '这局的安排'), sub: sub, tcls: this._tick('st:' + Mg.eventId + k, v.title || ''), scls: this._tick('ss:' + Mg.eventId + k, sub), toggle: () => this.setState({ c04mx: { id: Mg.eventId, intent: Mg.intent, k: open && k !== 'arrange' ? (all.filter(z => z !== k)[0] || k) : k } }),
 isApps: k === 'apps', isMembers: k === 'members', isQueue: k === 'queue', isLeaves: k === 'leaves', isReplies: k === 'replies', isArrange: k === 'arrange', isAttendance: k === 'attendance' }; });
 mg.apps = Mg.apps.rows.map(a => Object.assign({}, a, { ini: JU.fmt.initial(a.nick), pendingOpen: !a.result && !a.busy && !a.error, icon: a.status === 'approved' ? 'M5 12.5l4.2 4.2L19 7' : 'M7 7l10 10 M17 7L7 17' }));
 mg.roster = Mg.roster.rows.map(m => Object.assign({}, m, { cls: m.host ? 'you' : '', leftOn: !!(m.left && m.left.on), leftText: m.left ? m.left.text : '' }));

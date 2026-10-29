@@ -831,14 +831,15 @@ class Component extends DCLogic {
     const to = this._positions() || {}; const lk = this.state.ui && this.state.ui.landKey ? 'r:' + String(this.state.ui.landKey).replace(/^row-/, '') : null;
     /* the row that changes place has already let go of its old place during the fold: the others close up at once (300ms) and it is
        set in its new place from 140ms (220ms, a 8px rise) — the list never waits, and no frame has two lines of type on top of each other */
-    const moved = !!(lk && to[lk] != null && from[lk] != null && Math.abs(from[lk] - to[lk]) > 1);
+    const mk = this._movingKey || lk; this._movingKey = null;   /* the row this collapse let go of (known even when the stack had no origin key: an index jump) */
+    const moved = !!(mk && to[mk] != null && from[mk] != null && Math.abs(from[mk] - to[mk]) > 1);
     if (k > 0) root.querySelectorAll('.c06-list [data-k]').forEach(el => { const key = el.getAttribute('data-k'); const d = from[key] == null ? null : from[key] - to[key];
-      if (moved && key === lk) { el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220 * k, delay: 140 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); return; }
+      if (moved && key === mk) { el.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 220 * k, delay: 140 * k, easing: 'cubic-bezier(.2,.8,.2,1)', fill: 'backwards' }); return; }
       if (d == null) { el.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 220 * k, delay: 120 * k, easing: 'ease', fill: 'backwards' }); return; }
       if (Math.abs(d) > 1) el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 300 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); });
     if (moved) {
-      const el = root.querySelector('.c06-list [data-k="' + lk + '"]'); const h = el ? el.offsetHeight : 120; const view = sc.clientHeight; const y = to[lk] - sc.scrollTop;
-      if (y < 0 || y + h * .5 > view) { const t = Math.max(0, Math.round(to[lk] - view * .42)); if (k > 0) this._tween(sc, t, 300 * k, this._ezO); else sc.scrollTop = t; }
+      const el = root.querySelector('.c06-list [data-k="' + mk + '"]'); const h = el ? el.offsetHeight : 120; const view = sc.clientHeight; const y = to[mk] - sc.scrollTop;
+      if (y < 0 || y + h * .5 > view) { const t = Math.max(0, Math.round(to[mk] - view * .42)); if (k > 0) this._tween(sc, t, 300 * k, this._ezO); else sc.scrollTop = t; }
     }
   }
   componentWillUnmount() { cancelAnimationFrame(this._tw); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
@@ -886,6 +887,7 @@ class Component extends DCLogic {
     if (block) this._shrink(block, left);
     /* a row that will change place lets go of its old one while its paper folds (the last 130ms), so the list can close up at once */
     this._unfade(); const row = this._moved && k > 0 ? root.querySelector('.c06-row[data-rid="' + x.id + '"]') : null;
+    this._movingKey = row ? (x.s === 'draft' ? 'd:' : 'r:') + x.id : null;
     if (row) { const fd = Math.min(130 * k, left); this._fadeRow = row.animate([{ opacity: 1 }, { opacity: 0 }], { duration: fd, delay: Math.max(0, left - fd), easing: 'ease-in', fill: 'forwards' }); }
     this._tween(sc, y0, left, this._ezC);
   }
