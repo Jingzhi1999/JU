@@ -211,6 +211,10 @@ then rises on a slow-starting curve that keeps it inside the paper until the pap
 .c04-pg.has-from.is-top.dir-fwd .c04-ghost[data-gh="in"]{display:block}
 .c04-ghost[data-gh="in"] .c04-gt{animation:c04-gt-in calc(250ms * var(--k)) both}
 .c04-ghost[data-gh="in"] .c04-gt .g2{animation:c04-g2-in calc(250ms * var(--k)) both}
+.c04-gt .ga{color:var(--gc0)}
+.c04-gt .gb{color:var(--gc1)}
+.c04-ghost[data-gh="in"] .c04-gt .ga{animation:c04-ga calc(250ms * var(--k)) both}
+.c04-ghost[data-gh="in"] .c04-gt .gb{animation:c04-gb calc(250ms * var(--k)) both}
 .c04-ghost[data-gh="in"] .c04-gm{animation:c04-gm-in calc(250ms * var(--k)) both}
 .c04-ghost[data-gh="in"] .c04-gs{animation:c04-gs-in calc(250ms * var(--k)) both}
 /* every opening / closing keyframe also carries a constant scroll-margin-bottom: a property the compositor cannot run, so the whole choreography
@@ -221,9 +225,11 @@ then rises on a slow-starting curve that keeps it inside the paper until the pap
 24%{clip-path:inset(calc(var(--fx-y) - 8px) calc(100% - var(--fx-x) - var(--fx-w)) calc(100% - var(--fx-y) - var(--fx-vh,var(--fx-h)) + 8px) var(--fx-x) round 18px 18px 8px 8px);animation-timing-function:cubic-bezier(.22,.74,.16,1)}
 100%{scroll-margin-bottom:0px;clip-path:inset(0 0 0 0 round 18px)}}
 @keyframes c04-gt-in{
-0%{scroll-margin-bottom:0px;color:var(--gc0);transform:translate(var(--gdx),var(--gdy)) scale(var(--gs0));animation-timing-function:cubic-bezier(.25,.7,.35,1)}
-24%{color:var(--gc0);transform:translate(var(--gdx),calc(var(--gdy) - 8px)) scale(var(--gs0));animation-timing-function:cubic-bezier(.55,0,.2,1)}
-100%{scroll-margin-bottom:0px;color:var(--gc1);transform:translate(0px,0px) scale(1)}}
+0%{scroll-margin-bottom:0px;transform:translate(var(--gdx),var(--gdy)) scale(var(--gs0));animation-timing-function:cubic-bezier(.25,.7,.35,1)}
+24%{transform:translate(var(--gdx),calc(var(--gdy) - 8px)) scale(var(--gs0));animation-timing-function:cubic-bezier(.55,0,.2,1)}
+100%{scroll-margin-bottom:0px;transform:translate(0px,0px) scale(1)}}
+@keyframes c04-ga{0%,24%{scroll-margin-bottom:0px;opacity:1}64%,100%{scroll-margin-bottom:0px;opacity:0}}
+@keyframes c04-gb{0%,24%{scroll-margin-bottom:0px;opacity:0}64%,100%{scroll-margin-bottom:0px;opacity:1}}
 /* the line breaks as the title starts to rise (24–40%: the second half drops to its line), then slides to the margin while the title grows */
 @keyframes c04-g2-in{0%,24%{scroll-margin-bottom:0px;transform:translate(var(--g2x),var(--g2y));animation-timing-function:cubic-bezier(.3,.6,.3,1)}40%{transform:translate(var(--g2x),var(--g2z));animation-timing-function:cubic-bezier(.25,.7,.25,1)}100%{scroll-margin-bottom:0px;transform:translate(0px,0px)}}
 @keyframes c04-gm-in{0%{scroll-margin-bottom:0px;opacity:1;transform:none;animation-timing-function:cubic-bezier(.25,.7,.35,1)}24%{opacity:1;transform:translateY(-8px)}40%,100%{scroll-margin-bottom:0px;opacity:0;transform:translateY(-8px)}}
@@ -1033,10 +1039,9 @@ const emLs = f => /px$/.test(f.ls) ? (Math.round(parseFloat(f.ls) / f.fs * 10000
 const v = {}, px = n => (Math.round(n * 10) / 10) + 'px', hb = gh.parentElement.getBoundingClientRect(), ox = hb.left - R.left, oy = hb.top - R.top, s0 = 1 / S;
 /* the ghost is the page title (its font, size, line breaks) at its own place, scaled down onto the band's title at the start */
 gt.style.cssText = fontEm(pf) + 'line-height:' + pf.lh + 'px;left:' + px(pb.left - R.left - ox) + ';top:' + px(pb.top - R.top - oy); gt.textContent = '';
-const a = document.createElement('span'); a.className = 'g1'; a.textContent = t1; gt.appendChild(a);
+['ga', 'gb'].forEach(k => { const w = document.createElement('span'); w.className = k; const a = document.createElement('span'); a.className = 'g1'; a.textContent = t1; w.appendChild(a); if (t2) { const b = document.createElement('span'); b.className = 'g2'; b.textContent = t2; b.style.top = pf.lh + 'px'; w.appendChild(b); } gt.appendChild(w); });
 if (t2) {
-const b = document.createElement('span'); b.className = 'g2'; b.textContent = t2; b.style.top = pf.lh + 'px'; gt.appendChild(b);
-const sp = document.createElement('span'); sp.textContent = t1 + ' '; sp.style.visibility = 'hidden'; gt.appendChild(sp); const wsp = sp.offsetWidth; gt.removeChild(sp);
+const sp = document.createElement('span'); sp.textContent = t1 + ' '; sp.style.cssText = 'visibility:hidden;position:static'; gt.appendChild(sp); const wsp = sp.offsetWidth; gt.removeChild(sp);
 const two = tl.length === 2; v['--g2x'] = px(two ? 0 : wsp); v['--g2y'] = px(two ? g.tf.lh * S - pf.lh : -pf.lh); v['--g2z'] = px(two ? g.tf.lh * S - pf.lh : 0);
 }
 v['--gdx'] = px(g.tb.x - (pb.left - R.left)); v['--gdy'] = px(g.tb.y + (g.tf.lh - pf.lh * s0) / 2 - (pb.top - R.top)); v['--gs0'] = String(Math.round(s0 * 10000) / 10000); v['--gc0'] = g.tf.col; v['--gc1'] = pf.col;
