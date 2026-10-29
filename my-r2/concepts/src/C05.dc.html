@@ -1225,11 +1225,12 @@ class Component extends DCLogic {
       let own = el.matches('.ju-v27-cta,[data-tear],canvas,.c05-seats,.c05-bar'); for (let n = el.firstChild; !own && n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) own = true; if (own) C.push([el, pp[1]]); }); });
     X.forEach(function (x) { C.push(x); }); const R = C.map(function (c) { return self._rel(c[0], root); });
     C.forEach(function (c, j) { const r = R[j]; if (!r.w || !r.h || r.y > H || r.y + r.h < 0) return;
-      const hit = function (i) { if (!P) return false; for (let k = Math.max(0, i - 1); k <= Math.min(40, i + 1); k++) { const b = P[k]; if (r.x < b[0] + b[2] - 2 && r.x + r.w > b[0] + 2 && r.y < b[1] + b[3] - 2 && r.y + r.h > b[1] + 2) return true; } return false; };
+      /* the title's box with a margin (20px, ±3 samples) while it moves, so a frame-late title never lands on a line that is fading in */
+      const hit = function (i) { if (!P) return false; for (let k = Math.max(0, i - 3); k <= Math.min(40, i + 3); k++) { const b = P[k], g = k < 36 ? 20 : -2, gx = k < 36 ? 6 : -2; if (r.x < b[0] + b[2] + gx && r.x + r.w > b[0] - gx && r.y < b[1] + b[3] + g && r.y + r.h > b[1] - g) return true; } return false; };
       const v = S.map(function (s, i) { return c[1] ? s[0] <= r.y + 1 && s[1] >= r.y + r.h - 1 && !hit(i) : r.y + r.h <= s[0] + 1 || r.y >= s[1] - 1; });
       /* the arriving page's lines show once and stay; the leaving page's go once and stay gone */
-      if (c[1] === (dir !== 'back')) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else { if (P && (c[2] || c[1] || c[0].closest('.c05-zb'))) for (let i = 4; i <= 40; i++) v[i] = false; for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1]; }
-      /* with a title in flight the leaving hero (这一场, card) and, on a return, every line of the leaving page are gone within 40ms */
+      if (c[1] === (dir !== 'back')) for (let i = 39; i >= 0; i--) v[i] = v[i] && v[i + 1]; else { if (P && (c[2] || c[1] || c[0].closest('.c05-zb'))) for (let i = 2; i <= 40; i++) v[i] = false; for (let i = 1; i <= 40; i++) v[i] = v[i] && v[i - 1]; }
+      /* with a title in flight the leaving hero (这一场, card) and, on a return, every line of the leaving page are gone at once (≈10ms) */
       if (v.every(function (x) { return x; })) return; const kf = [{ offset: 0, opacity: v[0] ? 1 : 0 }]; let o = 0; const pu = function (t, a) { o = Math.max(o, Math.min(1, t)); kf.push({ offset: o, opacity: a }); };
       for (let i = 1; i <= 40; i++) if (v[i] !== v[i - 1]) { if (v[i]) { pu(i / 40, 0); pu(i / 40 + 50 * q, 1); } else { pu((i - 1) / 40 - 40 * q, 1); pu((i - 1) / 40, 0); } }
       pu(1, v[40] ? 1 : 0); add(c[0], kf, { easing: 'linear' }); });
