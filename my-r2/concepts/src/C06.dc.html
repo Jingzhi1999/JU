@@ -842,8 +842,8 @@ class Component extends DCLogic {
   _syncFig() { const f = this._figTop; this._figTop = null; if (!f || !f.el.isConnected) return; const d = f.y - f.el.getBoundingClientRect().top; const k = this.kf(); if (Math.abs(d) > 1 && k > 0) f.el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 300 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
   /* m7 · a deleted draft folds its own height while it fades, so the next one slides up into the place; an undone one opens its place again */
   _syncDrafts() {
-    const root = this.rootRef.current, k = this.kf(); if (!root || !(k > 0)) return;
-    const del = root.querySelector('.c06-list .c06-item.is-deleting'); if (del && !this._delAnim) { const h = del.offsetHeight; del.style.overflow = 'hidden'; this._delAnim = del.animate([{ height: h + 'px' }, { height: '0px', borderTopColor: 'transparent' }], { duration: 260 * k, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }); this._delAnim.oncancel = () => { del.style.overflow = ''; }; }
+    const root = this.rootRef.current, k = this.kf(); if (this._delFlush) { const el = this._delFlush; this._delFlush = null; void el.offsetWidth; requestAnimationFrame(() => { el.style.transition = ''; }); } if (!root || !(k > 0)) return;
+    const del = root.querySelector('.c06-list .c06-item.is-deleting'); if (del && !this._delAnim) { const h = del.offsetHeight; del.style.overflow = 'hidden'; this._delEl = del; this._delAnim = del.animate([{ height: h + 'px' }, { height: '0px', borderTopColor: 'transparent' }], { duration: 260 * k, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'forwards' }); this._delAnim.oncancel = () => { del.style.overflow = ''; }; }
     root.querySelectorAll('.c06-list .c06-item.is-restored').forEach((el) => { if (el.__c06r) return; el.__c06r = 1; const h = el.offsetHeight; el.style.overflow = 'hidden'; const a = el.animate([{ height: '0px' }, { height: h + 'px' }], { duration: 280 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); a.onfinish = a.oncancel = () => { el.style.overflow = ''; el.__c06r = 0; }; });
   }
   /* m6 · the undo countdown follows the clock (the window's own timer: paused with 暂停, slowed with 0.5×) */
@@ -861,7 +861,7 @@ class Component extends DCLogic {
   /* leaving an open item: remember where every row and label stood in the frozen order, so the re-sort that follows can slide */
   getSnapshotBeforeUpdate(pp, ps) {
     if (this._resetScrollers) this._fresh = true;
-    if (ps && ps.ui && ps.ui.ghost && !(this.state.ui && this.state.ui.ghost) && this._delAnim) { try { this._delAnim.cancel(); } catch (e) { } this._delAnim = null; }
+    if (ps && ps.ui && ps.ui.ghost && !(this.state.ui && this.state.ui.ghost) && this._delAnim) { const el = this._delEl; if (el) { el.style.transition = 'none'; this._delFlush = el; } this._delEl = null; try { this._delAnim.cancel(); } catch (e) { } this._delAnim = null; }   /* the folded row's node is reused for the next draft: it takes its look at once, without the fade back */
     if (this._rit && this._rit.tearing && !this._figTop) { const root = this.rootRef.current, fig = root && root.querySelector('.c06-item.is-x .c06-fig'); if (fig) this._figTop = { el: fig, y: fig.getBoundingClientRect().top }; }
     if (ps && ps.sheet && !this.state.sheet && !this._resetScrollers && this.kf() > 0) { const root = this.rootRef.current, ov = root && root.querySelector('.c06-over'); if (ov) this._ghost = ov.cloneNode(true); }   /* jumpTo / reset (the controller zeroes every list after this render) */
     const has = (st) => !!(st && st.nav && st.nav.stack.some((e, i) => i > 0 && C06_INLINE[e.s]));
@@ -918,7 +918,10 @@ class Component extends DCLogic {
     if (!x) this._swapOut = null;
     if (x && (!prev || prev.id !== x.id)) {
       const memo = this._scrollMemo && this._scrollMemo['home:' + this.state.role + ':' + this.state.section];
-      const target = this._targetFor(x.id); this._liftId = target != null ? x.id : null; const lst = root.querySelector('.c06-list'); if (lst) lst.classList.toggle('is-lift', target != null);
+      const target = this._targetFor(x.id);
+      /* what was above leaves at once only when the title ends up under the header (nothing above would stay in view); a shorter carry keeps it, dimmed */
+      let lift = false; if (target != null) { const rw = root.querySelector('.c06-row[data-rid="' + x.id + '"]'), it = rw && (rw.closest('.c06-item') || rw); if (it) lift = it.getBoundingClientRect().top - sc.getBoundingClientRect().top - (target - sc.scrollTop) < 72; }
+      this._liftId = lift ? x.id : null; const lst = root.querySelector('.c06-list'); if (lst) lst.classList.toggle('is-lift', lift);
       this._y0 = { id: x.id, y: memo && memo.home != null ? memo.home : null, alt: sc.scrollTop };
       const moving = nav.phase !== 'idle' && nav.dir !== 'back' && k > 0; if (moving) { this._moT0 = document.timeline.currentTime; this._moSet = null; }
       /* the paragraph starts opening under a title that has not moved yet (the rows below are pushed down); 90ms later the list carries the title up under the header — both land by 420ms */

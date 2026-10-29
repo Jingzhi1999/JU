@@ -253,7 +253,7 @@ body{margin:0}
 /* the contact action is not there until the contact layer shows it (it was focusable and took clicks at opacity 0) */
 .c08-foot .ju-contact-action:not([data-shown="true"]){visibility:hidden;pointer-events:none}
 /* the moment the stub detaches, 撕开票根 / 接受新时间 steps aside: the falling stub never crosses a live button */
-.c08-pg:has([data-print-stage][data-detached="1"]) .c08-foot :is([data-act="tear-now"],[data-act="accept"],[data-act="decline"]){opacity:0;visibility:hidden;pointer-events:none;transition:opacity calc(120ms * var(--k)) ease,visibility 0s linear calc(120ms * var(--k))}
+.c08-foot.is-falling :is([data-act="tear-now"],[data-act="accept"],[data-act="decline"]){opacity:0;visibility:hidden;pointer-events:none;transition:opacity calc(120ms * var(--k)) ease,visibility 0s linear calc(120ms * var(--k))}
 .c08-foot:empty{display:none}
 .c08-foot .c08-weak{color:#2f3546;min-height:40px;margin:0}
 /* page motion: enter = the face background grows from the tapped strip to the head face; the strip's title IS the page title (it moves and
@@ -281,6 +281,7 @@ body{margin:0}
 .app.over-home .c08-pg.is-top.ph-in .c08-body>*,.app.over-home .c08-pg.is-top.ph-in .c08-foot{transition:opacity calc(150ms * var(--k)) ease calc(150ms * var(--k)),transform calc(340ms * var(--k)) var(--tA)}
 .app.over-home .c08-pg.is-top.ph-exit .c08-body>*,.app.over-home .c08-pg.is-top.ph-exit .c08-foot,.app.over-home .c08-pg.is-top.ph-exit .c08-tool{transition:opacity calc(80ms * var(--k)) ease}
 .c08-home.is-under.ph-exit .c08-st,.c08-home.is-under.ph-exit .c08-hdw{animation-delay:calc(60ms * var(--k))!important}
+.c08-home.is-under.ph-exit .c08-void,.c08-home.is-under.ph-exit .c08-tail{animation:c08-underin calc(200ms * var(--k)) ease calc(90ms * var(--k)) both!important}   /* the list's own words wait for the page content to be gone */
 /* the page's paper fades in under the leaving bands (never a one-frame swap from the environment to paper) and fades out on the way back */
 .app.over-home .c08-pg.is-top.ph-enter .c08-body{background-color:rgba(246,244,241,0);transition:none}
 .app.over-home .c08-pg.is-top.ph-in .c08-body{transition:background-color calc(260ms * var(--k)) ease calc(90ms * var(--k))}
@@ -620,7 +621,7 @@ body{margin:0}
               </sc-if>
             </div>
           </div>
-          <div class="c08-foot">
+          <div class="c08-foot {{tk.fallCls}}">
             <sc-if value="{{c.ticket.tear.canTear}}"><button type="button" class="ju-v27-cta" data-act="{{tk.tearAct}}" onClick="{{c.ticket.tear.tearNow}}"><span class="gloss"></span><span class="label">{{tk.tearLabel}}</span></button></sc-if>
             <sc-if value="{{tk.replyDecline}}"><button type="button" class="c08-weak" data-act="decline" onClick="{{c.ticket.reply.decline}}">去不了了</button></sc-if>
             <sc-if value="{{tk.contactAction}}"><button type="button" class="ju-v27-cta ju-contact-action" data-contact-action data-act="contacted" aria-disabled="false"><span class="gloss"></span><span class="label" data-slot="actionLabel">已加微信</span></button></sc-if>
@@ -1051,7 +1052,7 @@ class Component extends DCLogic {
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn;
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
   }
-  _tearOpts() { return { onDetach: () => this.tearCommit(), onDone: () => { this._uiIn('ticket', { contactOpen: true }); this.after(120, () => this._focusAfterTear(6)); } }; }
+  _tearOpts() { return { onDetach: () => { const ok = this.tearCommit(); if (ok !== false) this.setState({ tearFall: true }); return ok; }, onDone: () => { this.setState({ tearFall: false }); this._uiIn('ticket', { contactOpen: true }); this.after(120, () => this._focusAfterTear(6)); } }; }
   /* a stub torn from the keyboard leaves focus on nothing (the stub is gone): it goes on to the contact the tear revealed */
   _focusAfterTear(n) {
     const root = this._root(); if (!root) return; const sr = root.getRootNode(); const ae = sr && sr.activeElement;
@@ -1300,7 +1301,7 @@ class Component extends DCLogic {
     const tk = { on: tkOn, surface: c.nav.on.reply ? 'reply' : 'ticket', tone: tTone, crumb: crumbOf(tTone), exitAct: t.isReply ? 'decline' : 'exit', noExit: !(t.on && t.canExit) || !!(t.reply && t.tear && t.tear.canTear), showExit: !!(t.on && t.canExit) && !(t.reply && t.tear && t.tear.canTear),   /* the reply page asks its question once: 接受 / 去不了了 side by side in the foot */
       title: t.on ? JU.fmt.keepDot(t.row.title) : '', meta: t.on ? t.title + ' · ' + (t.isReply && t.reply ? (t.reply.newWhen && t.reply.newWhen.zh ? '改到 ' + t.reply.newWhen.zh : t.reply.newText) : t.face.when.zh) : '',
       showStage: t.on && !t.unavailable, stageCls: t.isReply ? 'reissued' : '', noPrevious: !(t.on && t.ritual && t.ritual.previous), previousText: t.on && t.ritual && t.ritual.previous ? '原定 ' + t.ritual.previous : '', noMark: !(t.on && t.ritual && t.ritual.mark),
-      tearAct: t.isReply ? 'accept' : 'tear-now', tearLabel: t.isReply ? '接受新时间' : '撕开票根', replyDecline: !!(t.reply && t.tear && t.tear.canTear),
+      tearAct: t.isReply ? 'accept' : 'tear-now', fallCls: this.state.tearFall ? 'is-falling' : '', tearLabel: t.isReply ? '接受新时间' : '撕开票根', replyDecline: !!(t.reply && t.tear && t.tear.canTear),
       contactAction: !!(t.on && !t.unavailable && !t.result), showClosed: !!(t.on && t.contact.closed && !t.result && !t.unavailable), ashes: !!(t.result && t.result.burn && !t.result.burning),
       retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, copyRetry: !!(c.ticket.on && c.ticket.contact && c.ticket.contact.copyFail && !(c.ticket.ritual && c.ticket.ritual.added) && !c.ticket.contact.ctaDisabled),
       printingNote: !!(t.on && t.state === 'printing'), outline: !!(t.on && !t.unavailable && (t.state === 'printing' || t.state === 'fresh')), wrapCls: t.on && t.result && t.result.burn && !t.result.burning ? 'is-burnt' : '', hint: '' };
