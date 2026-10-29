@@ -1,6 +1,6 @@
 # C04「叠层」· fix-r1：独立复核（快照 88505666dc73）之后的修改，并入规则 10
 
-- 源文件：`my-r2/concepts/src/C04.dc.html`，193,525 字节（189 KB，上限 200 KB）。
+- 源文件：`my-r2/concepts/src/C04.dc.html`，194,715 字节（190 KB，上限 200 KB；含下面「冻结前补改」）。
 - 构建：`JU_FONTS_CSS=… JU_STANDALONE=.build/C04.html JU_ONLY=C04 node my-r2/src/build.js`。
 - 已提交的 stage1 / stage2 证据没有删除，也没有覆盖。本轮证据全部在 `my-r2/evidence/C04/fix-r1/`，规则 10 的阶段中间测量放在 `stage2/env/`。
 - 帧证据都来自真实点击（`clickSel` 或元素 `click()`），每条流程从首页起步，不走索引跳转；只有工具（coverage / widths / kb / rm / env-probe）按约定使用索引跳转。
@@ -121,3 +121,10 @@
 
 - 局主历史组注释「可以从这里再开一局」在 `my-r2/src/core/ju-data.js` 里，暗示一个范围外的动作，建议在共享层改。
 - 本机无 GPU，使用软件栅格。首次打开较重的页面（票件页、长管理页）时，1× 下整页可能晚约 0.3s 出现，但已不再压字或出现空纸。真机仍需复核。
+
+## 冻结前补改：卡面局名（主负责人交回）
+
+- 卡面只放主名（`String(e.title).split(' · ')[0]`），完整局名留在页标题里。主名在卡面上一律单行：按卡包的一行容量缩放字号（中文记 1、拉丁记 0.56；invite 6.6 / street 8.6 / riso 7.4 / acid 7.0 / mono 12，与 C01 相同），不再在词中间断行。三处卡面（首页角卡、详情 196×245、局卡弹层 296）同一套规则。
+- 六种卡包各看一次（真实点击，环境暂停）：invite「周六早午餐」196 宽 22.5px、street「周末速写」196 宽 15.7px、riso「东村小酒馆试营业」296 宽 31.5px（缩放 0.925，占 261/296）、acid「看展搭子」36.1px、grain「德州扑克新手桌」8.6px（该包卡面的局名本来就是底栏小字）、mono「自然酒小试」17.8px，全部 1 行。`fix-r1/cards/sheet-cards.jpg`、`fix-r1/cards/measure.json`；改前（riso 断成「东村小酒 / 馆试营业」）在 `fix-r1/cards/before/sheet-cards.jpg`。
+- coverage 复跑：50/50，errors 0，mismatches 0（`fix-r1/cards/coverage/`）。
+- 局主历史组注释「可以从这里再开一局」：共享层的事，按要求保持不动。

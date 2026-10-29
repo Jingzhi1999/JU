@@ -142,7 +142,7 @@ body{margin:0}
 .c06-left::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--line)}
 .c06-item.is-x .c06-x .c06-left{animation:c06-fade calc(200ms * var(--k,1)) ease calc(170ms * var(--k,1)) both}
 .c06-item.has-x:not(.is-x) .c06-x .c06-left{opacity:0;transition:opacity calc(100ms * var(--k,1)) ease}   /* folding back: it leaves before the row's own line returns */   /* the open paragraph's countdown comes in once the row's own countdown line has yielded: the line is never there twice */
-.c06-left i{position:absolute;left:0;bottom:0;height:2px;width:calc(var(--ratio,0) * 100%);background:var(--go);z-index:1;transition:width 900ms linear}
+.c06-left i{position:absolute;left:0;bottom:0;height:2px;width:100%;transform:scaleX(var(--ratio,0));transform-origin:0 50%;background:var(--go);z-index:1}   /* a 6-hour bar moves 1/21600 a second: no transition (a per-second one never lets the window rest, so 关键帧 could not replay the last motion) */
 .c06-left.amber i{background:var(--amber)}.c06-left.red i{background:var(--warn)}
 .c06-ctaw{position:relative;display:grid;justify-items:center;padding:20px 0 2px;isolation:isolate}
 .c06-ctaw::before{content:"";position:absolute;z-index:-1;left:calc(-1 * var(--gx));right:calc(-1 * var(--gx));top:0;height:104px;pointer-events:none;opacity:.62;
@@ -481,7 +481,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                   <sc-if value="{{it.xW}}">
                     <div class="c06-x" data-xb="{{it.r.id}}" data-surface="waitlist">
                       <div class="c06-xin">
-                        <p class="c06-lede"><sc-if value="{{c.waitlist.receipt.field}}"><b class="c06-lf">{{c.waitlist.receipt.field}}</b></sc-if>{{c.waitlist.receipt.title}}<sc-if value="{{c.waitlist.receipt.body}}"> · {{c.waitlist.receipt.body}}</sc-if></p>
+                        <p class="c06-lede"><sc-if value="{{c.waitlist.receipt.field}}"><b class="c06-lf">{{c.waitlist.receipt.field}}</b></sc-if>{{c.waitlist.receipt.title}}<sc-if value="{{v.wl.rcBody}}"> · {{v.wl.rcBody}}</sc-if></p>
                         <sc-if value="{{c.waitlist.receipt.note}}"><p class="c06-note">{{c.waitlist.receipt.note}}</p></sc-if>
                         <sc-if value="{{c.waitlist.countdown.on}}"><p class="c06-left {{c.waitlist.countdown.tone}}" style="--ratio:{{c.waitlist.countdown.ratio}}"><b>剩 {{c.waitlist.countdown.text}}</b><span>6 小时预留</span><i></i></p></sc-if>
                         <div class="c06-jc" data-c06card="{{v.wl.card}}" role="img" aria-label="局卡 · {{c.waitlist.row.title}}"></div>
@@ -774,7 +774,10 @@ const C06_CARD = {
   acid: (v, N) => `<div style="position:relative;aspect-ratio:4/5;overflow:hidden;background:#C9F23C;color:#14150F;display:flex;flex-direction:column;padding:0;box-sizing:border-box"><div style="height:20cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw);display:flex;align-items:center;justify-content:center;font-family:'Space Mono',monospace;font-size:2.6cqw;color:#5d7413;letter-spacing:0.3cqw">[ 官方图库 · 餐桌 / 沸腾_01 ]</div><div style="flex:1;display:flex;flex-direction:column;justify-content:center;gap:2.4cqw;padding:5cqw 6cqw;min-height:0"><div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.3cqw"><span>${v.num}</span><span>${v.en}</span></div><div style="display:flex;justify-content:space-between;font-family:'Oswald',sans-serif;font-weight:500;font-size:4.5cqw;letter-spacing:0.6cqw;text-transform:uppercase;opacity:0.85"><span>HOSTED</span><span>BY ${v.host}</span></div><div style="font-family:'Noto Sans SC',sans-serif;font-weight:900;font-size:12.2cqw;line-height:1.08;letter-spacing:0.15cqw">${v.title}</div><div style="display:flex;justify-content:space-between;align-items:baseline;font-family:'Oswald',sans-serif;font-weight:600;font-size:7cqw;letter-spacing:0.2cqw"><span>${v.dateNum}</span><span style="font-size:5cqw">${v.time} – LATE</span></div><div style="display:flex;justify-content:space-between;font-family:'Space Mono',monospace;font-weight:700;font-size:3.3cqw"><span style="white-space:nowrap">${v.loc} · NYC</span><span style="white-space:nowrap">${v.seatShort}</span></div></div><div style="height:14cqw;background:repeating-linear-gradient(-45deg,#a7cc2b 0 2.5cqw,#b7dd33 2.5cqw 5cqw)"></div><div style="position:absolute;inset:0;pointer-events:none;opacity:0.16;mix-blend-mode:multiply;background-image:${N}"></div></div>`,
 };
 /* the status line says each fact once: when the note opens with the status word itself (已退出候补 · 退出候补 · …), the repeated head is left out */
-function c06Need(label, need) { if (!need || !label) return need; const L = String(label).trim(), L2 = L.replace(/^已/, ''); const segs = String(need).split(' · '); if (segs.length > 1 && (segs[0] === L || segs[0] === L2)) segs.shift(); return segs.join(' · '); }
+function c06Need(label, need) { if (!need || !label) return need; const L = String(label).trim(), L2 = L.replace(/^已/, ''); const segs = String(need).split(' · '); if (segs.length > 1 && (segs[0] === L || segs[0] === L2)) segs.shift();
+  /* a single line that only restates the status (已撤回 · 申请已撤回) is dropped: the status says it */
+  if (segs.length === 1) { const n = segs[0], i = n.indexOf(L); if (i >= 0 && n.length - L.length <= 2) return ''; }
+  return segs.join(' · '); }
 function c06Esc(t) { return String(t == null ? '' : t).replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch])); }
 /* the template's own renderVals, from this event's facts: seats = places still open; the card's lettering carries the short name */
 function c06CardVm(ev, when, place, host, avail, statusLabel, seatCaption) {
@@ -1286,7 +1289,7 @@ class Component extends DCLogic {
   }
   _decorD(it, c, x, collapsing) {
     const r = it.r; const isX = !!(x && x.id === r.id && x.s === 'draft');
-    const o = { key: it.key, isD: true, r: r, title: r.untitled ? '未命名草稿' : JU.fmt.keepDot(r.title), wp: [r.whenText, r.placeText].filter(Boolean).join(' · '), label: r.ready ? '可以发布' : (r.missingText || '还没写完'), need: [r.agoText, r.sourceText].filter(Boolean).join(' · '), tone: r.ready ? 'c06-t-go' : 'c06-t-amber', origin: isX ? null : r.originKey, ax: isX ? 'true' : 'false', tap: this._tap(r) };
+    const o = { key: it.key, isD: true, r: r, title: JU.fmt.keepDot(r.title || '未命名的局'), wp: [r.whenText, r.placeText].filter(Boolean).join(' · '), label: r.ready ? '可以发布' : (r.missingText || '还没写完'), need: [r.agoText, r.sourceText].filter(Boolean).join(' · '), tone: r.ready ? 'c06-t-go' : 'c06-t-amber', origin: isX ? null : r.originKey, ax: isX ? 'true' : 'false', tap: this._tap(r) };
     o.cls = (r.cls || '') + (isX && !collapsing ? ' is-x has-x' : isX ? ' has-x' : '') + (r.landing ? ' is-landing' : '');
     o.xDr = isX; o.dActs = !isX;
     return o;
@@ -1372,9 +1375,12 @@ class Component extends DCLogic {
         rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '',
         card: this._card('d', d.eventId, d.event, d.when, d.place, d.host, d.counts ? d.counts.available : 0) };
     } else v.dt = { resTitle: '', resBody: '', rcBody: '', resTone: '', lede: '', rules: [], rulesNote: '', card: '' };
-    v.wl = { card: '' };
+    v.wl = { card: '', rcBody: '' };
     if (c.waitlist.on) { (c.waitlist.entered || []).forEach(m => { m.youCls = m.you ? 'you' : ''; }); (c.waitlist.queue || []).forEach(q => { q.youCls = q.you ? 'you' : ''; });
-      const wr = c.waitlist.row || {}; v.wl.card = this._card('w', c.waitlist.eventId, wr.event, wr.when, wr.place, wr.host, c.waitlist.counts ? c.waitlist.counts.available : 0); }
+      const wr = c.waitlist.row || {}; v.wl.card = this._card('w', c.waitlist.eventId, wr.event, wr.when, wr.place, wr.host, c.waitlist.counts ? c.waitlist.counts.available : 0);
+      /* m9 · the receipt never repeats the status line under the title (轮到你时才开始 6 小时预留) */
+      const rb = (c.waitlist.receipt && c.waitlist.receipt.body) || '', sq = (t) => String(t || '').replace(/[。.\s]/g, ''), wn = c06Need(wr.label, wr.need) || '';
+      v.wl.rcBody = rb && !(sq(rb) === sq(wr.need) || sq(rb) === sq(wn) || (wr.need && sq(wr.need).indexOf(sq(rb)) >= 0)) ? rb : ''; }
     /* history paragraph */
     const hr = c.history.on ? c.history.ritual : null;
     const hwhy = { cancelled: '局主取消', withdrawn: '主动退出', 'reschedule-declined': '拒绝改期' }[c.history.on && c.history.burn ? c.history.burn.reason : ''] || '';
