@@ -286,7 +286,7 @@ body{margin:0}
 .c06-over{position:absolute;inset:0;z-index:50;display:flex;flex-direction:column;justify-content:flex-end;background:rgba(20,22,31,.3);animation:c06-scrim calc(260ms * var(--k,1)) ease both}
 @keyframes c06-scrim{0%{background:rgba(20,22,31,0)}100%{background:rgba(20,22,31,.3)}}
 .c06-sheet{position:relative;background:var(--paper);padding:28px var(--gx) calc(16px + var(--sab,0px) + var(--kb,0px));max-height:calc(100% - var(--tt) - 24px);overflow-y:auto;overflow-x:hidden;animation:c06-rise calc(340ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both;outline:none}
-@keyframes c06-rise{0%{transform:translateY(48px);opacity:0}100%{transform:none;opacity:1}}
+@keyframes c06-rise{0%{transform:translateY(100%)}100%{transform:none}}   /* opaque paper slides up from the edge: no frame where the sheet's words lie over the page's */
 .c06-sheet h3{font-family:var(--serif);font-weight:600;font-size:calc(24px * var(--tz,1));line-height:1.3;color:var(--ink)}
 .c06-sh-id{margin:10px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--sec)}
 .c06-sh-id b{font-weight:500;color:var(--body);margin-right:8px}
@@ -856,7 +856,7 @@ class Component extends DCLogic {
   _syncExpand() {
     const root = this.rootRef.current, sc = this.scRef.current; if (!root || !sc || !this.state.nav) return;
     const nav = this.state.nav, x = this._expOf(), k = this.kf();
-    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); this._unfold(); this._unfade(); }
+    if (this._fresh) { this._fresh = false; cancelAnimationFrame(this._tw); this._xp = null; this._y0 = null; this._rit.autoKey = null;   /* a jump may land on the same ticket: its contact opens again */ root.querySelectorAll('[data-xb]').forEach(b => this._stop(b)); this._unfold(); this._unfade(); }
     const prev = this._xp;
     const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home');
     this._xp = x ? { id: x.id, s: x.s, collapsing } : null;
@@ -1057,28 +1057,31 @@ class Component extends DCLogic {
     const s = x.s; const r = (s === 'ticket' || s === 'reply') ? c.ticket.row : s === 'detail' ? c.detail.row : s === 'waitlist' ? c.waitlist.row : s === 'history' ? c.history.row : null;
     return r && r.id === id ? r : null;
   }
+  /* an open item keeps the typography it opened with (26px lead title, kicker line): its title never changes size under the reader when the
+     last thing to do is done; the kicker turns into 「已处理」 and the list takes the new order when the item closes */
+  _keepLead(isX, id, now) { if (!isX) return now; if (!this._xl || this._xl.id !== id) this._xl = { id: id, lead: now }; return this._xl.lead; }
   _decorJ(it, c, x, collapsing) {
     const r = this._surfRow(c, x, it.r.id) || it.r; const isX = !!(x && x.id === r.id); const w = r.when || {};
-    const lead = !!r.isLead && c.section === 'current' && c.role === 'joined';
+    const lead0 = !!r.isLead && c.section === 'current' && c.role === 'joined', lead = this._keepLead(isX, r.id, lead0);
     const old = r.oldWhen ? (r.oldWhen.md === w.md ? r.oldWhen.time : r.oldWhen.md + ' ' + r.oldWhen.time) : '';
     const hist = r.group === 'kept' || r.group === 'closed';
     const o = { key: it.key, isJ: true, r: r, title: JU.fmt.keepDot(r.title), md: w.md, time: w.time, wp: [w.wdZh, r.placeText || (r.place && r.place.hood)].filter(Boolean).join(' · '), old: old,
       label: r.label, need: hist ? (r.attendanceText || r.need) : r.need, tone: 'c06-t-' + (r.tone || 'wait'), origin: isX ? null : r.originKey, ax: isX ? 'true' : 'false', tap: this._tap(r) };
     o.cls = (lead ? 'is-lead ' : '') + (!lead && (r.group === 'wait' || r.group === 'closed') ? 'is-quiet ' : '') + (isX && !collapsing ? 'is-x has-x ' : isX ? 'has-x ' : '') + (r.landing ? 'is-landing' : '');
-    if (lead) { o.kick = '先做这件'; o.lx = true; const lf = r.left && r.left.on ? r.left : null; o.left = lf ? { text: r.left.text, ratio: r.left.ratio, tone: r.left.expired ? 'expired' : r.left.tone } : null; o.kickEm = lf && !r.left.expired && r.deadline ? this._deadline(r.deadline) : ''; o.leftNote = lf ? (r.left.expired ? '预留已到期' : '6 小时预留 · 读完约定再确认') : ''; }
+    if (lead) { o.kick = lead0 ? '先做这件' : '已处理'; o.lx = lead0; const lf = lead0 && r.left && r.left.on ? r.left : null; o.left = lf ? { text: r.left.text, ratio: r.left.ratio, tone: r.left.expired ? 'expired' : r.left.tone } : null; o.kickEm = lf && !r.left.expired && r.deadline ? this._deadline(r.deadline) : ''; o.leftNote = lf ? (r.left.expired ? '预留已到期' : '6 小时预留 · 读完约定再确认') : ''; }
     o.xT = isX && (x.s === 'ticket' || x.s === 'reply'); o.xD = isX && x.s === 'detail'; o.xW = isX && x.s === 'waitlist'; o.xH = isX && x.s === 'history';
     return o;
   }
   _decorH(it, c, x, collapsing) {
     const r = it.r; const isX = !!(x && x.id === r.id && x.s === 'manage'); const w = r.when || {};
-    const lead = !!r.isLead && c.section === 'current';
+    const lead0 = !!r.isLead && c.section === 'current', lead = this._keepLead(isX, r.id, lead0);
     const tone = { todo: 'act', resched: 'amber', recruit: 'wait', formed: 'go', ended: 'kept', cancelled: 'void' }[r.section] || (r.life === '已取消' ? 'void' : 'wait');
     const old = r.oldWhen ? (r.oldWhen.md === w.md ? r.oldWhen.time : r.oldWhen.md + ' ' + r.oldWhen.time) : '';
     const seat = [r.seatText, r.seatMore].filter(Boolean).join(' · ');
     const o = { key: it.key, isH: true, r: r, title: JU.fmt.keepDot(r.title), md: w.md, time: w.time, wp: [w.wdZh, r.placeText || (r.place && r.place.hood)].filter(Boolean).join(' · '), old: old,
       label: r.label, need: c.section === 'history' ? r.life : seat, tone: 'c06-t-' + tone, origin: isX ? null : r.originKey, ax: isX ? 'true' : 'false', tap: this._tap(r) };
     o.cls = (lead ? 'is-lead ' : '') + (!lead && (r.section === 'recruit' || c.section === 'history') ? 'is-quiet ' : '') + (isX && !collapsing ? 'is-x has-x ' : isX ? 'has-x ' : '') + (r.landing ? 'is-landing' : '');
-    if (lead) { o.kick = '先做这件'; o.lx = !!r.cta; }
+    if (lead) { o.kick = lead0 ? '先做这件' : '已处理'; o.lx = lead0 && !!r.cta; }
     o.xM = isX;
     return o;
   }
@@ -1113,7 +1116,7 @@ class Component extends DCLogic {
   renderVals() {
     const panel = this.panelVals(); panel.show = this.props.panel !== false;
     const c = this.ctlVals(); this._c = c; const s = this.state, nav = s.nav;
-    const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing;
+    const x = this._expOf(); const collapsing = !!(x && x.top && nav.phase === 'exit' && x.under === 'home'); const open = !!x && !collapsing; if (!x) this._xl = null;
     const v = { onScroll: this._onScroll, rowKey: this._rowKey, back: this._back, scrim: this._scrim }; this._cards = {};
     v.appCls = (open ? ' c06-open' : '') + (s.hcOn ? ' c06-hcon' : '');
     v.listCls = open ? 'is-open' : ''; v.tail = !!x;

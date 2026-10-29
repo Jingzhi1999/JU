@@ -66,13 +66,13 @@ body{margin:0}
 .c10-ht{position:absolute;margin:0;left:calc(32px + 42px * var(--hc,0));right:calc(32px + 42px * var(--hc,0));top:calc(var(--sat,0px) + 77px - 40.45px * var(--hc,0));font-size:calc((30px - 12px * var(--hc,0)) * var(--tz,1));font-weight:500;line-height:1.05;color:#14161f;text-align:center;text-wrap:balance;word-break:keep-all;overflow-wrap:anywhere;transform-origin:50% 0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
 .c10-hd.hc1 .c10-ht{-webkit-line-clamp:1;display:block;white-space:nowrap;text-overflow:ellipsis}
 .c10-tsp{visibility:hidden;width:100%;margin:calc(var(--sat,0px) + 77px) 0 0;font-size:calc(30px * var(--tz,1));font-weight:500;line-height:1.05;text-wrap:balance;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
-.c10-meta{margin:9px 0 0;max-width:100%;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0));text-wrap:balance}
+.c10-meta{margin:9px 0 0;max-width:100%;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:max(0, calc(1 - 3.2 * var(--hc,0)));text-wrap:balance}
 .c10-tool{position:absolute;left:0;right:0;top:0;height:0;z-index:7}
 .c10-back{position:absolute!important;left:22px;top:calc(var(--sat,0px) + 24px);pointer-events:auto;border:0;padding:0;z-index:7}
 .c10-tr{position:absolute;right:12px;top:calc(var(--sat,0px) + 24px);height:44px;padding:0 12px;border:0;background:none;border-radius:12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--sub);pointer-events:auto;cursor:pointer}
 .c10-tr:active,.c10-weak:active,.c10-link:active{background:rgba(255,255,255,.4)}
 /* ---------- home head: intent summary · role capsule · sections ---------- */
-.c10-legend{margin:9px 0 0;display:flex;justify-content:center;flex-wrap:wrap;gap:2px 16px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:calc(1 - var(--hc,0))}
+.c10-legend{margin:9px 0 0;display:flex;justify-content:center;flex-wrap:wrap;gap:2px 16px;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--sub);opacity:max(0, calc(1 - 3.2 * var(--hc,0)))}
 .c10-legend span{white-space:nowrap}
 .c10-legend em{font-style:normal;font-family:var(--num);font-weight:600;margin-left:3px;color:var(--ink2)}
 .c10-legend i{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--tone);margin:0 6px 2px 0;vertical-align:middle}
@@ -189,7 +189,7 @@ body{margin:0}
 .c10-ink[disabled]{background:rgba(20,22,31,.055);color:#626777;box-shadow:inset 0 0 0 1px rgba(20,22,31,.1);cursor:not-allowed}
 .c10-ghost{min-width:160px;max-width:min(100%,280px);height:48px;padding:0 22px;border:0;border-radius:999px;background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 1px rgba(20,22,31,.12);color:var(--ink);font-size:calc(15px * var(--tz,1));cursor:pointer}
 /* read layer */
-.c10-prog{position:relative;width:132px;height:2px;margin:14px auto 0;background:var(--faint);border-radius:1px;overflow:hidden;opacity:calc(1 - var(--hc,0))}
+.c10-prog{position:relative;width:132px;height:2px;margin:14px auto 0;background:var(--faint);border-radius:1px;overflow:hidden;opacity:max(0, calc(1 - 3.2 * var(--hc,0)))}
 .c10-hprog{position:absolute;left:32px;right:32px;top:calc(var(--sat,0px) + 80px);width:auto;height:1.5px;margin:0;opacity:calc(var(--hc,0) * .8);background:rgba(20,22,31,.08)}
 .c10-prog i{position:absolute;left:50%;top:0;bottom:0;width:calc(var(--p,0) * 100%);transform:translateX(-50%);background:var(--ink2);border-radius:1px;transition:width calc(120ms * var(--k,1)) linear}
 .c10-rule{width:100%;display:flex;flex-direction:column;align-items:center}
@@ -928,7 +928,13 @@ class Component extends DCLogic {
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   kf() { const r = this.state.review || {}; return r.speed === 0.5 ? 2 : 1; }
   componentDidMount() { this._mountEnv(); this._syncRituals(null); this._syncReduced(); this._hc1(); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._hinge(); this._bump(); this._syncRituals(ps); this._syncReduced(ps); this._land(ps); this._hc1(); }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._hinge(); this._bump(); this._syncRituals(ps); this._syncReduced(ps); this._land(ps); this._hc1(); this._retryInView(); }
+  /* a copy failure puts the original's alert line and 「重试复制」 under the fold on short phones: scroll them above the footer */
+  _retryInView() {
+    const c = this._c, cf = !!(c && c.ticket.on && c.ticket.contact.copyFail); const was = this._cf; this._cf = cf; if (!cf || was) return;
+    requestAnimationFrame(() => { const root = this.rootRef.current; const el = root && root.querySelector('.pg-ticket .c10-retry'); if (!el) return; const sc = el.closest('.c10-sc'), foot = el.closest('.c10-pg').querySelector('.c10-foot'); if (!sc) return;
+      const r = el.getBoundingClientRect(), lim = (foot ? foot.getBoundingClientRect().top + 20 : sc.getBoundingClientRect().bottom) - 8; if (r.bottom > lim) { try { sc.scrollTo({ top: sc.scrollTop + r.bottom - lim, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += r.bottom - lim; } } });
+  }
   componentWillUnmount() { if (this._hcObs) this._hcObs.disconnect(); this._anims(null); this._destroyTicket(); this._destroyHistory(); const S = JU.shared && JU.shared.skins; if (S && this.envRef.current) S.unmount(this.envRef.current); if (this._reducedSet) delete document.documentElement.dataset.juReduced; }
   /* ---------------- environment ---------------- */
   _mountEnv() { const S = JU.shared && JU.shared.skins, el = this.envRef.current; if (!S || !el) return; S.mount(el, (this.state.review && this.state.review.skin) || 'cotton', { live: this.live() }); }

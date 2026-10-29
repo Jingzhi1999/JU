@@ -13,7 +13,7 @@
 | j-d-waitlist | 候补等待 | ✓ | ✓ 查看候补位置；到最近到期 → 第 2 位变第 1 位 | ✓ clock/jw-0、jw-1 | — | — |
 | j-d-invitedq | 候补轮到 | 跳转 | — | ✓ coverage | — | — |
 | j-d-gathering | 已确认待成局 | 跳转 | — | ✓ coverage（席位条在延续带上） | — | — |
-| j-d-tear | 已出票待撕 | ✓ | ✓ 从首页点进：出票口 + 虚线票位 → 停稳后打印 → 撕开票根（按钮）→ 联系层；副券 Enter 撕 | ✓ keyboard/12–13、rituals/print、rituals/tear | ✓ motion-m4-enter-operate-return-ticket（含局名「回车」折行 / 打印 / 撕 / 联系 / 返回） | 打印 2.3s 是原件时长 |
+| j-d-tear | 已出票待撕 | ✓ | ✓ 从首页点进：出票口 + 虚线票位 → 停稳后打印 → 撕开票根（按钮）→ 联系层；副券 Enter 撕 → 焦点落到「复制」 | ✓ keyboard/12–13、rituals/print、rituals/tear | ✓ motion-m4-enter-operate-return-ticket（含局名「回车」折行 / 打印 / 撕 / 联系 / 返回） | 打印 2.3s 是原件时长 |
 | j-d-contact | 已撕票待联系 | ✓ | ✓「下一次复制失败」→ 原件那行提示 + 旁边重试 | ✓ operations/6–7 | — | — |
 | j-d-going | 已联系待赴约 | ✓ | ✓ 去不了了 → 继续赴约 / 确认退出 → 燃烧 C → 空舞台收起，头部面褪成未成行色 | ✓ coverage | ✓ motion-m8-burn-exit | — |
 | j-d-reschedule | 改期待答复 | ✓ | ✓ 接受新时间（撕新副券 → 联系）；不接受 → 燃烧 B | ✓ coverage | ✓ motion-m7-reply、motion-m8-burn-decline | — |

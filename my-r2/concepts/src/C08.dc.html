@@ -1094,8 +1094,9 @@ class Component extends DCLogic {
     const home = root.querySelector('[data-surface="home"]'); if (!home) { this._bandH = null; return; }
     const sig = c.role + '|' + c.section + '|' + (this.state.jumpKey || '') + '|' + (this.state.review && this.state.review.resetN || 0); const idle = c.nav.phase === 'idle' && c.nav.cur === 'home';   /* a jump / reset is not an in-place change */
     const now = {}; const order = [];
-    home.querySelectorAll('[data-band]').forEach(b => { if (b.classList.contains('c08-ghost')) return; const k = b.getAttribute('data-band'); order.push(k); now[k] = { el: b, h: b.offsetHeight, ids: Array.prototype.map.call(b.querySelectorAll('[data-rid]'), x => x.getAttribute('data-rid')), tone: (b.className.match(/t-(act|soon|wait|arr|kept|closed|draft)/) || [''])[0], title: (b.querySelector('.c08-bh b') || {}).textContent || '' }; });
-    const prev = this._bandH; this._bandH = { sig, order, map: {} }; order.forEach(k => { this._bandH.map[k] = { h: now[k].h, ids: now[k].ids, tone: now[k].tone, title: now[k].title }; });
+    home.querySelectorAll('[data-band]').forEach(b => { if (b.classList.contains('c08-ghost')) return; const k = b.getAttribute('data-band'); order.push(k); now[k] = { el: b, h: b.offsetHeight, ids: Array.prototype.map.call(b.querySelectorAll('[data-rid]'), x => x.getAttribute('data-rid')), tone: (b.className.match(/t-(act|soon|wait|arr|kept|closed|draft)/) || [''])[0], title: (b.querySelector('.c08-bh b') || {}).textContent || '', pos: {} };
+      b.querySelectorAll('.c08-st[data-rid]:not(.c08-lead):not(.c08-ctaz)').forEach(x => { now[k].pos[x.getAttribute('data-rid')] = x.offsetTop; }); });
+    const prev = this._bandH; this._bandH = { sig, order, map: {} }; order.forEach(k => { this._bandH.map[k] = { h: now[k].h, ids: now[k].ids, tone: now[k].tone, title: now[k].title, pos: now[k].pos }; });
     if (!prev || prev.sig !== sig || !idle || this.state.ghost || root.classList.contains('rm')) return;
     const k2 = parseFloat(getComputedStyle(root).getPropertyValue('--k')) || 1;
     order.forEach(k => { if (!prev.map[k]) now[k].el.querySelectorAll('.c08-st').forEach(x => x.classList.add('is-in')); });   /* a band that appears in place fades in */
@@ -1103,6 +1104,9 @@ class Component extends DCLogic {
       n.el.querySelectorAll('[data-rid]').forEach(x => { if (p.ids.indexOf(x.getAttribute('data-rid')) < 0) x.classList.add('is-in'); });
       /* the next item moved up into the lead (its old one expired / left): the lead's new content arrives, it is not swapped in one frame */
       const lead = n.el.querySelector('.c08-lead[data-rid]'); if (lead && p.ids[0] && p.ids[0] !== lead.getAttribute('data-rid')) [lead, n.el.querySelector('.c08-ctaz')].forEach(x => { if (!x) return; x.classList.remove('is-in'); void x.offsetWidth; x.classList.add('is-in'); });
+      /* the rows that stay slide to their new place (FLIP, same curve as the band) instead of jumping up a row in one frame */
+      n.el.querySelectorAll('.c08-st[data-rid]:not(.c08-lead):not(.c08-ctaz)').forEach(x => { const rid = x.getAttribute('data-rid'); const was = p.pos && p.pos[rid]; if (was == null || !x.animate) return; const dy = was - n.pos[rid];
+        if (Math.abs(dy) > 1) x.animate([{ transform: 'translateY(' + dy + 'px)' }, { transform: 'none' }], { duration: Math.round(320 * k2), easing: 'cubic-bezier(.32,.72,.2,1)' }); });
       if (Math.abs(p.h - n.h) < 2) return; const el = n.el;
       el.style.overflow = 'hidden'; el.style.background = 'var(--bg)'; el.style.height = p.h + 'px'; void el.offsetHeight;   /* the band itself shrinks / grows */
       el.style.transition = 'height ' + Math.round(320 * k2) + 'ms cubic-bezier(.32,.72,.2,1)'; el.style.height = n.h + 'px';

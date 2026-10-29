@@ -510,7 +510,13 @@
       },
       onDone: () => {
         stage.dataset.state = 'torn';
-        if (NS.measureTicket) NS.measureTicket(stage, true);
+        if (NS.measureTicket) {
+          NS.measureTicket(stage, true);
+          /* the stub's box collapses over the next frames (under reduced motion onDone fires on the detach frame, so the first
+             measure still counted its 84px — C03 / C07 re-measured on their own); follow it for 24 frames and once more at 700ms */
+          let n = 0; const again = () => { if (!stage.isConnected) return; NS.measureTicket(stage, true); if (++n < 24) requestAnimationFrame(again); };
+          requestAnimationFrame(again); setTimeout(() => { if (stage.isConnected && stage.dataset.state === 'torn') NS.measureTicket(stage, true); }, 700);
+        }
         if (opts.onDone) opts.onDone();
         resolveDone({ ok: true, detachedAt, doneAt: performance.now() });
       },
