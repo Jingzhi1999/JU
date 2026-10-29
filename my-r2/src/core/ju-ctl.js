@@ -380,7 +380,7 @@
       var run = function (name, payload, after) { self._sheetSet({ busy: true, error: '' }); self.holdKey('busy:sheet', self.processMs || 360, function () { finish(self.act(name, payload), after); }); };
       if (sh.kind === 'confirm') {
         var map = { withdraw: 'withdrawApplication', release: 'releaseReservation', exit: 'exitEvent', decline: 'declineReschedule', leaveQueue: 'leaveWaitlist' };
-        var titles = { withdraw: ['已撤回', '申请已撤回'], release: ['已退出这局', '已放弃预留 · 不记主动失约'], exit: ['已退出这局', '主动退出 · 票根与联系已关闭'], decline: ['已退出', '未接受局主的新时间，位置已释放。'], leaveQueue: ['已退出候补', '退出候补 · 不记缺席'] };
+        var titles = { withdraw: ['已撤回', '申请已撤回'], release: ['已退出这局', '已放弃预留 · 不记主动失约'], exit: ['已退出这局', '主动退出 · 票根与联系已关闭'], decline: ['拒绝改期', '未接受局主的新时间，位置已释放。'], leaveQueue: ['已退出候补', '退出候补 · 不记缺席'] };
         run(map[sh.sub], { eventId: sh.eventId }, function (e) {
           var t = titles[sh.sub]; var burn = !!e.burn && !self.state.ui.burned[sh.eventId];
           self._ui({ result: { eventId: sh.eventId, kind: e.type, sub: sh.sub, title: t[0], body: t[1], burn: burn, burning: burn } });

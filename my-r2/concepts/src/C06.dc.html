@@ -116,6 +116,7 @@ body{margin:0}
 .c06-need{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .c06-need::before{content:"·";margin-right:6px;color:var(--faint)}
 .c06-t-act{color:var(--act)}.c06-t-go{color:var(--go)}.c06-t-wait{color:var(--wait)}.c06-t-amber{color:var(--amber)}.c06-t-kept{color:var(--body)}.c06-t-void{color:var(--void)}.c06-t-red{color:var(--warn)}
+.c06-res.c06-t-ink{color:var(--ink)}   /* a step back (撤回 / 放弃 / 退出) is stated in ink; green stays for 已确认 */
 /* the lead (先做这件): countdown rule + the only CTA, which rests on a band of environment light */
 .c06-lx{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(160ms * var(--k,1)) ease}
 .c06-lx>div{min-height:0;overflow:clip;overflow-clip-margin:24px}   /* the CTA's light band runs to the page edges; only the height is clipped while the lead folds */
@@ -438,7 +439,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
                   <sc-if value="{{it.xD}}">
                     <div class="c06-x" data-xb="{{it.r.id}}" data-surface="detail">
                       <div class="c06-xin">
-                        <sc-if value="{{c.detail.result}}"><p class="c06-res c06-t-go">{{c.detail.result.title}}</p><p class="c06-lede">{{c.detail.result.body}}</p></sc-if>
+                        <sc-if value="{{c.detail.result}}"><p class="c06-res {{v.dt.resTone}}">{{c.detail.result.title}}</p><p class="c06-lede">{{c.detail.result.body}}</p></sc-if>
                         <p class="c06-lede">{{v.dt.lede}}</p>
                         <sc-if value="{{c.detail.countdown.on}}"><p class="c06-left {{c.detail.countdown.tone}}" style="--ratio:{{c.detail.countdown.ratio}}"><b>剩 {{c.detail.countdown.text}}</b><span>{{c.detail.row.deadlineText}}</span><i></i></p></sc-if>
                         <sc-if value="{{c.detail.receipt}}"><p class="c06-lede"><sc-if value="{{c.detail.receipt.field}}"><b class="c06-lf">{{c.detail.receipt.field}}</b></sc-if>{{c.detail.receipt.body}}</p><p class="c06-note">{{c.detail.receipt.note}}</p></sc-if>
@@ -1157,10 +1158,10 @@ class Component extends DCLogic {
     if (c.detail.on) {
       c.detail.members.forEach(m => { m.youCls = m.you ? 'you' : ''; });
       const d = c.detail; const st = d.stage;
-      v.dt = { lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : (d.need || ''),
+      v.dt = { resTone: d.result && d.result.kind === 'confirmed' ? 'c06-t-go' : 'c06-t-ink', lede: d.result ? '' : st === 'pending' ? '申请已经递给 ' + d.host.name + '。审核前不占名额，也不用做什么。' : st === 'invited' || st === 'invited_queue' ? d.host.name + ' 给你留了位置。读完约定再确认，确认后才算入局。' : st === 'gathering' ? '你已确认。还在等其他成员，全员到齐后一起出票。' : (d.need || ''),
         rules: (d.rules || []).map(g => ({ title: g.title, first: (g.lines && g.lines[0]) || '' })), rulesNote: st === 'invited' || st === 'invited_queue' ? '确认前请读完' : '',
         card: this._card('d', d.eventId, d.event, d.when, d.place, d.host, d.counts ? d.counts.available : 0) };
-    } else v.dt = { lede: '', rules: [], rulesNote: '', card: '' };
+    } else v.dt = { resTone: '', lede: '', rules: [], rulesNote: '', card: '' };
     v.wl = { card: '' };
     if (c.waitlist.on) { (c.waitlist.entered || []).forEach(m => { m.youCls = m.you ? 'you' : ''; }); (c.waitlist.queue || []).forEach(q => { q.youCls = q.you ? 'you' : ''; });
       const wr = c.waitlist.row || {}; v.wl.card = this._card('w', c.waitlist.eventId, wr.event, wr.when, wr.place, wr.host, c.waitlist.counts ? c.waitlist.counts.available : 0); }

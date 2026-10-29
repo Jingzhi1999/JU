@@ -29,11 +29,11 @@
 | j-d-withdrawn | 撤回申请 | 跳转 | — | ✓ coverage | — | — |
 | j-d-absent | 未出席待核实 | 跳转 | — | ✓ coverage（08 场景：未出席章） | — | — |
 | h-home | 局主 · 当前 | ✓ | ✓ 点待你处理 → 管理 → 发出邀请 → 返回，计数原位落定 | ✓ six/2、env/三环境 | ✓ motion-m5-review | — |
-| h-drafts | 草稿 | ✓ | ✓ 删除 → 收起补位 → 撤销回原位 | ✓ coverage | ✓ motion-m10-drafts | — |
+| h-drafts | 草稿 | ✓ | ✓ 删除 → 收起 → 撤销回原位；再删 → 撤销窗口关闭后「没有草稿」才淡入（撤销条不再被推下） | ✓ coverage | ✓ motion-m10-drafts | — |
 | h-history | 局主 · 历史 | ✓ | — | ✓ coverage | — | — |
 | h-pending | 待处理较多 | ✓ | — | ✓ variants/pending | — | — |
 | h-history-many | 历史较多 | ✓ | ✓ 尝试滚动：数据只有 4 场，一屏放下，无收拢 | ✓ m3/h-history-many-* | — | 数据量不足以收拢（记录，不改数据） |
-| h-drafts-many | 只有草稿 | ✓ | — | ✓ coverage | — | — |
+| h-drafts-many | 只有草稿 | ✓ | ✓ 删除第一份 → 下面两份补位 → 撤销回到第一位 | ✓ coverage | ✓ motion-m10-drafts-fill | — |
 | h-m-review | 申请审核 | ✓ | ✓ 通过 / 谢绝；处理中；「下一次写入失败」→ 知道了 → 重试成功 | ✓ six/6、operations/1–5 | ✓ motion-m5-review、motion-m11-last | — |
 | h-m-members | 成员与席位 | 跳转 | — | ✓ coverage | — | — |
 | h-m-waitlist | 候补 | 跳转 | ✓ 时钟：Leon 预留到期 → 西西顺位补位、离开记录 +1 | ✓ clock/hm-0、hm-7 | — | — |

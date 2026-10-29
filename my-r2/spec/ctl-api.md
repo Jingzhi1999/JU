@@ -266,3 +266,5 @@ JU.mixin(Component);   // 安装评审 mixin + 控制器；applyJump 默认 = ct
 - `_mountTicket` 建议加防御分支：`'fresh'` 与 `'printing'` 一样走出票（C02 复核：已撕票曾以 fresh 进入，票位空白；共享层已修根因，防御分支避免任何遗漏路径留空票位）。
 - 切换角色 / 分区首次进入：没有存过滚动位置时，`[data-scroller="home"]` 归零（原先沿用另一角色列表的滚动量，C02 复核 m3）；shared-regress 新增一项（8/8）。
 - 减少动态下撕开后票台多出约 84px（上一条「待查」）：`JURitual.tear` 落定后连续 24 帧、再于 700ms 重测票台高度（C03 / C07 各自做过同样的补测，现在共享层统一做）。探针：常规与减少动态撕开后 `--ju-paper-height` 都是 398px。
+- 拒绝改期与主动退出在历史里不再同名：`declined.label` = 「拒绝改期」，回执标题同步（原先两者都是「已退出」，C07 复核 M6）。
+- 已取消 / 已散场的局，名单里的预留不再显示倒计时（`leftText / leftRatio / leftTone` 为空，C07 复核 m19）。
