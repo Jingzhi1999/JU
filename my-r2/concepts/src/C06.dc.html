@@ -119,7 +119,7 @@ body{margin:0}
 /* the lead (先做这件): countdown rule + the only CTA, which rests on a band of environment light */
 .c06-lx{display:grid;grid-template-rows:1fr;transition:grid-template-rows calc(280ms * var(--k,1)) cubic-bezier(.2,.8,.2,1),opacity calc(160ms * var(--k,1)) ease}
 .c06-lx>div{min-height:0;overflow:clip;overflow-clip-margin:24px}   /* the CTA's light band runs to the page edges; only the height is clipped while the lead folds */
-.c06-item.has-x .c06-lx>div{overflow-clip-margin:0}   /* while it folds or unfolds, the band stays inside its own row (never over the paragraph) */
+.c06-item.has-x .c06-lx>div{overflow-clip-margin:0;-webkit-mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent);mask-image:linear-gradient(180deg,#000 calc(100% - 26px),transparent)}   /* while it folds or unfolds, the band stays inside its own row and its cut edge is soft: no sliver of the button sits on the paragraph's first line */
 /* opening: the row closes from below while its words stay legible (opacity holds, then goes in the last third) — no empty bar */
 .c06-item.is-x .c06-lx{grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows calc(240ms * var(--k,1)) cubic-bezier(.4,0,.2,1),opacity calc(240ms * var(--k,1)) cubic-bezier(.75,0,.9,.3),visibility 0s linear calc(240ms * var(--k,1))}
 /* folding back: the row opens with the fold and its words are there from the start (140ms) — no empty bar */
@@ -790,8 +790,9 @@ class Component extends DCLogic {
     g.setAttribute('aria-hidden', 'true'); g.inert = true; g.style.pointerEvents = 'none'; g.style.animation = 'none'; g.classList.add('is-ghost');
     const sh = g.querySelector('.c06-sheet'); if (sh) { sh.style.animation = 'none'; sh.removeAttribute('role'); }
     root.appendChild(g);
-    const a = g.animate([{ backgroundColor: 'rgba(20,22,31,.3)' }, { backgroundColor: 'rgba(20,22,31,0)' }], { duration: 220 * k, easing: 'ease', fill: 'forwards' });
-    if (sh) sh.animate([{ transform: 'none', opacity: 1 }, { transform: 'translateY(40px)', opacity: 0 }], { duration: 220 * k, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    const a = g.animate([{ backgroundColor: 'rgba(20,22,31,.3)' }, { backgroundColor: 'rgba(20,22,31,0)' }], { duration: 240 * k, easing: 'ease', fill: 'forwards' });
+    /* the paper goes back down whole (no fade): the page is uncovered from the top, never seen through the sheet's own words */
+    if (sh) sh.animate([{ transform: 'none' }, { transform: 'translateY(100%)' }], { duration: 240 * k, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
     a.onfinish = a.oncancel = () => g.remove(); setTimeout(() => g.remove(), 400 * k + 60);
   }
   _syncStamps() {

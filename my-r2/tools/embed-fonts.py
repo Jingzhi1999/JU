@@ -34,7 +34,7 @@ MODERN_UA = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML
 OFFLINE = '--offline' in sys.argv
 LICENSE = 'SIL Open Font License 1.1'
 # the families the ten concepts share (fonts.md §2–3 + baseline-rituals.md §1); Noto Serif SC 900 is only ever 出 / 席 / 未
-DEFAULT_REQUIRED = 'Noto Sans SC:400,500,700;Space Mono:400,700;Archivo:400,500,700;Noto Serif SC:900@出席未;Noto Serif SC:600;Libre Caslon Text:700'   # Serif 600 = C06 字排 的局名（全字集）
+DEFAULT_REQUIRED = 'Noto Sans SC:400,500,700,900;Space Mono:400,700;Archivo:400,500,700,800;Archivo Black:400;Caveat:600;Oswald:500,600;Noto Serif SC:900@出席未;Noto Serif SC:600;Libre Caslon Text:700;Zhi Mang Xing:400'   # Serif 600 = C06 字排 的局名（全字集）；Zhi Mang Xing 及其后几项 = 局卡原件 JuFilm.loadFonts 的必需字面（缺一个就等 24 秒超时，C07 汇报）
 VARIABLE = {}  # family -> list of raw specs that use a width (wdth) axis: embedded as subset variable woff2
 
 class Offline(Exception):
