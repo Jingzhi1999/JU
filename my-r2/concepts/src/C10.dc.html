@@ -219,6 +219,7 @@ body{margin:0}
 /* ---------- the ticket on the axis: the shared original (258, never scaled); the slot and the port are ours ---------- */
 .c10-stage{width:100%;margin:6px 0 0;flex-shrink:0;text-align:left}
 .c10-stage.reissued{--ju-ticket-top:24px}
+.c10-stage:focus{outline:none}
 /* the slot is the ticket's own footprint: 258 × 378 (face 294 + stub 84); a reissued ticket carries the old time, 258 × 401 */
 .c10-stage.reissued .c10-slot{height:401px}.c10-stage.reissued .c10-slot::before{top:317px}.c10-stage.reissued .c10-slot b{top:140px}.c10-stage.reissued .c10-slot u{top:349px}
 .c10-slot{position:absolute;left:50%;top:var(--ju-ticket-top,84px);width:258px;height:378px;margin-left:-129px;border-radius:14px;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(237,239,247,.72),rgba(237,239,247,.48));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.95),0 24px 36px -26px rgba(18,22,48,.5),0 2px 6px -2px rgba(18,22,48,.14);opacity:0;transition:opacity calc(320ms * var(--k,1)) ease}
@@ -1110,8 +1111,8 @@ class Component extends DCLogic {
      in   — the tapped title rises to the axis top; what was above it rides up as one body and fades late; what was at / below it
             (the row's own lines, the rows and groups after it) is gone from the first frame; the page body rises with the title's
             bottom edge (same curve), so it is always below the title.
-     back — the page body is gone in 70ms while the title has barely moved; the title falls onto its row; the list above the row
-            slides down with it as one body; the row's lines and everything below appear after it lands (110ms).
+     back — the page body, footer and tools leave in the first frame; the title falls onto its row while the whole list (above and
+            below the row) slides down with it as one body; the row's own lines appear 110ms after it lands.
      same event (detail ⇄ ticket, read → ticket, ticket → detail) — fade-through on a constant title: the old body fades in 100ms
             under its own title, then the new title takes the same place (flying from the old rect when that differs) and the new
             body rises 10px into view. Nothing of the old page and the new page is ever visible at once. */
@@ -1170,21 +1171,22 @@ class Component extends DCLogic {
     } else if (mode === 'hg' && st.dir === 'back') {
       const topPg = root.querySelector('.c10-pg.is-top'), home = root.querySelector('.pg-home');
       const row = home && home.querySelector('[data-origin="' + this._backKey + '"]'), dst = row && row.querySelector('[data-ttl]'), src = topPg && topPg.querySelector('.c10-ht'); if (!dst || !src) return;
-      const H = root.offsetHeight, W = 50 * k, T1 = 320 * k, T2 = 110 * k, o = { duration: T1, delay: W, easing: C10_E_BACK, fill: 'both' };
+      const H = root.offsetHeight, W = 0, T1 = 340 * k, T2 = 110 * k, o = { duration: T1, delay: W, easing: C10_E_BACK, fill: 'both' };
       const sc = home.querySelector('.c10-sc');
       /* the row may have moved to another group while the page was open: the controller's reveal brings it on screen (memo kept) */
       { const rr = this._rect(dst); if (sc && (rr.y > H - 170 || rr.y < 150)) { try { this.reveal(row, false, { memoKey: this._scrollKey(stack[stack.length - 2]) }); } catch (e) { } } }
-      this._ani(col(topPg), [{ opacity: 1 }, { opacity: 0 }], lin(W + 10 * k));
+      /* the page body, its footer and tools leave in the first frame (scripted, so a CSS entry animation on an original cannot keep them up); the list is already there */
+      const gone = [{ opacity: 0 }, { opacity: 0 }];
+      [col(topPg), topPg.querySelector('.c10-foot'), topPg.querySelector('.c10-tool')].forEach(el => this._ani(el, gone, lin(T1 + T2)));
       const g = this._fly(dst, src, 'back', T1, C10_E_BACK, W); if (!g) return;
       const down = 'translateY(' + (g.top1 - g.top0).toFixed(1) + 'px)', hd = home.querySelector('.c10-hd');
       this._ani(sc, [{ transform: down }, { transform: 'none' }], o); this._ani(hd, [{ transform: down }, { transform: 'none' }], o);
-      /* the row's own lines wait for the title to land; the rows and groups after it come down with the list once the page body is gone */
+      /* the row's own lines wait for the title to land; the rows and groups after it come down with the list from the first frame */
       const bl = this._below(row, true), all = W + T1 + T2, a = (W + T1) / all;
       /* on landing the row's own title takes over in one frame (the page title may wrap differently), then its lines appear */
       this._ani(src, [{ opacity: 1 }, { opacity: 1, offset: a }, { opacity: 0, offset: Math.min(1, a + .002) }, { opacity: 0 }], lin(all));
       this._ani(dst, [{ visibility: 'hidden' }, { visibility: 'hidden', offset: a }, { visibility: 'visible', offset: Math.min(1, a + .002) }, { visibility: 'visible' }], lin(all));
       bl.own.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: a + .004 }, { opacity: 1 }], lin(all)));
-      bl.rest.forEach(el => this._ani(el, [{ opacity: 0 }, { opacity: 0, offset: (W + 10 * k) / all }, { opacity: 1, offset: (W + 90 * k) / all }, { opacity: 1 }], lin(all)));
     } else if (mode === 'wp') {
       const back = st.dir === 'back';
       const newPg = back ? root.querySelector('.c10-pg.is-under') : root.querySelector('.c10-pg.is-top');
@@ -1317,7 +1319,8 @@ class Component extends DCLogic {
   onEffect(fx) {
     if (fx.type === 'contacted' && this._rit.contact) this._rit.contact.add();
     if (fx.type === 'cancelled' && !this.isRM()) { this.setState({ c10void: fx.eventId || (this._c && this._c.manage.eventId) }); this.holdKey('c10void', 2200, () => this.setState({ c10void: null })); }
-    if (fx.type === 'torn') { this.setState({ c10torn: true, c10fall: !this.isRM() }); this.holdKey('c10torn', 2400, () => this.setState({ c10torn: false })); this.holdKey('c10fall', 950, () => this.setState({ c10fall: false })); }
+    if (fx.type === 'torn') { const st0 = this._rit.stage; if (st0) { if (!st0.hasAttribute('tabindex')) st0.tabIndex = -1; try { st0.focus({ preventScroll: true }); } catch (e) { } }
+      this.setState({ c10torn: true, c10fall: !this.isRM() }); this.holdKey('c10torn', 2400, () => this.setState({ c10torn: false })); this.holdKey('c10fall', 950, () => this.setState({ c10fall: false })); }
     if (fx.replay && fx.type === 'torn') { const h = this._tearRig; if (h && h.rig) { h.reset(); h.enable(true); h.trigger(); } }
     if (fx.replay && (fx.type === 'exited' || fx.type === 'reschedule-declined')) this._replayBurn();
   }
