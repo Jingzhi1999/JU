@@ -1232,14 +1232,17 @@ class Component extends DCLogic {
        is gone before the row's words appear — never two titles at once */
     if (fwd) { add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' }); }
     else { add(g, [{ opacity: 1 }, { opacity: 1, offset: 1 - 2 * hand }, { opacity: 0, offset: 1 - hand }, { opacity: 0 }], { easing: 'linear' }); add(dst, [{ opacity: 0 }, { opacity: 0, offset: 1 - hand }, { opacity: 1 }], { easing: 'linear' }); }
-    /* what the title passes over steps aside: every text line of the page in the band that its path crosses is gone from the first frame
-       (on the way in that page is still a slit then) and, on the way in, comes back only as the title lands (last 30ms) */
+    /* what the title passes over steps aside: a text line of the page in the band that the moving title box (same curve, sampled every
+       1/40) touches is out of the way before the title reaches it and, on the way in, comes back once the title has passed it */
     const s0 = af / df, A = fwd ? { x: ra.x, y: ra.y, w: face.offsetWidth * s0, h: face.offsetHeight * s0 } : { x: d.x, y: d.y, w: face.offsetWidth, h: face.offsetHeight }, Bx = fwd ? { x: d.x, y: d.y, w: face.offsetWidth, h: face.offsetHeight } : { x: ra.x, y: ra.y, w: face.offsetWidth * s0, h: face.offsetHeight * s0 };
-    const x0 = Math.min(A.x, Bx.x) + 2, x1 = Math.max(A.x + A.w, Bx.x + Bx.w) - 2, y0 = Math.min(A.y, Bx.y) + 2, y1 = Math.max(A.y + A.h, Bx.y + Bx.h) - 2, o2 = 1 - Math.min(30 * this._kk() / T, .1), self = this;
+    const bz = function (x) { let lo = 0, hi = 1, u = x; for (let i = 0; i < 18; i++) { u = (lo + hi) / 2; if (3 * (1 - u) * (1 - u) * u * .22 + 3 * (1 - u) * u * u * .18 + u * u * u < x) lo = u; else hi = u; } return 3 * (1 - u) * (1 - u) * u * .6 + 3 * (1 - u) * u * u + u * u * u; };
+    const P = []; for (let i = 0; i <= 40; i++) { const f = bz(i / 40); P.push([A.x + (Bx.x - A.x) * f, A.y + (Bx.y - A.y) * f, A.w + (Bx.w - A.w) * f, A.h + (Bx.h - A.h) * f]); }
+    const q = this._kk() / T, cl = function (v) { return Math.max(0, Math.min(1, v)); }, self = this;
     inPg.querySelectorAll('*').forEach(function (el) { if (el === src || el === dst || el.contains(src) || el.contains(dst) || src.contains(el) || dst.contains(el)) return;
       let own = false; for (let n = el.firstChild; n; n = n.nextSibling) if (n.nodeType === 3 && n.textContent.trim()) { own = true; break; } if (!own && !el.matches('.ju-v27-cta')) return;
-      const r = self._rel(el, root); if (!r.w || r.x > x1 || r.x + r.w < x0 || r.y > y1 || r.y + r.h < y0) return;
-      add(el, fwd ? [{ opacity: 0 }, { opacity: 0, offset: o2 }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 0 }], { easing: 'linear' }); });
+      const r = self._rel(el, root); if (!r.w) return; let a = -1, z = -1; P.forEach(function (b, i) { if (r.x < b[0] + b[2] - 2 && r.x + r.w > b[0] + 2 && r.y < b[1] + b[3] - 2 && r.y + r.h > b[1] + 2) { if (a < 0) a = i; z = i; } }); if (a < 0) return;
+      if (fwd) { const o = cl((z + 1) / 40 + 10 * q), e = Math.min(1, o + 60 * q); add(el, e < 1 ? [{ opacity: 0 }, { opacity: 0, offset: o }, { opacity: 1, offset: e }, { opacity: 1 }] : [{ opacity: 0 }, { opacity: 0, offset: Math.min(o, 1 - 30 * q) }, { opacity: 1 }], { easing: 'linear' }); }
+      else { const h = cl((a - 1) / 40 - 10 * q), s1 = cl(h - 40 * q); add(el, h > 0 ? [{ opacity: 1 }, { opacity: 1, offset: s1 }, { opacity: 0, offset: h }, { opacity: 0 }] : [{ opacity: 0 }, { opacity: 0 }], { easing: 'linear' }); } });
     m.clean.push(function () { g.style.opacity = '0'; src.style.visibility = ''; dst.style.visibility = ''; });
     return { cy: ro.h <= 120 ? ro.y + ro.h / 2 : ra.y + ra.h / 2 };
   }

@@ -1,0 +1,18 @@
+from PIL import Image, ImageDraw, ImageOps
+import os
+rows=[["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/000-cotton_390_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/001-cotton_390_h-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/002-cotton_detail.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/005-cotton_read.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/008-cotton_ticket.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/011-cotton_waitlist.png"],["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/014-cotton_history.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/017-cotton_360_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/018-cotton_360_h-home.png"],["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/019-halo_390_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/020-halo_390_h-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/021-halo_detail.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/024-halo_read.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/027-halo_ticket.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/030-halo_waitlist.png"],["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/033-halo_history.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/036-halo_360_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/037-halo_360_h-home.png"],["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/038-sunset_390_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/039-sunset_390_h-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/040-sunset_detail.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/043-sunset_read.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/046-sunset_ticket.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/049-sunset_waitlist.png"],["/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/052-sunset_history.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/055-sunset_360_j-home.png","/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/056-sunset_360_h-home.png"]]
+labels=[["cotton 390 j-home","cotton 390 h-home","cotton detail","cotton read","cotton ticket","cotton waitlist"],["cotton history","cotton 360 j-home","cotton 360 h-home"],["halo 390 j-home","halo 390 h-home","halo detail","halo read","halo ticket","halo waitlist"],["halo history","halo 360 j-home","halo 360 h-home"],["sunset 390 j-home","sunset 390 h-home","sunset detail","sunset read","sunset ticket","sunset waitlist"],["sunset history","sunset 360 j-home","sunset 360 h-home"]]
+sc=0.42; gap=6; lab=18
+ims=[[Image.open(f).convert('RGB') for f in r] for r in rows]
+W=max(int(i.width*sc) for r in ims for i in r); H=max(int(i.height*sc) for r in ims for i in r); cols=max(len(r) for r in ims)
+sh=Image.new('RGB',(cols*(W+gap)+gap, len(ims)*(H+gap+lab)+gap),(40,40,44))
+d=ImageDraw.Draw(sh)
+from PIL import ImageFont
+try: ft=ImageFont.truetype('/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc', 13)
+except Exception: ft=None
+for ri,r in enumerate(ims):
+    for ci,im in enumerate(r):
+        x=gap+ci*(W+gap); y=gap+ri*(H+gap+lab)
+        if labels and ri < len(labels) and ci < len(labels[ri]): d.text((x+2,y+2),str(labels[ri][ci]),fill=(230,230,230),font=ft)
+        sh.paste(im.resize((int(im.width*sc),int(im.height*sc)),Image.LANCZOS),(x,y+lab))
+sh.save("/home/user/JU/my-r2/evidence/C03/verify/r2/a-static-env/sheet.png",optimize=True)
