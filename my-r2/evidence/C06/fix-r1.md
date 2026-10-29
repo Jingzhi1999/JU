@@ -1,8 +1,8 @@
 # C06「字排」· fix-r1：独立复核（快照 0f028c080d4b）之后的修改
 
-- 源文件：`my-r2/concepts/src/C06.dc.html`，170,758 字节（167 KB）（上限 200 KB）。
+- 源文件：`my-r2/concepts/src/C06.dc.html`，172,840 字节（169 KB，上限 200 KB）。
 - 构建：`JU_FONTS_CSS=/home/user/JU/my-r2/.fonts/fonts-embed.css JU_STANDALONE=.build/C06.html JU_ONLY=C06 node my-r2/src/build.js`（含共享层三处新改：燃烧句柄 onDone、出席更正焦点、截图浏览器中文）。
-- 本轮证据全部在 `my-r2/evidence/C06/fix-r1/`；stage1 / stage2 证据未动。
+- 本轮证据全部在 `my-r2/evidence/C06/fix-r1/`；stage1 / stage2 证据未动。所有运动帧、静帧、四个自动工具、env-probe 与对比度路线都是在同一个终版构建上录的（20:53–21:04 UTC）。
 - 帧证据都来自真实点击 / 拖动 / 按键 / 滚轮（`clickSel` = 先 `reveal` 再在元素中心发真实鼠标点击；拖撕是真实的按下-移动-松开；面板按钮也是真实点击），每条流程从首页起步，不走索引跳转。只有四个自动工具（coverage / widths / kb / rm）和 env-probe 按约定用索引跳转。
 - 运动帧只在 1 分钟负载 < 8 时录（每段录制前检查，`log.json` 里每段 `loadBefore / loadAfter / loadOk`，本轮全部 `loadOk: true`）。
 - 帧标签：`input+Nms` = 距离这次真实输入（pointerdown / keydown）的毫秒；`release+Nms` = 距离松手（pointerup）的毫秒。页内另用 rAF 逐帧采样（时间从 pointerdown / pointerup 起算），写在 `log.json` 的 `*-timeline` 里。
@@ -38,13 +38,13 @@
 - 原因：控制器在 exit 阶段、栈深 < 2 时再次 back，只改状态不 setState，展开层的 DOM 留着。
 - 改了什么：返回改成幂等。本套在 `JU.mixin` 之后包一层 `back()`：退场途中再按一次 → `_landBack()` 直接落到终态（收起动画与滚动时钟一律 finish、取消 nav 计时、出栈并 setState、`_snap` 跳过动画）；排队中的返回（`_backQ`）不重复入队。收起一开始，正在收的段落就 `pointer-events: none`；结束或被打断都走同一个清理。
 - 证据（真实双击，页内记录两次 pointerdown 的间隔）：`M1/sheet.jpg`；帧 `M1/M1-90-dbl-*.jpg`、`M1/M1-40-dbl-*.jpg`、`M1/M1-*-tap-run3k-*.jpg`；静帧 `M1/M1-90-1-landed.jpg`、`M1/M1-90-2-run3k-open.jpg`、`M1/M1-40-*.jpg`；数字 `M1/log.json`。
-- 实测：两档实际间隔 99ms / 48ms；两档都落到 `stack=home phase=idle`，`.c06-x` 0 个；在「公园慢跑 3K」中心做命中测试，命中的就是这一行；再点进入 `ticket:run3k`。
+- 实测：两档实际间隔 97ms / 46ms；两档都落到 `stack=home phase=idle`，`.c06-x` 0 个；在「公园慢跑 3K」中心做命中测试，命中的就是这一行；再点进入 `ticket:run3k`。
 
 **M2 · 票根返回约 400ms 无反馈、剪切 + 空白纸**
 
 - 改了什么：返回一按下（pointerdown，不等 click）就给反应：票根变暗、上移 8px、缩到 .975（220ms，快起缓收，从第 40ms 处起播，按下后第一帧就看得出），其余内容降到 .5；按下后没有点成（移出按钮再松手、pointercancel、1.5s 内没有 click）就原路退回。键盘 Enter 仍在 click 时起。控制器的 back 推迟两帧，保证反应先画出来。新页画好之前旧页一直在（变暗留着），新页的内容从 .5 淡入，不从 0 开始，所以没有空白帧。
-- 证据：`M2/sheet-a.jpg`（首页 → 详情 → 阅读 → 票根，再返回到详情，每帧）；帧 `M2/M2-a-back-to-detail-*.jpg`；时间线 `M2/log.json` 的 `M2-a-timeline`。
-- 实测（页内，从 pointerdown 起）：+11ms 1.00 → +38ms 0.78 → +76ms 0.53 → +107ms 0.41，之后旧票根停在 .3、文字 .5 一直可见，+355ms 详情画出（高度 685 → 888 继续长）。录屏帧：`input+76ms` 已可见变暗，`input+399ms` 是详情。中间没有一帧空白。
+- 证据：`M2/sheet-a.jpg`（首页 → 详情 → 阅读 → 票根，再返回到详情，每帧）；帧 `M2/M2-a-back-to-detail-*.jpg`；时间线 `M2/log.json` 的 `M2-a-timeline`。按下没点成：`M2/press-cancel/`（真实按下返回 → 移开 120 / 160px → 松手：+120ms 票根 0.33，+620ms 回到 1.00，栈仍是 `home > detail > ticket`；`log.json`、`P5-after-cancelled-press.jpg`）。
+- 实测（页内，从 pointerdown 起，录制时 1 分钟负载 5.8–6.8）：第一个采样帧 +11ms 票根已是 0.58（文字 0.65）→ +45ms 0.44 → +67ms 0.40 → 停在 .3 / .5 一直可见 → +362ms 详情画出（高度 685 → 888 继续长），中间 0 帧空白。录屏帧：按下后的第一帧 `input+45ms` 已变暗，`input+400ms` 前后是详情。
 
 **M3 · 局主取消缺「局卡抽色 + 余烬」，「已取消」头部在视野外**
 
@@ -57,19 +57,19 @@
 - 改了什么：展开、收起、换段、换组都是脚本动画；滚动补间改成读一段挂在滚动容器上的空 WAAPI 动画（「滚动时钟」）的 `currentTime`。暂停 = 暂停根节点下本套的有限动画（燃烧走引擎 `seek / pause`）；关键帧 = 每段动画按相对本次运动起点的偏移设 `currentTime`，0 / 25 / 50 / 75 / 100 就是展开过程的五个位置；释放 = 从当前位置播完。运动结束后，`lastMotion` 登记的是原地重放（回到打开前的滚动位置、窗口从 0 打开），不重走导航。
 - 同轮补修：6 小时倒计时细条原来每秒做一次 900ms 的宽度过渡，窗口里永远「有东西在动」，复核面板因此判断不了运动已结束，关键帧不能重播（第一次复跑的 `M4-replay-*` 五张一样）。细条改成 `transform: scaleX(var(--ratio))`、不做过渡（每秒变化 1/21600，看不出差别）。
 - 证据（0.5×，真实点击「法拉盛早茶」，+230ms 点面板「暂停」）：`M4/sheet.jpg`；静帧 `M4/M4-p0-paused.jpg`、`M4/M4-p1-paused-700ms-later.jpg`、`M4/M4-k000.jpg` … `M4/M4-k100.jpg`、`M4/M4-r0-released-settled.jpg`、`M4/M4-replay-k000.jpg` … `M4/M4-replay-k100.jpg`；`M4/log.json`。
-- 实测（scrollTop / 段落窗口 top）：暂停 +0 与 +700ms 完全一样（665 / 416，19 段动画全部 paused）；关键帧 0 / 25 / 50 / 75 / 100 = 598 / 598 / 771 / 800 / 804（窗口 −360 → 350 → 426 → 443 → 444）；释放后落定 804；落定后再拖关键帧 = 598 / 636 / 779 / 801 / 804（窗口 −360 → 412 → 430 → 444 → 444），原地重放。
+- 实测（scrollTop / 段落窗口 top）：暂停 +0 与 +700ms 完全一样（684 / 417，19 段动画全部 paused）；关键帧 0 / 25 / 50 / 75 / 100 = 598 / 598 / 773 / 800 / 804（窗口 −360 → 379 → 427 → 444 → 444）；释放后落定 804；落定后再拖关键帧 = 598 / 636 / 779 / 801 / 804（窗口 −360 → 412 → 430 → 444 → 444），原地重放。
 
 **M5 · 拖撕落定：旧 CTA 不退场、副券落在按钮 / 联系层上、整页上跳 ~113px、页头换文案时高度跳**
 
 - 改了什么：撕开的那一刻（松手过半、Enter / 空格或按钮）旧 CTA 立刻退场（150 / 200ms 淡出下沉，`.is-leaving` 由 VM 绑定、同帧也直接加，CTA 下的全宽色光带同时退，CTA 撤走后光带保留不变）；联系层改到副券落地（原件 `onDone`）之后才显出，副券落在空纸上；把联系层带进视野的滚动等票台收起后再起，一次 420ms，并且不把局名推到页头下面；页头换文案时票台用 transform 补偿。
 - 证据：`M5/sheet-a.jpg`（公园慢跑 3K 拖撕）、`M5/sheet-b.jpg`（周五 Livehouse 新票拖撕 = 接受新时间）、`M5/sheet-c.jpg`（键盘 Enter 撕）；帧 `M5/M5-a-drag-tear-*.jpg`、`M5/M5-b-drag-accept-*.jpg`、`M5/M5-c-key-enter-*.jpg`；`M5/log.json` 的 `M5-a-timeline / M5-b-timeline`。
-- 实测（页内，从松手起）：CTA 不透明度 +36ms 已为 0（b：+39ms）；+198ms 副券脱离（b：+172ms）；联系层 +1.26s 才挂上（b：+1.22s）；票台收起后联系层直接放得下，这次滚动 0px（票台 top 322 → 322，scrollTop 不变），没有任何跳动。
+- 实测（页内，从松手起）：CTA 不透明度 +26ms 已为 0（b：+29ms）；+167ms 副券脱离（b：+168ms）；联系层 +1.24s 才挂上（b：+1.34s）；票台收起后联系层直接放得下，这次滚动 0px（票台 top 322 → 322，scrollTop 不变），没有任何跳动。
 
 ## Minor
 
 **m1 · 移组行连续移动（FLIP）**：换组的那一行作为一张不透明的纸条从旧位置滑到新组（360ms，`translateY` + 一道很浅的抬起阴影 .38 → 0），其余行让位；落定后左侧 1.1s 落点标记。收起时不再先把这一行淡掉。证据：`m1/sheet.jpg`（公园慢跑 3K 已加微信后：要你回应 → 就快见面；周五 Livehouse 接受新时间后），帧 `m1/m1-back-regroup-*.jpg`、`m1/m1-back-regroup-livehouse-*.jpg`。
 
-**m2 · 首页「阅读并确认」并成一段**：先做这件点「阅读并确认」= 栈 `home > read` 一次运动（阅读层从底部升起盖住列表），约 300ms 到位（帧 `input+57ms` 起升，`input+321ms` 到位）。证据：`M2/sheet-b.jpg` 上半，帧 `M2/m2-lead-read-*.jpg`，静帧 `M2/m2-read-up.jpg`。
+**m2 · 首页「阅读并确认」并成一段**：先做这件点「阅读并确认」= 栈 `home > read` 一次运动（阅读层从底部升起盖住列表），约 300ms 到位（帧 `input+97ms` 已在升，`input+355ms` 到位）。证据：`M2/sheet-b.jpg` 上半，帧 `M2/m2-lead-read-*.jpg`，静帧 `M2/m2-read-up.jpg`。
 
 **m3 · 首页放弃预留先给结果行再退场**：先做这件「去不了了 → 确认退出」→ 该行原位换成「已处理 · 位置已释放 · 不记主动失约 · 已移到历史」1.3s（光带与 CTA 收起），再自身高度 300ms 收到 0，下一件「先做这件」补上。证据：`m3/sheet.jpg`，帧 `m3/m3-release-*.jpg`。
 
