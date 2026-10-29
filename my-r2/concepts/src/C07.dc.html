@@ -845,7 +845,7 @@ body{margin:0}
                   <sc-if value="{{c.detail.receipt}}"><div class="c07-h"><span>候补回执</span></div><div class="c07-result"><b>{{c.detail.receipt.title}}</b><p>{{c.detail.receipt.field}} · {{c.detail.receipt.body}}</p><p class="c07-hint">{{c.detail.receipt.note}}</p></div></sc-if>
                   <sc-if value="{{detail.resOn}}"><div class="c07-result"><sc-if value="{{detail.resTitle}}"><b>{{detail.resTitle}}</b></sc-if><sc-if value="{{detail.resBody}}"><p>{{detail.resBody}}</p></sc-if></div></sc-if>
                   <div class="c07-seats2 c07-dseats" role="img" aria-label="{{detail.seatText}}"><span class="ds"><sc-for list="{{detail.seats}}" as="d" hint-placeholder-count="4"><i class="d {{d.cls}}">{{d.t}}</i></sc-for><sc-if value="{{detail.seatMore}}"><b class="more">{{detail.seatMore}}</b></sc-if></span><span class="tx">{{detail.seatText}}</span></div>
-                  <button type="button" class="c07-dsum" data-act="rules" aria-expanded="{{detail.rulesExp}}" onClick="{{detail.openRules}}"><span class="n">参加约定</span><span class="r">{{detail.rulesText}}</span><span class="go" aria-hidden="true">›</span></button>
+                  <sc-if value="{{detail.rulesOn}}"><button type="button" class="c07-dsum" data-act="rules" aria-expanded="{{detail.rulesExp}}" onClick="{{detail.openRules}}"><span class="n">参加约定</span><span class="r">{{detail.rulesText}}</span><span class="go" aria-hidden="true">›</span></button></sc-if>
                   <sc-if value="{{detail.rulesOpen}}"><div class="c07-rlist"><sc-for list="{{c.detail.rules}}" as="g" hint-placeholder-count="3"><div class="g"><b>{{g.title}}</b><sc-for list="{{g.lines}}" as="l" hint-placeholder-count="3"><p>{{l}}</p></sc-for></div></sc-for></div></sc-if>
                   <p class="c07-hint c07-dis">查看我的记录</p>
                   <sc-if value="{{c.detail.error}}"><p class="c07-err">{{c.detail.error}}</p></sc-if>
@@ -1062,7 +1062,7 @@ class Component extends DCLogic {
     if (p.preset === 'hosted') this.state.role = 'hosted';
   }
   /* a review jump / reset starts the tray's own state over as well (receipts, holds, the cancel ceremony, the form's touched flag) */
-  initialState(variant) { return Object.assign(JU.baseState(variant), { mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null, leadNote: '', seatNew: null, fTouched: null, burnReplay: null, printReplay: false }); }
+  initialState(variant) { return Object.assign(JU.baseState(variant), { mfocus: null, mArr: false, actNote: '', attHold: null, cburn: null, leadNote: '', seatNew: null, fTouched: null, burnReplay: null, printReplay: false, dRules: null }); }
   R() { return window.JURitual || null; }
   live() { return this.props.live !== false && this.props.panel !== false && !this.props.idle; }
   /* ---------------- environment ---------------- */
@@ -1553,11 +1553,11 @@ class Component extends DCLogic {
         return { timeText: w && !has('时间') ? w.time : '--:--', timeCls: w && !has('时间') ? '' : 'c07-gap', mdText: w && !has('日期') ? w.md : '--.--', mdCls: w && !has('日期') ? '' : 'c07-gap',
           locText: has('地点') || !d.placeText ? '待定' : d.placeText, locCls: has('地点') || !d.placeText ? 'c07-gap' : '', titleCls: d.untitled ? 'c07-gap' : '' }; })(),
       waitlist: { receiptLine: c.waitlist && c.waitlist.on && c.waitlist.receipt ? [c.waitlist.receipt.field, c.waitlist.receipt.body].filter(Boolean).join(' · ') : '' },
-      detail: (() => { const d = c.detail; if (!d || !d.on || !d.row) return { cardJson: '', seats: [], seatMore: '', seatText: '', rulesText: '', rulesOpen: false, rulesExp: 'false', openRules: () => { }, resOn: false, resTitle: '', resBody: '' };
+      detail: (() => { const d = c.detail; if (!d || !d.on || !d.row) return { cardJson: '', seats: [], seatMore: '', seatText: '', rulesOn: false, rulesText: '', rulesOpen: false, rulesExp: 'false', openRules: () => { }, resOn: false, resTitle: '', resBody: '' };
         const sl = seatLine(d.row, false), rules = d.rules || [], toRead = !!(d.primary && d.primary.key === 'read'), open = !toRead && s.dRules === d.eventId;
         const hd = String(d.title || '') + ' ' + String(d.label || '') + ' · ' + String(d.need || ''), rt = d.result && d.result.title && hd.indexOf(d.result.title) < 0 ? d.result.title : '', rb = d.result && d.result.body && hd.indexOf(d.result.body) < 0 ? d.result.body : '';
         return { cardJson: cardJson(d.event, d.row.counts ? Object.assign({}, d.row.counts, { formed: !!d.row.formed }) : null), seats: sl.seats, seatMore: sl.seatMore, seatText: sl.seatText, resOn: !!(rt || rb), resTitle: rt, resBody: rb,
-          rulesText: rules.map(g => g.title + ' ' + ((g.lines && g.lines.length) || 0)).join(' · ') + (toRead ? ' · 读到末尾再确认' : ''), rulesOpen: open, rulesExp: open ? 'true' : 'false',
+          rulesOn: !(d.primary && d.primary.key === 'home'), rulesText: rules.map(g => g.title + ' ' + ((g.lines && g.lines.length) || 0)).join(' · ') + (toRead ? ' · 读到末尾再确认' : ''), rulesOpen: open && !(d.primary && d.primary.key === 'home'), rulesExp: open ? 'true' : 'false',
           openRules: (ev) => { if (toRead) { d.primary.act(ev); return; } this.setState(st => ({ dRules: st.dRules === d.eventId ? null : d.eventId })); } }; })(),
       history: { titleNb: hr ? nb(hr.title) : '', recordCount: c.history.on ? c.history.records.length : 0, showStage: !!(hr && c.history.burnOnce), stageCls: hr && hr.reissued ? 'reissued' : '', noPrevious: !(hr && hr.previous), previousText: hr && hr.previous ? '原定 ' + hr.previous : '', noMark: !(hr && hr.mark), showCard: c.history.on && !c.history.hasStamp && !!hr, paperCard: c.history.on && !c.history.hasStamp && !hr,
         stampCard: c.history.on && c.history.hasStamp ? cardJson(c.history.event, c.history.row && c.history.row.counts ? Object.assign({}, c.history.row.counts, { formed: true }) : null) : '', cardJson: c.history.on && !c.history.hasStamp && !hr ? cardJson(c.history.event, c.history.row && c.history.row.counts ? Object.assign({}, c.history.row.counts, { formed: !!c.history.row.formed }) : null) : '', stampFallback: !!s.stampFallback, stampNote: this._rit.stampErr ? '出席章引擎未加载：' + this._rit.stampErr : '出席章引擎加载中…' },
