@@ -37,7 +37,7 @@
   var H = 3600000, M = 60000;
   var SURFACES = ['home', 'detail', 'read', 'waitlist', 'ticket', 'reply', 'history', 'manage', 'draft'];
   JU.SURFACES = SURFACES;
-  var DEFAULT_PATHS = { home: ['home'], detail: ['home', 'detail'], read: ['home', 'detail', 'read'], waitlist: ['home', 'waitlist'], ticket: ['home', 'ticket'], reply: ['home', 'reply'], history: ['home', 'history'], manage: ['home', 'manage'], draft: ['home', 'draft'] };
+  var DEFAULT_PATHS = { home: ['home'], detail: ['home', 'detail'], read: ['home', 'read'],   /* 阅读并确认 from home opens the read layer directly — no unvisited detail underneath (C01 / C03 / C10 verify: ticket → back landed on a detail the person never opened) */ waitlist: ['home', 'waitlist'], ticket: ['home', 'ticket'], reply: ['home', 'reply'], history: ['home', 'history'], manage: ['home', 'manage'], draft: ['home', 'draft'] };
   JU.CTL_PATHS = DEFAULT_PATHS;
   var TITLES = { home: '我的局', detail: '局内详情', read: '阅读并确认', waitlist: '候补', ticket: '票根', reply: '局主改了时间', history: '历史', manage: '管理这局', draft: '草稿' };
   var FOCUSABLE = 'button:not([disabled]),[href],input:not([disabled]):not([type=hidden]),select:not([disabled]),textarea:not([disabled]),[tabindex]:not([tabindex="-1"])';

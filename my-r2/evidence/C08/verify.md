@@ -126,3 +126,15 @@
 
 合计：入口存在 50 / 真实操作 44（另 6 条 △）/ 原尺寸静态 49（1 条只看缩略）/ 1× 动效 22。
 
+## §4 工具结果（原始数字；全部跑在 `/home/user/JU/.build/verify-C08.html`，经 `slot.sh`）
+
+| 工具 | 输出目录 | 原始结果 |
+|---|---|---|
+| `coverage.cjs` | `verify/coverage/` | `{"states":50,"keys":50,"errors":0,"mismatches":0}` |
+| `widths.cjs` | `verify/widths/` | `{"shots":48,"overflow":[],"findings":[],"fontInvariance":[],"minFont":12,"api":{"zoom":"ok","safe":"ok"},"errors":0}` |
+| `kb-check.cjs` | `verify/kb/` | `{"shots":2,"findings":[],"errors":0}`（默认两态：h-m-reschedule、j-d-ended + 举报层） |
+| `rm-check.cjs` | `verify/rm/` | `{"rmSys":true,"flowsOk":"11/11","findings":[],"errors":0}` |
+
+- 四个工具都走索引跳转，测不到真实导航路径上的问题：§2 的 2、3、5、7（成局结果页空白、重进待赴约丢联系行、历史页色调沿用、进入叠化）都只在真实点击路径上出现，工具全绿不代表这些已过。
+- 源文件 172,040 B（168 KB ≤ 200 KB）；禁用词「扣分 / 信用分 / 处罚 / 等级 / 剩余次数」在快照里 0 次（「信用」1 次，是阅读层分节注释「确认 · 信用 · 赴约」，约定正文的「信用」小标题和「不影响成局信用」来自共享层文案）。
+- 共享层漂移：11:39 构建之后主负责人又提交了 `ju-data.js` / `ju-ctl.js`（当前前 12 位 `8de3755fc4f5` / `14dcc8df399c`，构建时 `0b41a22b9e6c` / `e656fa792b11`）。本报告只对 11:39 构建负责；§2 里来自共享层的现象（例如「此处为示例微信」）可能已变。

@@ -61,7 +61,7 @@ const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     /* under heavy machine load (several Chromium builders at once) the 300ms exit timer can land after a fixed 450ms wait: poll */
     await click(p, '[data-surface="detail"] [data-act="back"]'); ok('back → home (detail)', await until(p, `return inst.state.nav.stack[inst.state.nav.stack.length - 1].s === 'home' && inst.state.nav.phase === 'idle'`, 2500), await inst(p, `return inst.state.nav.phase + ' / ' + inst.state.nav.stack.map(function (e) { return e.s; }).join('>') + ' / ' + inst.state.nav.dir`));
     // (b) read → confirm → formed → ticket printing
-    await click(p, '[data-rid="brunch"] [data-act="cta"]'); await settled(p); ok('CTA → read (stack home>detail>read)', await inst(p, `return inst.state.nav.stack.map(function(x){return x.s}).join('>')`) === 'home>detail>read');
+    await click(p, '[data-rid="brunch"] [data-act="cta"]'); await settled(p); ok('CTA → read (stack home>read: no unvisited detail underneath)', await inst(p, `return inst.state.nav.stack.map(function(x){return x.s}).join('>')`) === 'home>read');
     const disabledBefore = await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled(); ok('confirm disabled before reading to the end', disabledBefore);
     await inst(p, `var s = root.querySelector('[data-scroller="read"]'); s.scrollTop = s.scrollHeight; s.dispatchEvent(new Event('scroll'));`); await p.waitForTimeout(80);
     ok('reading to the end enables confirm', !(await phone(p).locator('[data-surface="read"] [data-act="confirm"]').first().isDisabled()));
