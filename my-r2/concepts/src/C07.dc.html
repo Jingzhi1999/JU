@@ -56,11 +56,14 @@ body{margin:0}
 /* ======================= upper region: home list on the colour light ======================= */
 /* M4 — when the tray rises the list recedes (fades out in 160ms, drifts up 14px) and the colour light dims under an ink scrim, so the
    area the sheet has not covered yet never flashes bright; on the way back the scrim lifts and the list fades in behind the sheet */
-.c07-page{position:absolute;inset:0;z-index:2;transform-origin:50% 0;transition:opacity calc(220ms * var(--k)) ease calc(100ms * var(--k)),transform calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
-.app.c07-up .c07-page{opacity:0;transform:translateY(-14px) scale(.985);pointer-events:none;transition:opacity calc(160ms * var(--k)) ease,transform calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
+.c07-page{position:absolute;inset:0;z-index:2;transform-origin:50% 0;transition:opacity calc(160ms * var(--k)) cubic-bezier(0,0,.2,1),transform calc(320ms * var(--k)) cubic-bezier(.32,.72,.2,1)}
+/* the list stays readable while the sheet rises over it (only dimmed by the scrim and receding 14px / .985) and is there again the
+   moment the sheet starts down: every frame has the list above the sheet edge and a page or the lead on the sheet */
+.app.c07-up .c07-page{transform:translateY(-14px) scale(.985);pointer-events:none;transition:transform calc(340ms * var(--k)) cubic-bezier(.22,.9,.24,1)}
 /* home ⇄ manage swap the upper region in place: the outgoing page is gone in 90ms before the incoming one starts (at 100ms) — never
    two page titles at once */
-.c07-page.is-away{opacity:0;pointer-events:none;transition:opacity calc(90ms * var(--k)) ease-out}
+.c07-page.is-away{opacity:0;transform:translateY(-8px);pointer-events:none;transition:opacity calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
+.app.c07-mswap .c07-page:not(.is-away){transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k))}
 .c07-scrim{position:absolute;inset:0;z-index:5;pointer-events:none;background:#14161F;opacity:0;transition:opacity calc(200ms * var(--k)) ease}
 .app.c07-up .c07-scrim{opacity:.34;transition:opacity calc(200ms * var(--k)) ease}
 .c07-head{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(140px + var(--sat,0px));pointer-events:none}
@@ -151,11 +154,12 @@ body{margin:0}
    settling back: the old page stays on the sheet for 40ms and clears by 150ms; the block fades in from 110ms (the sheet is ~65% down),
    so the moving sheet always carries content and never two layers at full strength. */
 .c07-lead,.c07-act{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;
-  transition:opacity calc(180ms * var(--k)) ease calc(110ms * var(--k)),transform calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(60ms * var(--k));
-  animation:c07-in calc(240ms * var(--k)) ease calc(110ms * var(--k)) backwards}
+  transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(40ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(40ms * var(--k));
+  animation:c07-bin calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) calc(40ms * var(--k)) backwards}
+@keyframes c07-bin{from{opacity:0;transform:translateY(8px)}}
 /* going off (the sheet rises / a form takes the tray) the block is gone in the same commit that brings the new content — no fade to
    tick: a starved main thread (live WebGL environment) must never show the old title under the new one */
-.c07-lead.is-off,.c07-act.is-off{opacity:0;transform:translateY(-12px);pointer-events:none;transition:none}
+.c07-lead.is-off,.c07-act.is-off{opacity:0;transform:translateY(-8px);pointer-events:none;animation:none;transition:opacity calc(110ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) ease}   /* animation:none — a swap / entry animation must not restart (backwards fill = opacity 0) when the block goes off */
 @keyframes c07-in{from{opacity:0;transform:translateY(10px)}}
 .c07-lab{display:flex;justify-content:space-between;align-items:baseline;gap:10px;min-height:20px;font-size:calc(13px * var(--tz,1));letter-spacing:.02em;line-height:1.5;color:var(--tw3)}
 .c07-lab>span:first-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -188,8 +192,8 @@ body{margin:0}
 .c07-lead .cta{padding:12px 0 16px;display:flex;justify-content:center}
 .c07-lead.is-compact{padding-top:18px;padding-bottom:20px}
 /* the lead's own hand-over (role / section change, a receipt): same 110ms wait as its entry, so the old block is gone first */
-.c07-lead.sw-a:not(.is-off){animation:c07-swapA calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(110ms * var(--k)) backwards}
-.c07-lead.sw-b:not(.is-off){animation:c07-swapB calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(110ms * var(--k)) backwards}
+.c07-lead.sw-a:not(.is-off){animation:c07-swapA calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
+.c07-lead.sw-b:not(.is-off){animation:c07-swapB calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-none{margin:4px 0 0;font-size:calc(17px * var(--tz,1));font-weight:500;line-height:1.4;color:var(--tw)}
 .c07-lead .c07-none + .m{margin-top:2px}
 /* the primary CTA: V27 construction (cta.css) — a button element reset on top of it */
@@ -207,8 +211,8 @@ body{margin:0}
 .c07-link.dim{color:var(--tw3);text-decoration:none;cursor:default}
 
 /* ======================= surfaces inside the risen tray ======================= */
-.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:var(--navh);opacity:0;pointer-events:none;transition:opacity calc(110ms * var(--k)) ease calc(40ms * var(--k))}
-.c07-tray.is-up .c07-surfs{opacity:1;pointer-events:auto;transition:opacity calc(220ms * var(--k)) ease calc(110ms * var(--k))}
+.c07-surfs{position:absolute;left:0;right:0;top:0;bottom:var(--navh);opacity:0;pointer-events:none;transition:opacity calc(140ms * var(--k)) cubic-bezier(.4,0,1,1)}
+.c07-tray.is-up .c07-surfs{opacity:1;pointer-events:auto;transition:opacity calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) calc(50ms * var(--k))}
 .c07-tray .ju-v27-cta[aria-disabled="true"]{background:rgba(255,255,255,.08);background-image:none;box-shadow:inset 0 0 0 1px rgba(255,255,255,.16);color:rgba(244,245,250,.6)}
 .c07-tray .ju-v27-cta[aria-disabled="true"]>.gloss{display:none}
 .c07-surf{position:absolute;inset:0;display:flex;flex-direction:column;transition:transform calc(320ms * var(--k)) cubic-bezier(.2,.8,.2,1),opacity calc(220ms * var(--k)) ease}
@@ -309,9 +313,11 @@ body{margin:0}
 .c07-t08[data-ready]::before{opacity:0}
 
 /* ======================= manage: the upper region is the roster / applications, the tray is the action area ======================= */
-.c07-mpage{position:absolute;inset:0;z-index:3;opacity:0;pointer-events:none;transition:opacity calc(90ms * var(--k)) ease-out}
-.c07-mpage.is-on{opacity:1;pointer-events:auto;transition:opacity calc(220ms * var(--k)) ease calc(100ms * var(--k));animation:c07-pagein calc(220ms * var(--k)) ease calc(100ms * var(--k)) backwards}   /* mounted already on: the entry is an animation */
-@keyframes c07-pagein{from{opacity:0}}
+/* home ⇄ manage swap the upper region in place as a cross-fade: the outgoing page eases out (150ms) while the incoming one eases in from
+   30ms (170ms), 8px apart — at every frame one of the two is at least half there */
+.c07-mpage{position:absolute;inset:0;z-index:3;opacity:0;transform:translateY(8px);pointer-events:none;transition:opacity calc(150ms * var(--k)) cubic-bezier(.4,0,1,1),transform calc(220ms * var(--k)) cubic-bezier(.4,0,.2,1)}
+.c07-mpage.is-on{opacity:1;transform:none;pointer-events:auto;transition:opacity calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)),transform calc(260ms * var(--k)) cubic-bezier(.2,.8,.2,1) calc(30ms * var(--k));animation:c07-pagein calc(170ms * var(--k)) cubic-bezier(0,0,.2,1) calc(30ms * var(--k)) backwards}   /* mounted already on: the entry is an animation */
+@keyframes c07-pagein{from{opacity:0;transform:translateY(8px)}}
 .c07-mpage .c07-sc{top:calc(92px + var(--sat,0px))}
 .c07-mhead{position:absolute;left:0;right:0;top:0;z-index:6;height:calc(140px + var(--sat,0px));pointer-events:none}
 .c07-mhead::before{content:"";position:absolute;inset:0;height:calc(92px + var(--sat,0px));background:linear-gradient(180deg,rgba(236,237,244,.9) 60%,rgba(236,237,244,0));backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);opacity:var(--hc,0);mask-image:linear-gradient(#000 72%,transparent);-webkit-mask-image:linear-gradient(#000 72%,transparent)}
@@ -348,8 +354,8 @@ body{margin:0}
 .c07-actin{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
 .c07-actin.sw-a{animation:c07-swapA calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c07-actin.sw-b{animation:c07-swapB calc(300ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
-@keyframes c07-swapA{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
-@keyframes c07-swapB{0%{opacity:0;transform:translateY(12px)}100%{opacity:1;transform:none}}
+@keyframes c07-swapA{0%{opacity:.25;transform:translateY(8px)}100%{opacity:1;transform:none}}   /* starts at .25: the tray is never empty while the next item takes over */
+@keyframes c07-swapB{0%{opacity:.25;transform:translateY(8px)}100%{opacity:1;transform:none}}
 .c07-act .t{margin:6px 0 0;font-size:calc(24px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c07-act .m{margin:6px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--tw2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .c07-act .q{margin:6px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.5;color:var(--tw2);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
@@ -384,7 +390,7 @@ body{margin:0}
 
 /* forms in the tray (改时间 / 取消这局 / 记为散场 / 局卡): the manage sheet is the tray's own block — the tray grows to hold it and lifts
    above the keyboard; the roster above stays as context under a light scrim */
-.c07-form{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;animation:c07-in calc(240ms * var(--k)) ease calc(60ms * var(--k)) backwards}
+.c07-form{position:absolute;left:0;right:0;top:0;padding:22px 22px 0;display:flex;flex-direction:column;animation:c07-bin calc(200ms * var(--k)) cubic-bezier(0,0,.2,1) backwards}
 .c07-form .t{margin:6px 0 0;font-size:calc(22px * var(--tz,1));font-weight:600;line-height:1.3;color:var(--tw);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-wrap:balance}
 .c07-fbody{margin:8px 0 0;font-size:calc(14px * var(--tz,1));line-height:1.6;color:var(--tw2)}
 .c07-fid{margin:8px 0 0;font-size:calc(13px * var(--tz,1));line-height:1.5;color:var(--tw3);border-left:2px solid #8FA2FF;padding-left:9px}
@@ -890,7 +896,7 @@ body{margin:0}
                   <p class="c07-hint">继续编辑属于开局模块，本轮不可点</p>
                 </sc-if></sc-if>
               </div>
-              <div class="c07-sfoot"><sc-if value="{{dv.row}}"><button type="button" class="c07-pill danger" data-act="delete" onClick="{{draftDel}}">删除草稿</button></sc-if></div>
+              <div class="c07-sfoot"><sc-if value="{{dv.row}}"><button type="button" class="c07-pill danger" data-act="delete" onClick="{{dv.del}}">删除草稿</button></sc-if></div>
             </section>
           </sc-if>
         </div>
@@ -995,11 +1001,11 @@ class Component extends DCLogic {
     return (cv.__c07paint = ready.then(() => { const F = window.JuFilm; if (!F || cv.__c07card !== k) return false; const card = JSON.parse(k);
       return this._cardFonts(card).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
   }
-  /* the faces paintCard draws with, loaded for this card's text. JuFilm.loadFonts would wait 24 s for every family it lists to be
-     declared and then reject — the embedded font set has no Zhi Mang Xing — so only the declared ones are loaded here, capped at 1.5 s */
+  /* the faces paintCard draws with (Caveat's CJK falls back to Zhi Mang Xing), loaded for this card's text — only the declared ones,
+     capped at 1.5 s, so a missing face can never hold the card (JuFilm.loadFonts waits for every family it lists) */
   _cardFonts(card) {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
-    const want = [['Libre Caslon Text', 700], ['Space Mono', 400], ['Space Mono', 700], ['Caveat', 600], ['Archivo', 400], ['Archivo', 500], ['Archivo', 800], ['Archivo Black', 400], ['Oswald', 500], ['Oswald', 600], ['Noto Sans SC', 400], ['Noto Sans SC', 900], ['Noto Serif SC', 900]];
+    const want = [['Libre Caslon Text', 700], ['Space Mono', 400], ['Space Mono', 700], ['Caveat', 600], ['Archivo', 400], ['Archivo', 500], ['Archivo', 800], ['Archivo Black', 400], ['Oswald', 500], ['Oswald', 600], ['Noto Sans SC', 400], ['Noto Sans SC', 900], ['Noto Serif SC', 900], ['Zhi Mang Xing', 400]];
     const have = new Set(Array.from(document.fonts).map(f => String(f.family).replace(/["']/g, '')));
     const words = [card.title, card.en, card.host, card.loc, '缺人的你来不来还不算局主已成局位子满了已确认已预留活动已取消结束这局的记录余候补报名后等确认 0123456789:.·/'].join('');
     const loads = want.filter(f => have.has(f[0])).map(f => document.fonts.load(f[1] + ' 20px "' + f[0] + '"', words).catch(() => { }));
@@ -1110,7 +1116,7 @@ class Component extends DCLogic {
        engine-owned DOM (the same stage is reused when a review jump resets the data) */
     { const ch = this._contact(); if (ch && !c.ticket.contact.on) ch.hide(); }
     if (!R || !R.print) { stage.dataset.state = st === 'torn' ? 'torn' : 'ready'; if (st === 'printing') this.ticketPrinted(c.ticket.printKey); return; }
-    if (st === 'printing') {
+    if (st === 'printing' || st === 'fresh') {   /* 'fresh' (not yet printed, not marked printing): print it — no path may leave the slot empty */
       const key = c.ticket.printKey; this.lastMotion = { name: 'print', fn: () => this._reprint() };   /* replay only — motion() would run it now */
       /* the sheet is still rising (340ms): the print engine needs ~200ms of setup (fonts, stub rig, raster) before paper shows, so it is
          started 120ms into the rise — the paper begins to feed as the sheet lands, instead of a risen sheet waiting with only its header */
@@ -1334,26 +1340,23 @@ class Component extends DCLogic {
     const ticketOn = nav.on.ticket || nav.on.reply;
     /* a page leaving by replace (read → ticket after 成局, ticket → 退出结果) keeps its last model from the controller (leaving:true) */
     const rv = c.read, tv = c.ticket, tk = tv;
-    /* the draft summary: its delete is the row's (the controller's assign lets the row's del — no back — win), so C07 deletes and goes
-       back itself; while the page leaves, it is drawn from its last live model instead of 「草稿已删除」 */
-    if (c.draft.on && c.draft.row) this._lastDraft = c.draft;
-    const dv = (c.draft.on && !c.draft.row && this._lastDraft && (nav.phase === 'exit' || this._draftLeaving)) ? this._lastDraft : c.draft;
+    const dv = c.draft;   /* the draft summary: the controller's del deletes and goes back; its exit keeps the last model (leaving) */
     const hr = c.history.on ? c.history.ritual : null;
     return {
       panel, rootRef: this.rootRef, envRef: this.envRef, c, noSkins: !c.ritual.skins,
-      toastOn: this._toastHere(c), trayRootCls: (this._snap ? ' c07-snap' : '') + (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
+      toastOn: this._toastHere(c), trayRootCls: (this._snap ? ' c07-snap' : '') + (trayUp ? ' c07-up' : '') + (mVis ? ' c07-mng' : '') + (mTop && ph !== 'idle' ? ' c07-mswap' : '') + (trayForm ? ' c07-formon' : '')   /* root modifier: not .c07-form, which is the form block itself */, goHome: () => this._goHome(),
       home: { pageCls: (mVis ? 'is-away' : '') + (isJ ? '' : ' three'), meta: isJ ? (c.joined.badgeText || (c.joined.counts.current ? c.joined.counts.current + ' 场进行中' : '眼下没有进行中的局')) : ((c.hosted.badgeText || (c.hosted.counts.current ? c.hosted.counts.current + ' 场进行中' : '眼下没有进行中的局')) + (c.hosted.counts.drafts ? ' · 草稿 ' + c.hosted.counts.drafts : '')),
         joinedCurrent: isJ && c.section === 'current', joinedHistory: isJ && c.section === 'history', hostedCurrent: !isJ && c.section === 'current', hostedDrafts: !isJ && c.section === 'drafts', hostedHistory: !isJ && c.section === 'history',
         jsections, hsections, onlyLead: isCur && !!leadRow && (isJ ? jsections : hsections).length === 0, onlyLeadTitle: isJ ? '只有这一件' : '只有这一局',
         onlyLeadText: (leadRow ? ({ act: '要你回应', soon: '就快见面', wait: '还在等', todo: '待你处理', resched: '改期中', formed: '已成局', recruit: '招募中' }[leadKind] || '') + ' · ' : '') + '在下方的盘里处理',
         paneCls: (isCur && ((isJ ? c.joined.empty.on : c.hosted.empty.on) || (!!leadRow && (isJ ? jsections : hsections).length === 0))) || (c.section === 'history' && (isJ ? c.joined.empty.on : c.hosted.empty.on)) || (c.section === 'drafts' && c.hosted.empty.on && !c.hosted.drafts.length) ? 'is-hero' : '' },
       tray: { cls: (trayUp ? 'is-up' : 'is-down') + (firstUp ? ' first-up' : ''), leadOn: !(mTop && ph === 'idle') },
-      lead, act, manage, rv, tv, dv, form, draftDel: (ev) => { const d = c.draft; this._draftLeaving = true; if (d.del) d.del(ev); this.back(); this.afterKey('c07-draftleave', 600, () => { this._draftLeaving = false; }); }, formOn: trayForm, trayThc: (s.thc || 318) + 'px',
+      lead, act, manage, rv, tv, dv, form, formOn: trayForm, trayThc: (s.thc || 318) + 'px',
       read: { showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
       ticketOn, ticketSurface: nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result,
-        /* the contact action exists from the start (the shared contact handle wires it once), but it is unreachable until the stub is
-           torn and the contact layer opens — before that a stray tap could mark 已加微信 on an untorn ticket (the engine has no guard) */
+        /* the contact action exists from the start (the shared contact handle wires it once); it stays unreachable until the stub is torn
+           and the contact layer opens (the engine also only accepts it then) */
         actionCls: this._contactWant(c) ? 'is-on' : '', actionInert: !this._contactWant(c),
         ctaLabel: tk.on && tk.contact ? (tk.contact.ctaLabel || '已加微信') : '已加微信', ctaDisabled: tk.on && tk.contact && tk.contact.ctaDisabled ? 'true' : 'false', ashes: !!(tk.result && tk.result.burn && !tk.result.burning), showHome: tk.on && nav.depth > 2 && !tk.result, retryCopy: () => { const h = this._contact(); if (h) this._c.ticket.contact.copyWith(() => h.copy()); else this._c.ticket.contact.retryCopy(); }, hint: tk.on ? (tk.state === 'printing' ? '出票中…' : tk.tear.canTear ? '拖动副券撕开，或按 Enter' : '') : '' },
       draft: (() => { const d = dv, miss = (d.on && d.draft && d.draft.missing) || [], w = d.on ? d.when : null, has = (k) => miss.indexOf(k) >= 0;

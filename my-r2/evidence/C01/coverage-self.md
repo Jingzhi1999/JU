@@ -20,12 +20,12 @@
 | `j-d-withdraw` | 撤回 / 退出确认 | ✓ 票根页「去不了了」 | ✓ 九种确认层 Tab 循环 / Esc / 焦点回到触发 | ✓ | ✓ keyboard/sheets、motion/m8-burn | — |
 | `j-d-ended` | 已散场 · 历史票根 | ✓ 历史散场行 | ✓ 局内记录：输入 → 提交 → 已受理；+24 小时联系关闭 | ✓ | ✓ motion/m6、motion/m9-history、clock/joined | — |
 | `j-d-cancelled` | 局主取消 | ✓ 历史未成行行 | ✓ 首次打开燃烧一次，再进入不重放 | ✓ | ✓ motion/m8-cancel | — |
-| `j-d-rejected` | 审核未通过 | ✓ 历史未成行行 | — | ✓ | — | 页面下半留白（无票根、无记录） |
-| `j-d-queueleft` | 退出候补 | ✓ 历史未成行行 | —（结果由退出候补得到，rm-check） | ✓ | — | 页面下半留白 |
+| `j-d-rejected` | 审核未通过 | ✓ 历史未成行行 | — | ✓ | — | —（下半由脊接「和局主的其他局」「前后 N 天内」，fixes-1029/04） |
+| `j-d-queueleft` | 退出候补 | ✓ 历史未成行行 | —（结果由退出候补得到，rm-check） | ✓ | — | —（fixes-1029/05） |
 | `j-d-exited` | 主动退出 | ✓ 历史未成行行 | —（结果由 j-d-going 退出得到） | ✓ | ✓ motion/m8-burn | — |
 | `j-d-declined` | 拒绝改期 | ✓ 历史未成行行 | —（结果由拒绝改期得到） | ✓ | ✓ motion/m8-burn | — |
-| `j-d-expired` | 预留到期 | ✓ 历史未成行行 | — | ✓ | — | 页面下半留白 |
-| `j-d-released` | 放弃预留 | ✓ 历史未成行行 | — | ✓ | — | 页面下半留白 |
+| `j-d-expired` | 预留到期 | ✓ 历史未成行行 | — | ✓ | — | —（fixes-1029/06） |
+| `j-d-released` | 放弃预留 | ✓ 历史未成行行 | — | ✓ | — | —（fixes-1029/07） |
 | `j-d-withdrawn` | 撤回申请 | ✓ 历史未成行行 | —（结果由撤回得到） | ✓ | ✓ motion/m6-withdraw | — |
 | `j-d-absent` | 散场 · 未出席待核实 | ✓ 历史散场行 | — | ✓ | — | 未出席章与「待核实」语气 |
 | `h-home` | 当前（默认） | ✓ 身份「我发起的」 / 收拢后的「参 · 发」 | ✓ 截止块 CTA 审核申请 → 处理 → 返回落点 | ✓ | ✓ motion/m5、motion/m1-m2 | — |

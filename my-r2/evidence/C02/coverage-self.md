@@ -14,8 +14,8 @@
 | j-d-invitedq | 候补轮到 | 跳转 | — | ✓ coverage | — | — |
 | j-d-gathering | 已确认待成局 | ✓ | ✓ 进入 / 返回 / 入场途中返回 | ✓ s12/03 | ✓ extra/tap、back-mid-flight（打断） | 局卡只写「·」前的局名，全名在卡下 |
 | j-d-tear | 已出票待撕 | ✓ | ✓ 拖过阈值撕下；拖一半放手回位且不写入（torn=false） | ✓ | ✓ roundA/handover ticket-*、print/、tear/、extra/half-drag | 无头 SwiftShader 下出纸前准备 ≈0.75s |
-| j-d-contact | 已撕票待联系 | ✓ | ✓ 复制（http 真实剪贴板）、「下一次复制失败」→ 原件那一行（role=alert）+ 旁边的「重试」、已加微信（写入期间「处理中…」并锁住）→ 待赴约 | ✓ roundA/copy | ✓ tear/、fail/copy-* | — |
-| j-d-going | 已联系待赴约 | ✓ | ✓ 去不了了 → 确认 → 燃烧 C → 查看退出结果 → 历史灰烬 | ✓ | ✓ burn/burnC、to-history | — |
+| j-d-contact | 已撕票待联系 | ✓ | ✓ 从列表真实点击进入：已撕原件 + 局主卡（dantat.coffee）+「已加微信」立即在场（roundA/b1）；复制（http 真实剪贴板）、「下一次复制失败」→ 原件那一行（role=alert）+ 旁边的「重试」、已加微信（写入期间「处理中…」并锁住）→ 待赴约 | ✓ roundA/copy | ✓ tear/、fail/copy-* | — |
+| j-d-going | 已联系待赴约 | ✓ | ✓ 从列表真实点击进入：已撕原件 + 局主卡 +「待赴约」；去不了了 → 确认 → 燃烧在在场的票上开始 → 查看退出结果 → 历史灰烬 | ✓ roundA/b1 | ✓ roundA/b1 exit-burn-start、burn/burnC | — |
 | j-d-reschedule | 改期待答复 | ✓ | ✓ 接受（rm）、拒绝 → 燃烧 B | ✓ | ✓ burn/burnB | — |
 | j-d-withdraw | 退出确认层 | ✓ | ✓ 确认 / Esc / 焦点回到触发 | ✓ | ✓ burn/confirm | — |
 | j-d-ended | 散场 · 历史票根 | ✓ | ✓ 历史列表点开即为盖好章的 08 场景（settled，不重放）；局内记录层（键盘态） | ✓ s12/05、clock/10 | ✓ stamp/history-settled | 08 场景在无头环境由 SwiftShader 绘制 |
@@ -30,7 +30,7 @@
 | j-d-absent | 散场 · 未出席待核实 | 跳转 | — | ✓ coverage | — | — |
 | h-home | 局主 · 当前 | ✓ | ✓ 点先做这件卡进管理、返回落回卡上 | ✓ s12/02 | ✓ roundA/handover manage-*、path/ | — |
 | h-drafts | 局主 · 草稿 | ✓ | ✓ 删掉唯一的草稿 → 空态 + 撤销条 | ✓ extra2/M11-* | ✓ extra2/M11-last-draft | — |
-| h-history | 局主 · 历史 | ✓ | — | ✓ coverage | — | — |
+| h-history | 局主 · 历史 | ✓ | ✓ 全员记录出席后行状态「n/N 人到场」（roundA/m5） | ✓ coverage、roundA/m5 | — | — |
 | h-pending | 待处理较多 | ✓ | ✓ 滚动 | ✓ variants/ | — | — |
 | h-history-many | 历史较多 | 跳转 | — | ✓ coverage | — | — |
 | h-drafts-many | 只有草稿 | ✓ | ✓ 删第一个，下面两个补位，撤销回原槽位 | ✓ | ✓ motion/M10-* | — |
@@ -41,7 +41,7 @@
 | h-m-leaves | 离开记录 | ✓ | ✓ 展开 / 收起 | ✓ | ✓ extra/leaves-toggle | — |
 | h-m-reschedule | 改时间 | ✓ | ✓ 同时间禁用 → 新时间 → 提交 → 答复区；键盘态 | ✓ kb/ | ✓ motion/M7 | 原生日期 / 时间框会把 Tab 分给内部分段（浏览器行为） |
 | h-m-replies | 改期答复 | 跳转 | — | ✓ coverage | — | — |
-| h-m-cancel | 取消这局 | ✓ | ✓ 确认取消 → 已取消（人逐个变灰） | ✓ | ✓ extra/cancel-drain | 抽色较轻（40px 圆 900ms 变灰） |
+| h-m-cancel | 取消这局 | ✓ | ✓ 确认取消 → 席位条热带扫过、逐个抽色、余烬升起、灰烬线落定，「这局已取消 · 已告知 …」；失败 → 重试 → 已取消 → 历史不变 | ✓ roundA/cancel | ✓ roundA/cancel（含关键帧 0/25/50/75/100）、extra/cancel-drain | — |
 | h-m-end | 记为散场 | ✓ | ✓ | ✓ | ✓ stamp/end | — |
 | h-m-attendance | 出席记录 | ✓ | ✓ 出席 / 未出席 / 更正为待定，章面逐人按下；最后一位记完 → 完成句；+24h 联系关闭 | ✓ s12/04、clock/08-09、extra2/M11-all-recorded | ✓ stamp/、extra2/M11-last-person | — |
 | h-m-card | 完整局卡 | ✓ | ✓ 打开 / Esc / 焦点回「局卡」 | ✓ coverage、widths-deep | — | 局卡只写「·」前的局名 |
