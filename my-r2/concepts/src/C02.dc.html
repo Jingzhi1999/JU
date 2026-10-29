@@ -95,9 +95,16 @@ body{margin:0}
 .c02-weak{position:absolute;right:12px;top:0;height:44px;padding:0 10px;border:0;background:none;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink2);cursor:pointer;border-radius:12px}
 .c02-weak:active{background:rgba(255,255,255,.35)}
 /* ---- home header: role switch (white pill) on the title row ---- */
-.c02-roles{position:absolute;right:calc(22px - 6px * var(--hc,0));top:calc(var(--sat,0px) + 72px - 46px * var(--hc,0));transform:scale(calc(1 - .2 * var(--hc,0)));transform-origin:100% 50%;display:grid;grid-template-columns:1fr 1fr;height:calc(40px * var(--tz,1));padding:3px;border-radius:999px;background:rgba(255,255,255,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.62),0 8px 18px -12px rgba(var(--sh),.4)}
+.c02-roles{position:absolute;right:22px;top:calc(var(--sat,0px) + 72px);transition:top calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1),right calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1),height calc(220ms * var(--k)) cubic-bezier(.2,.8,.2,1),background calc(220ms * var(--k)) ease;display:grid;grid-template-columns:1fr 1fr;height:calc(40px * var(--tz,1));padding:3px;border-radius:999px;background:rgba(255,255,255,.36);box-shadow:inset 0 0 0 1px rgba(255,255,255,.62),0 8px 18px -12px rgba(var(--sh),.4)}
 .c02-pill{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:999px;background:#fff;box-shadow:0 1px 2px rgba(var(--sh),.14),0 6px 14px -6px rgba(var(--sh),.34);transition:transform calc(260ms * var(--k)) cubic-bezier(.3,.9,.3,1)}
 .c02-roles.is-hosted .c02-pill{transform:translateX(100%)}
+.c02-role .ls{display:none}
+[data-c02m="1"] .c02-roles{top:calc(var(--sat,0px) + 31px);right:16px;height:calc(30px * var(--tz,1));padding:2px;background:rgba(255,255,255,.8)}
+[data-c02m="1"] .c02-pill{top:2px;bottom:2px;left:2px;width:calc(50% - 2px)}
+[data-c02m="1"] .c02-role{padding:0 9px;font-size:calc(12px * var(--tz,1));gap:3px}
+[data-c02m="1"] .c02-role .lf{display:none}
+[data-c02m="1"] .c02-role .ls{display:inline}
+[data-c02m="1"] .c02-badge{min-width:7px;width:7px;height:7px;padding:0;font-size:0;line-height:0}
 .c02-role{position:relative;z-index:1;min-width:0;border:0;background:transparent;padding:0 12px;font-size:calc(14px * var(--tz,1));font-weight:500;color:var(--ink3);display:flex;align-items:center;justify-content:center;gap:5px;white-space:nowrap;cursor:pointer;border-radius:999px;transition:color calc(220ms * var(--k))}
 .c02-role.on{color:var(--ink)}
 .c02-badge{font-style:normal;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--warn);color:#fff;font:600 calc(12px * var(--tz,1))/18px Archivo,sans-serif;text-align:center}
@@ -465,7 +472,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
             <p class="c02-t14">{{home.sentence}}</p>
             <div class="c02-roles {{home.rolesCls}}" role="tablist" aria-label="我的局 · 角色">
               <span class="c02-pill" aria-hidden="true"></span>
-              <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" class="c02-role {{t.cls}}" data-role-tab="{{t.k}}" aria-selected="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}">{{t.label}}<sc-if value="{{t.c2badge}}"><i class="c02-badge">{{t.badge}}</i></sc-if></button></sc-for>
+              <sc-for list="{{c.roleTabs}}" as="t" hint-placeholder-count="2"><button type="button" role="tab" class="c02-role {{t.cls}}" data-role-tab="{{t.k}}" aria-selected="{{t.on}}" aria-label="{{t.label}} {{t.badgeText}}" onClick="{{t.go}}"><span class="lf">{{t.label}}</span><span class="ls">{{t.short}}</span><sc-if value="{{t.c2badge}}"><i class="c02-badge">{{t.badge}}</i></sc-if></button></sc-for>
             </div>
           </header>
           <div class="c02-sc" data-scroller="home" onScroll="{{onScroll}}">
@@ -1299,7 +1306,7 @@ class Component extends DCLogic {
   /* within a group, a row never leads with the same person as the row above it */
   _decoGroups(ss, side) { var self = this; ss.forEach(function (g) { var prev = null; g.rows.forEach(function (r) { var d = side === 'h' ? self._hDeco(r) : self._jDeco(r); if (prev && d.avs[0] && d.avs[0].g === prev && d.ppl.length > 1) d = side === 'h' ? self._hDeco(r, 1) : self._jDeco(r, 1); r.c2 = d; prev = d.avs[0] ? d.avs[0].g : null; }); }); }
   _toGroup(k) { var root = this.rootRef.current; var sc = root && root.querySelector('[data-scroller="home"]'); if (!sc) return; var el = k === 'act' ? sc.querySelector('.c02-secs') : sc.querySelector('[data-g="' + k + '"]'); if (!el) return; var ph = root.closest('.ju-phone') || root; var d = el.getBoundingClientRect().top - (ph.getBoundingClientRect().top + 84); if (k === 'act') d = -sc.scrollTop; try { sc.scrollBy({ top: d, behavior: this.isRM() ? 'auto' : 'smooth' }); } catch (e) { sc.scrollTop += d; } }
-  _scroll(ev) { var el = ev.currentTarget; this._c.nav.onScroll(ev); var surf = el.closest && el.closest('[data-surface]'); if (surf) { var on = el.scrollTop >= (this.headerRange || 88) - 2 ? '1' : '0'; if (surf.dataset.c02c !== on) surf.dataset.c02c = on; } }
+  _scroll(ev) { var el = ev.currentTarget; this._c.nav.onScroll(ev); var surf = el.closest && el.closest('[data-surface]'); if (surf) { var on = el.scrollTop >= (this.headerRange || 88) - 2 ? '1' : '0', cm = el.scrollTop >= 8 ? '1' : '0'; if (surf.dataset.c02m !== cm) surf.dataset.c02m = cm; if (surf.dataset.c02c !== on) surf.dataset.c02c = on; } }
   renderVals() {
     var panel = this.panelVals(); panel.show = this.props.panel !== false;
     var c = this.ctlVals(); this._c = c; var s = this.state; var rv = s.review || {}; var self = this;
@@ -1320,7 +1327,7 @@ class Component extends DCLogic {
     [c.joined.sections, c.joined.sectionsHistory].forEach(function (ss) { self._decoGroups(ss, 'j'); });
     [c.hosted.sections, c.hosted.sectionsHistory].forEach(function (ss) { self._decoGroups(ss, 'h'); });
     c.hosted.drafts.forEach(function (r) { r.c2 = { g: C2.glyph(r.title || '草'), tone: r.ready ? 'go' : 'wait', rowCls: r.landing ? 'is-landing' : '' }; });
-    c.roleTabs.forEach(function (t) { t.c2badge = !t.on && !!t.badge; });
+    c.roleTabs.forEach(function (t) { t.c2badge = !t.on && !!t.badge; t.short = String(t.label || '').replace(/^我/, '').replace(/的$/, ''); });
     /* the sentence under 我的局: who you will meet this week / who is waiting on you */
     var weekEnd = (function () { var d = new Date(now); var day = d.getUTCDay(); return Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + ((7 - day) % 7), 23, 59); })();
     var uniq = function (a) { var o = {}, out = []; a.forEach(function (x) { if (x && !o[x]) { o[x] = 1; out.push(x); } }); return out; };
