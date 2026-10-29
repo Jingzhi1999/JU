@@ -284,6 +284,7 @@ body{margin:0}
    once the rigid block above has risen through it, the page's content once the strips below have dropped past (no double exposure);
    on the way back the content is gone before the strips return */
 .app.over-home .c08-pg.is-top.ph-in .c08-tool{transition:opacity calc(200ms * var(--k)) ease calc(200ms * var(--k))}
+.app.over-home .c08-pg.is-top.ph-in .c08-fm,.app.over-home .c08-pg.is-top.ph-in .c08-fx{transition:opacity calc(160ms * var(--k)) ease calc(240ms * var(--k))}   /* the meta appears once the travelling title has passed its line */
 .app.over-home .c08-pg.is-top.ph-in .c08-body>*,.app.over-home .c08-pg.is-top.ph-in .c08-foot{transition:opacity calc(150ms * var(--k)) ease calc(150ms * var(--k)),transform calc(340ms * var(--k)) var(--tA)}
 .app.over-home .c08-pg.is-top.ph-exit .c08-body>*,.app.over-home .c08-pg.is-top.ph-exit .c08-foot,.app.over-home .c08-pg.is-top.ph-exit .c08-tool{transition:opacity calc(80ms * var(--k)) ease}
 .c08-home.is-under.ph-exit .c08-st,.c08-home.is-under.ph-exit .c08-hdw{animation-delay:calc(60ms * var(--k))!important}
@@ -1061,6 +1062,16 @@ class Component extends DCLogic {
     const r = this.state.review, pr = ps && ps.review; const burn = this._rit.burn;
     if (burn && burn.engine) { if (r.scrub != null) { burn.seek(r.scrub / 100 * (burn.engine.duration || 6.6)); burn.pause(); } else if (pr && pr.scrub != null) burn.resume(); }
   }
+  /* the stub starts to move (pressed / Enter) → the tear button steps aside at once; a tear given up (released before it parts) brings it back */
+  _armTearGrab(stage, h) {
+    const g = stage && stage.querySelector('[data-tear] [role="button"]'); if (!g || g.__c08arm) return; g.__c08arm = true;
+    const on = () => { if (!this.state.tearFall) this.setState({ tearFall: true }); };
+    /* released: wait for the rig — it either parts (keeps going) or springs back to 0 (the button returns) */
+    const off = () => { let n = 0; const chk = () => { const rg = h && h.rig; if (stage.dataset.detached === '1' || (rg && (rg.done || rg.falling))) return;
+      if (!rg || (rg.p || 0) <= 0.02) { if (this.state.tearFall && !(this._c && this._c.ticket.state === 'torn')) this.setState({ tearFall: false }); return; } if (++n < 40) setTimeout(chk, 50); }; setTimeout(chk, 50); };
+    g.addEventListener('pointerdown', on); g.addEventListener('pointerup', off); g.addEventListener('pointercancel', off);
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') on(); });
+  }
   _tearOpts() { return { onDetach: () => { const ok = this.tearCommit(); this.setState({ tearFall: ok !== false }); return ok; }, onDone: () => { this.setState({ tearFall: false }); this._uiIn('ticket', { contactOpen: true }); this.after(120, () => this._focusAfterTear(6)); } }; }
   /* a stub torn from the keyboard leaves focus on nothing (the stub is gone): it goes on to the contact the tear revealed */
   _focusAfterTear(n) {
@@ -1090,7 +1101,7 @@ class Component extends DCLogic {
     const paper = stage.querySelector('[data-paper]'); paper.style.transition = 'none'; paper.style.transform = 'none'; paper.style.opacity = '1'; paper.style.pointerEvents = 'auto'; paper.inert = false;
     if (final === 'ready' && R.tear) {
       const h = R.tear.mount(stage, data, tearOpts || {}); stage.dataset.state = 'ready';
-      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); R.measureTicket(stage, false); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
+      if (h.rig) { h.rig.ready.then(() => { if (this._rit.stage !== stage) return; h.enable(true); R.measureTicket(stage, false); this._armTearGrab(stage, h); document.fonts.ready.then(() => { if (h.rig && !h.rig.done && h.rig.redraw) h.rig.redraw(); }); }); }
       if (tearOpts) this.registerTear(h);
       return h;
     }

@@ -340,10 +340,12 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
 .c06-jc.is-big{width:296px;margin:22px auto 26px}
 .c06-cap{text-align:center}
 /* toast */
-.c06-toast{position:absolute;left:var(--gx);right:var(--gx);bottom:calc(var(--navh) + var(--sab,0px) + 14px + var(--kb,0px));z-index:60;background:var(--ink);color:#F6F5F1;padding:12px 16px;border-radius:10px;font-size:calc(14px * var(--tz,1));line-height:1.5;animation:c06-toast calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
+.c06-toast{position:absolute;left:var(--gx);right:var(--gx);bottom:var(--c06-toast-b,calc(var(--navh) + var(--sab,0px) + 14px + var(--kb,0px)));transition:bottom calc(200ms * var(--k,1)) cubic-bezier(.2,.8,.2,1);z-index:60;background:var(--ink);color:#F6F5F1;padding:12px 16px;border-radius:10px;font-size:calc(14px * var(--tz,1));line-height:1.5;animation:c06-toast calc(240ms * var(--k,1)) cubic-bezier(.2,.8,.2,1) both}
 .c06-toast.k-error{background:#7c1a2e}
-/* with a paragraph open the toast speaks from the tool row (where the compact title sits), never over the paragraph or its action */
-.app.c06-open .c06-toast{bottom:calc(var(--navh) + var(--sab,0px) + var(--c06-slot,0px) + 10px + var(--kb,0px))}
+/* n2 · a toast never covers a live action or the words being read: with a sheet up it sits above the sheet (outside it); otherwise above
+   the lowest visible action with a 10px gap (measured each frame while it shows, since rituals move actions without a render); while a stub
+   is falling it waits, and shows once the stub has landed */
+.c06-toast.is-wait{visibility:hidden;animation:none}
 @keyframes c06-toast-top{0%{opacity:0;transform:translateY(-6px)}100%{opacity:1;transform:none}}
 @keyframes c06-toast{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 .c06-sr{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
@@ -745,7 +747,7 @@ textarea.c06-in{font-family:var(--ju-font-ui);resize:none;line-height:1.6}
           </div>
         </div>
       </sc-if>
-      <sc-if value="{{c.toast.on}}"><div class="c06-toast {{c.toast.cls}}" role="status">{{c.toast.text}}</div></sc-if>
+      <sc-if value="{{v.toast.on}}"><div class="c06-toast {{v.toast.cls}}" role="status">{{v.toast.text}}</div></sc-if>
     </div>
     <!-- @fx-svg -->
   </div>
@@ -843,7 +845,7 @@ class Component extends DCLogic {
   componentDidMount() { this._mountEnv(); this._syncExpand(); this._syncCards(); this._syncStamps(); this._syncRituals(null); this._syncReduced(); this._syncLabels(); }
   _card(kind, id, ev, when, place, host, avail, status, caption) { const vm = c06CardVm(ev, when, place, host, avail, status, caption); const key = [kind, id, vm.pack, vm.title, vm.date, vm.time, avail, status || ''].join('|'); this._cards[key] = vm; return key; }
   _syncCards() { const root = this.rootRef.current, vm = this._cards || {}; if (!root) return; root.querySelectorAll('[data-c06card]').forEach((el) => { const k = el.getAttribute('data-c06card'); if (!k || el.__c06k === k || !vm[k]) return; el.innerHTML = c06CardHtml(vm[k]); el.__c06k = k; }); }
-  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncStamps(); this._syncSheetGhost(); this._syncSheetIn(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); this._syncFig(); this._syncDrafts(); this._syncUndo(); this._syncFocus(); this._syncSlot(); this._syncClock(ps); this._snap = false; }
+  componentDidUpdate(pp, ps) { this._syncEnv(ps); this._syncScroll(ps); this._syncExpand(); this._syncFlip(); this._syncCards(); this._syncStamps(); this._syncSheetGhost(); this._syncSheetIn(ps); this._syncRituals(ps); this._syncReduced(ps); this._syncLabels(); this._syncFig(); this._syncDrafts(); this._syncUndo(); this._syncFocus(); this._syncSlot(); this._watchToast(); this._syncClock(ps); this._snap = false; }
   /* M5 · across the tear's write the ticket keeps its place on screen: a reflow above it is absorbed by a transform, not a jump */
   _syncFig() { const f = this._figTop; this._figTop = null; if (!f || !f.el.isConnected) return; const d = f.y - f.el.getBoundingClientRect().top; const k = this.kf(); if (Math.abs(d) > 1 && k > 0) f.el.animate([{ transform: 'translateY(' + d + 'px)' }, { transform: 'none' }], { duration: 300 * k, easing: 'cubic-bezier(.2,.8,.2,1)' }); }
   /* m7 · a deleted draft folds its own height while it fades, so the next one slides up into the place; an undone one opens its place again */
@@ -859,6 +861,44 @@ class Component extends DCLogic {
   _syncFocus() { const sel = this._focusNext; if (!sel) return; const root = this.rootRef.current, el = root && root.querySelector(sel); if (!el) return; this._focusNext = null; try { el.focus({ preventScroll: true }); } catch (e) { } }
   /* the toast sits above the open paragraph's action: its height is the slot's */
   _syncSlot() { const root = this.rootRef.current; if (!root) return; const sl = root.querySelector('.c06-item.is-x .c06-slot'); const h = sl && sl.querySelector('.c06-cta:not(.ju-contact-action), .ju-contact-action[data-shown="true"]') ? Math.round(sl.getBoundingClientRect().height) : 0; if (root.style.getPropertyValue('--c06-slot') !== h + 'px') root.style.setProperty('--c06-slot', h + 'px'); }
+  /* n2 · the toast as this concept shows it: a message raised while a stub is falling waits for the landing, then stays 2.2s from there */
+  _toastView(c) {
+    const t = c.toast || {}, wait = !!(this._rit && this._rit.tearing), now = Date.now();
+    if (t.on && wait) { this._toastLate = { text: t.text, cls: t.cls || '', until: 0 }; return { on: true, text: t.text, cls: (t.cls || '') + ' is-wait' }; }
+    const late = this._toastLate;
+    if (late) {
+      if (!late.until) { late.until = now + 2200; this.hold(2250, () => { if (this._toastLate === late) { this._toastLate = null; this.forceUpdate(); } }); }
+      if (now < late.until && (!t.on || t.text === late.text)) return { on: true, text: late.text, cls: late.cls };
+      this._toastLate = null;
+    }
+    return { on: !!t.on, text: t.text, cls: t.cls || '' };
+  }
+  _placeToast() {
+    const root = this.rootRef.current; if (!root) return false; const t = root.querySelector('.c06-toast');
+    if (!t) { if (root.style.getPropertyValue('--c06-toast-b')) root.style.removeProperty('--c06-toast-b'); return false; }
+    const op = t.offsetParent || root, pr = op.getBoundingClientRect(), cs = getComputedStyle(root), px = (n) => parseFloat(cs.getPropertyValue(n)) || 0;
+    const base = px('--navh') + px('--sab') + 14 + px('--kb'); let top = null;
+    /* positions are layout positions (offsets, not the moving box), so a sheet still rising or an action still fading in already counts */
+    const layTop = (el) => { let y = 0, n = el; while (n && n !== op) { y += n.offsetTop; n = n.offsetParent; } return n === op ? pr.top + y : el.getBoundingClientRect().top; };
+    const sh = root.querySelector('.c06-over:not(.is-ghost) .c06-sheet');
+    if (sh && sh.offsetHeight > 0) top = layTop(sh);   /* a sheet is up: speak from above it, outside it */
+    else {
+      const band = pr.bottom - base - t.offsetHeight - 12;
+      root.querySelectorAll('.c06-cta, .ju-contact-action, .c06-slot button, .c06-item.is-x .ju-contact-wrap').forEach((el) => {   /* the contact layer above the action is being read too */
+        if (el.closest('.c06-over') || el.classList.contains('is-leaving')) return; const r = el.getBoundingClientRect(); if (r.height < 4 || r.bottom <= band || r.top >= pr.bottom) return;
+        const st = getComputedStyle(el); if (st.visibility === 'hidden' || st.display === 'none') return; top = top == null ? r.top : Math.min(top, r.top); });
+    }
+    const b = top == null ? '' : Math.max(base, Math.round(pr.bottom - top + 10)) + 'px';
+    const cur = root.style.getPropertyValue('--c06-toast-b');
+    if (cur !== b) {
+      /* a long way (a sheet came up) is taken at once, so the toast never crosses what it makes way for; a short one glides */
+      const far = Math.abs((parseFloat(cur) || base) - (parseFloat(b) || base)) > 24; if (far) { t.style.transition = 'none'; }
+      if (b) root.style.setProperty('--c06-toast-b', b); else root.style.removeProperty('--c06-toast-b');
+      if (far) { void t.offsetHeight; requestAnimationFrame(() => { t.style.transition = ''; }); }
+    }
+    return true;
+  }
+  _watchToast() { if (!this._placeToast() || this._toastRaf) return; const tick = () => { this._toastRaf = 0; if (this._placeToast()) this._toastRaf = requestAnimationFrame(tick); }; this._toastRaf = requestAnimationFrame(tick); }
   _syncScroll(ps) {
     const s = this.state, sc = this.scRef.current; if (!ps || !sc || (ps.role === s.role && ps.section === s.section) || this._expOf()) return;
     const m = this._scrollMemo && this._scrollMemo['home:' + s.role + ':' + s.section]; sc.scrollTop = m && m.home != null ? m.home : 0;
@@ -1217,8 +1257,12 @@ class Component extends DCLogic {
     this.after(120, () => { const root = this.rootRef.current, sc = this.scRef.current, row = root && root.querySelector('.c06-row[data-rid="' + id + '"]'); if (!row || !sc) return;
       const rel = row.getBoundingClientRect().top - sc.getBoundingClientRect().top; if (rel < 0 || rel > sc.clientHeight * 0.3) { const t = Math.max(0, Math.round(sc.scrollTop + rel - 10)); if (k > 0) this._tween(sc, t, 360 * k, this._ezO); else { sc.scrollTop = t; if (this._c) this._c.nav.onScroll({ currentTarget: sc }); } } });
     if (!(k > 0)) return;
+    /* n1 · one drain, one way: from the cancel on, the title keeps its ink (fill backwards over the 480ms wait), then draws down to --cx once */
+    const r0 = this.rootRef.current, c0 = r0 ? getComputedStyle(r0) : null, ink = (c0 && c0.getPropertyValue('--ink').trim()) || '#14161F', cx = (c0 && c0.getPropertyValue('--cx').trim()) || '#4f5466';
+    const drain = () => { const root = this.rootRef.current, ti = root && root.querySelector('.c06-row[data-rid="' + id + '"] .c06-ti'); if (!ti || ti.__c06drain) return; ti.__c06drain = 1;
+      const a = ti.animate([{ color: ink }, { color: cx }], { duration: 900 * k, delay: 480 * k, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'backwards' }); a.onfinish = a.oncancel = () => { ti.__c06drain = 0; }; };
+    drain(); requestAnimationFrame(drain);   /* now (if the row is already drawn) and after the cancelled render (if it is drawn anew) */
     this.after(480, () => { const root = this.rootRef.current, ti = root && root.querySelector('.c06-row[data-rid="' + id + '"] .c06-ti'); if (!ti) return;
-      ti.animate([{ color: '#14161F' }, { color: getComputedStyle(ti).color }], { duration: 900 * k, easing: 'cubic-bezier(.4,0,.2,1)' });
       const rr = root.getBoundingClientRect(), tr = ti.getBoundingClientRect(); const rg = document.createRange(); rg.selectNodeContents(ti); const lines = Array.from(rg.getClientRects()).filter(r => r.width > 4);
       const span = lines.length ? lines[lines.length - 1] : tr; const n = 18;
       for (let i = 0; i < n; i++) { const e = document.createElement('i'); e.className = 'c06-ember'; e.setAttribute('aria-hidden', 'true');
@@ -1357,7 +1401,7 @@ class Component extends DCLogic {
     if (x) { const at = (arr) => { let g = null, n = -1, i0 = -1; arr.forEach((it) => { if (it.isG) { g = it.key; return; } n++; if (it.key === 'r:' + x.id || it.key === 'd:' + x.id) i0 = n, this._g = g; }); return i0 < 0 ? null : this._g + '#' + i0; }; const a = at(live), b = at(items); this._moved = !!(a && b && a !== b); } else this._moved = false;
     v.items = items.map(it => it.isG ? it : it.kind === 'j' ? this._decorJ(it, c, x, collapsing) : it.kind === 'h' ? this._decorH(it, c, x, collapsing) : this._decorD(it, c, x, collapsing));
     if (this._hold) v.items.forEach(o => { if (o.key !== this._hold.key) return; o.label = this._hold.label; o.need = this._hold.need; o.tone = 'c06-t-void'; o.kick = o.kick ? '已处理' : ''; o.kickEm = ''; o.tap = () => { }; o.cls = String(o.cls || '') + ' is-held'; });
-    v.undoLeft = this._undoLeft(c.hosted && c.hosted.undo);
+    v.undoLeft = this._undoLeft(c.hosted && c.hosted.undo); v.toast = this._toastView(c);
     const em = role === 'joined' ? c.joined.empty : c.hosted.empty;
     v.empty = em && em.on && !x ? { title: em.title, body: em.body, label: em.action ? em.action.label : '', go: em.action ? em.action.go : null, inert: em.action && em.action.inert ? 'true' : 'false', cls: em.action && em.action.inert ? 'inert' : 'act' } : null;
     v.outline = !!(v.empty && role === 'hosted' && sec === 'drafts');
