@@ -8,9 +8,9 @@
 
 依据（都是我自己截的图，逐张看过）：
 - 双角色首屏 × 三环境：`v1-home-env/f01`（参加者·棉糖）`f02`（局主·棉糖）`f03/f04`（光晕）`f05/f06`（落日）。
-- 深层页：`coverage/j-d-gathering`、`j-d-invited`（详情）、`j-d-tear`、`j-d-contact`、`j-d-reschedule`（票根面）、`h-m-review`、`h-m-members`、`h-m-attendance`、`h-m-reschedule`（管理 / 出席 / 改时间层）、`j-history`、`j-d-ended`、`j-d-cancelled`、`j-d-rejected`（历史）、`b-empty`、`b-empty-h`、`h-drafts`、`h-draft`（空态 / 草稿）、`h-m-card`、`j-d-withdraw`（弹层）。拼图：`coverage/sheet.png`。
+- 深层页：`coverage/j-d-gathering`、`j-d-invited`（详情）、`j-d-tear`、`j-d-contact`、`j-d-reschedule`（票根面）、`h-m-review`、`h-m-members`、`h-m-attendance`、`h-m-reschedule`（管理 / 出席 / 改时间层）、`j-history`、`j-d-ended`、`j-d-cancelled`、`j-d-rejected`（历史）、`b-empty`、`b-empty-h`、`h-drafts`、`h-draft`（空态 / 草稿）、`h-m-card`、`j-d-withdraw`（弹层）。拼图：`coverage/sheet.jpg`。
 - 宽度与字号：`widths/f00-w-360-j-home`、`f24-w-430-j-home`、`f32-zoom-390-j-home`、`f22-w-390-b-long`、`f23-w-390-b-long-h`。
-- 灰度 + 最近邻：`gray/gray-C05-vs-C07.png`（左两张 C05，右两张 C07），C07 原色 `v6-neighbor-C07/sheet.png`。
+- 灰度 + 最近邻：`gray/gray-C05-vs-C07.jpg`（左两张 C05，右两张 C07），C07 原色 `v6-neighbor-C07/sheet.jpg`。
 - 固定物件实测：`measure/fixed.json`。
 
 逐项回答（简报七问）：
