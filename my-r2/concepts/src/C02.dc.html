@@ -49,6 +49,8 @@ body{margin:0}
 .scrub :is(.c02-sv.is-fresh,.c02-prow.is-fresh,.c02-res,.c02-delta,.c02-chop.fresh,.c02-row.is-deleting,.c02-row.is-restored),.scrub .c02-pc.is-ok .c02-av::after{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 600ms * var(--k,1))!important}
 .scrub .ju-stamp-face[data-pressed="true"]{animation-play-state:paused!important;animation-delay:calc(-1 * var(--frame,0) * 550ms)!important}
 /* role / section: the content changes in one frame, fully opaque; only a 12–18px slide (transform) carries the change */
+.c02-fly{position:absolute;inset:0;z-index:40;pointer-events:none;overflow:hidden}
+.c02-fly>i{position:absolute;display:flex;align-items:center;justify-content:center;border-radius:50%;line-height:1;letter-spacing:0;font-style:normal;transform-origin:50% 50%}
 .c02-pane{transition:transform calc(240ms * var(--k)) cubic-bezier(.2,.8,.2,1)}
 .c02-home.ph-enter.dir-role .c02-pane{transform:translateX(var(--rx,16px));transition:none}
 .c02-home.ph-enter.dir-swap .c02-pane{transform:translateY(12px);transition:none}
@@ -861,6 +863,7 @@ textarea.c02-in-f{height:auto;padding:10px 12px;resize:none}
           </div>
         </section>
       </sc-if>
+      <div class="c02-fly" ref="{{flyRef}}" aria-hidden="true"></div>
 
       <!-- ===================== SHEET ===================== -->
       <sc-if value="{{S.on}}">
@@ -953,7 +956,7 @@ class Component extends DCLogic {
     super(p); this.reviewInit(CONCEPT);
     this.motionSpec = { fwd: 400, back: 340, swap: 260, role: 280 };   /* ms at 1× (phases); the hand-over itself is done ≈330ms after the commit */
     this.headerRange = 88; this.processMs = 360; this.printMs = 2300; this.burnMs = 6600; this.deleteMs = 260;
-    this.envRef = { current: null }; this._rit = {}; this._flip = null; this._c2fx = []; this._fl = []; this._cardVm = {};
+    this.envRef = { current: null }; this.flyRef = { current: null }; this._rit = {}; this._flip = null; this._c2fx = []; this._fl = []; this._cardVm = {};
     if (p.preset === 'hosted') this.state.role = 'hosted';
   }
   initialState(variant) { return JU.baseState(variant); }
@@ -974,22 +977,24 @@ class Component extends DCLogic {
   }
   _syncReduced(ps) { if (this.props.panel === false) return; var rm = !!(this.state.review && this.state.review.rm); if (ps && !!(ps.review && ps.review.rm) === rm && this._reducedSet !== undefined) return; if (rm) { document.documentElement.dataset.juReduced = 'true'; this._reducedSet = true; } else if (this._reducedSet) { delete document.documentElement.dataset.juReduced; this._reducedSet = false; } }
   /* page hand-over (M4): onNav records the tapped surface, its title and the [data-pk] circles */
-  /* page hand-over (M4): a band wipe. The arriving page is drawn whole from the first frame inside a band that opens from the tapped row's
-     line (back: closes onto it); outside the band the page it replaces stays whole — one layer of text at any point, no fade, no flight.
-     Both clips run as WAAPI clip-path animations on one (main-thread) clock. */
+  /* page hand-over (M4): the people lead. The tapped row's cluster grows where it is and flies out to the people of the next page
+     (circle → rows); the next page opens as a circle around the cluster, drawn whole underneath from the first frame, the page it
+     replaces stays whole outside it (complementary polygon clips). Back: the people fly home into the row and the circle closes on it.
+     Clips, people and cards all run on one main-thread clock (a custom property in every keyframe); one layer of text at any point. */
   _land() { (this._fl || []).forEach(function (f) { try { f.a.cancel(); } catch (e) { } (f.x || []).forEach(function (x) { try { x.cancel(); } catch (e) { } }); if (f.i && f.i.parentNode) f.i.remove(); }); this._fl = []; }
+  _ppl(scope) { var out = {}; if (scope) scope.querySelectorAll('[data-pk]').forEach(function (el) { var k = el.getAttribute('data-pk'), r = el.getBoundingClientRect(), f = el.querySelector('.c02-av') || el; if (!k || out[k] || !r.width) return; var c = getComputedStyle(f), w = getComputedStyle(el); out[k] = { el: el, r: r, g: f.textContent.trim(), bg: c.backgroundImage !== 'none' ? c.backgroundImage : c.backgroundColor, fg: c.color, fs: parseFloat(c.fontSize) || 14, fw: c.fontWeight, sh: w.boxShadow }; }); return out; }
   onNav(kind, s, params) {
     var root = this.rootRef && this.rootRef.current; this._land(); this._flip = null; if (!root || this.isRM()) return;
-    var top0 = root.querySelector('.c02-pg.is-top'), R = root.getBoundingClientRect();
+    var top0 = root.querySelector('.c02-pg.is-top');
     if (kind === 'go' || kind === 'replace') {
-      var id = params && params.eventId, src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null, r = src && src.getBoundingClientRect();
-      this._flip = { dir: kind === 'replace' ? 'swap' : 'fwd', cy: r && r.height ? (r.top + r.bottom) / 2 - R.top : null };
+      var id = params && params.eventId, src = id && top0 ? top0.querySelector('[data-origin="row-' + id + '"]') : null;
+      this._flip = { dir: kind === 'replace' ? 'swap' : 'fwd', from: this._ppl(src) };
     } else if (kind === 'back') {
       var st = this.state.nav.stack; var top = st[st.length - 1], under = st[st.length - 2], key = top && top.key;
       /* reached by a jump (no origin): it still goes back into its own row when the list has it */
       var tid = !key && top && top.p && (top.p.eventId || top.p.draftId); if (tid && under && under.s === 'home' && this._originRect && this._originRect('row-' + tid, this._scrollKey(under))) key = 'row-' + tid;
       var urow = key && under && root.querySelector('.c02-pg[data-surface="' + under.s + '"] [data-origin="' + key + '"]'); if (urow) this._clearFade(urow, under);
-      this._flip = { dir: 'back', key: key };
+      this._flip = { dir: 'back', key: key, from: this._ppl(top0) };
     }
   }
   _clearFade(el, under) {
@@ -998,19 +1003,41 @@ class Component extends DCLogic {
     sc.scrollTop += d; var mk = this._scrollKey(under), m = this._scrollMemo || (this._scrollMemo = {}); (m[mk] = m[mk] || {})[sc.getAttribute('data-scroller')] = sc.scrollTop; if (this._applyHc) this._applyHc(sc);
   }
   _fly() {
-    var f = this._flip; if (!f) return; var root = this.rootRef && this.rootRef.current; if (!root) return;
+    var f = this._flip; if (!f) return; var root = this.rootRef && this.rootRef.current, layer = this.flyRef.current; if (!root || !layer) return;
     var back = f.dir === 'back', band = back ? root.querySelector('.c02-pg.is-top.ph-exit') : root.querySelector('.c02-pg.is-top'),
       rest = back ? root.querySelector('.c02-pg.is-under.ph-exit') : root.querySelector(f.dir === 'swap' ? '.c02-pg.is-leaving' : '.c02-pg.is-under:not(.c02-skip)');
     if (!band || !rest) return; this._flip = null; var k = this._kk(); if (!k || !band.animate) return;
-    var R = root.getBoundingClientRect(), H = root.offsetHeight, W = root.offsetWidth, z = (R.height / H) || 1, cy = f.cy;
-    if (back) { var o = f.key && rest.querySelector('[data-origin="' + f.key + '"]'), r = o && o.getBoundingClientRect(); cy = r && r.height ? (r.top + r.bottom) / 2 - R.top : null; }
-    cy = cy == null ? H / 2 : Math.max(0, Math.min(H, cy / z));
-    var px = function (v) { return v.toFixed(1) + 'px'; }, IN = function (q) { return 'inset(' + px(q[0]) + ' -400px ' + px(H - q[1]) + ' -400px)'; },
-      OUT = function (q) { var L = '-400px ', E = (W + 400) + 'px ', Z = px(H + 400); return 'polygon(' + L + '-400px,' + E + '-400px,' + E + px(q[0]) + ',' + L + px(q[0]) + ',' + L + px(q[1]) + ',' + E + px(q[1]) + ',' + E + Z + ',' + L + Z + ')'; };
-    var line = [cy, cy], full = [0, H], from = back ? full : line, to = back ? line : full, D = (back ? 280 : f.dir === 'swap' ? 260 : 300) * k, T = { duration: D, easing: 'cubic-bezier(.4,0,.2,1)', fill: 'both' };
-    var a = band.animate([{ clipPath: IN(from) }, { clipPath: IN(to) }], T), c = rest.animate([{ clipPath: OUT(from) }, { clipPath: OUT(to) }], T);
-    /* landed: the page left whole is unclipped; the other keeps its empty clip until the next hand-over (or its unmount) */
-    this._fl.push({ a: a, x: [c] }); a.onfinish = function () { try { (back ? c : a).cancel(); } catch (e) { } };
+    var R = root.getBoundingClientRect(), H = root.offsetHeight, W = root.offsetWidth, z = (R.height / H) || 1, D = (back ? 340 : 380) * k, self = this;
+    var row = back && f.key ? rest.querySelector('[data-origin="' + f.key + '"]') : null, to = back ? this._ppl(row || rest) : this._ppl(band), from = f.from || {};
+    /* the cluster: the people of the row (going in) / of the row they return to (back) */
+    var cl = back ? (row ? to : null) : from, ks = cl ? Object.keys(cl) : [], cx = W / 2, cy = H / 2;
+    if (ks.length) { var x0 = 1e9, x1 = -1e9, y0 = 1e9, y1 = -1e9; ks.forEach(function (q) { var r = cl[q].r; x0 = Math.min(x0, r.left); x1 = Math.max(x1, r.right); y0 = Math.min(y0, r.top); y1 = Math.max(y1, r.bottom); }); cx = ((x0 + x1) / 2 - R.left) / z; cy = ((y0 + y1) / 2 - R.top) / z; }
+    var px = function (v) { return v.toFixed(1) + 'px'; }, N = 36, rM = Math.max(Math.hypot(cx, cy), Math.hypot(W - cx, cy), Math.hypot(cx, H - cy), Math.hypot(W - cx, H - cy)) + 4;
+    var ring = function (r) { var p = []; for (var i = 0; i <= N; i++) { var a = i * 2 * Math.PI / N; p.push(px(cx + r * Math.cos(a)) + ' ' + px(cy + r * Math.sin(a))); } return p; };
+    var IN = function (r) { return 'polygon(' + ring(r).join(',') + ')'; }, O = ['-400px -400px', (W + 400) + 'px -400px', (W + 400) + 'px ' + (H + 400) + 'px', '-400px ' + (H + 400) + 'px', '-400px -400px'];
+    var OUT = function (r) { return 'polygon(evenodd,' + O.concat(ring(r)).join(',') + ')'; }, kf = function (a) { return a.map(function (x, i) { return Object.assign({ '--c02s': String(i) }, x); }); };
+    var r0 = back ? rM : 0, r1 = back ? 0 : rM, T = { duration: D, easing: back ? 'cubic-bezier(.55,0,.75,.2)' : 'cubic-bezier(.3,.1,.3,1)', fill: 'both' };
+    var a = band.animate(kf([{ clipPath: IN(r0) }, { clipPath: IN(r1) }]), T), c = rest.animate(kf([{ clipPath: OUT(r0) }, { clipPath: OUT(r1) }]), T), x = [c];
+    this._fl.push({ a: a, x: x }); a.onfinish = function () { try { (back ? c : a).cancel(); } catch (e) { } };
+    /* the people: one circle per person on the flight layer; the circle on the page waits until it lands (one copy at a time) */
+    var hide = function (el) { x.push(el.animate([{ opacity: 0 }, { opacity: 0 }], { duration: D })); };
+    var face = function (q, r) { var e = document.createElement('i'); e.textContent = q.g; e.style.cssText = 'left:' + px((r.left - R.left) / z) + ';top:' + px((r.top - R.top) / z) + ';width:' + px(r.width / z) + ';height:' + px(r.height / z) + ';background:' + q.bg + ';color:' + q.fg + ';font-size:' + px(q.fs) + ';font-weight:' + q.fw + ';box-shadow:' + q.sh; layer.appendChild(e); return e; };
+    var at = function (r, q) { var w = q.width / z; return 'translate(' + px((r.left - q.left) / z + (r.width / z - w) / 2) + ',' + px((r.top - q.top) / z + (r.height / z - w) / 2) + ') scale(' + (r.width / q.width).toFixed(3) + ')'; };
+    var E = 'cubic-bezier(.4,0,.2,1)', U = 1.25, n = 0;
+    Object.keys(back ? from : to).forEach(function (q) {
+      var A = from[q], B = to[q]; if (back && row && !B && A) {   /* not in the row: into the cluster, gone */
+        var e0 = face(A, A.r), cc = { left: R.left + cx * z - A.r.width / 2, top: R.top + cy * z - A.r.height / 2, width: A.r.width, height: A.r.height }; hide(A.el);
+        var m0 = e0.animate(kf([{ transform: 'none', opacity: 1, easing: E }, { transform: at(cc, A.r) + ' scale(.35)', opacity: 0, offset: .7 }, { transform: at(cc, A.r) + ' scale(.35)', opacity: 0 }]), { duration: D, fill: 'both' }); self._fl.push({ i: e0, a: m0 }); return; }
+      if (!B || B.r.bottom < R.top || B.r.top > R.bottom) return; if (!A) { if (back || !ks.length || n > 5 || B.el.classList.contains('c02-sv')) return; A = { r: { left: R.left + cx * z - B.r.width / 2, top: R.top + cy * z - B.r.height / 2, width: B.r.width, height: B.r.height } }; }
+      var e = face(B, B.r), s0 = at(A.r, B.r), pop = !A.el, d = Math.min(120, n++ * 30);
+      var k3 = back ? [{ transform: s0, easing: E }, { transform: 'scale(' + U + ')', offset: .78 }, { transform: 'none' }]
+        : pop ? [{ transform: s0 + ' scale(.4)', easing: E }, { transform: s0 + ' scale(.4)', offset: .22 + d / 1000, easing: E }, { transform: 'none' }]
+        : [{ transform: s0, easing: 'ease-out' }, { transform: s0 + ' scale(' + U + ')', offset: .22, easing: E }, { transform: 'none' }];
+      var m = e.animate(kf(k3), { duration: D, fill: 'both' }); hide(B.el); if (A.el) hide(A.el);
+      var rec = { i: e, a: m }; self._fl.push(rec); m.onfinish = function () { if (e.parentNode) e.remove(); };
+    });
+    /* host: the applicants' cards come in one after another, 60ms apart (transform only) */
+    if (!back && band.classList.contains('c02-mg')) band.querySelectorAll('.c02-pc').forEach(function (p, i) { x.push(p.animate(kf([{ transform: 'translateX(28px)' }, { transform: 'none' }]), { duration: 260 * k, delay: (120 + 60 * i) * k, easing: E, fill: 'backwards' })); });
   }
   _syncScrub() {
     var r = this.state.review || {}, mode = r.scrub != null ? 's' + r.scrub : r.paused ? 'p' : '', k = this._kk() || 1; var all = [];
@@ -1296,7 +1323,7 @@ class Component extends DCLogic {
         S = Object.assign({}, this._shLast, { cls: (this._shLast.cls || '') + ' is-closing', onKeyDown: null, focusRef: null, on: true }); sh = shOf(this._shLast); }
     }
     var toastOn = c.toast.on;
-    return { panel: panel, rootRef: this.rootRef, envRef: this.envRef, press: function (ev) { self._press(ev); }, c: c, nv: nv, S: S, noSkins: !c.ritual.skins, toastOn: toastOn, home: home, jSecs: jSecs, hSecs: hSecs, rootNav: rootNav, dt: dt, rd: rd, wl: wl, tk: tk, hi: hi, mg: mg, df: df, sh: sh,
+    return { panel: panel, rootRef: this.rootRef, envRef: this.envRef, flyRef: this.flyRef, press: function (ev) { self._press(ev); }, c: c, nv: nv, S: S, noSkins: !c.ritual.skins, toastOn: toastOn, home: home, jSecs: jSecs, hSecs: hSecs, rootNav: rootNav, dt: dt, rd: rd, wl: wl, tk: tk, hi: hi, mg: mg, df: df, sh: sh,
       onScroll: function (ev) { self._scroll(ev); }, readScroll: function (ev) { c.read.onScroll(ev); var el = ev.currentTarget, surf = el.closest && el.closest('[data-surface]'); if (surf) surf.dataset.c02c = el.scrollTop >= 86 ? '1' : '0'; } };
   }
 }
