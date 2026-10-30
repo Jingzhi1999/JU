@@ -862,7 +862,7 @@ body{margin:0}
           <!-- READ (阅读并确认): its own scroller writes --hc and the reading progress -->
           <sc-if value="{{c.nav.on.read}}" hint-placeholder-val="{{false}}">
             <section class="c07-surf {{c.nav.cls.read}} {{read.cls}}" data-surface="read">
-              <header class="c07-shead" data-header><button type="button" class="c07-back ju-v27-back-pill" data-act="back" aria-label="返回" onClick="{{rv.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><h1 class="c07-stitle">{{rv.title}}</h1><div class="c07-smeta"><sc-if value="{{rv.countdown.on}}"><span class="c07-cd {{rv.countdown.tone}}" style="font-size:14px">剩 {{rv.countdown.text}}</span> · </sc-if>{{rv.hint}}</div></header>
+              <header class="c07-shead" data-header><button type="button" class="c07-back ju-v27-back-pill" data-act="back" aria-label="返回" onClick="{{rv.back}}"><span class="ju-v27-back-gloss"></span><span class="ju-v27-back-glyph">←</span></button><h1 class="c07-stitle">{{read.headTitle}}</h1><div class="c07-smeta"><sc-if value="{{rv.countdown.on}}"><span class="c07-cd {{rv.countdown.tone}}" style="font-size:14px">剩 {{rv.countdown.text}}</span> · </sc-if>{{read.headHint}}</div></header>
               <div class="c07-ssc" data-scroller="read" onScroll="{{rv.onScroll}}">
                 <sc-if value="{{read.topResult}}"><div class="c07-result"><b>{{rv.result.title}}</b><p>{{rv.result.body}}</p></div></sc-if>
                 <sc-if value="{{rv.expired}}"><div class="c07-result"><b>预留已到期</b><p>00:00:00 · 位置已补给他人</p></div></sc-if>
@@ -1556,7 +1556,9 @@ class Component extends DCLogic {
       /* rows and other role="button" blocks answer Enter / Space like buttons (keyboard users open a row as a click would) */
       rootKey: this._rootKey || (this._rootKey = (ev) => { const t = ev.target; if ((ev.key === 'Enter' || ev.key === ' ') && t && t.getAttribute && t.getAttribute('role') === 'button' && t.tagName !== 'BUTTON' && !ev.defaultPrevented) { ev.preventDefault(); t.click(); } }),
       lead, act, manage, rv, tv, dv, form, formOn: trayForm, homeInert: trayForm || trayUp, trayThc: (s.thc || 318) + 'px',
-      read: { showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
+      /* after confirming, the tray says 「✓ 已确认 · 已成局」 at the CTA and the block under the head names the event, so the head reads
+         the page's own name instead of a third copy of either */
+      read: { headTitle: rv.on && rv.confirmed && rv.result ? '参加约定' : rv.title, headHint: rv.on && rv.confirmed && rv.result ? '约定已读完' : rv.hint, showHome: rv.on && rv.confirmed && nav.depth > 2, originKey: rv.on && rv.row ? rv.row.originKey : '', done: !!(rv.on && rv.confirmed && rv.result), doneTitle: rv.result ? rv.result.title : '', doneBody: rv.result ? rv.result.body : '', cls: rv.on && rv.confirmed ? 'is-done' : '', topResult: !!(rv.on && rv.result && !rv.confirmed) },
       ticketOn, ticketSurface: nav.on.reply ? 'reply' : 'ticket', ticketExitAct: tk.isReply ? 'decline' : 'exit',
       ticket: { titleNb: tk.on ? nb(tk.ritual.title) : '', showStage: tk.on && !tk.unavailable, stageCls: tk.isReply ? 'reissued' : '', noPrevious: !(tk.on && tk.ritual.previous), previousText: tk.on && tk.ritual.previous ? '原定 ' + tk.ritual.previous : '', noMark: !(tk.on && tk.ritual.mark), tearAct: tk.isReply ? 'accept' : 'tear-now', tearLabel: tk.isReply ? '接受新时间（撕下副券）' : '撕开票根', contactAction: tk.on && !tk.unavailable && !tk.result,
         tearOn: !!(tk.on && tk.tear && tk.tear.canTear && !s.printReplay),   /* a print replay (关键帧 / 重播) hides it until the paper has printed */
