@@ -315,7 +315,7 @@ body{margin:0}
 .app.over-home .c08-pg.is-top.ph-in .c08-stack,.app.over-home .c08-pg.is-top.ph-in .c08-msecs,.app.over-home .c08-pg.is-top.ph-in .c08-paper{transition:opacity calc(150ms * var(--k)) ease calc(150ms * var(--k)),transform calc(340ms * var(--k)) var(--tA)}   /* after the strips below have (mostly) dropped past: no double exposure with the leaving list */
 /* the tapped strip's other lines (eyebrow, time · place, status, countdown…) are cloned into the face and fade where they were, drifting up
    with the expansion (WAAPI in _placeCarry) — they never vanish in one frame */
-.c08-carry{position:absolute;left:0;right:0;top:0;height:0;z-index:1;pointer-events:none}
+.c08-carry{position:absolute;left:0;right:0;top:0;height:2000px;z-index:1;pointer-events:none}   /* tall host: its clip (the face's own rect, animated with it) is set in px from the top */
 .c08-carry>.c08-st{position:absolute;left:0;right:0;background:transparent!important;visibility:visible!important}
 .c08-carry>.c08-st::before,.c08-carry>.c08-st::after{display:none}
 .c08-carry .t{visibility:hidden}
@@ -1226,14 +1226,19 @@ class Component extends DCLogic {
   /* the tapped strip's clone fades where it was and drifts up with the expansion (no line disappears in one frame) */
   _placeCarry() {
     const cr = this._carry, root = this._root(), c = this._c; if (!cr || !root || !c) return; const ph = c.nav.phase;
-    const drop = () => { if (cr.anim) { try { cr.anim.cancel(); } catch (e) { } } cr.node.remove(); if (this._carry === cr) this._carry = null; };
+    const drop = () => { if (cr.anim) { try { cr.anim.cancel(); } catch (e) { } } if (cr.clip) { try { cr.clip.cancel(); } catch (e) { } } cr.node.remove(); if (this._carry === cr) this._carry = null; };
     if (cr.placed && (ph === 'idle' || ph === 'exit')) return drop();
     if (!cr.placed) { if (ph !== 'enter' && ph !== 'in') { this._carry = null; return; } const host = root.querySelector('.c08-pg.is-top .c08-face .c08-carry'); if (!host) return; host.appendChild(cr.node); cr.placed = true; }
     if (root.classList.contains('rm')) return drop();
     /* it starts fading with everything else (phase in), never during the one-frame enter */
     if (ph === 'in' && !cr.anim) { const k = parseFloat(getComputedStyle(root).getPropertyValue('--k')) || 1;
       cr.anim = cr.node.animate([{ opacity: 1, transform: 'translateY(0)' }, { opacity: 0, transform: 'translateY(-22px)' }], { duration: 210 * k, easing: 'cubic-bezier(.22,.8,.24,1)', fill: 'forwards' });
-      cr.anim.onfinish = drop; }
+      cr.anim.onfinish = drop;
+      /* the copied lines live in the face: clipped to the face's own rect as it grows (same 380ms curve, main thread like its top / height),
+         they never float over the page lines the leaving strips uncover */
+      const host = cr.node.parentElement, face = host && host.closest('.c08-face'), fx = this._fx;
+      if (host && face && fx && fx.h0 != null) { const sat = parseFloat(getComputedStyle(root).getPropertyValue('--sat')) || 0; const fb = face.offsetHeight;
+        try { cr.clip = host.animate([{ clipPath: 'inset(' + fx.y0 + 'px 0 ' + (2000 - fx.y0 - fx.h0) + 'px 0)' }, { clipPath: 'inset(' + (sat + 92) + 'px 0 ' + Math.max(0, 2000 - fb) + 'px 0)' }], { duration: 380 * k, easing: 'cubic-bezier(.22,.8,.24,1)', fill: 'both' }); } catch (e) { } } }
   }
   /* V27 局卡 markup into its hosts (re-injected only when the host's key changes) */
   _syncCards() {
