@@ -34,14 +34,14 @@ for (const c of concepts) {
 const codes = concepts.map(c => c.code); const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC';
 const cell = (v) => String(v == null ? '' : v).replace(/\|/g, '\\|').replace(/\n/g, ' ') || '–';
 let md = `# 覆盖表（自动生成 ${stamp}）\n\n`;
-md += `五栏分开记录，不用一个「50/50 ✓」同时声称五件事：\n\n- **入口存在**：\`tools/coverage.cjs\` 对每套跳转全部 ${INDEX.length} 个索引状态并截图；✓ = 可到达且截图已生成（\`my-r2/evidence/CNN/coverage-matrix/<key>.png\`）。\n- **真实操作成功**：用真实点击 / 键盘 / 拖动走到该状态（\`capture.cjs\` / \`flow-compare.cjs\` / \`rm-check.cjs\` 记录），手工登记在 \`my-r2/spec/coverage-manual.json\`。\n- **静态视觉已看**：有人 Read 过该状态的截图并记录结论。\n- **正常速度动效已看**：1× 帧序列（\`flow-compare.cjs\` / \`capture.cjs\`）被看过。\n- **仍需用户验收**：留给用户的判断，不由构建者自评。\n\n`;
+md += `五栏分开记录，不用一个「50/50 ✓」同时声称五件事：\n\n- **入口存在**：\`tools/coverage.cjs\` 对每套跳转全部 ${INDEX.length} 个索引状态并截图；✓ = 可到达且截图已生成（\`my-r2/evidence/CNN/coverage-matrix/<key>.jpg\`）。\n- **真实操作成功**：用真实点击 / 键盘 / 拖动走到该状态（\`capture.cjs\` / \`flow-compare.cjs\` / \`rm-check.cjs\` 记录），手工登记在 \`my-r2/spec/coverage-manual.json\`。\n- **静态视觉已看**：有人 Read 过该状态的截图并记录结论。\n- **正常速度动效已看**：1× 帧序列（\`flow-compare.cjs\` / \`capture.cjs\`）被看过。\n- **仍需用户验收**：留给用户的判断，不由构建者自评。\n\n`;
 md += `## 入口存在（自动）\n\n| 状态 | 分组 | ${codes.join(' | ')} |\n|---|---|${codes.map(() => '---').join('|')}|\n`;
 for (const e of INDEX) md += `| ${e.key} · ${e.label} | ${e.group} | ${codes.map(c => results[c].have.has(e.key) ? '✓' : '✗').join(' | ')} |\n`;
 md += `\n| 方案 | 可到达状态 | 跳转后 jumpKey 不符 | errors |\n|---|---|---|---|\n` + codes.map(c => `| ${c} | ${results[c].have.size}/${INDEX.length} | ${results[c].mismatches.length} | ${results[c].errors.length}${results[c].errors.length ? '：' + cell(results[c].errors.slice(0, 3).join('；').slice(0, 300)) : ''} |`).join('\n') + '\n';
 md += `\n## 五栏覆盖（每套）\n\n`;
 for (const c of codes) {
   const m = manual[c] || {}; const star = m['*'] || {};
-  md += `### ${c} ${results[c].name}\n\n| 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |\n|---|---|---|---|---|---|\n`;
+  md += `### ${c} ${results[c].name}\n\n` + (star.note ? star.note + '\n\n' : '') + `| 状态 | 入口存在 | 真实操作成功 | 静态视觉已看 | 正常速度动效已看 | 仍需用户验收 |\n|---|---|---|---|---|---|\n`;
   for (const e of INDEX) { const r = Object.assign({}, star, m[e.key] || {}); md += `| ${e.key} · ${e.label} | ${results[c].have.has(e.key) ? '✓' : '✗'} | ${cell(r.op)} | ${cell(r.static)} | ${cell(r.motion)} | ${cell(r.pending)} |\n`; }
   md += '\n';
 }

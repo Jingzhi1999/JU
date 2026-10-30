@@ -3,13 +3,15 @@
 //   my-r2/evidence/<CODE>/home-joined.png home-hosted.png detail.png manage.png history.png empty.png result.png
 //   my-r2/evidence/<CODE>/ritual-{print,tear,burn,stamp}/{1-trigger,2-develop,3-settled}.png + sheet.png
 //   my-r2/evidence/<CODE>/final-shots.json (frames, timings, issues)
-// node my-r2/tools/final-shots.cjs [C01 C02 ...] [--file <html>]     (env JU_STANDALONE also works; default = the deliverable)
+// node my-r2/tools/final-shots.cjs [C01 C02 ...] [--file <html>] [--parts stills,result,print,tear,burn,stamp]
+//   (env JU_STANDALONE also works; default = the deliverable; --parts re-takes only those groups, the others stay as they are)
 // The environment engine is paused before every still (same frame in every concept); rituals keep the engine paused too, so the
 // only motion in a frame is the ritual. Ritual frames are timed from the controller's own state (printing → printed, torn, burned,
 // stamp fresh), not from a fixed clock, so slow software rendering does not move the "settled" frame.
 const L = require('./_lib.cjs'); const fs = L.fs, path = L.path;
 const codes = L.positionals().length ? L.positionals() : ['C01', 'C02', 'C03', 'C04', 'C05', 'C06', 'C07', 'C08', 'C09', 'C10'];
 const FILE = L.opt('file', '') ? path.resolve(L.opt('file')) : L.fileFor(null);
+const PARTS = L.opt('parts', 'stills,result,print,tear,burn,stamp').split(','); const want = (k) => PARTS.includes(k);
 const STILLS = [['home-joined', 'j-home'], ['home-hosted', 'h-home'], ['detail', 'j-d-gathering'], ['manage', 'h-m-attendance'], ['history', 'j-history'], ['empty', 'b-empty']];
 const PAUSE_ENV = 'if (window.JU && JU.shared && JU.shared.skins && inst.envRef && inst.envRef.current) JU.shared.skins.pause(inst.envRef.current); return 1;';
 (async () => {
@@ -27,14 +29,14 @@ const PAUSE_ENV = 'if (window.JU && JU.shared && JU.shared.skins && inst.envRef 
       const snap = async (file, label) => { const r = await rect(); await L.shot(p, r, file); log.frames.push({ file: path.relative(L.ROOT, file), label }); };
       await pause();
       /* 1. the six required stills (+ empty) */
-      for (const [name, key] of STILLS) { await L.jump(p, code, key, 900); await pause(); await settle(2500); await p.waitForTimeout(250); await snap(path.join(out, name + '.png'), key); }
+      if (want('stills')) for (const [name, key] of STILLS) { await L.jump(p, code, key, 900); await pause(); await settle(2500); await p.waitForTimeout(250); await snap(path.join(out, name + '.png'), key); }
       /* 2. a stable result after a key operation: 阅读并确认 → 成局出票 (flow read-confirm), shot once the ticket has printed */
-      { const f = L.loadFlows()['read-confirm']; await L.jump(p, code, f.jump, 800); await pause();
+      if (want('result')) { const f = L.loadFlows()['read-confirm']; await L.jump(p, code, f.jump, 800); await pause();
         for (const st of f.steps) { const issue = await L.runStep(p, code, st); if (issue) log.issues.push('read-confirm: ' + issue); }
         await until("var t = inst.ctlVals().ticket; return !t.on || t.state === 'printed' || t.state === 'torn';", 9000); await settle(2500); await p.waitForTimeout(400);
         await snap(path.join(out, 'result.png'), 'read-confirm result'); }
       /* 3. rituals: trigger · development · settled */
-      const ritual = async (name, run) => { const dir = path.join(out, 'ritual-' + name); fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true }); const shots = []; try { await run(async (k, label) => { const f = path.join(dir, k + '.png'); await snap(f, name + ' ' + label); shots.push(f); }); } catch (e) { log.issues.push(name + ': ' + e.message); } if (shots.length) L.tilePy(dir, [shots], path.join(dir, 'sheet.png'), { scale: 0.5, labels: [shots.map(f => path.basename(f, '.png'))] }); };
+      const ritual = async (name, run) => { if (!want(name)) return; const dir = path.join(out, 'ritual-' + name); fs.rmSync(dir, { recursive: true, force: true }); fs.mkdirSync(dir, { recursive: true }); const shots = []; try { await run(async (k, label) => { const f = path.join(dir, k + '.png'); await snap(f, name + ' ' + label); shots.push(f); }); } catch (e) { log.issues.push(name + ': ' + e.message); } if (shots.length) L.tilePy(dir, [shots], path.join(dir, 'sheet.png'), { scale: 0.5, labels: [shots.map(f => path.basename(f, '.png'))] }); };
       /* print: home → the 公园慢跑 3K row (ticket not printed yet in a fresh dataset) */
       await ritual('print', async (s) => {
         await L.jump(p, code, 'j-home', 900); await pause();
@@ -60,17 +62,32 @@ const PAUSE_ENV = 'if (window.JU && JU.shared && JU.shared.skins && inst.envRef 
         await p.waitForTimeout(2400); await s('2-develop', 'confirm +3000ms');
         await until("return !!(inst.state.ui.burned && inst.state.ui.burned.livehouse);", 12000); await settle(2500); await p.waitForTimeout(400); await s('3-settled', 'burned');
       });
-      /* stamp: 出席 for the first unrecorded person on the attendance page */
+      /* stamp: 出席 for the first unrecorded person on the attendance page. The row's stamp is the V27 juStamp press (.55s), which
+         is over before a timed frame could catch it, so the press itself is held at 90ms (coming down, large and faint) and 300ms
+         (about to land) through the Web Animations API, then released; without a juStamp animation it falls back to timed frames */
       await ritual('stamp', async (s) => {
         await L.jump(p, code, 'h-m-attendance', 900); await pause(); await settle(2000);
         const r = await L.clickSel(p, code, '[data-act="attend-present"]'); const iss = L.clickIssue(r, 'attend-present'); if (iss) log.issues.push('stamp: ' + iss);
-        await p.waitForTimeout(200); await s('1-trigger', 'present +200ms');
-        await p.waitForTimeout(1000); await s('2-develop', 'present +1200ms');
-        await p.waitForTimeout(1900); await settle(2000); await s('3-settled', 'present +3.1s');
+        const PRESS = "var a = (sr && sr.getAnimations ? sr.getAnimations() : document.getAnimations()).filter(function (x) { return x.animationName === 'juStamp'; });";
+        const held = await until(PRESS + " if (!a.length) return false; a.forEach(function (x) { x.pause(); x.currentTime = 90; }); return true;", 3000);
+        if (held >= 0) {
+          await p.waitForTimeout(150); await s('1-trigger', 'juStamp press held at 90ms of 550ms (found ' + held + 'ms after the click)');
+          await L.E(p, code, PRESS + " a.forEach(function (x) { x.currentTime = 300; }); return a.length;"); await p.waitForTimeout(150); await s('2-develop', 'juStamp press held at 300ms of 550ms');
+          await L.E(p, code, PRESS + " a.forEach(function (x) { x.play(); }); return a.length;");
+        } else {
+          await p.waitForTimeout(200); await s('1-trigger', 'present +200ms (no juStamp press found)');
+          await p.waitForTimeout(1000); await s('2-develop', 'present +1200ms');
+        }
+        await p.waitForTimeout(900); await settle(2000); await s('3-settled', 'settled');
       });
       log.errors = errors.slice(0, 10);
     } catch (e) { log.issues.push('fatal: ' + e.message); }
-    finally { fs.writeFileSync(path.join(out, 'final-shots.json'), JSON.stringify(log, null, 1)); await b.close(); }
+    finally {
+      /* a partial re-take (--parts) keeps the earlier frames of the groups it did not touch */
+      const jf = path.join(out, 'final-shots.json');
+      if (PARTS.length < 6 && fs.existsSync(jf)) { try { const old = JSON.parse(fs.readFileSync(jf, 'utf8')); const mine = new Set(log.frames.map(f => f.file)); const dirs = new Set(log.frames.map(f => path.dirname(f.file))); log.frames = old.frames.filter(f => !mine.has(f.file) && !(PARTS.some(k => k !== 'stills' && k !== 'result') && dirs.has(path.dirname(f.file)) && /ritual-/.test(f.file))).concat(log.frames); log.issues = (old.issues || []).filter(x => !PARTS.some(k => x.indexOf(k + ':') === 0)).concat(log.issues); } catch (e) { } }
+      fs.writeFileSync(jf, JSON.stringify(log, null, 1)); await b.close();
+    }
     console.log(code, log.frames.length + ' frames', log.issues.length ? 'issues: ' + log.issues.join(' | ') : 'ok');
   }
   console.log(JSON.stringify({ codes: codes.length, frames: Object.values(report).reduce((a, r) => a + r.frames.length, 0), issues: Object.fromEntries(Object.entries(report).map(([c, r]) => [c, r.issues.length])) }));

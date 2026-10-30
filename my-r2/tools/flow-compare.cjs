@@ -78,7 +78,10 @@ if (!outdir) { console.error('usage: node my-r2/tools/flow-compare.cjs <outdir> 
     let res = await record(code, span0, max0); if (!res) continue;
     let note = '';
     if (res.frames.length < min && !useShots) { note = `first run gave ${res.frames.length} frames (< ${min}): re-recorded with span ${Math.round(span0 * 1.6)}`; res = await record(code, Math.round(span0 * 1.6), Math.round(max0 * 1.5)) || res; }
-    rows.push({ code, frames: res.frames }); log[code] = { how: res.how, fps: res.fps, span: res.span, note, errors: res.errors, frames: res.frames.length };
+    rows.push({ code, frames: res.frames }); log[code] = { how: res.how, fps: res.fps, span: res.span, note, errors: res.errors, frames: res.frames.length, labels: res.frames.map(x => x.label) };
+    /* one sheet per concept as well (the evidence gallery shows each concept's own 1x run): outdir/<CODE>-sheet.png */
+    const by8 = (a) => a.reduce((o, x, i) => { if (i % 8 === 0) o.push([]); o[o.length - 1].push(x); return o; }, []);
+    try { L.tilePy(outdir, by8(res.frames.map(x => x.f)), path.join(outdir, code + '-sheet.png'), { scale: 0.5, gap: 6, labels: by8(res.frames.map(x => x.label)) }); } catch (e) { log[code].sheetError = e.message; }
   }
   await b.close();
   if (rows.length) L.tilePy(outdir, rows.map(r => r.frames.map(x => x.f)), path.join(outdir, 'sheet.png'), { scale: 0.34, gap: 6, labels: rows.map(r => r.frames.map(x => x.label)) });

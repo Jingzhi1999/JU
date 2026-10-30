@@ -40,10 +40,17 @@ for code in ['C%02d' % i for i in range(1, 11)]:
                 if m: key = m.group(1); break
             if not key or key in rows: continue
             g = lambda j: clean(cs[j]) if 0 <= j < len(cs) else ''
-            rows[key] = {'op': '复核 R1：' + g(c_op), 'static': '复核 R1：' + g(c_st), 'motion': '复核 R1：' + g(c_mo), 'pending': g(c_pe) or '是'}
+            pe = g(c_pe).strip()
+            # the reviewer's 仍需用户验收 cell names round-1 issues (M-1 …); those went through the fix rounds, so the cell keeps them as
+            # what round 1 noted, not as still open: every state still waits for the user's final visual acceptance
+            pend = '是（最终视觉验收）' if pe in ('', '是', '否', '—', '-', '–') else '是（最终视觉验收）；R1 曾记：' + re.sub(r'^是[（(](.*)[)）]$', r'\1', pe)
+            rows[key] = {'op': '复核 R1：' + g(c_op), 'static': '复核 R1：' + g(c_st), 'motion': '复核 R1：' + g(c_mo), 'pending': pend[:150]}
         if rows: break
     if rows:
-        if later: rows['*'] = {'pending': '是（最终视觉验收）'}
+        rows['*'] = {'note': ('「真实操作成功 / 静态视觉已看 / 正常速度动效已看」三栏是独立复核第 1 轮亲自做过、看过的记录（格内前缀「复核 R1」）。'
+                              + ('第 1 轮标 ✗ 或「部分」的项与「R1 曾记」的问题，修复后由复核第 2 轮逐条复验（`my-r2/evidence/%s/verify.md`「复核第 2 轮」），' % code if later else
+                                 '这一套只做了 1 轮复核；第 1 轮的问题修复后由主负责人看帧确认（`my-r2/evidence/%s/fix-*`），' % code)
+                              + '转场另经十套横向测量与主负责人看帧（附录「验证」§3）。「面板载入」= 该数据集只能由评审面板切换，不是产品里的操作。')}
         manual[code] = rows
     print(code, len(rows) - (1 if '*' in rows else 0), 'rows')
 json.dump(manual, open(out, 'w', encoding='utf-8'), ensure_ascii=False, indent=1)

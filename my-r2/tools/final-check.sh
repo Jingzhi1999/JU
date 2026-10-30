@@ -1,23 +1,31 @@
 #!/bin/bash
 # Runs every acceptance check against the FINAL deliverable (JU-MY-R2-TEN-DIRECTIONS.html), not a private build.
 # Usage: bash my-r2/tools/final-check.sh [C01 C02 ...]      (default: all ten)
+#        FC_PARTS=global,concepts,flow,summary (default: all four) runs only those parts, so the per-concept checks can be split
+#        over two shells (e.g. FC_PARTS=concepts … C01 C02 C03 C04 C05 and … C06 … C10), then FC_PARTS=global,flow,summary once.
 # Output: my-r2/evidence/final/<check>/... and my-r2/evidence/final/summary.json
 set -u
 cd /home/user/JU
 F=/home/user/JU/JU-MY-R2-TEN-DIRECTIONS.html
 O=my-r2/evidence/final
 CODES="${*:-C01 C02 C03 C04 C05 C06 C07 C08 C09 C10}"
+PARTS=",${FC_PARTS:-global,concepts,flow,summary},"
 mkdir -p $O
 export JU_STANDALONE=$F
-node my-r2/tools/test/standalone.cjs --shots $O/standalone > $O/standalone.json 2>&1
-node my-r2/tools/offline-check.cjs $F $O/offline > $O/offline.json 2>&1
-for c in $CODES; do
-  node my-r2/tools/coverage.cjs $c $O/coverage/$c > $O/coverage-$c.log 2>&1
-  node my-r2/tools/widths.cjs $c $O/widths/$c > $O/widths-$c.log 2>&1
-  node my-r2/tools/kb-check.cjs $c $O/kb/$c > $O/kb-$c.log 2>&1
-  node my-r2/tools/rm-check.cjs $c $O/rm/$c > $O/rm-$c.log 2>&1
-done
-node my-r2/tools/flow-compare.cjs $O/flow --final --codes $(echo $CODES | tr ' ' ',') > $O/flow.log 2>&1
+if [[ $PARTS == *,global,* ]]; then
+  node my-r2/tools/test/standalone.cjs --shots $O/standalone > $O/standalone.json 2>&1
+  node my-r2/tools/offline-check.cjs $F $O/offline > $O/offline.json 2>&1
+fi
+if [[ $PARTS == *,concepts,* ]]; then
+  for c in $CODES; do
+    node my-r2/tools/coverage.cjs $c $O/coverage/$c > $O/coverage-$c.log 2>&1
+    node my-r2/tools/widths.cjs $c $O/widths/$c > $O/widths-$c.log 2>&1
+    node my-r2/tools/kb-check.cjs $c $O/kb/$c > $O/kb-$c.log 2>&1
+    node my-r2/tools/rm-check.cjs $c $O/rm/$c > $O/rm-$c.log 2>&1
+  done
+fi
+[[ $PARTS == *,flow,* ]] && node my-r2/tools/flow-compare.cjs $O/flow --final --codes $(echo $CODES | tr ' ' ',') > $O/flow.log 2>&1
+[[ $PARTS == *,summary,* ]] || exit 0
 python3 - "$O" $CODES <<'PY'
 import json, os, sys
 O=sys.argv[1]; codes=sys.argv[2:]

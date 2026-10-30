@@ -16,6 +16,13 @@ codes = [c for c in opt('codes', '').split(',') if c] or sorted(d for d in os.li
 width = int(opt('width', '260'))
 thumbs = os.path.join(root, '_thumbs')
 items = []
+# gallery order = the order of the brief's per-concept evidence list (默认首屏 ×2, 详情, 管理 / 出席, 历史, 空态, 操作后的稳定结果,
+# 进入—操作—返回 1×, 四个仪式); anything else follows alphabetically
+TITLES = {'home-joined': '参加者默认首屏', 'home-hosted': '局主默认首屏', 'detail': '普通局内详情', 'manage': '关键管理 / 出席状态', 'history': '历史',
+          'empty': '空态', 'result': '关键操作后的稳定结果', 'flow-enter': '进入—操作—返回 · 1×', 'ritual-print': '仪式 · 出票',
+          'ritual-tear': '仪式 · 撕票', 'ritual-burn': '仪式 · 作废燃烧', 'ritual-stamp': '仪式 · 出席章'}
+GROUPS = {'flow-enter': '录帧', 'ritual-print': '触发 · 发展 · 落定', 'ritual-tear': '触发 · 发展 · 落定', 'ritual-burn': '触发 · 发展 · 落定', 'ritual-stamp': '触发 · 发展 · 落定'}
+ORDER = ['home-joined', 'home-hosted', 'detail', 'manage', 'history', 'empty', 'result', 'flow-enter', 'ritual-print', 'ritual-tear', 'ritual-burn', 'ritual-stamp']
 def thumb_for(rel):
     src = os.path.join(root, rel); dst = os.path.join(thumbs, os.path.splitext(rel)[0] + '.jpg')
     os.makedirs(os.path.dirname(dst), exist_ok=True)
@@ -29,12 +36,12 @@ for code in codes:
     if os.path.exists(np_):
         try: notes = json.load(open(np_, encoding='utf-8'))
         except Exception as e: print('notes.json unreadable for', code, e)
-    for f in sorted(os.listdir(base)):
+    for f in sorted(os.listdir(base), key=lambda f: (ORDER.index(os.path.splitext(f)[0]) if os.path.splitext(f)[0] in ORDER else 99, f)):
         p = os.path.join(base, f)
         if os.path.isfile(p) and f.lower().endswith(('.png', '.jpg', '.jpeg')):
             rel = code + '/' + f
-            items.append({'code': code, 'group': '静态', 'title': os.path.splitext(f)[0], 'file': rel, 'thumb': thumb_for(rel), 'note': notes.get(f, '')})
-    for d in sorted(os.listdir(base)):
+            items.append({'code': code, 'group': '静态', 'title': TITLES.get(os.path.splitext(f)[0], os.path.splitext(f)[0]), 'file': rel, 'thumb': thumb_for(rel), 'note': notes.get(f, '')})
+    for d in sorted(os.listdir(base), key=lambda d: (ORDER.index(d) if d in ORDER else 99, d)):
         dp = os.path.join(base, d)
         if not os.path.isdir(dp) or d in ('verify', 'stage1'):
             continue
@@ -42,7 +49,7 @@ for code in codes:
             sp = os.path.join(dp, sheet)
             if os.path.exists(sp):
                 rel = code + '/' + d + '/' + sheet
-                items.append({'code': code, 'group': d, 'title': d + (' · 灰度' if 'gray' in sheet else ''), 'file': rel, 'thumb': thumb_for(rel), 'note': notes.get(d + '/' + sheet, '')})
+                items.append({'code': code, 'group': GROUPS.get(d, d), 'title': TITLES.get(d, d) + (' · 灰度' if 'gray' in sheet else ''), 'file': rel, 'thumb': thumb_for(rel), 'note': notes.get(d + '/' + sheet, '')})
 out = {'generated': time.strftime('%Y-%m-%d %H:%M UTC', time.gmtime()), 'items': items}
 json.dump(out, open(os.path.join(root, 'index.json'), 'w', encoding='utf-8'), ensure_ascii=False, indent=1)
 print(json.dumps({'index': os.path.join(root, 'index.json'), 'codes': codes, 'items': len(items)}, ensure_ascii=False))

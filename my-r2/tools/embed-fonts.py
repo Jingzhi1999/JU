@@ -282,6 +282,7 @@ def main():
                     missing.append('%s %s %s: not in the cache (offline; run without --offline when online)' % (name, s, w)); continue
                 whole = [r for r in recs if not r['range']]
                 use = whole[:1] if whole else recs
+                wtext = own_for(own_text, name, w, ftext)   # per-weight subsets (Noto Serif SC:900@出席未) apply offline too
                 got = 0
                 for r in use:
                     key = hashlib.sha1(r['url'].encode()).hexdigest(); key2 = hashlib.sha1((MODERN_UA + r['url']).encode()).hexdigest()
@@ -289,7 +290,7 @@ def main():
                     if data is None:
                         continue
                     ranges = parse_ranges(r['range']) if r['range'] else []
-                    block_text = ''.join(ch for ch in ftext if not ranges or in_ranges(ch, ranges))
+                    block_text = ''.join(ch for ch in wtext if not ranges or in_ranges(ch, ranges))
                     if not block_text.strip():
                         got += 1; continue
                     sub_data = subset_bytes(data, block_text)
