@@ -16,10 +16,12 @@ function parts(file) {
     const seg = t.slice(a, next < 0 ? undefined : next); out.parts[k] = { hash: h(seg), bytes: Buffer.byteLength(seg) };
     rest = rest.replace(seg, '');
   });
-  out.parts.shell = { hash: h(rest), bytes: Buffer.byteLength(rest) };   /* the page around the data: shell markup, CSS, runtime, fonts */
+  out.parts.shell = { hash: h(rest), bytes: Buffer.byteLength(rest) };
+  /* each concept on its own, so a rebuild that touched one concept shows which */
+  try { const a = t.indexOf('window.__JU_SOURCES='); const b = t.indexOf(';window.__JU_META=', a); const S = JSON.parse(t.slice(a + 'window.__JU_SOURCES='.length, b)); out.concepts = Object.fromEntries(Object.keys(S).map(k => [k, h(S[k])])); } catch (e) { out.concepts = { error: e.message }; }   /* the page around the data: shell markup, CSS, runtime, fonts */
   out.runs = h(RUNS.map(k => (out.parts[k] || {}).hash || '').join('') + out.parts.shell.hash);
   return out;
 }
 const files = process.argv.slice(2); const res = files.map(f => Object.assign({ file: f }, parts(f)));
-if (res.length === 2) res.push({ sameRunningParts: res[0].runs === res[1].runs, differ: Object.keys(res[0].parts).filter(k => (res[1].parts[k] || {}).hash !== res[0].parts[k].hash) });
+if (res.length === 2) res.push({ sameRunningParts: res[0].runs === res[1].runs, differ: Object.keys(res[0].parts).filter(k => (res[1].parts[k] || {}).hash !== res[0].parts[k].hash), conceptsDiffer: Object.keys(res[0].concepts || {}).filter(k => (res[1].concepts || {})[k] !== res[0].concepts[k]) });
 console.log(JSON.stringify(res, null, 1));

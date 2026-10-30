@@ -1145,6 +1145,9 @@ class Component extends DCLogic {
   /* ---------------- rituals: the controller wrote the data; these calls only show it (C00 call sites) ---------------- */
   _syncRituals(ps) {
     const c = this._c, root = this.rootRef.current; if (!c || !root) return;
+    /* the CTA's step-out belongs to one tear: whenever the ticket comes back closed, printing or printed (back home, a jump, a reset),
+       nothing is leaving any more, whatever the timing of the last tear was */
+    const tst = c.ticket.on ? c.ticket.state : 'off'; if (tst !== this._rit.lastSt) { if (tst === 'off' || tst === 'printing' || tst === 'printed') this._rit.leaving = null; this._rit.lastSt = tst; }
     const stage = root.querySelector('[data-surface="ticket"] .c06-stage,[data-surface="reply"] .c06-stage');
     if (c.ticket.on && stage) {
       const opening = c.ticket.state === 'printing' && this.state.nav.phase !== 'idle' && this.kf() > 0;
