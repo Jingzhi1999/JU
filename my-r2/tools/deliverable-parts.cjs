@@ -16,9 +16,9 @@ function parts(file) {
     const seg = t.slice(a, next < 0 ? undefined : next); out.parts[k] = { hash: h(seg), bytes: Buffer.byteLength(seg) };
     rest = rest.replace(seg, '');
   });
-  out.parts.shell = { hash: h(rest), bytes: Buffer.byteLength(rest) };
+  out.parts.shell = { hash: h(rest), bytes: Buffer.byteLength(rest) };   /* the page around the data: shell markup, CSS, runtime, fonts */
   /* each concept on its own, so a rebuild that touched one concept shows which */
-  try { const a = t.indexOf('window.__JU_SOURCES='); const b = t.indexOf(';window.__JU_META=', a); const S = JSON.parse(t.slice(a + 'window.__JU_SOURCES='.length, b)); out.concepts = Object.fromEntries(Object.keys(S).map(k => [k, h(S[k])])); } catch (e) { out.concepts = { error: e.message }; }   /* the page around the data: shell markup, CSS, runtime, fonts */
+  try { const a = t.indexOf('window.__JU_SOURCES='); const b = t.indexOf(';window.__JU_META=', a); const S = JSON.parse(t.slice(a + 'window.__JU_SOURCES='.length, b)); out.concepts = Object.fromEntries(Object.keys(S).map(k => [k, h(S[k])])); } catch (e) { out.concepts = { error: e.message }; }
   out.runs = h(RUNS.map(k => (out.parts[k] || {}).hash || '').join('') + out.parts.shell.hash);
   return out;
 }

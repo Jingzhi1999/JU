@@ -264,16 +264,16 @@
     return h;
   }
   var COLS = [['entry', '入口存在'], ['op', '真实操作成功'], ['static', '静态视觉已看'], ['motion', '正常速度动效已看'], ['pending', '仍需用户验收']];
-  function cellCls(k, v) { v = String(v || '').trim(); if (!v || v === '–' || v === '-' || v === '—') return 'na'; if (k === 'pending') return 'pend'; if (/^[✓✔]/.test(v)) return 'ok'; if (/^[✗✘×x]/i.test(v)) return 'no'; return 'txt'; }
+  function cellCls(k, v) { v = String(v || '').trim().replace(/^(复核\s*R\d+|主负责人[^：:]{0,8})[：:]\s*/, ''); if (!v || v === '–' || v === '-' || v === '—') return 'na'; if (k === 'pending') return 'pend'; if (/^[✓✔]/.test(v)) return 'ok'; if (/^[✗✘×x]/i.test(v)) return 'no'; return 'txt'; }
   var covCode = null;
   function renderCoverage(box) {
-    var legend = '<p class="cov-legend"><span>五栏各自独立：</span><span>入口存在 = tools/coverage.cjs 跳转到该状态且截图生成（自动）</span><span>真实操作成功 = 用真实点击走到该状态（capture / flow 记录）</span><span>静态视觉已看 = 有人看过该截图</span><span>正常速度动效已看 = 1× 帧序列被看过</span><span>仍需用户验收 = 留给用户的判断</span></p>';
+    var legend = '<p class="cov-legend"><span>五栏各自独立：</span><span>入口存在 = 在交付文件上逐一跳转到该状态并截图（自动）</span><span>真实操作成功 / 静态视觉已看 / 正常速度动效已看 = 独立复核者亲自做过、看过的记录（格内写明轮次；之后的复验见下方说明）</span><span>仍需用户验收 = 留给你的最终判断</span></p>';
     if (!COV) { box.innerHTML = '<h2>覆盖表</h2>' + legend + '<p class="apx-missing">（尚未生成 my-r2/spec/coverage.md：运行 node my-r2/tools/coverage-matrix.cjs，再把真实操作 / 静态 / 动效 / 待验收四栏记录到 my-r2/spec/coverage-manual.json 后重新构建）</p>'; return; }
     if (!covCode || !COV.concepts[covCode]) covCode = COV.order[0];
     var c = COV.concepts[covCode]; var rows = c.rows || [];
     var sums = COLS.map(function (col) { return rows.filter(function (r) { return cellCls(col[0], r[col[0]]) === 'ok' || (col[0] === 'pending' && cellCls(col[0], r[col[0]]) === 'pend'); }).length; });
     var html = '<h2>覆盖表 <span class="apx-note">自动生成 ' + esc(COV.generated) + '</span></h2>' + legend +
-      '<div class="cov-head"><label>方案 <select id="cov-sel">' + COV.order.map(function (k) { return '<option value="' + k + '"' + (k === covCode ? ' selected' : '') + '>' + k + ' ' + esc(COV.concepts[k].name) + '</option>'; }).join('') + '</select></label><span>' + rows.length + ' 个状态</span></div>' +
+      '<div class="cov-head"><label>方案 <select id="cov-sel">' + COV.order.map(function (k) { return '<option value="' + k + '"' + (k === covCode ? ' selected' : '') + '>' + k + ' ' + esc(COV.concepts[k].name) + '</option>'; }).join('') + '</select></label><span>' + rows.length + ' 个状态</span></div>' + (c.note ? '<p class="cov-legend">' + esc(c.note) + '</p>' : '') +
       '<div class="cov-sum">' + COLS.map(function (col, i) { return '<div><b>' + sums[i] + '/' + rows.length + '</b>' + col[1] + (col[0] === 'pending' ? '（有记录）' : '（✓）') + '</div>'; }).join('') + '</div>' +
       '<table class="cov-table"><thead><tr><th>状态</th><th>名称</th>' + COLS.map(function (col) { return '<th>' + col[1] + '</th>'; }).join('') + '</tr></thead><tbody>' +
       rows.map(function (r) { return '<tr><td class="key">' + esc(r.key) + '</td><td class="grp">' + esc(r.label) + '</td>' + COLS.map(function (col) { var v = r[col[0]]; return '<td class="' + cellCls(col[0], v) + '">' + (String(v || '').trim() ? esc(v) : '–') + '</td>'; }).join('') + '</tr>'; }).join('') +

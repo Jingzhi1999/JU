@@ -281,6 +281,7 @@ function parseCoverage(text) {
   for (let i = 0; i < lines.length; i++) {
     const l = lines[i]; let m;
     if ((m = /^###\s+(C\d\d)\b\s*(.*)$/.exec(l))) { cur = { code: m[1], name: m[2].trim(), rows: [] }; out.concepts[m[1]] = cur; out.order.push(m[1]); continue; }
+    if (cur && !cur.rows.length && !cur.note && l.trim() && !/^\|/.test(l)) { cur.note = l.trim().replace(/`/g, ''); continue; }   /* the line under the heading: where the hand-kept columns come from */
     if (cur && /^\|/.test(l)) {
       const head = splitRow(l).map(c => c.trim()); if (!(head.length >= 6 && COVERAGE_COLUMNS.every(c => head.indexOf(c) >= 0))) continue;
       const col = COVERAGE_COLUMNS.map(c => head.indexOf(c)); i += 2;
