@@ -1158,8 +1158,11 @@ class Component extends DCLogic {
     cv.__c07card = k; const R = this.R();
     const ready = this._filmReady || (this._filmReady = (R && R.stampFace ? R.stampFace.ready() : Promise.resolve()).catch(() => { }));
     return (cv.__c07paint = ready.then(() => { const F = window.JuFilm; if (!F || cv.__c07card !== k) return false; const card = JSON.parse(k);
-      return this._cardFonts(card).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
+      return this._cardFonts(card).then(() => this._offCross()).then(() => { if (cv.__c07card !== k) return false; F.paintCard(card, cv); cv.setAttribute('data-painted', ''); return true; }); }).catch(() => false));
   }
+  /* a card paint is a long task (720×900, software raster): during a rise it waits until the hand-over has crossed (~64–68ms after the
+     animations start), so no frame of the crossing is held */
+  _offCross() { const root = this.rootRef.current, r = this.state.review || {}; return root && root.classList.contains('c07-rising') && !this.isRM() ? new Promise(ok => setTimeout(ok, r.speed === 0.5 ? 360 : 180)) : null; }
   /* the faces paintCard needs for this card's text (declared ones only, 1.5s cap) */
   _cardFonts(card) {
     if (!document.fonts || !document.fonts.load) return Promise.resolve();
