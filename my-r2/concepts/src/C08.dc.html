@@ -176,10 +176,10 @@ body{margin:0}
 .c08-home.is-under.ph-exit .c08-hdw{animation:c08-in-hd calc(320ms * var(--k)) var(--tB) both}
 .c08-home.is-under.ph-exit .c08-nav{animation:c08-in-nav calc(320ms * var(--k)) var(--tB) both}
 .c08-home.is-under.ph-exit .c08-ctaz{animation:c08-in-st calc(320ms * var(--k)) var(--tB) both,c08-unfade calc(160ms * var(--k)) ease calc(160ms * var(--k)) both}
-@keyframes c08-out-st{from{transform:none}to{transform:translateY(var(--push,0px))}}
-@keyframes c08-in-st{from{transform:translateY(var(--push,0px))}to{transform:none}}
-@keyframes c08-out-hd{from{transform:none}to{transform:translateY(var(--push-hd,0px))}}
-@keyframes c08-in-hd{from{transform:translateY(var(--push-hd,0px))}to{transform:none}}
+@keyframes c08-out-st{from{top:0}to{top:var(--push,0px)}}
+@keyframes c08-in-st{from{top:var(--push,0px)}to{top:0}}
+@keyframes c08-out-hd{from{top:0}to{top:var(--push-hd,0px)}}
+@keyframes c08-in-hd{from{top:var(--push-hd,0px)}to{top:0}}
 @keyframes c08-out-nav{from{transform:none}to{transform:translateY(100%)}}
 @keyframes c08-in-nav{from{transform:translateY(100%)}to{transform:none}}
 @keyframes c08-unfade{from{opacity:0}to{opacity:1}}
@@ -276,10 +276,26 @@ body{margin:0}
 .app:not(.over-home) .c08-pg.is-top.ph-enter.dir-fwd .c08-ft{opacity:0;transition:none}
 .c08-pg.is-top.ph-exit .c08-tool,.c08-pg.is-top.ph-exit .c08-fm,.c08-pg.is-top.ph-exit .c08-fx,.c08-pg.is-top.ph-exit:not(.has-back) .c08-ft{opacity:0;transition:opacity calc(110ms * var(--k)) ease}
 /* the way back carries the title home: it shrinks and travels onto the strip it came from (measured at back()), then fades with the face */
-.app.over-home .c08-pg.is-top.ph-exit.has-back .c08-ft{left:var(--tx1,0px);top:var(--ty1,0px);transform:none;font-size:var(--tfs1,15px);opacity:0;transition:left calc(250ms * var(--k)) var(--tB),top calc(250ms * var(--k)) var(--tB),transform calc(250ms * var(--k)) var(--tB),font-size calc(250ms * var(--k)) var(--tB),opacity calc(100ms * var(--k)) linear calc(250ms * var(--k))}
+.app.over-home .c08-pg.is-top.ph-exit.has-back .c08-ft{left:var(--tx1,0px);top:var(--ty1,0px);transform:none;font-size:var(--tfs1,15px);opacity:1;visibility:hidden;transition:left calc(250ms * var(--k)) var(--tB),top calc(250ms * var(--k)) var(--tB),transform calc(250ms * var(--k)) var(--tB),font-size calc(250ms * var(--k)) var(--tB),visibility 0s linear calc(250ms * var(--k))}
 .c08-pg .c08-body>*,.c08-pg .c08-foot{transition:opacity calc(160ms * var(--k)) ease,transform calc(340ms * var(--k)) var(--tA)}
 .c08-pg.is-top.ph-enter.dir-fwd .c08-body>*,.c08-pg.is-top.ph-enter.dir-fwd .c08-foot{opacity:0;transform:translateY(14px);transition:none}
 .app.over-home .c08-pg.is-top.ph-exit .c08-body>*,.app.over-home .c08-pg.is-top.ph-exit .c08-foot{opacity:0;transition:opacity calc(120ms * var(--k)) ease}
+/* the wipe (C05's rule, every part on one clock): the page is there from the first frame, under the leaving list; each of its lines is
+   uncovered when the dropping strips' edge passes it (clip-path, main thread, with the strips' own top); on the way back each line stays
+   until the returning strips reach it — nothing of the page fades out early, nothing of it waits for the band to land */
+.app.over-home .c08-pg.is-top.ph-enter.dir-fwd .c08-body{clip-path:inset(var(--py0,0px) 0 calc(100% - var(--rv0,0px)) 0)}
+.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-body{animation:c08-reveal calc(380ms * var(--k)) var(--tA) both}
+@keyframes c08-reveal{from{clip-path:inset(var(--py0,0px) 0 calc(100% - var(--rv0,0px)) 0)}to{clip-path:inset(var(--fz) 0 calc(100% - var(--rv1,2000px)) 0)}}   /* top edge = the face's top edge (nothing of the page shows above its own head), bottom edge = the dropping strips */
+.app.over-home .c08-pg.is-top.ph-exit .c08-body{animation:c08-cover calc(320ms * var(--k)) var(--tB) calc(60ms * var(--k)) both}
+@keyframes c08-cover{from{clip-path:inset(0 0 calc(100% - var(--rx0,2000px)) 0)}to{clip-path:inset(0 0 calc(100% - var(--rx1,0px)) 0)}}
+.app.over-home .c08-pg.is-top.ph-enter.dir-fwd .c08-body>*,.app.over-home .c08-pg.is-top.ph-in .c08-body>*{opacity:1!important;transform:none!important;transition:none!important}
+.app.over-home .c08-pg.is-top.ph-exit .c08-body>*{opacity:1!important;transition:none!important}
+/* what is not part of the wipe leaves at once on the way back (the returning list passes where it stood): no two layers of words */
+.app.over-home .c08-pg.is-top.ph-exit .c08-foot,.app.over-home .c08-pg.is-top.ph-exit .c08-tool,.app.over-home .c08-pg.is-top.ph-exit .c08-fm,.app.over-home .c08-pg.is-top.ph-exit .c08-fx,.app.over-home .c08-pg.is-top.ph-exit:not(.has-back) .c08-ft{opacity:0!important;transition:none!important}
+/* coming in, the foot waits until the dropping strips have passed the bottom */
+.app.over-home .c08-pg.is-top.ph-in.dir-fwd .c08-foot{opacity:1;transform:none;transition:opacity calc(120ms * var(--k)) ease calc(260ms * var(--k))}
+/* the strip's eyebrow line sits in the travelling title's path: it leaves with the first frame */
+.c08-carry .e{visibility:hidden}
 /* the page no longer lies on paper, so nothing of it may appear over the list that is still leaving: the environment head's tools come in
    once the rigid block above has risen through it, the page's content once the strips below have dropped past (no double exposure);
    on the way back the content is gone before the strips return */
@@ -577,7 +593,7 @@ body{margin:0}
 
       <!-- ================= TICKET / REPLY: the band's face on top, the ticket (shared original, 258 wide) comes out from under its lower edge ================= -->
       <sc-if value="{{tk.on}}" hint-placeholder-val="{{false}}">
-        <section class="c08-pg {{c.nav.cls.ticket}}{{c.nav.cls.reply}}{{fx.backCls}}{{tk.f1}}" data-surface="{{tk.surface}}">
+        <section class="c08-pg {{c.nav.cls.ticket}}{{c.nav.cls.reply}}{{fx.backCls}}{{tk.f1}}" data-surface="{{tk.surface}}" style="{{fx.pgStyle}}">
           <div class="c08-face {{tk.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="返回我的局" onClick="{{c.ticket.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{tk.crumb}}</span><sc-if value="{{tk.showExit}}"><button type="button" class="c08-weak" data-act="{{tk.exitAct}}" onClick="{{c.ticket.exit}}">{{c.ticket.exitLabel}}</button></sc-if><sc-if value="{{tk.noExit}}"><span class="sp"></span></sc-if></div>
@@ -641,7 +657,7 @@ body{margin:0}
 
       <!-- ================= MANAGE: the band's face (局名 · 状态 · 席位) and one band per block ================= -->
       <sc-if value="{{c.nav.on.manage}}" hint-placeholder-val="{{false}}">
-        <section class="c08-pg {{c.nav.cls.manage}}{{fx.backCls}}{{mg.f1}}" data-surface="manage">
+        <section class="c08-pg {{c.nav.cls.manage}}{{fx.backCls}}{{mg.f1}}" data-surface="manage" style="{{fx.pgStyle}}">
           <div class="c08-face {{mg.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="{{c.manage.backLabel}}" onClick="{{c.manage.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{mg.crumb}}</span><span class="sp"></span></div>
@@ -736,7 +752,7 @@ body{margin:0}
 
       <!-- ================= DETAIL / READ / WAITLIST / HISTORY / DRAFT: the band expanded — its face on top, bands under it ================= -->
       <sc-for list="{{pages}}" as="pg" hint-placeholder-count="0">
-        <section class="c08-pg {{pg.cls}}{{fx.backCls}}{{pg.f1}}" data-surface="{{pg.s}}">
+        <section class="c08-pg {{pg.cls}}{{fx.backCls}}{{pg.f1}}" data-surface="{{pg.s}}" style="{{fx.pgStyle}}">
           <div class="c08-face {{pg.tone}}" data-header>
             <div class="c08-face-bg" style="{{fx.bg}}"></div><div class="c08-carry" aria-hidden="true"></div>
             <div class="c08-tool"><button type="button" class="c08-back" data-act="back" aria-label="返回" onClick="{{pg.back}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"></path></svg></button><span class="c08-crumb">{{pg.crumb}}</span><sc-if value="{{pg.weak}}"><button type="button" class="c08-weak" data-act="{{pg.weak.key}}" onClick="{{pg.weak.act}}">{{pg.weak.label}}</button></sc-if><sc-if value="{{pg.noWeak}}"><span class="sp"></span></sc-if></div>
@@ -932,7 +948,8 @@ class Component extends DCLogic {
     if (tt && t) { const lh = parseFloat(getComputedStyle(t).lineHeight) || 22; const one = t.offsetHeight < lh * 1.5; let w = 0; try { const rg = document.createRange(); rg.selectNodeContents(t); w = rg.getBoundingClientRect().width; } catch (e) { }
       const tz = this.state.review && this.state.review.zoom ? 1.15 : 1; tt.one = one && w * (30 * tz / tt.fs) > (this._root().clientWidth - 44) * 0.98;
       if (tt.one) tt.fold = this._fold(t.textContent, tz); }
-    const bfx = { id, srcKey: src ? src.key : null, band: src ? src.band : null, tone: src ? src.tone : null, y0, h0, push, hdPush, counts, tt, role: this.state.role, section: this.state.section, srcH: src ? src.h : 0 };
+    const rv0 = src ? Math.round(src.y + src.h) : Math.round(m.hdH), rv1 = Math.round(H + 40);
+    const bfx = { rv0, rv1, id, srcKey: src ? src.key : null, band: src ? src.band : null, tone: src ? src.tone : null, y0, h0, push, hdPush, counts, tt, role: this.state.role, section: this.state.section, srcH: src ? src.h : 0 };
     this._fx = bfx; this.setState({ bfx, ghost: null, cntFx: null });
   }
   /* the controller calls onNav synchronously inside go() / back(), before its own state lands: the DOM still shows where things are */
@@ -971,7 +988,7 @@ class Component extends DCLogic {
       /* a two-line head title unfolds on the way home: its second line slides back up behind the first, landing as the strip's one line */
       let fold1 = null; if (tt1 && ft) { const hc = parseFloat(getComputedStyle(ft).getPropertyValue('--hc')) || 0; const lhp = parseFloat(getComputedStyle(ft).lineHeight) || 31;
         if (hc < 0.001 && ft.offsetHeight > lhp * 1.5) fold1 = this._fold(ft.textContent, this.state.review && this.state.review.zoom ? 1.15 : 1); }
-      this._fx = Object.assign({}, fx, { y1: Math.round(y1), h1: Math.round(h1), tgtKey, tt1, landTone, fold1 });
+      this._fx = Object.assign({}, fx, { rx0: Math.round(m.H + 40), rx1: Math.round(y1 + h1), y1: Math.round(y1), h1: Math.round(h1), tgtKey, tt1, landTone, fold1 });
       this.setState({ bfx: this._fx, ghost, cntFx: Object.keys(cnt).length ? { map: cnt } : null });
       const self = this; const ms = this.navMs('back');
       if (ghost) this.after(ms + 560, function () { self.setState({ ghost: null }); });
@@ -1307,7 +1324,7 @@ class Component extends DCLogic {
     const fold = bfx ? (bfx.y1 != null ? bfx.fold1 : (tt && tt.one ? tt.fold : null)) : null; const foldOk = !!(fold && fold.tz === tz);
     /* the head title as two runs: before / after the line break of its settled two-line self (one run when no fold is travelling) */
     const tsplit = o => { if (!o) return o; const on = foldOk && o.title === fold.full; o.ta = on ? fold.a : o.title; o.tb = on ? fold.b : ''; o.f1 = on ? ' f1' : ''; return o; };
-    const fx = { bg:'--y0:' + (bfx ? bfx.y0 : 0) + 'px;--h0:' + (bfx ? bfx.h0 : 0) + 'px;--y1:' + (bfx && bfx.y1 != null ? bfx.y1 : (bfx ? bfx.y0 : 0)) + 'px;--h1:' + (bfx && bfx.h1 != null ? bfx.h1 : (bfx ? bfx.h0 : 0)) + 'px',
+    const fx = { pgStyle: bfx ? '--py0:' + (bfx.y0 || 0) + 'px;--rv0:' + (bfx.rv0 != null ? bfx.rv0 : 0) + 'px;--rv1:' + (bfx.rv1 != null ? bfx.rv1 : 2000) + 'px;--rx0:' + (bfx.rx0 != null ? bfx.rx0 : 2000) + 'px;--rx1:' + (bfx.rx1 != null ? bfx.rx1 : 0) + 'px' : '', bg:'--y0:' + (bfx ? bfx.y0 : 0) + 'px;--h0:' + (bfx ? bfx.h0 : 0) + 'px;--y1:' + (bfx && bfx.y1 != null ? bfx.y1 : (bfx ? bfx.y0 : 0)) + 'px;--h1:' + (bfx && bfx.h1 != null ? bfx.h1 : (bfx ? bfx.h0 : 0)) + 'px',
       title: (tt ? '--tx:' + tt.tx + 'px;--ty:' + tt.ty + 'px;--tfs:' + tt.fs + 'px' : '--tfs:' + (30 * tz) + 'px') + (bfx && bfx.tt1 ? ';--tx1:' + bfx.tt1.tx + 'px;--ty1:' + bfx.tt1.ty + 'px;--tfs1:' + bfx.tt1.fs + 'px' : '') + (foldOk ? ';--fbx:' + fold.x + ';--fby:' + fold.y + ';--fbxp:' + Math.round(fold.x * 30 * tz * 100) / 100 + 'px;--fbyp:' + Math.round(fold.y * 30 * tz * 100) / 100 + 'px' : ''),
       backCls: (bfx && bfx.tt1 && bfx.y1 != null ? ' has-back' : '') + (tt && tt.one && !(bfx && bfx.y1 != null) ? ' t1' : '') + (bfx && bfx.srcKey && !tt && bfx.y1 == null ? ' no-tt' : '') };
     /* a page keeps the colour of the band it was opened from for the whole visit (a 局 that moves group while its page is open does not
