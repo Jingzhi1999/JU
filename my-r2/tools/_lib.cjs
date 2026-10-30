@@ -88,6 +88,8 @@ async function runStep(p, code, st) {
   if (st.expectSel) { const ok = await E(p, code, "return a.split(',').some(function (s) { return Array.prototype.slice.call(sr.querySelectorAll(s.trim())).some(function (e) { var b = e.getBoundingClientRect(); return b.width > 0 && b.height > 0; }); });", st.expectSel); return ok ? '' : 'expected element not visible: ' + st.expectSel + (st.name ? ' (' + st.name + ')' : ''); }
   if (st.expect) { let ok = false, err = ''; try { ok = await E(p, code, st.expect); } catch (e) { err = e.message; } return ok ? '' : 'expectation failed' + (st.name ? ' (' + st.name + ')' : '') + ': ' + st.expect.slice(0, 120) + (err ? ' — ' + err : ''); }
   if (st.eval) { await E(p, code, st.eval); await p.waitForTimeout(st.after || 100); return ''; }
+  /* until: poll a condition (e.g. the ticket has printed) for at most st.max ms, so a flow can wait for a ritual without a fixed sleep */
+  if (st.until) { const t0 = Date.now(); while (Date.now() - t0 < (st.max || 8000)) { let ok = false; try { ok = await E(p, code, st.until); } catch (e) { } if (ok) return ''; await p.waitForTimeout(80); } return 'until timed out' + (st.name ? ' (' + st.name + ')' : '') + ': ' + st.until.slice(0, 100); }
   return 'unknown step: ' + JSON.stringify(st);
 }
 module.exports = { chromium, path, fs, execSync, ROOT, DELIVERABLE, EVIDENCE, fileFor, opt, flag, positionals, launch, openConcept, E, phoneRect, shot, jump, indexKeys, indexList, clickSel, clickIssue, PICK_JS, setSkin, setToggle, runningAnimations, tileFfmpeg, tilePy, writeLog, loadFlows, runStep };

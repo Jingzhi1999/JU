@@ -24,7 +24,7 @@ if [[ $PARTS == *,concepts,* ]]; then
     node my-r2/tools/rm-check.cjs $c $O/rm/$c > $O/rm-$c.log 2>&1
   done
 fi
-[[ $PARTS == *,flow,* ]] && node my-r2/tools/flow-compare.cjs $O/flow --final --codes $(echo $CODES | tr ' ' ',') > $O/flow.log 2>&1
+[[ $PARTS == *,flow,* ]] && node my-r2/tools/flow-compare.cjs $O/flow --final --flow enter-op-back --codes $(echo $CODES | tr ' ' ',') > $O/flow.log 2>&1
 [[ $PARTS == *,summary,* ]] || exit 0
 python3 - "$O" $CODES <<'PY'
 import json, os, sys

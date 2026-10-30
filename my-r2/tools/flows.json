@@ -1,62 +1,364 @@
 {
-  "_doc": "Real-click flows shared by rm-check.cjs (terminal states under prefers-reduced-motion), flow-compare.cjs (normal-speed frame rows) and capture.cjs ({\"flow\":\"<name>\"}). Steps: click (selector; several comma-separated alternatives allowed; {last:true} takes the last visible match, {js:true} a synthetic click) · wait · scrollEnd (scroll a container to its end) · input ({sel,value}) · key ({key,focus,times}) · expectSel (a visible element must exist) · expect (js with root/inst/sr returning true) · eval. Selectors follow my-r2/spec/contract.md §6; expectations read the shared data (my-r2/src/core/ju-data.js) through inst.state.data.",
-  "enter-back": { "title": "详情进入与返回", "jump": "j-home", "steps": [
-    { "click": "[data-rid][data-origin], [data-rid]" }, { "wait": 500 },
-    { "expectSel": "[data-surface=\"detail\"], [data-surface=\"ticket\"], [data-surface=\"waitlist\"], [data-surface=\"reply\"]", "name": "detail opened" },
-    { "click": "[data-act=\"back\"]" }, { "wait": 500 },
-    { "expectSel": "[data-surface=\"home\"]", "name": "back home" } ] },
-  "read-confirm": { "title": "阅读确认 → 成局出票", "jump": "j-d-invited", "steps": [
-    { "click": "[data-act=\"read\"], [data-act=\"confirm\"]" }, { "wait": 500 },
-    { "expectSel": "[data-surface=\"read\"]", "name": "read layer opened" },
-    { "scrollEnd": "[data-scroller=\"read\"], [data-surface=\"read\"] [data-scroller]" }, { "wait": 500 },
-    { "click": "[data-surface=\"read\"] [data-act=\"confirm\"], [data-act=\"confirm\"]", "last": true }, { "wait": 1200 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'brunch'; })[0]; return !!it && it.stage !== 'invited';", "name": "brunch no longer invited" } ] },
-  "tear-contact-copy": { "title": "撕票 → 联系 → 复制 → 已加微信", "jump": "j-d-tear", "steps": [
-    { "wait": 1500 },
-    { "click": "[data-act=\"tear-now\"], [data-act=\"tear\"]" }, { "wait": 2000 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'run3k'; })[0]; return !!(it && it.ticket && it.ticket.torn);", "name": "run3k torn" },
-    { "click": "[data-act=\"contact\"]", "optional": true }, { "wait": 500 },
-    { "click": "[data-act=\"copy\"]" }, { "wait": 500 },
-    { "click": "[data-act=\"contacted\"]" }, { "wait": 600 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'run3k'; })[0]; return !!(it && (it.contactAdded || it.stage === 'going'));", "name": "run3k contacted" } ] },
-  "reschedule-accept": { "title": "改期答复：接受", "jump": "j-d-reschedule", "steps": [
-    { "click": "[data-act=\"accept\"]" }, { "wait": 1600 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'livehouse'; })[0]; return !!(it && ((it.reschedule && it.reschedule.answered === 'accepted') || it.stage !== 'reschedule'));", "name": "livehouse accepted" } ] },
-  "reschedule-decline": { "title": "改期答复：拒绝（燃烧）", "jump": "j-d-reschedule", "steps": [
-    { "click": "[data-act=\"decline\"]" }, { "wait": 400 },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"ok\"]" }, { "wait": 1800 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'livehouse'; })[0]; return !!(it && ((it.reschedule && it.reschedule.answered === 'declined') || it.stage === 'declined'));", "name": "livehouse declined" } ] },
-  "waitlist-leave": { "title": "候补退出", "jump": "j-d-waitlist", "steps": [
-    { "click": "[data-act=\"leave-queue\"]" }, { "wait": 400 },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"ok\"]" }, { "wait": 900 },
-    { "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'vintage'; })[0]; return !!(it && it.stage !== 'waitlist');", "name": "vintage left the queue" } ] },
-  "review-approve-reject": { "title": "审核通过 / 谢绝 → 计数与席位", "jump": "h-m-review", "steps": [
-    { "eval": "window.__juPendingBefore = inst.state.data.hosted.filter(function (x) { return x.eventId === 'bar'; })[0].applications.filter(function (a) { return a.status === 'pending'; }).length;" },
-    { "click": "[data-act=\"approve\"]" }, { "wait": 900 },
-    { "click": "[data-act=\"reject\"]" }, { "wait": 900 },
-    { "expect": "var it = inst.state.data.hosted.filter(function (x) { return x.eventId === 'bar'; })[0]; var n = it.applications.filter(function (a) { return a.status === 'pending'; }).length; return n <= window.__juPendingBefore - 2 || (window.__juPendingBefore < 2 && n === 0);", "name": "two applications handled" } ] },
-  "reschedule-propose": { "title": "改时间 → 成员待答复", "jump": "h-m-reschedule", "steps": [
-    { "input": { "sel": "[data-field=\"date\"]", "value": "2026-12-24" } },
-    { "input": { "sel": "[data-field=\"time\"]", "value": "19:30" } }, { "wait": 200 },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"propose\"]" }, { "wait": 1200 },
-    { "expect": "var e = inst.state.data.events.wine; return !!(e && (e.proposal || (e.version && e.version > 1) || /2026-12-24/.test(e.iso)));", "name": "wine rescheduled" } ] },
-  "cancel-burn": { "title": "取消这局 → 燃烧 → 历史", "jump": "h-m-cancel", "steps": [
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"cancel\"]" }, { "wait": 400 },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"]", "optional": true }, { "wait": 2200 },
-    { "expect": "var e = inst.state.data.events.cards; return !!(e && e.status === 'cancelled');", "name": "cards cancelled" } ] },
-  "end-attend": { "title": "散场 → 出席登记 → 更正", "jump": "h-m-end", "steps": [
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"end\"]" }, { "wait": 1400 },
-    { "expect": "var e = inst.state.data.events.wine; return !!(e && e.status === 'ended');", "name": "wine ended" },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"], [class*=\"-over\"] [data-act=\"close\"]", "optional": true }, { "wait": 700 },
-    { "click": "[data-act=\"attend-present\"]" }, { "wait": 1200 },
-    { "click": "[data-act=\"correct\"]", "optional": true }, { "wait": 300 },
-    { "click": "[data-act=\"attend-absent\"]", "optional": true }, { "wait": 1200 },
-    { "expect": "var it = inst.state.data.hosted.filter(function (x) { return x.eventId === 'wine'; })[0]; return !!(it && it.members.some(function (m) { return !m.host && m.attendance; }));", "name": "attendance recorded" } ] },
-  "draft-delete-undo": { "title": "草稿删除 → 撤销恢复", "jump": "h-drafts", "steps": [
-    { "eval": "window.__juDraftsBefore = inst.state.data.drafts.length;" },
-    { "click": "[data-act=\"delete\"]" }, { "wait": 400 },
-    { "click": "[class*=\"-over\"] [data-act=\"ok\"]", "optional": true }, { "wait": 700 },
-    { "expect": "return inst.state.data.drafts.filter(function (d) { return !d.deleted && !d.pendingDelete; }).length < window.__juDraftsBefore || inst.state.data.drafts.length < window.__juDraftsBefore;", "name": "one draft gone" },
-    { "click": "[data-act=\"undo\"]" }, { "wait": 900 },
-    { "expect": "return inst.state.data.drafts.filter(function (d) { return !d.deleted && !d.pendingDelete; }).length === window.__juDraftsBefore;", "name": "draft restored" } ] }
+ "_doc": "Real-click flows shared by rm-check.cjs (terminal states under prefers-reduced-motion), flow-compare.cjs (normal-speed frame rows) and capture.cjs ({\"flow\":\"<name>\"}). Steps: click (selector; several comma-separated alternatives allowed; {last:true} takes the last visible match, {js:true} a synthetic click) · wait · scrollEnd (scroll a container to its end) · input ({sel,value}) · key ({key,focus,times}) · expectSel (a visible element must exist) · expect (js with root/inst/sr returning true) · eval. Selectors follow my-r2/spec/contract.md §6; expectations read the shared data (my-r2/src/core/ju-data.js) through inst.state.data.",
+ "enter-back": {
+  "title": "详情进入与返回",
+  "jump": "j-home",
+  "steps": [
+   {
+    "click": "[data-rid][data-origin], [data-rid]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "expectSel": "[data-surface=\"detail\"], [data-surface=\"ticket\"], [data-surface=\"waitlist\"], [data-surface=\"reply\"]",
+    "name": "detail opened"
+   },
+   {
+    "click": "[data-act=\"back\"]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "expectSel": "[data-surface=\"home\"]",
+    "name": "back home"
+   }
+  ]
+ },
+ "enter-op-back": {
+  "title": "进入—操作—返回：点「公园慢跑 3K」进票根 → 出票后撕票 → 返回",
+  "jump": "j-home",
+  "steps": [
+   {
+    "click": "[data-rid=\"run3k\"]"
+   },
+   {
+    "until": "var t = inst.ctlVals().ticket; return t.on && t.state === 'printed';",
+    "max": 9000,
+    "name": "ticket printed"
+   },
+   {
+    "wait": 300
+   },
+   {
+    "click": "[data-act=\"tear-now\"], [data-act=\"tear\"]"
+   },
+   {
+    "until": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'run3k'; })[0]; return !!(it && it.ticket && it.ticket.torn);",
+    "max": 6000,
+    "name": "torn"
+   },
+   {
+    "wait": 300
+   },
+   {
+    "click": "[data-act=\"back\"]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "expectSel": "[data-surface=\"home\"]",
+    "name": "back home"
+   }
+  ]
+ },
+ "read-confirm": {
+  "title": "阅读确认 → 成局出票",
+  "jump": "j-d-invited",
+  "steps": [
+   {
+    "click": "[data-act=\"read\"], [data-act=\"confirm\"]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "expectSel": "[data-surface=\"read\"]",
+    "name": "read layer opened"
+   },
+   {
+    "scrollEnd": "[data-scroller=\"read\"], [data-surface=\"read\"] [data-scroller]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "click": "[data-surface=\"read\"] [data-act=\"confirm\"], [data-act=\"confirm\"]",
+    "last": true
+   },
+   {
+    "wait": 1200
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'brunch'; })[0]; return !!it && it.stage !== 'invited';",
+    "name": "brunch no longer invited"
+   }
+  ]
+ },
+ "tear-contact-copy": {
+  "title": "撕票 → 联系 → 复制 → 已加微信",
+  "jump": "j-d-tear",
+  "steps": [
+   {
+    "wait": 1500
+   },
+   {
+    "click": "[data-act=\"tear-now\"], [data-act=\"tear\"]"
+   },
+   {
+    "wait": 2000
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'run3k'; })[0]; return !!(it && it.ticket && it.ticket.torn);",
+    "name": "run3k torn"
+   },
+   {
+    "click": "[data-act=\"contact\"]",
+    "optional": true
+   },
+   {
+    "wait": 500
+   },
+   {
+    "click": "[data-act=\"copy\"]"
+   },
+   {
+    "wait": 500
+   },
+   {
+    "click": "[data-act=\"contacted\"]"
+   },
+   {
+    "wait": 600
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'run3k'; })[0]; return !!(it && (it.contactAdded || it.stage === 'going'));",
+    "name": "run3k contacted"
+   }
+  ]
+ },
+ "reschedule-accept": {
+  "title": "改期答复：接受",
+  "jump": "j-d-reschedule",
+  "steps": [
+   {
+    "click": "[data-act=\"accept\"]"
+   },
+   {
+    "wait": 1600
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'livehouse'; })[0]; return !!(it && ((it.reschedule && it.reschedule.answered === 'accepted') || it.stage !== 'reschedule'));",
+    "name": "livehouse accepted"
+   }
+  ]
+ },
+ "reschedule-decline": {
+  "title": "改期答复：拒绝（燃烧）",
+  "jump": "j-d-reschedule",
+  "steps": [
+   {
+    "click": "[data-act=\"decline\"]"
+   },
+   {
+    "wait": 400
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"ok\"]"
+   },
+   {
+    "wait": 1800
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'livehouse'; })[0]; return !!(it && ((it.reschedule && it.reschedule.answered === 'declined') || it.stage === 'declined'));",
+    "name": "livehouse declined"
+   }
+  ]
+ },
+ "waitlist-leave": {
+  "title": "候补退出",
+  "jump": "j-d-waitlist",
+  "steps": [
+   {
+    "click": "[data-act=\"leave-queue\"]"
+   },
+   {
+    "wait": 400
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"ok\"]"
+   },
+   {
+    "wait": 900
+   },
+   {
+    "expect": "var it = inst.state.data.joined.filter(function (x) { return x.eventId === 'vintage'; })[0]; return !!(it && it.stage !== 'waitlist');",
+    "name": "vintage left the queue"
+   }
+  ]
+ },
+ "review-approve-reject": {
+  "title": "审核通过 / 谢绝 → 计数与席位",
+  "jump": "h-m-review",
+  "steps": [
+   {
+    "eval": "window.__juPendingBefore = inst.state.data.hosted.filter(function (x) { return x.eventId === 'bar'; })[0].applications.filter(function (a) { return a.status === 'pending'; }).length;"
+   },
+   {
+    "click": "[data-act=\"approve\"]"
+   },
+   {
+    "wait": 900
+   },
+   {
+    "click": "[data-act=\"reject\"]"
+   },
+   {
+    "wait": 900
+   },
+   {
+    "expect": "var it = inst.state.data.hosted.filter(function (x) { return x.eventId === 'bar'; })[0]; var n = it.applications.filter(function (a) { return a.status === 'pending'; }).length; return n <= window.__juPendingBefore - 2 || (window.__juPendingBefore < 2 && n === 0);",
+    "name": "two applications handled"
+   }
+  ]
+ },
+ "reschedule-propose": {
+  "title": "改时间 → 成员待答复",
+  "jump": "h-m-reschedule",
+  "steps": [
+   {
+    "input": {
+     "sel": "[data-field=\"date\"]",
+     "value": "2026-12-24"
+    }
+   },
+   {
+    "input": {
+     "sel": "[data-field=\"time\"]",
+     "value": "19:30"
+    }
+   },
+   {
+    "wait": 200
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"propose\"]"
+   },
+   {
+    "wait": 1200
+   },
+   {
+    "expect": "var e = inst.state.data.events.wine; return !!(e && (e.proposal || (e.version && e.version > 1) || /2026-12-24/.test(e.iso)));",
+    "name": "wine rescheduled"
+   }
+  ]
+ },
+ "cancel-burn": {
+  "title": "取消这局 → 燃烧 → 历史",
+  "jump": "h-m-cancel",
+  "steps": [
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"cancel\"]"
+   },
+   {
+    "wait": 400
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"]",
+    "optional": true
+   },
+   {
+    "wait": 2200
+   },
+   {
+    "expect": "var e = inst.state.data.events.cards; return !!(e && e.status === 'cancelled');",
+    "name": "cards cancelled"
+   }
+  ]
+ },
+ "end-attend": {
+  "title": "散场 → 出席登记 → 更正",
+  "jump": "h-m-end",
+  "steps": [
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [data-act=\"end\"]"
+   },
+   {
+    "wait": 1400
+   },
+   {
+    "expect": "var e = inst.state.data.events.wine; return !!(e && e.status === 'ended');",
+    "name": "wine ended"
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"], [class*=\"-over\"] [data-act=\"close\"]",
+    "optional": true
+   },
+   {
+    "wait": 700
+   },
+   {
+    "click": "[data-act=\"attend-present\"]"
+   },
+   {
+    "wait": 1200
+   },
+   {
+    "click": "[data-act=\"correct\"]",
+    "optional": true
+   },
+   {
+    "wait": 300
+   },
+   {
+    "click": "[data-act=\"attend-absent\"]",
+    "optional": true
+   },
+   {
+    "wait": 1200
+   },
+   {
+    "expect": "var it = inst.state.data.hosted.filter(function (x) { return x.eventId === 'wine'; })[0]; return !!(it && it.members.some(function (m) { return !m.host && m.attendance; }));",
+    "name": "attendance recorded"
+   }
+  ]
+ },
+ "draft-delete-undo": {
+  "title": "草稿删除 → 撤销恢复",
+  "jump": "h-drafts",
+  "steps": [
+   {
+    "eval": "window.__juDraftsBefore = inst.state.data.drafts.length;"
+   },
+   {
+    "click": "[data-act=\"delete\"]"
+   },
+   {
+    "wait": 400
+   },
+   {
+    "click": "[class*=\"-over\"] [data-act=\"ok\"]",
+    "optional": true
+   },
+   {
+    "wait": 700
+   },
+   {
+    "expect": "return inst.state.data.drafts.filter(function (d) { return !d.deleted && !d.pendingDelete; }).length < window.__juDraftsBefore || inst.state.data.drafts.length < window.__juDraftsBefore;",
+    "name": "one draft gone"
+   },
+   {
+    "click": "[data-act=\"undo\"]"
+   },
+   {
+    "wait": 900
+   },
+   {
+    "expect": "return inst.state.data.drafts.filter(function (d) { return !d.deleted && !d.pendingDelete; }).length === window.__juDraftsBefore;",
+    "name": "draft restored"
+   }
+  ]
+ }
 }

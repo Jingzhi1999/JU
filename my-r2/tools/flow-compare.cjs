@@ -64,7 +64,7 @@ if (!outdir) { console.error('usage: node my-r2/tools/flow-compare.cjs <outdir> 
     };
     await still('起点');
     for (const st of flow.steps) {
-      if (st.click) { let r; await segment(st.click.replace(/\[data-act="?|"?\]|\[data-rid\]\[data-origin\]/g, '').split(',')[0].trim() || 'click', async () => { r = await L.clickSel(p, code, st.click, st); }); const issue = (st.optional && (r.missing || r.hidden)) ? 'skipped (optional, not present)' : L.clickIssue(r, st.click); how.push((issue || 'click') + ' ← ' + st.click); }
+      if (st.click) { let r; await segment(st.click.replace(/\[data-rid="?([^"\]]*)"?\]/g, 'row $1').replace(/\[data-act="?|"?\]|\[data-rid\]\[data-origin\]/g, '').split(',')[0].trim() || 'click', async () => { r = await L.clickSel(p, code, st.click, st); }); const issue = (st.optional && (r.missing || r.hidden)) ? 'skipped (optional, not present)' : L.clickIssue(r, st.click); how.push((issue || 'click') + ' ← ' + st.click); }
       else if (st.wait) { await p.waitForTimeout(Math.min(st.wait, 300)); }
       else { const issue = await L.runStep(p, code, st); if (issue) how.push(issue); }
     }
